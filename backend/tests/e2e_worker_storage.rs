@@ -339,6 +339,10 @@ mod publish_consume_tests {
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("pub-con-test", &config).await.unwrap();
+		channel
+			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.await
+			.unwrap();
 
 		let task = make_task("publish-test@example.com");
 		let props = BasicProperties::default()
@@ -376,6 +380,10 @@ mod publish_consume_tests {
 			concurrency: 10,
 		};
 		let channel = setup_rabbit_mq("multi-pub", &config).await.unwrap();
+		channel
+			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.await
+			.unwrap();
 
 		for i in 0..5 {
 			let task = make_task(&format!("multi-{}@test.com", i));
@@ -405,6 +413,10 @@ mod publish_consume_tests {
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("priority-test", &config).await.unwrap();
+		channel
+			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.await
+			.unwrap();
 
 		let low = make_task("low@test.com");
 		publish_task_raw(
@@ -459,6 +471,10 @@ mod publish_consume_tests {
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("meta-rt", &config).await.unwrap();
+		channel
+			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.await
+			.unwrap();
 
 		let task = CheckEmailTask {
 			input: check_if_email_exists::CheckEmailInput {

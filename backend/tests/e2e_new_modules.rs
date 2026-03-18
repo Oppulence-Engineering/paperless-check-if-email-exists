@@ -387,7 +387,7 @@ mod tenant_self_tests {
 			.await;
 		assert_eq!(r.status(), StatusCode::OK);
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
-		assert_eq!(b["name"], "Self");
+		assert_eq!(b["tenant_name"], "Self");
 	}
 
 	#[tokio::test]
@@ -456,7 +456,7 @@ mod tenant_self_tests {
 
 		let r = request()
 			.path("/v1/me/webhook")
-			.method("PUT")
+			.method("PATCH")
 			.header("Authorization", format!("Bearer {}", key))
 			.json(
 				&serde_json::json!({"default_webhook_url":"https://w.t","webhook_signing_secret":"s"}),

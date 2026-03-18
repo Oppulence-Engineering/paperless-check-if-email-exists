@@ -224,10 +224,10 @@ mod me_endpoint {
 	}
 
 	#[tokio::test]
+	#[serial]
 	async fn test_me_api_keys_requires_api_key() {
-		let mut config = BackendConfig::empty();
-		config.header_secret = Some("test-secret".into());
-		let config = Arc::new(config);
+		let _db = TestDb::start().await;
+		let config = config_with_db().await;
 
 		let resp = request()
 			.path("/v1/me/api-keys")

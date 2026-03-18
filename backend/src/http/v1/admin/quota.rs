@@ -21,8 +21,18 @@ pub struct TenantQuotaResponse {
 	pub remaining_quota: Option<i32>,
 }
 
+fn deserialize_optional_nullable<'de, D>(deserializer: D) -> Result<Option<Option<i32>>, D::Error>
+where
+	D: serde::Deserializer<'de>,
+{
+	// If the field is present, deserialize its value (which may be null → None).
+	// Wrap in Some(...) so the outer Option distinguishes present-null from absent.
+	Ok(Some(Option::deserialize(deserializer)?))
+}
+
 #[derive(Debug, Deserialize)]
 struct UpdateTenantQuotaRequest {
+	#[serde(default, deserialize_with = "deserialize_optional_nullable")]
 	pub monthly_email_limit: Option<Option<i32>>,
 }
 
