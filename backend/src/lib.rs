@@ -14,9 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#![recursion_limit = "256"]
+
 pub mod config;
 pub mod http;
 pub mod storage;
+pub mod tenant;
 pub mod throttle;
 pub mod worker;
 

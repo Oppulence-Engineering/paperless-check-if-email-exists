@@ -27,13 +27,15 @@ use warp::Filter;
 
 use super::with_worker_db;
 use crate::config::BackendConfig;
+use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
+use crate::tenant::context::TenantContext;
 use csv_helper::{CsvResponse, CsvWrapper};
 
 mod csv_helper;
 
 /// Defines the download format, passed in as a query param.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 enum ResponseFormat {
 	Json,
@@ -42,7 +44,8 @@ enum ResponseFormat {
 
 // limit and offset are optional in the request
 // If unspecified, offset will default to 0.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
 struct Request {
 	format: Option<ResponseFormat>,
 	limit: Option<u64>,
@@ -56,21 +59,23 @@ struct Response {
 
 async fn http_handler(
 	job_id: i32,
+	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 	req: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	// Throw an error if the job is still running.
-	// Is there a way to combine these 2 requests in one?
+	// Tenant-scoped job lookup
 	let total_records = sqlx::query!(
-		r#"SELECT total_records FROM v1_bulk_job WHERE id = $1;"#,
-		job_id
+		r#"SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL);"#,
+		job_id,
+		tenant_ctx.tenant_id,
 	)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?
 	.total_records;
+	// Count all terminal tasks (completed, failed, cancelled, dead_lettered) — not just those with result/error
 	let total_processed = sqlx::query!(
-		r#"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1;"#,
+		r#"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state NOT IN ('queued', 'running', 'retrying');"#,
 		job_id
 	)
 	.fetch_one(&pg_pool)
@@ -176,11 +181,22 @@ async fn job_result_csv(
 	Ok(data)
 }
 
+/// GET /v1/bulk/{job_id}/results
+///
+/// Returns terminal results for a tenant-scoped v1 bulk job.
+#[utoipa::path(
+	get,
+	path = "/v1/bulk/{job_id}/results",
+	tag = "Jobs",
+	params(("job_id" = i32, Path, description = "V1 bulk job identifier"), Request),
+	responses((status = 200, description = "Bulk job results"))
+)]
 pub fn v1_get_bulk_job_results(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32 / "results")
 		.and(warp::get())
+		.and(resolve_tenant(Arc::clone(&config)))
 		.and(with_worker_db(config))
 		.and(warp::query::<Request>())
 		.and_then(http_handler)

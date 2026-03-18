@@ -56,3 +56,30 @@ pub async fn send_to_reacher(
 
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use check_if_email_exists::{CheckEmailOutput, Reachable};
+
+	#[tokio::test]
+	async fn test_send_to_reacher_no_config_is_noop() {
+		let config = Arc::new(BackendConfig::empty());
+		let output: Result<CheckEmailOutput, TaskError> = Ok(CheckEmailOutput {
+			input: "test@example.com".into(),
+			is_reachable: Reachable::Invalid,
+			..Default::default()
+		});
+		let result = send_to_reacher(config, "test@example.com", &output).await;
+		assert!(result.is_ok());
+	}
+
+	#[tokio::test]
+	async fn test_send_to_reacher_with_error_result() {
+		let config = Arc::new(BackendConfig::empty());
+		let output: Result<CheckEmailOutput, TaskError> =
+			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
+		let result = send_to_reacher(config, "test@example.com", &output).await;
+		assert!(result.is_ok());
+	}
+}

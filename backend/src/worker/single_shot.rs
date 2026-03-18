@@ -98,3 +98,53 @@ pub async fn send_single_shot_reply(
 
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::throttle::{ThrottleLimit, ThrottleResult};
+	use std::time::Duration;
+
+	#[test]
+	fn test_single_shot_reply_serde_ok() {
+		let reply = SingleShotReply::Ok(b"test body".to_vec());
+		let json = serde_json::to_vec(&reply).unwrap();
+		let back: SingleShotReply = serde_json::from_slice(&json).unwrap();
+		match back {
+			SingleShotReply::Ok(body) => assert_eq!(body, b"test body"),
+			_ => panic!("Expected Ok variant"),
+		}
+	}
+
+	#[test]
+	fn test_single_shot_reply_serde_err() {
+		let reply = SingleShotReply::Err(("throttled".into(), 429));
+		let json = serde_json::to_vec(&reply).unwrap();
+		let back: SingleShotReply = serde_json::from_slice(&json).unwrap();
+		match back {
+			SingleShotReply::Err((msg, code)) => {
+				assert_eq!(msg, "throttled");
+				assert_eq!(code, 429);
+			}
+			_ => panic!("Expected Err variant"),
+		}
+	}
+
+	#[test]
+	fn test_try_from_throttle_error() {
+		let throttle_result = ThrottleResult {
+			delay: Duration::from_secs(5),
+			limit_type: ThrottleLimit::PerSecond,
+		};
+		let err_result: Result<CheckEmailOutput, TaskError> =
+			Err(TaskError::Throttle(throttle_result));
+		let reply = SingleShotReply::try_from(&err_result).unwrap();
+		match reply {
+			SingleShotReply::Err((msg, code)) => {
+				assert!(msg.contains("full capacity"));
+				assert_eq!(code, StatusCode::TOO_MANY_REQUESTS.as_u16());
+			}
+			_ => panic!("Expected Err variant"),
+		}
+	}
+}

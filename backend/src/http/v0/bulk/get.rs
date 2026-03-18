@@ -24,6 +24,7 @@ use tracing::error;
 use warp::Filter;
 
 use super::{db::with_db, error::BulkError};
+use crate::http::deprecation::add_deprecation_headers;
 
 /// NOTE: Type conversions from postgres to rust types
 /// are according to the table given by
@@ -89,7 +90,7 @@ async fn job_status(
 			"Failed to get job record for [job={}] with [error={}]",
 			job_id, e
 		);
-		BulkError::from(e)
+			BulkError::from(e)
 	})?;
 
 	let agg_info = sqlx::query!(
@@ -115,7 +116,7 @@ async fn job_status(
 			job_id,
 			e
 		);
-		BulkError::from(e)
+			BulkError::from(e)
 	})?;
 
 	let (job_status, finished_at) = if (agg_info
@@ -135,37 +136,52 @@ async fn job_status(
 		)
 	};
 
-	Ok(warp::reply::json(&JobStatusResponseBody {
-		job_id: job_rec.id,
-		created_at: job_rec.created_at,
-		finished_at,
-		total_records: job_rec.total_records,
-		total_processed: agg_info
-			.total_processed
-			.expect("sql COUNT returns an int. qed.") as i32,
-		summary: JobStatusSummary {
-			total_safe: agg_info.safe_count.expect("sql COUNT returns an int. qed.") as i32,
-			total_risky: agg_info
-				.risky_count
+	Ok(add_deprecation_headers(
+		warp::reply::json(&JobStatusResponseBody {
+			job_id: job_rec.id,
+			created_at: job_rec.created_at,
+			finished_at,
+			total_records: job_rec.total_records,
+			total_processed: agg_info
+				.total_processed
 				.expect("sql COUNT returns an int. qed.") as i32,
-			total_invalid: agg_info
-				.invalid_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-			total_unknown: agg_info
-				.unknown_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-		},
-		job_status,
-	}))
+			summary: JobStatusSummary {
+				total_safe: agg_info.safe_count.expect("sql COUNT returns an int. qed.") as i32,
+				total_risky: agg_info
+					.risky_count
+					.expect("sql COUNT returns an int. qed.") as i32,
+				total_invalid: agg_info
+					.invalid_count
+					.expect("sql COUNT returns an int. qed.") as i32,
+				total_unknown: agg_info
+					.unknown_count
+					.expect("sql COUNT returns an int. qed.") as i32,
+			},
+			job_status,
+		}),
+		"2026-09-16",
+		"/v1/bulk/{id}",
+	))
 }
 
+/// GET /v0/bulk/{job_id}
+///
+/// Returns current status and summary for a legacy bulk verification job.
+#[utoipa::path(
+	get,
+	path = "/v0/bulk/{job_id}",
+	tag = "v0",
+	params(("job_id" = i32, Path, description = "Legacy bulk job identifier")),
+	responses((status = 200, description = "Bulk status response"))
+)]
 pub fn get_bulk_job_status(
+	config: std::sync::Arc<crate::config::BackendConfig>,
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk" / i32)
 		.and(warp::get())
+		.and(crate::http::check_header(config))
 		.and(with_db(o))
 		.and_then(job_status)
-		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }

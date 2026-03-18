@@ -17,15 +17,22 @@
 //! This file implements the `POST /v0/check_email` endpoint.
 
 use check_if_email_exists::smtp::verif_method::VerifMethod;
-use check_if_email_exists::{check_email, CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
+use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use warp::{http, Filter};
+use warp::Reply;
+use warp::http::header::CONTENT_TYPE;
+use warp::Filter;
 
 use super::backwardcompat::{BackwardCompatHotmailB2CVerifMethod, BackwardCompatYahooVerifMethod};
 use crate::config::BackendConfig;
-use crate::http::{check_header, ReacherResponseError};
+use crate::http::deprecation::add_deprecation_headers;
+use crate::http::shared::check_email::handle_check_email;
+use crate::http::ReacherResponseError;
+use crate::http::resolve_tenant;
+use crate::tenant::context::TenantContext;
 
 /// The request body for the `POST /v0/check_email` endpoint.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -57,12 +64,6 @@ impl CheckEmailRequest {
 		let smtp_port = self.smtp_port.unwrap_or(25);
 		let retries = 1;
 
-		// The current behavior is a bit complex. If the proxy field is present,
-		// we force use the proxy for all the verifications. If the proxy field is
-		// not present, we use the default configuration for all the verifications.
-		//
-		// If the proxy field is unset, but one of the other fields (from_email,
-		// hello_name, smtp_timeout, smtp_port) is set, we ignore those fields.
 		let mut verif_method = if let Some(proxy) = &self.proxy {
 			VerifMethod::new_with_same_config_for_all(
 				Some(proxy.clone()),
@@ -76,8 +77,6 @@ impl CheckEmailRequest {
 			config.get_verif_method()
 		};
 
-		// Also support backward compatibility of the *_verif_method fields, which
-		// override the verif_method.
 		if let Some(yahoo_verif_method) = &self.yahoo_verif_method {
 			verif_method.yahoo = yahoo_verif_method.to_yahoo_verif_method(
 				self.proxy.is_some(),
@@ -110,39 +109,60 @@ impl CheckEmailRequest {
 	}
 }
 
-/// The main endpoint handler that implements the logic of this route.
+/// The main endpoint handler — delegates to shared check_email logic
+/// and adds deprecation headers.
 async fn http_handler(
+	tenant_ctx: TenantContext,
 	config: Arc<BackendConfig>,
-	body: CheckEmailRequest,
+	idempotency_key: Option<String>,
+	body: Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	// The to_email field must be present
-	if body.to_email.is_empty() {
-		Err(
-			ReacherResponseError::new(http::StatusCode::BAD_REQUEST, "to_email field is required.")
-				.into(),
-		)
-	} else {
-		// Run the future to check an email.
-		Ok(warp::reply::json(
-			&check_email(&body.to_check_email_input(Arc::clone(&config))).await,
-		))
-	}
+	let request_body = body.clone();
+	let body: CheckEmailRequest = serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;
+	let result = handle_check_email(
+		config,
+		&request_body,
+		&body,
+		&tenant_ctx,
+		"/v0/check_email",
+		idempotency_key,
+	)
+	.await?;
+
+	let mut response = warp::reply::with_status(result.body, result.status_code).into_response();
+	response
+		.headers_mut()
+		.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+	Ok(add_deprecation_headers(
+		response,
+		"2026-09-16",
+		"/v1/check_email",
+	))
 }
 
-/// Create the `POST /check_email` endpoint.
+/// POST /v0/check_email
+///
+/// Legacy email verification endpoint (deprecated, retained for compatibility).
+#[utoipa::path(
+	post,
+	path = "/v0/check_email",
+	tag = "v0",
+	params(
+		("Idempotency-Key" = Option<String>, Header, description = "Optional idempotency key")
+	),
+	responses((status = 200, description = "Email verification result"),)
+)]
 pub fn post_check_email<'a>(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone + 'a {
 	warp::path!("v0" / "check_email")
 		.and(warp::post())
-		.and(check_header(Arc::clone(&config)))
+		.and(resolve_tenant(Arc::clone(&config)))
 		.and(with_config(config))
-		// When accepting a body, we want a JSON body (and to reject huge
-		// payloads)...
+		.and(warp::header::optional::<String>("Idempotency-Key"))
 		.and(warp::body::content_length_limit(1024 * 16))
-		.and(warp::body::json())
+		.and(warp::body::bytes())
 		.and_then(http_handler)
-		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }
 

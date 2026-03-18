@@ -142,3 +142,62 @@ pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, 
 		Err(err)
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_new_error() {
+		let err = ReacherResponseError::new(StatusCode::BAD_REQUEST, "bad input");
+		assert_eq!(err.code, StatusCode::BAD_REQUEST);
+		assert_eq!(err.to_string(), "bad input");
+	}
+
+	#[test]
+	fn test_error_serializes_to_json() {
+		let err = ReacherResponseError::new(StatusCode::NOT_FOUND, "not found");
+		let json = serde_json::to_value(&err).unwrap();
+		assert_eq!(json["error"], "not found");
+		// code is not serialized — only "error" field
+		assert!(json.get("code").is_none());
+	}
+
+	#[test]
+	fn test_display_shows_message() {
+		let err = ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, "oops");
+		assert_eq!(format!("{}", err), "oops");
+	}
+
+	#[test]
+	fn test_from_serde_json_error() {
+		let bad_json: Result<serde_json::Value, _> = serde_json::from_str("{invalid");
+		let err: ReacherResponseError = bad_json.unwrap_err().into();
+		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
+	}
+
+	#[test]
+	fn test_from_sqlx_error() {
+		let err: ReacherResponseError =
+			sqlx::Error::RowNotFound.into();
+		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
+		assert!(err.to_string().contains("no rows"));
+	}
+
+	#[test]
+	fn test_from_anyhow_error() {
+		let err: ReacherResponseError =
+			anyhow::anyhow!("something went wrong").into();
+		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
+		assert!(err.to_string().contains("something went wrong"));
+	}
+
+	#[test]
+	fn test_from_storage_error() {
+		let storage_err = StorageError::SerdeJsonError(
+			serde_json::from_str::<serde_json::Value>("{bad").unwrap_err(),
+		);
+		let err: ReacherResponseError = storage_err.into();
+		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
+	}
+}

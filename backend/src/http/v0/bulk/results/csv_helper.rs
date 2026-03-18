@@ -203,3 +203,90 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		})
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use std::convert::TryInto;
+
+	fn valid_json() -> serde_json::Value {
+		serde_json::json!({
+			"input": "test@example.com",
+			"is_reachable": "safe",
+			"misc": {"is_disposable": false, "is_role_account": true, "gravatar_url": null, "error": null},
+			"mx": {"accepts_email": true, "records": [], "error": null},
+			"smtp": {"can_connect_smtp": true, "has_full_inbox": false, "is_catch_all": false, "is_deliverable": true, "is_disabled": false, "error": null},
+			"syntax": {"is_valid_syntax": true, "domain": "example.com", "username": "test", "error": null}
+		})
+	}
+
+	#[test]
+	fn test_valid_conversion() {
+		let wrapper = CsvWrapper(valid_json());
+		let csv: JobResultCsvResponse = wrapper.try_into().unwrap();
+		assert_eq!(csv.input, "test@example.com");
+		assert_eq!(csv.is_reachable, "safe");
+		assert!(!csv.misc_is_disposable);
+		assert!(csv.misc_is_role_account);
+		assert!(csv.misc_gravatar_url.is_none());
+		assert!(csv.mx_accepts_mail);
+		assert!(csv.smtp_can_connect);
+		assert!(!csv.smtp_has_full_inbox);
+		assert!(!csv.smtp_is_catch_all);
+		assert!(csv.smtp_is_deliverable);
+		assert!(!csv.smtp_is_disabled);
+		assert!(csv.syntax_is_valid_syntax);
+		assert_eq!(csv.syntax_domain, "example.com");
+		assert_eq!(csv.syntax_username, "test");
+	}
+
+	#[test]
+	fn test_not_an_object() {
+		let wrapper = CsvWrapper(serde_json::json!("string"));
+		let result: Result<JobResultCsvResponse, _> = wrapper.try_into();
+		assert!(result.is_err());
+	}
+
+	#[test]
+	fn test_missing_misc() {
+		let mut json = valid_json();
+		json.as_object_mut().unwrap().remove("misc");
+		let result: Result<JobResultCsvResponse, _> = CsvWrapper(json).try_into();
+		// Should still work — misc fields just won't be set (default false)
+		assert!(result.is_ok());
+	}
+
+	#[test]
+	fn test_with_gravatar_url() {
+		let mut json = valid_json();
+		json["misc"]["gravatar_url"] = serde_json::json!("https://gravatar.com/abc");
+		let csv: JobResultCsvResponse = CsvWrapper(json).try_into().unwrap();
+		assert!(csv.misc_gravatar_url.is_some());
+	}
+
+	#[test]
+	fn test_with_error_in_smtp() {
+		let mut json = valid_json();
+		json["smtp"]["error"] = serde_json::json!("connection refused");
+		let csv: JobResultCsvResponse = CsvWrapper(json).try_into().unwrap();
+		assert!(csv.error.is_some());
+	}
+
+	#[test]
+	fn test_csv_serialization() {
+		let csv: JobResultCsvResponse = CsvWrapper(valid_json()).try_into().unwrap();
+		let mut wtr = csv::WriterBuilder::new().has_headers(true).from_writer(vec![]);
+		wtr.serialize(&csv).unwrap();
+		let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+		assert!(data.contains("test@example.com"));
+		assert!(data.contains("safe"));
+	}
+
+	#[test]
+	fn test_unknown_fields_ignored() {
+		let mut json = valid_json();
+		json.as_object_mut().unwrap().insert("unknown_field".into(), serde_json::json!("ignored"));
+		let result: Result<JobResultCsvResponse, _> = CsvWrapper(json).try_into();
+		assert!(result.is_ok());
+	}
+}

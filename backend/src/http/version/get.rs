@@ -26,7 +26,15 @@ struct EndpointVersion {
 	version: String,
 }
 
-/// Create the `GET /version` endpoint.
+/// GET /version
+///
+/// Returns the running server version.
+#[utoipa::path(
+	get,
+	path = "/version",
+	tag = "System",
+	responses((status = 200, description = "Service version"))
+)]
 pub fn get_version() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone
 {
 	warp::path("version").and(warp::get()).map(|| {

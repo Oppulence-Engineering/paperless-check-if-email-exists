@@ -166,3 +166,112 @@ impl TryFrom<CsvWrapper> for CsvResponse {
 		})
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use std::convert::TryInto;
+
+	fn valid_json() -> serde_json::Value {
+		serde_json::json!({
+			"input": "test@example.com",
+			"is_reachable": "safe",
+			"misc": {
+				"is_disposable": false,
+				"is_role_account": true,
+				"gravatar_url": null
+			},
+			"mx": {
+				"accepts_email": true,
+				"records": []
+			},
+			"smtp": {
+				"can_connect_smtp": true,
+				"has_full_inbox": false,
+				"is_catch_all": false,
+				"is_deliverable": true,
+				"is_disabled": false
+			},
+			"syntax": {
+				"is_valid_syntax": true,
+				"domain": "example.com",
+				"username": "test"
+			}
+		})
+	}
+
+	#[test]
+	fn test_csv_conversion_valid() {
+		let wrapper = CsvWrapper(valid_json());
+		let csv: CsvResponse = wrapper.try_into().unwrap();
+		assert_eq!(csv.input, "test@example.com");
+		assert_eq!(csv.is_reachable, "safe");
+		assert!(!csv.misc_is_disposable);
+		assert!(csv.misc_is_role_account);
+		assert!(csv.misc_gravatar_url.is_none());
+		assert!(csv.mx_accepts_mail);
+		assert!(csv.smtp_can_connect);
+		assert!(!csv.smtp_has_full_inbox);
+		assert!(csv.smtp_is_deliverable);
+		assert!(csv.syntax_is_valid_syntax);
+		assert_eq!(csv.syntax_domain, "example.com");
+		assert_eq!(csv.syntax_username, "test");
+	}
+
+	#[test]
+	fn test_csv_conversion_missing_input() {
+		let mut json = valid_json();
+		json.as_object_mut().unwrap().remove("input");
+		let wrapper = CsvWrapper(json);
+		let result: Result<CsvResponse, _> = wrapper.try_into();
+		assert!(result.is_err());
+		assert!(result.unwrap_err().contains("input"));
+	}
+
+	#[test]
+	fn test_csv_conversion_missing_misc() {
+		let mut json = valid_json();
+		json.as_object_mut().unwrap().remove("misc");
+		let wrapper = CsvWrapper(json);
+		let result: Result<CsvResponse, _> = wrapper.try_into();
+		assert!(result.is_err());
+		assert!(result.unwrap_err().contains("misc"));
+	}
+
+	#[test]
+	fn test_csv_conversion_missing_smtp() {
+		let mut json = valid_json();
+		json.as_object_mut().unwrap().remove("smtp");
+		let wrapper = CsvWrapper(json);
+		let result: Result<CsvResponse, _> = wrapper.try_into();
+		assert!(result.is_err());
+	}
+
+	#[test]
+	fn test_csv_conversion_not_an_object() {
+		let wrapper = CsvWrapper(serde_json::json!("just a string"));
+		let result: Result<CsvResponse, _> = wrapper.try_into();
+		assert!(result.is_err());
+		assert!(result.unwrap_err().contains("top level"));
+	}
+
+	#[test]
+	fn test_csv_conversion_with_gravatar_url() {
+		let mut json = valid_json();
+		json["misc"]["gravatar_url"] = serde_json::json!("https://gravatar.com/avatar/abc");
+		let wrapper = CsvWrapper(json);
+		let csv: CsvResponse = wrapper.try_into().unwrap();
+		assert_eq!(csv.misc_gravatar_url.unwrap(), "https://gravatar.com/avatar/abc");
+	}
+
+	#[test]
+	fn test_csv_serialization() {
+		let wrapper = CsvWrapper(valid_json());
+		let csv: CsvResponse = wrapper.try_into().unwrap();
+		let mut wtr = csv::WriterBuilder::new().has_headers(true).from_writer(vec![]);
+		wtr.serialize(&csv).unwrap();
+		let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+		assert!(data.contains("test@example.com"));
+		assert!(data.contains("safe"));
+	}
+}
