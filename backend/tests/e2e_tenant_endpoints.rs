@@ -268,14 +268,14 @@ mod admin_tenant_quota {
 		let db = TestDb::start().await;
 		let config = admin_config().await;
 		let routes = create_routes(Arc::clone(&config));
-		let tenant_id = sqlx::query_scalar!(
+		let tenant_id: uuid::Uuid = sqlx::query_scalar(
 			"INSERT INTO tenants (name, slug, contact_email, monthly_email_limit, used_this_period, status, result_retention_days) VALUES ($1, $2, $3, $4, $5, 'active', 30) RETURNING id",
-			"QuotaTenant",
-			"quota-tenant-test",
-			"admin@example.com",
-			25,
-			9
 		)
+		.bind("QuotaTenant")
+		.bind("quota-tenant-test")
+		.bind("admin@example.com")
+		.bind(25i32)
+		.bind(9i32)
 		.fetch_one(db.pool())
 		.await
 		.unwrap();
@@ -315,14 +315,14 @@ mod admin_tenant_quota {
 		let db = TestDb::start().await;
 		let config = admin_config().await;
 		let routes = create_routes(Arc::clone(&config));
-		let tenant_id = sqlx::query_scalar!(
+		let tenant_id: uuid::Uuid = sqlx::query_scalar(
 			"INSERT INTO tenants (name, slug, contact_email, monthly_email_limit, used_this_period, status, result_retention_days) VALUES ($1, $2, $3, $4, $5, 'active', 30) RETURNING id",
-			"ResetQuotaTenant",
-			"reset-quota-tenant",
-			"admin@example.com",
-			25,
-			11
 		)
+		.bind("ResetQuotaTenant")
+		.bind("reset-quota-tenant")
+		.bind("admin@example.com")
+		.bind(25i32)
+		.bind(11i32)
 		.fetch_one(db.pool())
 		.await
 		.unwrap();
@@ -352,14 +352,14 @@ mod admin_tenant_quota {
 		let db = TestDb::start().await;
 		let config = admin_config().await;
 		let routes = create_routes(Arc::clone(&config));
-		let tenant_id = sqlx::query_scalar!(
+		let tenant_id: uuid::Uuid = sqlx::query_scalar(
 			"INSERT INTO tenants (name, slug, contact_email, monthly_email_limit, used_this_period, status, result_retention_days) VALUES ($1, $2, $3, $4, $5, 'active', 30) RETURNING id",
-			"UpdateQuotaTenant",
-			"update-quota-tenant",
-			"admin@example.com",
-			25,
-			2
 		)
+		.bind("UpdateQuotaTenant")
+		.bind("update-quota-tenant")
+		.bind("admin@example.com")
+		.bind(25i32)
+		.bind(2i32)
 		.fetch_one(db.pool())
 		.await
 		.unwrap();
@@ -397,14 +397,14 @@ mod admin_tenant_quota {
 		let db = TestDb::start().await;
 		let config = admin_config().await;
 		let routes = create_routes(Arc::clone(&config));
-		let tenant_id = sqlx::query_scalar!(
+		let tenant_id: uuid::Uuid = sqlx::query_scalar(
 			"INSERT INTO tenants (name, slug, contact_email, monthly_email_limit, used_this_period, status, result_retention_days) VALUES ($1, $2, $3, $4, $5, 'active', 30) RETURNING id",
-			"UpdateQuotaTenantNull",
-			"update-quota-tenant-null",
-			"admin@example.com",
-			10,
-			3
 		)
+		.bind("UpdateQuotaTenantNull")
+		.bind("update-quota-tenant-null")
+		.bind("admin@example.com")
+		.bind(10i32)
+		.bind(3i32)
 		.fetch_one(db.pool())
 		.await
 		.unwrap();
