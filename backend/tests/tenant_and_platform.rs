@@ -102,7 +102,9 @@ mod tenant_context_tests {
 
 #[cfg(test)]
 mod webhook_signing_tests {
-	use reacher_backend::tenant::webhook::{sign_payload, verify_signature, WEBHOOK_SIGNATURE_HEADER};
+	use reacher_backend::tenant::webhook::{
+		sign_payload, verify_signature, WEBHOOK_SIGNATURE_HEADER,
+	};
 
 	#[test]
 	fn test_sign_produces_sha256_prefix() {
@@ -144,10 +146,7 @@ mod webhook_signing_tests {
 	#[test]
 	fn test_different_payloads_different_sigs() {
 		let secret = "test";
-		assert_ne!(
-			sign_payload(secret, b"one"),
-			sign_payload(secret, b"two")
-		);
+		assert_ne!(sign_payload(secret, b"one"), sign_payload(secret, b"two"));
 	}
 
 	#[test]
@@ -329,7 +328,10 @@ mod task_metadata_tests {
 
 		assert_eq!(deserialized.tenant_id.as_deref(), Some("123"));
 		assert_eq!(deserialized.task_db_id, Some(42));
-		assert_eq!(deserialized.dedupe_key.as_deref(), Some("email@example.com"));
+		assert_eq!(
+			deserialized.dedupe_key.as_deref(),
+			Some("email@example.com")
+		);
 	}
 
 	#[test]

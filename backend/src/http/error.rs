@@ -178,16 +178,14 @@ mod tests {
 
 	#[test]
 	fn test_from_sqlx_error() {
-		let err: ReacherResponseError =
-			sqlx::Error::RowNotFound.into();
+		let err: ReacherResponseError = sqlx::Error::RowNotFound.into();
 		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
 		assert!(err.to_string().contains("no rows"));
 	}
 
 	#[test]
 	fn test_from_anyhow_error() {
-		let err: ReacherResponseError =
-			anyhow::anyhow!("something went wrong").into();
+		let err: ReacherResponseError = anyhow::anyhow!("something went wrong").into();
 		assert_eq!(err.code, StatusCode::INTERNAL_SERVER_ERROR);
 		assert!(err.to_string().contains("something went wrong"));
 	}

@@ -1,11 +1,11 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
-use sqlx::Row;
 use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::PgPool;
+use sqlx::Row;
 use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
@@ -38,9 +38,7 @@ async fn http_handler(
 	let job = match job {
 		Some(j) => j,
 		None => {
-			return Err(
-				ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into(),
-			)
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into())
 		}
 	};
 
@@ -66,11 +64,13 @@ async fn http_handler(
 	}
 
 	// Set job to cancelling
-	sqlx::query("UPDATE v1_bulk_job SET status = 'cancelling'::job_state, updated_at = NOW() WHERE id = $1")
-		.bind(job_id)
-		.execute(&mut *tx)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'cancelling'::job_state, updated_at = NOW() WHERE id = $1",
+	)
+	.bind(job_id)
+	.execute(&mut *tx)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	// Cancel all queued/retrying tasks
 	let result = sqlx::query(

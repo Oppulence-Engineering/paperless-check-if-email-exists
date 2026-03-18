@@ -1,5 +1,5 @@
-use chrono::Utc;
 use check_if_email_exists::LOG_TARGET;
+use chrono::Utc;
 use sqlx::PgPool;
 use tracing::{debug, warn};
 use uuid::Uuid;
@@ -22,10 +22,7 @@ pub enum QuotaCheckResult {
 /// Check whether the tenant has remaining monthly quota.
 /// For legacy/unlimited tenants, always returns Allowed.
 /// If the billing period has elapsed, resets the counter first.
-pub async fn check_quota(
-	pg_pool: Option<&PgPool>,
-	tenant_ctx: &TenantContext,
-) -> QuotaCheckResult {
+pub async fn check_quota(pg_pool: Option<&PgPool>, tenant_ctx: &TenantContext) -> QuotaCheckResult {
 	// Legacy callers or tenants with no limit are always allowed
 	let limit = match tenant_ctx.monthly_email_limit {
 		Some(l) if l > 0 => l,

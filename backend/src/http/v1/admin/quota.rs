@@ -65,10 +65,13 @@ fn row_to_response(row: &sqlx::postgres::PgRow) -> TenantQuotaResponse {
 	}
 }
 
-async fn get_handler(tenant_id: String, pg_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_uuid = tenant_id
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format"))?;
+async fn get_handler(
+	tenant_id: String,
+	pg_pool: PgPool,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	let tenant_uuid = tenant_id.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
+	})?;
 
 	let row = sqlx::query(
 		r#"
@@ -84,7 +87,9 @@ async fn get_handler(tenant_id: String, pg_pool: PgPool) -> Result<impl warp::Re
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into()),
+		None => {
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into())
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -94,9 +99,9 @@ async fn reset_handler(
 	tenant_id: String,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_uuid = tenant_id
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format"))?;
+	let tenant_uuid = tenant_id.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
+	})?;
 
 	let row = sqlx::query(
 		r#"
@@ -114,7 +119,9 @@ async fn reset_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into()),
+		None => {
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into())
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -125,9 +132,9 @@ async fn update_handler(
 	pg_pool: PgPool,
 	body: UpdateTenantQuotaRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_uuid = tenant_id
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format"))?;
+	let tenant_uuid = tenant_id.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
+	})?;
 
 	let limit = match body.monthly_email_limit {
 		Some(limit) => limit,
@@ -156,7 +163,9 @@ async fn update_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into()),
+		None => {
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into())
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -223,5 +232,7 @@ pub fn update_tenant_quota(
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(update_handler)
-		.with(warp::log("reacher_backend::v1::admin::tenant_quota::update"))
+		.with(warp::log(
+			"reacher_backend::v1::admin::tenant_quota::update",
+		))
 }

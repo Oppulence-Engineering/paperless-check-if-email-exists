@@ -84,12 +84,7 @@ mod tests {
 			.await;
 
 		// Now returns 401 with JSON body via resolve_tenant()
-		assert_eq!(
-			resp.status(),
-			StatusCode::UNAUTHORIZED,
-			"{:?}",
-			resp.body()
-		);
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
 	}
 
 	#[tokio::test]
@@ -106,12 +101,7 @@ mod tests {
 			.await;
 
 		// Now returns 401 via resolve_tenant()
-		assert_eq!(
-			resp.status(),
-			StatusCode::UNAUTHORIZED,
-			"{:?}",
-			resp.body()
-		);
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
 	}
 
 	#[tokio::test]
@@ -206,12 +196,7 @@ mod tests {
 			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
-		assert_eq!(
-			resp.status(),
-			StatusCode::UNAUTHORIZED,
-			"{:?}",
-			resp.body()
-		);
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
 	}
 
 	#[tokio::test]

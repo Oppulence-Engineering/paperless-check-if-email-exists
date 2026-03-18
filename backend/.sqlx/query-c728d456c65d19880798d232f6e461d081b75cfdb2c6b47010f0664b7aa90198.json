@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE v1_task_result SET started_at = NOW() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c728d456c65d19880798d232f6e461d081b75cfdb2c6b47010f0664b7aa90198"
+}

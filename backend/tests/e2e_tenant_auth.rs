@@ -2,15 +2,15 @@ mod test_helpers;
 
 #[cfg(test)]
 mod tests {
+	use crate::test_helpers::{
+		insert_api_key, insert_api_key_with_status, insert_tenant, insert_tenant_with_status,
+		TestDb,
+	};
 	use reacher_backend::config::ThrottleConfig;
 	use reacher_backend::tenant::auth::{generate_api_key, hash_api_key, resolve_from_api_key};
 	use reacher_backend::tenant::models::{PlanTier, TenantStatus};
 	use serial_test::serial;
 	use sqlx::Row;
-	use crate::test_helpers::{
-		insert_api_key, insert_api_key_with_status, insert_tenant, insert_tenant_with_status,
-		TestDb,
-	};
 
 	#[tokio::test]
 	#[serial]

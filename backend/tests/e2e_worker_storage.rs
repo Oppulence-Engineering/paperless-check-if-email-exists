@@ -26,12 +26,12 @@ async fn publish_task_raw(
 #[cfg(test)]
 mod postgres_storage_tests {
 	use crate::test_helpers::TestDb;
-	use serial_test::serial;
 	use check_if_email_exists::{CheckEmailOutput, Reachable};
 	use reacher_backend::storage::postgres::PostgresStorage;
 	use reacher_backend::worker::do_work::{
 		CheckEmailJobId, CheckEmailTask, TaskError, TaskMetadata,
 	};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	fn make_task(job_id: CheckEmailJobId, metadata: Option<TaskMetadata>) -> CheckEmailTask {
@@ -71,10 +71,13 @@ mod postgres_storage_tests {
 	async fn test_store_ok_result_single_shot() {
 		let db = TestDb::start().await;
 		let storage = PostgresStorage::new(
-			&format!("postgres://postgres:postgres@127.0.0.1:{}/postgres",
-				db.pool().connect_options().get_port()),
+			&format!(
+				"postgres://postgres:postgres@127.0.0.1:{}/postgres",
+				db.pool().connect_options().get_port()
+			),
 			None,
-		).await;
+		)
+		.await;
 
 		// If new() fails because port extraction is tricky, just use the pool directly
 		// For simplicity, use the already-connected pool
@@ -119,10 +122,11 @@ mod postgres_storage_tests {
 	async fn test_store_ok_result_bulk_with_job_id() {
 		let db = TestDb::start().await;
 
-		let job_row = sqlx::query("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+		let job_row =
+			sqlx::query("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		let bulk_job_id: i32 = job_row.get("id");
 
 		let task = make_task(CheckEmailJobId::Bulk(bulk_job_id), None);
@@ -130,15 +134,13 @@ mod postgres_storage_tests {
 		let payload_json = serde_json::to_value(&task).unwrap();
 		let output_json = serde_json::to_value(&output).unwrap();
 
-		sqlx::query(
-			"INSERT INTO v1_task_result (payload, job_id, result) VALUES ($1, $2, $3)"
-		)
-		.bind(&payload_json)
-		.bind(Some(bulk_job_id))
-		.bind(&output_json)
-		.execute(db.pool())
-		.await
-		.unwrap();
+		sqlx::query("INSERT INTO v1_task_result (payload, job_id, result) VALUES ($1, $2, $3)")
+			.bind(&payload_json)
+			.bind(Some(bulk_job_id))
+			.bind(&output_json)
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let row = sqlx::query("SELECT job_id, result FROM v1_task_result WHERE job_id = $1")
 			.bind(bulk_job_id)
@@ -162,15 +164,13 @@ mod postgres_storage_tests {
 		let payload_json = serde_json::to_value(&task).unwrap();
 		let err_text = "InvalidChannel(0)";
 
-		sqlx::query(
-			"INSERT INTO v1_task_result (payload, job_id, error) VALUES ($1, $2, $3)"
-		)
-		.bind(&payload_json)
-		.bind(Option::<i32>::None)
-		.bind(err_text)
-		.execute(db.pool())
-		.await
-		.unwrap();
+		sqlx::query("INSERT INTO v1_task_result (payload, job_id, error) VALUES ($1, $2, $3)")
+			.bind(&payload_json)
+			.bind(Option::<i32>::None)
+			.bind(err_text)
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let row = sqlx::query("SELECT result, error FROM v1_task_result ORDER BY id DESC LIMIT 1")
 			.fetch_one(db.pool())
@@ -203,15 +203,13 @@ mod postgres_storage_tests {
 		let output = make_output(Reachable::Invalid);
 		let output_json = serde_json::to_value(&output).unwrap();
 
-		sqlx::query(
-			"INSERT INTO v1_task_result (payload, result, tenant_id) VALUES ($1, $2, $3)"
-		)
-		.bind(&payload_json)
-		.bind(&output_json)
-		.bind(tenant_id)
-		.execute(db.pool())
-		.await
-		.unwrap();
+		sqlx::query("INSERT INTO v1_task_result (payload, result, tenant_id) VALUES ($1, $2, $3)")
+			.bind(&payload_json)
+			.bind(&output_json)
+			.bind(tenant_id)
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let row = sqlx::query("SELECT tenant_id FROM v1_task_result ORDER BY id DESC LIMIT 1")
 			.fetch_one(db.pool())
@@ -232,15 +230,13 @@ mod postgres_storage_tests {
 		let output = make_output(Reachable::Invalid);
 		let output_json = serde_json::to_value(&output).unwrap();
 
-		sqlx::query(
-			"INSERT INTO v1_task_result (payload, result, extra) VALUES ($1, $2, $3)"
-		)
-		.bind(&payload_json)
-		.bind(&output_json)
-		.bind(&extra)
-		.execute(db.pool())
-		.await
-		.unwrap();
+		sqlx::query("INSERT INTO v1_task_result (payload, result, extra) VALUES ($1, $2, $3)")
+			.bind(&payload_json)
+			.bind(&output_json)
+			.bind(&extra)
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let row = sqlx::query("SELECT extra FROM v1_task_result ORDER BY id DESC LIMIT 1")
 			.fetch_one(db.pool())
@@ -254,9 +250,9 @@ mod postgres_storage_tests {
 #[cfg(test)]
 mod rabbitmq_setup_tests {
 	use crate::test_helpers::TestRabbitMq;
-	use serial_test::serial;
 	use reacher_backend::config::RabbitMQConfig;
 	use reacher_backend::worker::consume::{setup_rabbit_mq, CHECK_EMAIL_QUEUE};
+	use serial_test::serial;
 
 	#[tokio::test]
 	#[serial]
@@ -313,7 +309,6 @@ mod rabbitmq_setup_tests {
 mod publish_consume_tests {
 	use crate::publish_task_raw;
 	use crate::test_helpers::TestRabbitMq;
-	use serial_test::serial;
 	use futures::StreamExt;
 	use lapin::options::*;
 	use lapin::types::FieldTable;
@@ -321,6 +316,7 @@ mod publish_consume_tests {
 	use reacher_backend::config::RabbitMQConfig;
 	use reacher_backend::worker::consume::{setup_rabbit_mq, CHECK_EMAIL_QUEUE};
 	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask};
+	use serial_test::serial;
 
 	fn make_task(email: &str) -> CheckEmailTask {
 		CheckEmailTask {
@@ -338,7 +334,10 @@ mod publish_consume_tests {
 	#[serial]
 	async fn test_publish_and_consume_task() {
 		let rmq = TestRabbitMq::start().await;
-		let config = RabbitMQConfig { url: rmq.amqp_url.clone(), concurrency: 4 };
+		let config = RabbitMQConfig {
+			url: rmq.amqp_url.clone(),
+			concurrency: 4,
+		};
 		let channel = setup_rabbit_mq("pub-con-test", &config).await.unwrap();
 
 		let task = make_task("publish-test@example.com");
@@ -348,12 +347,20 @@ mod publish_consume_tests {
 		publish_task_raw(&channel, &task, props).await;
 
 		let mut consumer = channel
-			.basic_consume(CHECK_EMAIL_QUEUE, "test-consumer", BasicConsumeOptions::default(), FieldTable::default())
+			.basic_consume(
+				CHECK_EMAIL_QUEUE,
+				"test-consumer",
+				BasicConsumeOptions::default(),
+				FieldTable::default(),
+			)
 			.await
 			.unwrap();
 
 		let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
-			.await.unwrap().unwrap().unwrap();
+			.await
+			.unwrap()
+			.unwrap()
+			.unwrap();
 
 		let received: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		assert_eq!(received.input.to_email, "publish-test@example.com");
@@ -364,7 +371,10 @@ mod publish_consume_tests {
 	#[serial]
 	async fn test_publish_multiple_tasks() {
 		let rmq = TestRabbitMq::start().await;
-		let config = RabbitMQConfig { url: rmq.amqp_url.clone(), concurrency: 10 };
+		let config = RabbitMQConfig {
+			url: rmq.amqp_url.clone(),
+			concurrency: 10,
+		};
 		let channel = setup_rabbit_mq("multi-pub", &config).await.unwrap();
 
 		for i in 0..5 {
@@ -373,7 +383,14 @@ mod publish_consume_tests {
 		}
 
 		let queue = channel
-			.queue_declare(CHECK_EMAIL_QUEUE, QueueDeclareOptions { passive: true, ..Default::default() }, FieldTable::default())
+			.queue_declare(
+				CHECK_EMAIL_QUEUE,
+				QueueDeclareOptions {
+					passive: true,
+					..Default::default()
+				},
+				FieldTable::default(),
+			)
 			.await
 			.unwrap();
 		assert_eq!(queue.message_count(), 5);
@@ -383,24 +400,53 @@ mod publish_consume_tests {
 	#[serial]
 	async fn test_publish_with_priority() {
 		let rmq = TestRabbitMq::start().await;
-		let config = RabbitMQConfig { url: rmq.amqp_url.clone(), concurrency: 4 };
+		let config = RabbitMQConfig {
+			url: rmq.amqp_url.clone(),
+			concurrency: 4,
+		};
 		let channel = setup_rabbit_mq("priority-test", &config).await.unwrap();
 
 		let low = make_task("low@test.com");
-		publish_task_raw(&channel, &low, BasicProperties::default().with_priority(1).with_content_type("application/json".into())).await;
+		publish_task_raw(
+			&channel,
+			&low,
+			BasicProperties::default()
+				.with_priority(1)
+				.with_content_type("application/json".into()),
+		)
+		.await;
 
 		let high = make_task("high@test.com");
-		publish_task_raw(&channel, &high, BasicProperties::default().with_priority(5).with_content_type("application/json".into())).await;
+		publish_task_raw(
+			&channel,
+			&high,
+			BasicProperties::default()
+				.with_priority(5)
+				.with_content_type("application/json".into()),
+		)
+		.await;
 
 		let mut consumer = channel
-			.basic_consume(CHECK_EMAIL_QUEUE, "prio-con", BasicConsumeOptions::default(), FieldTable::default())
-			.await.unwrap();
+			.basic_consume(
+				CHECK_EMAIL_QUEUE,
+				"prio-con",
+				BasicConsumeOptions::default(),
+				FieldTable::default(),
+			)
+			.await
+			.unwrap();
 
 		let first = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
-			.await.unwrap().unwrap().unwrap();
+			.await
+			.unwrap()
+			.unwrap()
+			.unwrap();
 
 		let first_task: CheckEmailTask = serde_json::from_slice(&first.data).unwrap();
-		assert_eq!(first_task.input.to_email, "high@test.com", "Higher priority first");
+		assert_eq!(
+			first_task.input.to_email, "high@test.com",
+			"Higher priority first"
+		);
 		first.ack(BasicAckOptions::default()).await.unwrap();
 	}
 
@@ -408,7 +454,10 @@ mod publish_consume_tests {
 	#[serial]
 	async fn test_publish_with_metadata_survives_roundtrip() {
 		let rmq = TestRabbitMq::start().await;
-		let config = RabbitMQConfig { url: rmq.amqp_url.clone(), concurrency: 4 };
+		let config = RabbitMQConfig {
+			url: rmq.amqp_url.clone(),
+			concurrency: 4,
+		};
 		let channel = setup_rabbit_mq("meta-rt", &config).await.unwrap();
 
 		let task = CheckEmailTask {
@@ -429,14 +478,28 @@ mod publish_consume_tests {
 			}),
 		};
 
-		publish_task_raw(&channel, &task, BasicProperties::default().with_content_type("application/json".into())).await;
+		publish_task_raw(
+			&channel,
+			&task,
+			BasicProperties::default().with_content_type("application/json".into()),
+		)
+		.await;
 
 		let mut consumer = channel
-			.basic_consume(CHECK_EMAIL_QUEUE, "meta-con", BasicConsumeOptions::default(), FieldTable::default())
-			.await.unwrap();
+			.basic_consume(
+				CHECK_EMAIL_QUEUE,
+				"meta-con",
+				BasicConsumeOptions::default(),
+				FieldTable::default(),
+			)
+			.await
+			.unwrap();
 
 		let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
-			.await.unwrap().unwrap().unwrap();
+			.await
+			.unwrap()
+			.unwrap()
+			.unwrap();
 
 		let received: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		let meta = received.metadata.unwrap();
@@ -449,9 +512,9 @@ mod publish_consume_tests {
 
 #[cfg(test)]
 mod check_email_result_tests {
-	use serial_test::serial;
 	use reacher_backend::worker::do_work::check_email_and_send_result;
 	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask};
+	use serial_test::serial;
 
 	#[tokio::test]
 	#[serial]
@@ -468,7 +531,10 @@ mod check_email_result_tests {
 
 		let result = check_email_and_send_result(&task, None).await;
 		assert!(result.is_ok());
-		assert_eq!(result.unwrap().is_reachable, check_if_email_exists::Reachable::Invalid);
+		assert_eq!(
+			result.unwrap().is_reachable,
+			check_if_email_exists::Reachable::Invalid
+		);
 	}
 
 	#[tokio::test]
@@ -496,16 +562,16 @@ mod check_email_result_tests {
 
 #[cfg(test)]
 mod full_pipeline_tests {
-	use crate::test_helpers::{TestDb, TestRabbitMq};
 	use crate::publish_task_raw;
-	use serial_test::serial;
-	use reacher_backend::config::RabbitMQConfig;
-	use reacher_backend::worker::consume::setup_rabbit_mq;
-	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
+	use crate::test_helpers::{TestDb, TestRabbitMq};
 	use futures::StreamExt;
 	use lapin::options::*;
 	use lapin::types::FieldTable;
 	use lapin::BasicProperties;
+	use reacher_backend::config::RabbitMQConfig;
+	use reacher_backend::worker::consume::setup_rabbit_mq;
+	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -514,11 +580,17 @@ mod full_pipeline_tests {
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
 
-		let config = RabbitMQConfig { url: rmq.amqp_url.clone(), concurrency: 4 };
+		let config = RabbitMQConfig {
+			url: rmq.amqp_url.clone(),
+			concurrency: 4,
+		};
 		let channel = setup_rabbit_mq("pipeline-test", &config).await.unwrap();
 
-		let job_row = sqlx::query("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
-			.fetch_one(db.pool()).await.unwrap();
+		let job_row =
+			sqlx::query("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		let job_id: i32 = job_row.get("id");
 
 		let task = CheckEmailTask {
@@ -529,16 +601,24 @@ mod full_pipeline_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
-				tenant_id: None, request_id: None, correlation_id: None,
+				tenant_id: None,
+				request_id: None,
+				correlation_id: None,
 				created_by: Some("pipeline-test".into()),
-				retry_policy: None, dedupe_key: None, task_db_id: None,
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: None,
 			}),
 		};
 
 		publish_task_raw(
-			&channel, &task,
-			BasicProperties::default().with_content_type("application/json".into()).with_priority(1),
-		).await;
+			&channel,
+			&task,
+			BasicProperties::default()
+				.with_content_type("application/json".into())
+				.with_priority(1),
+		)
+		.await;
 
 		let mut consumer = channel
 			.basic_consume(
@@ -546,16 +626,23 @@ mod full_pipeline_tests {
 				"pipeline-consumer",
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
-			).await.unwrap();
+			)
+			.await
+			.unwrap();
 
 		let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
-			.await.unwrap().unwrap().unwrap();
+			.await
+			.unwrap()
+			.unwrap()
+			.unwrap();
 
 		let received_task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
 
 		// Run check_email directly
-		let output = reacher_backend::worker::do_work::check_email_and_send_result(&received_task, None).await;
+		let output =
+			reacher_backend::worker::do_work::check_email_and_send_result(&received_task, None)
+				.await;
 		assert!(output.is_ok());
 
 		// Store result in Postgres

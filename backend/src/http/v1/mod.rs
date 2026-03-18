@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod account_api_keys;
 pub mod admin;
 pub mod bulk;
 pub mod check_email;
-pub mod account_api_keys;
-pub mod me;
 pub mod jobs;
+pub mod me;
 pub mod onboard;
 pub mod tenant_domains;
 pub mod tenant_settings;

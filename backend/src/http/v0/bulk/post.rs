@@ -112,8 +112,8 @@ async fn create_bulk_request(
 			"Failed to create job record for [body={:?}] with [error={}]",
 			&body, e
 		);
-			BulkError::from(e)
-		})?;
+		BulkError::from(e)
+	})?;
 
 	for task_input in body.into_iter() {
 		let task_uuid = submit_job(&conn_pool, rec.id, task_input).await?;

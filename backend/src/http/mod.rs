@@ -17,8 +17,8 @@
 pub mod deprecation;
 mod error;
 mod health;
-mod openapi;
 pub mod idempotency;
+mod openapi;
 pub mod shared;
 mod v0;
 mod v1;
@@ -44,44 +44,27 @@ pub fn create_routes(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	let pg_pool = config.get_pg_pool();
 
-	let health_routes = health::liveness::healthz().boxed().or(
-		health::readiness::readyz(Arc::clone(&config))
-			.boxed()
-	);
-	let health_routes = health_routes.or(version::get::get_version().boxed()).boxed();
+	let health_routes = health::liveness::healthz()
+		.boxed()
+		.or(health::readiness::readyz(Arc::clone(&config)).boxed());
+	let health_routes = health_routes
+		.or(version::get::get_version().boxed())
+		.boxed();
 	let openapi_route = openapi::openapi_spec().boxed();
 
 	let v0_routes = v0::check_email::post::post_check_email(Arc::clone(&config))
 		.boxed()
-		.or(v0::bulk::post::create_bulk_job(
-			Arc::clone(&config),
-			pg_pool.clone(),
-		)
-		.boxed())
-		.or(v0::bulk::get::get_bulk_job_status(
-			Arc::clone(&config),
-			pg_pool.clone(),
-		)
-		.boxed())
-		.or(v0::bulk::results::get_bulk_job_result(
-			Arc::clone(&config),
-			pg_pool,
-		)
-		.boxed())
+		.or(v0::bulk::post::create_bulk_job(Arc::clone(&config), pg_pool.clone()).boxed())
+		.or(v0::bulk::get::get_bulk_job_status(Arc::clone(&config), pg_pool.clone()).boxed())
+		.or(v0::bulk::results::get_bulk_job_result(Arc::clone(&config), pg_pool).boxed())
 		.boxed();
 
 	let v1_routes = v1::onboard::v1_check_email_with_onboard(Arc::clone(&config))
 		.boxed()
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)).boxed())
 		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)).boxed())
-		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(
-			Arc::clone(&config),
-		)
-		.boxed())
-		.or(v1::bulk::get_results::v1_get_bulk_job_results(
-			Arc::clone(&config),
-		)
-		.boxed())
+		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)).boxed())
+		.or(v1::bulk::get_results::v1_get_bulk_job_results(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_job_routes = v1::jobs::get_status::v1_get_job_status(Arc::clone(&config))
@@ -203,9 +186,7 @@ const API_KEY_PREFIX: &str = "rch_live_";
 /// 2. `x-reacher-secret` header → validate against config → legacy context
 /// 3. No auth headers + no `header_secret` configured → legacy context (open mode)
 /// 4. Otherwise → 401 Unauthorized
-pub fn resolve_tenant(
-	config: Arc<BackendConfig>,
-) -> warp::filters::BoxedFilter<(TenantContext,)> {
+pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<(TenantContext,)> {
 	let config_clone = Arc::clone(&config);
 	warp::any()
 		.and(warp::header::optional::<String>("authorization"))

@@ -259,33 +259,37 @@ pub async fn do_check_email_work(
 	}
 
 	// Load webhook signing secret from DB if tenant_id is present
-	let webhook_signing_secret: Option<String> = if let Some(ref tid) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
-		if let Some(pool) = config.get_pg_pool() {
-			if let Ok(uuid) = tid.parse::<uuid::Uuid>() {
-				sqlx::query_scalar("SELECT webhook_signing_secret FROM tenants WHERE id = $1")
-					.bind(uuid)
-					.fetch_optional(&pool)
-					.await
-					.ok()
-					.flatten()
-			} else { None }
-		} else { None }
-	} else { None };
+	let webhook_signing_secret: Option<String> =
+		if let Some(ref tid) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
+			if let Some(pool) = config.get_pg_pool() {
+				if let Ok(uuid) = tid.parse::<uuid::Uuid>() {
+					sqlx::query_scalar("SELECT webhook_signing_secret FROM tenants WHERE id = $1")
+						.bind(uuid)
+						.fetch_optional(&pool)
+						.await
+						.ok()
+						.flatten()
+				} else {
+					None
+				}
+			} else {
+				None
+			}
+		} else {
+			None
+		};
 
 	let worker_output = check_email_and_send_result(task, webhook_signing_secret.as_deref()).await;
 
 	// Determine current retry count from the database
 	let current_retry_count = if let Some(id) = task_db_id {
 		if let Some(pool) = config.get_pg_pool() {
-			sqlx::query_scalar!(
-				"SELECT retry_count FROM v1_task_result WHERE id = $1",
-				id
-			)
-			.fetch_optional(&pool)
-			.await
-			.ok()
-			.flatten()
-			.unwrap_or(0)
+			sqlx::query_scalar!("SELECT retry_count FROM v1_task_result WHERE id = $1", id)
+				.fetch_optional(&pool)
+				.await
+				.ok()
+				.flatten()
+				.unwrap_or(0)
 		} else {
 			0
 		}
@@ -320,7 +324,7 @@ pub async fn do_check_email_work(
 
 		let delay_seconds = (retry_policy.backoff_seconds as f64
 			* retry_policy.backoff_multiplier.powf((new_count - 1) as f64))
-			.max(0.0);
+		.max(0.0);
 		if delay_seconds > 0.0 {
 			info!(
 				target: LOG_TARGET,
@@ -372,7 +376,14 @@ pub async fn do_check_email_work(
 		}
 
 		// Still store the result and handle single-shot reply
-		delivery_finalize(task, &delivery, channel, Arc::clone(&config), &worker_output).await?;
+		delivery_finalize(
+			task,
+			&delivery,
+			channel,
+			Arc::clone(&config),
+			&worker_output,
+		)
+		.await?;
 		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered after exhausting retries");
 	} else {
 		// Success path
@@ -404,7 +415,14 @@ pub async fn do_check_email_work(
 			}
 		}
 
-		delivery_finalize(task, &delivery, channel, Arc::clone(&config), &worker_output).await?;
+		delivery_finalize(
+			task,
+			&delivery,
+			channel,
+			Arc::clone(&config),
+			&worker_output,
+		)
+		.await?;
 
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,

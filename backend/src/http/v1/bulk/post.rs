@@ -31,10 +31,10 @@ use warp::Filter;
 
 use super::with_worker_db;
 use crate::config::BackendConfig;
+use crate::http::resolve_tenant;
 use crate::http::v0::check_email::post::with_config;
 use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
-use crate::http::resolve_tenant;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
 use crate::worker::consume::CHECK_EMAIL_QUEUE;
@@ -70,12 +70,18 @@ async fn http_handler(
 	let email_count = body.input.len() as i32;
 	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, email_count).await {
 		QuotaCheckResult::Allowed => {}
-		QuotaCheckResult::ExceededMonthlyLimit { limit, used, resets_at } => {
+		QuotaCheckResult::ExceededMonthlyLimit {
+			limit,
+			used,
+			resets_at,
+		} => {
 			return Err(ReacherResponseError::new(
 				StatusCode::TOO_MANY_REQUESTS,
 				format!(
 					"Monthly email limit of {} reached ({} used). Resets at {}",
-					limit, used, resets_at.format("%Y-%m-%d %H:%M:%S UTC")
+					limit,
+					used,
+					resets_at.format("%Y-%m-%d %H:%M:%S UTC")
 				),
 			)
 			.into());
@@ -218,7 +224,7 @@ pub async fn publish_task(
 	channel: Arc<Channel>,
 	task: CheckEmailTask,
 	properties: BasicProperties,
-)-> Result<(), ReacherResponseError> {
+) -> Result<(), ReacherResponseError> {
 	let payload = serde_json::to_vec(&task).map_err(ReacherResponseError::from)?;
 
 	channel

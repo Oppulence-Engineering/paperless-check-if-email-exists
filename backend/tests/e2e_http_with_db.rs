@@ -65,9 +65,7 @@ mod tests {
 			.path("/v1/check_email")
 			.method("POST")
 			.header("Authorization", format!("Bearer {}", full_key))
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 
@@ -88,9 +86,7 @@ mod tests {
 			.path("/v0/check_email")
 			.method("POST")
 			.header("Authorization", format!("Bearer {}", full_key))
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 
@@ -108,10 +104,11 @@ mod tests {
 		let resp = request()
 			.path("/v1/check_email")
 			.method("POST")
-			.header("Authorization", "Bearer rch_live_0000000000000000000000000000dead")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
+			.header(
+				"Authorization",
+				"Bearer rch_live_0000000000000000000000000000dead",
 			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 
@@ -128,9 +125,7 @@ mod tests {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "test-secret")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 
@@ -153,9 +148,7 @@ mod tests {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "test-secret")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 

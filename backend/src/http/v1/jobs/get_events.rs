@@ -1,13 +1,13 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
-use warp::http::StatusCode;
 use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -52,14 +52,11 @@ async fn http_handler(
 	let limit = query.limit.unwrap_or(50).min(200);
 	let offset = query.offset.unwrap_or(0);
 
-	let total = sqlx::query_scalar!(
-		"SELECT COUNT(*) FROM job_events WHERE job_id = $1",
-		job_id,
-	)
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?
-	.unwrap_or(0);
+	let total = sqlx::query_scalar!("SELECT COUNT(*) FROM job_events WHERE job_id = $1", job_id,)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?
+		.unwrap_or(0);
 
 	let events = sqlx::query_as!(
 		Event,

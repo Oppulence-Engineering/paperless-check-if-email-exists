@@ -110,7 +110,14 @@ mod tests {
 	#[test]
 	fn test_yahoo_smtp_with_proxy() {
 		let m = BackwardCompatYahooVerifMethod::Smtp;
-		let result = m.to_yahoo_verif_method(true, "hello".into(), "from@e.com".into(), Some(Duration::from_secs(30)), 465, 3);
+		let result = m.to_yahoo_verif_method(
+			true,
+			"hello".into(),
+			"from@e.com".into(),
+			Some(Duration::from_secs(30)),
+			465,
+			3,
+		);
 		match result {
 			YahooVerifMethod::Smtp(c) => {
 				assert_eq!(c.from_email, "from@e.com");

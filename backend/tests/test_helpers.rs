@@ -23,7 +23,10 @@ impl TestRabbitMq {
 	pub async fn start() -> Self {
 		// Check for existing RabbitMQ via env var
 		if let Ok(url) = std::env::var("TEST_AMQP_URL") {
-			return Self { amqp_url: url, _container: None };
+			return Self {
+				amqp_url: url,
+				_container: None,
+			};
 		}
 		let container = RabbitMq::default()
 			.start()
@@ -52,13 +55,20 @@ impl TestDb {
 
 			// Clean up data from previous runs (keep schema)
 			let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
-			let _ = sqlx::query("DELETE FROM idempotency_keys").execute(&pool).await;
-			let _ = sqlx::query("DELETE FROM v1_task_result").execute(&pool).await;
+			let _ = sqlx::query("DELETE FROM idempotency_keys")
+				.execute(&pool)
+				.await;
+			let _ = sqlx::query("DELETE FROM v1_task_result")
+				.execute(&pool)
+				.await;
 			let _ = sqlx::query("DELETE FROM v1_bulk_job").execute(&pool).await;
 			let _ = sqlx::query("DELETE FROM api_keys").execute(&pool).await;
 			let _ = sqlx::query("DELETE FROM tenants").execute(&pool).await;
 
-			return Self { pool, _container: None };
+			return Self {
+				pool,
+				_container: None,
+			};
 		}
 
 		// Slow path: testcontainers
@@ -70,7 +80,10 @@ impl TestDb {
 			.get_host_port_ipv4(5432)
 			.await
 			.expect("Failed to get Postgres port");
-		let db_url = format!("postgres://postgres:postgres@127.0.0.1:{}/postgres", host_port);
+		let db_url = format!(
+			"postgres://postgres:postgres@127.0.0.1:{}/postgres",
+			host_port
+		);
 		let pool = PgPoolOptions::new()
 			.max_connections(5)
 			.connect(&db_url)
@@ -82,7 +95,10 @@ impl TestDb {
 			.await
 			.expect("Failed to run migrations");
 
-		Self { pool, _container: Some(container) }
+		Self {
+			pool,
+			_container: Some(container),
+		}
 	}
 
 	pub fn pool(&self) -> &PgPool {
@@ -94,7 +110,12 @@ impl TestDb {
 	}
 }
 
-pub async fn insert_tenant(pool: &PgPool, slug: &str, monthly_limit: Option<i32>, used: i32) -> uuid::Uuid {
+pub async fn insert_tenant(
+	pool: &PgPool,
+	slug: &str,
+	monthly_limit: Option<i32>,
+	used: i32,
+) -> uuid::Uuid {
 	let row = sqlx::query(
 		"INSERT INTO tenants (name, slug, contact_email, plan_tier, status, monthly_email_limit, used_this_period) VALUES ($1, $2, $3, 'starter', 'active', $4, $5) RETURNING id",
 	)
@@ -129,7 +150,11 @@ pub async fn insert_api_key(pool: &PgPool, tenant_id: uuid::Uuid) -> (String, uu
 	(full_key, row.get("id"))
 }
 
-pub async fn insert_api_key_with_status(pool: &PgPool, tenant_id: uuid::Uuid, status: &str) -> (String, uuid::Uuid) {
+pub async fn insert_api_key_with_status(
+	pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	status: &str,
+) -> (String, uuid::Uuid) {
 	let (full_key, prefix, hash) = reacher_backend::tenant::auth::generate_api_key();
 	let row = sqlx::query(
 		"INSERT INTO api_keys (tenant_id, key_prefix, key_hash, name, status) VALUES ($1, $2, $3, 'test-key', $4::api_key_status) RETURNING id",
@@ -139,7 +164,12 @@ pub async fn insert_api_key_with_status(pool: &PgPool, tenant_id: uuid::Uuid, st
 	(full_key, row.get("id"))
 }
 
-pub async fn insert_job(pool: &PgPool, tenant_id: Option<uuid::Uuid>, total_records: i32, status: &str) -> i32 {
+pub async fn insert_job(
+	pool: &PgPool,
+	tenant_id: Option<uuid::Uuid>,
+	total_records: i32,
+	status: &str,
+) -> i32 {
 	let row = sqlx::query(
 		"INSERT INTO v1_bulk_job (total_records, tenant_id, status) VALUES ($1, $2, $3::job_state) RETURNING id",
 	)
@@ -148,7 +178,14 @@ pub async fn insert_job(pool: &PgPool, tenant_id: Option<uuid::Uuid>, total_reco
 	row.get("id")
 }
 
-pub async fn insert_task(pool: &PgPool, job_id: i32, state: &str, tenant_id: Option<uuid::Uuid>, result_json: Option<serde_json::Value>, error_text: Option<&str>) -> i32 {
+pub async fn insert_task(
+	pool: &PgPool,
+	job_id: i32,
+	state: &str,
+	tenant_id: Option<uuid::Uuid>,
+	result_json: Option<serde_json::Value>,
+	error_text: Option<&str>,
+) -> i32 {
 	let payload = serde_json::json!({"input": {"to_email": "t@e.com"}, "job_id": {"bulk": job_id}, "webhook": null});
 	let row = sqlx::query(
 		"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, result, error) VALUES ($1, $2, $3::task_state, $4, $5, $6) RETURNING id",
@@ -158,7 +195,12 @@ pub async fn insert_task(pool: &PgPool, job_id: i32, state: &str, tenant_id: Opt
 	row.get("id")
 }
 
-pub async fn insert_event(pool: &PgPool, job_id: i32, task_id: Option<i32>, event_type: &str) -> i64 {
+pub async fn insert_event(
+	pool: &PgPool,
+	job_id: i32,
+	task_id: Option<i32>,
+	event_type: &str,
+) -> i64 {
 	let row = sqlx::query(
 		"INSERT INTO job_events (job_id, task_id, event_type, actor) VALUES ($1, $2, $3, 'test') RETURNING id",
 	)

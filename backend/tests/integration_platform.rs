@@ -183,7 +183,10 @@ mod auth_integration {
 		let resp = request()
 			.path("/v1/check_email")
 			.method("POST")
-			.header("Authorization", "Bearer rch_live_0123456789abcdef0123456789ab")
+			.header(
+				"Authorization",
+				"Bearer rch_live_0123456789abcdef0123456789ab",
+			)
 			.json(&email_body())
 			.reply(&create_routes(config_with_secret("unused")))
 			.await;
@@ -229,9 +232,7 @@ mod v0_deprecation_integration {
 			.path("/v0/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "test-secret")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config()))
 			.await;
 
@@ -259,9 +260,7 @@ mod v0_deprecation_integration {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "test-secret")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config()))
 			.await;
 
@@ -394,9 +393,7 @@ mod content_type_integration {
 			.path("/v0/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "s")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config()))
 			.await;
 
@@ -411,9 +408,7 @@ mod content_type_integration {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "s")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config()))
 			.await;
 
@@ -440,9 +435,7 @@ mod content_type_integration {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "s")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": ""}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": ""}"#).unwrap())
 			.reply(&create_routes(config()))
 			.await;
 
@@ -511,9 +504,7 @@ mod backward_compat_integration {
 			.path("/v0/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "compat-test")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(Arc::clone(&config)))
 			.await;
 
@@ -521,9 +512,7 @@ mod backward_compat_integration {
 			.path("/v1/check_email")
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "compat-test")
-			.json(
-				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap(),
-			)
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
 			.reply(&create_routes(config))
 			.await;
 

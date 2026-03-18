@@ -167,18 +167,19 @@ struct EventRow {
 fn with_pg_pool(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
-	warp::any().and_then(move || {
-		let config = Arc::clone(&config);
-		async move {
-			config.get_pg_pool().ok_or_else(|| {
-				warp::reject::custom(ReacherResponseError::new(
-					StatusCode::SERVICE_UNAVAILABLE,
-					"Postgres database required for admin endpoints",
-				))
-			})
-		}
-	})
-	.boxed()
+	warp::any()
+		.and_then(move || {
+			let config = Arc::clone(&config);
+			async move {
+				config.get_pg_pool().ok_or_else(|| {
+					warp::reject::custom(ReacherResponseError::new(
+						StatusCode::SERVICE_UNAVAILABLE,
+						"Postgres database required for admin endpoints",
+					))
+				})
+			}
+		})
+		.boxed()
 }
 
 fn clamp_page(limit: Option<i64>, offset: Option<i64>) -> (i64, i64) {
@@ -236,7 +237,10 @@ fn row_to_task_summary(row: TaskSummaryRow) -> JobTaskSummary {
 	}
 }
 
-async fn fetch_task_summary(pg_pool: &PgPool, job_id: i32) -> Result<JobTaskSummary, ReacherResponseError> {
+async fn fetch_task_summary(
+	pg_pool: &PgPool,
+	job_id: i32,
+) -> Result<JobTaskSummary, ReacherResponseError> {
 	let summary = sqlx::query_as::<_, TaskSummaryRow>(
 		r#"
 		SELECT
@@ -249,11 +253,12 @@ async fn fetch_task_summary(pg_pool: &PgPool, job_id: i32) -> Result<JobTaskSumm
 			COUNT(CASE WHEN task_state = 'dead_lettered' THEN 1 END) as dead_lettered
 		FROM v1_task_result
 		WHERE job_id = $1
-		"#,)
-		.bind(job_id)
-		.fetch_one(pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+		"#,
+	)
+	.bind(job_id)
+	.fetch_one(pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	Ok(row_to_task_summary(summary))
 }
@@ -304,14 +309,15 @@ async fn list_admin_jobs(
 		  AND ($2::UUID IS NULL OR j.tenant_id = $2)
 		ORDER BY j.created_at DESC
 		LIMIT $3 OFFSET $4
-		"#,)
+		"#,
+	)
 	.bind(status.as_deref())
-		.bind(tenant_id)
-		.bind(limit)
-		.bind(offset)
-		.fetch_all(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	.bind(tenant_id)
+	.bind(limit)
+	.bind(offset)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	let total: i64 = sqlx::query_scalar(
 		"SELECT COUNT(*) FROM v1_bulk_job WHERE ($1::TEXT IS NULL OR status::TEXT = $1::TEXT) AND ($2::UUID IS NULL OR tenant_id = $2)",
@@ -357,10 +363,7 @@ async fn list_admin_jobs(
 		(status = 200, description = "Get a job by ID for admin users", body = JobDetail)
 	),
 )]
-async fn get_admin_job(
-	job_id: i32,
-	pg_pool: PgPool,
-) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_admin_job(job_id: i32, pg_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
 	let row = sqlx::query_as::<_, ListJobsRow>(
 		r#"
 		SELECT
@@ -380,13 +383,15 @@ async fn get_admin_job(
 		FROM v1_bulk_job j
 		LEFT JOIN tenants t ON t.id = j.tenant_id
 		WHERE j.id = $1
-		"#,)
-		.bind(job_id)
-		.fetch_optional(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+		"#,
+	)
+	.bind(job_id)
+	.fetch_optional(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
-	let row = row.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found"))?;
+	let row =
+		row.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found"))?;
 	let summary = fetch_task_summary(&pg_pool, job_id).await?;
 
 	Ok(warp::reply::json(&JobDetail {
@@ -422,10 +427,10 @@ async fn get_admin_job_events(
 	query: ListEventsQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM v1_bulk_job WHERE id = $1)")
-	.bind(job_id)
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+		.bind(job_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	if !exists {
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into());
@@ -434,10 +439,10 @@ async fn get_admin_job_events(
 	let (limit, offset) = clamp_page(query.limit, query.offset);
 
 	let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM job_events WHERE job_id = $1")
-	.bind(job_id)
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+		.bind(job_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	let rows = sqlx::query_as::<_, EventRow>(
 		r#"
@@ -446,13 +451,14 @@ async fn get_admin_job_events(
 		WHERE job_id = $1
 		ORDER BY created_at ASC
 		LIMIT $2 OFFSET $3
-		"#,)
-		.bind(job_id)
-		.bind(limit)
-		.bind(offset)
-		.fetch_all(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+		"#,
+	)
+	.bind(job_id)
+	.bind(limit)
+	.bind(offset)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	let events = rows
 		.into_iter()
@@ -506,10 +512,7 @@ async fn get_admin_job_results(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	let rows = sqlx::query_as::<
-		_,
-		(i32, String, Option<serde_json::Value>, Option<String>, i32),
-	>(
+	let rows = sqlx::query_as::<_, (i32, String, Option<serde_json::Value>, Option<String>, i32)>(
 		r#"
 		SELECT id, task_state::TEXT as task_state, result, error, retry_count
 		FROM v1_task_result
@@ -538,7 +541,10 @@ async fn get_admin_job_results(
 		})
 		.collect();
 
-	Ok(warp::reply::json(&ListTaskResultsResponse { results, total }))
+	Ok(warp::reply::json(&ListTaskResultsResponse {
+		results,
+		total,
+	}))
 }
 
 #[utoipa::path(
@@ -555,15 +561,15 @@ async fn list_tenant_jobs_handler(
 	pg_pool: PgPool,
 	query: ListTenantJobsQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_id = tenant_id_str
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format"))?;
+	let tenant_id = tenant_id_str.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
+	})?;
 
 	let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)")
-	.bind(tenant_id)
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+		.bind(tenant_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 	if !exists {
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into());
 	}
@@ -593,14 +599,15 @@ async fn list_tenant_jobs_handler(
 		  AND ($2::TEXT IS NULL OR j.status::TEXT = $2::TEXT)
 		ORDER BY j.created_at DESC
 		LIMIT $3 OFFSET $4
-		"#,)
-		.bind(tenant_id)
-		.bind(status.as_deref())
-		.bind(limit)
-		.bind(offset)
-		.fetch_all(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(status.as_deref())
+	.bind(limit)
+	.bind(offset)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	let total: i64 = sqlx::query_scalar(
 		"SELECT COUNT(*) FROM v1_bulk_job WHERE tenant_id = $1 AND ($2::TEXT IS NULL OR status::TEXT = $2::TEXT)",

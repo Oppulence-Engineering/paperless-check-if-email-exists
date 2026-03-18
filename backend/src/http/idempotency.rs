@@ -104,13 +104,10 @@ pub async fn check_idempotency_key(
 		})),
 		"failed" => {
 			// Delete the failed record and re-insert as processing
-			sqlx::query!(
-				"DELETE FROM idempotency_keys WHERE id = $1",
-				existing.id,
-			)
-			.execute(pg_pool)
-			.await
-			.map_err(ReacherResponseError::from)?;
+			sqlx::query!("DELETE FROM idempotency_keys WHERE id = $1", existing.id,)
+				.execute(pg_pool)
+				.await
+				.map_err(ReacherResponseError::from)?;
 
 			let new_id = sqlx::query_scalar!(
 				r#"

@@ -1,12 +1,14 @@
-use check_if_email_exists::{check_email, LOG_TARGET};
-use futures::StreamExt;
-use lapin::options::{BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions};
-use lapin::types::FieldTable;
-use lapin::BasicProperties;
 use crate::http::idempotency::{
 	check_idempotency_key, complete_idempotency_key, fail_idempotency_key, hash_request_body,
 	IdempotencyCheck,
 };
+use check_if_email_exists::{check_email, LOG_TARGET};
+use futures::StreamExt;
+use lapin::options::{
+	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
+};
+use lapin::types::FieldTable;
+use lapin::BasicProperties;
 use std::sync::Arc;
 use tracing::{info, warn};
 use warp::http::StatusCode;
@@ -34,7 +36,12 @@ async fn mark_idempotency_failed(pool: &sqlx::PgPool, record_id: i64) {
 	}
 }
 
-async fn mark_idempotency_complete(pool: &sqlx::PgPool, record_id: i64, status_code: u16, response_body: &[u8]) {
+async fn mark_idempotency_complete(
+	pool: &sqlx::PgPool,
+	record_id: i64,
+	status_code: u16,
+	response_body: &[u8],
+) {
 	if let Err(e) = complete_idempotency_key(pool, record_id, status_code, response_body).await {
 		warn!(target: LOG_TARGET, record_id = ?record_id, error = ?e, "Failed to mark idempotency key as completed");
 	}
@@ -67,15 +74,15 @@ pub async fn handle_check_email(
 			let tenant_id = tenant_ctx.tenant_id_str();
 			let request_body_hash = hash_request_body(request_body);
 
-				let idempotency_result = check_idempotency_key(
-					&pool,
-					&tenant_id,
-					&idempotency_key,
-					request_path,
-					&request_body_hash,
-					&tenant_ctx.tenant_name,
-				)
-				.await?;
+			let idempotency_result = check_idempotency_key(
+				&pool,
+				&tenant_id,
+				&idempotency_key,
+				request_path,
+				&request_body_hash,
+				&tenant_ctx.tenant_name,
+			)
+			.await?;
 
 			match idempotency_result {
 				IdempotencyCheck::New { record_id } => {
@@ -113,10 +120,8 @@ pub async fn handle_check_email(
 	}
 
 	// Get per-tenant throttle manager
-	let throttle_manager = config.get_tenant_throttle_manager(
-		tenant_ctx.tenant_id,
-		&tenant_ctx.throttle,
-	);
+	let throttle_manager =
+		config.get_tenant_throttle_manager(tenant_ctx.tenant_id, &tenant_ctx.throttle);
 
 	// Check throttle
 	if let Some(throttle_result) = throttle_manager.check_throttle().await {
@@ -137,7 +142,11 @@ pub async fn handle_check_email(
 	let pg_pool = config.get_pg_pool();
 	match check_and_increment_quota(pg_pool.as_ref(), tenant_ctx).await {
 		QuotaCheckResult::Allowed => {} // Quota already incremented atomically
-		QuotaCheckResult::ExceededMonthlyLimit { limit, used, resets_at } => {
+		QuotaCheckResult::ExceededMonthlyLimit {
+			limit,
+			used,
+			resets_at,
+		} => {
 			if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
 				mark_idempotency_failed(&pool, record_id).await;
 			}
@@ -145,7 +154,9 @@ pub async fn handle_check_email(
 				StatusCode::TOO_MANY_REQUESTS,
 				format!(
 					"Monthly email limit of {} reached ({} used). Resets at {}",
-					limit, used, resets_at.format("%Y-%m-%d %H:%M:%S UTC")
+					limit,
+					used,
+					resets_at.format("%Y-%m-%d %H:%M:%S UTC")
 				),
 			)
 			.into());
@@ -153,7 +164,8 @@ pub async fn handle_check_email(
 	}
 
 	if !config.worker.enable {
-		let response = handle_without_worker(Arc::clone(&config), body, &throttle_manager, tenant_ctx).await;
+		let response =
+			handle_without_worker(Arc::clone(&config), body, &throttle_manager, tenant_ctx).await;
 		match response {
 			Ok(body) => {
 				let response = CheckEmailResponse {
@@ -161,7 +173,13 @@ pub async fn handle_check_email(
 					body,
 				};
 				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_complete(&pool, record_id, response.status_code.as_u16(), &response.body).await;
+					mark_idempotency_complete(
+						&pool,
+						record_id,
+						response.status_code.as_u16(),
+						&response.body,
+					)
+					.await;
 				}
 				Ok(response)
 			}
@@ -181,7 +199,13 @@ pub async fn handle_check_email(
 					body,
 				};
 				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_complete(&pool, record_id, response.status_code.as_u16(), &response.body).await;
+					mark_idempotency_complete(
+						&pool,
+						record_id,
+						response.status_code.as_u16(),
+						&response.body,
+					)
+					.await;
 				}
 				Ok(response)
 			}

@@ -5,6 +5,9 @@ mod test_helpers;
 #[cfg(test)]
 mod worker_loop_tests {
 	use crate::test_helpers::TestDb;
+	use lapin::options::*;
+	use lapin::types::FieldTable;
+	use lapin::BasicProperties;
 	use reacher_backend::config::{
 		BackendConfig, PostgresConfig, RabbitMQConfig, StorageConfig, ThrottleConfig, WorkerConfig,
 	};
@@ -12,9 +15,6 @@ mod worker_loop_tests {
 	use reacher_backend::worker::do_work::{
 		CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata,
 	};
-	use lapin::options::*;
-	use lapin::types::FieldTable;
-	use lapin::BasicProperties;
 	use serial_test::serial;
 	use sqlx::Row;
 	use std::sync::Arc;
@@ -83,7 +83,10 @@ mod worker_loop_tests {
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
 		// Set up queue + purge
-		let rmq_cfg = RabbitMQConfig { url: rmq_url(), concurrency: 4 };
+		let rmq_cfg = RabbitMQConfig {
+			url: rmq_url(),
+			concurrency: 4,
+		};
 		let pub_channel = setup_rabbit_mq("test-pub-loop", &rmq_cfg).await.unwrap();
 		purge(&pub_channel).await;
 
@@ -137,14 +140,13 @@ mod worker_loop_tests {
 		tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
 		// Verify task state changed from queued
-		let state: String = sqlx::query(
-			"SELECT task_state::TEXT FROM v1_task_result WHERE id = $1",
-		)
-		.bind(task_db_id)
-		.fetch_one(db.pool())
-		.await
-		.unwrap()
-		.get(0);
+		let state: String =
+			sqlx::query("SELECT task_state::TEXT FROM v1_task_result WHERE id = $1")
+				.bind(task_db_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get(0);
 
 		assert!(
 			state == "completed" || state == "dead_lettered",
@@ -161,7 +163,10 @@ mod worker_loop_tests {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
-		let rmq_cfg = RabbitMQConfig { url: rmq_url(), concurrency: 4 };
+		let rmq_cfg = RabbitMQConfig {
+			url: rmq_url(),
+			concurrency: 4,
+		};
 		let pub_channel = setup_rabbit_mq("test-cancel-loop", &rmq_cfg).await.unwrap();
 		purge(&pub_channel).await;
 
@@ -209,19 +214,19 @@ mod worker_loop_tests {
 		tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
 		// Task should be cancelled (skipped by consumer)
-		let state: String = sqlx::query(
-			"SELECT task_state::TEXT FROM v1_task_result WHERE id = $1",
-		)
-		.bind(task_db_id)
-		.fetch_one(db.pool())
-		.await
-		.unwrap()
-		.get(0);
+		let state: String =
+			sqlx::query("SELECT task_state::TEXT FROM v1_task_result WHERE id = $1")
+				.bind(task_db_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get(0);
 
 		// The consumer may have been from a previous test's tokio::spawn — accept completed too
 		assert!(
 			state == "cancelled" || state == "completed" || state == "dead_lettered",
-			"Expected cancelled/completed/dead_lettered, got: {}", state
+			"Expected cancelled/completed/dead_lettered, got: {}",
+			state
 		);
 	}
 
@@ -240,8 +245,13 @@ mod worker_loop_tests {
 		})
 		.await;
 
-		let rmq_cfg = RabbitMQConfig { url: rmq_url(), concurrency: 4 };
-		let pub_channel = setup_rabbit_mq("test-throttle-loop", &rmq_cfg).await.unwrap();
+		let rmq_cfg = RabbitMQConfig {
+			url: rmq_url(),
+			concurrency: 4,
+		};
+		let pub_channel = setup_rabbit_mq("test-throttle-loop", &rmq_cfg)
+			.await
+			.unwrap();
 		purge(&pub_channel).await;
 
 		// Create a reply queue to receive the throttle error
@@ -327,8 +337,13 @@ mod worker_loop_tests {
 		})
 		.await;
 
-		let rmq_cfg = RabbitMQConfig { url: rmq_url(), concurrency: 4 };
-		let pub_channel = setup_rabbit_mq("test-throttle-bulk", &rmq_cfg).await.unwrap();
+		let rmq_cfg = RabbitMQConfig {
+			url: rmq_url(),
+			concurrency: 4,
+		};
+		let pub_channel = setup_rabbit_mq("test-throttle-bulk", &rmq_cfg)
+			.await
+			.unwrap();
 		purge(&pub_channel).await;
 
 		let job_id: i32 = sqlx::query(
@@ -359,11 +374,22 @@ mod worker_loop_tests {
 
 		// Verify the queue was consumed (messages processed or requeued)
 		let q = pub_channel
-			.queue_declare(CHECK_EMAIL_QUEUE, QueueDeclareOptions { passive: true, ..Default::default() }, FieldTable::default())
+			.queue_declare(
+				CHECK_EMAIL_QUEUE,
+				QueueDeclareOptions {
+					passive: true,
+					..Default::default()
+				},
+				FieldTable::default(),
+			)
 			.await
 			.unwrap();
 		// With throttle, first task processes, second gets requeued — so count should be <= 2
-		assert!(q.message_count() <= 2, "Queue should have been consumed, got {} messages", q.message_count());
+		assert!(
+			q.message_count() <= 2,
+			"Queue should have been consumed, got {} messages",
+			q.message_count()
+		);
 	}
 
 	// ── Test: do_check_email_work retry path with DB ────
@@ -374,8 +400,13 @@ mod worker_loop_tests {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
-		let rmq_cfg = RabbitMQConfig { url: rmq_url(), concurrency: 4 };
-		let pub_channel = setup_rabbit_mq("test-retry-events", &rmq_cfg).await.unwrap();
+		let rmq_cfg = RabbitMQConfig {
+			url: rmq_url(),
+			concurrency: 4,
+		};
+		let pub_channel = setup_rabbit_mq("test-retry-events", &rmq_cfg)
+			.await
+			.unwrap();
 		purge(&pub_channel).await;
 
 		let job_id: i32 = sqlx::query(
@@ -424,14 +455,13 @@ mod worker_loop_tests {
 		tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
 		// Verify state changed
-		let state: String = sqlx::query(
-			"SELECT task_state::TEXT FROM v1_task_result WHERE id = $1",
-		)
-		.bind(task_db_id)
-		.fetch_one(db.pool())
-		.await
-		.unwrap()
-		.get(0);
+		let state: String =
+			sqlx::query("SELECT task_state::TEXT FROM v1_task_result WHERE id = $1")
+				.bind(task_db_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get(0);
 
 		assert_ne!(state, "queued", "Task should no longer be queued");
 

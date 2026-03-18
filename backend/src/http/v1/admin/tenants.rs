@@ -110,8 +110,12 @@ fn row_to_response(row: &sqlx::postgres::PgRow) -> TenantResponse {
 		used_this_period: row.get("used_this_period"),
 		default_webhook_url: row.get("default_webhook_url"),
 		result_retention_days: row.get("result_retention_days"),
-		created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
-		updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+		created_at: row
+			.get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+			.to_rfc3339(),
+		updated_at: row
+			.get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
+			.to_rfc3339(),
 	}
 }
 
@@ -159,7 +163,10 @@ async fn create_handler(
 		// Check for PG unique violation error code 23505
 		if let sqlx::Error::Database(ref db_err) = e {
 			if db_err.code().as_deref() == Some("23505") {
-				return ReacherResponseError::new(StatusCode::CONFLICT, format!("Tenant with slug '{}' already exists", body.slug));
+				return ReacherResponseError::new(
+					StatusCode::CONFLICT,
+					format!("Tenant with slug '{}' already exists", body.slug),
+				);
 			}
 		}
 		ReacherResponseError::from(e)
@@ -192,12 +199,13 @@ async fn list_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-		let total: i64 = sqlx::query("SELECT COUNT(*) as count FROM tenants WHERE status = $1::tenant_status")
-			.bind(status)
-			.fetch_one(&pg_pool)
-			.await
-			.map_err(ReacherResponseError::from)?
-			.get("count");
+		let total: i64 =
+			sqlx::query("SELECT COUNT(*) as count FROM tenants WHERE status = $1::tenant_status")
+				.bind(status)
+				.fetch_one(&pg_pool)
+				.await
+				.map_err(ReacherResponseError::from)?
+				.get("count");
 
 		(rows, total)
 	} else {
@@ -226,10 +234,7 @@ async fn list_handler(
 	Ok(warp::reply::json(&ListResponse { tenants, total }))
 }
 
-async fn get_handler(
-	id: String,
-	pg_pool: PgPool,
-) -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_handler(id: String, pg_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id: Uuid = id.parse().map_err(|_| {
 		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
 	})?;
@@ -264,21 +269,59 @@ async fn update_handler(
 	let mut sets: Vec<String> = vec![];
 	let mut param_idx = 2u32; // $1 is tenant_id
 
-	if body.name.is_some() { sets.push(format!("name = ${}", param_idx)); param_idx += 1; }
-	if body.contact_email.is_some() { sets.push(format!("contact_email = ${}", param_idx)); param_idx += 1; }
-	if body.plan_tier.is_some() { sets.push(format!("plan_tier = ${}::plan_tier", param_idx)); param_idx += 1; }
-	if body.status.is_some() { sets.push(format!("status = ${}::tenant_status", param_idx)); param_idx += 1; }
-	if body.monthly_email_limit.is_some() { sets.push(format!("monthly_email_limit = ${}", param_idx)); param_idx += 1; }
-	if body.max_requests_per_second.is_some() { sets.push(format!("max_requests_per_second = ${}", param_idx)); param_idx += 1; }
-	if body.max_requests_per_minute.is_some() { sets.push(format!("max_requests_per_minute = ${}", param_idx)); param_idx += 1; }
-	if body.max_requests_per_hour.is_some() { sets.push(format!("max_requests_per_hour = ${}", param_idx)); param_idx += 1; }
-	if body.max_requests_per_day.is_some() { sets.push(format!("max_requests_per_day = ${}", param_idx)); param_idx += 1; }
-	if body.default_webhook_url.is_some() { sets.push(format!("default_webhook_url = ${}", param_idx)); param_idx += 1; }
-	if body.webhook_signing_secret.is_some() { sets.push(format!("webhook_signing_secret = ${}", param_idx)); param_idx += 1; }
-	if body.result_retention_days.is_some() { sets.push(format!("result_retention_days = ${}", param_idx)); param_idx += 1; }
+	if body.name.is_some() {
+		sets.push(format!("name = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.contact_email.is_some() {
+		sets.push(format!("contact_email = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.plan_tier.is_some() {
+		sets.push(format!("plan_tier = ${}::plan_tier", param_idx));
+		param_idx += 1;
+	}
+	if body.status.is_some() {
+		sets.push(format!("status = ${}::tenant_status", param_idx));
+		param_idx += 1;
+	}
+	if body.monthly_email_limit.is_some() {
+		sets.push(format!("monthly_email_limit = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.max_requests_per_second.is_some() {
+		sets.push(format!("max_requests_per_second = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.max_requests_per_minute.is_some() {
+		sets.push(format!("max_requests_per_minute = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.max_requests_per_hour.is_some() {
+		sets.push(format!("max_requests_per_hour = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.max_requests_per_day.is_some() {
+		sets.push(format!("max_requests_per_day = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.default_webhook_url.is_some() {
+		sets.push(format!("default_webhook_url = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.webhook_signing_secret.is_some() {
+		sets.push(format!("webhook_signing_secret = ${}", param_idx));
+		param_idx += 1;
+	}
+	if body.result_retention_days.is_some() {
+		sets.push(format!("result_retention_days = ${}", param_idx));
+		param_idx += 1;
+	}
 
 	if sets.is_empty() {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into());
+		return Err(
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into(),
+		);
 	}
 
 	let sql = format!(
@@ -291,18 +334,42 @@ async fn update_handler(
 
 	let mut query = sqlx::query(&sql).bind(tenant_id);
 
-	if let Some(ref v) = body.name { query = query.bind(v); }
-	if let Some(ref v) = body.contact_email { query = query.bind(v); }
-	if let Some(ref v) = body.plan_tier { query = query.bind(v); }
-	if let Some(ref v) = body.status { query = query.bind(v); }
-	if let Some(v) = body.monthly_email_limit { query = query.bind(v); }
-	if let Some(v) = body.max_requests_per_second { query = query.bind(v); }
-	if let Some(v) = body.max_requests_per_minute { query = query.bind(v); }
-	if let Some(v) = body.max_requests_per_hour { query = query.bind(v); }
-	if let Some(v) = body.max_requests_per_day { query = query.bind(v); }
-	if let Some(ref v) = body.default_webhook_url { query = query.bind(v); }
-	if let Some(ref v) = body.webhook_signing_secret { query = query.bind(v); }
-	if let Some(v) = body.result_retention_days { query = query.bind(v); }
+	if let Some(ref v) = body.name {
+		query = query.bind(v);
+	}
+	if let Some(ref v) = body.contact_email {
+		query = query.bind(v);
+	}
+	if let Some(ref v) = body.plan_tier {
+		query = query.bind(v);
+	}
+	if let Some(ref v) = body.status {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.monthly_email_limit {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.max_requests_per_second {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.max_requests_per_minute {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.max_requests_per_hour {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.max_requests_per_day {
+		query = query.bind(v);
+	}
+	if let Some(ref v) = body.default_webhook_url {
+		query = query.bind(v);
+	}
+	if let Some(ref v) = body.webhook_signing_secret {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.result_retention_days {
+		query = query.bind(v);
+	}
 
 	let row = query
 		.fetch_optional(&pg_pool)
@@ -315,10 +382,7 @@ async fn update_handler(
 	}
 }
 
-async fn delete_handler(
-	id: String,
-	pg_pool: PgPool,
-) -> Result<impl warp::Reply, warp::Rejection> {
+async fn delete_handler(id: String, pg_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id: Uuid = id.parse().map_err(|_| {
 		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
 	})?;
@@ -333,7 +397,10 @@ async fn delete_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into());
 	}
 
-	Ok(warp::reply::with_status(warp::reply::json(&serde_json::json!({"deleted": true})), StatusCode::OK))
+	Ok(warp::reply::with_status(
+		warp::reply::json(&serde_json::json!({"deleted": true})),
+		StatusCode::OK,
+	))
 }
 
 // ── Route registration ──────────────────────────────

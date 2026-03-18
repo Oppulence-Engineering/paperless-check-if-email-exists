@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use uuid::Uuid;
-use warp::Filter;
 use warp::http::StatusCode;
+use warp::Filter;
 
 // ── Request/Response types ──────────────────────────
 
@@ -105,7 +105,9 @@ fn with_pg_pool(
 	})
 }
 
-fn parse_expiry(expires_at: Option<String>) -> Result<Option<chrono::DateTime<chrono::Utc>>, warp::Rejection> {
+fn parse_expiry(
+	expires_at: Option<String>,
+) -> Result<Option<chrono::DateTime<chrono::Utc>>, warp::Rejection> {
 	if let Some(expires_at) = expires_at {
 		chrono::DateTime::parse_from_rfc3339(&expires_at)
 			.map(|dt| dt.with_timezone(&chrono::Utc))
@@ -135,7 +137,9 @@ fn row_to_response(row: &sqlx::postgres::PgRow) -> ApiKeyResponse {
 		expires_at: row
 			.get::<Option<chrono::DateTime<chrono::Utc>>, _>("expires_at")
 			.map(|dt| dt.to_rfc3339()),
-		created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+		created_at: row
+			.get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+			.to_rfc3339(),
 	}
 }
 
@@ -146,9 +150,9 @@ async fn create_handler(
 	pg_pool: PgPool,
 	body: CreateApiKeyRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_id: Uuid = tenant_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID")
-	})?;
+	let tenant_id: Uuid = tenant_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID"))?;
 
 	// Verify tenant exists
 	let exists: bool = sqlx::query("SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1) as exists")
@@ -208,9 +212,9 @@ async fn list_handler(
 	tenant_id_str: String,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_id: Uuid = tenant_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID")
-	})?;
+	let tenant_id: Uuid = tenant_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID"))?;
 
 	let rows = sqlx::query(
 		"SELECT id, tenant_id, key_prefix, name, scopes, status::TEXT, last_used_at, expires_at, created_at \
@@ -270,7 +274,10 @@ async fn list_all_handler(
 	.get("count");
 
 	let api_keys: Vec<ApiKeyResponse> = rows.iter().map(row_to_response).collect();
-	Ok(warp::reply::json(&ListAllApiKeysResponse { api_keys, total }))
+	Ok(warp::reply::json(&ListAllApiKeysResponse {
+		api_keys,
+		total,
+	}))
 }
 
 async fn revoke_handler(
@@ -278,12 +285,12 @@ async fn revoke_handler(
 	key_id_str: String,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_id: Uuid = tenant_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID")
-	})?;
-	let key_id: Uuid = key_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID")
-	})?;
+	let tenant_id: Uuid = tenant_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID"))?;
+	let key_id: Uuid = key_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID"))?;
 
 	let result = sqlx::query(
 		"UPDATE api_keys SET status = 'revoked'::api_key_status WHERE id = $1 AND tenant_id = $2",
@@ -298,7 +305,9 @@ async fn revoke_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into());
 	}
 
-	Ok(warp::reply::json(&serde_json::json!({"revoked": true, "key_id": key_id})))
+	Ok(warp::reply::json(
+		&serde_json::json!({"revoked": true, "key_id": key_id}),
+	))
 }
 
 async fn reactivate_handler(
@@ -306,12 +315,12 @@ async fn reactivate_handler(
 	key_id_str: String,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let tenant_id: Uuid = tenant_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID")
-	})?;
-	let key_id: Uuid = key_id_str.parse().map_err(|_| {
-		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID")
-	})?;
+	let tenant_id: Uuid = tenant_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID"))?;
+	let key_id: Uuid = key_id_str
+		.parse()
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID"))?;
 
 	let result = sqlx::query(
 		"UPDATE api_keys SET status = 'active'::api_key_status WHERE id = $1 AND tenant_id = $2",
@@ -326,7 +335,9 @@ async fn reactivate_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into());
 	}
 
-	Ok(warp::reply::json(&serde_json::json!({"reactivated": true, "key_id": key_id})))
+	Ok(warp::reply::json(
+		&serde_json::json!({"reactivated": true, "key_id": key_id}),
+	))
 }
 
 async fn get_handler(
@@ -351,7 +362,11 @@ async fn get_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into()),
+		None => {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into(),
+			)
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -384,7 +399,9 @@ async fn update_handler(
 	}
 
 	if sets.is_empty() {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into());
+		return Err(
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into(),
+		);
 	}
 
 	let sql = format!(
@@ -418,7 +435,11 @@ async fn update_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into()),
+		None => {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into(),
+			)
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -446,7 +467,7 @@ pub fn create_api_key(
 		.and(warp::body::json())
 		.and_then(create_handler)
 		.with(warp::log(LOG_TARGET))
-	}
+}
 
 /// GET /v1/admin/api-keys
 ///
@@ -467,7 +488,7 @@ pub fn list_all_api_keys(
 		.and(warp::query::<ListAllApiKeysQuery>())
 		.and_then(list_all_handler)
 		.with(warp::log("reacher_backend::v1::admin::api_keys::list_all"))
-	}
+}
 
 /// GET /v1/admin/tenants/{tenant_id}/api-keys
 ///
@@ -488,7 +509,7 @@ pub fn list_api_keys(
 		.and(with_pg_pool(config))
 		.and_then(list_handler)
 		.with(warp::log(LOG_TARGET))
-	}
+}
 
 /// GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
 ///
@@ -512,7 +533,7 @@ pub fn get_api_key(
 		.and(with_pg_pool(config))
 		.and_then(get_handler)
 		.with(warp::log(LOG_TARGET))
-	}
+}
 
 /// PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
 ///
@@ -537,7 +558,7 @@ pub fn update_api_key(
 		.and(warp::body::json())
 		.and_then(update_handler)
 		.with(warp::log(LOG_TARGET))
-	}
+}
 
 /// DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
 ///
@@ -561,7 +582,7 @@ pub fn revoke_api_key(
 		.and(with_pg_pool(config))
 		.and_then(revoke_handler)
 		.with(warp::log(LOG_TARGET))
-	}
+}
 
 /// POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate
 ///

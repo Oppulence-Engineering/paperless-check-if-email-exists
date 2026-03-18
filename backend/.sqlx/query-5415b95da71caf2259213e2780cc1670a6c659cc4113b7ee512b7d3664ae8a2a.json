@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\t\tINSERT INTO v1_task_result (job_id, payload, task_state, tenant_id)\n\t\t\tVALUES ($1, $2, 'queued', $3)\n\t\t\tRETURNING id\n\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5415b95da71caf2259213e2780cc1670a6c659cc4113b7ee512b7d3664ae8a2a"
+}

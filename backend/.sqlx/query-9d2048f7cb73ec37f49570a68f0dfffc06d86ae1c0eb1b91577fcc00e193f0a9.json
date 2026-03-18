@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tUPDATE tenants\n\t\tSET used_this_period = 0,\n\t\t    period_reset_at = date_trunc('month', NOW()) + INTERVAL '1 month'\n\t\tWHERE id = $1 AND period_reset_at <= NOW()\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9d2048f7cb73ec37f49570a68f0dfffc06d86ae1c0eb1b91577fcc00e193f0a9"
+}

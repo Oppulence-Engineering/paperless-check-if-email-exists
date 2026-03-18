@@ -17,7 +17,10 @@ mod me_endpoint {
 		config.header_secret = Some("test-secret".into());
 		let db_url = std::env::var("TEST_DATABASE_URL")
 			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { db_url, extra: None }));
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url,
+			extra: None,
+		}));
 		config.connect().await.expect("Failed to connect");
 		Arc::new(config)
 	}
@@ -251,7 +254,10 @@ mod admin_tenant_quota {
 		config.header_secret = Some("admin-secret".into());
 		let db_url = std::env::var("TEST_DATABASE_URL")
 			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { db_url, extra: None }));
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url,
+			extra: None,
+		}));
 		config.connect().await.expect("Failed to connect");
 		Arc::new(config)
 	}
@@ -331,7 +337,10 @@ mod admin_tenant_quota {
 		assert_eq!(resp.status(), StatusCode::OK);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		let expected_tenant_id = tenant_id.to_string();
-		assert_eq!(body["tenant_id"].as_str(), Some(expected_tenant_id.as_str()));
+		assert_eq!(
+			body["tenant_id"].as_str(),
+			Some(expected_tenant_id.as_str())
+		);
 		assert_eq!(body["used_this_period"], 0);
 		assert_eq!(body["monthly_email_limit"], 25);
 		assert_eq!(body["remaining_quota"], 25);
@@ -375,7 +384,8 @@ mod admin_tenant_quota {
 			.reply(&routes)
 			.await;
 		assert_eq!(unlimited_resp.status(), StatusCode::OK);
-		let unlimited_body: serde_json::Value = serde_json::from_slice(unlimited_resp.body()).unwrap();
+		let unlimited_body: serde_json::Value =
+			serde_json::from_slice(unlimited_resp.body()).unwrap();
 		assert_eq!(unlimited_body["monthly_email_limit"], 0);
 		assert!(unlimited_body["quota_unlimited"].as_bool().unwrap());
 		assert!(unlimited_body["remaining_quota"].is_null());

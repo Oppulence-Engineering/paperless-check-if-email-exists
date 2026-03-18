@@ -87,11 +87,9 @@ async fn onboard_handler(
 		.into());
 	}
 	if body.tenant_name.is_empty() {
-		return Err(ReacherResponseError::new(
-			StatusCode::BAD_REQUEST,
-			"tenant_name is required",
-		)
-		.into());
+		return Err(
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "tenant_name is required").into(),
+		);
 	}
 	if body.contact_email.is_empty() {
 		return Err(ReacherResponseError::new(
@@ -185,14 +183,13 @@ async fn onboard_handler(
 	);
 
 	// ── 4. Store result ─────────────────────────────
-	let _ = sqlx::query(
-		"INSERT INTO v1_task_result (payload, result, tenant_id) VALUES ($1, $2, $3)",
-	)
-	.bind(serde_json::json!({"to_email": body.email_to_verify}))
-	.bind(&result_json)
-	.bind(tenant_id)
-	.execute(&pg_pool)
-	.await;
+	let _ =
+		sqlx::query("INSERT INTO v1_task_result (payload, result, tenant_id) VALUES ($1, $2, $3)")
+			.bind(serde_json::json!({"to_email": body.email_to_verify}))
+			.bind(&result_json)
+			.bind(tenant_id)
+			.execute(&pg_pool)
+			.await;
 
 	// ── 5. Return everything ────────────────────────
 	Ok(warp::reply::with_status(

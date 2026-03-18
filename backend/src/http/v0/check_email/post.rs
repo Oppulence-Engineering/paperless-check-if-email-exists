@@ -16,22 +16,22 @@
 
 //! This file implements the `POST /v0/check_email` endpoint.
 
+use bytes::Bytes;
 use check_if_email_exists::smtp::verif_method::VerifMethod;
 use check_if_email_exists::{CheckEmailInput, CheckEmailInputProxy, LOG_TARGET};
-use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use warp::Reply;
 use warp::http::header::CONTENT_TYPE;
 use warp::Filter;
+use warp::Reply;
 
 use super::backwardcompat::{BackwardCompatHotmailB2CVerifMethod, BackwardCompatYahooVerifMethod};
 use crate::config::BackendConfig;
 use crate::http::deprecation::add_deprecation_headers;
+use crate::http::resolve_tenant;
 use crate::http::shared::check_email::handle_check_email;
 use crate::http::ReacherResponseError;
-use crate::http::resolve_tenant;
 use crate::tenant::context::TenantContext;
 
 /// The request body for the `POST /v0/check_email` endpoint.
@@ -118,7 +118,8 @@ async fn http_handler(
 	body: Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let request_body = body.clone();
-	let body: CheckEmailRequest = serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;
+	let body: CheckEmailRequest =
+		serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;
 	let result = handle_check_email(
 		config,
 		&request_body,

@@ -4,8 +4,12 @@ mod test_helpers;
 
 #[cfg(test)]
 mod tests {
-	use crate::test_helpers::{TestDb, insert_job, insert_task, insert_event, safe_result, insert_tenant, insert_api_key};
-	use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig, RabbitMQConfig, WorkerConfig};
+	use crate::test_helpers::{
+		insert_api_key, insert_event, insert_job, insert_task, insert_tenant, safe_result, TestDb,
+	};
+	use reacher_backend::config::{
+		BackendConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
+	};
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 	use serial_test::serial;
 	use sqlx::Row;
@@ -27,13 +31,22 @@ mod tests {
 	async fn worker_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { db_url: db_url(), extra: None }));
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url: db_url(),
+			extra: None,
+		}));
 		config.worker = WorkerConfig {
 			enable: true,
-			rabbitmq: Some(RabbitMQConfig { url: rmq_url(), concurrency: 4 }),
+			rabbitmq: Some(RabbitMQConfig {
+				url: rmq_url(),
+				concurrency: 4,
+			}),
 			webhook: None,
 		};
-		config.connect().await.expect("Failed to connect worker config");
+		config
+			.connect()
+			.await
+			.expect("Failed to connect worker config");
 		Arc::new(config)
 	}
 
@@ -41,7 +54,10 @@ mod tests {
 	async fn db_only_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { db_url: db_url(), extra: None }));
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url: db_url(),
+			extra: None,
+		}));
 		config.connect().await.expect("Failed to connect db config");
 		Arc::new(config)
 	}
@@ -55,7 +71,15 @@ mod tests {
 		let config = worker_config().await;
 
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
 		insert_task(db.pool(), job_id, "running", None, None, None).await;
 		insert_task(db.pool(), job_id, "queued", None, None, None).await;
 
@@ -181,7 +205,15 @@ mod tests {
 		let config = worker_config().await;
 		let job_id = insert_job(db.pool(), None, 5, "completed").await;
 		for _ in 0..5 {
-			insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
+			insert_task(
+				db.pool(),
+				job_id,
+				"completed",
+				None,
+				Some(safe_result()),
+				None,
+			)
+			.await;
 		}
 
 		let resp = request()
@@ -206,8 +238,24 @@ mod tests {
 		let db = TestDb::start().await;
 		let config = worker_config().await;
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
 		insert_task(db.pool(), job_id, "queued", None, None, None).await;
 
 		let resp = request()
@@ -232,8 +280,24 @@ mod tests {
 		let db = TestDb::start().await;
 		let config = worker_config().await;
 		let job_id = insert_job(db.pool(), None, 2, "completed").await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
 
 		let resp = request()
 			.path(&format!("/v1/bulk/{}/results", job_id))
@@ -253,7 +317,15 @@ mod tests {
 		let db = TestDb::start().await;
 		let config = worker_config().await;
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
-		insert_task(db.pool(), job_id, "completed", None, Some(safe_result()), None).await;
+		insert_task(
+			db.pool(),
+			job_id,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
 		// Only 1 of 3 done
 
 		let resp = request()
@@ -288,18 +360,31 @@ mod tests {
 		assert!(job_id > 0);
 
 		// Verify job was created with status='running'
-		let job_status: String = sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
-			.bind(job_id).fetch_one(db.pool()).await.unwrap();
+		let job_status: String =
+			sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+				.bind(job_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		assert_eq!(job_status, "running");
 
 		// Verify 3 task rows pre-created
-		let task_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1")
-			.bind(job_id).fetch_one(db.pool()).await.unwrap();
+		let task_count: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1")
+				.bind(job_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		assert_eq!(task_count, 3);
 
 		// Verify job.created event
-		let event_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM job_events WHERE job_id = $1 AND event_type = 'job.created'")
-			.bind(job_id).fetch_one(db.pool()).await.unwrap();
+		let event_count: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM job_events WHERE job_id = $1 AND event_type = 'job.created'",
+		)
+		.bind(job_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
 		assert_eq!(event_count, 1);
 	}
 
@@ -337,9 +422,12 @@ mod tests {
 				.path("/v1/check_email")
 				.method("POST")
 				.header(REACHER_SECRET_HEADER, "test")
-				.json(&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
-					r#"{"to_email": "worker@test.com"}"#,
-				).unwrap())
+				.json(
+					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
+						r#"{"to_email": "worker@test.com"}"#,
+					)
+					.unwrap(),
+				)
 				.reply(&create_routes(config)),
 		)
 		.await;
@@ -349,7 +437,9 @@ mod tests {
 		match resp {
 			Ok(r) => {
 				// If we get a response, it's likely 500 (no worker reply)
-				assert!(r.status() == StatusCode::INTERNAL_SERVER_ERROR || r.status() == StatusCode::OK);
+				assert!(
+					r.status() == StatusCode::INTERNAL_SERVER_ERROR || r.status() == StatusCode::OK
+				);
 			}
 			Err(_) => {
 				// Timeout is expected — the handle_with_worker code was still executed
@@ -373,27 +463,48 @@ mod tests {
 		tokio::spawn(async move {
 			use futures::StreamExt;
 			use std::convert::TryFrom;
-			let mut consumer = ch.basic_consume(
-				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
-				"test-worker",
-				lapin::options::BasicConsumeOptions::default(),
-				lapin::types::FieldTable::default(),
-			).await.unwrap();
+			let mut consumer = ch
+				.basic_consume(
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
+					"test-worker",
+					lapin::options::BasicConsumeOptions::default(),
+					lapin::types::FieldTable::default(),
+				)
+				.await
+				.unwrap();
 
 			while let Some(Ok(delivery)) = consumer.next().await {
-				if let Ok(task) = serde_json::from_slice::<reacher_backend::worker::do_work::CheckEmailTask>(&delivery.data) {
-					let output = reacher_backend::worker::do_work::check_email_and_send_result(&task, None).await;
-					if let (Some(reply_to), Some(corr_id)) = (delivery.properties.reply_to(), delivery.properties.correlation_id()) {
-						let reply = reacher_backend::worker::single_shot::SingleShotReply::try_from(&output).unwrap();
+				if let Ok(task) = serde_json::from_slice::<
+					reacher_backend::worker::do_work::CheckEmailTask,
+				>(&delivery.data)
+				{
+					let output =
+						reacher_backend::worker::do_work::check_email_and_send_result(&task, None)
+							.await;
+					if let (Some(reply_to), Some(corr_id)) = (
+						delivery.properties.reply_to(),
+						delivery.properties.correlation_id(),
+					) {
+						let reply =
+							reacher_backend::worker::single_shot::SingleShotReply::try_from(
+								&output,
+							)
+							.unwrap();
 						let payload = serde_json::to_vec(&reply).unwrap();
-						let _ = ch2.basic_publish(
-							"", reply_to.as_str(),
-							lapin::options::BasicPublishOptions::default(),
-							&payload,
-							lapin::BasicProperties::default().with_correlation_id(corr_id.to_owned()),
-						).await;
+						let _ = ch2
+							.basic_publish(
+								"",
+								reply_to.as_str(),
+								lapin::options::BasicPublishOptions::default(),
+								&payload,
+								lapin::BasicProperties::default()
+									.with_correlation_id(corr_id.to_owned()),
+							)
+							.await;
 					}
-					let _ = delivery.ack(lapin::options::BasicAckOptions::default()).await;
+					let _ = delivery
+						.ack(lapin::options::BasicAckOptions::default())
+						.await;
 				}
 			}
 		});
@@ -408,11 +519,15 @@ mod tests {
 				.path("/v1/check_email")
 				.method("POST")
 				.header(REACHER_SECRET_HEADER, "test")
-				.json(&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
-					r#"{"to_email": "foo@bar"}"#,
-				).unwrap())
+				.json(
+					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
+						r#"{"to_email": "foo@bar"}"#,
+					)
+					.unwrap(),
+				)
 				.reply(&routes),
-		).await;
+		)
+		.await;
 
 		match resp {
 			Ok(r) => {
@@ -435,14 +550,24 @@ mod tests {
 		let config = db_only_config().await;
 
 		// Insert a v0 job with results
-		let job_id: i32 = sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (2) RETURNING id")
-			.fetch_one(db.pool()).await.unwrap().get("id");
+		let job_id: i32 =
+			sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (2) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get("id");
 		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2)")
-			.bind(job_id).bind(serde_json::json!({"is_reachable": "safe"}))
-			.execute(db.pool()).await.unwrap();
+			.bind(job_id)
+			.bind(serde_json::json!({"is_reachable": "safe"}))
+			.execute(db.pool())
+			.await
+			.unwrap();
 		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2)")
-			.bind(job_id).bind(serde_json::json!({"is_reachable": "invalid"}))
-			.execute(db.pool()).await.unwrap();
+			.bind(job_id)
+			.bind(serde_json::json!({"is_reachable": "invalid"}))
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let resp = request()
 			.path(&format!("/v0/bulk/{}", job_id))
@@ -468,11 +593,18 @@ mod tests {
 		let db = TestDb::start().await;
 		let config = db_only_config().await;
 
-		let job_id: i32 = sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (1) RETURNING id")
-			.fetch_one(db.pool()).await.unwrap().get("id");
+		let job_id: i32 =
+			sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (1) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get("id");
 		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2)")
-			.bind(job_id).bind(serde_json::json!({"is_reachable": "safe", "input": "a@b.com"}))
-			.execute(db.pool()).await.unwrap();
+			.bind(job_id)
+			.bind(serde_json::json!({"is_reachable": "safe", "input": "a@b.com"}))
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let resp = request()
 			.path(&format!("/v0/bulk/{}/results?format=json", job_id))
@@ -493,12 +625,19 @@ mod tests {
 		let db = TestDb::start().await;
 		let config = db_only_config().await;
 
-		let job_id: i32 = sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (5) RETURNING id")
-			.fetch_one(db.pool()).await.unwrap().get("id");
+		let job_id: i32 =
+			sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (5) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap()
+				.get("id");
 		// Only 1 of 5 results
 		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2)")
-			.bind(job_id).bind(serde_json::json!({"is_reachable": "safe"}))
-			.execute(db.pool()).await.unwrap();
+			.bind(job_id)
+			.bind(serde_json::json!({"is_reachable": "safe"}))
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let resp = request()
 			.path(&format!("/v0/bulk/{}/results", job_id))
@@ -519,7 +658,8 @@ mod tests {
 		let _db = TestDb::start().await;
 		let config = db_only_config().await;
 		let resp = request()
-			.path("/readyz").method("GET")
+			.path("/readyz")
+			.method("GET")
 			.reply(&create_routes(config))
 			.await;
 
@@ -534,7 +674,8 @@ mod tests {
 		let _db = TestDb::start().await;
 		let config = worker_config().await;
 		let resp = request()
-			.path("/readyz").method("GET")
+			.path("/readyz")
+			.method("GET")
 			.reply(&create_routes(config))
 			.await;
 

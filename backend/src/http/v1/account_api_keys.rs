@@ -1,6 +1,6 @@
 use crate::config::BackendConfig;
-use crate::http::ReacherResponseError;
 use crate::http::resolve_tenant;
+use crate::http::ReacherResponseError;
 use crate::tenant::auth::generate_api_key;
 use crate::tenant::context::TenantContext;
 use chrono::{DateTime, Utc};
@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use uuid::Uuid;
-use warp::Filter;
 use warp::http::StatusCode;
+use warp::Filter;
 
 #[derive(Debug, Deserialize)]
 struct CreateApiKeyRequest {
@@ -121,9 +121,9 @@ async fn get_handler(
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
-	let key_id = key_id_str
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID format"))?;
+	let key_id = key_id_str.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID format")
+	})?;
 
 	let row = sqlx::query(
 		"SELECT id, tenant_id, key_prefix, name, scopes, status::TEXT, last_used_at, expires_at, created_at \
@@ -137,7 +137,11 @@ async fn get_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into()),
+		None => {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into(),
+			)
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -217,9 +221,9 @@ async fn update_handler(
 	body: UpdateApiKeyRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
-	let key_id = key_id_str
-		.parse::<Uuid>()
-		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID format"))?;
+	let key_id = key_id_str.parse::<Uuid>().map_err(|_| {
+		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID format")
+	})?;
 
 	let mut sets = Vec::new();
 	let mut param_idx = 3u32;
@@ -237,7 +241,9 @@ async fn update_handler(
 	}
 
 	if sets.is_empty() {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into());
+		return Err(
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No fields to update").into(),
+		);
 	}
 
 	let sql = format!(
@@ -272,7 +278,11 @@ async fn update_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into()),
+		None => {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into(),
+			)
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_response(&row)))
@@ -301,7 +311,9 @@ async fn revoke_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "API key not found").into());
 	}
 
-	Ok(warp::reply::json(&serde_json::json!({ "revoked": true, "key_id": key_id })))
+	Ok(warp::reply::json(
+		&serde_json::json!({ "revoked": true, "key_id": key_id }),
+	))
 }
 
 /// GET /v1/me/api-keys/{key_id}

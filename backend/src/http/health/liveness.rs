@@ -20,9 +20,7 @@ async fn handler() -> Result<impl warp::Reply, warp::Rejection> {
 	responses((status = 200, description = "Service is alive"))
 )]
 pub fn healthz() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	warp::path!("healthz")
-		.and(warp::get())
-		.and_then(handler)
+	warp::path!("healthz").and(warp::get()).and_then(handler)
 }
 
 #[cfg(test)]

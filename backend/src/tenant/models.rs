@@ -72,7 +72,11 @@ mod tests {
 
 	#[test]
 	fn test_tenant_status_serde_roundtrip() {
-		for status in [TenantStatus::Active, TenantStatus::Suspended, TenantStatus::Deactivated] {
+		for status in [
+			TenantStatus::Active,
+			TenantStatus::Suspended,
+			TenantStatus::Deactivated,
+		] {
 			let json = serde_json::to_string(&status).unwrap();
 			let back: TenantStatus = serde_json::from_str(&json).unwrap();
 			assert_eq!(status, back);
@@ -81,7 +85,12 @@ mod tests {
 
 	#[test]
 	fn test_plan_tier_serde_roundtrip() {
-		for tier in [PlanTier::Free, PlanTier::Starter, PlanTier::Professional, PlanTier::Enterprise] {
+		for tier in [
+			PlanTier::Free,
+			PlanTier::Starter,
+			PlanTier::Professional,
+			PlanTier::Enterprise,
+		] {
 			let json = serde_json::to_string(&tier).unwrap();
 			let back: PlanTier = serde_json::from_str(&json).unwrap();
 			assert_eq!(tier, back);
@@ -90,7 +99,11 @@ mod tests {
 
 	#[test]
 	fn test_api_key_status_serde_roundtrip() {
-		for status in [ApiKeyStatus::Active, ApiKeyStatus::Revoked, ApiKeyStatus::Expired] {
+		for status in [
+			ApiKeyStatus::Active,
+			ApiKeyStatus::Revoked,
+			ApiKeyStatus::Expired,
+		] {
 			let json = serde_json::to_string(&status).unwrap();
 			let back: ApiKeyStatus = serde_json::from_str(&json).unwrap();
 			assert_eq!(status, back);

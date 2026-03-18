@@ -90,7 +90,7 @@ async fn job_status(
 			"Failed to get job record for [job={}] with [error={}]",
 			job_id, e
 		);
-			BulkError::from(e)
+		BulkError::from(e)
 	})?;
 
 	let agg_info = sqlx::query!(

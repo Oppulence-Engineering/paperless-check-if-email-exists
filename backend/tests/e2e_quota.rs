@@ -3,6 +3,7 @@ mod test_helpers;
 
 #[cfg(test)]
 mod tests {
+	use crate::test_helpers::{insert_tenant, TestDb};
 	use chrono::Utc;
 	use reacher_backend::config::ThrottleConfig;
 	use reacher_backend::tenant::context::TenantContext;
@@ -12,7 +13,6 @@ mod tests {
 	};
 	use serial_test::serial;
 	use sqlx::{PgPool, Row};
-	use crate::test_helpers::{insert_tenant, TestDb};
 	use uuid::Uuid;
 
 	/// Build a TenantContext by reading the tenant row from the database so that
@@ -222,7 +222,10 @@ mod tests {
 
 		let used: i32 = row.get("used_this_period");
 
-		assert_eq!(used, 0, "Counter should have been reset to 0 after period expiry");
+		assert_eq!(
+			used, 0,
+			"Counter should have been reset to 0 after period expiry"
+		);
 	}
 
 	// ---------------------------------------------------------------
@@ -341,6 +344,9 @@ mod tests {
 			.await
 			.unwrap();
 		let used: i32 = row.get("used_this_period");
-		assert_eq!(used, 9, "Count-based quota check should not increment when over limit");
+		assert_eq!(
+			used, 9,
+			"Count-based quota check should not increment when over limit"
+		);
 	}
 }

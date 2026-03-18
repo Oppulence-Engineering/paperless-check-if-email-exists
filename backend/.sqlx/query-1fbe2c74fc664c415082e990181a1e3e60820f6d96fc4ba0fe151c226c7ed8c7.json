@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE v1_bulk_job SET status = 'running', updated_at = NOW() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1fbe2c74fc664c415082e990181a1e3e60820f6d96fc4ba0fe151c226c7ed8c7"
+}

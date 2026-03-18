@@ -261,14 +261,19 @@ mod tests {
 		json["misc"]["gravatar_url"] = serde_json::json!("https://gravatar.com/avatar/abc");
 		let wrapper = CsvWrapper(json);
 		let csv: CsvResponse = wrapper.try_into().unwrap();
-		assert_eq!(csv.misc_gravatar_url.unwrap(), "https://gravatar.com/avatar/abc");
+		assert_eq!(
+			csv.misc_gravatar_url.unwrap(),
+			"https://gravatar.com/avatar/abc"
+		);
 	}
 
 	#[test]
 	fn test_csv_serialization() {
 		let wrapper = CsvWrapper(valid_json());
 		let csv: CsvResponse = wrapper.try_into().unwrap();
-		let mut wtr = csv::WriterBuilder::new().has_headers(true).from_writer(vec![]);
+		let mut wtr = csv::WriterBuilder::new()
+			.has_headers(true)
+			.from_writer(vec![]);
 		wtr.serialize(&csv).unwrap();
 		let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
 		assert!(data.contains("test@example.com"));

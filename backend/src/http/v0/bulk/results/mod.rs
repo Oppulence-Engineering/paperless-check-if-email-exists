@@ -75,7 +75,7 @@ async fn job_result(
 			"Failed to fetch total_records for [job={}] with [error={}]",
 			job_id, e
 		);
-			BulkError::from(e)
+		BulkError::from(e)
 	})?
 	.total_records;
 	let total_processed = sqlx::query!(
@@ -90,7 +90,7 @@ async fn job_result(
 			"Failed to get total_processed for [job={}] with [error={}]",
 			job_id, e
 		);
-			BulkError::from(e)
+		BulkError::from(e)
 	})?
 	.count
 	.unwrap_or(0);
@@ -163,7 +163,7 @@ async fn job_result_as_iter(
 			e
 		);
 
-			BulkError::from(e)
+		BulkError::from(e)
 	})?;
 
 	Ok(Box::new(

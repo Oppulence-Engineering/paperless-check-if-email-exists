@@ -1,12 +1,12 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
-use warp::http::StatusCode;
 use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -51,8 +51,9 @@ async fn http_handler(
 	let limit = query.limit.unwrap_or(50).min(200);
 	let state_filter = query.state.as_deref().unwrap_or("completed");
 
-	let results = sqlx::query_as::<_, (i32, String, Option<serde_json::Value>, Option<String>, i32)>(
-		r#"
+	let results =
+		sqlx::query_as::<_, (i32, String, Option<serde_json::Value>, Option<String>, i32)>(
+			r#"
 		SELECT id, task_state::TEXT, result, error, retry_count
 		FROM v1_task_result
 		WHERE job_id = $1
@@ -61,14 +62,14 @@ async fn http_handler(
 		ORDER BY id ASC
 		LIMIT $3
 		"#,
-	)
-	.bind(job_id)
-	.bind(query.cursor)
-	.bind(limit + 1)
-	.bind(state_filter)
-	.fetch_all(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+		)
+		.bind(job_id)
+		.bind(query.cursor)
+		.bind(limit + 1)
+		.bind(state_filter)
+		.fetch_all(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	let has_more = results.len() as i64 > limit;
 	let results: Vec<TaskResult> = results

@@ -12,8 +12,8 @@ mod test_helpers;
 
 #[cfg(test)]
 mod job_status_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -23,15 +23,38 @@ mod job_status_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "status-summary", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 5, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 5, "running").await;
 
 		// 2 completed, 1 running, 1 queued, 1 failed
-		test_helpers::insert_task(pool, job_id, "completed", Some(tenant_id), Some(test_helpers::safe_result()), None).await;
-		test_helpers::insert_task(pool, job_id, "completed", Some(tenant_id), Some(test_helpers::safe_result()), None).await;
+		test_helpers::insert_task(
+			pool,
+			job_id,
+			"completed",
+			Some(tenant_id),
+			Some(test_helpers::safe_result()),
+			None,
+		)
+		.await;
+		test_helpers::insert_task(
+			pool,
+			job_id,
+			"completed",
+			Some(tenant_id),
+			Some(test_helpers::safe_result()),
+			None,
+		)
+		.await;
 		test_helpers::insert_task(pool, job_id, "running", Some(tenant_id), None, None).await;
 		test_helpers::insert_task(pool, job_id, "queued", Some(tenant_id), None, None).await;
-		test_helpers::insert_task(pool, job_id, "failed", Some(tenant_id), None, Some("timeout")).await;
+		test_helpers::insert_task(
+			pool,
+			job_id,
+			"failed",
+			Some(tenant_id),
+			None,
+			Some("timeout"),
+		)
+		.await;
 
 		// Aggregate task states for this job
 		let rows = sqlx::query(
@@ -89,8 +112,8 @@ mod job_status_tests {
 
 #[cfg(test)]
 mod job_cancellation_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -100,8 +123,7 @@ mod job_cancellation_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cancel-run", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 4, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 4, "running").await;
 
 		// 3 queued + 1 running
 		test_helpers::insert_task(pool, job_id, "queued", Some(tenant_id), None, None).await;
@@ -150,8 +172,7 @@ mod job_cancellation_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cancel-status", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 2, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 2, "running").await;
 
 		// 2 queued tasks — cancelling all of them leaves no non-terminal tasks
 		test_helpers::insert_task(pool, job_id, "queued", Some(tenant_id), None, None).await;
@@ -191,13 +212,11 @@ mod job_cancellation_tests {
 		}
 
 		// Verify job status
-		let row = sqlx::query(
-			"SELECT status::TEXT AS status FROM v1_bulk_job WHERE id = $1",
-		)
-		.bind(job_id)
-		.fetch_one(pool)
-		.await
-		.expect("fetch job status failed");
+		let row = sqlx::query("SELECT status::TEXT AS status FROM v1_bulk_job WHERE id = $1")
+			.bind(job_id)
+			.fetch_one(pool)
+			.await
+			.expect("fetch job status failed");
 
 		let job_status: String = row.get("status");
 
@@ -211,8 +230,7 @@ mod job_cancellation_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cancel-done", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 1, "completed").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 1, "completed").await;
 
 		// Attempt to set a completed job to cancelling — should affect 0 rows
 		let result = sqlx::query(
@@ -230,13 +248,11 @@ mod job_cancellation_tests {
 		);
 
 		// Confirm status is still completed
-		let row = sqlx::query(
-			"SELECT status::TEXT AS status FROM v1_bulk_job WHERE id = $1",
-		)
-		.bind(job_id)
-		.fetch_one(pool)
-		.await
-		.expect("fetch status failed");
+		let row = sqlx::query("SELECT status::TEXT AS status FROM v1_bulk_job WHERE id = $1")
+			.bind(job_id)
+			.fetch_one(pool)
+			.await
+			.expect("fetch status failed");
 
 		let status: String = row.get("status");
 
@@ -250,8 +266,8 @@ mod job_cancellation_tests {
 
 #[cfg(test)]
 mod event_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -261,18 +277,11 @@ mod event_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "evt-order", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 1, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 1, "running").await;
 
 		let mut event_ids = Vec::new();
 		for i in 0..5 {
-			let eid = test_helpers::insert_event(
-				pool,
-				job_id,
-				None,
-				&format!("event_{}", i),
-			)
-			.await;
+			let eid = test_helpers::insert_event(pool, job_id, None, &format!("event_{}", i)).await;
 			event_ids.push(eid);
 		}
 
@@ -308,8 +317,7 @@ mod event_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "evt-page", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 1, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 1, "running").await;
 
 		for i in 0..10 {
 			test_helpers::insert_event(pool, job_id, None, &format!("page_evt_{}", i)).await;
@@ -362,8 +370,8 @@ mod event_tests {
 
 #[cfg(test)]
 mod cursor_results_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -373,8 +381,7 @@ mod cursor_results_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cursor-first", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 10, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 10, "running").await;
 
 		// Insert 10 completed tasks with results
 		for _ in 0..10 {
@@ -417,8 +424,7 @@ mod cursor_results_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cursor-next", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 10, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 10, "running").await;
 
 		let mut task_ids = Vec::new();
 		for _ in 0..10 {
@@ -437,14 +443,13 @@ mod cursor_results_tests {
 		let limit: i64 = 3;
 
 		// First page
-		let page1 = sqlx::query(
-			"SELECT id FROM v1_task_result WHERE job_id = $1 ORDER BY id ASC LIMIT $2",
-		)
-		.bind(job_id)
-		.bind(limit)
-		.fetch_all(pool)
-		.await
-		.expect("page1 query failed");
+		let page1 =
+			sqlx::query("SELECT id FROM v1_task_result WHERE job_id = $1 ORDER BY id ASC LIMIT $2")
+				.bind(job_id)
+				.bind(limit)
+				.fetch_all(pool)
+				.await
+				.expect("page1 query failed");
 
 		let cursor: i32 = page1.last().unwrap().get("id");
 
@@ -479,8 +484,7 @@ mod cursor_results_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cursor-last", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 5, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 5, "running").await;
 
 		let mut task_ids = Vec::new();
 		for _ in 0..5 {
@@ -514,7 +518,11 @@ mod cursor_results_tests {
 		let has_more = rows.len() as i64 > limit;
 		let results: Vec<_> = rows.into_iter().take(limit as usize).collect();
 
-		assert_eq!(results.len(), 2, "last page should have only 2 remaining results");
+		assert_eq!(
+			results.len(),
+			2,
+			"last page should have only 2 remaining results"
+		);
 		assert!(!has_more, "has_more should be false on the last page");
 	}
 
@@ -525,21 +533,30 @@ mod cursor_results_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "cursor-filter", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 6, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 6, "running").await;
 
 		// Mix of states: 3 completed, 2 failed, 1 queued
 		for _ in 0..3 {
 			test_helpers::insert_task(
-				pool, job_id, "completed", Some(tenant_id),
-				Some(test_helpers::safe_result()), None,
-			).await;
+				pool,
+				job_id,
+				"completed",
+				Some(tenant_id),
+				Some(test_helpers::safe_result()),
+				None,
+			)
+			.await;
 		}
 		for _ in 0..2 {
 			test_helpers::insert_task(
-				pool, job_id, "failed", Some(tenant_id),
-				None, Some("smtp error"),
-			).await;
+				pool,
+				job_id,
+				"failed",
+				Some(tenant_id),
+				None,
+				Some("smtp error"),
+			)
+			.await;
 		}
 		test_helpers::insert_task(pool, job_id, "queued", Some(tenant_id), None, None).await;
 
@@ -552,7 +569,11 @@ mod cursor_results_tests {
 		.await
 		.expect("state filter query failed");
 
-		assert_eq!(completed_rows.len(), 3, "only completed tasks should be returned");
+		assert_eq!(
+			completed_rows.len(),
+			3,
+			"only completed tasks should be returned"
+		);
 		for row in &completed_rows {
 			let task_state: String = row.get("task_state");
 			assert_eq!(task_state, "completed");
@@ -566,8 +587,8 @@ mod cursor_results_tests {
 
 #[cfg(test)]
 mod dedupe_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 
 	#[tokio::test]
 	#[serial]
@@ -576,8 +597,7 @@ mod dedupe_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "dedupe", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 2, "running").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 2, "running").await;
 
 		let dedupe_key = "user@example.com";
 
@@ -617,8 +637,8 @@ mod dedupe_tests {
 
 #[cfg(test)]
 mod completion_detection_tests {
-	use serial_test::serial;
 	use super::test_helpers::{self, TestDb};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	#[tokio::test]
@@ -662,13 +682,11 @@ mod completion_detection_tests {
 		);
 
 		// Fetch job total_records for comparison
-		let row = sqlx::query(
-			"SELECT total_records FROM v1_bulk_job WHERE id = $1",
-		)
-		.bind(job_id)
-		.fetch_one(pool)
-		.await
-		.expect("fetch total_records failed");
+		let row = sqlx::query("SELECT total_records FROM v1_bulk_job WHERE id = $1")
+			.bind(job_id)
+			.fetch_one(pool)
+			.await
+			.expect("fetch total_records failed");
 
 		let job_total: Option<i32> = row.get("total_records");
 
@@ -682,20 +700,11 @@ mod completion_detection_tests {
 		let pool = db.pool();
 
 		let tenant_id = test_helpers::insert_tenant(pool, "pre-created", None, 0).await;
-		let job_id =
-			test_helpers::insert_job(pool, Some(tenant_id), 3, "pending").await;
+		let job_id = test_helpers::insert_job(pool, Some(tenant_id), 3, "pending").await;
 
 		// Insert 3 queued tasks with NO result and NO error
 		for _ in 0..3 {
-			test_helpers::insert_task(
-				pool,
-				job_id,
-				"queued",
-				Some(tenant_id),
-				None,
-				None,
-			)
-			.await;
+			test_helpers::insert_task(pool, job_id, "queued", Some(tenant_id), None, None).await;
 		}
 
 		// Count processed (result IS NOT NULL OR error IS NOT NULL)

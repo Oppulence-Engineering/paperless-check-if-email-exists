@@ -3,12 +3,12 @@ mod test_helpers;
 
 #[cfg(test)]
 mod tests {
-	use serial_test::serial;
 	use super::test_helpers::TestDb;
 	use reacher_backend::http::idempotency::{
 		check_idempotency_key, cleanup_idempotency_keys, complete_idempotency_key,
 		fail_idempotency_key, hash_request_body, IdempotencyCheck,
 	};
+	use serial_test::serial;
 	use sqlx::Row;
 
 	const TENANT: &str = "test-tenant";
@@ -67,15 +67,14 @@ mod tests {
 		let response_body = b"cached-response-body";
 
 		// Insert and complete.
-		let record_id = match check_idempotency_key(
-			pool, TENANT, "key-comp", PATH, &body_hash, LOCKED_BY,
-		)
-		.await
-		.expect("first check failed")
-		{
-			IdempotencyCheck::New { record_id } => record_id,
-			other => panic!("Expected New, got {:?}", other),
-		};
+		let record_id =
+			match check_idempotency_key(pool, TENANT, "key-comp", PATH, &body_hash, LOCKED_BY)
+				.await
+				.expect("first check failed")
+			{
+				IdempotencyCheck::New { record_id } => record_id,
+				other => panic!("Expected New, got {:?}", other),
+			};
 
 		complete_idempotency_key(pool, record_id, 200, response_body)
 			.await
@@ -104,17 +103,15 @@ mod tests {
 		let hash_b = hash_request_body(b"body-b");
 
 		// Insert with hash_a.
-		let first =
-			check_idempotency_key(pool, TENANT, "key-mismatch", PATH, &hash_a, LOCKED_BY)
-				.await
-				.expect("first check failed");
+		let first = check_idempotency_key(pool, TENANT, "key-mismatch", PATH, &hash_a, LOCKED_BY)
+			.await
+			.expect("first check failed");
 		assert!(matches!(first, IdempotencyCheck::New { .. }));
 
 		// Check with hash_b — should detect mismatch.
-		let second =
-			check_idempotency_key(pool, TENANT, "key-mismatch", PATH, &hash_b, LOCKED_BY)
-				.await
-				.expect("second check failed");
+		let second = check_idempotency_key(pool, TENANT, "key-mismatch", PATH, &hash_b, LOCKED_BY)
+			.await
+			.expect("second check failed");
 		assert!(
 			matches!(second, IdempotencyCheck::BodyMismatch),
 			"Expected BodyMismatch, got {:?}",
@@ -130,15 +127,14 @@ mod tests {
 		let body_hash = hash_request_body(b"body-fail-retry");
 
 		// Insert and fail.
-		let record_id = match check_idempotency_key(
-			pool, TENANT, "key-fail", PATH, &body_hash, LOCKED_BY,
-		)
-		.await
-		.expect("first check failed")
-		{
-			IdempotencyCheck::New { record_id } => record_id,
-			other => panic!("Expected New, got {:?}", other),
-		};
+		let record_id =
+			match check_idempotency_key(pool, TENANT, "key-fail", PATH, &body_hash, LOCKED_BY)
+				.await
+				.expect("first check failed")
+			{
+				IdempotencyCheck::New { record_id } => record_id,
+				other => panic!("Expected New, got {:?}", other),
+			};
 
 		fail_idempotency_key(pool, record_id)
 			.await
@@ -166,15 +162,14 @@ mod tests {
 		let body_hash = hash_request_body(b"body-store");
 		let response_body = b"{\"result\": \"ok\"}";
 
-		let record_id = match check_idempotency_key(
-			pool, TENANT, "key-store", PATH, &body_hash, LOCKED_BY,
-		)
-		.await
-		.expect("check failed")
-		{
-			IdempotencyCheck::New { record_id } => record_id,
-			other => panic!("Expected New, got {:?}", other),
-		};
+		let record_id =
+			match check_idempotency_key(pool, TENANT, "key-store", PATH, &body_hash, LOCKED_BY)
+				.await
+				.expect("check failed")
+			{
+				IdempotencyCheck::New { record_id } => record_id,
+				other => panic!("Expected New, got {:?}", other),
+			};
 
 		complete_idempotency_key(pool, record_id, 201, response_body)
 			.await
@@ -201,20 +196,14 @@ mod tests {
 		let pool = db.pool();
 		let body_hash = hash_request_body(b"body-cleanup-expired");
 
-		let record_id = match check_idempotency_key(
-			pool,
-			TENANT,
-			"key-expire",
-			PATH,
-			&body_hash,
-			LOCKED_BY,
-		)
-		.await
-		.expect("check failed")
-		{
-			IdempotencyCheck::New { record_id } => record_id,
-			other => panic!("Expected New, got {:?}", other),
-		};
+		let record_id =
+			match check_idempotency_key(pool, TENANT, "key-expire", PATH, &body_hash, LOCKED_BY)
+				.await
+				.expect("check failed")
+			{
+				IdempotencyCheck::New { record_id } => record_id,
+				other => panic!("Expected New, got {:?}", other),
+			};
 
 		// Complete the record so it becomes eligible for expiry cleanup.
 		complete_idempotency_key(pool, record_id, 200, b"done")
@@ -234,16 +223,9 @@ mod tests {
 		cleanup_idempotency_keys(pool).await;
 
 		// Verify the record was deleted — next check should return New.
-		let after = check_idempotency_key(
-			pool,
-			TENANT,
-			"key-expire",
-			PATH,
-			&body_hash,
-			LOCKED_BY,
-		)
-		.await
-		.expect("post-cleanup check failed");
+		let after = check_idempotency_key(pool, TENANT, "key-expire", PATH, &body_hash, LOCKED_BY)
+			.await
+			.expect("post-cleanup check failed");
 
 		assert!(
 			matches!(after, IdempotencyCheck::New { .. }),
@@ -260,20 +242,14 @@ mod tests {
 		let body_hash = hash_request_body(b"body-stale");
 
 		// Insert a key (stays in 'processing' status).
-		let _record_id = match check_idempotency_key(
-			pool,
-			TENANT,
-			"key-stale",
-			PATH,
-			&body_hash,
-			LOCKED_BY,
-		)
-		.await
-		.expect("check failed")
-		{
-			IdempotencyCheck::New { record_id } => record_id,
-			other => panic!("Expected New, got {:?}", other),
-		};
+		let _record_id =
+			match check_idempotency_key(pool, TENANT, "key-stale", PATH, &body_hash, LOCKED_BY)
+				.await
+				.expect("check failed")
+			{
+				IdempotencyCheck::New { record_id } => record_id,
+				other => panic!("Expected New, got {:?}", other),
+			};
 
 		// Manually set locked_at to 10 minutes ago to simulate a stale lock.
 		sqlx::query(
@@ -300,7 +276,10 @@ mod tests {
 
 		let status: String = row.get("status");
 
-		assert_eq!(status, "failed", "stale processing record should be marked failed");
+		assert_eq!(
+			status, "failed",
+			"stale processing record should be marked failed"
+		);
 
 		// Next check should return New (failed records allow retry).
 		let retry = check_idempotency_key(pool, TENANT, "key-stale", PATH, &body_hash, LOCKED_BY)
@@ -328,7 +307,10 @@ mod tests {
 	async fn test_hash_different_bodies() {
 		let hash_a = hash_request_body(b"alpha");
 		let hash_b = hash_request_body(b"beta");
-		assert_ne!(hash_a, hash_b, "different bodies should produce different hashes");
+		assert_ne!(
+			hash_a, hash_b,
+			"different bodies should produce different hashes"
+		);
 	}
 
 	#[tokio::test]

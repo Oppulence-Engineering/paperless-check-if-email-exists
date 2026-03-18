@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status as \"status: String\" FROM v1_bulk_job WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status: String",
+        "type_info": {
+          "Custom": {
+            "name": "job_state",
+            "kind": {
+              "Enum": [
+                "pending",
+                "running",
+                "completed",
+                "cancelling",
+                "cancelled",
+                "failed"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7a46e982e09e386a06fecf76dc58cca1247dc0980ec008d891275a9d40e74585"
+}

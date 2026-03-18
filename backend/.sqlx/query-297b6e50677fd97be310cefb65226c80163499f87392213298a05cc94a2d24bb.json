@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tINSERT INTO job_events (job_id, event_type, event_data, actor)\n\t\tVALUES ($1, 'job.created', $2, 'api')\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "297b6e50677fd97be310cefb65226c80163499f87392213298a05cc94a2d24bb"
+}

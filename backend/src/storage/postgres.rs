@@ -55,10 +55,7 @@ impl PostgresStorage {
 			.and_then(|m| m.tenant_id.as_ref())
 			.and_then(|id| id.parse().ok());
 
-		let task_db_id: Option<i32> = task
-			.metadata
-			.as_ref()
-			.and_then(|m| m.task_db_id);
+		let task_db_id: Option<i32> = task.metadata.as_ref().and_then(|m| m.task_db_id);
 
 		match worker_output {
 			Ok(output) => {

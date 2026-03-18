@@ -3,11 +3,11 @@ use serde_json::Value;
 use utoipa::OpenApi;
 use warp::Filter;
 
+use crate::http::v1::account_api_keys;
 use crate::http::v1::admin::api_keys as admin_api_keys;
 use crate::http::v1::admin::jobs as admin_jobs;
 use crate::http::v1::admin::quota as admin_quota;
 use crate::http::v1::admin::tenants as admin_tenants;
-use crate::http::v1::account_api_keys;
 use crate::http::v1::tenant_domains;
 use crate::http::v1::tenant_settings;
 
@@ -95,8 +95,7 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 	}
 
 	if let (Some(base_schemas), Some(generated_schemas)) = (
-		base
-			.get_mut("components")
+		base.get_mut("components")
 			.and_then(|v| v.get_mut("schemas"))
 			.and_then(Value::as_object_mut),
 		generated
@@ -112,8 +111,8 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 
 fn build_spec() -> Result<Value, ReacherResponseError> {
 	let mut spec: Value = serde_json::from_str(BASE_OPENAPI).map_err(ReacherResponseError::from)?;
-	let generated_spec = serde_json::to_value(BackendApiDoc::openapi())
-		.map_err(ReacherResponseError::from)?;
+	let generated_spec =
+		serde_json::to_value(BackendApiDoc::openapi()).map_err(ReacherResponseError::from)?;
 
 	merge_openapi(&mut spec, generated_spec);
 	Ok(spec)
@@ -128,8 +127,8 @@ fn build_spec() -> Result<Value, ReacherResponseError> {
 		(status = 200, description = "Merged OpenAPI specification for all documented REST endpoints")
 	)
 )]
-pub fn openapi_spec(
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+pub fn openapi_spec() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone
+{
 	warp::path!("openapi.json")
 		.and(warp::get())
 		.and_then(|| async move {

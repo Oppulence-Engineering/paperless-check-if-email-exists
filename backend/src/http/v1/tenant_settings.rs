@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use uuid::Uuid;
-use warp::Filter;
 use warp::http::StatusCode;
+use warp::Filter;
 
 #[derive(Debug, Deserialize)]
 struct UpdateTenantSettingsRequest {
@@ -87,9 +87,7 @@ fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
 		slug: row.get("slug"),
 		monthly_email_limit: row.get("monthly_email_limit"),
 		used_this_period: row.get("used_this_period"),
-		period_reset_at: row
-			.get::<DateTime<Utc>, _>("period_reset_at")
-			.to_rfc3339(),
+		period_reset_at: row.get::<DateTime<Utc>, _>("period_reset_at").to_rfc3339(),
 		result_retention_days: row.get("result_retention_days"),
 		default_webhook_url: row.get("default_webhook_url"),
 	}
@@ -159,9 +157,12 @@ async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, wa
 		_ => None,
 	};
 
-	let tenant_id = tenant_ctx
-		.tenant_id
-		.ok_or_else(|| warp::reject::custom(ReacherResponseError::new(StatusCode::UNAUTHORIZED, "Tenant context required")))?;
+	let tenant_id = tenant_ctx.tenant_id.ok_or_else(|| {
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::UNAUTHORIZED,
+			"Tenant context required",
+		))
+	})?;
 	let response = TenantUsageResponse {
 		tenant_id,
 		tenant_name: tenant_ctx.tenant_name,
@@ -187,16 +188,20 @@ async fn update_settings_handler(
 		&& body.webhook_signing_secret.is_none()
 		&& body.result_retention_days.is_none()
 	{
-		return Err(
-			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No settings fields provided").into(),
-		);
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"No settings fields provided",
+		)
+		.into());
 	}
 
 	if let Some(days) = body.result_retention_days {
 		if days <= 0 {
-			return Err(
-				ReacherResponseError::new(StatusCode::BAD_REQUEST, "result_retention_days must be positive").into(),
-			);
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"result_retention_days must be positive",
+			)
+			.into());
 		}
 	}
 
@@ -239,7 +244,9 @@ async fn update_settings_handler(
 
 	let row = match row {
 		Some(r) => r,
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into()),
+		None => {
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into())
+		}
 	};
 
 	Ok(warp::reply::json(&row_to_settings(&row)))
@@ -253,9 +260,11 @@ async fn update_webhook_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	if body.default_webhook_url.is_none() && body.webhook_signing_secret.is_none() {
-		return Err(
-			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No webhook fields provided").into(),
-		);
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"No webhook fields provided",
+		)
+		.into());
 	}
 
 	let row = sqlx::query(
@@ -294,7 +303,9 @@ async fn clear_webhook_handler(
 
 	let _ = match row {
 		Some(_) => (),
-		None => return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into()),
+		None => {
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into())
+		}
 	};
 
 	Ok(warp::reply::json(&serde_json::json!({
@@ -423,4 +434,3 @@ pub fn v1_get_tenant_usage(
 		.and_then(usage_handler)
 		.with(warp::log("reacher_backend::v1::tenant::usage"))
 }
-

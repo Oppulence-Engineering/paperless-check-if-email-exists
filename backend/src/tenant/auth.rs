@@ -34,8 +34,8 @@ pub fn generate_api_key() -> (String, String, String) {
 /// dump cannot be used to recover API keys even with brute force.
 pub fn hash_api_key(key: &str) -> String {
 	if let Some(secret) = get_hmac_secret() {
-		let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-			.expect("HMAC accepts any key length");
+		let mut mac =
+			HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
 		mac.update(key.as_bytes());
 		hex::encode(mac.finalize().into_bytes())
 	} else {
@@ -107,7 +107,9 @@ pub async fn resolve_from_api_key(
 	};
 
 	// If matched via legacy hash (not the current HMAC hash), upgrade in background
-	let matched_via_legacy = legacy_hash.as_deref().map_or(false, |lh| row.key_hash == lh);
+	let matched_via_legacy = legacy_hash
+		.as_deref()
+		.map_or(false, |lh| row.key_hash == lh);
 	if matched_via_legacy {
 		let pool = pg_pool.clone();
 		let new_hash = key_hash.clone();
@@ -115,8 +117,11 @@ pub async fn resolve_from_api_key(
 		tokio::spawn(async move {
 			let _ = sqlx::query!(
 				"UPDATE api_keys SET key_hash = $1 WHERE id = $2",
-				new_hash, api_key_id,
-			).execute(&pool).await;
+				new_hash,
+				api_key_id,
+			)
+			.execute(&pool)
+			.await;
 		});
 	}
 

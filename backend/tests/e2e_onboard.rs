@@ -16,7 +16,10 @@ mod tests {
 		c.header_secret = Some("s".into());
 		let db = std::env::var("TEST_DATABASE_URL")
 			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig { db_url: db, extra: None }));
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url: db,
+			extra: None,
+		}));
 		c.connect().await.unwrap();
 		Arc::new(c)
 	}
@@ -38,7 +41,12 @@ mod tests {
 			.reply(&create_routes(config))
 			.await;
 
-		assert_eq!(resp.status(), StatusCode::CREATED, "body: {:?}", resp.body());
+		assert_eq!(
+			resp.status(),
+			StatusCode::CREATED,
+			"body: {:?}",
+			resp.body()
+		);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 
 		// Tenant created
@@ -49,7 +57,10 @@ mod tests {
 		assert_eq!(body["tenant"]["status"], "active");
 
 		// API key created
-		assert!(body["api_key"]["key"].as_str().unwrap().starts_with("rch_live_"));
+		assert!(body["api_key"]["key"]
+			.as_str()
+			.unwrap()
+			.starts_with("rch_live_"));
 		assert!(body["api_key"]["id"].is_string());
 		assert_eq!(body["api_key"]["name"], "Default");
 
@@ -90,7 +101,11 @@ mod tests {
 			.reply(&routes)
 			.await;
 
-		assert_eq!(check_resp.status(), StatusCode::OK, "API key from onboard should work");
+		assert_eq!(
+			check_resp.status(),
+			StatusCode::OK,
+			"API key from onboard should work"
+		);
 	}
 
 	#[tokio::test]
@@ -272,11 +287,12 @@ mod tests {
 		let tenant_id: uuid::Uuid = body["tenant"]["id"].as_str().unwrap().parse().unwrap();
 
 		// Verify result stored in DB
-		let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1")
-			.bind(tenant_id)
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+		let count: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		assert!(count >= 1, "Verification result should be stored in DB");
 	}
 }

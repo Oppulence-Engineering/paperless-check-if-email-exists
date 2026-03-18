@@ -16,17 +16,17 @@
 
 //! This file implements the `POST /v1/check_email` endpoint.
 
-use check_if_email_exists::LOG_TARGET;
 use bytes::Bytes;
-use warp::http::header::CONTENT_TYPE;
+use check_if_email_exists::LOG_TARGET;
 use serde_json;
 use std::sync::Arc;
+use warp::http::header::CONTENT_TYPE;
 use warp::Filter;
 
 use crate::config::BackendConfig;
-use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::resolve_tenant;
 use crate::http::shared::check_email::handle_check_email;
+use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::ReacherResponseError;
 use crate::tenant::context::TenantContext;
 use warp::Reply;
@@ -39,7 +39,8 @@ async fn http_handler(
 	body: Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let request_body = body.clone();
-	let body: CheckEmailRequest = serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;
+	let body: CheckEmailRequest =
+		serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;
 	let result = handle_check_email(
 		config,
 		&request_body,

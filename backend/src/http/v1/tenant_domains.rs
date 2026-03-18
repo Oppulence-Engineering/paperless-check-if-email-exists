@@ -5,8 +5,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use warp::Filter;
 use warp::http::StatusCode;
+use warp::Filter;
 
 #[derive(Debug, Serialize)]
 struct TenantDomainResponse {
@@ -81,14 +81,20 @@ fn normalize_domain(raw: String) -> Result<String, ReacherResponseError> {
 		));
 	}
 
-	if !domain.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-') {
+	if !domain
+		.chars()
+		.all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-')
+	{
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
 			"Domain contains invalid characters",
 		));
 	}
 
-	domain = domain.trim_end_matches('.').trim_start_matches('.').to_string();
+	domain = domain
+		.trim_end_matches('.')
+		.trim_start_matches('.')
+		.to_string();
 	if domain.is_empty() || !domain.contains('.') {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -208,9 +214,11 @@ async fn update_domain_handler(
 		&& body.is_verified.is_none()
 		&& body.notes.is_none()
 	{
-		return Err(
-			ReacherResponseError::new(StatusCode::BAD_REQUEST, "No domain fields provided").into(),
-		);
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"No domain fields provided",
+		)
+		.into());
 	}
 
 	let mut sets = Vec::new();

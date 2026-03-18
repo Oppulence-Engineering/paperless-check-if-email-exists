@@ -162,7 +162,9 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 							delivery.ack(BasicAckOptions::default()).await?;
 
 							// Mark task as cancelled if we have its DB id
-							if let Some(task_db_id) = payload.metadata.as_ref().and_then(|m| m.task_db_id) {
+							if let Some(task_db_id) =
+								payload.metadata.as_ref().and_then(|m| m.task_db_id)
+							{
 								let _ = sqlx::query!(
 									"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
 									task_db_id,

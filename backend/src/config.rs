@@ -252,12 +252,11 @@ impl BackendConfig {
 		tenant_throttle_config: &ThrottleConfig,
 	) -> Arc<ThrottleManager> {
 		match tenant_id {
-			Some(id) => {
-				self.tenant_throttle_managers
-					.entry(id)
-					.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())))
-					.clone()
-			}
+			Some(id) => self
+				.tenant_throttle_managers
+				.entry(id)
+				.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())))
+				.clone(),
 			None => self.throttle_manager.clone(),
 		}
 	}

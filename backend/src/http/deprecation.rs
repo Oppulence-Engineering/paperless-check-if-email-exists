@@ -35,7 +35,9 @@ pub fn add_deprecation_headers(
 pub fn deprecation_wrapper(
 	sunset: &'static str,
 	successor: &'static str,
-) -> impl Fn(warp::http::Response<warp::hyper::body::Bytes>) -> warp::http::Response<warp::hyper::body::Bytes>
+) -> impl Fn(
+	warp::http::Response<warp::hyper::body::Bytes>,
+) -> warp::http::Response<warp::hyper::body::Bytes>
        + Clone {
 	move |mut resp: warp::http::Response<warp::hyper::body::Bytes>| {
 		resp.headers_mut()
@@ -62,14 +64,8 @@ mod tests {
 		let with_headers = add_deprecation_headers(reply, "2026-09-16", "/v1/foo");
 		let response = with_headers.into_response();
 
-		assert_eq!(
-			response.headers().get("Deprecation").unwrap(),
-			"true"
-		);
-		assert_eq!(
-			response.headers().get("Sunset").unwrap(),
-			"2026-09-16"
-		);
+		assert_eq!(response.headers().get("Deprecation").unwrap(), "true");
+		assert_eq!(response.headers().get("Sunset").unwrap(), "2026-09-16");
 		let link = response.headers().get("Link").unwrap().to_str().unwrap();
 		assert!(link.contains("/v1/foo"));
 		assert!(link.contains("successor-version"));

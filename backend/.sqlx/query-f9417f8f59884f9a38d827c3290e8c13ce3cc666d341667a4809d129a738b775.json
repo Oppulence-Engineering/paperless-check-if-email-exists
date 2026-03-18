@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tenants SET used_this_period = used_this_period + 1 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f9417f8f59884f9a38d827c3290e8c13ce3cc666d341667a4809d129a738b775"
+}

@@ -54,9 +54,7 @@ async fn http_handler(
 	let job = match job {
 		Some(j) => j,
 		None => {
-			return Err(
-				ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into(),
-			)
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into())
 		}
 	};
 
