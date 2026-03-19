@@ -24,6 +24,7 @@
 
 ## Advanced
 
+* [Customer Feature Backlog](advanced/customer-feature-backlog.md)
 * [OpenAPI](advanced/openapi/README.md)
   * [/v0/check\_email](advanced/openapi/v0-check_email.md)
   * [/v1/check\_email](advanced/openapi/v1-check_email.md)
