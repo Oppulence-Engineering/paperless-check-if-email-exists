@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **is_disposable** | **boolean** |  | [default to undefined]
 **is_free_provider** | **boolean** |  | [default to undefined]
 **is_role_account** | **boolean** |  | [default to undefined]
+**is_spam_trap_domain** | **boolean** |  | [default to undefined]
 **reachable** | [**Reachable**](Reachable.md) |  | [default to undefined]
 **smtp_can_connect** | **boolean** |  | [default to undefined]
 **smtp_error** | **boolean** |  | [default to undefined]
@@ -30,6 +31,7 @@ const instance: ScoringSignals = {
     is_disposable,
     is_free_provider,
     is_role_account,
+    is_spam_trap_domain,
     reachable,
     smtp_can_connect,
     smtp_error,

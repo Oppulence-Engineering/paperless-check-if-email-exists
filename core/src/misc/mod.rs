@@ -25,11 +25,14 @@ use thiserror::Error;
 
 const ROLE_ACCOUNTS: &str = include_str!("./roles.txt");
 const FREE_EMAIL_PROVIDERS: &str = include_str!("./b2c.txt");
+const SPAM_TRAP_DOMAINS: &str = include_str!("./spam_traps.txt");
 
 // Lazy static initialization of domain sets
 static ROLE_ACCOUNTS_SET: Lazy<HashSet<String>> = Lazy::new(|| load_str_as_hashset(ROLE_ACCOUNTS));
 static FREE_EMAIL_PROVIDERS_SET: Lazy<HashSet<String>> =
 	Lazy::new(|| load_str_as_hashset(FREE_EMAIL_PROVIDERS));
+static SPAM_TRAP_DOMAINS_SET: Lazy<HashSet<String>> =
+	Lazy::new(|| load_str_as_hashset(SPAM_TRAP_DOMAINS));
 
 // Function to load a file with `\n`-separated lines into a HashSet.
 fn load_str_as_hashset(file_content: &str) -> HashSet<String> {
@@ -48,6 +51,8 @@ pub struct MiscDetails {
 	pub is_role_account: bool,
 	/// Is this email a B2C email address?
 	pub is_b2c: bool,
+	/// Is the domain associated with known spam-trap or honeypot networks?
+	pub is_spam_trap_domain: bool,
 	/// If set, the gravatar URL for this email address.
 	pub gravatar_url: Option<String>,
 	/// Is this email address listed in the haveibeenpwned database for
@@ -93,6 +98,7 @@ pub async fn check_misc(
 		is_disposable: !mailchecker::is_valid(address.as_ref()),
 		is_role_account: ROLE_ACCOUNTS_SET.contains(&syntax.username.to_lowercase()),
 		is_b2c: FREE_EMAIL_PROVIDERS_SET.contains(&syntax.domain.to_lowercase()),
+		is_spam_trap_domain: SPAM_TRAP_DOMAINS_SET.contains(&syntax.domain.to_lowercase()),
 		gravatar_url,
 		haveibeenpwned,
 	}

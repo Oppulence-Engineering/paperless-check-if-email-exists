@@ -1259,6 +1259,7 @@ components:
               is_free_provider: true
               smtp_can_connect: true
               valid_syntax: true
+              is_spam_trap_domain: true
               smtp_is_catch_all: true
               is_role_account: true
               smtp_error: true
@@ -1313,6 +1314,7 @@ components:
               is_free_provider: true
               smtp_can_connect: true
               valid_syntax: true
+              is_spam_trap_domain: true
               smtp_is_catch_all: true
               is_role_account: true
               smtp_error: true
@@ -1408,6 +1410,7 @@ components:
             is_free_provider: true
             smtp_can_connect: true
             valid_syntax: true
+            is_spam_trap_domain: true
             smtp_is_catch_all: true
             is_role_account: true
             smtp_error: true
@@ -1716,6 +1719,7 @@ components:
           is_free_provider: true
           smtp_can_connect: true
           valid_syntax: true
+          is_spam_trap_domain: true
           smtp_is_catch_all: true
           is_role_account: true
           smtp_error: true
@@ -2236,6 +2240,7 @@ components:
       - full_inbox
       - disposable
       - role_account
+      - spam_trap
       - unknown_deliverability
       - free_provider
       - possible_typo
@@ -2320,6 +2325,7 @@ components:
         is_free_provider: true
         smtp_can_connect: true
         valid_syntax: true
+        is_spam_trap_domain: true
         smtp_is_catch_all: true
         is_role_account: true
         smtp_error: true
@@ -2334,6 +2340,8 @@ components:
         is_free_provider:
           type: boolean
         is_role_account:
+          type: boolean
+        is_spam_trap_domain:
           type: boolean
         reachable:
           $ref: "#/components/schemas/Reachable"
@@ -2357,6 +2365,7 @@ components:
       - is_disposable
       - is_free_provider
       - is_role_account
+      - is_spam_trap_domain
       - reachable
       - smtp_can_connect
       - smtp_error
@@ -2412,6 +2421,7 @@ components:
       - full_inbox
       - disposable
       - role_account
+      - spam_trap
       - risky
       - unknown
       type: string

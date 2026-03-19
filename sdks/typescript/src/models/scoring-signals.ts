@@ -55,6 +55,12 @@ export interface ScoringSignals {
     'is_role_account': boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof ScoringSignals
+     */
+    'is_spam_trap_domain': boolean;
+    /**
+     * 
      * @type {Reachable}
      * @memberof ScoringSignals
      */

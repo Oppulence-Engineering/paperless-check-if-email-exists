@@ -27,6 +27,7 @@ pub enum SubReason {
 	FullInbox,
 	Disposable,
 	RoleAccount,
+	SpamTrap,
 	Risky,
 	Unknown,
 }
@@ -44,6 +45,7 @@ pub struct ScoringSignals {
 	pub smtp_has_full_inbox: bool,
 	pub is_disposable: bool,
 	pub is_role_account: bool,
+	pub is_spam_trap_domain: bool,
 	pub is_free_provider: bool,
 	pub has_domain_suggestion: bool,
 }
@@ -135,6 +137,9 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	if signals.is_role_account {
 		score -= 10;
 	}
+	if signals.is_spam_trap_domain {
+		score -= 30;
+	}
 	if matches!(signals.reachable, Reachable::Risky) {
 		score -= 10;
 	}
@@ -162,6 +167,8 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 		SubReason::Disposable
 	} else if signals.is_role_account {
 		SubReason::RoleAccount
+	} else if signals.is_spam_trap_domain {
+		SubReason::SpamTrap
 	} else if matches!(signals.reachable, Reachable::Risky) {
 		SubReason::Risky
 	} else if matches!(signals.reachable, Reachable::Unknown) {
@@ -173,7 +180,8 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let safe_to_send = category == EmailCategory::Valid
 		&& !signals.is_disposable
 		&& !signals.smtp_is_catch_all
-		&& !signals.is_role_account;
+		&& !signals.is_role_account
+		&& !signals.is_spam_trap_domain;
 
 	let reason_codes = collect_reason_codes(&signals);
 
@@ -222,6 +230,9 @@ fn collect_reason_codes(signals: &ScoringSignals) -> Vec<String> {
 	if signals.is_role_account {
 		codes.push("role_account".to_string());
 	}
+	if signals.is_spam_trap_domain {
+		codes.push("spam_trap".to_string());
+	}
 	if matches!(signals.reachable, Reachable::Unknown) {
 		codes.push("unknown_deliverability".to_string());
 	}
@@ -262,6 +273,9 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		smtp_has_full_inbox: smtp_ok.map(|smtp| smtp.has_full_inbox).unwrap_or(false),
 		is_disposable: misc_ok.map(|misc| misc.is_disposable).unwrap_or(false),
 		is_role_account: misc_ok.map(|misc| misc.is_role_account).unwrap_or(false),
+		is_spam_trap_domain: misc_ok
+			.map(|misc| misc.is_spam_trap_domain)
+			.unwrap_or(false),
 		is_free_provider: misc_ok.map(|misc| misc.is_b2c).unwrap_or(false),
 		has_domain_suggestion: output.syntax.suggestion.is_some(),
 	}
@@ -380,6 +394,7 @@ mod tests {
 				smtp_has_full_inbox: false,
 				is_disposable: false,
 				is_role_account: false,
+				is_spam_trap_domain: false,
 				is_free_provider: false,
 				has_domain_suggestion: false,
 			},
@@ -465,6 +480,7 @@ mod tests {
 			smtp_has_full_inbox: false,
 			is_disposable: false,
 			is_role_account: false,
+			is_spam_trap_domain: false,
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
@@ -487,5 +503,42 @@ mod tests {
 		let score = compute_score(&output);
 		assert!(score.reason_codes.contains(&"invalid_syntax".to_string()));
 		assert!(!score.reason_codes.contains(&"deliverable".to_string()));
+	}
+
+	#[test]
+	fn spam_trap_domain_penalizes_score_and_disqualifies_safe_to_send() {
+		let mut output = base_output();
+		output.misc = Ok(MiscDetails {
+			is_spam_trap_domain: true,
+			..Default::default()
+		});
+		let score = compute_score(&output);
+		assert!(score.reason_codes.contains(&"spam_trap".to_string()));
+		assert!(!score.safe_to_send);
+		assert!(score.score < 100);
+	}
+
+	#[test]
+	fn spam_trap_domain_appears_in_sub_reason() {
+		// Test via signals directly to avoid base_output() MX issues
+		let signals = ScoringSignals {
+			valid_syntax: true,
+			reachable: Reachable::Safe,
+			has_mx_records: true,
+			smtp_error: false,
+			smtp_can_connect: true,
+			smtp_is_deliverable: true,
+			smtp_is_disabled: false,
+			smtp_is_catch_all: false,
+			smtp_has_full_inbox: false,
+			is_disposable: false,
+			is_role_account: false,
+			is_spam_trap_domain: true,
+			is_free_provider: false,
+			has_domain_suggestion: false,
+		};
+		let codes = collect_reason_codes(&signals);
+		assert!(codes.contains(&"spam_trap".to_string()));
+		assert!(!codes.contains(&"deliverable".to_string()));
 	}
 }

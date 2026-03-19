@@ -33,6 +33,7 @@ export const SubReason = {
     FullInbox: 'full_inbox',
     Disposable: 'disposable',
     RoleAccount: 'role_account',
+    SpamTrap: 'spam_trap',
     Risky: 'risky',
     Unknown: 'unknown'
 } as const;

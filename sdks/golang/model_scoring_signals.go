@@ -27,6 +27,7 @@ type ScoringSignals struct {
 	IsDisposable bool `json:"is_disposable"`
 	IsFreeProvider bool `json:"is_free_provider"`
 	IsRoleAccount bool `json:"is_role_account"`
+	IsSpamTrapDomain bool `json:"is_spam_trap_domain"`
 	Reachable Reachable `json:"reachable"`
 	SmtpCanConnect bool `json:"smtp_can_connect"`
 	SmtpError bool `json:"smtp_error"`
@@ -43,13 +44,14 @@ type _ScoringSignals ScoringSignals
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool) *ScoringSignals {
+func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, isSpamTrapDomain bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool) *ScoringSignals {
 	this := ScoringSignals{}
 	this.HasDomainSuggestion = hasDomainSuggestion
 	this.HasMxRecords = hasMxRecords
 	this.IsDisposable = isDisposable
 	this.IsFreeProvider = isFreeProvider
 	this.IsRoleAccount = isRoleAccount
+	this.IsSpamTrapDomain = isSpamTrapDomain
 	this.Reachable = reachable
 	this.SmtpCanConnect = smtpCanConnect
 	this.SmtpError = smtpError
@@ -187,6 +189,30 @@ func (o *ScoringSignals) GetIsRoleAccountOk() (*bool, bool) {
 // SetIsRoleAccount sets field value
 func (o *ScoringSignals) SetIsRoleAccount(v bool) {
 	o.IsRoleAccount = v
+}
+
+// GetIsSpamTrapDomain returns the IsSpamTrapDomain field value
+func (o *ScoringSignals) GetIsSpamTrapDomain() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsSpamTrapDomain
+}
+
+// GetIsSpamTrapDomainOk returns a tuple with the IsSpamTrapDomain field value
+// and a boolean to check if the value has been set.
+func (o *ScoringSignals) GetIsSpamTrapDomainOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsSpamTrapDomain, true
+}
+
+// SetIsSpamTrapDomain sets field value
+func (o *ScoringSignals) SetIsSpamTrapDomain(v bool) {
+	o.IsSpamTrapDomain = v
 }
 
 // GetReachable returns the Reachable field value
@@ -396,6 +422,7 @@ func (o ScoringSignals) ToMap() (map[string]interface{}, error) {
 	toSerialize["is_disposable"] = o.IsDisposable
 	toSerialize["is_free_provider"] = o.IsFreeProvider
 	toSerialize["is_role_account"] = o.IsRoleAccount
+	toSerialize["is_spam_trap_domain"] = o.IsSpamTrapDomain
 	toSerialize["reachable"] = o.Reachable
 	toSerialize["smtp_can_connect"] = o.SmtpCanConnect
 	toSerialize["smtp_error"] = o.SmtpError
@@ -417,6 +444,7 @@ func (o *ScoringSignals) UnmarshalJSON(data []byte) (err error) {
 		"is_disposable",
 		"is_free_provider",
 		"is_role_account",
+		"is_spam_trap_domain",
 		"reachable",
 		"smtp_can_connect",
 		"smtp_error",

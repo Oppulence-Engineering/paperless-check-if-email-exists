@@ -33,6 +33,7 @@ const (
 	REASONCODE_FULL_INBOX ReasonCode = "full_inbox"
 	REASONCODE_DISPOSABLE ReasonCode = "disposable"
 	REASONCODE_ROLE_ACCOUNT ReasonCode = "role_account"
+	REASONCODE_SPAM_TRAP ReasonCode = "spam_trap"
 	REASONCODE_UNKNOWN_DELIVERABILITY ReasonCode = "unknown_deliverability"
 	REASONCODE_FREE_PROVIDER ReasonCode = "free_provider"
 	REASONCODE_POSSIBLE_TYPO ReasonCode = "possible_typo"
@@ -52,6 +53,7 @@ var AllowedReasonCodeEnumValues = []ReasonCode{
 	"full_inbox",
 	"disposable",
 	"role_account",
+	"spam_trap",
 	"unknown_deliverability",
 	"free_provider",
 	"possible_typo",

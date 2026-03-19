@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **IsDisposable** | **bool** |  | 
 **IsFreeProvider** | **bool** |  | 
 **IsRoleAccount** | **bool** |  | 
+**IsSpamTrapDomain** | **bool** |  | 
 **Reachable** | [**Reachable**](Reachable.md) |  | 
 **SmtpCanConnect** | **bool** |  | 
 **SmtpError** | **bool** |  | 
@@ -22,7 +23,7 @@ Name | Type | Description | Notes
 
 ### NewScoringSignals
 
-`func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool, ) *ScoringSignals`
+`func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, isSpamTrapDomain bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool, ) *ScoringSignals`
 
 NewScoringSignals instantiates a new ScoringSignals object
 This constructor will assign default values to properties that have it defined,
@@ -135,6 +136,26 @@ and a boolean to check if the value has been set.
 `func (o *ScoringSignals) SetIsRoleAccount(v bool)`
 
 SetIsRoleAccount sets IsRoleAccount field to given value.
+
+
+### GetIsSpamTrapDomain
+
+`func (o *ScoringSignals) GetIsSpamTrapDomain() bool`
+
+GetIsSpamTrapDomain returns the IsSpamTrapDomain field if non-nil, zero value otherwise.
+
+### GetIsSpamTrapDomainOk
+
+`func (o *ScoringSignals) GetIsSpamTrapDomainOk() (*bool, bool)`
+
+GetIsSpamTrapDomainOk returns a tuple with the IsSpamTrapDomain field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsSpamTrapDomain
+
+`func (o *ScoringSignals) SetIsSpamTrapDomain(v bool)`
+
+SetIsSpamTrapDomain sets IsSpamTrapDomain field to given value.
 
 
 ### GetReachable

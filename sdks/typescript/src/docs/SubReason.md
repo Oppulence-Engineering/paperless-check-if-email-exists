@@ -27,6 +27,8 @@
 
 * `RoleAccount` (value: `'role_account'`)
 
+* `SpamTrap` (value: `'spam_trap'`)
+
 * `Risky` (value: `'risky'`)
 
 * `Unknown` (value: `'unknown'`)
