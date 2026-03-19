@@ -33,6 +33,7 @@ export const ReasonCode = {
     FullInbox: 'full_inbox',
     Disposable: 'disposable',
     RoleAccount: 'role_account',
+    SpamTrap: 'spam_trap',
     UnknownDeliverability: 'unknown_deliverability',
     FreeProvider: 'free_provider',
     PossibleTypo: 'possible_typo'

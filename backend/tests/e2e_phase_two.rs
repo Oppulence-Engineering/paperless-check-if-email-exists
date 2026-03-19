@@ -98,6 +98,7 @@ mod tests {
 					"smtp_has_full_inbox": false,
 					"is_disposable": false,
 					"is_role_account": false,
+					"is_spam_trap_domain": false,
 					"is_free_provider": false,
 					"has_domain_suggestion": false
 				}

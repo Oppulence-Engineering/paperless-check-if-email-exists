@@ -33,6 +33,7 @@ const (
 	SUBREASON_FULL_INBOX SubReason = "full_inbox"
 	SUBREASON_DISPOSABLE SubReason = "disposable"
 	SUBREASON_ROLE_ACCOUNT SubReason = "role_account"
+	SUBREASON_SPAM_TRAP SubReason = "spam_trap"
 	SUBREASON_RISKY SubReason = "risky"
 	SUBREASON_UNKNOWN SubReason = "unknown"
 )
@@ -51,6 +52,7 @@ var AllowedSubReasonEnumValues = []SubReason{
 	"full_inbox",
 	"disposable",
 	"role_account",
+	"spam_trap",
 	"risky",
 	"unknown",
 }

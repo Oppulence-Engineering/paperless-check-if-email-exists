@@ -27,6 +27,8 @@
 
 * `ROLE_ACCOUNT` (value: `"role_account"`)
 
+* `SPAM_TRAP` (value: `"spam_trap"`)
+
 * `UNKNOWN_DELIVERABILITY` (value: `"unknown_deliverability"`)
 
 * `FREE_PROVIDER` (value: `"free_provider"`)

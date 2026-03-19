@@ -311,6 +311,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"full_inbox",
 				"disposable",
 				"role_account",
+				"spam_trap",
 				"risky",
 				"unknown"
 			]
@@ -334,6 +335,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"full_inbox",
 				"disposable",
 				"role_account",
+				"spam_trap",
 				"unknown_deliverability",
 				"free_provider",
 				"possible_typo"
@@ -357,6 +359,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"smtp_has_full_inbox": { "type": "boolean" },
 				"is_disposable": { "type": "boolean" },
 				"is_role_account": { "type": "boolean" },
+				"is_spam_trap_domain": { "type": "boolean" },
 				"is_free_provider": { "type": "boolean" },
 				"has_domain_suggestion": { "type": "boolean" }
 			},
@@ -372,6 +375,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"smtp_has_full_inbox",
 				"is_disposable",
 				"is_role_account",
+				"is_spam_trap_domain",
 				"is_free_provider",
 				"has_domain_suggestion"
 			]

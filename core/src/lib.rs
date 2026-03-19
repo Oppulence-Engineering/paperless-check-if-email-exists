@@ -119,7 +119,12 @@ pub fn initialize_crypto_provider() {
 /// ref: https://github.com/reacherhq/check-if-email-exists/issues/935
 fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
 	if let Ok(smtp) = smtp {
-		if misc.is_disposable || misc.is_role_account || smtp.is_catch_all || smtp.has_full_inbox {
+		if misc.is_disposable
+			|| misc.is_role_account
+			|| misc.is_spam_trap_domain
+			|| smtp.is_catch_all
+			|| smtp.has_full_inbox
+		{
 			return Reachable::Risky;
 		}
 
