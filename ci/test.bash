@@ -34,5 +34,5 @@ if [ -z "$TEST_DATABASE_URL" ] && ! docker info > /dev/null 2>&1; then
     EXTRA_ARGS="--exclude reacher_backend"
 fi
 
-$CROSS test --target $TARGET_TRIPLE $EXTRA_ARGS
-$CROSS test --target $TARGET_TRIPLE --all-features $EXTRA_ARGS
+$CROSS test --workspace --target $TARGET_TRIPLE $EXTRA_ARGS
+$CROSS test --workspace --target $TARGET_TRIPLE --all-features $EXTRA_ARGS
