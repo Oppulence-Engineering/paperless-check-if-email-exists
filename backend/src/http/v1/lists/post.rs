@@ -136,9 +136,9 @@ async fn http_handler(
 			sqlx::query(
 				r#"
 				INSERT INTO v1_task_result (
-					job_id, payload, extra, result, tenant_id, task_state, score, score_category, sub_reason, safe_to_send, completed_at
+					job_id, payload, extra, result, tenant_id, task_state, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 				)
-				VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, NOW())
+				VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, ARRAY['invalid_syntax'], NOW())
 				"#,
 			)
 			.bind(job_id)
@@ -312,7 +312,7 @@ fn blank_email_result() -> serde_json::Value {
 		serde_json::json!({
 			"input": "",
 			"is_reachable": "invalid",
-			"score": {"score": 0, "category": "invalid", "sub_reason": "invalid_syntax", "safe_to_send": false}
+			"score": {"score": 0, "category": "invalid", "sub_reason": "invalid_syntax", "safe_to_send": false, "reason_codes": ["invalid_syntax"]}
 		})
 	})
 }

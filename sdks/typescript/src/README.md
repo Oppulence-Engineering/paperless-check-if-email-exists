@@ -152,6 +152,7 @@ Class | Method | HTTP request | Description
  - [MiscDetails](docs/MiscDetails.md)
  - [MxDetails](docs/MxDetails.md)
  - [Reachable](docs/Reachable.md)
+ - [ReasonCode](docs/ReasonCode.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
  - [ScoringSignals](docs/ScoringSignals.md)

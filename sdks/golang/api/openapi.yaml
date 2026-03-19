@@ -1245,19 +1245,24 @@ components:
         results:
         - input: input
           score:
+            reason_codes:
+            - deliverable
+            - deliverable
             score: 14
             signals:
-              smtp_can_connect: true
               smtp_is_deliverable: true
               smtp_is_disabled: true
-              valid_syntax: true
-              smtp_is_catch_all: true
               has_mx_records: true
-              is_role_account: true
-              smtp_error: true
               is_disposable: true
               smtp_has_full_inbox: true
               reachable: null
+              is_free_provider: true
+              smtp_can_connect: true
+              valid_syntax: true
+              smtp_is_catch_all: true
+              is_role_account: true
+              smtp_error: true
+              has_domain_suggestion: true
             category: valid
             safe_to_send: true
             sub_reason: deliverable
@@ -1294,19 +1299,24 @@ components:
             is_disposable: true
         - input: input
           score:
+            reason_codes:
+            - deliverable
+            - deliverable
             score: 14
             signals:
-              smtp_can_connect: true
               smtp_is_deliverable: true
               smtp_is_disabled: true
-              valid_syntax: true
-              smtp_is_catch_all: true
               has_mx_records: true
-              is_role_account: true
-              smtp_error: true
               is_disposable: true
               smtp_has_full_inbox: true
               reachable: null
+              is_free_provider: true
+              smtp_can_connect: true
+              valid_syntax: true
+              smtp_is_catch_all: true
+              is_role_account: true
+              smtp_error: true
+              has_domain_suggestion: true
             category: valid
             safe_to_send: true
             sub_reason: deliverable
@@ -1384,19 +1394,24 @@ components:
       example:
         input: input
         score:
+          reason_codes:
+          - deliverable
+          - deliverable
           score: 14
           signals:
-            smtp_can_connect: true
             smtp_is_deliverable: true
             smtp_is_disabled: true
-            valid_syntax: true
-            smtp_is_catch_all: true
             has_mx_records: true
-            is_role_account: true
-            smtp_error: true
             is_disposable: true
             smtp_has_full_inbox: true
             reachable: null
+            is_free_provider: true
+            smtp_can_connect: true
+            valid_syntax: true
+            smtp_is_catch_all: true
+            is_role_account: true
+            smtp_error: true
+            has_domain_suggestion: true
           category: valid
           safe_to_send: true
           sub_reason: deliverable
@@ -1687,25 +1702,34 @@ components:
       type: string
     EmailScore:
       example:
+        reason_codes:
+        - deliverable
+        - deliverable
         score: 14
         signals:
-          smtp_can_connect: true
           smtp_is_deliverable: true
           smtp_is_disabled: true
-          valid_syntax: true
-          smtp_is_catch_all: true
           has_mx_records: true
-          is_role_account: true
-          smtp_error: true
           is_disposable: true
           smtp_has_full_inbox: true
           reachable: null
+          is_free_provider: true
+          smtp_can_connect: true
+          valid_syntax: true
+          smtp_is_catch_all: true
+          is_role_account: true
+          smtp_error: true
+          has_domain_suggestion: true
         category: valid
         safe_to_send: true
         sub_reason: deliverable
       properties:
         category:
           $ref: "#/components/schemas/EmailCategory"
+        reason_codes:
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+          type: array
         safe_to_send:
           type: boolean
         score:
@@ -1719,6 +1743,7 @@ components:
           $ref: "#/components/schemas/SubReason"
       required:
       - category
+      - reason_codes
       - safe_to_send
       - score
       - signals
@@ -2197,6 +2222,24 @@ components:
       - risky
       title: Reachable
       type: string
+    ReasonCode:
+      enum:
+      - deliverable
+      - invalid_syntax
+      - invalid_recipient
+      - smtp_undeliverable
+      - disabled_mailbox
+      - no_mx
+      - smtp_error
+      - smtp_unreachable
+      - catch_all
+      - full_inbox
+      - disposable
+      - role_account
+      - unknown_deliverability
+      - free_provider
+      - possible_typo
+      type: string
     ReputationCheckRequest:
       example:
         domain: domain
@@ -2268,21 +2311,27 @@ components:
       type: object
     ScoringSignals:
       example:
-        smtp_can_connect: true
         smtp_is_deliverable: true
         smtp_is_disabled: true
-        valid_syntax: true
-        smtp_is_catch_all: true
         has_mx_records: true
-        is_role_account: true
-        smtp_error: true
         is_disposable: true
         smtp_has_full_inbox: true
         reachable: null
+        is_free_provider: true
+        smtp_can_connect: true
+        valid_syntax: true
+        smtp_is_catch_all: true
+        is_role_account: true
+        smtp_error: true
+        has_domain_suggestion: true
       properties:
+        has_domain_suggestion:
+          type: boolean
         has_mx_records:
           type: boolean
         is_disposable:
+          type: boolean
+        is_free_provider:
           type: boolean
         is_role_account:
           type: boolean
@@ -2303,8 +2352,10 @@ components:
         valid_syntax:
           type: boolean
       required:
+      - has_domain_suggestion
       - has_mx_records
       - is_disposable
+      - is_free_provider
       - is_role_account
       - reachable
       - smtp_can_connect

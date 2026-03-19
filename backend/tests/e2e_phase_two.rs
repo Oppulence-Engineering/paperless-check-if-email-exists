@@ -51,6 +51,13 @@ mod tests {
 		sub_reason: &str,
 	) -> serde_json::Value {
 		let safe_to_send = category == "valid";
+		let mut reason_codes = Vec::new();
+		if sub_reason != "deliverable" {
+			reason_codes.push(sub_reason);
+		}
+		if reason_codes.is_empty() {
+			reason_codes.push("deliverable");
+		}
 		serde_json::json!({
 			"input": email,
 			"is_reachable": reachable,
@@ -78,6 +85,7 @@ mod tests {
 				"category": category,
 				"sub_reason": sub_reason,
 				"safe_to_send": safe_to_send,
+				"reason_codes": reason_codes,
 				"signals": {
 					"valid_syntax": true,
 					"reachable": reachable,
@@ -89,7 +97,9 @@ mod tests {
 					"smtp_is_catch_all": false,
 					"smtp_has_full_inbox": false,
 					"is_disposable": false,
-					"is_role_account": false
+					"is_role_account": false,
+					"is_free_provider": false,
+					"has_domain_suggestion": false
 				}
 			}
 		})
@@ -252,9 +262,9 @@ mod tests {
 			sqlx::query(
 				r#"
 				INSERT INTO v1_task_result (
-					job_id, payload, task_state, result, error, score, score_category, sub_reason, safe_to_send, completed_at
+					job_id, payload, task_state, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 				)
-				VALUES ($1, $2, 'completed'::task_state, $3, NULL, 95, 'valid', 'deliverable', true, NOW())
+				VALUES ($1, $2, 'completed'::task_state, $3, NULL, 95, 'valid', 'deliverable', true, ARRAY['deliverable'], NOW())
 				"#,
 			)
 			.bind(job_id)
@@ -280,7 +290,8 @@ mod tests {
 
 		assert_eq!(response.status(), StatusCode::OK);
 		let body = String::from_utf8(response.body().to_vec()).unwrap();
-		assert!(body.starts_with("input,is_reachable,score,category,sub_reason,safe_to_send"));
+		assert!(body
+			.starts_with("input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes"));
 		assert!(body.contains(",95,valid,deliverable,"));
 		assert_eq!(body.lines().count(), 1002);
 	}
@@ -303,9 +314,9 @@ mod tests {
 			sqlx::query(
 				r#"
 				INSERT INTO v1_task_result (
-					job_id, payload, task_state, result, error, score, score_category, sub_reason, safe_to_send, completed_at
+					job_id, payload, task_state, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 				)
-				VALUES ($1, $2, 'completed'::task_state, $3, NULL, $4, $5, 'deliverable', $6, NOW())
+				VALUES ($1, $2, 'completed'::task_state, $3, NULL, $4, $5, 'deliverable', $6, ARRAY['deliverable'], NOW())
 				"#,
 			)
 			.bind(job_id)
@@ -403,9 +414,9 @@ mod tests {
 		let high_task_id: i32 = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (
-				job_id, payload, tenant_id, task_state, result, score, score_category, sub_reason, safe_to_send, completed_at
+				job_id, payload, tenant_id, task_state, result, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 			)
-			VALUES ($1, $2, $3, 'completed'::task_state, $4, 95, 'valid', 'deliverable', true, NOW())
+			VALUES ($1, $2, $3, 'completed'::task_state, $4, 95, 'valid', 'deliverable', true, ARRAY['deliverable'], NOW())
 			RETURNING id
 			"#,
 		)
@@ -425,9 +436,9 @@ mod tests {
 		let low_task_id: i32 = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (
-				job_id, payload, tenant_id, task_state, result, score, score_category, sub_reason, safe_to_send, completed_at
+				job_id, payload, tenant_id, task_state, result, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 			)
-			VALUES ($1, $2, $3, 'completed'::task_state, $4, 75, 'risky', 'deliverable', false, NOW())
+			VALUES ($1, $2, $3, 'completed'::task_state, $4, 75, 'risky', 'deliverable', false, ARRAY['deliverable'], NOW())
 			RETURNING id
 			"#,
 		)
@@ -550,6 +561,7 @@ mod tests {
 			    score_category = 'valid',
 			    sub_reason = 'deliverable',
 			    safe_to_send = true,
+			    reason_codes = ARRAY['deliverable'],
 			    completed_at = NOW()
 			WHERE id = $1
 			"#,
@@ -598,9 +610,10 @@ mod tests {
 		let csv_body = download.text().await.unwrap();
 		assert_eq!(download_status, reqwest::StatusCode::OK, "{}", csv_body);
 		assert!(csv_body.starts_with(
-			"name,email,company,is_reachable,score,category,safe_to_send,is_disposable,smtp_is_deliverable,error"
+			"name,email,company,is_reachable,score,category,safe_to_send,reason_codes,is_disposable,smtp_is_deliverable,error"
 		));
-		assert!(csv_body.contains("Alice,alice@example.com,Acme,safe,95,valid,true,false,true,"));
+		assert!(csv_body
+			.contains("Alice,alice@example.com,Acme,safe,95,valid,true,deliverable,false,true,"));
 		assert!(csv_body.contains("Bob,,Widgets,invalid,0,invalid"));
 	}
 
@@ -664,13 +677,18 @@ mod tests {
 				"invalid_recipient",
 			),
 		] {
+			let reason_codes_val: Vec<String> = if sub_reason == "deliverable" {
+				vec!["deliverable".to_string()]
+			} else {
+				vec![sub_reason.to_string()]
+			};
 			sqlx::query(
 				r#"
 				INSERT INTO v1_task_result (
 					job_id, payload, extra, tenant_id, task_state, result, error,
-					score, score_category, sub_reason, safe_to_send, completed_at
+					score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 				)
-				VALUES ($1, $2, $3, $4, 'completed'::task_state, $5, NULL, $6, $7, $8, $9, NOW())
+				VALUES ($1, $2, $3, $4, 'completed'::task_state, $5, NULL, $6, $7, $8, $9, $10, NOW())
 				"#,
 			)
 			.bind(job_id)
@@ -686,6 +704,7 @@ mod tests {
 			.bind(category)
 			.bind(sub_reason)
 			.bind(category == "valid")
+			.bind(&reason_codes_val)
 			.execute(db.pool())
 			.await
 			.unwrap();
@@ -719,9 +738,10 @@ mod tests {
 		assert_eq!(filtered_download.status(), StatusCode::OK);
 		let csv_body = String::from_utf8(filtered_download.body().to_vec()).unwrap();
 		assert!(csv_body.starts_with(
-			"name,email,company,is_reachable,score,category,safe_to_send,is_disposable,smtp_is_deliverable,error"
+			"name,email,company,is_reachable,score,category,safe_to_send,reason_codes,is_disposable,smtp_is_deliverable,error"
 		));
-		assert!(csv_body.contains("Alice,alice@example.com,Acme,safe,95,valid,true,false,true,"));
+		assert!(csv_body
+			.contains("Alice,alice@example.com,Acme,safe,95,valid,true,deliverable,false,true,"));
 		assert!(!csv_body.contains("Bob,bob@example.com,Widgets"));
 		assert_eq!(csv_body.lines().count(), 2);
 

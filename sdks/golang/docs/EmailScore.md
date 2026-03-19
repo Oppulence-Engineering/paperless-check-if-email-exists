@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Category** | [**EmailCategory**](EmailCategory.md) |  | 
+**ReasonCodes** | [**[]ReasonCode**](ReasonCode.md) |  | 
 **SafeToSend** | **bool** |  | 
 **Score** | **int32** |  | 
 **Signals** | [**ScoringSignals**](ScoringSignals.md) |  | 
@@ -14,7 +15,7 @@ Name | Type | Description | Notes
 
 ### NewEmailScore
 
-`func NewEmailScore(category EmailCategory, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason, ) *EmailScore`
+`func NewEmailScore(category EmailCategory, reasonCodes []ReasonCode, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason, ) *EmailScore`
 
 NewEmailScore instantiates a new EmailScore object
 This constructor will assign default values to properties that have it defined,
@@ -47,6 +48,26 @@ and a boolean to check if the value has been set.
 `func (o *EmailScore) SetCategory(v EmailCategory)`
 
 SetCategory sets Category field to given value.
+
+
+### GetReasonCodes
+
+`func (o *EmailScore) GetReasonCodes() []ReasonCode`
+
+GetReasonCodes returns the ReasonCodes field if non-nil, zero value otherwise.
+
+### GetReasonCodesOk
+
+`func (o *EmailScore) GetReasonCodesOk() (*[]ReasonCode, bool)`
+
+GetReasonCodesOk returns a tuple with the ReasonCodes field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetReasonCodes
+
+`func (o *EmailScore) SetReasonCodes(v []ReasonCode)`
+
+SetReasonCodes sets ReasonCodes field to given value.
 
 
 ### GetSafeToSend

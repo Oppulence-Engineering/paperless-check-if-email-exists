@@ -318,6 +318,30 @@ fn add_phase_two_schemas(spec: &mut Value) {
 	);
 	insert_schema(
 		spec,
+		"ReasonCode",
+		json!({
+			"type": "string",
+			"enum": [
+				"deliverable",
+				"invalid_syntax",
+				"invalid_recipient",
+				"smtp_undeliverable",
+				"disabled_mailbox",
+				"no_mx",
+				"smtp_error",
+				"smtp_unreachable",
+				"catch_all",
+				"full_inbox",
+				"disposable",
+				"role_account",
+				"unknown_deliverability",
+				"free_provider",
+				"possible_typo"
+			]
+		}),
+	);
+	insert_schema(
+		spec,
 		"ScoringSignals",
 		json!({
 			"type": "object",
@@ -332,7 +356,9 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"smtp_is_catch_all": { "type": "boolean" },
 				"smtp_has_full_inbox": { "type": "boolean" },
 				"is_disposable": { "type": "boolean" },
-				"is_role_account": { "type": "boolean" }
+				"is_role_account": { "type": "boolean" },
+				"is_free_provider": { "type": "boolean" },
+				"has_domain_suggestion": { "type": "boolean" }
 			},
 			"required": [
 				"valid_syntax",
@@ -345,7 +371,9 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"smtp_is_catch_all",
 				"smtp_has_full_inbox",
 				"is_disposable",
-				"is_role_account"
+				"is_role_account",
+				"is_free_provider",
+				"has_domain_suggestion"
 			]
 		}),
 	);
@@ -359,9 +387,13 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"category": { "$ref": "#/components/schemas/EmailCategory" },
 				"sub_reason": { "$ref": "#/components/schemas/SubReason" },
 				"safe_to_send": { "type": "boolean" },
+				"reason_codes": {
+					"type": "array",
+					"items": { "$ref": "#/components/schemas/ReasonCode" }
+				},
 				"signals": { "$ref": "#/components/schemas/ScoringSignals" }
 			},
-			"required": ["score", "category", "sub_reason", "safe_to_send", "signals"]
+			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),
 	);
 	insert_schema(

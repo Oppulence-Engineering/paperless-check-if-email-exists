@@ -22,8 +22,10 @@ var _ MappedNullable = &ScoringSignals{}
 
 // ScoringSignals struct for ScoringSignals
 type ScoringSignals struct {
+	HasDomainSuggestion bool `json:"has_domain_suggestion"`
 	HasMxRecords bool `json:"has_mx_records"`
 	IsDisposable bool `json:"is_disposable"`
+	IsFreeProvider bool `json:"is_free_provider"`
 	IsRoleAccount bool `json:"is_role_account"`
 	Reachable Reachable `json:"reachable"`
 	SmtpCanConnect bool `json:"smtp_can_connect"`
@@ -41,10 +43,12 @@ type _ScoringSignals ScoringSignals
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewScoringSignals(hasMxRecords bool, isDisposable bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool) *ScoringSignals {
+func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool) *ScoringSignals {
 	this := ScoringSignals{}
+	this.HasDomainSuggestion = hasDomainSuggestion
 	this.HasMxRecords = hasMxRecords
 	this.IsDisposable = isDisposable
+	this.IsFreeProvider = isFreeProvider
 	this.IsRoleAccount = isRoleAccount
 	this.Reachable = reachable
 	this.SmtpCanConnect = smtpCanConnect
@@ -63,6 +67,30 @@ func NewScoringSignals(hasMxRecords bool, isDisposable bool, isRoleAccount bool,
 func NewScoringSignalsWithDefaults() *ScoringSignals {
 	this := ScoringSignals{}
 	return &this
+}
+
+// GetHasDomainSuggestion returns the HasDomainSuggestion field value
+func (o *ScoringSignals) GetHasDomainSuggestion() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.HasDomainSuggestion
+}
+
+// GetHasDomainSuggestionOk returns a tuple with the HasDomainSuggestion field value
+// and a boolean to check if the value has been set.
+func (o *ScoringSignals) GetHasDomainSuggestionOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.HasDomainSuggestion, true
+}
+
+// SetHasDomainSuggestion sets field value
+func (o *ScoringSignals) SetHasDomainSuggestion(v bool) {
+	o.HasDomainSuggestion = v
 }
 
 // GetHasMxRecords returns the HasMxRecords field value
@@ -111,6 +139,30 @@ func (o *ScoringSignals) GetIsDisposableOk() (*bool, bool) {
 // SetIsDisposable sets field value
 func (o *ScoringSignals) SetIsDisposable(v bool) {
 	o.IsDisposable = v
+}
+
+// GetIsFreeProvider returns the IsFreeProvider field value
+func (o *ScoringSignals) GetIsFreeProvider() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsFreeProvider
+}
+
+// GetIsFreeProviderOk returns a tuple with the IsFreeProvider field value
+// and a boolean to check if the value has been set.
+func (o *ScoringSignals) GetIsFreeProviderOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsFreeProvider, true
+}
+
+// SetIsFreeProvider sets field value
+func (o *ScoringSignals) SetIsFreeProvider(v bool) {
+	o.IsFreeProvider = v
 }
 
 // GetIsRoleAccount returns the IsRoleAccount field value
@@ -339,8 +391,10 @@ func (o ScoringSignals) MarshalJSON() ([]byte, error) {
 
 func (o ScoringSignals) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["has_domain_suggestion"] = o.HasDomainSuggestion
 	toSerialize["has_mx_records"] = o.HasMxRecords
 	toSerialize["is_disposable"] = o.IsDisposable
+	toSerialize["is_free_provider"] = o.IsFreeProvider
 	toSerialize["is_role_account"] = o.IsRoleAccount
 	toSerialize["reachable"] = o.Reachable
 	toSerialize["smtp_can_connect"] = o.SmtpCanConnect
@@ -358,8 +412,10 @@ func (o *ScoringSignals) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"has_domain_suggestion",
 		"has_mx_records",
 		"is_disposable",
+		"is_free_provider",
 		"is_role_account",
 		"reachable",
 		"smtp_can_connect",

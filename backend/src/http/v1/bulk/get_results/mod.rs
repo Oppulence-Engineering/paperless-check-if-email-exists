@@ -176,7 +176,7 @@ async fn job_result_csv(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes
 		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
@@ -201,6 +201,7 @@ async fn job_result_csv(
 			score_category: row.get("score_category"),
 			sub_reason: row.get("sub_reason"),
 			safe_to_send: row.get("safe_to_send"),
+			reason_codes: row.get("reason_codes"),
 		})
 		.collect();
 
