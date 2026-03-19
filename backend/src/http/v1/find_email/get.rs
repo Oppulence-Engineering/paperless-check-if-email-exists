@@ -41,11 +41,15 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let row = row.ok_or_else(|| {
-		warp::reject::custom(ReacherResponseError::new(StatusCode::NOT_FOUND, "Finder job not found"))
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::NOT_FOUND,
+			"Finder job not found",
+		))
 	})?;
 
-	let (results, best_match, all_terminal) =
-		sync_finder_results(&pg_pool, job_id).await.map_err(warp::reject::custom)?;
+	let (results, best_match, all_terminal) = sync_finder_results(&pg_pool, job_id)
+		.await
+		.map_err(warp::reject::custom)?;
 
 	let status = if all_terminal {
 		"completed".to_string()

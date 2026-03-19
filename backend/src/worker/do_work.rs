@@ -464,13 +464,16 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 		return;
 	};
 
-	if let Some(task_db_id) = task.metadata.as_ref().and_then(|metadata| metadata.task_db_id) {
-		if let Ok(rows) = sqlx::query(
-			"SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1",
-		)
-		.bind(task_db_id)
-		.fetch_all(&pool)
-		.await
+	if let Some(task_db_id) = task
+		.metadata
+		.as_ref()
+		.and_then(|metadata| metadata.task_db_id)
+	{
+		if let Ok(rows) =
+			sqlx::query("SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1")
+				.bind(task_db_id)
+				.fetch_all(&pool)
+				.await
 		{
 			for row in rows {
 				let finder_job_id: i32 = sqlx::Row::get(&row, "finder_job_id");
@@ -486,15 +489,14 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 		.await
 		{
 			if let Some(list_id) = list_id {
-				let total_rows = sqlx::query_scalar::<_, i32>(
-					"SELECT total_rows FROM v1_lists WHERE id = $1",
-				)
-				.bind(list_id)
-				.fetch_optional(&pool)
-				.await
-				.ok()
-				.flatten()
-				.unwrap_or_default();
+				let total_rows =
+					sqlx::query_scalar::<_, i32>("SELECT total_rows FROM v1_lists WHERE id = $1")
+						.bind(list_id)
+						.fetch_optional(&pool)
+						.await
+						.ok()
+						.flatten()
+						.unwrap_or_default();
 				let processed = sqlx::query_scalar::<_, i64>(
 					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state NOT IN ('queued', 'running', 'retrying')",
 				)

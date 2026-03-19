@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::do_work::TaskError;
-use anyhow::bail;
 use crate::scoring::response::scored_response;
+use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::options::BasicPublishOptions;

@@ -265,9 +265,12 @@ mod tests {
 	#[test]
 	fn compute_score_smtp_error() {
 		let mut output = base_output();
-		output.mx = Err(check_if_email_exists::mx::MxError::from(std::io::Error::other("mx")));
-		output.smtp =
-			Err(check_if_email_exists::smtp::SmtpError::from(std::io::Error::other("smtp")));
+		output.mx = Err(check_if_email_exists::mx::MxError::from(
+			std::io::Error::other("mx"),
+		));
+		output.smtp = Err(check_if_email_exists::smtp::SmtpError::from(
+			std::io::Error::other("smtp"),
+		));
 		let score = compute_score(&output);
 		assert_eq!(score.score, 15);
 		assert_eq!(score.category, EmailCategory::Unknown);

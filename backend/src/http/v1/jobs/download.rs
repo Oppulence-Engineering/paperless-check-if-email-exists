@@ -91,39 +91,42 @@ async fn http_handler(
 		ResponseFormat::Json => "ndjson",
 	};
 
-	let body = Body::wrap_stream(stream::unfold(
-		state,
-		|mut state| async move {
-			if matches!(state.format, ResponseFormat::Csv) && !state.header_sent {
-				state.header_sent = true;
-				return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
-			}
+	let body = Body::wrap_stream(stream::unfold(state, |mut state| async move {
+		if matches!(state.format, ResponseFormat::Csv) && !state.header_sent {
+			state.header_sent = true;
+			return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
+		}
 
-			match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
-				Ok(records) if records.is_empty() => None,
-				Ok(records) => {
-					state.last_id = records.last().map(|record| record.id).unwrap_or(state.last_id);
+		match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
+			Ok(records) if records.is_empty() => None,
+			Ok(records) => {
+				state.last_id = records
+					.last()
+					.map(|record| record.id)
+					.unwrap_or(state.last_id);
 
-					let chunk = match state.format {
-						ResponseFormat::Csv => csv_rows(&records)
-							.map(Bytes::from)
-							.map_err(|err| io::Error::other(err.to_string())),
-						ResponseFormat::Json => ndjson_rows(&records)
-							.map(Bytes::from)
-							.map_err(|err| io::Error::other(err.to_string())),
-					};
-					Some((chunk, state))
-				}
-				Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
+				let chunk = match state.format {
+					ResponseFormat::Csv => csv_rows(&records)
+						.map(Bytes::from)
+						.map_err(|err| io::Error::other(err.to_string())),
+					ResponseFormat::Json => ndjson_rows(&records)
+						.map(Bytes::from)
+						.map_err(|err| io::Error::other(err.to_string())),
+				};
+				Some((chunk, state))
 			}
-		},
-	));
+			Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
+		}
+	}));
 
 	let response = Response::builder()
 		.header("Content-Type", content_type)
 		.header(
 			"Content-Disposition",
-			format!("attachment; filename=\"job_{}_results.{}\"", job_id, file_extension),
+			format!(
+				"attachment; filename=\"job_{}_results.{}\"",
+				job_id, file_extension
+			),
 		)
 		.body(body)
 		.map_err(|err| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, err))?;
@@ -166,16 +169,14 @@ async fn fetch_batch(
 
 	Ok(rows
 		.into_iter()
-		.map(|row| {
-			TaskResultRecord {
-				id: row.get::<i32, _>("id") as i64,
-				payload: row.get("payload"),
-				result: row.get("result"),
-				error: row.get("error"),
-				score: row.get::<Option<i16>, _>("score"),
-				score_category: row.get("score_category"),
-				sub_reason: row.get("sub_reason"),
-			}
+		.map(|row| TaskResultRecord {
+			id: row.get::<i32, _>("id") as i64,
+			payload: row.get("payload"),
+			result: row.get("result"),
+			error: row.get("error"),
+			score: row.get::<Option<i16>, _>("score"),
+			score_category: row.get("score_category"),
+			sub_reason: row.get("sub_reason"),
 		})
 		.collect())
 }

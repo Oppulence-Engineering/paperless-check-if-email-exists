@@ -22,13 +22,17 @@ pub fn parse_csv(
 	bytes: &[u8],
 	explicit_email_column: Option<&str>,
 ) -> Result<ParsedCsv, ReacherResponseError> {
-	let mut reader = csv::ReaderBuilder::new()
-		.flexible(true)
-		.from_reader(bytes);
+	let mut reader = csv::ReaderBuilder::new().flexible(true).from_reader(bytes);
 
-	let headers = reader.headers().map_err(ReacherResponseError::from)?.clone();
+	let headers = reader
+		.headers()
+		.map_err(ReacherResponseError::from)?
+		.clone();
 	if headers.is_empty() {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "CSV must include headers"));
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"CSV must include headers",
+		));
 	}
 
 	let headers_vec: Vec<String> = headers.iter().map(ToOwned::to_owned).collect();
@@ -95,10 +99,7 @@ pub fn parse_csv(
 }
 
 fn normalize_header(header: &str) -> String {
-	header
-		.trim()
-		.to_lowercase()
-		.replace([' ', '-'], "_")
+	header.trim().to_lowercase().replace([' ', '-'], "_")
 }
 
 #[cfg(test)]

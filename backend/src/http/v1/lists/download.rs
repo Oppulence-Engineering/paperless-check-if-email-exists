@@ -45,7 +45,11 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	if query.format.as_deref().unwrap_or("csv") != "csv" {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Only format=csv is supported").into());
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Only format=csv is supported",
+		)
+		.into());
 	}
 
 	let list = sqlx::query(
@@ -61,10 +65,15 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 	let list = list.ok_or_else(|| {
-		warp::reject::custom(ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found"))
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::NOT_FOUND,
+			"List not found",
+		))
 	})?;
 
-	let summary = list_summary(&pg_pool, list_id).await.map_err(warp::reject::custom)?;
+	let summary = list_summary(&pg_pool, list_id)
+		.await
+		.map_err(warp::reject::custom)?;
 	let total_rows: i32 = sqlx::query_scalar("SELECT total_rows FROM v1_lists WHERE id = $1")
 		.bind(list_id)
 		.fetch_one(&pg_pool)
@@ -72,15 +81,14 @@ async fn http_handler(
 		.map_err(ReacherResponseError::from)
 		.map_err(warp::reject::custom)?;
 	if summary.total_processed < i64::from(total_rows) {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "List is still processing").into());
+		return Err(
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "List is still processing").into(),
+		);
 	}
 
 	let headers: Vec<String> = list.get("original_headers");
 	let original_data: Value = list.get("original_data");
-	let original_map = original_data
-		.as_object()
-		.cloned()
-		.unwrap_or_default();
+	let original_map = original_data.as_object().cloned().unwrap_or_default();
 	let mut sorted_original: BTreeMap<i32, Map<String, Value>> = BTreeMap::new();
 	for (key, value) in original_map {
 		if let Ok(index) = key.parse::<i32>() {
@@ -103,7 +111,10 @@ async fn http_handler(
 		|mut state| async move {
 			if !state.header_sent {
 				state.header_sent = true;
-				return Some((Ok::<Bytes, io::Error>(Bytes::from(render_header(&state.headers))), state));
+				return Some((
+					Ok::<Bytes, io::Error>(Bytes::from(render_header(&state.headers))),
+					state,
+				));
 			}
 
 			loop {
@@ -124,7 +135,8 @@ async fn http_handler(
 								}
 							}
 
-							let original = state.original_rows.remove(&row_index).unwrap_or_default();
+							let original =
+								state.original_rows.remove(&row_index).unwrap_or_default();
 							chunk.extend_from_slice(&render_row(&state.headers, &original, &flat));
 						}
 
@@ -221,10 +233,22 @@ fn render_row(
 		);
 	}
 	row.push(flat.is_reachable.clone());
-	row.push(flat.score.map(|value| value.to_string()).unwrap_or_default());
+	row.push(
+		flat.score
+			.map(|value| value.to_string())
+			.unwrap_or_default(),
+	);
 	row.push(flat.category.clone().unwrap_or_default());
-	row.push(flat.is_disposable.map(|value| value.to_string()).unwrap_or_default());
-	row.push(flat.smtp_is_deliverable.map(|value| value.to_string()).unwrap_or_default());
+	row.push(
+		flat.is_disposable
+			.map(|value| value.to_string())
+			.unwrap_or_default(),
+	);
+	row.push(
+		flat.smtp_is_deliverable
+			.map(|value| value.to_string())
+			.unwrap_or_default(),
+	);
 	row.push(flat.error.clone().unwrap_or_default());
 	writer.write_record(&row).expect("csv row write");
 	writer.into_inner().expect("csv row bytes")

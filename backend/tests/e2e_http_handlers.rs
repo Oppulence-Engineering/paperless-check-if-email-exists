@@ -62,7 +62,10 @@ mod tests {
 			db_url: db_url.to_string(),
 			extra: None,
 		}));
-		config.connect().await.expect("Failed to connect pseudo worker config");
+		config
+			.connect()
+			.await
+			.expect("Failed to connect pseudo worker config");
 		config.worker.enable = true;
 		Arc::new(config)
 	}

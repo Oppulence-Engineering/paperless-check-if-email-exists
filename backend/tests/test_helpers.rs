@@ -3,19 +3,17 @@
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
 use std::sync::{LazyLock, Mutex};
-use testcontainers::ImageExt;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::ContainerAsync;
+use testcontainers::ImageExt;
 use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::rabbitmq::RabbitMq;
 use tokio::sync::OnceCell;
 use tokio::time::{sleep, Duration};
 
 static SHARED_AMQP_URL: OnceCell<String> = OnceCell::const_new();
-static CURRENT_TEST_DB_URL: LazyLock<Mutex<Option<String>>> =
-	LazyLock::new(|| Mutex::new(None));
-static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> =
-	LazyLock::new(|| Mutex::new(None));
+static CURRENT_TEST_DB_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
+static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
 
 const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
 const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
@@ -25,7 +23,9 @@ fn set_current_test_db_url(url: &str) {
 }
 
 fn set_current_test_amqp_url(url: &str) {
-	*CURRENT_TEST_AMQP_URL.lock().expect("amqp url mutex poisoned") = Some(url.to_string());
+	*CURRENT_TEST_AMQP_URL
+		.lock()
+		.expect("amqp url mutex poisoned") = Some(url.to_string());
 }
 
 pub fn test_db_url() -> String {
@@ -82,8 +82,7 @@ impl TestRabbitMq {
 								.get_host_port_ipv4(5672)
 								.await
 								.map_err(|err| format!("Failed to get RabbitMQ port: {err}"))?;
-							let amqp_url =
-								format!("amqp://guest:guest@127.0.0.1:{}", host_port);
+							let amqp_url = format!("amqp://guest:guest@127.0.0.1:{}", host_port);
 							set_current_test_amqp_url(&amqp_url);
 							let _ = Box::leak(Box::new(container));
 							return Ok::<String, String>(amqp_url);
@@ -146,8 +145,10 @@ impl TestDb {
 						.get_host_port_ipv4(5432)
 						.await
 						.expect("Failed to get Postgres port");
-					let db_url =
-						format!("postgres://postgres:postgres@127.0.0.1:{}/postgres", host_port);
+					let db_url = format!(
+						"postgres://postgres:postgres@127.0.0.1:{}/postgres",
+						host_port
+					);
 
 					let pool = PgPoolOptions::new()
 						.max_connections(10)

@@ -20,7 +20,12 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 	let mx_lookup = resolver.mx_lookup(domain).await.ok();
 	let mx_hosts: Vec<String> = mx_lookup
 		.as_ref()
-		.map(|lookup| lookup.iter().map(|record| record.exchange().to_string()).collect())
+		.map(|lookup| {
+			lookup
+				.iter()
+				.map(|record| record.exchange().to_string())
+				.collect()
+		})
 		.unwrap_or_default();
 	let first_host = match mx_hosts.first() {
 		Some(host) => host.clone(),
@@ -48,7 +53,12 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 				"{}.{}.{}.{}.{}",
 				octets[3], octets[2], octets[1], octets[0], zone
 			);
-			resolver.lookup_ip(query).await.ok().map(|lookup| lookup.iter().next().is_some()).unwrap_or(false)
+			resolver
+				.lookup_ip(query)
+				.await
+				.ok()
+				.map(|lookup| lookup.iter().next().is_some())
+				.unwrap_or(false)
 		} else {
 			false
 		};

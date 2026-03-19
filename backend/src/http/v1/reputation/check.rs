@@ -1,6 +1,6 @@
 use crate::config::BackendConfig;
-use crate::http::v0::check_email::post::with_config;
 use crate::http::resolve_tenant;
+use crate::http::v0::check_email::post::with_config;
 use crate::reputation::checker::check_domain;
 use crate::reputation::models::ReputationCheckRequest;
 use check_if_email_exists::LOG_TARGET;

@@ -128,7 +128,9 @@ fn normalize_nullable_types(value: &mut Value) {
 					.filter(|entry| *entry != "null");
 				let first_non_null = non_null_types.next().map(str::to_string);
 				let has_single_non_null = non_null_types.next().is_none();
-				let has_null = type_values.iter().any(|entry| entry.as_str() == Some("null"));
+				let has_null = type_values
+					.iter()
+					.any(|entry| entry.as_str() == Some("null"));
 				if has_null && has_single_non_null {
 					if let Some(non_null_type) = first_non_null {
 						map.insert("type".to_string(), Value::String(non_null_type));
@@ -176,7 +178,11 @@ fn paths_mut(spec: &mut Value) -> &mut Map<String, Value> {
 		.expect("paths object")
 }
 
-fn operation_mut<'a>(spec: &'a mut Value, path: &str, method: &str) -> Option<&'a mut Map<String, Value>> {
+fn operation_mut<'a>(
+	spec: &'a mut Value,
+	path: &str,
+	method: &str,
+) -> Option<&'a mut Map<String, Value>> {
 	paths_mut(spec)
 		.get_mut(path)
 		.and_then(Value::as_object_mut)
@@ -215,7 +221,14 @@ fn binary_response(description: &str, content_type: &str) -> Value {
 	})
 }
 
-fn set_request_body(spec: &mut Value, path: &str, method: &str, content_type: &str, schema_name: &str, required: bool) {
+fn set_request_body(
+	spec: &mut Value,
+	path: &str,
+	method: &str,
+	content_type: &str,
+	schema_name: &str,
+	required: bool,
+) {
 	if let Some(operation) = operation_mut(spec, path, method) {
 		operation.insert(
 			"requestBody".to_string(),
@@ -246,7 +259,10 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 
 fn ensure_check_email_output_scored(spec: &mut Value) {
 	let schemas = schemas_mut(spec);
-	let Some(schema) = schemas.get_mut("CheckEmailOutput").and_then(Value::as_object_mut) else {
+	let Some(schema) = schemas
+		.get_mut("CheckEmailOutput")
+		.and_then(Value::as_object_mut)
+	else {
 		return;
 	};
 	let properties = schema
@@ -657,10 +673,36 @@ fn add_phase_two_schemas(spec: &mut Value) {
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
-	set_request_body(spec, "/v0/check_email", "post", "application/json", "CheckEmailRequest", true);
-	set_request_body(spec, "/v1/check_email", "post", "application/json", "CheckEmailRequest", true);
-	set_response(spec, "/v0/check_email", "post", "200", json_response("CheckEmailOutput", "Email verification result"));
-	set_response(spec, "/v1/check_email", "post", "200", json_response("CheckEmailOutput", "Email verification result"));
+	set_request_body(
+		spec,
+		"/v0/check_email",
+		"post",
+		"application/json",
+		"CheckEmailRequest",
+		true,
+	);
+	set_request_body(
+		spec,
+		"/v1/check_email",
+		"post",
+		"application/json",
+		"CheckEmailRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v0/check_email",
+		"post",
+		"200",
+		json_response("CheckEmailOutput", "Email verification result"),
+	);
+	set_response(
+		spec,
+		"/v1/check_email",
+		"post",
+		"200",
+		json_response("CheckEmailOutput", "Email verification result"),
+	);
 
 	set_response(
 		spec,
@@ -701,7 +743,14 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		}),
 	);
 
-	set_request_body(spec, "/v1/find_email", "post", "application/json", "FindEmailRequest", true);
+	set_request_body(
+		spec,
+		"/v1/find_email",
+		"post",
+		"application/json",
+		"FindEmailRequest",
+		true,
+	);
 	set_response(
 		spec,
 		"/v1/find_email",
@@ -717,7 +766,14 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		json_response("FindEmailStatusResponse", "Finder job result"),
 	);
 
-	set_request_body(spec, "/v1/lists", "post", "multipart/form-data", "ListUploadRequest", true);
+	set_request_body(
+		spec,
+		"/v1/lists",
+		"post",
+		"multipart/form-data",
+		"ListUploadRequest",
+		true,
+	);
 	set_response(
 		spec,
 		"/v1/lists",

@@ -9,7 +9,11 @@ pub fn compute_score(
 
 	for result in blacklist_results {
 		if result.listed {
-			score -= if is_major_provider(&result.provider) { 15 } else { 8 };
+			score -= if is_major_provider(&result.provider) {
+				15
+			} else {
+				8
+			};
 		}
 	}
 	if !dns_records.has_spf {

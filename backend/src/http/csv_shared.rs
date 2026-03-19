@@ -39,9 +39,7 @@ pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	for record in records {
 		writer.serialize(csv_row(record))?;
 	}
-	writer
-		.into_inner()
-		.map_err(|err| err.into_error().into())
+	writer.into_inner().map_err(|err| err.into_error().into())
 }
 
 pub fn ndjson_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, serde_json::Error> {
@@ -84,7 +82,8 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		category,
 		sub_reason,
 		is_disposable: result_value(record, &["misc", "is_disposable"]).and_then(Value::as_bool),
-		is_role_account: result_value(record, &["misc", "is_role_account"]).and_then(Value::as_bool),
+		is_role_account: result_value(record, &["misc", "is_role_account"])
+			.and_then(Value::as_bool),
 		mx_accepts_mail: result_value(record, &["mx", "accepts_mail"]).and_then(Value::as_bool),
 		smtp_can_connect: result_value(record, &["smtp", "can_connect_smtp"])
 			.and_then(Value::as_bool),

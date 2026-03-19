@@ -83,9 +83,13 @@ mod tests {
 	#[test]
 	fn normalization_strips_accents_and_symbols() {
 		let candidates = generate_candidates("Jo-hn", "D'oe", "example.com");
-		assert!(candidates.iter().any(|candidate| candidate.email == "john.doe@example.com"));
+		assert!(candidates
+			.iter()
+			.any(|candidate| candidate.email == "john.doe@example.com"));
 
 		let accent = generate_candidates("Jöhn", "Doé", "example.com");
-		assert!(accent.iter().any(|candidate| candidate.email == "john.doe@example.com"));
+		assert!(accent
+			.iter()
+			.any(|candidate| candidate.email == "john.doe@example.com"));
 	}
 }

@@ -21,18 +21,25 @@ async fn http_handler(
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
-	let row = sqlx::query("SELECT job_id, status::TEXT AS status FROM v1_lists WHERE id = $1 AND tenant_id = $2")
-		.bind(list_id)
-		.bind(tenant_id)
-		.fetch_optional(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	let row = sqlx::query(
+		"SELECT job_id, status::TEXT AS status FROM v1_lists WHERE id = $1 AND tenant_id = $2",
+	)
+	.bind(list_id)
+	.bind(tenant_id)
+	.fetch_optional(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 	let row = row.ok_or_else(|| {
-		warp::reject::custom(ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found"))
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::NOT_FOUND,
+			"List not found",
+		))
 	})?;
 
 	if row.get::<String, _>("status") == "processing" {
-		return Err(ReacherResponseError::new(StatusCode::CONFLICT, "List is still processing").into());
+		return Err(
+			ReacherResponseError::new(StatusCode::CONFLICT, "List is still processing").into(),
+		);
 	}
 
 	let job_id: i32 = row.get("job_id");

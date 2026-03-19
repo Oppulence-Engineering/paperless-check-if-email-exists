@@ -13,7 +13,10 @@ pub async fn check_domain(
 ) -> Result<ReputationCheckResponse, ReacherResponseError> {
 	let normalized = domain.trim().to_lowercase();
 	if normalized.is_empty() || !normalized.contains('.') {
-		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid domain"));
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Invalid domain",
+		));
 	}
 
 	if !force_refresh {

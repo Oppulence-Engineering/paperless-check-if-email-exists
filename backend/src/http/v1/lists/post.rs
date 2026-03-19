@@ -46,14 +46,16 @@ async fn http_handler(
 	let non_empty_email_count = parsed
 		.rows
 		.iter()
-		.filter(|row| row
-			.get(&parsed.email_column)
-			.and_then(Value::as_str)
-			.map(|value| !value.trim().is_empty())
-			.unwrap_or(false))
+		.filter(|row| {
+			row.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.map(|value| !value.trim().is_empty())
+				.unwrap_or(false)
+		})
 		.count() as i32;
 
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, non_empty_email_count).await
+	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, non_empty_email_count)
+		.await
 	{
 		QuotaCheckResult::Allowed => {}
 		QuotaCheckResult::ExceededMonthlyLimit {
@@ -203,8 +205,16 @@ async fn http_handler(
 		published_any = true;
 	}
 
-	let job_status = if published_any { "running" } else { "completed" };
-	let list_status = if published_any { "processing" } else { "completed" };
+	let job_status = if published_any {
+		"running"
+	} else {
+		"completed"
+	};
+	let list_status = if published_any {
+		"processing"
+	} else {
+		"completed"
+	};
 	sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, updated_at = NOW(), completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END WHERE id = $1")
 		.bind(job_id)
 		.bind(job_status)
@@ -273,7 +283,10 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 
 	Ok(UploadData {
 		file_bytes: file_bytes.ok_or_else(|| {
-			ReacherResponseError::new(StatusCode::BAD_REQUEST, "multipart field 'file' is required")
+			ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"multipart field 'file' is required",
+			)
 		})?,
 		filename: filename.unwrap_or_else(|| "upload.csv".to_string()),
 		name,
@@ -295,11 +308,13 @@ fn blank_email_result() -> serde_json::Value {
 		is_reachable: Reachable::Invalid,
 		..Default::default()
 	};
-	scored_json(&output).unwrap_or_else(|_| serde_json::json!({
-		"input": "",
-		"is_reachable": "invalid",
-		"score": {"score": 0, "category": "invalid", "sub_reason": "invalid_syntax"}
-	}))
+	scored_json(&output).unwrap_or_else(|_| {
+		serde_json::json!({
+			"input": "",
+			"is_reachable": "invalid",
+			"score": {"score": 0, "category": "invalid", "sub_reason": "invalid_syntax"}
+		})
+	})
 }
 
 fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {

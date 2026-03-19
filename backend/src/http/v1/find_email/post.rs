@@ -225,11 +225,13 @@ async fn http_handler(
 		.await?;
 	}
 
-	sqlx::query("UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1")
-		.bind(bulk_job_id)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1",
+	)
+	.bind(bulk_job_id)
+	.execute(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {

@@ -12,30 +12,35 @@ pub async fn check_dns_records(domain: &str) -> Result<DnsRecordResults, anyhow:
 
 	let mx_records = mx_lookup
 		.as_ref()
-		.map(|lookup| lookup.iter().map(|record| record.exchange().to_string()).collect())
+		.map(|lookup| {
+			lookup
+				.iter()
+				.map(|record| record.exchange().to_string())
+				.collect()
+		})
 		.unwrap_or_else(Vec::new);
 	let has_mx = !mx_records.is_empty();
 
 	let txt_values: Vec<String> = txt_lookup
 		.as_ref()
 		.map(|lookup| {
-				lookup
-					.iter()
-					.flat_map(|txt| txt.txt_data().iter())
-					.filter_map(|bytes| std::str::from_utf8(bytes).ok())
-					.map(ToOwned::to_owned)
-					.collect()
+			lookup
+				.iter()
+				.flat_map(|txt| txt.txt_data().iter())
+				.filter_map(|bytes| std::str::from_utf8(bytes).ok())
+				.map(ToOwned::to_owned)
+				.collect()
 		})
 		.unwrap_or_default();
 	let dmarc_values: Vec<String> = dmarc_lookup
 		.as_ref()
 		.map(|lookup| {
-				lookup
-					.iter()
-					.flat_map(|txt| txt.txt_data().iter())
-					.filter_map(|bytes| std::str::from_utf8(bytes).ok())
-					.map(ToOwned::to_owned)
-					.collect()
+			lookup
+				.iter()
+				.flat_map(|txt| txt.txt_data().iter())
+				.filter_map(|bytes| std::str::from_utf8(bytes).ok())
+				.map(ToOwned::to_owned)
+				.collect()
 		})
 		.unwrap_or_default();
 

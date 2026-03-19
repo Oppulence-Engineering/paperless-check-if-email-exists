@@ -49,10 +49,15 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 	let row = row.ok_or_else(|| {
-		warp::reject::custom(ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found"))
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::NOT_FOUND,
+			"List not found",
+		))
 	})?;
 
-	let summary = list_summary(&pg_pool, list_id).await.map_err(warp::reject::custom)?;
+	let summary = list_summary(&pg_pool, list_id)
+		.await
+		.map_err(warp::reject::custom)?;
 
 	if summary.total_processed >= i64::from(row.get::<i32, _>("total_rows"))
 		&& row.get::<String, _>("status") != "completed"

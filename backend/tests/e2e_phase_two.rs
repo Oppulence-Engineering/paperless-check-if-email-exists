@@ -3,11 +3,11 @@ mod test_helpers;
 #[cfg(test)]
 mod tests {
 	use crate::test_helpers::{insert_api_key, insert_tenant, TestDb, TestRabbitMq};
-	use reqwest::multipart::{Form, Part};
 	use reacher_backend::config::{
 		BackendConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
 	};
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
+	use reqwest::multipart::{Form, Part};
 	use serial_test::serial;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
@@ -155,11 +155,12 @@ mod tests {
 		assert_eq!(body["status"], "completed");
 		assert_eq!(body["candidates_checked"], 0);
 
-		let used_this_period: i32 = sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id = $1")
-			.bind(tenant_id)
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+		let used_this_period: i32 =
+			sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		assert_eq!(used_this_period, 0);
 
 		let job_id = body["job_id"].as_i64().unwrap();
@@ -198,7 +199,12 @@ mod tests {
 			.reply(&create_routes(config))
 			.await;
 
-		assert_eq!(response.status(), StatusCode::ACCEPTED, "{:?}", response.body());
+		assert_eq!(
+			response.status(),
+			StatusCode::ACCEPTED,
+			"{:?}",
+			response.body()
+		);
 		let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
 		assert_eq!(body["status"], "running");
 		assert_eq!(body["candidates_checked"], 13);
@@ -251,7 +257,13 @@ mod tests {
 			)
 			.bind(job_id)
 			.bind(payload)
-			.bind(scored_result(&format!("user{}@example.com", index), "safe", 95, "valid", "deliverable"))
+			.bind(scored_result(
+				&format!("user{}@example.com", index),
+				"safe",
+				95,
+				"valid",
+				"deliverable",
+			))
 			.execute(db.pool())
 			.await
 			.unwrap();
@@ -321,7 +333,10 @@ mod tests {
 		let page_body: serde_json::Value = serde_json::from_slice(page.body()).unwrap();
 		assert_eq!(page_body["results"].as_array().unwrap().len(), 2);
 		assert_eq!(page_body["results"][0]["result"]["score"]["score"], 95);
-		assert_eq!(page_body["results"][1]["result"]["score"]["category"], "risky");
+		assert_eq!(
+			page_body["results"][1]["result"]["score"]["category"],
+			"risky"
+		);
 
 		let ndjson = request()
 			.method("GET")
@@ -469,7 +484,8 @@ mod tests {
 		let status: String = sqlx::Row::get(&stored, "status");
 		let best_match_email: Option<String> = sqlx::Row::get(&stored, "best_match_email");
 		let best_match_score: Option<i16> = sqlx::Row::get(&stored, "best_match_score");
-		let best_match_confidence: Option<String> = sqlx::Row::get(&stored, "best_match_confidence");
+		let best_match_confidence: Option<String> =
+			sqlx::Row::get(&stored, "best_match_confidence");
 		assert_eq!(status, "completed");
 		assert_eq!(best_match_email.as_deref(), Some("john.doe@example.com"));
 		assert_eq!(best_match_score, Some(95));
@@ -491,22 +507,25 @@ mod tests {
 			.post(format!("{}/v1/lists", server_url))
 			.bearer_auth(&api_key)
 			.multipart(
-				Form::new()
-					.text("name", "My List")
-					.part(
-						"file",
-						Part::bytes(csv.as_bytes().to_vec())
-							.file_name("contacts.csv")
-							.mime_str("text/csv")
-							.unwrap(),
-					),
+				Form::new().text("name", "My List").part(
+					"file",
+					Part::bytes(csv.as_bytes().to_vec())
+						.file_name("contacts.csv")
+						.mime_str("text/csv")
+						.unwrap(),
+				),
 			)
 			.send()
 			.await
 			.unwrap();
 		let upload_status = upload.status();
 		let upload_text = upload.text().await.unwrap();
-		assert_eq!(upload_status, reqwest::StatusCode::ACCEPTED, "{}", upload_text);
+		assert_eq!(
+			upload_status,
+			reqwest::StatusCode::ACCEPTED,
+			"{}",
+			upload_text
+		);
 		let upload_body: serde_json::Value = serde_json::from_str(&upload_text).unwrap();
 		let list_id = upload_body["list_id"].as_i64().unwrap() as i32;
 		let job_id = upload_body["job_id"].as_i64().unwrap() as i32;
@@ -532,7 +551,13 @@ mod tests {
 			"#,
 		)
 		.bind(task_id)
-		.bind(scored_result("alice@example.com", "safe", 95, "valid", "deliverable"))
+		.bind(scored_result(
+			"alice@example.com",
+			"safe",
+			95,
+			"valid",
+			"deliverable",
+		))
 		.execute(db.pool())
 		.await
 		.unwrap();
@@ -557,7 +582,10 @@ mod tests {
 		assert_eq!(detail_body["summary"]["total_processed"], 2);
 
 		let download = client
-			.get(format!("{}/v1/lists/{}/download?format=csv", server_url, list_id))
+			.get(format!(
+				"{}/v1/lists/{}/download?format=csv",
+				server_url, list_id
+			))
 			.bearer_auth(&api_key)
 			.send()
 			.await
@@ -615,8 +643,22 @@ mod tests {
 		.unwrap();
 
 		for (row_index, email, reachable, score, category, sub_reason) in [
-			(0_i32, "alice@example.com", "safe", 95_i16, "valid", "deliverable"),
-			(1_i32, "bob@example.com", "invalid", 0_i16, "invalid", "invalid_recipient"),
+			(
+				0_i32,
+				"alice@example.com",
+				"safe",
+				95_i16,
+				"valid",
+				"deliverable",
+			),
+			(
+				1_i32,
+				"bob@example.com",
+				"invalid",
+				0_i16,
+				"invalid",
+				"invalid_recipient",
+			),
 		] {
 			sqlx::query(
 				r#"
@@ -661,7 +703,10 @@ mod tests {
 
 		let filtered_download = request()
 			.method("GET")
-			.path(&format!("/v1/lists/{}/download?format=csv&filter=valid", list_id))
+			.path(&format!(
+				"/v1/lists/{}/download?format=csv&filter=valid",
+				list_id
+			))
 			.header("authorization", format!("Bearer {}", api_key))
 			.reply(&create_routes(Arc::clone(&config)))
 			.await;
@@ -696,12 +741,13 @@ mod tests {
 			.fetch_one(db.pool())
 			.await
 			.unwrap();
-		let task_count: i64 =
-			sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1")
-				.bind(list_id)
-				.fetch_one(db.pool())
-				.await
-				.unwrap();
+		let task_count: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1",
+		)
+		.bind(list_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
 		assert_eq!(list_count, 0);
 		assert_eq!(job_count, 0);
 		assert_eq!(task_count, 0);
@@ -759,11 +805,12 @@ mod tests {
 		assert_eq!(status, reqwest::StatusCode::BAD_REQUEST, "{}", body);
 		assert!(body.contains("plan allows 1000"), "{}", body);
 
-		let list_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM v1_lists WHERE tenant_id = $1")
-			.bind(tenant_id)
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+		let list_count: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_lists WHERE tenant_id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
 		let job_count: i64 =
 			sqlx::query_scalar("SELECT COUNT(*) FROM v1_bulk_job WHERE tenant_id = $1")
 				.bind(tenant_id)
