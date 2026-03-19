@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state NOT IN ('queued', 'running', 'retrying');",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3b6f6e4eaf8d4dffbba37331d15747b6b103f94d6eb22aa69ec862008d4ab351"
+}

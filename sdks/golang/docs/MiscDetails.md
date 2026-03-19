@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
-**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
 **GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional] 
 **IsB2c** | **bool** | Is this a B2C email address? | 
+**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
+**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
 
 ## Methods
 
 ### NewMiscDetails
 
-`func NewMiscDetails(isDisposable bool, isRoleAccount bool, isB2c bool, ) *MiscDetails`
+`func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool, ) *MiscDetails`
 
 NewMiscDetails instantiates a new MiscDetails object
 This constructor will assign default values to properties that have it defined,
@@ -27,46 +27,6 @@ will change when the set of required properties is changed
 NewMiscDetailsWithDefaults instantiates a new MiscDetails object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
-
-### GetIsDisposable
-
-`func (o *MiscDetails) GetIsDisposable() bool`
-
-GetIsDisposable returns the IsDisposable field if non-nil, zero value otherwise.
-
-### GetIsDisposableOk
-
-`func (o *MiscDetails) GetIsDisposableOk() (*bool, bool)`
-
-GetIsDisposableOk returns a tuple with the IsDisposable field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIsDisposable
-
-`func (o *MiscDetails) SetIsDisposable(v bool)`
-
-SetIsDisposable sets IsDisposable field to given value.
-
-
-### GetIsRoleAccount
-
-`func (o *MiscDetails) GetIsRoleAccount() bool`
-
-GetIsRoleAccount returns the IsRoleAccount field if non-nil, zero value otherwise.
-
-### GetIsRoleAccountOk
-
-`func (o *MiscDetails) GetIsRoleAccountOk() (*bool, bool)`
-
-GetIsRoleAccountOk returns a tuple with the IsRoleAccount field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIsRoleAccount
-
-`func (o *MiscDetails) SetIsRoleAccount(v bool)`
-
-SetIsRoleAccount sets IsRoleAccount field to given value.
-
 
 ### GetGravatarUrl
 
@@ -111,6 +71,46 @@ and a boolean to check if the value has been set.
 `func (o *MiscDetails) SetIsB2c(v bool)`
 
 SetIsB2c sets IsB2c field to given value.
+
+
+### GetIsDisposable
+
+`func (o *MiscDetails) GetIsDisposable() bool`
+
+GetIsDisposable returns the IsDisposable field if non-nil, zero value otherwise.
+
+### GetIsDisposableOk
+
+`func (o *MiscDetails) GetIsDisposableOk() (*bool, bool)`
+
+GetIsDisposableOk returns a tuple with the IsDisposable field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsDisposable
+
+`func (o *MiscDetails) SetIsDisposable(v bool)`
+
+SetIsDisposable sets IsDisposable field to given value.
+
+
+### GetIsRoleAccount
+
+`func (o *MiscDetails) GetIsRoleAccount() bool`
+
+GetIsRoleAccount returns the IsRoleAccount field if non-nil, zero value otherwise.
+
+### GetIsRoleAccountOk
+
+`func (o *MiscDetails) GetIsRoleAccountOk() (*bool, bool)`
+
+GetIsRoleAccountOk returns a tuple with the IsRoleAccount field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsRoleAccount
+
+`func (o *MiscDetails) SetIsRoleAccount(v bool)`
+
+SetIsRoleAccount sets IsRoleAccount field to given value.
 
 
 

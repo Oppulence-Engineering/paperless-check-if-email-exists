@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL);",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total_records",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c590a1e798f89c8f60d02be76a2a0970b26d6f776ff4b510168751b93fe75836"
+}

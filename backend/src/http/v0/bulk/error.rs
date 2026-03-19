@@ -42,3 +42,39 @@ impl From<sqlx::Error> for BulkError {
 		BulkError::Db(e)
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_bulk_error_from_sqlx() {
+		let err: BulkError = sqlx::Error::RowNotFound.into();
+		assert!(matches!(err, BulkError::Db(_)));
+	}
+
+	#[test]
+	fn test_bulk_error_empty_input() {
+		let err = BulkError::EmptyInput;
+		assert!(matches!(err, BulkError::EmptyInput));
+	}
+
+	#[test]
+	fn test_bulk_error_job_in_progress() {
+		let err = BulkError::JobInProgress;
+		assert!(matches!(err, BulkError::JobInProgress));
+	}
+
+	#[test]
+	fn test_csv_error_parse() {
+		let err = CsvError::Parse("test error");
+		assert!(matches!(err, CsvError::Parse(_)));
+	}
+
+	#[test]
+	fn test_bulk_error_debug() {
+		let err = BulkError::EmptyInput;
+		let debug = format!("{:?}", err);
+		assert!(debug.contains("EmptyInput"));
+	}
+}

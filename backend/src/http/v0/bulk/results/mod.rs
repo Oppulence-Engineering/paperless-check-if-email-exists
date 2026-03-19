@@ -29,6 +29,7 @@ use super::{
 	db::with_db,
 	error::{BulkError, CsvError},
 };
+use crate::http::deprecation::add_deprecation_headers;
 use csv_helper::{CsvWrapper, JobResultCsvResponse};
 
 mod csv_helper;
@@ -115,17 +116,21 @@ async fn job_result(
 					BulkError::Json(e)
 				})?;
 
-			Ok(warp::reply::with_header(
-				reply,
-				"Content-Type",
-				"application/json",
+			Ok(add_deprecation_headers(
+				warp::reply::with_header(reply, "Content-Type", "application/json"),
+				"2026-09-16",
+				"/v1/bulk/{id}/results",
 			))
 		}
 		JobResultResponseFormat::Csv => {
 			let data =
 				job_result_csv(job_id, req.limit, req.offset.unwrap_or(0), conn_pool).await?;
 
-			Ok(warp::reply::with_header(data, "Content-Type", "text/csv"))
+			Ok(add_deprecation_headers(
+				warp::reply::with_header(data, "Content-Type", "text/csv"),
+				"2026-09-16",
+				"/v1/bulk/{id}/results",
+			))
 		}
 	}
 }
@@ -235,14 +240,25 @@ async fn job_result_csv(
 	Ok(data)
 }
 
+/// GET /v0/bulk/{job_id}/results
+///
+/// Returns terminal result rows for a legacy bulk job.
+#[utoipa::path(
+	get,
+	path = "/v0/bulk/{job_id}/results",
+	tag = "v0",
+	params(("job_id" = i32, Path, description = "Legacy bulk job identifier")),
+	responses((status = 200, description = "Bulk job results"))
+)]
 pub fn get_bulk_job_result(
+	config: std::sync::Arc<crate::config::BackendConfig>,
 	o: Option<Pool<Postgres>>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk" / i32 / "results")
 		.and(warp::get())
+		.and(crate::http::check_header(config))
 		.and(with_db(o))
 		.and(warp::query::<JobResultRequest>())
 		.and_then(job_result)
-		// View access logs by setting `RUST_LOG=reacher_backend`.
 		.with(warp::log(LOG_TARGET))
 }

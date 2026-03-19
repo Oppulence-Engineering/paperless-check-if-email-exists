@@ -26,6 +26,7 @@ use check_if_email_exists::smtp::verif_method::{
 };
 use check_if_email_exists::{CheckEmailInputProxy, WebdriverConfig, LOG_TARGET};
 use config::Config;
+use dashmap::DashMap;
 use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -33,6 +34,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::warn;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
@@ -88,6 +90,11 @@ pub struct BackendConfig {
 
 	#[serde(skip)]
 	throttle_manager: Arc<ThrottleManager>,
+
+	/// Per-tenant throttle managers, keyed by tenant UUID.
+	/// Legacy/open-mode callers use the global `throttle_manager` above.
+	#[serde(skip)]
+	tenant_throttle_managers: Arc<DashMap<Uuid, Arc<ThrottleManager>>>,
 }
 
 impl BackendConfig {
@@ -115,6 +122,7 @@ impl BackendConfig {
 			throttle_manager: Arc::new(
 				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
 			),
+			tenant_throttle_managers: Arc::new(DashMap::new()),
 		}
 	}
 
@@ -234,6 +242,23 @@ impl BackendConfig {
 
 	pub fn get_throttle_manager(&self) -> Arc<ThrottleManager> {
 		self.throttle_manager.clone()
+	}
+
+	/// Get or create a per-tenant ThrottleManager. If the tenant_id is None
+	/// (legacy mode), returns the global throttle manager.
+	pub fn get_tenant_throttle_manager(
+		&self,
+		tenant_id: Option<Uuid>,
+		tenant_throttle_config: &ThrottleConfig,
+	) -> Arc<ThrottleManager> {
+		match tenant_id {
+			Some(id) => self
+				.tenant_throttle_managers
+				.entry(id)
+				.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())))
+				.clone(),
+			None => self.throttle_manager.clone(),
+		}
 	}
 }
 

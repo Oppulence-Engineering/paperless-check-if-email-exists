@@ -28,6 +28,7 @@ use super::error::BulkError;
 use super::task::{submit_job, TaskInput};
 use crate::config::BackendConfig;
 use crate::http::check_header;
+use crate::http::deprecation::add_deprecation_headers;
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -124,14 +125,22 @@ async fn create_bulk_request(
 		);
 	}
 
-	Ok(warp::reply::json(&CreateBulkResponseBody {
-		job_id: rec.id,
-	}))
+	Ok(add_deprecation_headers(
+		warp::reply::json(&CreateBulkResponseBody { job_id: rec.id }),
+		"2026-09-16",
+		"/v1/bulk",
+	))
 }
 
-/// Create the `POST /bulk` endpoint.
-/// The endpoint accepts list of email address and creates
-/// a new job to check them.
+/// POST /v0/bulk
+///
+/// Creates a legacy bulk verification job and queues tasks synchronously via sqlxmq.
+#[utoipa::path(
+	post,
+	path = "/v0/bulk",
+	tag = "v0",
+	responses((status = 200, description = "Legacy bulk job created"))
+)]
 pub fn create_bulk_job(
 	config: Arc<BackendConfig>,
 	o: Option<Pool<Postgres>>,

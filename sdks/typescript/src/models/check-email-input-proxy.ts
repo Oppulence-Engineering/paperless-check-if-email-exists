@@ -27,6 +27,12 @@ export interface CheckEmailInputProxy {
      */
     'host': string;
     /**
+     * Password for proxy authentication.
+     * @type {string}
+     * @memberof CheckEmailInputProxy
+     */
+    'password'?: string;
+    /**
      * The proxy port number.
      * @type {number}
      * @memberof CheckEmailInputProxy
@@ -38,11 +44,5 @@ export interface CheckEmailInputProxy {
      * @memberof CheckEmailInputProxy
      */
     'username'?: string;
-    /**
-     * Password for proxy authentication.
-     * @type {string}
-     * @memberof CheckEmailInputProxy
-     */
-    'password'?: string;
 }
 

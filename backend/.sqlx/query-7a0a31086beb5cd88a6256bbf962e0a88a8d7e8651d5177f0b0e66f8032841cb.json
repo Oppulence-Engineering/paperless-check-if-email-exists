@@ -1,0 +1,73 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT id, total_records, status as \"status: String\",\n\t\t       created_at, updated_at, completed_at, cancelled_at\n\t\tFROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_records",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "status: String",
+        "type_info": {
+          "Custom": {
+            "name": "job_state",
+            "kind": {
+              "Enum": [
+                "pending",
+                "running",
+                "completed",
+                "cancelling",
+                "cancelled",
+                "failed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "completed_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "cancelled_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "7a0a31086beb5cd88a6256bbf962e0a88a8d7e8651d5177f0b0e66f8032841cb"
+}

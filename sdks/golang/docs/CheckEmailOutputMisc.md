@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
-**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
 **GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional] 
 **IsB2c** | **bool** | Is this a B2C email address? | 
-**Type** | **string** | The type of error. | 
+**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
+**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
 **Message** | **string** | A human-readable description of the error. | 
+**Type** | **string** | The type of error. | 
 
 ## Methods
 
 ### NewCheckEmailOutputMisc
 
-`func NewCheckEmailOutputMisc(isDisposable bool, isRoleAccount bool, isB2c bool, type_ string, message string, ) *CheckEmailOutputMisc`
+`func NewCheckEmailOutputMisc(isB2c bool, isDisposable bool, isRoleAccount bool, message string, type_ string, ) *CheckEmailOutputMisc`
 
 NewCheckEmailOutputMisc instantiates a new CheckEmailOutputMisc object
 This constructor will assign default values to properties that have it defined,
@@ -29,46 +29,6 @@ will change when the set of required properties is changed
 NewCheckEmailOutputMiscWithDefaults instantiates a new CheckEmailOutputMisc object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
-
-### GetIsDisposable
-
-`func (o *CheckEmailOutputMisc) GetIsDisposable() bool`
-
-GetIsDisposable returns the IsDisposable field if non-nil, zero value otherwise.
-
-### GetIsDisposableOk
-
-`func (o *CheckEmailOutputMisc) GetIsDisposableOk() (*bool, bool)`
-
-GetIsDisposableOk returns a tuple with the IsDisposable field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIsDisposable
-
-`func (o *CheckEmailOutputMisc) SetIsDisposable(v bool)`
-
-SetIsDisposable sets IsDisposable field to given value.
-
-
-### GetIsRoleAccount
-
-`func (o *CheckEmailOutputMisc) GetIsRoleAccount() bool`
-
-GetIsRoleAccount returns the IsRoleAccount field if non-nil, zero value otherwise.
-
-### GetIsRoleAccountOk
-
-`func (o *CheckEmailOutputMisc) GetIsRoleAccountOk() (*bool, bool)`
-
-GetIsRoleAccountOk returns a tuple with the IsRoleAccount field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIsRoleAccount
-
-`func (o *CheckEmailOutputMisc) SetIsRoleAccount(v bool)`
-
-SetIsRoleAccount sets IsRoleAccount field to given value.
-
 
 ### GetGravatarUrl
 
@@ -115,24 +75,44 @@ and a boolean to check if the value has been set.
 SetIsB2c sets IsB2c field to given value.
 
 
-### GetType
+### GetIsDisposable
 
-`func (o *CheckEmailOutputMisc) GetType() string`
+`func (o *CheckEmailOutputMisc) GetIsDisposable() bool`
 
-GetType returns the Type field if non-nil, zero value otherwise.
+GetIsDisposable returns the IsDisposable field if non-nil, zero value otherwise.
 
-### GetTypeOk
+### GetIsDisposableOk
 
-`func (o *CheckEmailOutputMisc) GetTypeOk() (*string, bool)`
+`func (o *CheckEmailOutputMisc) GetIsDisposableOk() (*bool, bool)`
 
-GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+GetIsDisposableOk returns a tuple with the IsDisposable field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetType
+### SetIsDisposable
 
-`func (o *CheckEmailOutputMisc) SetType(v string)`
+`func (o *CheckEmailOutputMisc) SetIsDisposable(v bool)`
 
-SetType sets Type field to given value.
+SetIsDisposable sets IsDisposable field to given value.
+
+
+### GetIsRoleAccount
+
+`func (o *CheckEmailOutputMisc) GetIsRoleAccount() bool`
+
+GetIsRoleAccount returns the IsRoleAccount field if non-nil, zero value otherwise.
+
+### GetIsRoleAccountOk
+
+`func (o *CheckEmailOutputMisc) GetIsRoleAccountOk() (*bool, bool)`
+
+GetIsRoleAccountOk returns a tuple with the IsRoleAccount field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsRoleAccount
+
+`func (o *CheckEmailOutputMisc) SetIsRoleAccount(v bool)`
+
+SetIsRoleAccount sets IsRoleAccount field to given value.
 
 
 ### GetMessage
@@ -153,6 +133,26 @@ and a boolean to check if the value has been set.
 `func (o *CheckEmailOutputMisc) SetMessage(v string)`
 
 SetMessage sets Message field to given value.
+
+
+### GetType
+
+`func (o *CheckEmailOutputMisc) GetType() string`
+
+GetType returns the Type field if non-nil, zero value otherwise.
+
+### GetTypeOk
+
+`func (o *CheckEmailOutputMisc) GetTypeOk() (*string, bool)`
+
+GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetType
+
+`func (o *CheckEmailOutputMisc) SetType(v string)`
+
+SetType sets Type field to given value.
 
 
 

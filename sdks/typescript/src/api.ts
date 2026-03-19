@@ -14,5 +14,13 @@
 
 
 
-export * from './api/default-api';
+export * from './api/account-api';
+export * from './api/admin-api';
+export * from './api/admin-jobs-api';
+export * from './api/health-api';
+export * from './api/jobs-api';
+export * from './api/system-api';
+export * from './api/tenant-api';
+export * from './api/v0-api';
+export * from './api/v1-api';
 

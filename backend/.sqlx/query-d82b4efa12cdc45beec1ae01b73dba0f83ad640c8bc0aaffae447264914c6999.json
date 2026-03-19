@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tUPDATE idempotency_keys\n\t\tSET status = 'completed', response_status_code = $2, response_body = $3, updated_at = NOW()\n\t\tWHERE id = $1\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d82b4efa12cdc45beec1ae01b73dba0f83ad640c8bc0aaffae447264914c6999"
+}

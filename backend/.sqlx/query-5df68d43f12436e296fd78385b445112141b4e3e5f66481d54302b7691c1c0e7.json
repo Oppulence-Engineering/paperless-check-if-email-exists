@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tINSERT INTO v1_bulk_job (total_records, tenant_id, status)\n\t\tVALUES ($1, $2, 'pending')\n\t\tRETURNING id\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5df68d43f12436e296fd78385b445112141b4e3e5f66481d54302b7691c1c0e7"
+}

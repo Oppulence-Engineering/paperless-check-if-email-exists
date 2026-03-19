@@ -20,17 +20,55 @@ mod tests {
 
 	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, CheckEmailRequest, REACHER_SECRET_HEADER};
+	use serde_json::Value;
 	use warp::http::StatusCode;
 	use warp::test::request;
-
-	const FOO_BAR_RESPONSE: &str = r#"{"input":"foo@bar","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"is_b2c":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}"#;
-	const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"is_b2c":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
 	fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some(header_secret.to_string());
 		Arc::new(config)
 	}
+
+	fn create_open_config() -> Arc<BackendConfig> {
+		let mut config = BackendConfig::empty();
+		config.header_secret = None;
+		Arc::new(config)
+	}
+
+	fn parse_json(body: &[u8]) -> Value {
+		serde_json::from_slice(body).expect("response body should be valid JSON")
+	}
+
+	fn assert_invalid_scored_response(
+		body: &[u8],
+		input: &str,
+		is_valid_syntax: bool,
+		address: Option<&str>,
+		domain: &str,
+		username: &str,
+		sub_reason: &str,
+	) {
+		let body = parse_json(body);
+		assert_eq!(body["input"], input);
+		assert_eq!(body["is_reachable"], "invalid");
+		assert_eq!(body["syntax"]["is_valid_syntax"], is_valid_syntax);
+		assert_eq!(body["syntax"]["domain"], domain);
+		assert_eq!(body["syntax"]["username"], username);
+		match address {
+			Some(address) => assert_eq!(body["syntax"]["address"], address),
+			None => assert!(body["syntax"]["address"].is_null()),
+		}
+		assert!(body["misc"].is_object());
+		assert!(body["mx"].is_object() || body["mx"].is_null());
+		assert!(body["smtp"].is_object() || body["smtp"].is_null());
+		assert_eq!(body["score"]["score"], 0);
+		assert_eq!(body["score"]["category"], "invalid");
+		assert_eq!(body["score"]["sub_reason"], sub_reason);
+		assert!(body["score"]["signals"].is_object());
+	}
+
+	// --- V0 check_email with legacy auth ---
 
 	#[tokio::test]
 	async fn test_input_foo_bar() {
@@ -43,7 +81,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	#[tokio::test]
@@ -60,7 +106,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_BAZ_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar.baz",
+			true,
+			Some("foo@bar.baz"),
+			"bar.baz",
+			"foo",
+			"invalid_recipient",
+		);
 	}
 
 	#[tokio::test]
@@ -75,8 +129,8 @@ mod tests {
 			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
-		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
-		assert_eq!(resp.body(), r#"Missing request header "x-reacher-secret""#);
+		// Now returns 401 with JSON body via resolve_tenant()
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
 	}
 
 	#[tokio::test]
@@ -92,8 +146,8 @@ mod tests {
 			.reply(&create_routes(create_backend_config("foobar")))
 			.await;
 
-		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
-		assert_eq!(resp.body(), r#"Invalid request header "x-reacher-secret""#);
+		// Now returns 401 via resolve_tenant()
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
 	}
 
 	#[tokio::test]
@@ -107,7 +161,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	#[tokio::test]
@@ -122,5 +184,176 @@ mod tests {
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
 		assert_eq!(resp.body(), r#"{"error":"to_email field is required."}"#);
+	}
+
+	// --- V0 check_email returns deprecation headers ---
+
+	#[tokio::test]
+	async fn test_v0_deprecation_headers() {
+		let resp = request()
+			.path("/v0/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK);
+		assert_eq!(resp.headers().get("Deprecation").unwrap(), "true");
+		assert_eq!(resp.headers().get("Sunset").unwrap(), "2026-09-16");
+		assert!(resp
+			.headers()
+			.get("Link")
+			.unwrap()
+			.to_str()
+			.unwrap()
+			.contains("/v1/check_email"));
+	}
+
+	// --- Open mode (no auth configured) ---
+
+	#[tokio::test]
+	async fn test_open_mode_no_auth_required() {
+		let resp = request()
+			.path("/v0/check_email")
+			.method("POST")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_open_config()))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
+	}
+
+	// --- V1 check_email with legacy auth ---
+
+	#[tokio::test]
+	async fn test_v1_check_email_with_legacy_auth() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
+	}
+
+	#[tokio::test]
+	async fn test_v1_check_email_missing_auth() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "{:?}", resp.body());
+	}
+
+	#[tokio::test]
+	async fn test_v1_check_email_invalid_bearer() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header("Authorization", "Bearer rch_live_notavalidkey1234567890ab")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		// API key lookup requires Postgres — returns 503 without it
+		assert!(
+			resp.status() == StatusCode::SERVICE_UNAVAILABLE
+				|| resp.status() == StatusCode::UNAUTHORIZED,
+			"Expected 503 or 401, got {}",
+			resp.status()
+		);
+	}
+
+	// --- Health endpoints ---
+
+	#[tokio::test]
+	async fn test_healthz() {
+		let resp = request()
+			.path("/healthz")
+			.method("GET")
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK);
+		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+		assert_eq!(body["status"], "ok");
+	}
+
+	#[tokio::test]
+	async fn test_healthz_no_auth_required() {
+		// Health endpoints should work without any auth
+		let resp = request()
+			.path("/healthz")
+			.method("GET")
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK);
+	}
+
+	#[tokio::test]
+	async fn test_readyz_no_postgres() {
+		// Without Postgres, readyz should still return (with not_configured)
+		let resp = request()
+			.path("/readyz")
+			.method("GET")
+			.reply(&create_routes(create_open_config()))
+			.await;
+
+		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+		assert!(body["checks"]["postgres"]["status"].is_string());
+		assert!(body["checks"]["rabbitmq"]["status"].is_string());
+	}
+
+	// --- V1 empty email ---
+
+	#[tokio::test]
+	async fn test_v1_to_email_empty() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": ""}"#).unwrap())
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+	}
+
+	// --- Version endpoint still works ---
+
+	#[tokio::test]
+	async fn test_version_endpoint() {
+		let resp = request()
+			.path("/version")
+			.method("GET")
+			.reply(&create_routes(create_open_config()))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK);
 	}
 }

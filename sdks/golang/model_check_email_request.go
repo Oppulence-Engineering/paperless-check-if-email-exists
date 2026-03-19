@@ -22,21 +22,21 @@ var _ MappedNullable = &CheckEmailRequest{}
 
 // CheckEmailRequest A request object to perform an email verification. The `to_email` field is required, all other fields are optional.
 type CheckEmailRequest struct {
+	// Whether to check if a Gravatar image exists for the given email.
+	CheckGravatar *bool `json:"check_gravatar,omitempty"`
 	// In the SMTP connection, the FROM email address.
 	FromEmail *string `json:"from_email,omitempty"`
-	// The email address to check.
-	ToEmail string `json:"to_email"`
+	GmailVerifMethod *GmailVerifMethod `json:"gmail_verif_method,omitempty"`
 	// In the SMTP connection, the EHLO hostname.
 	HelloName *string `json:"hello_name,omitempty"`
+	Hotmailb2bVerifMethod *HotmailB2BVerifMethod `json:"hotmailb2b_verif_method,omitempty"`
+	Hotmailb2cVerifMethod *HotmailB2CVerifMethod `json:"hotmailb2c_verif_method,omitempty"`
 	Proxy *CheckEmailInputProxy `json:"proxy,omitempty"`
 	// SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
 	SmtpPort *float32 `json:"smtp_port,omitempty"`
-	GmailVerifMethod *GmailVerifMethod `json:"gmail_verif_method,omitempty"`
-	Hotmailb2bVerifMethod *HotmailB2BVerifMethod `json:"hotmailb2b_verif_method,omitempty"`
-	Hotmailb2cVerifMethod *HotmailB2CVerifMethod `json:"hotmailb2c_verif_method,omitempty"`
+	// The email address to check.
+	ToEmail string `json:"to_email"`
 	YahooVerifMethod *YahooVerifMethod `json:"yahoo_verif_method,omitempty"`
-	// Whether to check if a Gravatar image exists for the given email.
-	CheckGravatar *bool `json:"check_gravatar,omitempty"`
 }
 
 type _CheckEmailRequest CheckEmailRequest
@@ -57,6 +57,38 @@ func NewCheckEmailRequest(toEmail string) *CheckEmailRequest {
 func NewCheckEmailRequestWithDefaults() *CheckEmailRequest {
 	this := CheckEmailRequest{}
 	return &this
+}
+
+// GetCheckGravatar returns the CheckGravatar field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetCheckGravatar() bool {
+	if o == nil || IsNil(o.CheckGravatar) {
+		var ret bool
+		return ret
+	}
+	return *o.CheckGravatar
+}
+
+// GetCheckGravatarOk returns a tuple with the CheckGravatar field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetCheckGravatarOk() (*bool, bool) {
+	if o == nil || IsNil(o.CheckGravatar) {
+		return nil, false
+	}
+	return o.CheckGravatar, true
+}
+
+// HasCheckGravatar returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasCheckGravatar() bool {
+	if o != nil && !IsNil(o.CheckGravatar) {
+		return true
+	}
+
+	return false
+}
+
+// SetCheckGravatar gets a reference to the given bool and assigns it to the CheckGravatar field.
+func (o *CheckEmailRequest) SetCheckGravatar(v bool) {
+	o.CheckGravatar = &v
 }
 
 // GetFromEmail returns the FromEmail field value if set, zero value otherwise.
@@ -91,28 +123,36 @@ func (o *CheckEmailRequest) SetFromEmail(v string) {
 	o.FromEmail = &v
 }
 
-// GetToEmail returns the ToEmail field value
-func (o *CheckEmailRequest) GetToEmail() string {
-	if o == nil {
-		var ret string
+// GetGmailVerifMethod returns the GmailVerifMethod field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetGmailVerifMethod() GmailVerifMethod {
+	if o == nil || IsNil(o.GmailVerifMethod) {
+		var ret GmailVerifMethod
 		return ret
 	}
-
-	return o.ToEmail
+	return *o.GmailVerifMethod
 }
 
-// GetToEmailOk returns a tuple with the ToEmail field value
+// GetGmailVerifMethodOk returns a tuple with the GmailVerifMethod field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CheckEmailRequest) GetToEmailOk() (*string, bool) {
-	if o == nil {
+func (o *CheckEmailRequest) GetGmailVerifMethodOk() (*GmailVerifMethod, bool) {
+	if o == nil || IsNil(o.GmailVerifMethod) {
 		return nil, false
 	}
-	return &o.ToEmail, true
+	return o.GmailVerifMethod, true
 }
 
-// SetToEmail sets field value
-func (o *CheckEmailRequest) SetToEmail(v string) {
-	o.ToEmail = v
+// HasGmailVerifMethod returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasGmailVerifMethod() bool {
+	if o != nil && !IsNil(o.GmailVerifMethod) {
+		return true
+	}
+
+	return false
+}
+
+// SetGmailVerifMethod gets a reference to the given GmailVerifMethod and assigns it to the GmailVerifMethod field.
+func (o *CheckEmailRequest) SetGmailVerifMethod(v GmailVerifMethod) {
+	o.GmailVerifMethod = &v
 }
 
 // GetHelloName returns the HelloName field value if set, zero value otherwise.
@@ -145,102 +185,6 @@ func (o *CheckEmailRequest) HasHelloName() bool {
 // SetHelloName gets a reference to the given string and assigns it to the HelloName field.
 func (o *CheckEmailRequest) SetHelloName(v string) {
 	o.HelloName = &v
-}
-
-// GetProxy returns the Proxy field value if set, zero value otherwise.
-func (o *CheckEmailRequest) GetProxy() CheckEmailInputProxy {
-	if o == nil || IsNil(o.Proxy) {
-		var ret CheckEmailInputProxy
-		return ret
-	}
-	return *o.Proxy
-}
-
-// GetProxyOk returns a tuple with the Proxy field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailRequest) GetProxyOk() (*CheckEmailInputProxy, bool) {
-	if o == nil || IsNil(o.Proxy) {
-		return nil, false
-	}
-	return o.Proxy, true
-}
-
-// HasProxy returns a boolean if a field has been set.
-func (o *CheckEmailRequest) HasProxy() bool {
-	if o != nil && !IsNil(o.Proxy) {
-		return true
-	}
-
-	return false
-}
-
-// SetProxy gets a reference to the given CheckEmailInputProxy and assigns it to the Proxy field.
-func (o *CheckEmailRequest) SetProxy(v CheckEmailInputProxy) {
-	o.Proxy = &v
-}
-
-// GetSmtpPort returns the SmtpPort field value if set, zero value otherwise.
-func (o *CheckEmailRequest) GetSmtpPort() float32 {
-	if o == nil || IsNil(o.SmtpPort) {
-		var ret float32
-		return ret
-	}
-	return *o.SmtpPort
-}
-
-// GetSmtpPortOk returns a tuple with the SmtpPort field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailRequest) GetSmtpPortOk() (*float32, bool) {
-	if o == nil || IsNil(o.SmtpPort) {
-		return nil, false
-	}
-	return o.SmtpPort, true
-}
-
-// HasSmtpPort returns a boolean if a field has been set.
-func (o *CheckEmailRequest) HasSmtpPort() bool {
-	if o != nil && !IsNil(o.SmtpPort) {
-		return true
-	}
-
-	return false
-}
-
-// SetSmtpPort gets a reference to the given float32 and assigns it to the SmtpPort field.
-func (o *CheckEmailRequest) SetSmtpPort(v float32) {
-	o.SmtpPort = &v
-}
-
-// GetGmailVerifMethod returns the GmailVerifMethod field value if set, zero value otherwise.
-func (o *CheckEmailRequest) GetGmailVerifMethod() GmailVerifMethod {
-	if o == nil || IsNil(o.GmailVerifMethod) {
-		var ret GmailVerifMethod
-		return ret
-	}
-	return *o.GmailVerifMethod
-}
-
-// GetGmailVerifMethodOk returns a tuple with the GmailVerifMethod field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailRequest) GetGmailVerifMethodOk() (*GmailVerifMethod, bool) {
-	if o == nil || IsNil(o.GmailVerifMethod) {
-		return nil, false
-	}
-	return o.GmailVerifMethod, true
-}
-
-// HasGmailVerifMethod returns a boolean if a field has been set.
-func (o *CheckEmailRequest) HasGmailVerifMethod() bool {
-	if o != nil && !IsNil(o.GmailVerifMethod) {
-		return true
-	}
-
-	return false
-}
-
-// SetGmailVerifMethod gets a reference to the given GmailVerifMethod and assigns it to the GmailVerifMethod field.
-func (o *CheckEmailRequest) SetGmailVerifMethod(v GmailVerifMethod) {
-	o.GmailVerifMethod = &v
 }
 
 // GetHotmailb2bVerifMethod returns the Hotmailb2bVerifMethod field value if set, zero value otherwise.
@@ -307,6 +251,94 @@ func (o *CheckEmailRequest) SetHotmailb2cVerifMethod(v HotmailB2CVerifMethod) {
 	o.Hotmailb2cVerifMethod = &v
 }
 
+// GetProxy returns the Proxy field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetProxy() CheckEmailInputProxy {
+	if o == nil || IsNil(o.Proxy) {
+		var ret CheckEmailInputProxy
+		return ret
+	}
+	return *o.Proxy
+}
+
+// GetProxyOk returns a tuple with the Proxy field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetProxyOk() (*CheckEmailInputProxy, bool) {
+	if o == nil || IsNil(o.Proxy) {
+		return nil, false
+	}
+	return o.Proxy, true
+}
+
+// HasProxy returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasProxy() bool {
+	if o != nil && !IsNil(o.Proxy) {
+		return true
+	}
+
+	return false
+}
+
+// SetProxy gets a reference to the given CheckEmailInputProxy and assigns it to the Proxy field.
+func (o *CheckEmailRequest) SetProxy(v CheckEmailInputProxy) {
+	o.Proxy = &v
+}
+
+// GetSmtpPort returns the SmtpPort field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetSmtpPort() float32 {
+	if o == nil || IsNil(o.SmtpPort) {
+		var ret float32
+		return ret
+	}
+	return *o.SmtpPort
+}
+
+// GetSmtpPortOk returns a tuple with the SmtpPort field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetSmtpPortOk() (*float32, bool) {
+	if o == nil || IsNil(o.SmtpPort) {
+		return nil, false
+	}
+	return o.SmtpPort, true
+}
+
+// HasSmtpPort returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasSmtpPort() bool {
+	if o != nil && !IsNil(o.SmtpPort) {
+		return true
+	}
+
+	return false
+}
+
+// SetSmtpPort gets a reference to the given float32 and assigns it to the SmtpPort field.
+func (o *CheckEmailRequest) SetSmtpPort(v float32) {
+	o.SmtpPort = &v
+}
+
+// GetToEmail returns the ToEmail field value
+func (o *CheckEmailRequest) GetToEmail() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.ToEmail
+}
+
+// GetToEmailOk returns a tuple with the ToEmail field value
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetToEmailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.ToEmail, true
+}
+
+// SetToEmail sets field value
+func (o *CheckEmailRequest) SetToEmail(v string) {
+	o.ToEmail = v
+}
+
 // GetYahooVerifMethod returns the YahooVerifMethod field value if set, zero value otherwise.
 func (o *CheckEmailRequest) GetYahooVerifMethod() YahooVerifMethod {
 	if o == nil || IsNil(o.YahooVerifMethod) {
@@ -339,38 +371,6 @@ func (o *CheckEmailRequest) SetYahooVerifMethod(v YahooVerifMethod) {
 	o.YahooVerifMethod = &v
 }
 
-// GetCheckGravatar returns the CheckGravatar field value if set, zero value otherwise.
-func (o *CheckEmailRequest) GetCheckGravatar() bool {
-	if o == nil || IsNil(o.CheckGravatar) {
-		var ret bool
-		return ret
-	}
-	return *o.CheckGravatar
-}
-
-// GetCheckGravatarOk returns a tuple with the CheckGravatar field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailRequest) GetCheckGravatarOk() (*bool, bool) {
-	if o == nil || IsNil(o.CheckGravatar) {
-		return nil, false
-	}
-	return o.CheckGravatar, true
-}
-
-// HasCheckGravatar returns a boolean if a field has been set.
-func (o *CheckEmailRequest) HasCheckGravatar() bool {
-	if o != nil && !IsNil(o.CheckGravatar) {
-		return true
-	}
-
-	return false
-}
-
-// SetCheckGravatar gets a reference to the given bool and assigns it to the CheckGravatar field.
-func (o *CheckEmailRequest) SetCheckGravatar(v bool) {
-	o.CheckGravatar = &v
-}
-
 func (o CheckEmailRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -381,21 +381,17 @@ func (o CheckEmailRequest) MarshalJSON() ([]byte, error) {
 
 func (o CheckEmailRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.CheckGravatar) {
+		toSerialize["check_gravatar"] = o.CheckGravatar
+	}
 	if !IsNil(o.FromEmail) {
 		toSerialize["from_email"] = o.FromEmail
 	}
-	toSerialize["to_email"] = o.ToEmail
-	if !IsNil(o.HelloName) {
-		toSerialize["hello_name"] = o.HelloName
-	}
-	if !IsNil(o.Proxy) {
-		toSerialize["proxy"] = o.Proxy
-	}
-	if !IsNil(o.SmtpPort) {
-		toSerialize["smtp_port"] = o.SmtpPort
-	}
 	if !IsNil(o.GmailVerifMethod) {
 		toSerialize["gmail_verif_method"] = o.GmailVerifMethod
+	}
+	if !IsNil(o.HelloName) {
+		toSerialize["hello_name"] = o.HelloName
 	}
 	if !IsNil(o.Hotmailb2bVerifMethod) {
 		toSerialize["hotmailb2b_verif_method"] = o.Hotmailb2bVerifMethod
@@ -403,11 +399,15 @@ func (o CheckEmailRequest) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Hotmailb2cVerifMethod) {
 		toSerialize["hotmailb2c_verif_method"] = o.Hotmailb2cVerifMethod
 	}
+	if !IsNil(o.Proxy) {
+		toSerialize["proxy"] = o.Proxy
+	}
+	if !IsNil(o.SmtpPort) {
+		toSerialize["smtp_port"] = o.SmtpPort
+	}
+	toSerialize["to_email"] = o.ToEmail
 	if !IsNil(o.YahooVerifMethod) {
 		toSerialize["yahoo_verif_method"] = o.YahooVerifMethod
-	}
-	if !IsNil(o.CheckGravatar) {
-		toSerialize["check_gravatar"] = o.CheckGravatar
 	}
 	return toSerialize, nil
 }

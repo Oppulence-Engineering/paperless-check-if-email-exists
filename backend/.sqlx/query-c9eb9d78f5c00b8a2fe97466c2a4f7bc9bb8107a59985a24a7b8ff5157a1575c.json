@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\t\t\tINSERT INTO idempotency_keys (tenant_id, idempotency_key, request_path, request_body_hash, locked_at, locked_by)\n\t\t\t\tVALUES ($1, $2, $3, $4, NOW(), $5)\n\t\t\t\tRETURNING id\n\t\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c9eb9d78f5c00b8a2fe97466c2a4f7bc9bb8107a59985a24a7b8ff5157a1575c"
+}

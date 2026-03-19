@@ -22,10 +22,10 @@ var _ MappedNullable = &CoreError{}
 
 // CoreError Details of an error encountered during the verification process.
 type CoreError struct {
-	// The type of error.
-	Type string `json:"type"`
 	// A human-readable description of the error.
 	Message string `json:"message"`
+	// The type of error.
+	Type string `json:"type"`
 }
 
 type _CoreError CoreError
@@ -34,10 +34,10 @@ type _CoreError CoreError
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCoreError(type_ string, message string) *CoreError {
+func NewCoreError(message string, type_ string) *CoreError {
 	this := CoreError{}
-	this.Type = type_
 	this.Message = message
+	this.Type = type_
 	return &this
 }
 
@@ -47,30 +47,6 @@ func NewCoreError(type_ string, message string) *CoreError {
 func NewCoreErrorWithDefaults() *CoreError {
 	this := CoreError{}
 	return &this
-}
-
-// GetType returns the Type field value
-func (o *CoreError) GetType() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Type
-}
-
-// GetTypeOk returns a tuple with the Type field value
-// and a boolean to check if the value has been set.
-func (o *CoreError) GetTypeOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Type, true
-}
-
-// SetType sets field value
-func (o *CoreError) SetType(v string) {
-	o.Type = v
 }
 
 // GetMessage returns the Message field value
@@ -97,6 +73,30 @@ func (o *CoreError) SetMessage(v string) {
 	o.Message = v
 }
 
+// GetType returns the Type field value
+func (o *CoreError) GetType() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Type
+}
+
+// GetTypeOk returns a tuple with the Type field value
+// and a boolean to check if the value has been set.
+func (o *CoreError) GetTypeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Type, true
+}
+
+// SetType sets field value
+func (o *CoreError) SetType(v string) {
+	o.Type = v
+}
+
 func (o CoreError) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -107,8 +107,8 @@ func (o CoreError) MarshalJSON() ([]byte, error) {
 
 func (o CoreError) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["type"] = o.Type
 	toSerialize["message"] = o.Message
+	toSerialize["type"] = o.Type
 	return toSerialize, nil
 }
 
@@ -117,8 +117,8 @@ func (o *CoreError) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"type",
 		"message",
+		"type",
 	}
 
 	allProperties := make(map[string]interface{})

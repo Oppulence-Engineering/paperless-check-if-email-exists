@@ -21,16 +21,16 @@
  */
 export interface CoreError {
     /**
-     * The type of error.
-     * @type {string}
-     * @memberof CoreError
-     */
-    'type': string;
-    /**
      * A human-readable description of the error.
      * @type {string}
      * @memberof CoreError
      */
     'message': string;
+    /**
+     * The type of error.
+     * @type {string}
+     * @memberof CoreError
+     */
+    'type': string;
 }
 

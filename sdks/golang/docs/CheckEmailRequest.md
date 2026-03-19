@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional] 
 **FromEmail** | Pointer to **string** | In the SMTP connection, the FROM email address. | [optional] 
-**ToEmail** | **string** | The email address to check. | 
-**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional] 
-**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] 
-**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] 
 **GmailVerifMethod** | Pointer to [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional] 
+**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional] 
 **Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] 
 **Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] 
+**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] 
+**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] 
+**ToEmail** | **string** | The email address to check. | 
 **YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] 
-**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional] 
 
 ## Methods
 
@@ -33,6 +33,31 @@ will change when the set of required properties is changed
 NewCheckEmailRequestWithDefaults instantiates a new CheckEmailRequest object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetCheckGravatar
+
+`func (o *CheckEmailRequest) GetCheckGravatar() bool`
+
+GetCheckGravatar returns the CheckGravatar field if non-nil, zero value otherwise.
+
+### GetCheckGravatarOk
+
+`func (o *CheckEmailRequest) GetCheckGravatarOk() (*bool, bool)`
+
+GetCheckGravatarOk returns a tuple with the CheckGravatar field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCheckGravatar
+
+`func (o *CheckEmailRequest) SetCheckGravatar(v bool)`
+
+SetCheckGravatar sets CheckGravatar field to given value.
+
+### HasCheckGravatar
+
+`func (o *CheckEmailRequest) HasCheckGravatar() bool`
+
+HasCheckGravatar returns a boolean if a field has been set.
 
 ### GetFromEmail
 
@@ -59,25 +84,30 @@ SetFromEmail sets FromEmail field to given value.
 
 HasFromEmail returns a boolean if a field has been set.
 
-### GetToEmail
+### GetGmailVerifMethod
 
-`func (o *CheckEmailRequest) GetToEmail() string`
+`func (o *CheckEmailRequest) GetGmailVerifMethod() GmailVerifMethod`
 
-GetToEmail returns the ToEmail field if non-nil, zero value otherwise.
+GetGmailVerifMethod returns the GmailVerifMethod field if non-nil, zero value otherwise.
 
-### GetToEmailOk
+### GetGmailVerifMethodOk
 
-`func (o *CheckEmailRequest) GetToEmailOk() (*string, bool)`
+`func (o *CheckEmailRequest) GetGmailVerifMethodOk() (*GmailVerifMethod, bool)`
 
-GetToEmailOk returns a tuple with the ToEmail field if it's non-nil, zero value otherwise
+GetGmailVerifMethodOk returns a tuple with the GmailVerifMethod field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetToEmail
+### SetGmailVerifMethod
 
-`func (o *CheckEmailRequest) SetToEmail(v string)`
+`func (o *CheckEmailRequest) SetGmailVerifMethod(v GmailVerifMethod)`
 
-SetToEmail sets ToEmail field to given value.
+SetGmailVerifMethod sets GmailVerifMethod field to given value.
 
+### HasGmailVerifMethod
+
+`func (o *CheckEmailRequest) HasGmailVerifMethod() bool`
+
+HasGmailVerifMethod returns a boolean if a field has been set.
 
 ### GetHelloName
 
@@ -103,81 +133,6 @@ SetHelloName sets HelloName field to given value.
 `func (o *CheckEmailRequest) HasHelloName() bool`
 
 HasHelloName returns a boolean if a field has been set.
-
-### GetProxy
-
-`func (o *CheckEmailRequest) GetProxy() CheckEmailInputProxy`
-
-GetProxy returns the Proxy field if non-nil, zero value otherwise.
-
-### GetProxyOk
-
-`func (o *CheckEmailRequest) GetProxyOk() (*CheckEmailInputProxy, bool)`
-
-GetProxyOk returns a tuple with the Proxy field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetProxy
-
-`func (o *CheckEmailRequest) SetProxy(v CheckEmailInputProxy)`
-
-SetProxy sets Proxy field to given value.
-
-### HasProxy
-
-`func (o *CheckEmailRequest) HasProxy() bool`
-
-HasProxy returns a boolean if a field has been set.
-
-### GetSmtpPort
-
-`func (o *CheckEmailRequest) GetSmtpPort() float32`
-
-GetSmtpPort returns the SmtpPort field if non-nil, zero value otherwise.
-
-### GetSmtpPortOk
-
-`func (o *CheckEmailRequest) GetSmtpPortOk() (*float32, bool)`
-
-GetSmtpPortOk returns a tuple with the SmtpPort field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetSmtpPort
-
-`func (o *CheckEmailRequest) SetSmtpPort(v float32)`
-
-SetSmtpPort sets SmtpPort field to given value.
-
-### HasSmtpPort
-
-`func (o *CheckEmailRequest) HasSmtpPort() bool`
-
-HasSmtpPort returns a boolean if a field has been set.
-
-### GetGmailVerifMethod
-
-`func (o *CheckEmailRequest) GetGmailVerifMethod() GmailVerifMethod`
-
-GetGmailVerifMethod returns the GmailVerifMethod field if non-nil, zero value otherwise.
-
-### GetGmailVerifMethodOk
-
-`func (o *CheckEmailRequest) GetGmailVerifMethodOk() (*GmailVerifMethod, bool)`
-
-GetGmailVerifMethodOk returns a tuple with the GmailVerifMethod field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetGmailVerifMethod
-
-`func (o *CheckEmailRequest) SetGmailVerifMethod(v GmailVerifMethod)`
-
-SetGmailVerifMethod sets GmailVerifMethod field to given value.
-
-### HasGmailVerifMethod
-
-`func (o *CheckEmailRequest) HasGmailVerifMethod() bool`
-
-HasGmailVerifMethod returns a boolean if a field has been set.
 
 ### GetHotmailb2bVerifMethod
 
@@ -229,6 +184,76 @@ SetHotmailb2cVerifMethod sets Hotmailb2cVerifMethod field to given value.
 
 HasHotmailb2cVerifMethod returns a boolean if a field has been set.
 
+### GetProxy
+
+`func (o *CheckEmailRequest) GetProxy() CheckEmailInputProxy`
+
+GetProxy returns the Proxy field if non-nil, zero value otherwise.
+
+### GetProxyOk
+
+`func (o *CheckEmailRequest) GetProxyOk() (*CheckEmailInputProxy, bool)`
+
+GetProxyOk returns a tuple with the Proxy field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProxy
+
+`func (o *CheckEmailRequest) SetProxy(v CheckEmailInputProxy)`
+
+SetProxy sets Proxy field to given value.
+
+### HasProxy
+
+`func (o *CheckEmailRequest) HasProxy() bool`
+
+HasProxy returns a boolean if a field has been set.
+
+### GetSmtpPort
+
+`func (o *CheckEmailRequest) GetSmtpPort() float32`
+
+GetSmtpPort returns the SmtpPort field if non-nil, zero value otherwise.
+
+### GetSmtpPortOk
+
+`func (o *CheckEmailRequest) GetSmtpPortOk() (*float32, bool)`
+
+GetSmtpPortOk returns a tuple with the SmtpPort field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSmtpPort
+
+`func (o *CheckEmailRequest) SetSmtpPort(v float32)`
+
+SetSmtpPort sets SmtpPort field to given value.
+
+### HasSmtpPort
+
+`func (o *CheckEmailRequest) HasSmtpPort() bool`
+
+HasSmtpPort returns a boolean if a field has been set.
+
+### GetToEmail
+
+`func (o *CheckEmailRequest) GetToEmail() string`
+
+GetToEmail returns the ToEmail field if non-nil, zero value otherwise.
+
+### GetToEmailOk
+
+`func (o *CheckEmailRequest) GetToEmailOk() (*string, bool)`
+
+GetToEmailOk returns a tuple with the ToEmail field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetToEmail
+
+`func (o *CheckEmailRequest) SetToEmail(v string)`
+
+SetToEmail sets ToEmail field to given value.
+
+
 ### GetYahooVerifMethod
 
 `func (o *CheckEmailRequest) GetYahooVerifMethod() YahooVerifMethod`
@@ -253,31 +278,6 @@ SetYahooVerifMethod sets YahooVerifMethod field to given value.
 `func (o *CheckEmailRequest) HasYahooVerifMethod() bool`
 
 HasYahooVerifMethod returns a boolean if a field has been set.
-
-### GetCheckGravatar
-
-`func (o *CheckEmailRequest) GetCheckGravatar() bool`
-
-GetCheckGravatar returns the CheckGravatar field if non-nil, zero value otherwise.
-
-### GetCheckGravatarOk
-
-`func (o *CheckEmailRequest) GetCheckGravatarOk() (*bool, bool)`
-
-GetCheckGravatarOk returns a tuple with the CheckGravatar field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetCheckGravatar
-
-`func (o *CheckEmailRequest) SetCheckGravatar(v bool)`
-
-SetCheckGravatar sets CheckGravatar field to given value.
-
-### HasCheckGravatar
-
-`func (o *CheckEmailRequest) HasCheckGravatar() bool`
-
-HasCheckGravatar returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

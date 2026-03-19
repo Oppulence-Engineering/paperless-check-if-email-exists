@@ -146,6 +146,39 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 				continue;
 			}
 
+			// Check if the job has been cancelled before processing
+			if let CheckEmailJobId::Bulk(job_id) = &payload.job_id {
+				if let Some(pool) = config_clone.get_pg_pool() {
+					let job_status = sqlx::query_scalar!(
+						r#"SELECT status as "status: String" FROM v1_bulk_job WHERE id = $1"#,
+						*job_id
+					)
+					.fetch_optional(&pool)
+					.await;
+
+					if let Ok(Some(status)) = job_status {
+						if status == "cancelling" || status == "cancelled" {
+							debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
+							delivery.ack(BasicAckOptions::default()).await?;
+
+							// Mark task as cancelled if we have its DB id
+							if let Some(task_db_id) =
+								payload.metadata.as_ref().and_then(|m| m.task_db_id)
+							{
+								let _ = sqlx::query!(
+									"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
+									task_db_id,
+								)
+								.execute(&pool)
+								.await;
+							}
+
+							continue;
+						}
+					}
+				}
+			}
+
 			let config_clone2 = Arc::clone(&config_clone);
 			let channel_clone2 = Arc::clone(&channel);
 

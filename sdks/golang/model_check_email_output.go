@@ -22,14 +22,15 @@ var _ MappedNullable = &CheckEmailOutput{}
 
 // CheckEmailOutput The result of the email verification process.
 type CheckEmailOutput struct {
+	Debug *DebugDetails `json:"debug,omitempty"`
 	// The email address that was verified.
 	Input string `json:"input"`
 	IsReachable Reachable `json:"is_reachable"`
 	Misc CheckEmailOutputMisc `json:"misc"`
 	Mx CheckEmailOutputMx `json:"mx"`
+	Score EmailScore `json:"score"`
 	Smtp CheckEmailOutputSmtp `json:"smtp"`
 	Syntax SyntaxDetails `json:"syntax"`
-	Debug *DebugDetails `json:"debug,omitempty"`
 }
 
 type _CheckEmailOutput CheckEmailOutput
@@ -38,12 +39,13 @@ type _CheckEmailOutput CheckEmailOutput
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput {
+func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput {
 	this := CheckEmailOutput{}
 	this.Input = input
 	this.IsReachable = isReachable
 	this.Misc = misc
 	this.Mx = mx
+	this.Score = score
 	this.Smtp = smtp
 	this.Syntax = syntax
 	return &this
@@ -55,6 +57,38 @@ func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOut
 func NewCheckEmailOutputWithDefaults() *CheckEmailOutput {
 	this := CheckEmailOutput{}
 	return &this
+}
+
+// GetDebug returns the Debug field value if set, zero value otherwise.
+func (o *CheckEmailOutput) GetDebug() DebugDetails {
+	if o == nil || IsNil(o.Debug) {
+		var ret DebugDetails
+		return ret
+	}
+	return *o.Debug
+}
+
+// GetDebugOk returns a tuple with the Debug field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailOutput) GetDebugOk() (*DebugDetails, bool) {
+	if o == nil || IsNil(o.Debug) {
+		return nil, false
+	}
+	return o.Debug, true
+}
+
+// HasDebug returns a boolean if a field has been set.
+func (o *CheckEmailOutput) HasDebug() bool {
+	if o != nil && !IsNil(o.Debug) {
+		return true
+	}
+
+	return false
+}
+
+// SetDebug gets a reference to the given DebugDetails and assigns it to the Debug field.
+func (o *CheckEmailOutput) SetDebug(v DebugDetails) {
+	o.Debug = &v
 }
 
 // GetInput returns the Input field value
@@ -153,6 +187,30 @@ func (o *CheckEmailOutput) SetMx(v CheckEmailOutputMx) {
 	o.Mx = v
 }
 
+// GetScore returns the Score field value
+func (o *CheckEmailOutput) GetScore() EmailScore {
+	if o == nil {
+		var ret EmailScore
+		return ret
+	}
+
+	return o.Score
+}
+
+// GetScoreOk returns a tuple with the Score field value
+// and a boolean to check if the value has been set.
+func (o *CheckEmailOutput) GetScoreOk() (*EmailScore, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Score, true
+}
+
+// SetScore sets field value
+func (o *CheckEmailOutput) SetScore(v EmailScore) {
+	o.Score = v
+}
+
 // GetSmtp returns the Smtp field value
 func (o *CheckEmailOutput) GetSmtp() CheckEmailOutputSmtp {
 	if o == nil {
@@ -201,38 +259,6 @@ func (o *CheckEmailOutput) SetSyntax(v SyntaxDetails) {
 	o.Syntax = v
 }
 
-// GetDebug returns the Debug field value if set, zero value otherwise.
-func (o *CheckEmailOutput) GetDebug() DebugDetails {
-	if o == nil || IsNil(o.Debug) {
-		var ret DebugDetails
-		return ret
-	}
-	return *o.Debug
-}
-
-// GetDebugOk returns a tuple with the Debug field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailOutput) GetDebugOk() (*DebugDetails, bool) {
-	if o == nil || IsNil(o.Debug) {
-		return nil, false
-	}
-	return o.Debug, true
-}
-
-// HasDebug returns a boolean if a field has been set.
-func (o *CheckEmailOutput) HasDebug() bool {
-	if o != nil && !IsNil(o.Debug) {
-		return true
-	}
-
-	return false
-}
-
-// SetDebug gets a reference to the given DebugDetails and assigns it to the Debug field.
-func (o *CheckEmailOutput) SetDebug(v DebugDetails) {
-	o.Debug = &v
-}
-
 func (o CheckEmailOutput) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -243,15 +269,16 @@ func (o CheckEmailOutput) MarshalJSON() ([]byte, error) {
 
 func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Debug) {
+		toSerialize["debug"] = o.Debug
+	}
 	toSerialize["input"] = o.Input
 	toSerialize["is_reachable"] = o.IsReachable
 	toSerialize["misc"] = o.Misc
 	toSerialize["mx"] = o.Mx
+	toSerialize["score"] = o.Score
 	toSerialize["smtp"] = o.Smtp
 	toSerialize["syntax"] = o.Syntax
-	if !IsNil(o.Debug) {
-		toSerialize["debug"] = o.Debug
-	}
 	return toSerialize, nil
 }
 
@@ -264,6 +291,7 @@ func (o *CheckEmailOutput) UnmarshalJSON(data []byte) (err error) {
 		"is_reachable",
 		"misc",
 		"mx",
+		"score",
 		"smtp",
 		"syntax",
 	}

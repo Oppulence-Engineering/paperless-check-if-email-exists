@@ -27,23 +27,17 @@ import type { Duration } from './duration';
  */
 export interface DebugDetails {
     /**
-     * The timestamp when the email verification started.
-     * @type {string}
+     * 
+     * @type {Duration}
      * @memberof DebugDetails
      */
-    'start_time': string;
+    'duration': Duration;
     /**
      * The timestamp when the email verification ended.
      * @type {string}
      * @memberof DebugDetails
      */
     'end_time': string;
-    /**
-     * 
-     * @type {Duration}
-     * @memberof DebugDetails
-     */
-    'duration': Duration;
     /**
      * The name of the server that performed the verification.
      * @type {string}
@@ -56,5 +50,11 @@ export interface DebugDetails {
      * @memberof DebugDetails
      */
     'smtp': DebugDetailsSmtp;
+    /**
+     * The timestamp when the email verification started.
+     * @type {string}
+     * @memberof DebugDetails
+     */
+    'start_time': string;
 }
 

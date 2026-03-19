@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::do_work::TaskError;
+use crate::scoring::response::scored_response;
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
@@ -45,7 +46,7 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 
 	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
 		match result {
-			Ok(output) => Ok(Self::Ok(serde_json::to_vec(output)?)),
+			Ok(output) => Ok(Self::Ok(scored_response(output)?)),
 			Err(TaskError::Throttle(e)) => Ok(Self::Err((
 				TaskError::Throttle(e.clone()).to_string(),
 				StatusCode::TOO_MANY_REQUESTS.as_u16(),
@@ -97,4 +98,54 @@ pub async fn send_single_shot_reply(
 	}
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::throttle::{ThrottleLimit, ThrottleResult};
+	use std::time::Duration;
+
+	#[test]
+	fn test_single_shot_reply_serde_ok() {
+		let reply = SingleShotReply::Ok(b"test body".to_vec());
+		let json = serde_json::to_vec(&reply).unwrap();
+		let back: SingleShotReply = serde_json::from_slice(&json).unwrap();
+		match back {
+			SingleShotReply::Ok(body) => assert_eq!(body, b"test body"),
+			_ => panic!("Expected Ok variant"),
+		}
+	}
+
+	#[test]
+	fn test_single_shot_reply_serde_err() {
+		let reply = SingleShotReply::Err(("throttled".into(), 429));
+		let json = serde_json::to_vec(&reply).unwrap();
+		let back: SingleShotReply = serde_json::from_slice(&json).unwrap();
+		match back {
+			SingleShotReply::Err((msg, code)) => {
+				assert_eq!(msg, "throttled");
+				assert_eq!(code, 429);
+			}
+			_ => panic!("Expected Err variant"),
+		}
+	}
+
+	#[test]
+	fn test_try_from_throttle_error() {
+		let throttle_result = ThrottleResult {
+			delay: Duration::from_secs(5),
+			limit_type: ThrottleLimit::PerSecond,
+		};
+		let err_result: Result<CheckEmailOutput, TaskError> =
+			Err(TaskError::Throttle(throttle_result));
+		let reply = SingleShotReply::try_from(&err_result).unwrap();
+		match reply {
+			SingleShotReply::Err((msg, code)) => {
+				assert!(msg.contains("full capacity"));
+				assert_eq!(code, StatusCode::TOO_MANY_REQUESTS.as_u16());
+			}
+			_ => panic!("Expected Err variant"),
+		}
+	}
 }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "18dd49b95074f5c1d179143c916290cf4de2364c0dcdc45492f96d624d0aa2e6"
+}

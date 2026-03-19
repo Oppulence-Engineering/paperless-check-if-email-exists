@@ -5,11 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**start_time** | **string** | The timestamp when the email verification started. | [default to undefined]
-**end_time** | **string** | The timestamp when the email verification ended. | [default to undefined]
 **duration** | [**Duration**](Duration.md) |  | [default to undefined]
+**end_time** | **string** | The timestamp when the email verification ended. | [default to undefined]
 **server_name** | **string** | The name of the server that performed the verification. | [default to undefined]
 **smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | [default to undefined]
+**start_time** | **string** | The timestamp when the email verification started. | [default to undefined]
 
 ## Example
 
@@ -17,11 +17,11 @@ Name | Type | Description | Notes
 import { DebugDetails } from '@oppulence/reacher-sdk';
 
 const instance: DebugDetails = {
-    start_time,
-    end_time,
     duration,
+    end_time,
     server_name,
     smtp,
+    start_time,
 };
 ```
 

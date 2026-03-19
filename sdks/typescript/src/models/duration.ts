@@ -21,16 +21,16 @@
  */
 export interface Duration {
     /**
-     * Duration in seconds.
-     * @type {number}
-     * @memberof Duration
-     */
-    'secs': number;
-    /**
      * Duration in nanoseconds.
      * @type {number}
      * @memberof Duration
      */
     'nanos': number;
+    /**
+     * Duration in seconds.
+     * @type {number}
+     * @memberof Duration
+     */
+    'secs': number;
 }
 

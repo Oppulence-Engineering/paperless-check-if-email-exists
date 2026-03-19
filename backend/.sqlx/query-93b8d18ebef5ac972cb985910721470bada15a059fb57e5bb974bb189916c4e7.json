@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT id, status, request_body_hash, response_status_code, response_body, response_headers\n\t\tFROM idempotency_keys\n\t\tWHERE tenant_id = $1 AND idempotency_key = $2\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "request_body_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 3,
+        "name": "response_status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 4,
+        "name": "response_body",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 5,
+        "name": "response_headers",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "93b8d18ebef5ac972cb985910721470bada15a059fb57e5bb974bb189916c4e7"
+}

@@ -22,14 +22,14 @@ var _ MappedNullable = &MiscDetails{}
 
 // MiscDetails Additional information about the email account.
 type MiscDetails struct {
-	// Indicates if the email address is from a known disposable email provider.
-	IsDisposable bool `json:"is_disposable"`
-	// Indicates if the email address is a role-based account.
-	IsRoleAccount bool `json:"is_role_account"`
 	// URL to the Gravatar profile picture associated with the email, if available and requested.
 	GravatarUrl *string `json:"gravatar_url,omitempty"`
 	// Is this a B2C email address?
 	IsB2c bool `json:"is_b2c"`
+	// Indicates if the email address is from a known disposable email provider.
+	IsDisposable bool `json:"is_disposable"`
+	// Indicates if the email address is a role-based account.
+	IsRoleAccount bool `json:"is_role_account"`
 }
 
 type _MiscDetails MiscDetails
@@ -38,11 +38,11 @@ type _MiscDetails MiscDetails
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMiscDetails(isDisposable bool, isRoleAccount bool, isB2c bool) *MiscDetails {
+func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool) *MiscDetails {
 	this := MiscDetails{}
+	this.IsB2c = isB2c
 	this.IsDisposable = isDisposable
 	this.IsRoleAccount = isRoleAccount
-	this.IsB2c = isB2c
 	return &this
 }
 
@@ -52,54 +52,6 @@ func NewMiscDetails(isDisposable bool, isRoleAccount bool, isB2c bool) *MiscDeta
 func NewMiscDetailsWithDefaults() *MiscDetails {
 	this := MiscDetails{}
 	return &this
-}
-
-// GetIsDisposable returns the IsDisposable field value
-func (o *MiscDetails) GetIsDisposable() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.IsDisposable
-}
-
-// GetIsDisposableOk returns a tuple with the IsDisposable field value
-// and a boolean to check if the value has been set.
-func (o *MiscDetails) GetIsDisposableOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.IsDisposable, true
-}
-
-// SetIsDisposable sets field value
-func (o *MiscDetails) SetIsDisposable(v bool) {
-	o.IsDisposable = v
-}
-
-// GetIsRoleAccount returns the IsRoleAccount field value
-func (o *MiscDetails) GetIsRoleAccount() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.IsRoleAccount
-}
-
-// GetIsRoleAccountOk returns a tuple with the IsRoleAccount field value
-// and a boolean to check if the value has been set.
-func (o *MiscDetails) GetIsRoleAccountOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.IsRoleAccount, true
-}
-
-// SetIsRoleAccount sets field value
-func (o *MiscDetails) SetIsRoleAccount(v bool) {
-	o.IsRoleAccount = v
 }
 
 // GetGravatarUrl returns the GravatarUrl field value if set, zero value otherwise.
@@ -158,6 +110,54 @@ func (o *MiscDetails) SetIsB2c(v bool) {
 	o.IsB2c = v
 }
 
+// GetIsDisposable returns the IsDisposable field value
+func (o *MiscDetails) GetIsDisposable() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsDisposable
+}
+
+// GetIsDisposableOk returns a tuple with the IsDisposable field value
+// and a boolean to check if the value has been set.
+func (o *MiscDetails) GetIsDisposableOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsDisposable, true
+}
+
+// SetIsDisposable sets field value
+func (o *MiscDetails) SetIsDisposable(v bool) {
+	o.IsDisposable = v
+}
+
+// GetIsRoleAccount returns the IsRoleAccount field value
+func (o *MiscDetails) GetIsRoleAccount() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsRoleAccount
+}
+
+// GetIsRoleAccountOk returns a tuple with the IsRoleAccount field value
+// and a boolean to check if the value has been set.
+func (o *MiscDetails) GetIsRoleAccountOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsRoleAccount, true
+}
+
+// SetIsRoleAccount sets field value
+func (o *MiscDetails) SetIsRoleAccount(v bool) {
+	o.IsRoleAccount = v
+}
+
 func (o MiscDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -168,12 +168,12 @@ func (o MiscDetails) MarshalJSON() ([]byte, error) {
 
 func (o MiscDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["is_disposable"] = o.IsDisposable
-	toSerialize["is_role_account"] = o.IsRoleAccount
 	if !IsNil(o.GravatarUrl) {
 		toSerialize["gravatar_url"] = o.GravatarUrl
 	}
 	toSerialize["is_b2c"] = o.IsB2c
+	toSerialize["is_disposable"] = o.IsDisposable
+	toSerialize["is_role_account"] = o.IsRoleAccount
 	return toSerialize, nil
 }
 
@@ -182,9 +182,9 @@ func (o *MiscDetails) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"is_b2c",
 		"is_disposable",
 		"is_role_account",
-		"is_b2c",
 	}
 
 	allProperties := make(map[string]interface{})

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//! This file implements the `GET /bulk/{id}` endpoint.
+//! This file implements the `GET /v1/bulk/{id}` endpoint.
 
 use std::sync::Arc;
 
@@ -27,23 +27,16 @@ use warp::Filter;
 
 use super::with_worker_db;
 use crate::config::BackendConfig;
+use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
+use crate::tenant::context::TenantContext;
 
-/// NOTE: Type conversions from postgres to rust types
-/// are according to the table given by
-/// [sqlx here](https://docs.rs/sqlx/latest/sqlx/postgres/types/index.html)
 #[derive(Debug, Serialize, PartialEq, Eq)]
 enum ValidStatus {
 	Running,
 	Completed,
 }
 
-/// Job record stores the information about a submitted job
-///
-/// `job_status` field is an update on read field. It's
-/// status will be derived from counting number of
-/// completed email verification tasks. It will be updated
-/// with the most recent status of the job.
 #[derive(sqlx::FromRow, Debug, Serialize)]
 struct JobRecord {
 	id: i32,
@@ -51,7 +44,6 @@ struct JobRecord {
 	total_records: i32,
 }
 
-/// Summary of a bulk verification job status
 #[derive(Debug, Serialize)]
 struct ResponseSummary {
 	total_safe: i32,
@@ -60,7 +52,6 @@ struct ResponseSummary {
 	total_unknown: i32,
 }
 
-/// Complete information about a bulk verification job
 #[derive(Debug, Serialize)]
 struct Response {
 	job_id: i32,
@@ -72,15 +63,20 @@ struct Response {
 	job_status: ValidStatus,
 }
 
-async fn http_handler(job_id: i32, conn_pool: PgPool) -> Result<impl warp::Reply, warp::Rejection> {
+async fn http_handler(
+	job_id: i32,
+	tenant_ctx: TenantContext,
+	conn_pool: PgPool,
+) -> Result<impl warp::Reply, warp::Rejection> {
 	let job_rec = sqlx::query_as!(
 		JobRecord,
 		r#"
 		SELECT id, created_at, total_records FROM v1_bulk_job
-		WHERE id = $1
+		WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)
 		LIMIT 1
 		"#,
-		job_id
+		job_id,
+		tenant_ctx.tenant_id,
 	)
 	.fetch_one(&conn_pool)
 	.await
@@ -96,7 +92,7 @@ async fn http_handler(job_id: i32, conn_pool: PgPool) -> Result<impl warp::Reply
 			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) as unknown_count,
 			(SELECT created_at FROM v1_task_result WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at
 		FROM v1_task_result
-		WHERE job_id = $1
+		WHERE job_id = $1 AND (result IS NOT NULL OR error IS NOT NULL)
 		"#,
 		job_id
 	)
@@ -145,13 +141,23 @@ async fn http_handler(job_id: i32, conn_pool: PgPool) -> Result<impl warp::Reply
 	}))
 }
 
+/// GET /v1/bulk/{job_id}
+///
+/// Returns status and current progress for a tenant-scoped v1 bulk job.
+#[utoipa::path(
+	get,
+	path = "/v1/bulk/{job_id}",
+	tag = "Jobs",
+	params(("job_id" = i32, Path, description = "V1 bulk job identifier")),
+	responses((status = 200, description = "Bulk job progress"))
+)]
 pub fn v1_get_bulk_job_progress(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "bulk" / i32)
 		.and(warp::get())
+		.and(resolve_tenant(Arc::clone(&config)))
 		.and(with_worker_db(config))
 		.and_then(http_handler)
-		// View access logs by setting `RUST_LOG=reacher`.
 		.with(warp::log(LOG_TARGET))
 }

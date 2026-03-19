@@ -60,6 +60,7 @@ impl CheckEmailPartialTask {
 			input: self.input.to_check_email_input(backend_config),
 			job_id: self.job_id,
 			webhook: self.webhook,
+			metadata: None,
 		}
 	}
 }
@@ -98,9 +99,10 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 	let backend_config = Arc::new(load_config().await?);
 	debug!("{:#?}", backend_config);
 
-	let task = &task.into_check_email_task(backend_config.clone());
+	let task = task.into_check_email_task(backend_config.clone());
+	let task = &task;
 
-	let worker_output = check_email_and_send_result(task).await;
+	let worker_output = check_email_and_send_result(task, None).await;
 	match worker_output.as_ref() {
 		Ok(output) => {
 			info!(email = ?output.input, is_reachable = ?output.is_reachable, "Task completed");
