@@ -12,6 +12,7 @@ pub struct TaskResultRecord {
 	pub score_category: Option<String>,
 	pub sub_reason: Option<String>,
 	pub safe_to_send: Option<bool>,
+	pub reason_codes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -22,6 +23,7 @@ pub struct CsvDownloadRow {
 	pub category: Option<String>,
 	pub sub_reason: Option<String>,
 	pub safe_to_send: Option<bool>,
+	pub reason_codes: Option<String>,
 	pub is_disposable: Option<bool>,
 	pub is_role_account: Option<bool>,
 	pub mx_accepts_mail: Option<bool>,
@@ -32,7 +34,7 @@ pub struct CsvDownloadRow {
 }
 
 pub const CSV_HEADER: &str =
-	"input,is_reachable,score,category,sub_reason,safe_to_send,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error\n";
+	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error\n";
 
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
@@ -81,6 +83,16 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		.and_then(Value::as_bool)
 		.or(record.safe_to_send);
 
+	let reason_codes = result_value(record, &["score", "reason_codes"])
+		.and_then(Value::as_array)
+		.map(|arr| {
+			arr.iter()
+				.filter_map(Value::as_str)
+				.collect::<Vec<_>>()
+				.join("|")
+		})
+		.or_else(|| record.reason_codes.as_ref().map(|codes| codes.join("|")));
+
 	CsvDownloadRow {
 		input,
 		is_reachable,
@@ -88,6 +100,7 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		category,
 		sub_reason,
 		safe_to_send,
+		reason_codes,
 		is_disposable: result_value(record, &["misc", "is_disposable"]).and_then(Value::as_bool),
 		is_role_account: result_value(record, &["misc", "is_role_account"])
 			.and_then(Value::as_bool),
@@ -136,6 +149,12 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 			if let Some(value) = record.safe_to_send {
 				score.insert("safe_to_send".into(), Value::Bool(value));
 			}
+			if let Some(codes) = &record.reason_codes {
+				score.insert(
+					"reason_codes".into(),
+					Value::Array(codes.iter().map(|c| Value::String(c.clone())).collect()),
+				);
+			}
 			map.insert("score".into(), Value::Object(score));
 		}
 	}
@@ -174,13 +193,14 @@ mod tests {
 				"misc": {"is_disposable": false, "is_role_account": true},
 				"mx": {"accepts_mail": true},
 				"smtp": {"can_connect_smtp": true, "is_catch_all": false, "is_deliverable": true},
-				"score": {"score": 95, "category": "valid", "sub_reason": "deliverable", "safe_to_send": true}
+				"score": {"score": 95, "category": "valid", "sub_reason": "deliverable", "safe_to_send": true, "reason_codes": ["role_account"]}
 			})),
 			error: None,
 			score: None,
 			score_category: None,
 			sub_reason: None,
 			safe_to_send: None,
+			reason_codes: None,
 		});
 
 		assert_eq!(row.input, "user@example.com");

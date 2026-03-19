@@ -5,8 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**has_domain_suggestion** | **boolean** |  | [default to undefined]
 **has_mx_records** | **boolean** |  | [default to undefined]
 **is_disposable** | **boolean** |  | [default to undefined]
+**is_free_provider** | **boolean** |  | [default to undefined]
 **is_role_account** | **boolean** |  | [default to undefined]
 **reachable** | [**Reachable**](Reachable.md) |  | [default to undefined]
 **smtp_can_connect** | **boolean** |  | [default to undefined]
@@ -23,8 +25,10 @@ Name | Type | Description | Notes
 import { ScoringSignals } from '@oppulence/reacher-sdk';
 
 const instance: ScoringSignals = {
+    has_domain_suggestion,
     has_mx_records,
     is_disposable,
+    is_free_provider,
     is_role_account,
     reachable,
     smtp_can_connect,

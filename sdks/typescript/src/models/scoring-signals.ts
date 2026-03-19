@@ -28,6 +28,12 @@ export interface ScoringSignals {
      * @type {boolean}
      * @memberof ScoringSignals
      */
+    'has_domain_suggestion': boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ScoringSignals
+     */
     'has_mx_records': boolean;
     /**
      * 
@@ -35,6 +41,12 @@ export interface ScoringSignals {
      * @memberof ScoringSignals
      */
     'is_disposable': boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ScoringSignals
+     */
+    'is_free_provider': boolean;
     /**
      * 
      * @type {boolean}

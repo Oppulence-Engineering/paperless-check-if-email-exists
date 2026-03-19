@@ -73,7 +73,7 @@ impl PostgresStorage {
 				if let Some(db_id) = task_db_id {
 					// UPDATE the pre-created row instead of inserting a duplicate
 					let upd = sqlx::query(
-						"UPDATE v1_task_result SET payload = $1, extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb), result = $3, tenant_id = $4, score = $5, score_category = $6, sub_reason = $7, safe_to_send = $8 WHERE id = $9",
+						"UPDATE v1_task_result SET payload = $1, extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb), result = $3, tenant_id = $4, score = $5, score_category = $6, sub_reason = $7, safe_to_send = $8, reason_codes = $9 WHERE id = $10",
 					)
 					.bind(&payload_json)
 					.bind(&extra)
@@ -83,13 +83,14 @@ impl PostgresStorage {
 					.bind(&score_category)
 					.bind(&sub_reason)
 					.bind(email_score.safe_to_send)
+					.bind(&email_score.reason_codes)
 					.bind(db_id)
 					.execute(&self.pg_pool)
 					.await?;
 					// If pre-created row was deleted, fall back to INSERT
 					if upd.rows_affected() == 0 {
 						sqlx::query(
-							"INSERT INTO v1_task_result (payload, job_id, extra, result, tenant_id, score, score_category, sub_reason, safe_to_send) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+							"INSERT INTO v1_task_result (payload, job_id, extra, result, tenant_id, score, score_category, sub_reason, safe_to_send, reason_codes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
 						)
 						.bind(&payload_json)
 						.bind(match task.job_id { CheckEmailJobId::Bulk(jid) => Some(jid), CheckEmailJobId::SingleShot => None })
@@ -100,14 +101,15 @@ impl PostgresStorage {
 						.bind(&score_category)
 						.bind(&sub_reason)
 						.bind(email_score.safe_to_send)
+						.bind(&email_score.reason_codes)
 						.execute(&self.pg_pool)
 						.await?;
 					}
 				} else {
 					sqlx::query(
 						r#"
-						INSERT INTO v1_task_result (payload, job_id, extra, result, tenant_id, score, score_category, sub_reason, safe_to_send)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+						INSERT INTO v1_task_result (payload, job_id, extra, result, tenant_id, score, score_category, sub_reason, safe_to_send, reason_codes)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 						RETURNING id
 						"#,
 					)
@@ -123,6 +125,7 @@ impl PostgresStorage {
 					.bind(&score_category)
 					.bind(&sub_reason)
 					.bind(email_score.safe_to_send)
+					.bind(&email_score.reason_codes)
 					.fetch_one(&self.pg_pool)
 					.await?;
 				}
@@ -130,7 +133,7 @@ impl PostgresStorage {
 			Err(err) => {
 				if let Some(db_id) = task_db_id {
 					let upd = sqlx::query(
-						"UPDATE v1_task_result SET payload = $1, extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb), error = $3, tenant_id = $4, score = NULL, score_category = NULL, sub_reason = NULL, safe_to_send = NULL WHERE id = $5",
+						"UPDATE v1_task_result SET payload = $1, extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb), error = $3, tenant_id = $4, score = NULL, score_category = NULL, sub_reason = NULL, safe_to_send = NULL, reason_codes = NULL WHERE id = $5",
 					)
 					.bind(&payload_json)
 					.bind(&extra)

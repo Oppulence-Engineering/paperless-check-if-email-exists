@@ -4,8 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**HasDomainSuggestion** | **bool** |  | 
 **HasMxRecords** | **bool** |  | 
 **IsDisposable** | **bool** |  | 
+**IsFreeProvider** | **bool** |  | 
 **IsRoleAccount** | **bool** |  | 
 **Reachable** | [**Reachable**](Reachable.md) |  | 
 **SmtpCanConnect** | **bool** |  | 
@@ -20,7 +22,7 @@ Name | Type | Description | Notes
 
 ### NewScoringSignals
 
-`func NewScoringSignals(hasMxRecords bool, isDisposable bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool, ) *ScoringSignals`
+`func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool, ) *ScoringSignals`
 
 NewScoringSignals instantiates a new ScoringSignals object
 This constructor will assign default values to properties that have it defined,
@@ -34,6 +36,26 @@ will change when the set of required properties is changed
 NewScoringSignalsWithDefaults instantiates a new ScoringSignals object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetHasDomainSuggestion
+
+`func (o *ScoringSignals) GetHasDomainSuggestion() bool`
+
+GetHasDomainSuggestion returns the HasDomainSuggestion field if non-nil, zero value otherwise.
+
+### GetHasDomainSuggestionOk
+
+`func (o *ScoringSignals) GetHasDomainSuggestionOk() (*bool, bool)`
+
+GetHasDomainSuggestionOk returns a tuple with the HasDomainSuggestion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHasDomainSuggestion
+
+`func (o *ScoringSignals) SetHasDomainSuggestion(v bool)`
+
+SetHasDomainSuggestion sets HasDomainSuggestion field to given value.
+
 
 ### GetHasMxRecords
 
@@ -73,6 +95,26 @@ and a boolean to check if the value has been set.
 `func (o *ScoringSignals) SetIsDisposable(v bool)`
 
 SetIsDisposable sets IsDisposable field to given value.
+
+
+### GetIsFreeProvider
+
+`func (o *ScoringSignals) GetIsFreeProvider() bool`
+
+GetIsFreeProvider returns the IsFreeProvider field if non-nil, zero value otherwise.
+
+### GetIsFreeProviderOk
+
+`func (o *ScoringSignals) GetIsFreeProviderOk() (*bool, bool)`
+
+GetIsFreeProviderOk returns a tuple with the IsFreeProvider field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsFreeProvider
+
+`func (o *ScoringSignals) SetIsFreeProvider(v bool)`
+
+SetIsFreeProvider sets IsFreeProvider field to given value.
 
 
 ### GetIsRoleAccount

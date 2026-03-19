@@ -44,6 +44,8 @@ pub struct ScoringSignals {
 	pub smtp_has_full_inbox: bool,
 	pub is_disposable: bool,
 	pub is_role_account: bool,
+	pub is_free_provider: bool,
+	pub has_domain_suggestion: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,6 +54,7 @@ pub struct EmailScore {
 	pub category: EmailCategory,
 	pub sub_reason: SubReason,
 	pub safe_to_send: bool,
+	pub reason_codes: Vec<String>,
 	pub signals: ScoringSignals,
 }
 
@@ -59,41 +62,49 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let signals = extract_signals(output);
 
 	if !signals.valid_syntax {
+		let reason_codes = collect_reason_codes(&signals);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::InvalidSyntax,
 			safe_to_send: false,
+			reason_codes,
 			signals,
 		};
 	}
 
 	if matches!(signals.reachable, Reachable::Invalid) {
+		let reason_codes = collect_reason_codes(&signals);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::InvalidRecipient,
 			safe_to_send: false,
+			reason_codes,
 			signals,
 		};
 	}
 
 	if !signals.smtp_is_deliverable {
+		let reason_codes = collect_reason_codes(&signals);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::SmtpUndeliverable,
 			safe_to_send: false,
+			reason_codes,
 			signals,
 		};
 	}
 
 	if signals.smtp_is_disabled {
+		let reason_codes = collect_reason_codes(&signals);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::DisabledMailbox,
 			safe_to_send: false,
+			reason_codes,
 			signals,
 		};
 	}
@@ -164,13 +175,66 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 		&& !signals.smtp_is_catch_all
 		&& !signals.is_role_account;
 
+	let reason_codes = collect_reason_codes(&signals);
+
 	EmailScore {
 		score,
 		category,
 		sub_reason,
 		safe_to_send,
+		reason_codes,
 		signals,
 	}
+}
+
+fn collect_reason_codes(signals: &ScoringSignals) -> Vec<String> {
+	let mut codes = Vec::new();
+	if !signals.valid_syntax {
+		codes.push("invalid_syntax".to_string());
+	}
+	if matches!(signals.reachable, Reachable::Invalid) {
+		codes.push("invalid_recipient".to_string());
+	}
+	if !signals.smtp_is_deliverable {
+		codes.push("smtp_undeliverable".to_string());
+	}
+	if signals.smtp_is_disabled {
+		codes.push("disabled_mailbox".to_string());
+	}
+	if !signals.has_mx_records {
+		codes.push("no_mx".to_string());
+	}
+	if signals.smtp_error {
+		codes.push("smtp_error".to_string());
+	}
+	if !signals.smtp_can_connect {
+		codes.push("smtp_unreachable".to_string());
+	}
+	if signals.smtp_is_catch_all {
+		codes.push("catch_all".to_string());
+	}
+	if signals.smtp_has_full_inbox {
+		codes.push("full_inbox".to_string());
+	}
+	if signals.is_disposable {
+		codes.push("disposable".to_string());
+	}
+	if signals.is_role_account {
+		codes.push("role_account".to_string());
+	}
+	if matches!(signals.reachable, Reachable::Unknown) {
+		codes.push("unknown_deliverability".to_string());
+	}
+	if signals.is_free_provider {
+		codes.push("free_provider".to_string());
+	}
+	if signals.has_domain_suggestion {
+		codes.push("possible_typo".to_string());
+	}
+	if codes.is_empty() {
+		codes.push("deliverable".to_string());
+	}
+	codes
 }
 
 fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
@@ -198,6 +262,8 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		smtp_has_full_inbox: smtp_ok.map(|smtp| smtp.has_full_inbox).unwrap_or(false),
 		is_disposable: misc_ok.map(|misc| misc.is_disposable).unwrap_or(false),
 		is_role_account: misc_ok.map(|misc| misc.is_role_account).unwrap_or(false),
+		is_free_provider: misc_ok.map(|misc| misc.is_b2c).unwrap_or(false),
+		has_domain_suggestion: output.syntax.suggestion.is_some(),
 	}
 }
 
@@ -301,6 +367,7 @@ mod tests {
 			safe_to_send: EmailCategory::Valid == EmailCategory::Valid
 				&& !false && !false
 				&& !false,
+			reason_codes: vec!["deliverable".to_string()],
 			signals: ScoringSignals {
 				valid_syntax: true,
 				reachable: Reachable::Safe,
@@ -313,6 +380,8 @@ mod tests {
 				smtp_has_full_inbox: false,
 				is_disposable: false,
 				is_role_account: false,
+				is_free_provider: false,
+				has_domain_suggestion: false,
 			},
 		};
 		assert!(score.safe_to_send);
@@ -356,5 +425,67 @@ mod tests {
 		let score = compute_score(&output);
 		// disposable emails are never safe to send regardless of category
 		assert!(!score.safe_to_send);
+	}
+
+	#[test]
+	fn reason_codes_multiple_flags() {
+		let mut output = base_output();
+		output.smtp = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: false,
+			is_catch_all: true,
+			is_deliverable: true,
+			is_disabled: false,
+		});
+		output.misc = Ok(MiscDetails {
+			is_disposable: true,
+			is_role_account: true,
+			is_b2c: true,
+			..Default::default()
+		});
+		let score = compute_score(&output);
+		assert!(score.reason_codes.contains(&"catch_all".to_string()));
+		assert!(score.reason_codes.contains(&"disposable".to_string()));
+		assert!(score.reason_codes.contains(&"role_account".to_string()));
+		assert!(score.reason_codes.contains(&"free_provider".to_string()));
+		assert!(!score.reason_codes.contains(&"deliverable".to_string()));
+	}
+
+	#[test]
+	fn reason_codes_deliverable_when_clean() {
+		let signals = ScoringSignals {
+			valid_syntax: true,
+			reachable: Reachable::Safe,
+			has_mx_records: true,
+			smtp_error: false,
+			smtp_can_connect: true,
+			smtp_is_deliverable: true,
+			smtp_is_disabled: false,
+			smtp_is_catch_all: false,
+			smtp_has_full_inbox: false,
+			is_disposable: false,
+			is_role_account: false,
+			is_free_provider: false,
+			has_domain_suggestion: false,
+		};
+		let codes = collect_reason_codes(&signals);
+		assert_eq!(codes, vec!["deliverable"]);
+	}
+
+	#[test]
+	fn reason_codes_possible_typo() {
+		let mut output = base_output();
+		output.syntax.suggestion = Some("user@example.com".to_string());
+		let score = compute_score(&output);
+		assert!(score.reason_codes.contains(&"possible_typo".to_string()));
+	}
+
+	#[test]
+	fn reason_codes_invalid_syntax_early_return() {
+		let mut output = base_output();
+		output.syntax.is_valid_syntax = false;
+		let score = compute_score(&output);
+		assert!(score.reason_codes.contains(&"invalid_syntax".to_string()));
+		assert!(!score.reason_codes.contains(&"deliverable".to_string()));
 	}
 }

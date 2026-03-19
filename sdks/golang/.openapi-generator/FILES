@@ -53,6 +53,7 @@ docs/ListUploadResponse.md
 docs/MiscDetails.md
 docs/MxDetails.md
 docs/Reachable.md
+docs/ReasonCode.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/ScoringSignals.md
@@ -104,6 +105,7 @@ model_list_upload_response.go
 model_misc_details.go
 model_mx_details.go
 model_reachable.go
+model_reason_code.go
 model_reputation_check_request.go
 model_reputation_check_response.go
 model_scoring_signals.go

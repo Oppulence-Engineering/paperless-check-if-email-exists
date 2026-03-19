@@ -18,6 +18,9 @@
 import type { EmailCategory } from './email-category';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { ReasonCode } from './reason-code';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { ScoringSignals } from './scoring-signals';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -35,6 +38,12 @@ export interface EmailScore {
      * @memberof EmailScore
      */
     'category': EmailCategory;
+    /**
+     * 
+     * @type {Array<ReasonCode>}
+     * @memberof EmailScore
+     */
+    'reason_codes': Array<ReasonCode>;
     /**
      * 
      * @type {boolean}

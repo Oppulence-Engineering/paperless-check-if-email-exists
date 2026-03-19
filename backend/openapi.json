@@ -387,6 +387,12 @@
           "category": {
             "$ref": "#/components/schemas/EmailCategory"
           },
+          "reason_codes": {
+            "items": {
+              "$ref": "#/components/schemas/ReasonCode"
+            },
+            "type": "array"
+          },
           "safe_to_send": {
             "type": "boolean"
           },
@@ -408,6 +414,7 @@
           "category",
           "sub_reason",
           "safe_to_send",
+          "reason_codes",
           "signals"
         ],
         "type": "object"
@@ -904,6 +911,26 @@
         "title": "Reachable",
         "type": "string"
       },
+      "ReasonCode": {
+        "enum": [
+          "deliverable",
+          "invalid_syntax",
+          "invalid_recipient",
+          "smtp_undeliverable",
+          "disabled_mailbox",
+          "no_mx",
+          "smtp_error",
+          "smtp_unreachable",
+          "catch_all",
+          "full_inbox",
+          "disposable",
+          "role_account",
+          "unknown_deliverability",
+          "free_provider",
+          "possible_typo"
+        ],
+        "type": "string"
+      },
       "ReputationCheckRequest": {
         "properties": {
           "domain": {
@@ -962,10 +989,16 @@
       },
       "ScoringSignals": {
         "properties": {
+          "has_domain_suggestion": {
+            "type": "boolean"
+          },
           "has_mx_records": {
             "type": "boolean"
           },
           "is_disposable": {
+            "type": "boolean"
+          },
+          "is_free_provider": {
             "type": "boolean"
           },
           "is_role_account": {
@@ -1007,7 +1040,9 @@
           "smtp_is_catch_all",
           "smtp_has_full_inbox",
           "is_disposable",
-          "is_role_account"
+          "is_role_account",
+          "is_free_provider",
+          "has_domain_suggestion"
         ],
         "type": "object"
       },

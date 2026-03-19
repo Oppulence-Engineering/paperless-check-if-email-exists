@@ -33,6 +33,7 @@ export * from './list-upload-response';
 export * from './misc-details';
 export * from './mx-details';
 export * from './reachable';
+export * from './reason-code';
 export * from './reputation-check-request';
 export * from './reputation-check-response';
 export * from './scoring-signals';
