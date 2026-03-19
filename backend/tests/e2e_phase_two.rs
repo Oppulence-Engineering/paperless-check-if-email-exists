@@ -612,7 +612,8 @@ mod tests {
 		assert!(csv_body.starts_with(
 			"name,email,company,is_reachable,score,category,safe_to_send,reason_codes,is_disposable,smtp_is_deliverable,error"
 		));
-		assert!(csv_body.contains("Alice,alice@example.com,Acme,safe,95,valid,true,false,true,"));
+		assert!(csv_body
+			.contains("Alice,alice@example.com,Acme,safe,95,valid,true,deliverable,false,true,"));
 		assert!(csv_body.contains("Bob,,Widgets,invalid,0,invalid"));
 	}
 
@@ -739,7 +740,8 @@ mod tests {
 		assert!(csv_body.starts_with(
 			"name,email,company,is_reachable,score,category,safe_to_send,reason_codes,is_disposable,smtp_is_deliverable,error"
 		));
-		assert!(csv_body.contains("Alice,alice@example.com,Acme,safe,95,valid,true,false,true,"));
+		assert!(csv_body
+			.contains("Alice,alice@example.com,Acme,safe,95,valid,true,deliverable,false,true,"));
 		assert!(!csv_body.contains("Bob,bob@example.com,Widgets"));
 		assert_eq!(csv_body.lines().count(), 2);
 
