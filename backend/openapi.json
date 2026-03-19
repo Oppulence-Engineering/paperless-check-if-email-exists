@@ -387,6 +387,9 @@
           "category": {
             "$ref": "#/components/schemas/EmailCategory"
           },
+          "safe_to_send": {
+            "type": "boolean"
+          },
           "score": {
             "format": "int32",
             "maximum": 100,
@@ -404,6 +407,7 @@
           "score",
           "category",
           "sub_reason",
+          "safe_to_send",
           "signals"
         ],
         "type": "object"

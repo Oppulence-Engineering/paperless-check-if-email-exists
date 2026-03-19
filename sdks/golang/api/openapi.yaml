@@ -1259,6 +1259,7 @@ components:
               smtp_has_full_inbox: true
               reachable: null
             category: valid
+            safe_to_send: true
             sub_reason: deliverable
           debug:
             duration:
@@ -1307,6 +1308,7 @@ components:
               smtp_has_full_inbox: true
               reachable: null
             category: valid
+            safe_to_send: true
             sub_reason: deliverable
           debug:
             duration:
@@ -1396,6 +1398,7 @@ components:
             smtp_has_full_inbox: true
             reachable: null
           category: valid
+          safe_to_send: true
           sub_reason: deliverable
         debug:
           duration:
@@ -1698,10 +1701,13 @@ components:
           smtp_has_full_inbox: true
           reachable: null
         category: valid
+        safe_to_send: true
         sub_reason: deliverable
       properties:
         category:
           $ref: "#/components/schemas/EmailCategory"
+        safe_to_send:
+          type: boolean
         score:
           format: int32
           maximum: 100
@@ -1713,6 +1719,7 @@ components:
           $ref: "#/components/schemas/SubReason"
       required:
       - category
+      - safe_to_send
       - score
       - signals
       - sub_reason

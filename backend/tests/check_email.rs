@@ -65,6 +65,7 @@ mod tests {
 		assert_eq!(body["score"]["score"], 0);
 		assert_eq!(body["score"]["category"], "invalid");
 		assert_eq!(body["score"]["sub_reason"], sub_reason);
+		assert_eq!(body["score"]["safe_to_send"], false);
 		assert!(body["score"]["signals"].is_object());
 	}
 

@@ -358,9 +358,10 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"score": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
 				"category": { "$ref": "#/components/schemas/EmailCategory" },
 				"sub_reason": { "$ref": "#/components/schemas/SubReason" },
+				"safe_to_send": { "type": "boolean" },
 				"signals": { "$ref": "#/components/schemas/ScoringSignals" }
 			},
-			"required": ["score", "category", "sub_reason", "signals"]
+			"required": ["score", "category", "sub_reason", "safe_to_send", "signals"]
 		}),
 	);
 	insert_schema(

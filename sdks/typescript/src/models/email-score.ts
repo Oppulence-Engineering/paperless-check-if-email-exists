@@ -37,6 +37,12 @@ export interface EmailScore {
     'category': EmailCategory;
     /**
      * 
+     * @type {boolean}
+     * @memberof EmailScore
+     */
+    'safe_to_send': boolean;
+    /**
+     * 
      * @type {number}
      * @memberof EmailScore
      */

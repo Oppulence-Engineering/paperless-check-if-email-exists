@@ -153,7 +153,7 @@ async fn fetch_batch(
 ) -> Result<Vec<TaskResultRecord>, ReacherResponseError> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send
 		FROM v1_task_result
 		WHERE job_id = $1 AND id > $2
 		ORDER BY id ASC
@@ -177,6 +177,7 @@ async fn fetch_batch(
 			score: row.get::<Option<i16>, _>("score"),
 			score_category: row.get("score_category"),
 			sub_reason: row.get("sub_reason"),
+			safe_to_send: row.get("safe_to_send"),
 		})
 		.collect())
 }

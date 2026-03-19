@@ -23,6 +23,7 @@ var _ MappedNullable = &EmailScore{}
 // EmailScore struct for EmailScore
 type EmailScore struct {
 	Category EmailCategory `json:"category"`
+	SafeToSend bool `json:"safe_to_send"`
 	Score int32 `json:"score"`
 	Signals ScoringSignals `json:"signals"`
 	SubReason SubReason `json:"sub_reason"`
@@ -34,9 +35,10 @@ type _EmailScore EmailScore
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewEmailScore(category EmailCategory, score int32, signals ScoringSignals, subReason SubReason) *EmailScore {
+func NewEmailScore(category EmailCategory, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason) *EmailScore {
 	this := EmailScore{}
 	this.Category = category
+	this.SafeToSend = safeToSend
 	this.Score = score
 	this.Signals = signals
 	this.SubReason = subReason
@@ -73,6 +75,30 @@ func (o *EmailScore) GetCategoryOk() (*EmailCategory, bool) {
 // SetCategory sets field value
 func (o *EmailScore) SetCategory(v EmailCategory) {
 	o.Category = v
+}
+
+// GetSafeToSend returns the SafeToSend field value
+func (o *EmailScore) GetSafeToSend() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.SafeToSend
+}
+
+// GetSafeToSendOk returns a tuple with the SafeToSend field value
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetSafeToSendOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.SafeToSend, true
+}
+
+// SetSafeToSend sets field value
+func (o *EmailScore) SetSafeToSend(v bool) {
+	o.SafeToSend = v
 }
 
 // GetScore returns the Score field value
@@ -158,6 +184,7 @@ func (o EmailScore) MarshalJSON() ([]byte, error) {
 func (o EmailScore) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["category"] = o.Category
+	toSerialize["safe_to_send"] = o.SafeToSend
 	toSerialize["score"] = o.Score
 	toSerialize["signals"] = o.Signals
 	toSerialize["sub_reason"] = o.SubReason
@@ -170,6 +197,7 @@ func (o *EmailScore) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"category",
+		"safe_to_send",
 		"score",
 		"signals",
 		"sub_reason",
