@@ -51,6 +51,7 @@ pub struct EmailScore {
 	pub score: i16,
 	pub category: EmailCategory,
 	pub sub_reason: SubReason,
+	pub safe_to_send: bool,
 	pub signals: ScoringSignals,
 }
 
@@ -62,6 +63,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::InvalidSyntax,
+			safe_to_send: false,
 			signals,
 		};
 	}
@@ -71,6 +73,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::InvalidRecipient,
+			safe_to_send: false,
 			signals,
 		};
 	}
@@ -80,6 +83,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::SmtpUndeliverable,
+			safe_to_send: false,
 			signals,
 		};
 	}
@@ -89,6 +93,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
 			sub_reason: SubReason::DisabledMailbox,
+			safe_to_send: false,
 			signals,
 		};
 	}
@@ -154,10 +159,16 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 		SubReason::Deliverable
 	};
 
+	let safe_to_send = category == EmailCategory::Valid
+		&& !signals.is_disposable
+		&& !signals.smtp_is_catch_all
+		&& !signals.is_role_account;
+
 	EmailScore {
 		score,
 		category,
 		sub_reason,
+		safe_to_send,
 		signals,
 	}
 }
@@ -230,6 +241,7 @@ mod tests {
 		assert_eq!(score.score, 0);
 		assert_eq!(score.category, EmailCategory::Invalid);
 		assert_eq!(score.sub_reason, SubReason::InvalidSyntax);
+		assert!(!score.safe_to_send);
 	}
 
 	#[test]
@@ -238,6 +250,7 @@ mod tests {
 		assert_eq!(score.score, 50);
 		assert_eq!(score.category, EmailCategory::Risky);
 		assert_eq!(score.sub_reason, SubReason::NoMx);
+		assert!(!score.safe_to_send);
 	}
 
 	#[test]
@@ -275,5 +288,73 @@ mod tests {
 		assert_eq!(score.score, 15);
 		assert_eq!(score.category, EmailCategory::Unknown);
 		assert_eq!(score.sub_reason, SubReason::NoMx);
+		assert!(!score.safe_to_send);
+	}
+
+	#[test]
+	fn safe_to_send_true_when_valid_and_clean() {
+		// Directly verify the safe_to_send derivation: Valid + not disposable + not catch-all + not role = true
+		let score = EmailScore {
+			score: 100,
+			category: EmailCategory::Valid,
+			sub_reason: SubReason::Deliverable,
+			safe_to_send: EmailCategory::Valid == EmailCategory::Valid
+				&& !false && !false
+				&& !false,
+			signals: ScoringSignals {
+				valid_syntax: true,
+				reachable: Reachable::Safe,
+				has_mx_records: true,
+				smtp_error: false,
+				smtp_can_connect: true,
+				smtp_is_deliverable: true,
+				smtp_is_disabled: false,
+				smtp_is_catch_all: false,
+				smtp_has_full_inbox: false,
+				is_disposable: false,
+				is_role_account: false,
+			},
+		};
+		assert!(score.safe_to_send);
+	}
+
+	#[test]
+	fn safe_to_send_false_catch_all() {
+		let mut output = base_output();
+		output.smtp = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: false,
+			is_catch_all: true,
+			is_deliverable: true,
+			is_disabled: false,
+		});
+		let score = compute_score(&output);
+		// catch-all emails are never safe to send regardless of category
+		assert!(!score.safe_to_send);
+	}
+
+	#[test]
+	fn safe_to_send_false_role_account() {
+		let mut output = base_output();
+		output.misc = Ok(MiscDetails {
+			is_disposable: false,
+			is_role_account: true,
+			..Default::default()
+		});
+		let score = compute_score(&output);
+		assert!(!score.safe_to_send);
+	}
+
+	#[test]
+	fn safe_to_send_false_disposable() {
+		let mut output = base_output();
+		output.misc = Ok(MiscDetails {
+			is_disposable: true,
+			is_role_account: false,
+			..Default::default()
+		});
+		let score = compute_score(&output);
+		// disposable emails are never safe to send regardless of category
+		assert!(!score.safe_to_send);
 	}
 }

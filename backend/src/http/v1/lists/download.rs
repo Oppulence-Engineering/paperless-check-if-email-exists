@@ -179,7 +179,8 @@ async fn fetch_batch(
 			error,
 			score,
 			score_category,
-			sub_reason
+			sub_reason,
+			safe_to_send
 		FROM v1_task_result
 		WHERE (extra->>'list_id')::INTEGER = $1
 		  AND (extra->>'row_index')::INTEGER > $2
@@ -208,6 +209,7 @@ async fn fetch_batch(
 					score: row.get("score"),
 					score_category: row.get("score_category"),
 					sub_reason: row.get("sub_reason"),
+					safe_to_send: row.get("safe_to_send"),
 				},
 			)
 		})
@@ -240,6 +242,11 @@ fn render_row(
 	);
 	row.push(flat.category.clone().unwrap_or_default());
 	row.push(
+		flat.safe_to_send
+			.map(|value| value.to_string())
+			.unwrap_or_default(),
+	);
+	row.push(
 		flat.is_disposable
 			.map(|value| value.to_string())
 			.unwrap_or_default(),
@@ -263,6 +270,7 @@ fn render_header(headers: &[String]) -> Vec<u8> {
 		"is_reachable".to_string(),
 		"score".to_string(),
 		"category".to_string(),
+		"safe_to_send".to_string(),
 		"is_disposable".to_string(),
 		"smtp_is_deliverable".to_string(),
 		"error".to_string(),

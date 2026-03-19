@@ -11,6 +11,7 @@ pub struct TaskResultRecord {
 	pub score: Option<i16>,
 	pub score_category: Option<String>,
 	pub sub_reason: Option<String>,
+	pub safe_to_send: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -20,6 +21,7 @@ pub struct CsvDownloadRow {
 	pub score: Option<i16>,
 	pub category: Option<String>,
 	pub sub_reason: Option<String>,
+	pub safe_to_send: Option<bool>,
 	pub is_disposable: Option<bool>,
 	pub is_role_account: Option<bool>,
 	pub mx_accepts_mail: Option<bool>,
@@ -30,7 +32,7 @@ pub struct CsvDownloadRow {
 }
 
 pub const CSV_HEADER: &str =
-	"input,is_reachable,score,category,sub_reason,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error\n";
+	"input,is_reachable,score,category,sub_reason,safe_to_send,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error\n";
 
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
@@ -75,12 +77,17 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		.map(ToOwned::to_owned)
 		.or_else(|| record.sub_reason.clone());
 
+	let safe_to_send = result_value(record, &["score", "safe_to_send"])
+		.and_then(Value::as_bool)
+		.or(record.safe_to_send);
+
 	CsvDownloadRow {
 		input,
 		is_reachable,
 		score,
 		category,
 		sub_reason,
+		safe_to_send,
 		is_disposable: result_value(record, &["misc", "is_disposable"]).and_then(Value::as_bool),
 		is_role_account: result_value(record, &["misc", "is_role_account"])
 			.and_then(Value::as_bool),
@@ -113,7 +120,8 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 		if !map.contains_key("score")
 			&& (record.score.is_some()
 				|| record.score_category.is_some()
-				|| record.sub_reason.is_some())
+				|| record.sub_reason.is_some()
+				|| record.safe_to_send.is_some())
 		{
 			let mut score = Map::new();
 			if let Some(value) = record.score {
@@ -124,6 +132,9 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 			}
 			if let Some(value) = &record.sub_reason {
 				score.insert("sub_reason".into(), Value::String(value.clone()));
+			}
+			if let Some(value) = record.safe_to_send {
+				score.insert("safe_to_send".into(), Value::Bool(value));
 			}
 			map.insert("score".into(), Value::Object(score));
 		}
@@ -163,12 +174,13 @@ mod tests {
 				"misc": {"is_disposable": false, "is_role_account": true},
 				"mx": {"accepts_mail": true},
 				"smtp": {"can_connect_smtp": true, "is_catch_all": false, "is_deliverable": true},
-				"score": {"score": 95, "category": "valid", "sub_reason": "deliverable"}
+				"score": {"score": 95, "category": "valid", "sub_reason": "deliverable", "safe_to_send": true}
 			})),
 			error: None,
 			score: None,
 			score_category: None,
 			sub_reason: None,
+			safe_to_send: None,
 		});
 
 		assert_eq!(row.input, "user@example.com");

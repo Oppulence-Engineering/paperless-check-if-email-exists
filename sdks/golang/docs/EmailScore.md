@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Category** | [**EmailCategory**](EmailCategory.md) |  | 
+**SafeToSend** | **bool** |  | 
 **Score** | **int32** |  | 
 **Signals** | [**ScoringSignals**](ScoringSignals.md) |  | 
 **SubReason** | [**SubReason**](SubReason.md) |  | 
@@ -13,7 +14,7 @@ Name | Type | Description | Notes
 
 ### NewEmailScore
 
-`func NewEmailScore(category EmailCategory, score int32, signals ScoringSignals, subReason SubReason, ) *EmailScore`
+`func NewEmailScore(category EmailCategory, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason, ) *EmailScore`
 
 NewEmailScore instantiates a new EmailScore object
 This constructor will assign default values to properties that have it defined,
@@ -46,6 +47,26 @@ and a boolean to check if the value has been set.
 `func (o *EmailScore) SetCategory(v EmailCategory)`
 
 SetCategory sets Category field to given value.
+
+
+### GetSafeToSend
+
+`func (o *EmailScore) GetSafeToSend() bool`
+
+GetSafeToSend returns the SafeToSend field if non-nil, zero value otherwise.
+
+### GetSafeToSendOk
+
+`func (o *EmailScore) GetSafeToSendOk() (*bool, bool)`
+
+GetSafeToSendOk returns a tuple with the SafeToSend field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSafeToSend
+
+`func (o *EmailScore) SetSafeToSend(v bool)`
+
+SetSafeToSend sets SafeToSend field to given value.
 
 
 ### GetScore
