@@ -5,6 +5,7 @@
 ## Getting Started
 
 * [Verify your 1st email](getting-started/quickstart.md)
+* [Service Capabilities](getting-started/service-capabilities.md)
 * [Understanding "is\_reachable"](getting-started/is-reachable.md)
 
 ## Self-Hosting
