@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**StartTime** | **string** | The timestamp when the email verification started. | 
-**EndTime** | **string** | The timestamp when the email verification ended. | 
 **Duration** | [**Duration**](Duration.md) |  | 
+**EndTime** | **string** | The timestamp when the email verification ended. | 
 **ServerName** | **string** | The name of the server that performed the verification. | 
 **Smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | 
+**StartTime** | **string** | The timestamp when the email verification started. | 
 
 ## Methods
 
 ### NewDebugDetails
 
-`func NewDebugDetails(startTime string, endTime string, duration Duration, serverName string, smtp DebugDetailsSmtp, ) *DebugDetails`
+`func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string, ) *DebugDetails`
 
 NewDebugDetails instantiates a new DebugDetails object
 This constructor will assign default values to properties that have it defined,
@@ -29,24 +29,24 @@ NewDebugDetailsWithDefaults instantiates a new DebugDetails object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetStartTime
+### GetDuration
 
-`func (o *DebugDetails) GetStartTime() string`
+`func (o *DebugDetails) GetDuration() Duration`
 
-GetStartTime returns the StartTime field if non-nil, zero value otherwise.
+GetDuration returns the Duration field if non-nil, zero value otherwise.
 
-### GetStartTimeOk
+### GetDurationOk
 
-`func (o *DebugDetails) GetStartTimeOk() (*string, bool)`
+`func (o *DebugDetails) GetDurationOk() (*Duration, bool)`
 
-GetStartTimeOk returns a tuple with the StartTime field if it's non-nil, zero value otherwise
+GetDurationOk returns a tuple with the Duration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetStartTime
+### SetDuration
 
-`func (o *DebugDetails) SetStartTime(v string)`
+`func (o *DebugDetails) SetDuration(v Duration)`
 
-SetStartTime sets StartTime field to given value.
+SetDuration sets Duration field to given value.
 
 
 ### GetEndTime
@@ -67,26 +67,6 @@ and a boolean to check if the value has been set.
 `func (o *DebugDetails) SetEndTime(v string)`
 
 SetEndTime sets EndTime field to given value.
-
-
-### GetDuration
-
-`func (o *DebugDetails) GetDuration() Duration`
-
-GetDuration returns the Duration field if non-nil, zero value otherwise.
-
-### GetDurationOk
-
-`func (o *DebugDetails) GetDurationOk() (*Duration, bool)`
-
-GetDurationOk returns a tuple with the Duration field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetDuration
-
-`func (o *DebugDetails) SetDuration(v Duration)`
-
-SetDuration sets Duration field to given value.
 
 
 ### GetServerName
@@ -127,6 +107,26 @@ and a boolean to check if the value has been set.
 `func (o *DebugDetails) SetSmtp(v DebugDetailsSmtp)`
 
 SetSmtp sets Smtp field to given value.
+
+
+### GetStartTime
+
+`func (o *DebugDetails) GetStartTime() string`
+
+GetStartTime returns the StartTime field if non-nil, zero value otherwise.
+
+### GetStartTimeOk
+
+`func (o *DebugDetails) GetStartTimeOk() (*string, bool)`
+
+GetStartTimeOk returns a tuple with the StartTime field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStartTime
+
+`func (o *DebugDetails) SetStartTime(v string)`
+
+SetStartTime sets StartTime field to given value.
 
 
 

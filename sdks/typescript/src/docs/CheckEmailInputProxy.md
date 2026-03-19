@@ -7,9 +7,9 @@ Proxy configuration for email verification.
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **host** | **string** | The proxy host address. | [default to undefined]
+**password** | **string** | Password for proxy authentication. | [optional] [default to undefined]
 **port** | **number** | The proxy port number. | [default to undefined]
 **username** | **string** | Username for proxy authentication. | [optional] [default to undefined]
-**password** | **string** | Password for proxy authentication. | [optional] [default to undefined]
 
 ## Example
 
@@ -18,9 +18,9 @@ import { CheckEmailInputProxy } from '@oppulence/reacher-sdk';
 
 const instance: CheckEmailInputProxy = {
     host,
+    password,
     port,
     username,
-    password,
 };
 ```
 

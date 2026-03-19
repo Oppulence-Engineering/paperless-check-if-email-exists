@@ -6,14 +6,14 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AcceptsMail** | **bool** | Indicates if the mail server accepts emails. | 
 **Records** | **[]string** | List of Fully Qualified Domain Names (FQDN) of the mail server. | 
-**Type** | **string** | The type of error. | 
 **Message** | **string** | A human-readable description of the error. | 
+**Type** | **string** | The type of error. | 
 
 ## Methods
 
 ### NewCheckEmailOutputMx
 
-`func NewCheckEmailOutputMx(acceptsMail bool, records []string, type_ string, message string, ) *CheckEmailOutputMx`
+`func NewCheckEmailOutputMx(acceptsMail bool, records []string, message string, type_ string, ) *CheckEmailOutputMx`
 
 NewCheckEmailOutputMx instantiates a new CheckEmailOutputMx object
 This constructor will assign default values to properties that have it defined,
@@ -68,26 +68,6 @@ and a boolean to check if the value has been set.
 SetRecords sets Records field to given value.
 
 
-### GetType
-
-`func (o *CheckEmailOutputMx) GetType() string`
-
-GetType returns the Type field if non-nil, zero value otherwise.
-
-### GetTypeOk
-
-`func (o *CheckEmailOutputMx) GetTypeOk() (*string, bool)`
-
-GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetType
-
-`func (o *CheckEmailOutputMx) SetType(v string)`
-
-SetType sets Type field to given value.
-
-
 ### GetMessage
 
 `func (o *CheckEmailOutputMx) GetMessage() string`
@@ -106,6 +86,26 @@ and a boolean to check if the value has been set.
 `func (o *CheckEmailOutputMx) SetMessage(v string)`
 
 SetMessage sets Message field to given value.
+
+
+### GetType
+
+`func (o *CheckEmailOutputMx) GetType() string`
+
+GetType returns the Type field if non-nil, zero value otherwise.
+
+### GetTypeOk
+
+`func (o *CheckEmailOutputMx) GetTypeOk() (*string, bool)`
+
+GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetType
+
+`func (o *CheckEmailOutputMx) SetType(v string)`
+
+SetType sets Type field to given value.
 
 
 

@@ -5,7 +5,6 @@ use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::PgPool;
-use sqlx::Row;
 use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;

@@ -36,41 +36,29 @@ import type { YahooVerifMethod } from './yahoo-verif-method';
  */
 export interface CheckEmailRequest {
     /**
+     * Whether to check if a Gravatar image exists for the given email.
+     * @type {boolean}
+     * @memberof CheckEmailRequest
+     */
+    'check_gravatar'?: boolean;
+    /**
      * In the SMTP connection, the FROM email address.
      * @type {string}
      * @memberof CheckEmailRequest
      */
     'from_email'?: string;
     /**
-     * The email address to check.
-     * @type {string}
+     * 
+     * @type {GmailVerifMethod}
      * @memberof CheckEmailRequest
      */
-    'to_email': string;
+    'gmail_verif_method'?: GmailVerifMethod;
     /**
      * In the SMTP connection, the EHLO hostname.
      * @type {string}
      * @memberof CheckEmailRequest
      */
     'hello_name'?: string;
-    /**
-     * 
-     * @type {CheckEmailInputProxy}
-     * @memberof CheckEmailRequest
-     */
-    'proxy'?: CheckEmailInputProxy;
-    /**
-     * SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
-     * @type {number}
-     * @memberof CheckEmailRequest
-     */
-    'smtp_port'?: number;
-    /**
-     * 
-     * @type {GmailVerifMethod}
-     * @memberof CheckEmailRequest
-     */
-    'gmail_verif_method'?: GmailVerifMethod;
     /**
      * 
      * @type {HotmailB2BVerifMethod}
@@ -85,16 +73,28 @@ export interface CheckEmailRequest {
     'hotmailb2c_verif_method'?: HotmailB2CVerifMethod;
     /**
      * 
+     * @type {CheckEmailInputProxy}
+     * @memberof CheckEmailRequest
+     */
+    'proxy'?: CheckEmailInputProxy;
+    /**
+     * SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
+     * @type {number}
+     * @memberof CheckEmailRequest
+     */
+    'smtp_port'?: number;
+    /**
+     * The email address to check.
+     * @type {string}
+     * @memberof CheckEmailRequest
+     */
+    'to_email': string;
+    /**
+     * 
      * @type {YahooVerifMethod}
      * @memberof CheckEmailRequest
      */
     'yahoo_verif_method'?: YahooVerifMethod;
-    /**
-     * Whether to check if a Gravatar image exists for the given email.
-     * @type {boolean}
-     * @memberof CheckEmailRequest
-     */
-    'check_gravatar'?: boolean;
 }
 
 

@@ -6,8 +6,8 @@ An object representing a duration in seconds and nanoseconds.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**secs** | **number** | Duration in seconds. | [default to undefined]
 **nanos** | **number** | Duration in nanoseconds. | [default to undefined]
+**secs** | **number** | Duration in seconds. | [default to undefined]
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { Duration } from '@oppulence/reacher-sdk';
 
 const instance: Duration = {
-    secs,
     nanos,
+    secs,
 };
 ```
 

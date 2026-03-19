@@ -17,26 +17,22 @@
 //! This file implements the /bulk/{id}/results endpoints.
 
 use check_if_email_exists::LOG_TARGET;
-use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, PgPool, Row};
 use std::iter::Iterator;
-use std::{convert::TryInto, sync::Arc};
+use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 
 use super::with_worker_db;
 use crate::config::BackendConfig;
+use crate::http::csv_shared::{csv_rows, TaskResultRecord};
 use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
 use crate::tenant::context::TenantContext;
-use csv_helper::{CsvResponse, CsvWrapper};
-
-mod csv_helper;
 
 /// Defines the download format, passed in as a query param.
-#[derive(Serialize, Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "lowercase")]
+#[derive(Clone, Copy)]
 enum ResponseFormat {
 	Json,
 	Csv,
@@ -47,7 +43,8 @@ enum ResponseFormat {
 #[derive(Serialize, Deserialize, utoipa::IntoParams)]
 #[into_params(parameter_in = Query)]
 struct Request {
-	format: Option<ResponseFormat>,
+	/// Supported values: `json`, `csv`
+	format: Option<String>,
 	limit: Option<u64>,
 	offset: Option<u64>,
 }
@@ -92,7 +89,7 @@ async fn http_handler(
 		.into());
 	}
 
-	let format = req.format.unwrap_or(ResponseFormat::Json);
+	let format = parse_response_format(req.format.as_deref())?;
 	match format {
 		ResponseFormat::Json => {
 			let data = job_result_json(job_id, req.limit, req.offset.unwrap_or(0), pg_pool).await?;
@@ -111,6 +108,18 @@ async fn http_handler(
 
 			Ok(warp::reply::with_header(data, "Content-Type", "text/csv"))
 		}
+	}
+}
+
+fn parse_response_format(format: Option<&str>) -> Result<ResponseFormat, warp::Rejection> {
+	match format.unwrap_or("json").to_ascii_lowercase().as_str() {
+		"json" => Ok(ResponseFormat::Json),
+		"csv" => Ok(ResponseFormat::Csv),
+		_ => Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Invalid format. Expected one of: json, csv",
+		)
+		.into()),
 	}
 }
 
@@ -165,19 +174,37 @@ async fn job_result_csv(
 	offset: u64,
 	pg_pool: PgPool,
 ) -> Result<Vec<u8>, warp::Rejection> {
-	let rows = job_result_as_iter(job_id, limit, offset, pg_pool).await?;
-	let mut wtr = WriterBuilder::new().has_headers(true).from_writer(vec![]);
+	let rows = sqlx::query(
+		r#"
+		SELECT id, payload, result, error, score, score_category, sub_reason
+		FROM v1_task_result
+		WHERE job_id = $1
+		ORDER BY id
+		LIMIT $2 OFFSET $3
+		"#,
+	)
+	.bind(job_id)
+	.bind(limit.map(|l| l as i64))
+	.bind(offset as i64)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
-	for json_value in rows {
-		let result_csv: CsvResponse = CsvWrapper(json_value)
-			.try_into()
-			.map_err(|e| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e))?;
-		wtr.serialize(result_csv)
-			.map_err(|e| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, e))?;
-	}
+	let records: Vec<TaskResultRecord> = rows
+		.into_iter()
+		.map(|row| TaskResultRecord {
+			id: row.get::<i32, _>("id") as i64,
+			payload: row.get("payload"),
+			result: row.get("result"),
+			error: row.get("error"),
+			score: row.get("score"),
+			score_category: row.get("score_category"),
+			sub_reason: row.get("sub_reason"),
+		})
+		.collect();
 
-	let data = wtr.into_inner().map_err(ReacherResponseError::from)?;
-
+	let mut data = crate::http::csv_shared::CSV_HEADER.as_bytes().to_vec();
+	data.extend(csv_rows(&records).map_err(ReacherResponseError::from)?);
 	Ok(data)
 }
 

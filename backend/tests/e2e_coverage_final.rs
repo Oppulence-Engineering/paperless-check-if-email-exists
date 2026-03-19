@@ -21,8 +21,7 @@ mod coverage_final {
 	async fn admin_cfg() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db = crate::test_helpers::test_db_url();
 		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url: db,
 			extra: None,
@@ -34,10 +33,8 @@ mod coverage_final {
 	async fn worker_cfg() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
-		let rmq = std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into());
+		let db = crate::test_helpers::test_db_url();
+		let rmq = crate::test_helpers::test_amqp_url();
 		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url: db,
 			extra: None,

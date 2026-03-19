@@ -452,9 +452,111 @@ async fn delivery_finalize(
 		.store(task, worker_output, storage.get_extra())
 		.await?;
 
+	sync_related_entities(&config, task).await;
+
 	send_to_reacher(config, &task.input.to_email, worker_output).await?;
 
 	Ok(())
+}
+
+async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
+	let Some(pool) = config.get_pg_pool() else {
+		return;
+	};
+
+	if let Some(task_db_id) = task.metadata.as_ref().and_then(|metadata| metadata.task_db_id) {
+		if let Ok(rows) = sqlx::query(
+			"SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1",
+		)
+		.bind(task_db_id)
+		.fetch_all(&pool)
+		.await
+		{
+			for row in rows {
+				let finder_job_id: i32 = sqlx::Row::get(&row, "finder_job_id");
+				let _ = crate::finder::sync_finder_results(&pool, finder_job_id).await;
+			}
+		}
+
+		if let Ok(list_id) = sqlx::query_scalar::<_, Option<i32>>(
+			"SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $1",
+		)
+		.bind(task_db_id)
+		.fetch_one(&pool)
+		.await
+		{
+			if let Some(list_id) = list_id {
+				let total_rows = sqlx::query_scalar::<_, i32>(
+					"SELECT total_rows FROM v1_lists WHERE id = $1",
+				)
+				.bind(list_id)
+				.fetch_optional(&pool)
+				.await
+				.ok()
+				.flatten()
+				.unwrap_or_default();
+				let processed = sqlx::query_scalar::<_, i64>(
+					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state NOT IN ('queued', 'running', 'retrying')",
+				)
+				.bind(list_id)
+				.fetch_one(&pool)
+				.await
+				.unwrap_or(0);
+				if processed >= i64::from(total_rows) {
+					let _ = sqlx::query(
+						"UPDATE v1_lists SET status = 'completed'::list_status, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+					)
+					.bind(list_id)
+					.execute(&pool)
+					.await;
+				}
+			}
+		}
+	}
+
+	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+		let status = sqlx::query_scalar::<_, Option<String>>(
+			"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
+		)
+		.bind(job_id)
+		.fetch_one(&pool)
+		.await
+		.ok()
+		.flatten()
+		.unwrap_or_else(|| "running".to_string());
+
+		let non_terminal = sqlx::query_scalar::<_, i64>(
+			"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')",
+		)
+		.bind(job_id)
+		.fetch_one(&pool)
+		.await
+		.unwrap_or(0);
+
+		if non_terminal == 0 {
+			let failed = sqlx::query_scalar::<_, i64>(
+				"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')",
+			)
+			.bind(job_id)
+			.fetch_one(&pool)
+			.await
+			.unwrap_or(0);
+
+			let final_status = match status.as_str() {
+				"cancelling" | "cancelled" => "cancelled",
+				_ if failed > 0 => "failed",
+				_ => "completed",
+			};
+
+			let _ = sqlx::query(
+				"UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN COALESCE(completed_at, NOW()) ELSE completed_at END, cancelled_at = CASE WHEN $2 = 'cancelled' THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END, updated_at = NOW() WHERE id = $1",
+			)
+			.bind(job_id)
+			.bind(final_status)
+			.execute(&pool)
+			.await;
+		}
+	}
 }
 
 /// Checks the email and sends the result to the webhook.

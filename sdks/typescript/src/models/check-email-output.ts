@@ -27,6 +27,9 @@ import type { CheckEmailOutputSmtp } from './check-email-output-smtp';
 import type { DebugDetails } from './debug-details';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { EmailScore } from './email-score';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { Reachable } from './reachable';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -38,6 +41,12 @@ import type { SyntaxDetails } from './syntax-details';
  * @interface CheckEmailOutput
  */
 export interface CheckEmailOutput {
+    /**
+     * 
+     * @type {DebugDetails}
+     * @memberof CheckEmailOutput
+     */
+    'debug'?: DebugDetails;
     /**
      * The email address that was verified.
      * @type {string}
@@ -64,6 +73,12 @@ export interface CheckEmailOutput {
     'mx': CheckEmailOutputMx;
     /**
      * 
+     * @type {EmailScore}
+     * @memberof CheckEmailOutput
+     */
+    'score': EmailScore;
+    /**
+     * 
      * @type {CheckEmailOutputSmtp}
      * @memberof CheckEmailOutput
      */
@@ -74,12 +89,6 @@ export interface CheckEmailOutput {
      * @memberof CheckEmailOutput
      */
     'syntax': SyntaxDetails;
-    /**
-     * 
-     * @type {DebugDetails}
-     * @memberof CheckEmailOutput
-     */
-    'debug'?: DebugDetails;
 }
 
 

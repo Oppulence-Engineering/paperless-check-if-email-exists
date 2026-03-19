@@ -16,6 +16,7 @@
 
 use super::do_work::TaskError;
 use anyhow::bail;
+use crate::scoring::response::scored_response;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
 use lapin::options::BasicPublishOptions;
@@ -45,7 +46,7 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 
 	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
 		match result {
-			Ok(output) => Ok(Self::Ok(serde_json::to_vec(output)?)),
+			Ok(output) => Ok(Self::Ok(scored_response(output)?)),
 			Err(TaskError::Throttle(e)) => Ok(Self::Err((
 				TaskError::Throttle(e.clone()).to_string(),
 				StatusCode::TOO_MANY_REQUESTS.as_u16(),

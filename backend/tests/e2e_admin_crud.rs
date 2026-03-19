@@ -18,8 +18,7 @@ mod tenant_crud {
 	async fn admin_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
 			extra: None,
@@ -665,8 +664,7 @@ mod api_key_crud {
 	async fn admin_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
 			extra: None,

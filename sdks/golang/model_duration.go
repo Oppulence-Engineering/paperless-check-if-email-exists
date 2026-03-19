@@ -22,10 +22,10 @@ var _ MappedNullable = &Duration{}
 
 // Duration An object representing a duration in seconds and nanoseconds.
 type Duration struct {
-	// Duration in seconds.
-	Secs float32 `json:"secs"`
 	// Duration in nanoseconds.
 	Nanos float32 `json:"nanos"`
+	// Duration in seconds.
+	Secs float32 `json:"secs"`
 }
 
 type _Duration Duration
@@ -34,10 +34,10 @@ type _Duration Duration
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDuration(secs float32, nanos float32) *Duration {
+func NewDuration(nanos float32, secs float32) *Duration {
 	this := Duration{}
-	this.Secs = secs
 	this.Nanos = nanos
+	this.Secs = secs
 	return &this
 }
 
@@ -47,30 +47,6 @@ func NewDuration(secs float32, nanos float32) *Duration {
 func NewDurationWithDefaults() *Duration {
 	this := Duration{}
 	return &this
-}
-
-// GetSecs returns the Secs field value
-func (o *Duration) GetSecs() float32 {
-	if o == nil {
-		var ret float32
-		return ret
-	}
-
-	return o.Secs
-}
-
-// GetSecsOk returns a tuple with the Secs field value
-// and a boolean to check if the value has been set.
-func (o *Duration) GetSecsOk() (*float32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Secs, true
-}
-
-// SetSecs sets field value
-func (o *Duration) SetSecs(v float32) {
-	o.Secs = v
 }
 
 // GetNanos returns the Nanos field value
@@ -97,6 +73,30 @@ func (o *Duration) SetNanos(v float32) {
 	o.Nanos = v
 }
 
+// GetSecs returns the Secs field value
+func (o *Duration) GetSecs() float32 {
+	if o == nil {
+		var ret float32
+		return ret
+	}
+
+	return o.Secs
+}
+
+// GetSecsOk returns a tuple with the Secs field value
+// and a boolean to check if the value has been set.
+func (o *Duration) GetSecsOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Secs, true
+}
+
+// SetSecs sets field value
+func (o *Duration) SetSecs(v float32) {
+	o.Secs = v
+}
+
 func (o Duration) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -107,8 +107,8 @@ func (o Duration) MarshalJSON() ([]byte, error) {
 
 func (o Duration) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["secs"] = o.Secs
 	toSerialize["nanos"] = o.Nanos
+	toSerialize["secs"] = o.Secs
 	return toSerialize, nil
 }
 
@@ -117,8 +117,8 @@ func (o *Duration) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"secs",
 		"nanos",
+		"secs",
 	}
 
 	allProperties := make(map[string]interface{})

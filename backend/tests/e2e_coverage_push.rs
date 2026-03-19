@@ -144,8 +144,7 @@ mod v0_bulk_results_coverage {
 		// We already have a pool from TestDb; set up config storage so
 		// get_pg_pool() works through the storage adapter. We do this by
 		// connecting via the real path.
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
 			extra: None,
@@ -541,8 +540,7 @@ mod readiness_coverage {
 		let db = TestDb::start().await;
 		let _ = db.pool();
 
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
@@ -607,8 +605,7 @@ mod readiness_coverage {
 		let db = TestDb::start().await;
 		let _ = db.pool();
 
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
@@ -624,8 +621,7 @@ mod readiness_coverage {
 		// Instead, just set the storage adapter manually by re-creating with
 		// a partial connect. We'll create a new config with storage connected
 		// but worker channel missing.
-		let db_url2 = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url2 = crate::test_helpers::test_db_url();
 		let mut base_config = BackendConfig::empty();
 		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url: db_url2,
@@ -649,8 +645,7 @@ mod readiness_coverage {
 		final_config.storage = base_config.storage.clone();
 		// We need the storage adapter connected. Since BackendConfig::empty() sets Noop,
 		// we'll use a trick: connect a non-worker config first, then flip the flag.
-		let db_url3 = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url3 = crate::test_helpers::test_db_url();
 		let mut trick_config = BackendConfig::empty();
 		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url: db_url3,
@@ -844,8 +839,7 @@ mod v0_bulk_get_running_coverage {
 
 	async fn db_config() -> (TestDb, Arc<BackendConfig>) {
 		let db = TestDb::start().await;
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
@@ -1028,8 +1022,7 @@ mod v1_bulk_results_csv_coverage {
 	/// but no actual RabbitMQ channel (sufficient for the results endpoint).
 	async fn worker_db_config() -> (TestDb, Arc<BackendConfig>) {
 		let db = TestDb::start().await;
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {

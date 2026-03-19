@@ -20,12 +20,10 @@ mod worker_loop_tests {
 	use std::sync::Arc;
 
 	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
+		crate::test_helpers::test_amqp_url()
 	}
 	fn db_url() -> String {
-		std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into())
+		crate::test_helpers::test_db_url()
 	}
 
 	async fn make_worker_config(throttle: ThrottleConfig) -> Arc<BackendConfig> {

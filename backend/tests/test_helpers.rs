@@ -2,14 +2,54 @@
 /// Uses TEST_DATABASE_URL if set (fast, no Docker), otherwise testcontainers.
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
+use std::sync::{LazyLock, Mutex};
+use testcontainers::ImageExt;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::ContainerAsync;
 use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::rabbitmq::RabbitMq;
+use tokio::sync::OnceCell;
+use tokio::time::{sleep, Duration};
+
+static SHARED_AMQP_URL: OnceCell<String> = OnceCell::const_new();
+static CURRENT_TEST_DB_URL: LazyLock<Mutex<Option<String>>> =
+	LazyLock::new(|| Mutex::new(None));
+static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> =
+	LazyLock::new(|| Mutex::new(None));
+
+const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
+const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
+
+fn set_current_test_db_url(url: &str) {
+	*CURRENT_TEST_DB_URL.lock().expect("db url mutex poisoned") = Some(url.to_string());
+}
+
+fn set_current_test_amqp_url(url: &str) {
+	*CURRENT_TEST_AMQP_URL.lock().expect("amqp url mutex poisoned") = Some(url.to_string());
+}
+
+pub fn test_db_url() -> String {
+	CURRENT_TEST_DB_URL
+		.lock()
+		.expect("db url mutex poisoned")
+		.clone()
+		.or_else(|| std::env::var("TEST_DATABASE_URL").ok())
+		.unwrap_or_else(|| DEFAULT_TEST_DB_URL.to_string())
+}
+
+pub fn test_amqp_url() -> String {
+	CURRENT_TEST_AMQP_URL
+		.lock()
+		.expect("amqp url mutex poisoned")
+		.clone()
+		.or_else(|| std::env::var("TEST_AMQP_URL").ok())
+		.unwrap_or_else(|| DEFAULT_TEST_AMQP_URL.to_string())
+}
 
 /// Wrapper that holds a PgPool. If using testcontainers, also holds the container.
 pub struct TestDb {
 	pool: PgPool,
+	db_url: String,
 	// Option because when using TEST_DATABASE_URL we don't have a container
 	_container: Option<ContainerAsync<Postgres>>,
 }
@@ -28,17 +68,46 @@ impl TestRabbitMq {
 				_container: None,
 			};
 		}
-		let container = RabbitMq::default()
-			.start()
+		let amqp_url = SHARED_AMQP_URL
+			.get_or_try_init(|| async {
+				let mut last_error = None;
+				for attempt in 1..=5 {
+					match RabbitMq::default()
+						.with_startup_timeout(Duration::from_secs(300))
+						.start()
+						.await
+					{
+						Ok(container) => {
+							let host_port = container
+								.get_host_port_ipv4(5672)
+								.await
+								.map_err(|err| format!("Failed to get RabbitMQ port: {err}"))?;
+							let amqp_url =
+								format!("amqp://guest:guest@127.0.0.1:{}", host_port);
+							set_current_test_amqp_url(&amqp_url);
+							let _ = Box::leak(Box::new(container));
+							return Ok::<String, String>(amqp_url);
+						}
+						Err(err) => {
+							last_error = Some(err.to_string());
+							if attempt < 5 {
+								sleep(Duration::from_secs(2)).await;
+							}
+						}
+					}
+				}
+				Err(format!(
+					"Failed to start RabbitMQ container: {}",
+					last_error.unwrap_or_else(|| "unknown error".to_string())
+				))
+			})
 			.await
-			.expect("Failed to start RabbitMQ container");
-		let host_port = container
-			.get_host_port_ipv4(5672)
-			.await
-			.expect("Failed to get RabbitMQ port");
+			.expect("shared RabbitMQ init")
+			.clone();
+
 		Self {
-			amqp_url: format!("amqp://guest:guest@127.0.0.1:{}", host_port),
-			_container: Some(container),
+			amqp_url,
+			_container: None,
 		}
 	}
 }
@@ -47,58 +116,70 @@ impl TestDb {
 	pub async fn start() -> Self {
 		// Fast path: use existing Postgres via env var (works under llvm-cov)
 		if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
-			let pool = PgPoolOptions::new()
-				.max_connections(5)
-				.connect(&url)
-				.await
-				.expect("Failed to connect to TEST_DATABASE_URL");
+			set_current_test_db_url(&url);
+			return connect_existing_db(url).await;
+		}
 
-			// Clean up data from previous runs (keep schema)
-			let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
-			let _ = sqlx::query("DELETE FROM idempotency_keys")
-				.execute(&pool)
-				.await;
-			let _ = sqlx::query("DELETE FROM v1_task_result")
-				.execute(&pool)
-				.await;
-			let _ = sqlx::query("DELETE FROM v1_bulk_job").execute(&pool).await;
-			let _ = sqlx::query("DELETE FROM api_keys").execute(&pool).await;
-			let _ = sqlx::query("DELETE FROM tenants").execute(&pool).await;
-
-			return Self {
-				pool,
-				_container: None,
-			};
+		// Secondary fast path: prefer the default local docker-compose DB if it is up,
+		// even when TEST_DATABASE_URL is not explicitly exported.
+		if PgPoolOptions::new()
+			.max_connections(1)
+			.acquire_timeout(Duration::from_secs(2))
+			.connect(DEFAULT_TEST_DB_URL)
+			.await
+			.is_ok()
+		{
+			set_current_test_db_url(DEFAULT_TEST_DB_URL);
+			return connect_existing_db(DEFAULT_TEST_DB_URL.to_string()).await;
 		}
 
 		// Slow path: testcontainers
-		let container = Postgres::default()
-			.start()
-			.await
-			.expect("Failed to start Postgres container");
-		let host_port = container
-			.get_host_port_ipv4(5432)
-			.await
-			.expect("Failed to get Postgres port");
-		let db_url = format!(
-			"postgres://postgres:postgres@127.0.0.1:{}/postgres",
-			host_port
-		);
-		let pool = PgPoolOptions::new()
-			.max_connections(5)
-			.connect(&db_url)
-			.await
-			.expect("Failed to connect to test database");
+		let mut last_error = None;
+		for attempt in 1..=3 {
+			match Postgres::default()
+				.with_startup_timeout(Duration::from_secs(120))
+				.start()
+				.await
+			{
+				Ok(container) => {
+					let host_port = container
+						.get_host_port_ipv4(5432)
+						.await
+						.expect("Failed to get Postgres port");
+					let db_url =
+						format!("postgres://postgres:postgres@127.0.0.1:{}/postgres", host_port);
 
-		sqlx::migrate!("./migrations")
-			.run(&pool)
-			.await
-			.expect("Failed to run migrations");
+					let pool = PgPoolOptions::new()
+						.max_connections(10)
+						.connect(&db_url)
+						.await
+						.expect("Failed to connect to test database");
 
-		Self {
-			pool,
-			_container: Some(container),
+					sqlx::migrate!("./migrations")
+						.run(&pool)
+						.await
+						.expect("Failed to run migrations");
+					set_current_test_db_url(&db_url);
+
+					return Self {
+						pool,
+						db_url,
+						_container: Some(container),
+					};
+				}
+				Err(err) => {
+					last_error = Some(err.to_string());
+					if attempt < 3 {
+						sleep(Duration::from_secs(2)).await;
+					}
+				}
+			}
 		}
+
+		panic!(
+			"Failed to start Postgres container: {}",
+			last_error.unwrap_or_else(|| "unknown error".to_string())
+		);
 	}
 
 	pub fn pool(&self) -> &PgPool {
@@ -107,6 +188,46 @@ impl TestDb {
 
 	pub fn pool_owned(&self) -> PgPool {
 		self.pool.clone()
+	}
+
+	pub fn db_url(&self) -> &str {
+		&self.db_url
+	}
+}
+
+async fn connect_existing_db(url: String) -> TestDb {
+	let pool = PgPoolOptions::new()
+		.max_connections(10)
+		.connect(&url)
+		.await
+		.expect("Failed to connect to existing test database");
+
+	// Clean up data from previous runs (keep schema)
+	let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM idempotency_keys")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM reputation_cache")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_finder_result")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_finder_job")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_lists").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM v1_task_result")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_bulk_job").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM api_keys").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM tenants").execute(&pool).await;
+
+	TestDb {
+		pool,
+		db_url: url,
+		_container: None,
 	}
 }
 

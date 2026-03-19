@@ -22,9 +22,9 @@ var _ MappedNullable = &Webhook{}
 
 // Webhook Configuration for a webhook to receive email verification results. The method will be POST, and the body will contain the email verification response.
 type Webhook struct {
+	Extra map[string]interface{} `json:"extra,omitempty"`
 	// The URL to send the email verification results to.
 	Url string `json:"url"`
-	Extra map[string]interface{} `json:"extra,omitempty"`
 }
 
 type _Webhook Webhook
@@ -45,30 +45,6 @@ func NewWebhook(url string) *Webhook {
 func NewWebhookWithDefaults() *Webhook {
 	this := Webhook{}
 	return &this
-}
-
-// GetUrl returns the Url field value
-func (o *Webhook) GetUrl() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Url
-}
-
-// GetUrlOk returns a tuple with the Url field value
-// and a boolean to check if the value has been set.
-func (o *Webhook) GetUrlOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Url, true
-}
-
-// SetUrl sets field value
-func (o *Webhook) SetUrl(v string) {
-	o.Url = v
 }
 
 // GetExtra returns the Extra field value if set, zero value otherwise.
@@ -103,6 +79,30 @@ func (o *Webhook) SetExtra(v map[string]interface{}) {
 	o.Extra = v
 }
 
+// GetUrl returns the Url field value
+func (o *Webhook) GetUrl() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Url
+}
+
+// GetUrlOk returns a tuple with the Url field value
+// and a boolean to check if the value has been set.
+func (o *Webhook) GetUrlOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Url, true
+}
+
+// SetUrl sets field value
+func (o *Webhook) SetUrl(v string) {
+	o.Url = v
+}
+
 func (o Webhook) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -113,10 +113,10 @@ func (o Webhook) MarshalJSON() ([]byte, error) {
 
 func (o Webhook) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["url"] = o.Url
 	if !IsNil(o.Extra) {
 		toSerialize["extra"] = o.Extra
 	}
+	toSerialize["url"] = o.Url
 	return toSerialize, nil
 }
 

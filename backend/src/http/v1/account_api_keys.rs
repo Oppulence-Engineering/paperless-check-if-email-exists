@@ -322,6 +322,7 @@ async fn revoke_handler(
 #[utoipa::path(
 	get,
 	path = "/v1/me/api-keys/{key_id}",
+	operation_id = "getTenantApiKey",
 	tag = "Account",
 	params(("key_id" = Uuid, Path, description = "API key identifier")),
 	responses((status = 200, description = "API key details")),
@@ -343,6 +344,7 @@ pub fn get_api_key(
 #[utoipa::path(
 	get,
 	path = "/v1/me/api-keys",
+	operation_id = "listTenantApiKeys",
 	tag = "Account",
 	responses((status = 200, description = "API key list")),
 )]
@@ -363,6 +365,7 @@ pub fn list_api_keys(
 #[utoipa::path(
 	post,
 	path = "/v1/me/api-keys",
+	operation_id = "createTenantApiKey",
 	tag = "Account",
 	responses((status = 201, description = "API key created")),
 )]
@@ -384,6 +387,7 @@ pub fn create_api_key(
 #[utoipa::path(
 	patch,
 	path = "/v1/me/api-keys/{key_id}",
+	operation_id = "updateTenantApiKey",
 	tag = "Account",
 	params(("key_id" = Uuid, Path, description = "API key identifier")),
 	responses((status = 200, description = "API key updated")),
@@ -406,6 +410,7 @@ pub fn update_api_key(
 #[utoipa::path(
 	delete,
 	path = "/v1/me/api-keys/{key_id}",
+	operation_id = "revokeTenantApiKey",
 	tag = "Account",
 	params(("key_id" = Uuid, Path, description = "API key identifier")),
 	responses((status = 200, description = "API key revoked")),

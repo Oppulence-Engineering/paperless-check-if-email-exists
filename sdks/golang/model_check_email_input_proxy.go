@@ -24,12 +24,12 @@ var _ MappedNullable = &CheckEmailInputProxy{}
 type CheckEmailInputProxy struct {
 	// The proxy host address.
 	Host string `json:"host"`
+	// Password for proxy authentication.
+	Password *string `json:"password,omitempty"`
 	// The proxy port number.
 	Port int32 `json:"port"`
 	// Username for proxy authentication.
 	Username *string `json:"username,omitempty"`
-	// Password for proxy authentication.
-	Password *string `json:"password,omitempty"`
 }
 
 type _CheckEmailInputProxy CheckEmailInputProxy
@@ -75,6 +75,38 @@ func (o *CheckEmailInputProxy) GetHostOk() (*string, bool) {
 // SetHost sets field value
 func (o *CheckEmailInputProxy) SetHost(v string) {
 	o.Host = v
+}
+
+// GetPassword returns the Password field value if set, zero value otherwise.
+func (o *CheckEmailInputProxy) GetPassword() string {
+	if o == nil || IsNil(o.Password) {
+		var ret string
+		return ret
+	}
+	return *o.Password
+}
+
+// GetPasswordOk returns a tuple with the Password field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailInputProxy) GetPasswordOk() (*string, bool) {
+	if o == nil || IsNil(o.Password) {
+		return nil, false
+	}
+	return o.Password, true
+}
+
+// HasPassword returns a boolean if a field has been set.
+func (o *CheckEmailInputProxy) HasPassword() bool {
+	if o != nil && !IsNil(o.Password) {
+		return true
+	}
+
+	return false
+}
+
+// SetPassword gets a reference to the given string and assigns it to the Password field.
+func (o *CheckEmailInputProxy) SetPassword(v string) {
+	o.Password = &v
 }
 
 // GetPort returns the Port field value
@@ -133,38 +165,6 @@ func (o *CheckEmailInputProxy) SetUsername(v string) {
 	o.Username = &v
 }
 
-// GetPassword returns the Password field value if set, zero value otherwise.
-func (o *CheckEmailInputProxy) GetPassword() string {
-	if o == nil || IsNil(o.Password) {
-		var ret string
-		return ret
-	}
-	return *o.Password
-}
-
-// GetPasswordOk returns a tuple with the Password field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailInputProxy) GetPasswordOk() (*string, bool) {
-	if o == nil || IsNil(o.Password) {
-		return nil, false
-	}
-	return o.Password, true
-}
-
-// HasPassword returns a boolean if a field has been set.
-func (o *CheckEmailInputProxy) HasPassword() bool {
-	if o != nil && !IsNil(o.Password) {
-		return true
-	}
-
-	return false
-}
-
-// SetPassword gets a reference to the given string and assigns it to the Password field.
-func (o *CheckEmailInputProxy) SetPassword(v string) {
-	o.Password = &v
-}
-
 func (o CheckEmailInputProxy) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -176,12 +176,12 @@ func (o CheckEmailInputProxy) MarshalJSON() ([]byte, error) {
 func (o CheckEmailInputProxy) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["host"] = o.Host
+	if !IsNil(o.Password) {
+		toSerialize["password"] = o.Password
+	}
 	toSerialize["port"] = o.Port
 	if !IsNil(o.Username) {
 		toSerialize["username"] = o.Username
-	}
-	if !IsNil(o.Password) {
-		toSerialize["password"] = o.Password
 	}
 	return toSerialize, nil
 }

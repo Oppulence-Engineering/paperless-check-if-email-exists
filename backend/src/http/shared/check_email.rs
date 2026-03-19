@@ -17,6 +17,7 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
+use crate::scoring::response::scored_response;
 use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, QuotaCheckResult};
@@ -223,7 +224,7 @@ async fn handle_without_worker(
 	config: Arc<BackendConfig>,
 	body: &CheckEmailRequest,
 	throttle_manager: &crate::throttle::ThrottleManager,
-	tenant_ctx: &TenantContext,
+	_tenant_ctx: &TenantContext,
 ) -> Result<Vec<u8>, warp::Rejection> {
 	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
@@ -253,7 +254,7 @@ async fn handle_without_worker(
 
 	let result = result_ok.unwrap();
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
-	Ok(serde_json::to_vec(&result).map_err(ReacherResponseError::from)?)
+	Ok(scored_response(&result).map_err(ReacherResponseError::from)?)
 }
 
 async fn handle_with_worker(

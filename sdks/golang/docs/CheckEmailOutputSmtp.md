@@ -9,14 +9,14 @@ Name | Type | Description | Notes
 **IsCatchAll** | **bool** | Indicates if the email address is a catch-all address. | 
 **IsDeliverable** | **bool** | Indicates if an email sent to this address is deliverable. | 
 **IsDisabled** | **bool** | Indicates if the email address has been disabled by the provider. | 
-**Type** | **string** | The type of error. | 
 **Message** | **string** | A human-readable description of the error. | 
+**Type** | **string** | The type of error. | 
 
 ## Methods
 
 ### NewCheckEmailOutputSmtp
 
-`func NewCheckEmailOutputSmtp(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool, type_ string, message string, ) *CheckEmailOutputSmtp`
+`func NewCheckEmailOutputSmtp(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool, message string, type_ string, ) *CheckEmailOutputSmtp`
 
 NewCheckEmailOutputSmtp instantiates a new CheckEmailOutputSmtp object
 This constructor will assign default values to properties that have it defined,
@@ -131,26 +131,6 @@ and a boolean to check if the value has been set.
 SetIsDisabled sets IsDisabled field to given value.
 
 
-### GetType
-
-`func (o *CheckEmailOutputSmtp) GetType() string`
-
-GetType returns the Type field if non-nil, zero value otherwise.
-
-### GetTypeOk
-
-`func (o *CheckEmailOutputSmtp) GetTypeOk() (*string, bool)`
-
-GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetType
-
-`func (o *CheckEmailOutputSmtp) SetType(v string)`
-
-SetType sets Type field to given value.
-
-
 ### GetMessage
 
 `func (o *CheckEmailOutputSmtp) GetMessage() string`
@@ -169,6 +149,26 @@ and a boolean to check if the value has been set.
 `func (o *CheckEmailOutputSmtp) SetMessage(v string)`
 
 SetMessage sets Message field to given value.
+
+
+### GetType
+
+`func (o *CheckEmailOutputSmtp) GetType() string`
+
+GetType returns the Type field if non-nil, zero value otherwise.
+
+### GetTypeOk
+
+`func (o *CheckEmailOutputSmtp) GetTypeOk() (*string, bool)`
+
+GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetType
+
+`func (o *CheckEmailOutputSmtp) SetType(v string)`
+
+SetType sets Type field to given value.
 
 
 

@@ -21,16 +21,16 @@
  */
 export interface Webhook {
     /**
-     * The URL to send the email verification results to.
-     * @type {string}
-     * @memberof Webhook
-     */
-    'url': string;
-    /**
      * 
      * @type {object}
      * @memberof Webhook
      */
     'extra'?: object;
+    /**
+     * The URL to send the email verification results to.
+     * @type {string}
+     * @memberof Webhook
+     */
+    'url': string;
 }
 

@@ -20,11 +20,9 @@ mod tests {
 
 	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, CheckEmailRequest, REACHER_SECRET_HEADER};
+	use serde_json::Value;
 	use warp::http::StatusCode;
 	use warp::test::request;
-
-	const FOO_BAR_RESPONSE: &str = r#"{"input":"foo@bar","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"is_b2c":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":null,"domain":"","is_valid_syntax":false,"username":"","normalized_email":null,"suggestion":null}"#;
-	const FOO_BAR_BAZ_RESPONSE: &str = r#"{"input":"foo@bar.baz","is_reachable":"invalid","misc":{"is_disposable":false,"is_role_account":false,"is_b2c":false,"gravatar_url":null,"haveibeenpwned":null},"mx":{"accepts_mail":false,"records":[]},"smtp":{"can_connect_smtp":false,"has_full_inbox":false,"is_catch_all":false,"is_deliverable":false,"is_disabled":false},"syntax":{"address":"foo@bar.baz","domain":"bar.baz","is_valid_syntax":true,"username":"foo","normalized_email":"foo@bar.baz","suggestion":null}"#;
 
 	fn create_backend_config(header_secret: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
@@ -36,6 +34,38 @@ mod tests {
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
 		Arc::new(config)
+	}
+
+	fn parse_json(body: &[u8]) -> Value {
+		serde_json::from_slice(body).expect("response body should be valid JSON")
+	}
+
+	fn assert_invalid_scored_response(
+		body: &[u8],
+		input: &str,
+		is_valid_syntax: bool,
+		address: Option<&str>,
+		domain: &str,
+		username: &str,
+		sub_reason: &str,
+	) {
+		let body = parse_json(body);
+		assert_eq!(body["input"], input);
+		assert_eq!(body["is_reachable"], "invalid");
+		assert_eq!(body["syntax"]["is_valid_syntax"], is_valid_syntax);
+		assert_eq!(body["syntax"]["domain"], domain);
+		assert_eq!(body["syntax"]["username"], username);
+		match address {
+			Some(address) => assert_eq!(body["syntax"]["address"], address),
+			None => assert!(body["syntax"]["address"].is_null()),
+		}
+		assert!(body["misc"].is_object());
+		assert!(body["mx"].is_object() || body["mx"].is_null());
+		assert!(body["smtp"].is_object() || body["smtp"].is_null());
+		assert_eq!(body["score"]["score"], 0);
+		assert_eq!(body["score"]["category"], "invalid");
+		assert_eq!(body["score"]["sub_reason"], sub_reason);
+		assert!(body["score"]["signals"].is_object());
 	}
 
 	// --- V0 check_email with legacy auth ---
@@ -51,7 +81,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	#[tokio::test]
@@ -68,7 +106,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_BAZ_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar.baz",
+			true,
+			Some("foo@bar.baz"),
+			"bar.baz",
+			"foo",
+			"invalid_recipient",
+		);
 	}
 
 	#[tokio::test]
@@ -115,7 +161,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	#[tokio::test]
@@ -168,7 +222,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	// --- V1 check_email with legacy auth ---
@@ -184,7 +246,15 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
-		assert!(resp.body().starts_with(FOO_BAR_RESPONSE.as_bytes()));
+		assert_invalid_scored_response(
+			resp.body(),
+			"foo@bar",
+			false,
+			None,
+			"",
+			"",
+			"invalid_syntax",
+		);
 	}
 
 	#[tokio::test]

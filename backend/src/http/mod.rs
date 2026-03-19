@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod csv_shared;
 pub mod deprecation;
 mod error;
 mod health;
 pub mod idempotency;
-mod openapi;
+pub mod openapi;
 pub mod shared;
 mod v0;
 mod v1;
@@ -62,6 +63,14 @@ pub fn create_routes(
 	let v1_routes = v1::onboard::v1_check_email_with_onboard(Arc::clone(&config))
 		.boxed()
 		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)).boxed())
+		.or(v1::find_email::post::v1_find_email(Arc::clone(&config)).boxed())
+		.or(v1::find_email::get::v1_get_find_email(Arc::clone(&config)).boxed())
+		.or(v1::lists::post::v1_create_list(Arc::clone(&config)).boxed())
+		.or(v1::lists::get_list::v1_list_lists(Arc::clone(&config)).boxed())
+		.or(v1::lists::get_detail::v1_get_list(Arc::clone(&config)).boxed())
+		.or(v1::lists::download::v1_download_list(Arc::clone(&config)).boxed())
+		.or(v1::lists::delete::v1_delete_list(Arc::clone(&config)).boxed())
+		.or(v1::reputation::check::v1_check_reputation(Arc::clone(&config)).boxed())
 		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)).boxed())
 		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)).boxed())
 		.or(v1::bulk::get_results::v1_get_bulk_job_results(Arc::clone(&config)).boxed())
@@ -72,6 +81,7 @@ pub fn create_routes(
 		.or(v1::jobs::cancel::v1_cancel_job(Arc::clone(&config)).boxed())
 		.or(v1::jobs::get_events::v1_get_job_events(Arc::clone(&config)).boxed())
 		.or(v1::jobs::get_results::v1_get_job_results(Arc::clone(&config)).boxed())
+		.or(v1::jobs::download::v1_download_job_results(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_me_routes = v1::me::v1_me(Arc::clone(&config)).boxed();
@@ -153,6 +163,9 @@ pub async fn run_warp_server(
 	// Spawn idempotency key cleanup if Postgres is configured
 	if let Some(pool) = config.get_pg_pool() {
 		idempotency::spawn_idempotency_cleanup(pool);
+		if let Some(pool) = config.get_pg_pool() {
+			crate::reputation::spawn_cache_cleanup(pool);
+		}
 	}
 
 	// Run v0 bulk job listener.

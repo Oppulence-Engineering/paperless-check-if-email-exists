@@ -14,8 +14,7 @@ mod tests {
 	async fn cfg() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db = crate::test_helpers::test_db_url();
 		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url: db,
 			extra: None,

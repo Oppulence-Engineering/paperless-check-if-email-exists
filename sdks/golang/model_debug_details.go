@@ -22,14 +22,14 @@ var _ MappedNullable = &DebugDetails{}
 
 // DebugDetails struct for DebugDetails
 type DebugDetails struct {
-	// The timestamp when the email verification started.
-	StartTime string `json:"start_time"`
+	Duration Duration `json:"duration"`
 	// The timestamp when the email verification ended.
 	EndTime string `json:"end_time"`
-	Duration Duration `json:"duration"`
 	// The name of the server that performed the verification.
 	ServerName string `json:"server_name"`
 	Smtp DebugDetailsSmtp `json:"smtp"`
+	// The timestamp when the email verification started.
+	StartTime string `json:"start_time"`
 }
 
 type _DebugDetails DebugDetails
@@ -38,13 +38,13 @@ type _DebugDetails DebugDetails
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDebugDetails(startTime string, endTime string, duration Duration, serverName string, smtp DebugDetailsSmtp) *DebugDetails {
+func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string) *DebugDetails {
 	this := DebugDetails{}
-	this.StartTime = startTime
-	this.EndTime = endTime
 	this.Duration = duration
+	this.EndTime = endTime
 	this.ServerName = serverName
 	this.Smtp = smtp
+	this.StartTime = startTime
 	return &this
 }
 
@@ -54,54 +54,6 @@ func NewDebugDetails(startTime string, endTime string, duration Duration, server
 func NewDebugDetailsWithDefaults() *DebugDetails {
 	this := DebugDetails{}
 	return &this
-}
-
-// GetStartTime returns the StartTime field value
-func (o *DebugDetails) GetStartTime() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.StartTime
-}
-
-// GetStartTimeOk returns a tuple with the StartTime field value
-// and a boolean to check if the value has been set.
-func (o *DebugDetails) GetStartTimeOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.StartTime, true
-}
-
-// SetStartTime sets field value
-func (o *DebugDetails) SetStartTime(v string) {
-	o.StartTime = v
-}
-
-// GetEndTime returns the EndTime field value
-func (o *DebugDetails) GetEndTime() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.EndTime
-}
-
-// GetEndTimeOk returns a tuple with the EndTime field value
-// and a boolean to check if the value has been set.
-func (o *DebugDetails) GetEndTimeOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.EndTime, true
-}
-
-// SetEndTime sets field value
-func (o *DebugDetails) SetEndTime(v string) {
-	o.EndTime = v
 }
 
 // GetDuration returns the Duration field value
@@ -126,6 +78,30 @@ func (o *DebugDetails) GetDurationOk() (*Duration, bool) {
 // SetDuration sets field value
 func (o *DebugDetails) SetDuration(v Duration) {
 	o.Duration = v
+}
+
+// GetEndTime returns the EndTime field value
+func (o *DebugDetails) GetEndTime() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.EndTime
+}
+
+// GetEndTimeOk returns a tuple with the EndTime field value
+// and a boolean to check if the value has been set.
+func (o *DebugDetails) GetEndTimeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.EndTime, true
+}
+
+// SetEndTime sets field value
+func (o *DebugDetails) SetEndTime(v string) {
+	o.EndTime = v
 }
 
 // GetServerName returns the ServerName field value
@@ -176,6 +152,30 @@ func (o *DebugDetails) SetSmtp(v DebugDetailsSmtp) {
 	o.Smtp = v
 }
 
+// GetStartTime returns the StartTime field value
+func (o *DebugDetails) GetStartTime() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.StartTime
+}
+
+// GetStartTimeOk returns a tuple with the StartTime field value
+// and a boolean to check if the value has been set.
+func (o *DebugDetails) GetStartTimeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.StartTime, true
+}
+
+// SetStartTime sets field value
+func (o *DebugDetails) SetStartTime(v string) {
+	o.StartTime = v
+}
+
 func (o DebugDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -186,11 +186,11 @@ func (o DebugDetails) MarshalJSON() ([]byte, error) {
 
 func (o DebugDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["start_time"] = o.StartTime
-	toSerialize["end_time"] = o.EndTime
 	toSerialize["duration"] = o.Duration
+	toSerialize["end_time"] = o.EndTime
 	toSerialize["server_name"] = o.ServerName
 	toSerialize["smtp"] = o.Smtp
+	toSerialize["start_time"] = o.StartTime
 	return toSerialize, nil
 }
 
@@ -199,11 +199,11 @@ func (o *DebugDetails) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"start_time",
-		"end_time",
 		"duration",
+		"end_time",
 		"server_name",
 		"smtp",
+		"start_time",
 	}
 
 	allProperties := make(map[string]interface{})

@@ -4,19 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional] 
 **Input** | **string** | The email address that was verified. | 
 **IsReachable** | [**Reachable**](Reachable.md) |  | 
 **Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | 
 **Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | 
+**Score** | [**EmailScore**](EmailScore.md) |  | 
 **Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | 
 **Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | 
-**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional] 
 
 ## Methods
 
 ### NewCheckEmailOutput
 
-`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
+`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
 
 NewCheckEmailOutput instantiates a new CheckEmailOutput object
 This constructor will assign default values to properties that have it defined,
@@ -30,6 +31,31 @@ will change when the set of required properties is changed
 NewCheckEmailOutputWithDefaults instantiates a new CheckEmailOutput object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetDebug
+
+`func (o *CheckEmailOutput) GetDebug() DebugDetails`
+
+GetDebug returns the Debug field if non-nil, zero value otherwise.
+
+### GetDebugOk
+
+`func (o *CheckEmailOutput) GetDebugOk() (*DebugDetails, bool)`
+
+GetDebugOk returns a tuple with the Debug field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDebug
+
+`func (o *CheckEmailOutput) SetDebug(v DebugDetails)`
+
+SetDebug sets Debug field to given value.
+
+### HasDebug
+
+`func (o *CheckEmailOutput) HasDebug() bool`
+
+HasDebug returns a boolean if a field has been set.
 
 ### GetInput
 
@@ -111,6 +137,26 @@ and a boolean to check if the value has been set.
 SetMx sets Mx field to given value.
 
 
+### GetScore
+
+`func (o *CheckEmailOutput) GetScore() EmailScore`
+
+GetScore returns the Score field if non-nil, zero value otherwise.
+
+### GetScoreOk
+
+`func (o *CheckEmailOutput) GetScoreOk() (*EmailScore, bool)`
+
+GetScoreOk returns a tuple with the Score field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetScore
+
+`func (o *CheckEmailOutput) SetScore(v EmailScore)`
+
+SetScore sets Score field to given value.
+
+
 ### GetSmtp
 
 `func (o *CheckEmailOutput) GetSmtp() CheckEmailOutputSmtp`
@@ -150,31 +196,6 @@ and a boolean to check if the value has been set.
 
 SetSyntax sets Syntax field to given value.
 
-
-### GetDebug
-
-`func (o *CheckEmailOutput) GetDebug() DebugDetails`
-
-GetDebug returns the Debug field if non-nil, zero value otherwise.
-
-### GetDebugOk
-
-`func (o *CheckEmailOutput) GetDebugOk() (*DebugDetails, bool)`
-
-GetDebugOk returns a tuple with the Debug field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetDebug
-
-`func (o *CheckEmailOutput) SetDebug(v DebugDetails)`
-
-SetDebug sets Debug field to given value.
-
-### HasDebug
-
-`func (o *CheckEmailOutput) HasDebug() bool`
-
-HasDebug returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -6,6 +6,7 @@ mod test_helpers;
 mod tests {
 	use crate::test_helpers::{
 		insert_api_key, insert_event, insert_job, insert_task, insert_tenant, safe_result, TestDb,
+		TestRabbitMq,
 	};
 	use reacher_backend::config::{
 		BackendConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
@@ -17,28 +18,18 @@ mod tests {
 	use warp::http::StatusCode;
 	use warp::test::request;
 
-	fn db_url() -> String {
-		std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into())
-	}
-
-	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
-	}
-
-	/// BackendConfig with worker mode enabled (has DB + RabbitMQ).
-	async fn worker_config() -> Arc<BackendConfig> {
+	/// BackendConfig with worker mode enabled and a live RabbitMQ connection.
+	async fn worker_config(db_url: &str, rmq_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			db_url: db_url(),
+			db_url: db_url.to_string(),
 			extra: None,
 		}));
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
-				url: rmq_url(),
+				url: rmq_url.to_string(),
 				concurrency: 4,
 			}),
 			webhook: None,
@@ -50,15 +41,29 @@ mod tests {
 		Arc::new(config)
 	}
 
-	/// BackendConfig with DB but no worker mode.
-	async fn db_only_config() -> Arc<BackendConfig> {
+	/// BackendConfig with DB only.
+	async fn db_only_config(db_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			db_url: db_url(),
+			db_url: db_url.to_string(),
 			extra: None,
 		}));
 		config.connect().await.expect("Failed to connect db config");
+		Arc::new(config)
+	}
+
+	/// BackendConfig that behaves like worker mode for route gating but does not
+	/// require a live RabbitMQ connection.
+	async fn pseudo_worker_config(db_url: &str) -> Arc<BackendConfig> {
+		let mut config = BackendConfig::empty();
+		config.header_secret = Some("test".into());
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			db_url: db_url.to_string(),
+			extra: None,
+		}));
+		config.connect().await.expect("Failed to connect pseudo worker config");
+		config.worker.enable = true;
 		Arc::new(config)
 	}
 
@@ -68,7 +73,7 @@ mod tests {
 	#[serial]
 	async fn test_get_job_status_returns_task_summary() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
 		insert_task(
@@ -101,8 +106,8 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_get_job_status_not_found() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 
 		let resp = request()
 			.path("/v1/jobs/999999")
@@ -120,7 +125,7 @@ mod tests {
 	#[serial]
 	async fn test_cancel_running_job() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 
 		let job_id = insert_job(db.pool(), None, 2, "running").await;
 		insert_task(db.pool(), job_id, "queued", None, None, None).await;
@@ -143,7 +148,7 @@ mod tests {
 	#[serial]
 	async fn test_cancel_completed_job_fails() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 1, "completed").await;
 
 		let resp = request()
@@ -159,8 +164,8 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_cancel_not_found() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 
 		let resp = request()
 			.path("/v1/jobs/999999/cancel")
@@ -178,7 +183,7 @@ mod tests {
 	#[serial]
 	async fn test_get_job_events() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 1, "running").await;
 		insert_event(db.pool(), job_id, None, "job.created").await;
 		insert_event(db.pool(), job_id, None, "task.completed").await;
@@ -202,7 +207,7 @@ mod tests {
 	#[serial]
 	async fn test_get_job_results_cursor_pagination() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 5, "completed").await;
 		for _ in 0..5 {
 			insert_task(
@@ -236,7 +241,7 @@ mod tests {
 	#[serial]
 	async fn test_v1_bulk_progress() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
 		insert_task(
 			db.pool(),
@@ -278,7 +283,7 @@ mod tests {
 	#[serial]
 	async fn test_v1_bulk_results_completed_job() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 2, "completed").await;
 		insert_task(
 			db.pool(),
@@ -315,7 +320,7 @@ mod tests {
 	#[serial]
 	async fn test_v1_bulk_results_running_job_rejected() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 		let job_id = insert_job(db.pool(), None, 3, "running").await;
 		insert_task(
 			db.pool(),
@@ -344,7 +349,8 @@ mod tests {
 	#[serial]
 	async fn test_v1_bulk_post_creates_job_and_tasks() {
 		let db = TestDb::start().await;
-		let config = worker_config().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
 
 		let resp = request()
 			.path("/v1/bulk")
@@ -391,8 +397,8 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_v1_bulk_post_empty_input_rejected() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let config = pseudo_worker_config(db.db_url()).await;
 
 		let resp = request()
 			.path("/v1/bulk")
@@ -410,8 +416,9 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_v1_check_email_with_worker_mode() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
 
 		// This test exercises the handle_with_worker path in shared/check_email.rs
 		// It publishes to RabbitMQ and waits for a reply. Since no worker is consuming,
@@ -452,8 +459,9 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_v1_check_email_full_worker_rpc() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
 		let routes = create_routes(Arc::clone(&config));
 
 		// Start a background "worker" that consumes tasks and replies
@@ -534,6 +542,9 @@ mod tests {
 				assert_eq!(r.status(), StatusCode::OK, "body: {:?}", r.body());
 				let body: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 				assert!(body["is_reachable"].is_string());
+				assert!(body["score"].is_object());
+				assert!(body["score"]["score"].is_number());
+				assert!(body["score"]["category"].is_string());
 			}
 			Err(_) => {
 				// Timeout is acceptable but not ideal — the code paths were still exercised
@@ -547,7 +558,7 @@ mod tests {
 	#[serial]
 	async fn test_v0_bulk_get_status() {
 		let db = TestDb::start().await;
-		let config = db_only_config().await;
+		let config = db_only_config(db.db_url()).await;
 
 		// Insert a v0 job with results
 		let job_id: i32 =
@@ -591,7 +602,7 @@ mod tests {
 	#[serial]
 	async fn test_v0_bulk_get_results_json() {
 		let db = TestDb::start().await;
-		let config = db_only_config().await;
+		let config = db_only_config(db.db_url()).await;
 
 		let job_id: i32 =
 			sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (1) RETURNING id")
@@ -623,7 +634,7 @@ mod tests {
 	#[serial]
 	async fn test_v0_bulk_results_still_running() {
 		let db = TestDb::start().await;
-		let config = db_only_config().await;
+		let config = db_only_config(db.db_url()).await;
 
 		let job_id: i32 =
 			sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES (5) RETURNING id")
@@ -655,8 +666,8 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_readyz_with_postgres() {
-		let _db = TestDb::start().await;
-		let config = db_only_config().await;
+		let db = TestDb::start().await;
+		let config = db_only_config(db.db_url()).await;
 		let resp = request()
 			.path("/readyz")
 			.method("GET")
@@ -671,8 +682,9 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_readyz_with_rabbitmq() {
-		let _db = TestDb::start().await;
-		let config = worker_config().await;
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
 		let resp = request()
 			.path("/readyz")
 			.method("GET")

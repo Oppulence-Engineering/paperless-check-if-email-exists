@@ -21,18 +21,6 @@
  */
 export interface MiscDetails {
     /**
-     * Indicates if the email address is from a known disposable email provider.
-     * @type {boolean}
-     * @memberof MiscDetails
-     */
-    'is_disposable': boolean;
-    /**
-     * Indicates if the email address is a role-based account.
-     * @type {boolean}
-     * @memberof MiscDetails
-     */
-    'is_role_account': boolean;
-    /**
      * URL to the Gravatar profile picture associated with the email, if available and requested.
      * @type {string}
      * @memberof MiscDetails
@@ -44,5 +32,17 @@ export interface MiscDetails {
      * @memberof MiscDetails
      */
     'is_b2c': boolean;
+    /**
+     * Indicates if the email address is from a known disposable email provider.
+     * @type {boolean}
+     * @memberof MiscDetails
+     */
+    'is_disposable': boolean;
+    /**
+     * Indicates if the email address is a role-based account.
+     * @type {boolean}
+     * @memberof MiscDetails
+     */
+    'is_role_account': boolean;
 }
 

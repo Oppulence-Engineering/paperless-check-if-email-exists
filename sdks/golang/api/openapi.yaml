@@ -20,105 +20,575 @@ servers:
 security:
 - Authorization: []
 paths:
-  /v1/check_email:
+  /healthz:
+    get:
+      description: Returns a lightweight readiness signal with no upstream dependency
+        checks.
+      operationId: healthz
+      responses:
+        "200":
+          description: Service is alive
+      summary: GET /healthz
+      tags:
+      - Health
+  /openapi.json:
+    get:
+      operationId: openapi_spec
+      responses:
+        "200":
+          description: Merged OpenAPI specification for all documented REST endpoints
+      summary: Serve the merged OpenAPI document for all documented REST endpoints.
+      tags:
+      - System
+  /readyz:
+    get:
+      description: Performs dependency checks for Postgres and RabbitMQ and returns
+        readiness status.
+      operationId: readyz
+      responses:
+        "200":
+          description: Service readiness and dependency checks
+      summary: GET /readyz
+      tags:
+      - Health
+  /v0/bulk:
     post:
-      description: "Perform a comprehensive verification of an email address. This\
-        \ endpoint supersedes the previous `/v0/check_email` endpoint, maintaining\
-        \ the same input and output format. Unlike the `/v0/check_email` endpoint,\
-        \ the new `/v1/check_email` endpoint queues the email for verification, and\
-        \ the Reacher server processes the queue based on its configuration settings\
-        \ such as throttle and concurrency."
-      operationId: post-v1-check-email
+      description: Creates a legacy bulk verification job and queues tasks synchronously
+        via sqlxmq.
+      operationId: create_bulk_job
+      responses:
+        "200":
+          description: Legacy bulk job created
+      summary: POST /v0/bulk
+      tags:
+      - v0
+  /v0/bulk/{job_id}:
+    get:
+      description: Returns current status and summary for a legacy bulk verification
+        job.
+      operationId: get_bulk_job_status
+      parameters:
+      - description: Legacy bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Bulk status response
+      summary: "GET /v0/bulk/{job_id}"
+      tags:
+      - v0
+  /v0/bulk/{job_id}/results:
+    get:
+      description: Returns terminal result rows for a legacy bulk job.
+      operationId: get_bulk_job_result
+      parameters:
+      - description: Legacy bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Bulk job results
+      summary: "GET /v0/bulk/{job_id}/results"
+      tags:
+      - v0
+  /v0/check_email:
+    post:
+      description: "Legacy email verification endpoint (deprecated, retained for compatibility)."
+      operationId: post_check_email
+      parameters:
+      - description: Optional idempotency key
+        explode: false
+        in: header
+        name: Idempotency-Key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CheckEmailRequest"
-        description: Request object containing all parameters necessary for an email
-          verification.
+        required: true
       responses:
         "200":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CheckEmailOutput"
-          description: OK
-      summary: /v1/check_email
-      x-stoplight:
-        id: yho6jrv7p04qv
-  /v1/bulk:
-    post:
-      description: Initiate a bulk email verification.
-      operationId: post-v1-bulk
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/post_v1_bulk_request"
+          description: Email verification result
+      summary: POST /v0/check_email
+      tags:
+      - v0
+  /v1/admin/api-keys:
+    get:
+      description: List all API keys across tenants with optional filtering.
+      operationId: list_all_api_keys
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/post_v1_bulk_200_response"
-          description: OK
-      summary: /v1/bulk
-      x-stoplight:
-        id: jpoyy08arq31b
-  /v1/bulk/{job_id}:
+          description: All API keys
+      summary: GET /v1/admin/api-keys
+      tags:
+      - Admin
+  /v1/admin/jobs:
     get:
-      description: Retrieve the progress of a bulk verification job.
-      operationId: get-v1-bulk
+      description: List jobs across all tenants with optional filters.
+      operationId: list_jobs
+      responses:
+        "200":
+          description: Admin job list
+      summary: GET /v1/admin/jobs
+      tags:
+      - Admin Jobs
+  /v1/admin/jobs/{job_id}:
+    get:
+      description: Fetch a single job.
+      operationId: get_job
       parameters:
-      - description: The unique bulk verification job ID
+      - description: Job identifier
         explode: false
         in: path
         name: job_id
         required: true
         schema:
+          format: int32
           type: integer
         style: simple
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/get_v1_bulk_200_response"
-          description: OK
-      summary: "/v1/bulk/{job_id}"
-      x-stoplight:
-        id: phrhxrak01ja6
-  /v1/bulk/{job_id}/results:
+          description: Admin job details
+      summary: "GET /v1/admin/jobs/{job_id}"
+      tags:
+      - Admin Jobs
+  /v1/admin/jobs/{job_id}/events:
     get:
-      description: "Retrieve the results of a bulk verification job. This endpoint\
-        \ will return an error if the job is still running. Please query `GET /v1/bulk/{job_id}`\
-        \ first to check the job's progress."
-      operationId: get-v1-bulk-results
+      description: Fetch events for a job.
+      operationId: get_job_events
       parameters:
-      - description: The unique bulk verification job ID
+      - description: Job identifier
         explode: false
         in: path
         name: job_id
         required: true
         schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Job event list
+      summary: "GET /v1/admin/jobs/{job_id}/events"
+      tags:
+      - Admin Jobs
+  /v1/admin/jobs/{job_id}/results:
+    get:
+      description: Fetch task results for a job.
+      operationId: get_job_results
+      parameters:
+      - description: Job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Job result list
+      summary: "GET /v1/admin/jobs/{job_id}/results"
+      tags:
+      - Admin Jobs
+  /v1/admin/tenants:
+    get:
+      description: List tenants with optional status and pagination filters.
+      operationId: list_tenants
+      responses:
+        "200":
+          description: Tenant list
+      summary: GET /v1/admin/tenants
+      tags:
+      - Admin
+    post:
+      description: Create a new tenant.
+      operationId: create_tenant
+      responses:
+        "201":
+          description: Tenant created
+      summary: POST /v1/admin/tenants
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}:
+    delete:
+      description: Delete a tenant.
+      operationId: delete_tenant
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
           type: string
         style: simple
-      - description: The number of results to return.
+      responses:
+        "200":
+          description: Tenant deleted
+      summary: "DELETE /v1/admin/tenants/{tenant_id}"
+      tags:
+      - Admin
+    get:
+      description: Fetch tenant details by tenant ID.
+      operationId: get_tenant
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant details
+      summary: "GET /v1/admin/tenants/{tenant_id}"
+      tags:
+      - Admin
+    put:
+      description: Update tenant fields.
+      operationId: update_tenant
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant updated
+      summary: "PUT /v1/admin/tenants/{tenant_id}"
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}/api-keys:
+    get:
+      description: List API keys for a tenant.
+      operationId: list_api_keys
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant API keys
+      summary: "GET /v1/admin/tenants/{tenant_id}/api-keys"
+      tags:
+      - Admin
+    post:
+      description: Create a new API key for a tenant.
+      operationId: create_api_key
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "201":
+          description: API key created
+      summary: "POST /v1/admin/tenants/{tenant_id}/api-keys"
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}/api-keys/{key_id}:
+    delete:
+      description: Revoke an API key.
+      operationId: revoke_api_key
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key revoked
+      summary: "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
+      tags:
+      - Admin
+    get:
+      description: Fetch one API key by tenant and key ID.
+      operationId: get_api_key
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key details
+      summary: "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
+      tags:
+      - Admin
+    patch:
+      description: Update metadata for an API key.
+      operationId: update_api_key
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key updated
+      summary: "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate:
+    post:
+      description: Reactivate a previously revoked API key.
+      operationId: reactivate_api_key
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key reactivated
+      summary: "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate"
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}/jobs:
+    get:
+      description: List jobs scoped to one tenant.
+      operationId: list_tenant_jobs
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant job list
+      summary: "GET /v1/admin/tenants/{tenant_id}/jobs"
+      tags:
+      - Admin Jobs
+  /v1/admin/tenants/{tenant_id}/quota:
+    get:
+      description: Fetch current tenant quota usage and remaining allowance.
+      operationId: get_tenant_quota
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant quota details
+      summary: "GET /v1/admin/tenants/{tenant_id}/quota"
+      tags:
+      - Admin
+    patch:
+      description: Update tenant quota limit.
+      operationId: update_tenant_quota
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Quota updated
+      summary: "PATCH /v1/admin/tenants/{tenant_id}/quota"
+      tags:
+      - Admin
+  /v1/admin/tenants/{tenant_id}/quota/reset:
+    post:
+      description: Reset tenant quota usage counters.
+      operationId: reset_tenant_quota
+      parameters:
+      - description: Tenant identifier
+        explode: false
+        in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Quota reset
+      summary: "POST /v1/admin/tenants/{tenant_id}/quota/reset"
+      tags:
+      - Admin
+  /v1/bulk:
+    post:
+      description: Creates a tenant-scoped bulk job for async processing.
+      operationId: v1_create_bulk_job
+      parameters:
+      - description: Optional idempotency key
+        explode: false
+        in: header
+        name: Idempotency-Key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Bulk job created
+      summary: Create the v1 bulk endpoint.
+      tags:
+      - v1
+  /v1/bulk/{job_id}:
+    get:
+      description: Returns status and current progress for a tenant-scoped v1 bulk
+        job.
+      operationId: v1_get_bulk_job_progress
+      parameters:
+      - description: V1 bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Bulk job progress
+      summary: "GET /v1/bulk/{job_id}"
+      tags:
+      - Jobs
+  /v1/bulk/{job_id}/results:
+    get:
+      description: Returns terminal results for a tenant-scoped v1 bulk job.
+      operationId: v1_get_bulk_job_results
+      parameters:
+      - description: V1 bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - description: "Supported values: `json`, `csv`"
         explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
         in: query
         name: limit
         required: false
         schema:
-          default: 50
+          format: int64
+          minimum: 0
           type: integer
         style: form
-      - description: "The offset from which to return the results, equivalent to the\
-          \ number of elements in the array to skip."
-        explode: true
+      - explode: true
         in: query
         name: offset
         required: false
         schema:
+          format: int64
+          minimum: 0
           type: integer
         style: form
       responses:
@@ -126,30 +596,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/get_v1_bulk_results_200_response"
-          description: OK
-      summary: Retrieve bulk verification results
-      x-stoplight:
-        id: skx9nlfib3but
-  /v0/check_email:
+                $ref: "#/components/schemas/BulkJobResultsResponse"
+            text/csv:
+              schema:
+                format: binary
+                type: string
+          description: Bulk job results
+      summary: "GET /v1/bulk/{job_id}/results"
+      tags:
+      - Jobs
+  /v1/check_email:
     post:
-      deprecated: true
-      description: "**Sunset notice: please use `/v1/check_email` instead.** Both\
-        \ endpoints accept the same input arguments and return the same output; only\
-        \ their internal implementation differs. Perform a comprehensive verification\
-        \ of an email address. Unlike the `/v1/check_email` endpoint, this endpoint\
-        \ performs an email verification immediately, without considering the Reacher\
-        \ server's throttling, concurrency, and other configurations. As such, this\
-        \ endpoint is slightly riskier than `/v1/check_email`, as the Reacher server's\
-        \ IP reputation can be impacted if this endpoint is called too frequently."
-      operationId: post-v0-check-email
+      description: Verifies an email address and returns a result.
+      operationId: v1_check_email
       parameters:
-      - description: Your personal Reacher API key
+      - description: Optional idempotency key
         explode: false
         in: header
-        name: Authorization
-        required: true
+        name: Idempotency-Key
+        required: false
         schema:
+          nullable: true
           type: string
         style: simple
       requestBody:
@@ -157,93 +624,795 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CheckEmailRequest"
-        description: Request object containing all parameters necessary for an email
-          verification.
+        required: true
       responses:
         "200":
           content:
             application/json:
-              examples: {}
               schema:
                 $ref: "#/components/schemas/CheckEmailOutput"
-          description: OK
-      summary: /v0/check_email
-      x-stoplight:
-        id: 9cw3vilj3q88h
+          description: Email verification result
+      summary: POST /v1/check_email
+      tags:
+      - v1
+  /v1/find_email:
+    post:
+      operationId: v1_find_email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindEmailRequest"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindEmailAcceptedResponse"
+          description: Finder job accepted
+      summary: POST /v1/find_email
+      tags:
+      - v1
+  /v1/find_email/{job_id}:
+    get:
+      operationId: v1_get_find_email
+      parameters:
+      - description: Finder job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindEmailStatusResponse"
+          description: Finder job result
+      summary: "GET /v1/find_email/{job_id}"
+      tags:
+      - v1
+  /v1/jobs/{job_id}:
+    get:
+      description: Returns progress summary and state for a tenant-scoped bulk job.
+      operationId: v1_get_job_status
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Bulk job progress summary
+      summary: "GET /v1/jobs/{job_id}"
+      tags:
+      - Jobs
+  /v1/jobs/{job_id}/cancel:
+    post:
+      description: Requests cancellation for a tenant-scoped bulk job.
+      operationId: v1_cancel_job
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Job cancellation accepted
+      summary: "POST /v1/jobs/{job_id}/cancel"
+      tags:
+      - Jobs
+  /v1/jobs/{job_id}/download:
+    get:
+      description: Streams all terminal task results for a tenant-scoped bulk job.
+      operationId: v1_download_job_results
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - description: "Supported values: `csv`, `json`"
+        explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/x-ndjson:
+              schema:
+                format: binary
+                type: string
+            text/csv:
+              schema:
+                format: binary
+                type: string
+          description: Job result download stream
+      summary: "GET /v1/jobs/{job_id}/download"
+      tags:
+      - Jobs
+  /v1/jobs/{job_id}/events:
+    get:
+      description: Returns paginated event history for a tenant-scoped bulk job.
+      operationId: v1_get_job_events
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          description: Job events
+      summary: "GET /v1/jobs/{job_id}/events"
+      tags:
+      - Jobs
+  /v1/jobs/{job_id}/results:
+    get:
+      description: Returns paginated completed task results for a tenant-scoped bulk
+        job.
+      operationId: v1_get_job_results
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: cursor
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResultPageResponse"
+          description: Job result page
+      summary: "GET /v1/jobs/{job_id}/results"
+      tags:
+      - Jobs
+  /v1/lists:
+    get:
+      operationId: v1_list_lists
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListListResponse"
+          description: List resources
+      summary: GET /v1/lists
+      tags:
+      - v1
+    post:
+      operationId: v1_create_list
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ListUploadRequest"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListUploadResponse"
+          description: List upload accepted
+      summary: POST /v1/lists
+      tags:
+      - v1
+  /v1/lists/{list_id}:
+    delete:
+      operationId: v1_delete_list
+      parameters:
+      - description: List identifier
+        explode: false
+        in: path
+        name: list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDeleteResponse"
+          description: List deleted
+      summary: "DELETE /v1/lists/{list_id}"
+      tags:
+      - v1
+    get:
+      operationId: v1_get_list
+      parameters:
+      - description: List identifier
+        explode: false
+        in: path
+        name: list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDetailResponse"
+          description: List detail
+      summary: "GET /v1/lists/{list_id}"
+      tags:
+      - v1
+  /v1/lists/{list_id}/download:
+    get:
+      operationId: v1_download_list
+      parameters:
+      - description: List identifier
+        explode: false
+        in: path
+        name: list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: filter
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            text/csv:
+              schema:
+                format: binary
+                type: string
+          description: Cleaned list CSV download
+      summary: "GET /v1/lists/{list_id}/download"
+      tags:
+      - v1
+  /v1/me:
+    get:
+      description: Returns the authenticated tenant context and quota metadata.
+      operationId: v1_me
+      responses:
+        "200":
+          description: Current tenant profile
+      summary: GET /v1/me
+      tags:
+      - Account
+  /v1/me/api-keys:
+    get:
+      description: List API keys for the authenticated tenant.
+      operationId: listTenantApiKeys
+      responses:
+        "200":
+          description: API key list
+      summary: GET /v1/me/api-keys
+      tags:
+      - Account
+    post:
+      description: Create a new API key for the authenticated tenant.
+      operationId: createTenantApiKey
+      responses:
+        "201":
+          description: API key created
+      summary: POST /v1/me/api-keys
+      tags:
+      - Account
+  /v1/me/api-keys/{key_id}:
+    delete:
+      description: Revoke an API key.
+      operationId: revokeTenantApiKey
+      parameters:
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key revoked
+      summary: "DELETE /v1/me/api-keys/{key_id}"
+      tags:
+      - Account
+    get:
+      description: Return a single API key for the authenticated tenant.
+      operationId: getTenantApiKey
+      parameters:
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key details
+      summary: "GET /v1/me/api-keys/{key_id}"
+      tags:
+      - Account
+    patch:
+      description: Update metadata for an existing API key.
+      operationId: updateTenantApiKey
+      parameters:
+      - description: API key identifier
+        explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: API key updated
+      summary: "PATCH /v1/me/api-keys/{key_id}"
+      tags:
+      - Account
+  /v1/me/domains:
+    get:
+      description: List all active and inactive domain entries for the authenticated
+        tenant.
+      operationId: v1_list_tenant_domains
+      responses:
+        "200":
+          description: Tenant domains list
+      summary: GET /v1/me/domains
+      tags:
+      - Tenant
+    post:
+      description: Add a domain for the authenticated tenant.
+      operationId: v1_create_tenant_domain
+      responses:
+        "201":
+          description: Tenant domain created
+      summary: POST /v1/me/domains
+      tags:
+      - Tenant
+  /v1/me/domains/{domain}:
+    delete:
+      description: Remove a domain from the authenticated tenant.
+      operationId: v1_delete_tenant_domain
+      parameters:
+      - description: Domain identifier
+        explode: false
+        in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant domain deleted
+      summary: "DELETE /v1/me/domains/{domain}"
+      tags:
+      - Tenant
+    get:
+      description: Get one domain entry for the authenticated tenant.
+      operationId: v1_get_tenant_domain
+      parameters:
+      - description: Domain identifier
+        explode: false
+        in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant domain details
+      summary: "GET /v1/me/domains/{domain}"
+      tags:
+      - Tenant
+    patch:
+      description: "Update the domain value, status, verification state, or metadata\
+        \ notes."
+      operationId: v1_update_tenant_domain
+      parameters:
+      - description: Domain identifier
+        explode: false
+        in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Tenant domain updated
+      summary: "PATCH /v1/me/domains/{domain}"
+      tags:
+      - Tenant
+  /v1/me/settings:
+    get:
+      description: Get tenant runtime settings and default operational behavior.
+      operationId: v1_get_tenant_settings
+      responses:
+        "200":
+          description: Tenant settings
+      summary: GET /v1/me/settings
+      tags:
+      - Tenant
+    patch:
+      description: "Update tenant settings such as retention, default webhook URL,\
+        \ or secret."
+      operationId: v1_update_tenant_settings
+      responses:
+        "200":
+          description: Tenant settings updated
+      summary: PATCH /v1/me/settings
+      tags:
+      - Tenant
+  /v1/me/usage:
+    get:
+      description: Return current tenant usage and quota summary.
+      operationId: v1_get_tenant_usage
+      responses:
+        "200":
+          description: Tenant usage summary
+      summary: GET /v1/me/usage
+      tags:
+      - Tenant
+  /v1/me/webhook:
+    delete:
+      description: Clear tenant webhook URL and signing secret.
+      operationId: v1_clear_tenant_webhook
+      responses:
+        "200":
+          description: Tenant webhook cleared
+      summary: DELETE /v1/me/webhook
+      tags:
+      - Tenant
+    get:
+      description: Get masked tenant webhook integration state.
+      operationId: v1_get_tenant_webhook
+      responses:
+        "200":
+          description: Tenant webhook state
+      summary: GET /v1/me/webhook
+      tags:
+      - Tenant
+    patch:
+      description: Update tenant webhook URL and signing secret.
+      operationId: v1_update_tenant_webhook
+      responses:
+        "200":
+          description: Tenant webhook updated
+      summary: PATCH /v1/me/webhook
+      tags:
+      - Tenant
+  /v1/reputation/check:
+    post:
+      operationId: v1_check_reputation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReputationCheckRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationCheckResponse"
+          description: Reputation check response
+      summary: POST /v1/reputation/check
+      tags:
+      - v1
+  /version:
+    get:
+      description: Returns the running server version.
+      operationId: get_version
+      responses:
+        "200":
+          description: Service version
+      summary: GET /version
+      tags:
+      - System
 components:
   requestBodies: {}
   schemas:
-    CheckEmailRequest:
-      description: "A request object to perform an email verification. The `to_email`\
-        \ field is required, all other fields are optional."
+    BlacklistResult:
       example:
-        proxy:
-          password: password
-          port: 0
-          host: host
-          username: username
-        hotmailb2b_verif_method: Smtp
-        to_email: to_email
-        from_email: from_email
-        smtp_port: 6.027456183070403
-        hello_name: hello_name
-        gmail_verif_method: Smtp
-        check_gravatar: true
-        hotmailb2c_verif_method: Smtp
-        yahoo_verif_method: Api
+        listed: true
+        provider: provider
+        lookup_time_ms: 0
       properties:
-        from_email:
-          description: "In the SMTP connection, the FROM email address."
-          type: string
-        to_email:
-          description: The email address to check.
-          type: string
-        hello_name:
-          description: "In the SMTP connection, the EHLO hostname."
-          type: string
-        proxy:
-          $ref: "#/components/schemas/CheckEmailInputProxy"
-        smtp_port:
-          description: "SMTP port to use for email validation. Defaults to 25, but\
-            \ 465, 587, and 2525 are sometimes also used."
-          type: number
-        gmail_verif_method:
-          $ref: "#/components/schemas/GmailVerifMethod"
-        hotmailb2b_verif_method:
-          $ref: "#/components/schemas/HotmailB2BVerifMethod"
-        hotmailb2c_verif_method:
-          $ref: "#/components/schemas/HotmailB2CVerifMethod"
-        yahoo_verif_method:
-          $ref: "#/components/schemas/YahooVerifMethod"
-        check_gravatar:
-          description: Whether to check if a Gravatar image exists for the given email.
+        listed:
           type: boolean
+        lookup_time_ms:
+          format: int64
+          type: integer
+        provider:
+          type: string
       required:
-      - to_email
-      title: CheckEmailRequest
+      - listed
+      - lookup_time_ms
+      - provider
       type: object
-      x-stoplight:
-        id: 834398a8ce480
+    BulkJobResultsResponse:
+      example:
+        results:
+        - input: input
+          score:
+            score: 14
+            signals:
+              smtp_can_connect: true
+              smtp_is_deliverable: true
+              smtp_is_disabled: true
+              valid_syntax: true
+              smtp_is_catch_all: true
+              has_mx_records: true
+              is_role_account: true
+              smtp_error: true
+              is_disposable: true
+              smtp_has_full_inbox: true
+              reachable: null
+            category: valid
+            sub_reason: deliverable
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          syntax:
+            domain: domain
+            is_valid_syntax: true
+            username: username
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          misc:
+            is_b2c: true
+            gravatar_url: gravatar_url
+            is_role_account: true
+            is_disposable: true
+        - input: input
+          score:
+            score: 14
+            signals:
+              smtp_can_connect: true
+              smtp_is_deliverable: true
+              smtp_is_disabled: true
+              valid_syntax: true
+              smtp_is_catch_all: true
+              has_mx_records: true
+              is_role_account: true
+              smtp_error: true
+              is_disposable: true
+              smtp_has_full_inbox: true
+              reachable: null
+            category: valid
+            sub_reason: deliverable
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          syntax:
+            domain: domain
+            is_valid_syntax: true
+            username: username
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          misc:
+            is_b2c: true
+            gravatar_url: gravatar_url
+            is_role_account: true
+            is_disposable: true
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/CheckEmailOutput"
+          type: array
+      required:
+      - results
+      type: object
+    CheckEmailInputProxy:
+      description: Proxy configuration for email verification.
+      example:
+        password: password
+        port: 0
+        host: host
+        username: username
+      properties:
+        host:
+          description: The proxy host address.
+          type: string
+        password:
+          description: Password for proxy authentication.
+          type: string
+        port:
+          description: The proxy port number.
+          type: integer
+        username:
+          description: Username for proxy authentication.
+          type: string
+      required:
+      - host
+      - port
+      title: CheckEmailInputProxy
+      type: object
+      x-examples:
+        example-1:
+          value:
+            host: my-proxy.io
+            port: 1080
     CheckEmailOutput:
       description: The result of the email verification process.
       example:
         input: input
+        score:
+          score: 14
+          signals:
+            smtp_can_connect: true
+            smtp_is_deliverable: true
+            smtp_is_disabled: true
+            valid_syntax: true
+            smtp_is_catch_all: true
+            has_mx_records: true
+            is_role_account: true
+            smtp_error: true
+            is_disposable: true
+            smtp_has_full_inbox: true
+            reachable: null
+          category: valid
+          sub_reason: deliverable
+        debug:
+          duration:
+            nanos: 0.8008281904610115
+            secs: 6.027456183070403
+          server_name: server_name
+          start_time: start_time
+          smtp:
+            verif_method:
+              type: Smtp
+          end_time: end_time
         smtp:
           is_catch_all: true
           can_connect_smtp: true
           has_full_inbox: true
           is_disabled: true
           is_deliverable: true
-        debug:
-          duration:
-            nanos: 6.027456183070403
-            secs: 0.8008281904610115
-          start_time: start_time
-          server_name: server_name
-          smtp:
-            verif_method:
-              type: Smtp
-          end_time: end_time
         is_reachable: invalid
         syntax:
           domain: domain
@@ -256,10 +1425,12 @@ components:
           - records
         misc:
           is_b2c: true
-          is_role_account: true
           gravatar_url: gravatar_url
+          is_role_account: true
           is_disposable: true
       properties:
+        debug:
+          $ref: "#/components/schemas/DebugDetails"
         input:
           description: The email address that was verified.
           format: email
@@ -270,17 +1441,18 @@ components:
           $ref: "#/components/schemas/CheckEmailOutput_misc"
         mx:
           $ref: "#/components/schemas/CheckEmailOutput_mx"
+        score:
+          $ref: "#/components/schemas/EmailScore"
         smtp:
           $ref: "#/components/schemas/CheckEmailOutput_smtp"
         syntax:
           $ref: "#/components/schemas/SyntaxDetails"
-        debug:
-          $ref: "#/components/schemas/DebugDetails"
       required:
       - input
       - is_reachable
       - misc
       - mx
+      - score
       - smtp
       - syntax
       title: CheckEmailOutput
@@ -310,32 +1482,660 @@ components:
             domain: gmail.com
             is_valid_syntax: true
             username: test
-    Reachable:
-      description: "An enumeration describing the confidence level that the recipient\
-        \ address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our\
-        \ FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json."
+    CheckEmailRequest:
+      description: "A request object to perform an email verification. The `to_email`\
+        \ field is required, all other fields are optional."
+      example:
+        hotmailb2b_verif_method: Smtp
+        proxy:
+          password: password
+          port: 0
+          host: host
+          username: username
+        to_email: to_email
+        from_email: from_email
+        smtp_port: 6.027456183070403
+        hello_name: hello_name
+        gmail_verif_method: Smtp
+        check_gravatar: true
+        hotmailb2c_verif_method: Smtp
+        yahoo_verif_method: Api
+      properties:
+        check_gravatar:
+          description: Whether to check if a Gravatar image exists for the given email.
+          type: boolean
+        from_email:
+          description: "In the SMTP connection, the FROM email address."
+          type: string
+        gmail_verif_method:
+          $ref: "#/components/schemas/GmailVerifMethod"
+        hello_name:
+          description: "In the SMTP connection, the EHLO hostname."
+          type: string
+        hotmailb2b_verif_method:
+          $ref: "#/components/schemas/HotmailB2BVerifMethod"
+        hotmailb2c_verif_method:
+          $ref: "#/components/schemas/HotmailB2CVerifMethod"
+        proxy:
+          $ref: "#/components/schemas/CheckEmailInputProxy"
+        smtp_port:
+          description: "SMTP port to use for email validation. Defaults to 25, but\
+            \ 465, 587, and 2525 are sometimes also used."
+          type: number
+        to_email:
+          description: The email address to check.
+          type: string
+        yahoo_verif_method:
+          $ref: "#/components/schemas/YahooVerifMethod"
+      required:
+      - to_email
+      title: CheckEmailRequest
+      type: object
+      x-stoplight:
+        id: 834398a8ce480
+    CoreError:
+      description: Details of an error encountered during the verification process.
+      properties:
+        message:
+          description: A human-readable description of the error.
+          type: string
+        type:
+          description: The type of error.
+          type: string
+      required:
+      - message
+      - type
+      title: CoreError
+      type: object
+      x-stoplight:
+        id: a872ead6474cd
+    DebugDetails:
+      example:
+        duration:
+          nanos: 0.8008281904610115
+          secs: 6.027456183070403
+        server_name: server_name
+        start_time: start_time
+        smtp:
+          verif_method:
+            type: Smtp
+        end_time: end_time
+      properties:
+        duration:
+          $ref: "#/components/schemas/Duration"
+        end_time:
+          description: The timestamp when the email verification ended.
+          type: string
+          x-stoplight:
+            id: zw4ccbvwsoh6q
+        server_name:
+          description: The name of the server that performed the verification.
+          type: string
+          x-stoplight:
+            id: 2jrbdecvqh4t5
+        smtp:
+          $ref: "#/components/schemas/DebugDetailsSmtp"
+        start_time:
+          description: The timestamp when the email verification started.
+          type: string
+          x-stoplight:
+            id: 60i65k60m8e8d
+      required:
+      - duration
+      - end_time
+      - server_name
+      - smtp
+      - start_time
+      title: DebugDetails
+      type: object
+      x-stoplight:
+        id: 4wxlk39h8v9kz
+    DebugDetailsSmtp:
+      description: "SMTP details used for debugging, including the verification method."
+      example:
+        verif_method:
+          type: Smtp
+      properties:
+        verif_method:
+          $ref: "#/components/schemas/VerifMethod"
+      title: DebugDetailsSmtp
+      type: object
+      x-stoplight:
+        id: 2a90bzapppo0j
+    DnsRecordResults:
+      example:
+        spf_valid: true
+        mx_records:
+        - mx_records
+        - mx_records
+        has_mx: true
+        has_dmarc: true
+        dmarc_policy: dmarc_policy
+        has_spf: true
+        has_dkim: true
+      properties:
+        dmarc_policy:
+          nullable: true
+          type: string
+        has_dkim:
+          type: boolean
+        has_dmarc:
+          type: boolean
+        has_mx:
+          type: boolean
+        has_spf:
+          type: boolean
+        mx_records:
+          items:
+            type: string
+          type: array
+        spf_valid:
+          type: boolean
+      required:
+      - has_dkim
+      - has_dmarc
+      - has_mx
+      - has_spf
+      - mx_records
+      - spf_valid
+      type: object
+    DomainInfo:
+      example:
+        domain_age_days: 6
+        registrar: registrar
+        created_at: created_at
+      properties:
+        created_at:
+          nullable: true
+          type: string
+        domain_age_days:
+          format: int64
+          nullable: true
+          type: integer
+        registrar:
+          nullable: true
+          type: string
+      type: object
+    Duration:
+      description: An object representing a duration in seconds and nanoseconds.
+      example:
+        nanos: 0.8008281904610115
+        secs: 6.027456183070403
+      properties:
+        nanos:
+          description: Duration in nanoseconds.
+          type: number
+        secs:
+          description: Duration in seconds.
+          type: number
+      required:
+      - nanos
+      - secs
+      title: Duration
+      type: object
+      x-stoplight:
+        id: bg9y0iez4zati
+    EmailCategory:
       enum:
-      - invalid
-      - unknown
-      - safe
+      - valid
       - risky
-      title: Reachable
+      - unknown
+      - invalid
       type: string
+    EmailScore:
+      example:
+        score: 14
+        signals:
+          smtp_can_connect: true
+          smtp_is_deliverable: true
+          smtp_is_disabled: true
+          valid_syntax: true
+          smtp_is_catch_all: true
+          has_mx_records: true
+          is_role_account: true
+          smtp_error: true
+          is_disposable: true
+          smtp_has_full_inbox: true
+          reachable: null
+        category: valid
+        sub_reason: deliverable
+      properties:
+        category:
+          $ref: "#/components/schemas/EmailCategory"
+        score:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        signals:
+          $ref: "#/components/schemas/ScoringSignals"
+        sub_reason:
+          $ref: "#/components/schemas/SubReason"
+      required:
+      - category
+      - score
+      - signals
+      - sub_reason
+      type: object
+    FindEmailAcceptedResponse:
+      example:
+        job_id: 1
+        bulk_job_id: 0
+        candidates_checked: 6
+        status: status
+      properties:
+        bulk_job_id:
+          format: int32
+          type: integer
+        candidates_checked:
+          format: int32
+          type: integer
+        job_id:
+          format: int32
+          type: integer
+        status:
+          type: string
+      required:
+      - bulk_job_id
+      - candidates_checked
+      - job_id
+      - status
+      type: object
+    FindEmailRequest:
+      example:
+        domain: domain
+        last_name: last_name
+        first_name: first_name
+      properties:
+        domain:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+      required:
+      - domain
+      - first_name
+      - last_name
+      type: object
+    FindEmailStatusResponse:
+      example:
+        job_id: 1
+        best_match: ""
+        domain_has_mx: true
+        domain_is_catch_all: true
+        results:
+        - result: ""
+          score: 5
+          is_reachable: invalid
+          pattern: pattern
+          category: valid
+          email: email
+          sub_reason: deliverable
+        - result: ""
+          score: 5
+          is_reachable: invalid
+          pattern: pattern
+          category: valid
+          email: email
+          sub_reason: deliverable
+        bulk_job_id: 0
+        candidates_checked: 6
+        status: status
+      properties:
+        best_match:
+          allOf:
+          - $ref: "#/components/schemas/FinderBestMatch"
+          nullable: true
+        bulk_job_id:
+          format: int32
+          type: integer
+        candidates_checked:
+          format: int32
+          type: integer
+        domain_has_mx:
+          type: boolean
+        domain_is_catch_all:
+          type: boolean
+        job_id:
+          format: int32
+          type: integer
+        results:
+          items:
+            $ref: "#/components/schemas/FinderCandidateResult"
+          type: array
+        status:
+          type: string
+      required:
+      - bulk_job_id
+      - candidates_checked
+      - domain_has_mx
+      - domain_is_catch_all
+      - job_id
+      - results
+      - status
+      type: object
+    FinderBestMatch:
+      properties:
+        confidence:
+          type: string
+        email:
+          type: string
+        pattern:
+          type: string
+        score:
+          format: int32
+          type: integer
+      required:
+      - confidence
+      - email
+      - pattern
+      - score
+      type: object
+    FinderCandidateResult:
+      example:
+        result: ""
+        score: 5
+        is_reachable: invalid
+        pattern: pattern
+        category: valid
+        email: email
+        sub_reason: deliverable
+      properties:
+        category:
+          $ref: "#/components/schemas/EmailCategory"
+        email:
+          type: string
+        is_reachable:
+          $ref: "#/components/schemas/Reachable"
+        pattern:
+          type: string
+        result:
+          allOf:
+          - $ref: "#/components/schemas/CheckEmailOutput"
+          nullable: true
+        score:
+          format: int32
+          type: integer
+        sub_reason:
+          $ref: "#/components/schemas/SubReason"
+      required:
+      - category
+      - email
+      - is_reachable
+      - pattern
+      - score
+      - sub_reason
+      type: object
+    GmailVerifMethod:
+      description: Enumeration describing the method used to verify Gmail emails.
+      enum:
+      - Smtp
+      title: GmailVerifMethod
+      type: string
+      x-internal: false
+      x-stoplight:
+        id: xo5r48yhtxiwr
+    HotmailB2BVerifMethod:
+      description: Enumeration describing the method used to verify Hotmail B2B emails.
+      enum:
+      - Smtp
+      title: HotmailB2BVerifMethod
+      type: string
+      x-stoplight:
+        id: ntdugsleyotut
+    HotmailB2CVerifMethod:
+      description: Enumeration describing the method used to verify Hotmail B2C emails.
+      enum:
+      - Smtp
+      - Headless
+      title: HotmailB2CVerifMethod
+      type: string
+      x-stoplight:
+        id: cuc5bj6ra2t0i
+    JobResultPageResponse:
+      example:
+        next_cursor: 0
+        has_more: true
+        results:
+        - result: ""
+          retry_count: 1
+          task_state: task_state
+          id: 6
+          error: error
+        - result: ""
+          retry_count: 1
+          task_state: task_state
+          id: 6
+          error: error
+      properties:
+        has_more:
+          type: boolean
+        next_cursor:
+          format: int64
+          nullable: true
+          type: integer
+        results:
+          items:
+            $ref: "#/components/schemas/JobTaskResult"
+          type: array
+      required:
+      - has_more
+      - results
+      type: object
+    JobTaskResult:
+      example:
+        result: ""
+        retry_count: 1
+        task_state: task_state
+        id: 6
+        error: error
+      properties:
+        error:
+          nullable: true
+          type: string
+        id:
+          format: int64
+          type: integer
+        result:
+          allOf:
+          - $ref: "#/components/schemas/CheckEmailOutput"
+          nullable: true
+        retry_count:
+          format: int32
+          type: integer
+        task_state:
+          type: string
+      required:
+      - id
+      - retry_count
+      - task_state
+      type: object
+    ListDeleteResponse:
+      example:
+        deleted: true
+      properties:
+        deleted:
+          type: boolean
+      required:
+      - deleted
+      type: object
+    ListDetailResponse:
+      example:
+        email_column: email_column
+        summary:
+          total_unknown: 2
+          total_processed: 5
+          total_invalid: 1
+          total_valid: 7
+          total_risky: 5
+        job_id: 6
+        total_rows: 9
+        name: name
+        id: 0
+        status: status
+      properties:
+        email_column:
+          type: string
+        id:
+          format: int32
+          type: integer
+        job_id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+        summary:
+          $ref: "#/components/schemas/ListSummary"
+        total_rows:
+          format: int32
+          type: integer
+      required:
+      - email_column
+      - id
+      - job_id
+      - name
+      - status
+      - summary
+      - total_rows
+      type: object
+    ListItem:
+      example:
+        email_column: email_column
+        original_filename: original_filename
+        total_rows: 6
+        name: name
+        id: 0
+        status: status
+      properties:
+        email_column:
+          type: string
+        id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        original_filename:
+          type: string
+        status:
+          type: string
+        total_rows:
+          format: int32
+          type: integer
+      required:
+      - email_column
+      - id
+      - name
+      - original_filename
+      - status
+      - total_rows
+      type: object
+    ListListResponse:
+      example:
+        total: 1
+        lists:
+        - email_column: email_column
+          original_filename: original_filename
+          total_rows: 6
+          name: name
+          id: 0
+          status: status
+        - email_column: email_column
+          original_filename: original_filename
+          total_rows: 6
+          name: name
+          id: 0
+          status: status
+      properties:
+        lists:
+          items:
+            $ref: "#/components/schemas/ListItem"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - lists
+      - total
+      type: object
+    ListSummary:
+      example:
+        total_unknown: 2
+        total_processed: 5
+        total_invalid: 1
+        total_valid: 7
+        total_risky: 5
+      properties:
+        total_invalid:
+          format: int64
+          type: integer
+        total_processed:
+          format: int64
+          type: integer
+        total_risky:
+          format: int64
+          type: integer
+        total_unknown:
+          format: int64
+          type: integer
+        total_valid:
+          format: int64
+          type: integer
+      required:
+      - total_invalid
+      - total_processed
+      - total_risky
+      - total_unknown
+      - total_valid
+      type: object
+    ListUploadRequest:
+      properties:
+        email_column:
+          nullable: true
+          type: string
+        file:
+          format: binary
+          type: string
+        name:
+          nullable: true
+          type: string
+      required:
+      - file
+      type: object
+    ListUploadResponse:
+      example:
+        email_column: email_column
+        list_id: 6
+        job_id: 0
+        total_rows: 1
+      properties:
+        email_column:
+          type: string
+        job_id:
+          format: int32
+          type: integer
+        list_id:
+          format: int32
+          type: integer
+        total_rows:
+          format: int32
+          type: integer
+      required:
+      - email_column
+      - job_id
+      - list_id
+      - total_rows
+      type: object
     MiscDetails:
       description: Additional information about the email account.
       example:
         is_b2c: true
-        is_role_account: true
         gravatar_url: gravatar_url
+        is_role_account: true
         is_disposable: true
       properties:
-        is_disposable:
-          description: Indicates if the email address is from a known disposable email
-            provider.
-          type: boolean
-        is_role_account:
-          description: Indicates if the email address is a role-based account.
-          type: boolean
         gravatar_url:
           description: "URL to the Gravatar profile picture associated with the email,\
             \ if available and requested."
@@ -345,6 +2145,13 @@ components:
           type: boolean
           x-stoplight:
             id: 0cxn26qlxy8r4
+        is_disposable:
+          description: Indicates if the email address is from a known disposable email
+            provider.
+          type: boolean
+        is_role_account:
+          description: Indicates if the email address is a role-based account.
+          type: boolean
       required:
       - is_b2c
       - is_disposable
@@ -371,6 +2178,135 @@ components:
       - accepts_mail
       - records
       title: MxDetails
+      type: object
+    Reachable:
+      description: "An enumeration describing the confidence level that the recipient\
+        \ address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our\
+        \ FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json."
+      enum:
+      - invalid
+      - unknown
+      - safe
+      - risky
+      title: Reachable
+      type: string
+    ReputationCheckRequest:
+      example:
+        domain: domain
+        force_refresh: false
+      properties:
+        domain:
+          type: string
+        force_refresh:
+          default: false
+          type: boolean
+      required:
+      - domain
+      type: object
+    ReputationCheckResponse:
+      example:
+        risk_level: risk_level
+        score: 14
+        blacklist_results:
+        - listed: true
+          provider: provider
+          lookup_time_ms: 0
+        - listed: true
+          provider: provider
+          lookup_time_ms: 0
+        dns_records:
+          spf_valid: true
+          mx_records:
+          - mx_records
+          - mx_records
+          has_mx: true
+          has_dmarc: true
+          dmarc_policy: dmarc_policy
+          has_spf: true
+          has_dkim: true
+        cached: true
+        domain: domain
+        domain_info:
+          domain_age_days: 6
+          registrar: registrar
+          created_at: created_at
+      properties:
+        blacklist_results:
+          items:
+            $ref: "#/components/schemas/BlacklistResult"
+          type: array
+        cached:
+          type: boolean
+        dns_records:
+          $ref: "#/components/schemas/DnsRecordResults"
+        domain:
+          type: string
+        domain_info:
+          $ref: "#/components/schemas/DomainInfo"
+        risk_level:
+          type: string
+        score:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+      required:
+      - blacklist_results
+      - cached
+      - dns_records
+      - domain
+      - domain_info
+      - risk_level
+      - score
+      type: object
+    ScoringSignals:
+      example:
+        smtp_can_connect: true
+        smtp_is_deliverable: true
+        smtp_is_disabled: true
+        valid_syntax: true
+        smtp_is_catch_all: true
+        has_mx_records: true
+        is_role_account: true
+        smtp_error: true
+        is_disposable: true
+        smtp_has_full_inbox: true
+        reachable: null
+      properties:
+        has_mx_records:
+          type: boolean
+        is_disposable:
+          type: boolean
+        is_role_account:
+          type: boolean
+        reachable:
+          $ref: "#/components/schemas/Reachable"
+        smtp_can_connect:
+          type: boolean
+        smtp_error:
+          type: boolean
+        smtp_has_full_inbox:
+          type: boolean
+        smtp_is_catch_all:
+          type: boolean
+        smtp_is_deliverable:
+          type: boolean
+        smtp_is_disabled:
+          type: boolean
+        valid_syntax:
+          type: boolean
+      required:
+      - has_mx_records
+      - is_disposable
+      - is_role_account
+      - reachable
+      - smtp_can_connect
+      - smtp_error
+      - smtp_has_full_inbox
+      - smtp_is_catch_all
+      - smtp_is_deliverable
+      - smtp_is_disabled
+      - valid_syntax
       type: object
     SmtpDetails:
       description: Results from SMTP connection attempts to the mail server.
@@ -404,6 +2340,23 @@ components:
       - is_disabled
       title: SmtpDetails
       type: object
+    SubReason:
+      enum:
+      - deliverable
+      - invalid_syntax
+      - invalid_recipient
+      - smtp_undeliverable
+      - disabled_mailbox
+      - no_mx
+      - smtp_error
+      - smtp_unreachable
+      - catch_all
+      - full_inbox
+      - disposable
+      - role_account
+      - risky
+      - unknown
+      type: string
     SyntaxDetails:
       description: Validation of the email address syntax.
       example:
@@ -426,158 +2379,16 @@ components:
       - username
       title: SyntaxDetails
       type: object
-    CoreError:
-      description: Details of an error encountered during the verification process.
+    TaskWebhook:
+      description: Optional webhook configuration for sending email verification results
+        during bulk verification.
       properties:
-        type:
-          description: The type of error.
-          type: string
-        message:
-          description: A human-readable description of the error.
-          type: string
-      required:
-      - message
-      - type
-      title: CoreError
+        on_each_email:
+          $ref: "#/components/schemas/Webhook"
+      title: TaskWebhook
       type: object
       x-stoplight:
-        id: a872ead6474cd
-    YahooVerifMethod:
-      description: Enumeration describing the method used to verify Yahoo emails.
-      enum:
-      - Api
-      - Headless
-      - Smtp
-      title: YahooVerifMethod
-      type: string
-    HotmailB2BVerifMethod:
-      description: Enumeration describing the method used to verify Hotmail B2B emails.
-      enum:
-      - Smtp
-      title: HotmailB2BVerifMethod
-      type: string
-      x-stoplight:
-        id: ntdugsleyotut
-    HotmailB2CVerifMethod:
-      description: Enumeration describing the method used to verify Hotmail B2C emails.
-      enum:
-      - Smtp
-      - Headless
-      title: HotmailB2CVerifMethod
-      type: string
-      x-stoplight:
-        id: cuc5bj6ra2t0i
-    GmailVerifMethod:
-      description: Enumeration describing the method used to verify Gmail emails.
-      enum:
-      - Smtp
-      title: GmailVerifMethod
-      type: string
-      x-stoplight:
-        id: xo5r48yhtxiwr
-      x-internal: false
-    CheckEmailInputProxy:
-      description: Proxy configuration for email verification.
-      example:
-        password: password
-        port: 0
-        host: host
-        username: username
-      properties:
-        host:
-          description: The proxy host address.
-          type: string
-        port:
-          description: The proxy port number.
-          type: integer
-        username:
-          description: Username for proxy authentication.
-          type: string
-        password:
-          description: Password for proxy authentication.
-          type: string
-      required:
-      - host
-      - port
-      title: CheckEmailInputProxy
-      type: object
-      x-examples:
-        example-1:
-          value:
-            host: my-proxy.io
-            port: 1080
-    DebugDetails:
-      example:
-        duration:
-          nanos: 6.027456183070403
-          secs: 0.8008281904610115
-        start_time: start_time
-        server_name: server_name
-        smtp:
-          verif_method:
-            type: Smtp
-        end_time: end_time
-      properties:
-        start_time:
-          description: The timestamp when the email verification started.
-          type: string
-          x-stoplight:
-            id: 60i65k60m8e8d
-        end_time:
-          description: The timestamp when the email verification ended.
-          type: string
-          x-stoplight:
-            id: zw4ccbvwsoh6q
-        duration:
-          $ref: "#/components/schemas/Duration"
-        server_name:
-          description: The name of the server that performed the verification.
-          type: string
-          x-stoplight:
-            id: 2jrbdecvqh4t5
-        smtp:
-          $ref: "#/components/schemas/DebugDetailsSmtp"
-      required:
-      - duration
-      - end_time
-      - server_name
-      - smtp
-      - start_time
-      title: DebugDetails
-      type: object
-      x-stoplight:
-        id: 4wxlk39h8v9kz
-    Duration:
-      description: An object representing a duration in seconds and nanoseconds.
-      example:
-        nanos: 6.027456183070403
-        secs: 0.8008281904610115
-      properties:
-        secs:
-          description: Duration in seconds.
-          type: number
-        nanos:
-          description: Duration in nanoseconds.
-          type: number
-      required:
-      - nanos
-      - secs
-      title: Duration
-      type: object
-      x-stoplight:
-        id: bg9y0iez4zati
-    DebugDetailsSmtp:
-      description: "SMTP details used for debugging, including the verification method."
-      example:
-        verif_method:
-          type: Smtp
-      properties:
-        verif_method:
-          $ref: "#/components/schemas/VerifMethod"
-      title: DebugDetailsSmtp
-      type: object
-      x-stoplight:
-        id: 2a90bzapppo0j
+        id: 6053d3ngu2hfn
     VerifMethod:
       description: The method used for email verification.
       example:
@@ -599,203 +2410,34 @@ components:
       type: object
       x-stoplight:
         id: 9xw9e1jwti230
-    TaskWebhook:
-      description: Optional webhook configuration for sending email verification results
-        during bulk verification.
-      properties:
-        on_each_email:
-          $ref: "#/components/schemas/Webhook"
-      title: TaskWebhook
-      type: object
-      x-stoplight:
-        id: 6053d3ngu2hfn
     Webhook:
       description: "Configuration for a webhook to receive email verification results.\
         \ The method will be POST, and the body will contain the email verification\
         \ response."
       properties:
+        extra:
+          type: object
+          x-stoplight:
+            id: f20boz81d2fei
         url:
           description: The URL to send the email verification results to.
           type: string
           x-stoplight:
             id: iraaa1ism4bzi
-        extra:
-          type: object
-          x-stoplight:
-            id: f20boz81d2fei
       required:
       - url
       title: Webhook
       type: object
       x-stoplight:
         id: p9emghvcb92fj
-    post_v1_bulk_request:
-      properties:
-        input:
-          description: A list of emails to verify.
-          items:
-            type: string
-            x-stoplight:
-              id: kgcb3i4u5sfgr
-          type: array
-          x-stoplight:
-            id: fsitj4yhkzk8e
-        webhook:
-          $ref: "#/components/schemas/TaskWebhook"
-      required:
-      - input
-      type: object
-    post_v1_bulk_200_response:
-      example:
-        job_id: 0
-      properties:
-        job_id:
-          description: The unique ID generated for this bulk verification job. Use
-            this `job_id` to query the progress or results of the bulk verification.
-          type: integer
-          x-stoplight:
-            id: 614agdy9mxybk
-      required:
-      - job_id
-      type: object
-    get_v1_bulk_200_response_summary:
-      description: A summary of the processed emails.
-      example:
-        total_unknown: 7
-        total_invalid: 5
-        total_safe: 5
-        total_risky: 2
-      properties:
-        total_safe:
-          description: The number of emails where `is_reachable` is "safe".
-          type: integer
-          x-stoplight:
-            id: 4nss0vedcrjc4
-        total_invalid:
-          description: The number of emails where `is_reachable` is "invalid".
-          type: integer
-          x-stoplight:
-            id: uzzk7ija2l5sv
-        total_risky:
-          description: The number of emails where `is_reachable` is "risky".
-          type: integer
-          x-stoplight:
-            id: sqjtoggge6us3
-        total_unknown:
-          description: The number of emails where `is_reachable` is "unknown".
-          type: integer
-          x-stoplight:
-            id: 8lsodukakqreu
-      required:
-      - total_invalid
-      - total_risky
-      - total_safe
-      - total_unknown
-      type: object
-      x-stoplight:
-        id: n5q382zces1lq
-    get_v1_bulk_200_response:
-      example:
-        summary:
-          total_unknown: 7
-          total_invalid: 5
-          total_safe: 5
-          total_risky: 2
-        job_status: Running
-        total_processed: 1
-        finished_at: 2000-01-23T04:56:07.000+00:00
-        job_id: 0
-        total_records: 6
-        created_at: 2000-01-23T04:56:07.000+00:00
-      properties:
-        job_id:
-          type: integer
-          x-stoplight:
-            id: 4f6vqudy7zank
-        created_at:
-          description: The date and time when the bulk verification job was created.
-          format: date-time
-          type: string
-          x-stoplight:
-            id: 7baymbmoaj5vo
-        finished_at:
-          description: "If the bulk verification job is completed, the date and time\
-            \ when it was finished."
-          format: date-time
-          type: string
-          x-stoplight:
-            id: 7lhzxsb1ixnvz
-        total_records:
-          description: The number of emails to verify in the bulk verification job.
-          type: integer
-          x-stoplight:
-            id: y8q2zhagq8zd6
-        total_processed:
-          description: The number of emails that have been verified at the time of
-            the query.
-          type: integer
-          x-stoplight:
-            id: oqxvsorhd06ch
-        summary:
-          $ref: "#/components/schemas/get_v1_bulk_200_response_summary"
-        job_status:
-          description: "The status of the job, either \"Running\" or \"Completed\"\
-            ."
-          enum:
-          - Running
-          - Completed
-          type: string
-          x-stoplight:
-            id: tsw5sp5cxe7ad
-      required:
-      - created_at
-      - job_id
-      - job_status
-      - summary
-      - total_processed
-      - total_records
-      type: object
-    get_v1_bulk_results_200_response:
-      example:
-        results:
-          input: input
-          smtp:
-            is_catch_all: true
-            can_connect_smtp: true
-            has_full_inbox: true
-            is_disabled: true
-            is_deliverable: true
-          debug:
-            duration:
-              nanos: 6.027456183070403
-              secs: 0.8008281904610115
-            start_time: start_time
-            server_name: server_name
-            smtp:
-              verif_method:
-                type: Smtp
-            end_time: end_time
-          is_reachable: invalid
-          syntax:
-            domain: domain
-            is_valid_syntax: true
-            username: username
-          mx:
-            accepts_mail: true
-            records:
-            - records
-            - records
-          misc:
-            is_b2c: true
-            is_role_account: true
-            gravatar_url: gravatar_url
-            is_disposable: true
-      properties:
-        results:
-          $ref: "#/components/schemas/CheckEmailOutput"
-      required:
-      - results
-      type: object
+    YahooVerifMethod:
+      description: Enumeration describing the method used to verify Yahoo emails.
+      enum:
+      - Api
+      - Headless
+      - Smtp
+      title: YahooVerifMethod
+      type: string
     CheckEmailOutput_misc:
       description: Additional information about the email account.
       oneOf:

@@ -16,8 +16,7 @@ mod consume_coverage {
 	use serial_test::serial;
 
 	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
+		crate::test_helpers::test_amqp_url()
 	}
 
 	#[tokio::test]
@@ -92,8 +91,7 @@ mod do_work_coverage {
 	use std::collections::HashMap;
 
 	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
+		crate::test_helpers::test_amqp_url()
 	}
 
 	#[tokio::test]
@@ -249,8 +247,7 @@ mod shared_check_email_coverage {
 	async fn config_with_db() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("s".into());
-		let db_url = std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into());
+		let db_url = crate::test_helpers::test_db_url();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			db_url,
 			extra: None,
@@ -796,13 +793,11 @@ mod do_check_email_work_coverage {
 	use std::sync::Arc;
 
 	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
+		crate::test_helpers::test_amqp_url()
 	}
 
 	fn db_url() -> String {
-		std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into())
+		crate::test_helpers::test_db_url()
 	}
 
 	async fn make_config() -> Arc<BackendConfig> {
@@ -1048,12 +1043,10 @@ mod do_check_email_work_retry_coverage {
 	use std::sync::Arc;
 
 	fn rmq_url() -> String {
-		std::env::var("TEST_AMQP_URL")
-			.unwrap_or_else(|_| "amqp://guest:guest@127.0.0.1:35672".into())
+		crate::test_helpers::test_amqp_url()
 	}
 	fn db_url() -> String {
-		std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into())
+		crate::test_helpers::test_db_url()
 	}
 
 	async fn make_config() -> Arc<BackendConfig> {
@@ -1255,8 +1248,7 @@ mod postgres_storage_coverage {
 	use serial_test::serial;
 
 	fn db_url() -> String {
-		std::env::var("TEST_DATABASE_URL")
-			.unwrap_or_else(|_| "postgres://postgres:postgres@127.0.0.1:25432/reacher_test".into())
+		crate::test_helpers::test_db_url()
 	}
 
 	fn make_task(metadata: Option<TaskMetadata>) -> CheckEmailTask {
