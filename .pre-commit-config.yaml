@@ -6,4 +6,9 @@ repos:
         entry: bash -c "cd helm/check-if-email-exists && helm lint ."
         language: system
         pass_filenames: false
-
+      - id: sdk-autogen
+        name: Regenerate OpenAPI and SDKs
+        entry: scripts/precommit-autogen-sdks.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/src/.*|backend/Cargo\.toml|backend/openapi\.json|Makefile)$
