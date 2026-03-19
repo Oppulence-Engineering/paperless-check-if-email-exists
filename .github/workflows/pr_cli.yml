@@ -104,7 +104,6 @@ jobs:
         image: rabbitmq:3.8.22-management
         ports:
           - 35672:5672
-          - 45672:15672
         options: >-
           --health-cmd "rabbitmq-diagnostics check_running"
           --health-interval 10s
@@ -158,7 +157,6 @@ jobs:
         image: rabbitmq:3.8.22-management
         ports:
           - 35672:5672
-          - 45672:15672
         options: >-
           --health-cmd "rabbitmq-diagnostics check_running"
           --health-interval 10s
