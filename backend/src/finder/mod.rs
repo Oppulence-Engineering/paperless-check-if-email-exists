@@ -16,6 +16,7 @@ pub struct FinderCandidateResult {
 	pub category: String,
 	pub sub_reason: String,
 	pub is_reachable: String,
+	pub confidence: Option<ConfidenceExplanation>,
 	pub result: Option<serde_json::Value>,
 }
 
@@ -48,6 +49,93 @@ pub fn confidence_for_score(score: i16) -> Option<&'static str> {
 		90..=100 => Some("high"),
 		70..=89 => Some("medium"),
 		_ => None,
+	}
+}
+
+/// Pattern quality scores used in confidence calculation.
+/// Higher-ranked patterns (e.g. first.last) are more commonly used in real
+/// organizations, so matches against them carry higher confidence.
+fn pattern_quality(pattern: &str) -> i16 {
+	match pattern {
+		"first.last" => 10,
+		"firstlast" => 9,
+		"first_last" => 9,
+		"first-last" => 9,
+		"f.last" => 7,
+		"flast" => 7,
+		"f_last" => 7,
+		"first.l" => 6,
+		"firstl" => 6,
+		"last.first" => 5,
+		"lastf" => 5,
+		"first" => 3,
+		"last" => 3,
+		_ => 1,
+	}
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ConfidenceExplanation {
+	pub score: i16,
+	pub level: String,
+	pub factors: Vec<String>,
+}
+
+/// Builds a human-readable confidence explanation for a finder candidate.
+pub fn explain_confidence(
+	email_score: i16,
+	pattern: &str,
+	domain_precheck: &DomainPrecheck,
+) -> ConfidenceExplanation {
+	let pq = pattern_quality(pattern);
+	let mut raw = pq * 10;
+	let mut factors = Vec::new();
+
+	factors.push(format!(
+		"pattern_quality: {} ({})",
+		pq,
+		if pq >= 9 {
+			"very common"
+		} else if pq >= 7 {
+			"common"
+		} else if pq >= 5 {
+			"uncommon"
+		} else {
+			"rare"
+		}
+	));
+
+	if !domain_precheck.has_mx_records {
+		raw -= 20;
+		factors.push("no_mx_records: -20".to_string());
+	}
+
+	if domain_precheck.is_catch_all {
+		raw -= 15;
+		factors.push("catch_all_domain: -15".to_string());
+	}
+
+	if email_score >= 80 {
+		raw += 10;
+		factors.push(format!("email_score_bonus: +10 (score={})", email_score));
+	} else if email_score < 50 {
+		raw -= 10;
+		factors.push(format!("email_score_penalty: -10 (score={})", email_score));
+	}
+
+	let score = raw.clamp(0, 100);
+	let level = match score {
+		80..=100 => "high",
+		60..=79 => "medium",
+		30..=59 => "low",
+		_ => "very_low",
+	}
+	.to_string();
+
+	ConfidenceExplanation {
+		score,
+		level,
+		factors,
 	}
 }
 
@@ -88,6 +176,23 @@ pub async fn sync_finder_results(
 	pg_pool: &PgPool,
 	finder_job_id: i32,
 ) -> Result<(Vec<FinderCandidateResult>, Option<FinderBestMatch>, bool), ReacherResponseError> {
+	// Fetch domain precheck info for confidence explanations
+	let domain_row =
+		sqlx::query("SELECT domain_has_mx, domain_is_catch_all FROM v1_finder_job WHERE id = $1")
+			.bind(finder_job_id)
+			.fetch_optional(pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?;
+	let domain_precheck = domain_row
+		.map(|r| DomainPrecheck {
+			has_mx_records: r.get("domain_has_mx"),
+			is_catch_all: r.get("domain_is_catch_all"),
+		})
+		.unwrap_or(DomainPrecheck {
+			has_mx_records: true,
+			is_catch_all: false,
+		});
+
 	let rows = sqlx::query(
 		r#"
 		SELECT
@@ -162,13 +267,16 @@ pub async fn sync_finder_results(
 				})
 				.to_string();
 
+			let pattern: String = row.get("pattern");
+			let confidence = Some(explain_confidence(score, &pattern, &domain_precheck));
 			completed_results.push(FinderCandidateResult {
 				email: row.get("candidate_email"),
-				pattern: row.get("pattern"),
+				pattern,
 				score,
 				category,
 				sub_reason,
 				is_reachable,
+				confidence,
 				result: result.clone(),
 			});
 		}

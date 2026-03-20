@@ -1739,6 +1739,29 @@ components:
       type: object
       x-stoplight:
         id: 834398a8ce480
+    ConfidenceExplanation:
+      properties:
+        factors:
+          items:
+            type: string
+          type: array
+        level:
+          enum:
+          - high
+          - medium
+          - low
+          - very_low
+          type: string
+        score:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+      required:
+      - factors
+      - level
+      - score
+      type: object
     CoreError:
       description: Details of an error encountered during the verification process.
       properties:
@@ -2000,6 +2023,7 @@ components:
         - result: ""
           score: 5
           is_reachable: invalid
+          confidence: ""
           pattern: pattern
           category: valid
           email: email
@@ -2007,6 +2031,7 @@ components:
         - result: ""
           score: 5
           is_reachable: invalid
+          confidence: ""
           pattern: pattern
           category: valid
           email: email
@@ -2069,6 +2094,7 @@ components:
         result: ""
         score: 5
         is_reachable: invalid
+        confidence: ""
         pattern: pattern
         category: valid
         email: email
@@ -2076,6 +2102,10 @@ components:
       properties:
         category:
           $ref: "#/components/schemas/EmailCategory"
+        confidence:
+          allOf:
+          - $ref: "#/components/schemas/ConfidenceExplanation"
+          nullable: true
         email:
           type: string
         is_reachable:

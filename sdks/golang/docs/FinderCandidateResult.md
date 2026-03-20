@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Category** | [**EmailCategory**](EmailCategory.md) |  | 
+**Confidence** | Pointer to [**NullableConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional] 
 **Email** | **string** |  | 
 **IsReachable** | [**Reachable**](Reachable.md) |  | 
 **Pattern** | **string** |  | 
@@ -51,6 +52,41 @@ and a boolean to check if the value has been set.
 SetCategory sets Category field to given value.
 
 
+### GetConfidence
+
+`func (o *FinderCandidateResult) GetConfidence() ConfidenceExplanation`
+
+GetConfidence returns the Confidence field if non-nil, zero value otherwise.
+
+### GetConfidenceOk
+
+`func (o *FinderCandidateResult) GetConfidenceOk() (*ConfidenceExplanation, bool)`
+
+GetConfidenceOk returns a tuple with the Confidence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetConfidence
+
+`func (o *FinderCandidateResult) SetConfidence(v ConfidenceExplanation)`
+
+SetConfidence sets Confidence field to given value.
+
+### HasConfidence
+
+`func (o *FinderCandidateResult) HasConfidence() bool`
+
+HasConfidence returns a boolean if a field has been set.
+
+### SetConfidenceNil
+
+`func (o *FinderCandidateResult) SetConfidenceNil(b bool)`
+
+ SetConfidenceNil sets the value for Confidence to be an explicit nil
+
+### UnsetConfidence
+`func (o *FinderCandidateResult) UnsetConfidence()`
+
+UnsetConfidence ensures that no value is present for Confidence, not even an explicit nil
 ### GetEmail
 
 `func (o *FinderCandidateResult) GetEmail() string`

@@ -259,6 +259,37 @@
           "id": "834398a8ce480"
         }
       },
+      "ConfidenceExplanation": {
+        "properties": {
+          "factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "level": {
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "very_low"
+            ],
+            "type": "string"
+          },
+          "score": {
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "score",
+          "level",
+          "factors"
+        ],
+        "type": "object"
+      },
       "CoreError": {
         "description": "Details of an error encountered during the verification process.",
         "properties": {
@@ -594,6 +625,14 @@
         "properties": {
           "category": {
             "$ref": "#/components/schemas/EmailCategory"
+          },
+          "confidence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceExplanation"
+              }
+            ],
+            "nullable": true
           },
           "email": {
             "type": "string"

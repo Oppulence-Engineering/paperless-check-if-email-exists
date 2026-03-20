@@ -133,6 +133,7 @@ Class | Method | HTTP request | Description
  - [CheckEmailOutputMx](docs/CheckEmailOutputMx.md)
  - [CheckEmailOutputSmtp](docs/CheckEmailOutputSmtp.md)
  - [CheckEmailRequest](docs/CheckEmailRequest.md)
+ - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [CoreError](docs/CoreError.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)

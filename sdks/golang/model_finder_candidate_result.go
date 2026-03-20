@@ -23,6 +23,7 @@ var _ MappedNullable = &FinderCandidateResult{}
 // FinderCandidateResult struct for FinderCandidateResult
 type FinderCandidateResult struct {
 	Category EmailCategory `json:"category"`
+	Confidence NullableConfidenceExplanation `json:"confidence,omitempty"`
 	Email string `json:"email"`
 	IsReachable Reachable `json:"is_reachable"`
 	Pattern string `json:"pattern"`
@@ -78,6 +79,48 @@ func (o *FinderCandidateResult) GetCategoryOk() (*EmailCategory, bool) {
 // SetCategory sets field value
 func (o *FinderCandidateResult) SetCategory(v EmailCategory) {
 	o.Category = v
+}
+
+// GetConfidence returns the Confidence field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *FinderCandidateResult) GetConfidence() ConfidenceExplanation {
+	if o == nil || IsNil(o.Confidence.Get()) {
+		var ret ConfidenceExplanation
+		return ret
+	}
+	return *o.Confidence.Get()
+}
+
+// GetConfidenceOk returns a tuple with the Confidence field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *FinderCandidateResult) GetConfidenceOk() (*ConfidenceExplanation, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Confidence.Get(), o.Confidence.IsSet()
+}
+
+// HasConfidence returns a boolean if a field has been set.
+func (o *FinderCandidateResult) HasConfidence() bool {
+	if o != nil && o.Confidence.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetConfidence gets a reference to the given NullableConfidenceExplanation and assigns it to the Confidence field.
+func (o *FinderCandidateResult) SetConfidence(v ConfidenceExplanation) {
+	o.Confidence.Set(&v)
+}
+// SetConfidenceNil sets the value for Confidence to be an explicit nil
+func (o *FinderCandidateResult) SetConfidenceNil() {
+	o.Confidence.Set(nil)
+}
+
+// UnsetConfidence ensures that no value is present for Confidence, not even an explicit nil
+func (o *FinderCandidateResult) UnsetConfidence() {
+	o.Confidence.Unset()
 }
 
 // GetEmail returns the Email field value
@@ -253,6 +296,9 @@ func (o FinderCandidateResult) MarshalJSON() ([]byte, error) {
 func (o FinderCandidateResult) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["category"] = o.Category
+	if o.Confidence.IsSet() {
+		toSerialize["confidence"] = o.Confidence.Get()
+	}
 	toSerialize["email"] = o.Email
 	toSerialize["is_reachable"] = o.IsReachable
 	toSerialize["pattern"] = o.Pattern
