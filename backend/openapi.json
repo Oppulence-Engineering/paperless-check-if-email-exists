@@ -466,11 +466,27 @@
             "format": "int64",
             "type": "integer"
           },
+          "catch_all_severity": {
+            "description": "Severity tier for catch-all domains (low=free provider, high=corporate)",
+            "enum": [
+              "low",
+              "high"
+            ],
+            "type": "string"
+          },
           "category": {
             "$ref": "#/components/schemas/EmailCategory"
           },
+          "domain_suggestion": {
+            "description": "Suggested corrected email when a likely domain typo is detected",
+            "type": "string"
+          },
           "freshness": {
             "$ref": "#/components/schemas/Freshness"
+          },
+          "normalized_email": {
+            "description": "Canonical form of the email after alias/plus-address normalization",
+            "type": "string"
           },
           "reason_codes": {
             "items": {

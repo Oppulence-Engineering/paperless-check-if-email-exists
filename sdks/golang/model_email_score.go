@@ -24,8 +24,14 @@ var _ MappedNullable = &EmailScore{}
 // EmailScore struct for EmailScore
 type EmailScore struct {
 	AgeDays *int64 `json:"age_days,omitempty"`
+	// Severity tier for catch-all domains (low=free provider, high=corporate)
+	CatchAllSeverity *string `json:"catch_all_severity,omitempty"`
 	Category EmailCategory `json:"category"`
+	// Suggested corrected email when a likely domain typo is detected
+	DomainSuggestion *string `json:"domain_suggestion,omitempty"`
 	Freshness *Freshness `json:"freshness,omitempty"`
+	// Canonical form of the email after alias/plus-address normalization
+	NormalizedEmail *string `json:"normalized_email,omitempty"`
 	ReasonCodes []ReasonCode `json:"reason_codes"`
 	SafeToSend bool `json:"safe_to_send"`
 	Score int32 `json:"score"`
@@ -91,6 +97,38 @@ func (o *EmailScore) SetAgeDays(v int64) {
 	o.AgeDays = &v
 }
 
+// GetCatchAllSeverity returns the CatchAllSeverity field value if set, zero value otherwise.
+func (o *EmailScore) GetCatchAllSeverity() string {
+	if o == nil || IsNil(o.CatchAllSeverity) {
+		var ret string
+		return ret
+	}
+	return *o.CatchAllSeverity
+}
+
+// GetCatchAllSeverityOk returns a tuple with the CatchAllSeverity field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetCatchAllSeverityOk() (*string, bool) {
+	if o == nil || IsNil(o.CatchAllSeverity) {
+		return nil, false
+	}
+	return o.CatchAllSeverity, true
+}
+
+// HasCatchAllSeverity returns a boolean if a field has been set.
+func (o *EmailScore) HasCatchAllSeverity() bool {
+	if o != nil && !IsNil(o.CatchAllSeverity) {
+		return true
+	}
+
+	return false
+}
+
+// SetCatchAllSeverity gets a reference to the given string and assigns it to the CatchAllSeverity field.
+func (o *EmailScore) SetCatchAllSeverity(v string) {
+	o.CatchAllSeverity = &v
+}
+
 // GetCategory returns the Category field value
 func (o *EmailScore) GetCategory() EmailCategory {
 	if o == nil {
@@ -113,6 +151,38 @@ func (o *EmailScore) GetCategoryOk() (*EmailCategory, bool) {
 // SetCategory sets field value
 func (o *EmailScore) SetCategory(v EmailCategory) {
 	o.Category = v
+}
+
+// GetDomainSuggestion returns the DomainSuggestion field value if set, zero value otherwise.
+func (o *EmailScore) GetDomainSuggestion() string {
+	if o == nil || IsNil(o.DomainSuggestion) {
+		var ret string
+		return ret
+	}
+	return *o.DomainSuggestion
+}
+
+// GetDomainSuggestionOk returns a tuple with the DomainSuggestion field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetDomainSuggestionOk() (*string, bool) {
+	if o == nil || IsNil(o.DomainSuggestion) {
+		return nil, false
+	}
+	return o.DomainSuggestion, true
+}
+
+// HasDomainSuggestion returns a boolean if a field has been set.
+func (o *EmailScore) HasDomainSuggestion() bool {
+	if o != nil && !IsNil(o.DomainSuggestion) {
+		return true
+	}
+
+	return false
+}
+
+// SetDomainSuggestion gets a reference to the given string and assigns it to the DomainSuggestion field.
+func (o *EmailScore) SetDomainSuggestion(v string) {
+	o.DomainSuggestion = &v
 }
 
 // GetFreshness returns the Freshness field value if set, zero value otherwise.
@@ -145,6 +215,38 @@ func (o *EmailScore) HasFreshness() bool {
 // SetFreshness gets a reference to the given Freshness and assigns it to the Freshness field.
 func (o *EmailScore) SetFreshness(v Freshness) {
 	o.Freshness = &v
+}
+
+// GetNormalizedEmail returns the NormalizedEmail field value if set, zero value otherwise.
+func (o *EmailScore) GetNormalizedEmail() string {
+	if o == nil || IsNil(o.NormalizedEmail) {
+		var ret string
+		return ret
+	}
+	return *o.NormalizedEmail
+}
+
+// GetNormalizedEmailOk returns a tuple with the NormalizedEmail field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetNormalizedEmailOk() (*string, bool) {
+	if o == nil || IsNil(o.NormalizedEmail) {
+		return nil, false
+	}
+	return o.NormalizedEmail, true
+}
+
+// HasNormalizedEmail returns a boolean if a field has been set.
+func (o *EmailScore) HasNormalizedEmail() bool {
+	if o != nil && !IsNil(o.NormalizedEmail) {
+		return true
+	}
+
+	return false
+}
+
+// SetNormalizedEmail gets a reference to the given string and assigns it to the NormalizedEmail field.
+func (o *EmailScore) SetNormalizedEmail(v string) {
+	o.NormalizedEmail = &v
 }
 
 // GetReasonCodes returns the ReasonCodes field value
@@ -312,9 +414,18 @@ func (o EmailScore) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.AgeDays) {
 		toSerialize["age_days"] = o.AgeDays
 	}
+	if !IsNil(o.CatchAllSeverity) {
+		toSerialize["catch_all_severity"] = o.CatchAllSeverity
+	}
 	toSerialize["category"] = o.Category
+	if !IsNil(o.DomainSuggestion) {
+		toSerialize["domain_suggestion"] = o.DomainSuggestion
+	}
 	if !IsNil(o.Freshness) {
 		toSerialize["freshness"] = o.Freshness
+	}
+	if !IsNil(o.NormalizedEmail) {
+		toSerialize["normalized_email"] = o.NormalizedEmail
 	}
 	toSerialize["reason_codes"] = o.ReasonCodes
 	toSerialize["safe_to_send"] = o.SafeToSend

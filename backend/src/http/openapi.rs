@@ -412,7 +412,10 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"signals": { "$ref": "#/components/schemas/ScoringSignals" },
 				"verified_at": { "type": "string", "format": "date-time" },
 				"age_days": { "type": "integer", "format": "int64" },
-				"freshness": { "$ref": "#/components/schemas/Freshness" }
+				"freshness": { "$ref": "#/components/schemas/Freshness" },
+				"domain_suggestion": { "type": "string", "description": "Suggested corrected email when a likely domain typo is detected" },
+				"normalized_email": { "type": "string", "description": "Canonical form of the email after alias/plus-address normalization" },
+				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains (low=free provider, high=corporate)" }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),

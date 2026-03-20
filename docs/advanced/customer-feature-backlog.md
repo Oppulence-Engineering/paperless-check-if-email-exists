@@ -25,6 +25,9 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 9 | Finder / Enrichment | Finder confidence explanation | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 30 | Verification | Accept-all severity tiers | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
+| 31 | Verification | Domain typo correction suggestions | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
+| 32 | Verification | Alias and plus-address normalization | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 
 ## Remaining
 
@@ -53,9 +56,9 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | ~~27~~ | ~~Verification~~ | ~~Result freshness / confidence decay~~ | ~~Shipped in PR #21~~ | ~~Done~~ |
 | 28 | Verification | Historical verification timeline | Lets customers see how an address changed across checks over time | High |
 | 29 | Verification | Mailbox status change alerts | Notifies teams when previously valid contacts become risky or invalid | High |
-| 30 | Verification | Accept-all severity tiers | Distinguishes between mild catch-all risk and high-risk accept-all domains | High |
-| 31 | Verification | Domain typo correction suggestions | Helps customers recover leads that were entered with misspelled domains instead of losing them | High |
-| 32 | Verification | Alias and plus-address normalization | Reduces duplicate contacts and improves matching across workflows | High |
+| ~~30~~ | ~~Verification~~ | ~~Accept-all severity tiers~~ | ~~Shipped in PR #23~~ | ~~Done~~ |
+| ~~31~~ | ~~Verification~~ | ~~Domain typo correction suggestions~~ | ~~Shipped in PR #23~~ | ~~Done~~ |
+| ~~32~~ | ~~Verification~~ | ~~Alias and plus-address normalization~~ | ~~Shipped in PR #23~~ | ~~Done~~ |
 | 33 | Verification | Pre-send audience approval checklist | Gives teams a simple go or no-go summary before launching a campaign | High |
 | 34 | Analytics / Reporting | Custom score-threshold policies | Lets teams define their own send, review, or suppress rules by workflow | High |
 | 35 | List Cleaning | Saved segmentation rules | Makes it easy to repeatedly pull only valid, only risky, or only role-based subsets | High |
