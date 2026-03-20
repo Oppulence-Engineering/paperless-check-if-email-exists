@@ -1030,6 +1030,44 @@
         ],
         "type": "object"
       },
+      "ReverificationStatusResponse": {
+        "properties": {
+          "batch_size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "emails_requeued": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "last_job_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "last_run_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "next_run_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "staleness_days": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      },
       "ScoringSignals": {
         "properties": {
           "has_domain_suggestion": {
@@ -2989,6 +3027,27 @@
           }
         },
         "summary": "POST /v1/reputation/check",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/reverification/status": {
+      "get": {
+        "operationId": "v1_reverification_status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReverificationStatusResponse"
+                }
+              }
+            },
+            "description": "Reverification schedule status"
+          }
+        },
+        "summary": "GET /v1/reverification/status",
         "tags": [
           "v1"
         ]

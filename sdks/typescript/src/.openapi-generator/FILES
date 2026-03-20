@@ -59,6 +59,7 @@ docs/Reachable.md
 docs/ReasonCode.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
+docs/ReverificationStatusResponse.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
 docs/SubReason.md
@@ -119,6 +120,7 @@ models/reachable.ts
 models/reason-code.ts
 models/reputation-check-request.ts
 models/reputation-check-response.ts
+models/reverification-status-response.ts
 models/scoring-signals.ts
 models/smtp-details.ts
 models/sub-reason.ts
