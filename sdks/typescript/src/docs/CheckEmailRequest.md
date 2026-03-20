@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **hotmailb2b_verif_method** | [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] [default to undefined]
 **hotmailb2c_verif_method** | [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] [default to undefined]
 **proxy** | [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] [default to undefined]
+**sandbox** | **boolean** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional] [default to false]
 **smtp_port** | **number** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] [default to undefined]
 **to_email** | **string** | The email address to check. | [default to undefined]
 **yahoo_verif_method** | [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] [default to undefined]
@@ -30,6 +31,7 @@ const instance: CheckEmailRequest = {
     hotmailb2b_verif_method,
     hotmailb2c_verif_method,
     proxy,
+    sandbox,
     smtp_port,
     to_email,
     yahoo_verif_method,

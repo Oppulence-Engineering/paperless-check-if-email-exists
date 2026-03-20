@@ -1703,6 +1703,7 @@ components:
         smtp_port: 6.027456183070403
         hello_name: hello_name
         gmail_verif_method: Smtp
+        sandbox: false
         check_gravatar: true
         hotmailb2c_verif_method: Smtp
         yahoo_verif_method: Api
@@ -1724,6 +1725,11 @@ components:
           $ref: "#/components/schemas/HotmailB2CVerifMethod"
         proxy:
           $ref: "#/components/schemas/CheckEmailInputProxy"
+        sandbox:
+          default: false
+          description: "When true, returns deterministic mock results without consuming\
+            \ credits or making real SMTP connections."
+          type: boolean
         smtp_port:
           description: "SMTP port to use for email validation. Defaults to 25, but\
             \ 465, 587, and 2525 are sometimes also used."

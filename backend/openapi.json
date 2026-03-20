@@ -238,6 +238,11 @@
           "proxy": {
             "$ref": "#/components/schemas/CheckEmailInputProxy"
           },
+          "sandbox": {
+            "default": false,
+            "description": "When true, returns deterministic mock results without consuming credits or making real SMTP connections.",
+            "type": "boolean"
+          },
           "smtp_port": {
             "description": "SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.",
             "type": "number"

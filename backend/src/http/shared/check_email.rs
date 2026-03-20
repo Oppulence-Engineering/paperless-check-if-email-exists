@@ -67,6 +67,17 @@ pub async fn handle_check_email(
 		.into());
 	}
 
+	// Sandbox mode: return deterministic mock results without SMTP,
+	// throttle checks, or quota consumption.
+	if body.sandbox {
+		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
+		let body = scored_response_fresh(&mock_result).map_err(ReacherResponseError::from)?;
+		return Ok(CheckEmailResponse {
+			status_code: StatusCode::OK,
+			body,
+		});
+	}
+
 	let mut idempotency_record_id: Option<i64> = None;
 	let mut idempotency_pool: Option<sqlx::PgPool> = None;
 

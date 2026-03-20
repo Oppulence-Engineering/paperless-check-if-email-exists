@@ -43,6 +43,10 @@ pub struct CheckEmailRequest {
 	pub proxy: Option<CheckEmailInputProxy>,
 	pub smtp_timeout: Option<Duration>,
 	pub smtp_port: Option<u16>,
+	/// When true, returns deterministic mock results without consuming credits
+	/// or making real SMTP connections.
+	#[serde(default)]
+	pub sandbox: bool,
 	// The following fields are for backward compatibility.
 	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,
 	pub hotmailb2c_verif_method: Option<BackwardCompatHotmailB2CVerifMethod>,
