@@ -1426,6 +1426,7 @@ components:
             - deliverable
             age_days: 1
             score: 59
+            catch_all_severity: low
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -1442,8 +1443,10 @@ components:
               smtp_error: true
               has_domain_suggestion: true
             verified_at: 2000-01-23T04:56:07.000+00:00
+            domain_suggestion: domain_suggestion
             category: valid
             freshness: fresh
+            normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
           debug:
@@ -1484,6 +1487,7 @@ components:
             - deliverable
             age_days: 1
             score: 59
+            catch_all_severity: low
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -1500,8 +1504,10 @@ components:
               smtp_error: true
               has_domain_suggestion: true
             verified_at: 2000-01-23T04:56:07.000+00:00
+            domain_suggestion: domain_suggestion
             category: valid
             freshness: fresh
+            normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
           debug:
@@ -1583,6 +1589,7 @@ components:
           - deliverable
           age_days: 1
           score: 59
+          catch_all_severity: low
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -1599,8 +1606,10 @@ components:
             smtp_error: true
             has_domain_suggestion: true
           verified_at: 2000-01-23T04:56:07.000+00:00
+          domain_suggestion: domain_suggestion
           category: valid
           freshness: fresh
+          normalized_email: normalized_email
           safe_to_send: true
           sub_reason: deliverable
         debug:
@@ -1924,6 +1933,7 @@ components:
         - deliverable
         age_days: 1
         score: 59
+        catch_all_severity: low
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -1940,18 +1950,32 @@ components:
           smtp_error: true
           has_domain_suggestion: true
         verified_at: 2000-01-23T04:56:07.000+00:00
+        domain_suggestion: domain_suggestion
         category: valid
         freshness: fresh
+        normalized_email: normalized_email
         safe_to_send: true
         sub_reason: deliverable
       properties:
         age_days:
           format: int64
           type: integer
+        catch_all_severity:
+          description: "Severity tier for catch-all domains (low=free provider, high=corporate)"
+          enum:
+          - low
+          - high
+          type: string
         category:
           $ref: "#/components/schemas/EmailCategory"
+        domain_suggestion:
+          description: Suggested corrected email when a likely domain typo is detected
+          type: string
         freshness:
           $ref: "#/components/schemas/Freshness"
+        normalized_email:
+          description: Canonical form of the email after alias/plus-address normalization
+          type: string
         reason_codes:
           items:
             $ref: "#/components/schemas/ReasonCode"

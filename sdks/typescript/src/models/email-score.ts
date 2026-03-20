@@ -42,17 +42,35 @@ export interface EmailScore {
      */
     'age_days'?: number;
     /**
+     * Severity tier for catch-all domains (low=free provider, high=corporate)
+     * @type {string}
+     * @memberof EmailScore
+     */
+    'catch_all_severity'?: EmailScoreCatchAllSeverityEnum;
+    /**
      * 
      * @type {EmailCategory}
      * @memberof EmailScore
      */
     'category': EmailCategory;
     /**
+     * Suggested corrected email when a likely domain typo is detected
+     * @type {string}
+     * @memberof EmailScore
+     */
+    'domain_suggestion'?: string;
+    /**
      * 
      * @type {Freshness}
      * @memberof EmailScore
      */
     'freshness'?: Freshness;
+    /**
+     * Canonical form of the email after alias/plus-address normalization
+     * @type {string}
+     * @memberof EmailScore
+     */
+    'normalized_email'?: string;
     /**
      * 
      * @type {Array<ReasonCode>}
@@ -91,5 +109,11 @@ export interface EmailScore {
     'verified_at'?: string;
 }
 
+export const EmailScoreCatchAllSeverityEnum = {
+    Low: 'low',
+    High: 'high'
+} as const;
+
+export type EmailScoreCatchAllSeverityEnum = typeof EmailScoreCatchAllSeverityEnum[keyof typeof EmailScoreCatchAllSeverityEnum];
 
 

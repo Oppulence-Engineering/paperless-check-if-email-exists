@@ -5,8 +5,11 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AgeDays** | Pointer to **int64** |  | [optional] 
+**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional] 
 **Category** | [**EmailCategory**](EmailCategory.md) |  | 
+**DomainSuggestion** | Pointer to **string** | Suggested corrected email when a likely domain typo is detected | [optional] 
 **Freshness** | Pointer to [**Freshness**](Freshness.md) |  | [optional] 
+**NormalizedEmail** | Pointer to **string** | Canonical form of the email after alias/plus-address normalization | [optional] 
 **ReasonCodes** | [**[]ReasonCode**](ReasonCode.md) |  | 
 **SafeToSend** | **bool** |  | 
 **Score** | **int32** |  | 
@@ -58,6 +61,31 @@ SetAgeDays sets AgeDays field to given value.
 
 HasAgeDays returns a boolean if a field has been set.
 
+### GetCatchAllSeverity
+
+`func (o *EmailScore) GetCatchAllSeverity() string`
+
+GetCatchAllSeverity returns the CatchAllSeverity field if non-nil, zero value otherwise.
+
+### GetCatchAllSeverityOk
+
+`func (o *EmailScore) GetCatchAllSeverityOk() (*string, bool)`
+
+GetCatchAllSeverityOk returns a tuple with the CatchAllSeverity field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCatchAllSeverity
+
+`func (o *EmailScore) SetCatchAllSeverity(v string)`
+
+SetCatchAllSeverity sets CatchAllSeverity field to given value.
+
+### HasCatchAllSeverity
+
+`func (o *EmailScore) HasCatchAllSeverity() bool`
+
+HasCatchAllSeverity returns a boolean if a field has been set.
+
 ### GetCategory
 
 `func (o *EmailScore) GetCategory() EmailCategory`
@@ -77,6 +105,31 @@ and a boolean to check if the value has been set.
 
 SetCategory sets Category field to given value.
 
+
+### GetDomainSuggestion
+
+`func (o *EmailScore) GetDomainSuggestion() string`
+
+GetDomainSuggestion returns the DomainSuggestion field if non-nil, zero value otherwise.
+
+### GetDomainSuggestionOk
+
+`func (o *EmailScore) GetDomainSuggestionOk() (*string, bool)`
+
+GetDomainSuggestionOk returns a tuple with the DomainSuggestion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDomainSuggestion
+
+`func (o *EmailScore) SetDomainSuggestion(v string)`
+
+SetDomainSuggestion sets DomainSuggestion field to given value.
+
+### HasDomainSuggestion
+
+`func (o *EmailScore) HasDomainSuggestion() bool`
+
+HasDomainSuggestion returns a boolean if a field has been set.
 
 ### GetFreshness
 
@@ -102,6 +155,31 @@ SetFreshness sets Freshness field to given value.
 `func (o *EmailScore) HasFreshness() bool`
 
 HasFreshness returns a boolean if a field has been set.
+
+### GetNormalizedEmail
+
+`func (o *EmailScore) GetNormalizedEmail() string`
+
+GetNormalizedEmail returns the NormalizedEmail field if non-nil, zero value otherwise.
+
+### GetNormalizedEmailOk
+
+`func (o *EmailScore) GetNormalizedEmailOk() (*string, bool)`
+
+GetNormalizedEmailOk returns a tuple with the NormalizedEmail field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetNormalizedEmail
+
+`func (o *EmailScore) SetNormalizedEmail(v string)`
+
+SetNormalizedEmail sets NormalizedEmail field to given value.
+
+### HasNormalizedEmail
+
+`func (o *EmailScore) HasNormalizedEmail() bool`
+
+HasNormalizedEmail returns a boolean if a field has been set.
 
 ### GetReasonCodes
 
