@@ -69,7 +69,7 @@ async fn http_handler(
 			COUNT(CASE WHEN score_category = 'risky' THEN 1 END) AS risky,
 			COUNT(CASE WHEN score_category = 'unknown' THEN 1 END) AS unknown,
 			COUNT(CASE WHEN score_category = 'invalid' THEN 1 END) AS invalid,
-			COUNT(CASE WHEN task_state NOT IN ('completed', 'failed', 'dead_lettered', 'cancelled') THEN 1 END) AS unprocessed,
+			COUNT(CASE WHEN task_state NOT IN ('completed', 'failed', 'dead_lettered') THEN 1 END) AS unprocessed,
 			COUNT(CASE WHEN safe_to_send = true THEN 1 END) AS safe_to_send_count
 		FROM v1_task_result WHERE job_id = $1
 		"#,
@@ -115,22 +115,23 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let total = total_records.max(1) as f64;
-	let safe_pct = (safe_to_send_count as f64 / total * 100.0).round() / 1.0;
+	let safe_ratio = safe_to_send_count as f64 / total * 100.0;
+	let safe_pct = safe_ratio.round();
 
 	let (recommendation, ready) = if unprocessed > 0 {
 		(
 			"Job is still processing. Wait for completion before sending.".to_string(),
 			false,
 		)
-	} else if safe_pct >= 90.0 {
+	} else if safe_ratio >= 90.0 {
 		("List quality is excellent. Safe to send.".to_string(), true)
-	} else if safe_pct >= 70.0 {
+	} else if safe_ratio >= 70.0 {
 		(
 			"List quality is good. Consider removing risky and invalid addresses before sending."
 				.to_string(),
 			true,
 		)
-	} else if safe_pct >= 50.0 {
+	} else if safe_ratio >= 50.0 {
 		(
 			"List quality is moderate. Remove invalid and risky addresses before sending."
 				.to_string(),
