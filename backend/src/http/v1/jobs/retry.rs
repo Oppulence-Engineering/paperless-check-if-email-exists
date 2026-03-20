@@ -75,14 +75,23 @@ async fn http_handler(
 		}
 	}
 
-	// Count retryable tasks
-	let retryable_count: i64 = sqlx::query_scalar(
-		"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')",
+	// Fetch and lock retryable task rows atomically (FOR UPDATE prevents
+	// concurrent retries from selecting the same rows and ensures the count
+	// matches the actual rows we'll publish).
+	let retryable_tasks = sqlx::query(
+		r#"
+		SELECT id, payload
+		FROM v1_task_result
+		WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')
+		FOR UPDATE
+		"#,
 	)
 	.bind(job_id)
-	.fetch_one(&mut *tx)
+	.fetch_all(&mut *tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
+
+	let retryable_count = retryable_tasks.len() as i64;
 
 	if retryable_count == 0 {
 		tx.commit().await.map_err(ReacherResponseError::from)?;
@@ -93,7 +102,7 @@ async fn http_handler(
 		}));
 	}
 
-	// Check quota for the retry count
+	// Check quota using the exact locked row count
 	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, retryable_count as i32)
 		.await
 	{
@@ -117,21 +126,15 @@ async fn http_handler(
 		}
 	}
 
-	// Fetch retryable task IDs and payloads
-	let retryable_tasks = sqlx::query(
-		r#"
-		SELECT id, payload
-		FROM v1_task_result
-		WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')
-		"#,
-	)
-	.bind(job_id)
-	.fetch_all(&mut *tx)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	// Collect task IDs for the targeted UPDATE after publish
+	let task_ids: Vec<i32> = retryable_tasks
+		.iter()
+		.map(|r| r.get::<i32, _>("id"))
+		.collect();
 
 	// Publish tasks to RabbitMQ BEFORE committing DB changes.
-	// If publish fails, the transaction rolls back and tasks stay retryable.
+	// If publish fails, the transaction rolls back and tasks stay in
+	// failed/dead_lettered — safe to retry again.
 	let channel = config
 		.must_worker_config()
 		.map_err(ReacherResponseError::from)?
@@ -148,7 +151,6 @@ async fn http_handler(
 		let mut task: CheckEmailTask =
 			serde_json::from_value(payload).map_err(ReacherResponseError::from)?;
 
-		// Update metadata with the existing task_db_id
 		if let Some(ref mut metadata) = task.metadata {
 			metadata.task_db_id = Some(task_db_id);
 		} else {
@@ -166,7 +168,7 @@ async fn http_handler(
 		publish_task(channel.clone(), task, properties.clone()).await?;
 	}
 
-	// All tasks published successfully — now reset DB rows and commit
+	// All tasks published — reset only the exact rows we locked and published
 	sqlx::query(
 		r#"
 		UPDATE v1_task_result
@@ -181,10 +183,10 @@ async fn http_handler(
 		    retry_count = 0,
 		    completed_at = NULL,
 		    updated_at = NOW()
-		WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')
+		WHERE id = ANY($1)
 		"#,
 	)
-	.bind(job_id)
+	.bind(&task_ids)
 	.execute(&mut *tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
