@@ -49,9 +49,9 @@ pub async fn evaluate_post_completion_actions(
 			ON CONFLICT (tenant_id, email) DO NOTHING
 			"#,
 		)
-		.bind(reason)
 		.bind(tenant_id)
 		.bind(&normalized_email)
+		.bind(reason)
 		.execute(pg_pool)
 		.await;
 
