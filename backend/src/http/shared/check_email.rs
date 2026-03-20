@@ -68,16 +68,24 @@ pub async fn handle_check_email(
 	}
 
 	// Sandbox mode: return deterministic mock results without SMTP,
-	// throttle checks, or quota consumption. Uses a fixed timestamp
-	// so responses are fully deterministic.
+	// throttle checks, or quota consumption. Freshness fields are
+	// hardcoded so responses are fully deterministic across time.
 	if body.sandbox {
-		use crate::scoring::response::scored_json_with_freshness;
-		use chrono::TimeZone;
+		use crate::scoring::response::scored_json;
 		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
-		let fixed_time = chrono::Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap();
-		let json = scored_json_with_freshness(&mock_result, Some(fixed_time))
-			.and_then(|v| serde_json::to_vec(&v))
-			.map_err(ReacherResponseError::from)?;
+		let mut value = scored_json(&mock_result).map_err(ReacherResponseError::from)?;
+		if let Some(score_obj) = value.get_mut("score").and_then(|v| v.as_object_mut()) {
+			score_obj.insert(
+				"verified_at".into(),
+				serde_json::Value::String("2025-01-01T00:00:00+00:00".into()),
+			);
+			score_obj.insert("age_days".into(), serde_json::Value::from(0));
+			score_obj.insert(
+				"freshness".into(),
+				serde_json::Value::String("fresh".into()),
+			);
+		}
+		let json = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
 			body: json,
