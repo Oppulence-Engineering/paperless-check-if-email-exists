@@ -102,7 +102,8 @@ async fn http_handler(
 		}));
 	}
 
-	// Check quota using the exact locked row count
+	// Check quota before publishing (reject early if over limit).
+	// Quota is charged atomically here — same pattern as bulk/post.rs.
 	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, retryable_count as i32)
 		.await
 	{
@@ -195,7 +196,7 @@ async fn http_handler(
 	let new_status = match status.as_str() {
 		"completed" | "failed" => {
 			sqlx::query(
-				"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1",
+				"UPDATE v1_bulk_job SET status = 'running'::job_state, completed_at = NULL, updated_at = NOW() WHERE id = $1",
 			)
 			.bind(job_id)
 			.execute(&mut *tx)
