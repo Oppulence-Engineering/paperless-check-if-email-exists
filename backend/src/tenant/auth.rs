@@ -241,6 +241,9 @@ pub async fn resolve_tenant_context_by_id(
 		_ => bail!("Unknown plan tier: {}", plan_str),
 	};
 
+	// No global throttle fallback: background tasks (reverification) run at
+	// the tenant's own rate limits without inheriting server-wide defaults.
+	// This differs from resolve_from_api_key which merges with global_throttle.
 	let throttle = ThrottleConfig {
 		max_requests_per_second: row
 			.get::<Option<i32>, _>("max_requests_per_second")

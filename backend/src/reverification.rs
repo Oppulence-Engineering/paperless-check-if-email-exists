@@ -12,13 +12,14 @@ pub fn spawn_reverification_scheduler(config: Arc<BackendConfig>, pg_pool: PgPoo
 	let reverification_config = config.reverification.clone();
 	tokio::spawn(async move {
 		let interval = Duration::from_secs(reverification_config.interval_seconds);
+		// Run first cycle immediately, then sleep between subsequent cycles
 		loop {
-			tokio::time::sleep(interval).await;
 			if let Err(err) =
 				run_reverification_cycle(&reverification_config, &config, &pg_pool).await
 			{
 				warn!(target: LOG_TARGET, error = ?err, "Reverification cycle failed");
 			}
+			tokio::time::sleep(interval).await;
 		}
 	});
 }
@@ -110,6 +111,9 @@ async fn process_schedule(
 		return Ok(());
 	}
 
+	// Validate worker config early before consuming quota or creating DB records
+	let worker_config = config.must_worker_config()?;
+
 	// Check quota
 	let tenant_ctx =
 		crate::tenant::auth::resolve_tenant_context_by_id(pg_pool, schedule.tenant_id).await?;
@@ -152,8 +156,6 @@ async fn process_schedule(
 	.bind(schedule.tenant_id)
 	.fetch_one(pg_pool)
 	.await?;
-
-	let worker_config = config.must_worker_config()?;
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
 		.with_priority(0); // Lower priority than normal tasks

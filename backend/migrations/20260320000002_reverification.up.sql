@@ -7,7 +7,7 @@ CREATE TABLE reverification_schedules (
     batch_size      INTEGER NOT NULL DEFAULT 100,
     last_run_at     TIMESTAMPTZ,
     next_run_at     TIMESTAMPTZ,
-    last_job_id     INTEGER REFERENCES v1_bulk_job(id),
+    last_job_id     INTEGER REFERENCES v1_bulk_job(id) ON DELETE SET NULL,
     emails_requeued INTEGER NOT NULL DEFAULT 0,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()

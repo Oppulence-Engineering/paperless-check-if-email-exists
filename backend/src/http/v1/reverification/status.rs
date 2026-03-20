@@ -12,18 +12,18 @@ use warp::Filter;
 #[derive(Debug, Serialize)]
 struct Response {
 	enabled: bool,
-	staleness_days: i32,
-	batch_size: i32,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	staleness_days: Option<i32>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	batch_size: Option<i32>,
+	#[serde(skip_serializing_if = "Option::is_none")]
 	last_run_at: Option<String>,
+	#[serde(skip_serializing_if = "Option::is_none")]
 	next_run_at: Option<String>,
+	#[serde(skip_serializing_if = "Option::is_none")]
 	last_job_id: Option<i32>,
-	emails_requeued: i32,
-}
-
-#[derive(Debug, Serialize)]
-struct NotConfiguredResponse {
-	enabled: bool,
-	message: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	emails_requeued: Option<i32>,
 }
 
 async fn http_handler(
@@ -49,16 +49,21 @@ async fn http_handler(
 	match row {
 		Some(row) => Ok(warp::reply::json(&Response {
 			enabled: row.get("enabled"),
-			staleness_days: row.get("staleness_days"),
-			batch_size: row.get("batch_size"),
+			staleness_days: Some(row.get("staleness_days")),
+			batch_size: Some(row.get("batch_size")),
 			last_run_at: row.get("last_run_at"),
 			next_run_at: row.get("next_run_at"),
 			last_job_id: row.get("last_job_id"),
-			emails_requeued: row.get("emails_requeued"),
+			emails_requeued: Some(row.get("emails_requeued")),
 		})),
-		None => Ok(warp::reply::json(&NotConfiguredResponse {
+		None => Ok(warp::reply::json(&Response {
 			enabled: false,
-			message: "No reverification schedule configured for this tenant".to_string(),
+			staleness_days: None,
+			batch_size: None,
+			last_run_at: None,
+			next_run_at: None,
+			last_job_id: None,
+			emails_requeued: None,
 		})),
 	}
 }

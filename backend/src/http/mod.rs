@@ -173,6 +173,11 @@ pub async fn run_warp_server(
 		if config.reverification.enable {
 			crate::reverification::spawn_reverification_scheduler(Arc::clone(&config), pool);
 		}
+	} else if config.reverification.enable {
+		tracing::error!(
+			target: check_if_email_exists::LOG_TARGET,
+			"Reverification is enabled but no Postgres pool is configured. Reverification will not run."
+		);
 	}
 
 	// Run v0 bulk job listener.
