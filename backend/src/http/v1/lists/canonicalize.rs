@@ -3,7 +3,9 @@
 /// Rules:
 /// 1. Trim whitespace, lowercase everything
 /// 2. Gmail/Googlemail: remove dots, strip +subaddress, normalize domain to gmail.com
-/// 3. All other providers: strip +subaddress only
+/// 3. All other providers: lowercase only (no +subaddress stripping, since
+///    '+' is not a universal subaddress convention and some providers treat
+///    it as significant)
 ///
 /// Returns None if the email doesn't contain exactly one '@'.
 pub fn canonicalize_email(email: &str) -> Option<String> {
@@ -29,13 +31,8 @@ pub fn canonicalize_email(email: &str) -> Option<String> {
 			}
 			format!("{}@gmail.com", local)
 		}
-		_ => {
-			let local = strip_subaddress(local);
-			if local.is_empty() {
-				return None;
-			}
-			format!("{}@{}", local, domain)
-		}
+		// No +subaddress stripping for non-Gmail providers
+		_ => format!("{}@{}", local, domain),
 	};
 
 	Some(result)
@@ -93,10 +90,11 @@ mod tests {
 	}
 
 	#[test]
-	fn test_other_provider_strips_subaddress() {
+	fn test_other_provider_preserves_subaddress() {
+		// '+' is not stripped for non-Gmail providers since it may be significant
 		assert_eq!(
 			canonicalize_email("user+tag@company.com"),
-			Some("user@company.com".to_string())
+			Some("user+tag@company.com".to_string())
 		);
 	}
 
