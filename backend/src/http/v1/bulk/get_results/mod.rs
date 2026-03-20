@@ -124,6 +124,10 @@ fn parse_response_format(format: Option<&str>) -> Result<ResponseFormat, warp::R
 	}
 }
 
+fn safe_i64(value: u64) -> i64 {
+	value.min(i64::MAX as u64) as i64
+}
+
 async fn job_result_as_iter(
 	job_id: i32,
 	limit: Option<u64>,
@@ -139,8 +143,8 @@ async fn job_result_as_iter(
 		"#,
 	)
 	.bind(job_id)
-	.bind(limit.map(|l| l as i64))
-	.bind(offset as i64)
+	.bind(limit.map(safe_i64))
+	.bind(safe_i64(offset))
 	.fetch_all(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -186,8 +190,8 @@ async fn job_result_csv(
 		"#,
 	)
 	.bind(job_id)
-	.bind(limit.map(|l| l as i64))
-	.bind(offset as i64)
+	.bind(limit.map(safe_i64))
+	.bind(safe_i64(offset))
 	.fetch_all(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
