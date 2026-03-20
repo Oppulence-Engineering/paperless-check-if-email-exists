@@ -68,15 +68,16 @@ pub async fn handle_check_email(
 	}
 
 	// Sandbox mode: return deterministic mock results without SMTP,
-	// throttle checks, or quota consumption.
+	// throttle checks, or quota consumption. Uses a fixed timestamp
+	// so responses are fully deterministic.
 	if body.sandbox {
+		use crate::scoring::response::scored_json_with_freshness;
+		use chrono::TimeZone;
 		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
-		let mut json = scored_response_fresh(&mock_result).map_err(ReacherResponseError::from)?;
-		// Inject sandbox marker so consumers know this is mock data
-		if let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(&json) {
-			value["_sandbox"] = serde_json::Value::Bool(true);
-			json = serde_json::to_vec(&value).unwrap_or(json);
-		}
+		let fixed_time = chrono::Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap();
+		let json = scored_json_with_freshness(&mock_result, Some(fixed_time))
+			.and_then(|v| serde_json::to_vec(&v))
+			.map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
 			body: json,

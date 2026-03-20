@@ -35,9 +35,9 @@ pub async fn evaluate_post_completion_actions(
 		}
 	};
 
-	let should_suppress = check_auto_suppress(&settings, score, category);
+	let suppress_reason = check_auto_suppress(&settings, score, category);
 
-	if should_suppress {
+	if let Some(reason) = suppress_reason {
 		let normalized_email = email.trim().to_lowercase();
 		if normalized_email.is_empty() {
 			return;
@@ -45,10 +45,11 @@ pub async fn evaluate_post_completion_actions(
 		let result = sqlx::query(
 			r#"
 			INSERT INTO v1_suppression_entries (tenant_id, email, reason, source)
-			VALUES ($1, $2, 'auto_invalid', 'auto_action')
+			VALUES ($1, $2, $3, 'auto_action')
 			ON CONFLICT (tenant_id, email) DO NOTHING
 			"#,
 		)
+		.bind(reason)
 		.bind(tenant_id)
 		.bind(&normalized_email)
 		.execute(pg_pool)
@@ -80,7 +81,7 @@ fn check_auto_suppress(
 	settings: &serde_json::Value,
 	score: Option<i16>,
 	category: Option<&str>,
-) -> bool {
+) -> Option<&'static str> {
 	// Check score threshold
 	if let Some(threshold) = settings
 		.get("auto_suppress_below_score")
@@ -88,7 +89,7 @@ fn check_auto_suppress(
 	{
 		if let Some(s) = score {
 			if (s as i64) < threshold {
-				return true;
+				return Some("auto_invalid");
 			}
 		}
 	}
@@ -100,12 +101,16 @@ fn check_auto_suppress(
 	{
 		if let Some(cat) = category {
 			if categories.iter().any(|c| c.as_str() == Some(cat)) {
-				return true;
+				return match cat {
+					"invalid" => Some("auto_invalid"),
+					"risky" => Some("auto_invalid"),
+					_ => Some("auto_invalid"),
+				};
 			}
 		}
 	}
 
-	false
+	None
 }
 
 #[cfg(test)]
@@ -116,18 +121,18 @@ mod tests {
 	#[test]
 	fn auto_suppress_below_score_threshold() {
 		let settings = json!({"auto_suppress_below_score": 30});
-		assert!(check_auto_suppress(&settings, Some(20), None));
-		assert!(!check_auto_suppress(&settings, Some(50), None));
-		assert!(!check_auto_suppress(&settings, None, None));
+		assert!(check_auto_suppress(&settings, Some(20), None).is_some());
+		assert!(check_auto_suppress(&settings, Some(50), None).is_none());
+		assert!(check_auto_suppress(&settings, None, None).is_none());
 	}
 
 	#[test]
 	fn auto_suppress_by_category() {
 		let settings = json!({"auto_suppress_categories": ["invalid", "risky"]});
-		assert!(check_auto_suppress(&settings, None, Some("invalid")));
-		assert!(check_auto_suppress(&settings, None, Some("risky")));
-		assert!(!check_auto_suppress(&settings, None, Some("valid")));
-		assert!(!check_auto_suppress(&settings, None, None));
+		assert!(check_auto_suppress(&settings, None, Some("invalid")).is_some());
+		assert!(check_auto_suppress(&settings, None, Some("risky")).is_some());
+		assert!(check_auto_suppress(&settings, None, Some("valid")).is_none());
+		assert!(check_auto_suppress(&settings, None, None).is_none());
 	}
 
 	#[test]
@@ -137,16 +142,16 @@ mod tests {
 			"auto_suppress_categories": ["invalid"]
 		});
 		// Score matches
-		assert!(check_auto_suppress(&settings, Some(10), Some("valid")));
+		assert!(check_auto_suppress(&settings, Some(10), Some("valid")).is_some());
 		// Category matches
-		assert!(check_auto_suppress(&settings, Some(50), Some("invalid")));
+		assert!(check_auto_suppress(&settings, Some(50), Some("invalid")).is_some());
 		// Neither matches
-		assert!(!check_auto_suppress(&settings, Some(50), Some("valid")));
+		assert!(check_auto_suppress(&settings, Some(50), Some("valid")).is_none());
 	}
 
 	#[test]
 	fn no_settings_no_suppression() {
 		let settings = json!({});
-		assert!(!check_auto_suppress(&settings, Some(0), Some("invalid")));
+		assert!(check_auto_suppress(&settings, Some(0), Some("invalid")).is_none());
 	}
 }
