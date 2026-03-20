@@ -12,19 +12,46 @@ use check_if_email_exists::{
 /// - `*@disposable.example.com` → risky, disposable
 /// - Any other domain → safe, deliverable (default)
 pub fn sandbox_check(email: &str) -> CheckEmailOutput {
-	let domain = email.split('@').nth(1).unwrap_or("example.com");
-	let username = email.split('@').next().unwrap_or("user");
+	let parts: Vec<&str> = email.splitn(2, '@').collect();
+	let (username, domain) = if parts.len() == 2 {
+		(parts[0], parts[1])
+	} else {
+		// Invalid email — no @ sign
+		return CheckEmailOutput {
+			input: email.to_string(),
+			is_reachable: Reachable::Invalid,
+			syntax: SyntaxDetails {
+				address: None,
+				domain: String::new(),
+				is_valid_syntax: false,
+				username: email.to_string(),
+				normalized_email: None,
+				suggestion: None,
+			},
+			misc: Ok(MiscDetails::default()),
+			mx: Ok(MxDetails::default()),
+			smtp: Ok(SmtpDetails {
+				can_connect_smtp: false,
+				has_full_inbox: false,
+				is_catch_all: false,
+				is_deliverable: false,
+				is_disabled: false,
+			}),
+			debug: Default::default(),
+		};
+	};
 
+	let domain_lower = domain.to_lowercase();
 	let syntax = SyntaxDetails {
 		address: None,
-		domain: domain.to_string(),
-		is_valid_syntax: true,
+		domain: domain_lower.clone(),
+		is_valid_syntax: !username.is_empty() && !domain.is_empty(),
 		username: username.to_string(),
-		normalized_email: Some(email.to_string()),
+		normalized_email: Some(format!("{}@{}", username, domain_lower)),
 		suggestion: None,
 	};
 
-	match domain {
+	match domain_lower.as_str() {
 		"invalid.example.com" => CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Invalid,

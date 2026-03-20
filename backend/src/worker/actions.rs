@@ -29,6 +29,7 @@ pub async fn evaluate_post_completion_actions(
 	let should_suppress = check_auto_suppress(&settings, score, category);
 
 	if should_suppress {
+		let normalized_email = email.trim().to_lowercase();
 		let result = sqlx::query(
 			r#"
 			INSERT INTO v1_suppression_entries (tenant_id, email, reason, source)
@@ -37,7 +38,7 @@ pub async fn evaluate_post_completion_actions(
 			"#,
 		)
 		.bind(tenant_id)
-		.bind(email)
+		.bind(&normalized_email)
 		.execute(pg_pool)
 		.await;
 

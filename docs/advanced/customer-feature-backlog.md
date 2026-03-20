@@ -22,6 +22,9 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 6 | List Cleaning | Smart deduplication and canonicalization | [#20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/20) | Yes |
 | 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 | 27 | Verification | Result freshness / confidence decay | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
+| 9 | Finder / Enrichment | Finder confidence explanation | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 
 ### Remaining
 
@@ -29,19 +32,19 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 |---|---|---|---|---|
 | 7 | List Cleaning | One-click suppression sync back to ESPs and CRMs | Saves customers from manually pushing bad records into downstream systems | Critical |
 | 8 | Finder / Enrichment | Contact waterfall search strategy | Increases match rates by chaining multiple candidate-generation and verification steps | Critical |
-| 9 | Finder / Enrichment | Finder confidence explanation | Shows why one candidate won, which improves trust in results | Critical |
+| ~~9~~ | ~~Finder / Enrichment~~ | ~~Finder confidence explanation~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
 | 10 | Integrations | Native HubSpot sync | Reduces manual export/import steps for CRM-driven teams | Critical |
 | 11 | Integrations | Native Salesforce sync | Makes enterprise sales and marketing workflows much easier to operationalize | Critical |
 | 12 | Integrations | Zapier connector | Expands automation reach for non-technical customers | Critical |
 | 13 | Integrations | Google Sheets sync | Gives spreadsheet-heavy teams a native workflow instead of CSV round-trips | Critical |
 | 14 | Automation | Scheduled list-cleaning pipelines | Lets customers keep recurring imports clean without manual uploads every time | Critical |
-| 15 | Automation | Conditional actions based on score and category | Makes the product more useful as a decision engine instead of a reporting tool | Critical |
+| ~~15~~ | ~~Automation~~ | ~~Conditional actions based on score and category~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
 | 16 | Verification | Provider-specific syntax validation | Prevents false positives by applying Gmail, Outlook, Yahoo, and other provider rules more precisely | Critical |
 | 17 | Verification | Bounce-risk prediction model | Gives customers a forward-looking risk estimate beyond raw SMTP checks | Critical |
 | 18 | Analytics / Reporting | Campaign outcome feedback loop | Lets customers feed bounce and engagement outcomes back into verification decisions | Critical |
 | 19 | Analytics / Reporting | Deliverability trends dashboard | Helps customers monitor quality changes over time instead of treating each job in isolation | Critical |
 | 20 | Finder / Enrichment | Account-based bulk people finder | Lets teams discover multiple likely contacts for a target company in one workflow | Critical |
-| 21 | Developer / API | Sandbox mode with deterministic mock results | Helps customers and partners build safely before using real credits or data | Critical |
+| ~~21~~ | ~~Developer / API~~ | ~~Sandbox mode with deterministic mock results~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
 | ~~22~~ | ~~Developer / API~~ | ~~Partial retry endpoint for failed bulk rows~~ | ~~Shipped in PR #21~~ | ~~Done~~ |
 | 23 | Team / Admin | SSO / SAML / SCIM | Required by many larger customers before they can adopt a new vendor | Critical |
 | 24 | Team / Admin | Role-based access control | Prevents accidental access to lists, exports, and admin actions | Critical |
