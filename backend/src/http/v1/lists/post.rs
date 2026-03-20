@@ -63,8 +63,15 @@ async fn http_handler(
 			continue;
 		}
 
-		let canonical = canonicalize_email(&email).unwrap_or_else(|| email.to_lowercase());
-		canonical_groups.entry(canonical).or_default().push(index);
+		match canonicalize_email(&email) {
+			Some(canonical) => {
+				canonical_groups.entry(canonical).or_default().push(index);
+			}
+			None => {
+				// Malformed email (multiple @, empty local after strip, etc.)
+				blank_indices.push(index);
+			}
+		}
 	}
 
 	let unique_email_count = canonical_groups.len() as i32;
