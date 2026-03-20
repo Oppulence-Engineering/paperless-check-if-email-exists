@@ -22,6 +22,7 @@ var _ MappedNullable = &ListDetailResponse{}
 
 // ListDetailResponse struct for ListDetailResponse
 type ListDetailResponse struct {
+	DeduplicatedCount NullableInt32 `json:"deduplicated_count,omitempty"`
 	EmailColumn string `json:"email_column"`
 	Id int32 `json:"id"`
 	JobId int32 `json:"job_id"`
@@ -29,6 +30,7 @@ type ListDetailResponse struct {
 	Status string `json:"status"`
 	Summary ListSummary `json:"summary"`
 	TotalRows int32 `json:"total_rows"`
+	UniqueEmails NullableInt32 `json:"unique_emails,omitempty"`
 }
 
 type _ListDetailResponse ListDetailResponse
@@ -55,6 +57,48 @@ func NewListDetailResponse(emailColumn string, id int32, jobId int32, name strin
 func NewListDetailResponseWithDefaults() *ListDetailResponse {
 	this := ListDetailResponse{}
 	return &this
+}
+
+// GetDeduplicatedCount returns the DeduplicatedCount field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetDeduplicatedCount() int32 {
+	if o == nil || IsNil(o.DeduplicatedCount.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.DeduplicatedCount.Get()
+}
+
+// GetDeduplicatedCountOk returns a tuple with the DeduplicatedCount field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListDetailResponse) GetDeduplicatedCountOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.DeduplicatedCount.Get(), o.DeduplicatedCount.IsSet()
+}
+
+// HasDeduplicatedCount returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasDeduplicatedCount() bool {
+	if o != nil && o.DeduplicatedCount.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDeduplicatedCount gets a reference to the given NullableInt32 and assigns it to the DeduplicatedCount field.
+func (o *ListDetailResponse) SetDeduplicatedCount(v int32) {
+	o.DeduplicatedCount.Set(&v)
+}
+// SetDeduplicatedCountNil sets the value for DeduplicatedCount to be an explicit nil
+func (o *ListDetailResponse) SetDeduplicatedCountNil() {
+	o.DeduplicatedCount.Set(nil)
+}
+
+// UnsetDeduplicatedCount ensures that no value is present for DeduplicatedCount, not even an explicit nil
+func (o *ListDetailResponse) UnsetDeduplicatedCount() {
+	o.DeduplicatedCount.Unset()
 }
 
 // GetEmailColumn returns the EmailColumn field value
@@ -225,6 +269,48 @@ func (o *ListDetailResponse) SetTotalRows(v int32) {
 	o.TotalRows = v
 }
 
+// GetUniqueEmails returns the UniqueEmails field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetUniqueEmails() int32 {
+	if o == nil || IsNil(o.UniqueEmails.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.UniqueEmails.Get()
+}
+
+// GetUniqueEmailsOk returns a tuple with the UniqueEmails field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListDetailResponse) GetUniqueEmailsOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.UniqueEmails.Get(), o.UniqueEmails.IsSet()
+}
+
+// HasUniqueEmails returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasUniqueEmails() bool {
+	if o != nil && o.UniqueEmails.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetUniqueEmails gets a reference to the given NullableInt32 and assigns it to the UniqueEmails field.
+func (o *ListDetailResponse) SetUniqueEmails(v int32) {
+	o.UniqueEmails.Set(&v)
+}
+// SetUniqueEmailsNil sets the value for UniqueEmails to be an explicit nil
+func (o *ListDetailResponse) SetUniqueEmailsNil() {
+	o.UniqueEmails.Set(nil)
+}
+
+// UnsetUniqueEmails ensures that no value is present for UniqueEmails, not even an explicit nil
+func (o *ListDetailResponse) UnsetUniqueEmails() {
+	o.UniqueEmails.Unset()
+}
+
 func (o ListDetailResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -235,6 +321,9 @@ func (o ListDetailResponse) MarshalJSON() ([]byte, error) {
 
 func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.DeduplicatedCount.IsSet() {
+		toSerialize["deduplicated_count"] = o.DeduplicatedCount.Get()
+	}
 	toSerialize["email_column"] = o.EmailColumn
 	toSerialize["id"] = o.Id
 	toSerialize["job_id"] = o.JobId
@@ -242,6 +331,9 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["status"] = o.Status
 	toSerialize["summary"] = o.Summary
 	toSerialize["total_rows"] = o.TotalRows
+	if o.UniqueEmails.IsSet() {
+		toSerialize["unique_emails"] = o.UniqueEmails.Get()
+	}
 	return toSerialize, nil
 }
 

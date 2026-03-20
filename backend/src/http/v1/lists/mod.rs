@@ -1,3 +1,4 @@
+pub mod canonicalize;
 pub mod csv_parse;
 pub mod delete;
 pub mod download;

@@ -723,6 +723,11 @@
       },
       "ListDetailResponse": {
         "properties": {
+          "deduplicated_count": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "email_column": {
             "type": "string"
           },
@@ -745,6 +750,11 @@
           },
           "total_rows": {
             "format": "int32",
+            "type": "integer"
+          },
+          "unique_emails": {
+            "format": "int32",
+            "nullable": true,
             "type": "integer"
           }
         },

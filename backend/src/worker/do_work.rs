@@ -481,6 +481,24 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 			}
 		}
 
+		// Propagate results (including errors) to duplicate task rows and
+		// transition them to 'completed' (they were 'queued' until now).
+		let _ = sqlx::query(
+			r#"
+			UPDATE v1_task_result AS dup
+			SET task_state = 'completed'::task_state,
+				result = pri.result, error = pri.error,
+				score = pri.score, score_category = pri.score_category,
+				sub_reason = pri.sub_reason, safe_to_send = pri.safe_to_send,
+				reason_codes = pri.reason_codes, completed_at = NOW(), updated_at = NOW()
+			FROM v1_task_result AS pri
+			WHERE dup.canonical_task_id = $1 AND pri.id = $1 AND dup.is_duplicate = true
+			"#,
+		)
+		.bind(task_db_id)
+		.execute(&pool)
+		.await;
+
 		if let Ok(list_id) = sqlx::query_scalar::<_, Option<i32>>(
 			"SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $1",
 		)
@@ -497,8 +515,9 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 						.ok()
 						.flatten()
 						.unwrap_or_default();
+				// Count rows with results, errors, or cancelled state as terminal
 				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state NOT IN ('queued', 'running', 'retrying')",
+					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')",
 				)
 				.bind(list_id)
 				.fetch_one(&pool)

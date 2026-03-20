@@ -1,3 +1,4 @@
+use super::canonicalize::canonicalize_email;
 use super::csv_parse::{parse_csv, ParsedCsv};
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
@@ -17,6 +18,7 @@ use lapin::BasicProperties;
 use serde::Serialize;
 use serde_json::Value;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::multipart::FormData;
@@ -43,19 +45,41 @@ async fn http_handler(
 
 	enforce_row_limit(&tenant_ctx, parsed.rows.len())?;
 
-	let non_empty_email_count = parsed
-		.rows
-		.iter()
-		.filter(|row| {
-			row.get(&parsed.email_column)
-				.and_then(Value::as_str)
-				.map(|value| !value.trim().is_empty())
-				.unwrap_or(false)
-		})
-		.count() as i32;
+	// Phase 1: Build canonical groupings for deduplication
+	// Maps canonical_email -> vec of row indices that share that canonical form
+	let mut canonical_groups: HashMap<String, Vec<usize>> = HashMap::new();
+	let mut blank_indices: Vec<usize> = Vec::new();
 
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, non_empty_email_count)
-		.await
+	for (index, row) in parsed.rows.iter().enumerate() {
+		let email = row
+			.get(&parsed.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
+
+		if email.is_empty() {
+			blank_indices.push(index);
+			continue;
+		}
+
+		match canonicalize_email(&email) {
+			Some(canonical) => {
+				canonical_groups.entry(canonical).or_default().push(index);
+			}
+			None => {
+				// Malformed email (multiple @, empty local after strip, etc.)
+				blank_indices.push(index);
+			}
+		}
+	}
+
+	let unique_email_count = canonical_groups.len() as i32;
+	let deduplicated_count =
+		(canonical_groups.values().map(|v| v.len()).sum::<usize>() - canonical_groups.len()) as i32;
+
+	// Phase 2: Charge quota for unique emails only
+	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, unique_email_count).await
 	{
 		QuotaCheckResult::Allowed => {}
 		QuotaCheckResult::ExceededMonthlyLimit {
@@ -90,13 +114,16 @@ async fn http_handler(
 		.name
 		.clone()
 		.unwrap_or_else(|| upload.filename.clone());
+
+	// Phase 3: Store dedup stats on v1_lists
 	let list_id: i32 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_lists (
 			tenant_id, job_id, name, original_filename, file_size_bytes, total_rows,
-			email_column, original_headers, original_data, status
+			email_column, original_headers, original_data, status,
+			unique_emails, deduplicated_count
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11)
 		RETURNING id
 		"#,
 	)
@@ -109,6 +136,8 @@ async fn http_handler(
 	.bind(&parsed.email_column)
 	.bind(&parsed.headers)
 	.bind(&original_data)
+	.bind(unique_email_count)
+	.bind(deduplicated_count)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -117,67 +146,81 @@ async fn http_handler(
 		.with_content_type("application/json".into())
 		.with_priority(1);
 
+	// Phase 4: Process rows with deduplication
 	let mut published_any = false;
-	for (index, row) in parsed.rows.iter().enumerate() {
-		let email = row
-			.get(&parsed.email_column)
-			.and_then(Value::as_str)
-			.unwrap_or_default()
-			.trim()
-			.to_string();
+
+	// Handle blank emails
+	for &index in &blank_indices {
 		let extra = serde_json::json!({
 			"list_id": list_id,
 			"row_index": index as i32,
 			"email_column": parsed.email_column,
 		});
-
-		if email.is_empty() {
-			let invalid_result = blank_email_result();
-			sqlx::query(
-				r#"
-				INSERT INTO v1_task_result (
-					job_id, payload, extra, result, tenant_id, task_state, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
-				)
-				VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, ARRAY['invalid_syntax'], NOW())
-				"#,
-			)
-			.bind(job_id)
-			.bind(serde_json::json!({
-				"input": {"to_email": ""},
-				"job_id": {"bulk": job_id},
-				"webhook": null
-			}))
-			.bind(extra)
-			.bind(invalid_result)
-			.bind(tenant_id)
-			.execute(&pg_pool)
-			.await
-			.map_err(ReacherResponseError::from)?;
-			continue;
-		}
-
-		let task_row_id: i32 = sqlx::query_scalar(
+		let invalid_result = blank_email_result();
+		sqlx::query(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id)
-			VALUES ($1, $2, $3, 'queued', $4)
+			INSERT INTO v1_task_result (
+				job_id, payload, extra, result, tenant_id, task_state,
+				score, score_category, sub_reason, safe_to_send, reason_codes,
+				completed_at, canonical_email, is_duplicate
+			)
+			VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, ARRAY['invalid_syntax'], NOW(), NULL, false)
+			"#,
+		)
+		.bind(job_id)
+		.bind(serde_json::json!({
+			"input": {"to_email": ""},
+			"job_id": {"bulk": job_id},
+			"webhook": null
+		}))
+		.bind(extra)
+		.bind(invalid_result)
+		.bind(tenant_id)
+		.execute(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+	}
+
+	// Handle canonical groups: first occurrence is primary, rest are duplicates
+	for (canonical, indices) in &canonical_groups {
+		let primary_index = indices[0];
+		let primary_email = parsed.rows[primary_index]
+			.get(&parsed.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
+
+		// Create primary task (queued, published to RabbitMQ)
+		let primary_extra = serde_json::json!({
+			"list_id": list_id,
+			"row_index": primary_index as i32,
+			"email_column": parsed.email_column,
+		});
+		// Use the canonical email for verification (not the raw first-seen email)
+		let primary_task_id: i32 = sqlx::query_scalar(
+			r#"
+			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate)
+			VALUES ($1, $2, $3, 'queued', $4, $5, false)
 			RETURNING id
 			"#,
 		)
 		.bind(job_id)
 		.bind(serde_json::json!({
-			"input": {"to_email": email},
+			"input": {"to_email": canonical},
 			"job_id": {"bulk": job_id},
 			"webhook": null
 		}))
-		.bind(extra)
+		.bind(primary_extra)
 		.bind(tenant_id)
+		.bind(canonical)
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
 
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
-				to_email: email.clone(),
+				to_email: canonical.clone(),
 				..Default::default()
 			}
 			.to_check_email_input(Arc::clone(&config)),
@@ -189,8 +232,8 @@ async fn http_handler(
 				correlation_id: None,
 				created_by: Some("lists".to_string()),
 				retry_policy: None,
-				dedupe_key: Some(format!("list:{}:row:{}", list_id, index)),
-				task_db_id: Some(task_row_id),
+				dedupe_key: Some(format!("list:{}:row:{}", list_id, primary_index)),
+				task_db_id: Some(primary_task_id),
 			}),
 		};
 		publish_task(
@@ -203,6 +246,45 @@ async fn http_handler(
 		)
 		.await?;
 		published_any = true;
+
+		// Create duplicate rows (completed immediately, no RabbitMQ publish, no result yet)
+		for &dup_index in &indices[1..] {
+			let dup_email = parsed.rows[dup_index]
+				.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.trim()
+				.to_string();
+			let dup_extra = serde_json::json!({
+				"list_id": list_id,
+				"row_index": dup_index as i32,
+				"email_column": parsed.email_column,
+			});
+			// Mark as 'queued' (not 'completed') so polling consumers don't see
+			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
+			sqlx::query(
+				r#"
+				INSERT INTO v1_task_result (
+					job_id, payload, extra, task_state, tenant_id,
+					canonical_email, is_duplicate, canonical_task_id
+				)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6)
+				"#,
+			)
+			.bind(job_id)
+			.bind(serde_json::json!({
+				"input": {"to_email": dup_email},
+				"job_id": {"bulk": job_id},
+				"webhook": null
+			}))
+			.bind(dup_extra)
+			.bind(tenant_id)
+			.bind(canonical)
+			.bind(primary_task_id)
+			.execute(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?;
+		}
 	}
 
 	let job_status = if published_any {
