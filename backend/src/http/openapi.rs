@@ -36,6 +36,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::jobs::get_results::v1_get_job_results,
 		crate::http::v1::jobs::download::v1_download_job_results,
 		crate::http::v1::jobs::retry::v1_retry_job,
+		crate::http::v1::jobs::approval_checklist::v1_job_approval_checklist,
 		crate::http::v1::lists::post::v1_create_list,
 		crate::http::v1::lists::get_list::v1_list_lists,
 		crate::http::v1::lists::get_detail::v1_get_list,
@@ -1061,6 +1062,32 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("RetryJobResponse", "Retry initiated"),
+	);
+	set_response(
+		spec,
+		"/v1/jobs/{job_id}/approval",
+		"get",
+		"200",
+		json!({
+			"description": "Pre-send approval checklist",
+			"content": {
+				"application/json": {
+					"schema": {
+						"type": "object",
+						"properties": {
+							"job_id": { "type": "integer", "format": "int32" },
+							"total_records": { "type": "integer", "format": "int32" },
+							"categories": { "type": "object" },
+							"risk_flags": { "type": "object" },
+							"safe_to_send_count": { "type": "integer", "format": "int64" },
+							"safe_to_send_pct": { "type": "number" },
+							"recommendation": { "type": "string" },
+							"ready_to_send": { "type": "boolean" }
+						}
+					}
+				}
+			}
+		}),
 	);
 	set_response(
 		spec,

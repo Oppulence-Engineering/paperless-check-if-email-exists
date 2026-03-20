@@ -11,6 +11,7 @@ Method | HTTP request | Description
 [**V1GetJobEvents**](JobsAPI.md#V1GetJobEvents) | **Get** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events
 [**V1GetJobResults**](JobsAPI.md#V1GetJobResults) | **Get** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 [**V1GetJobStatus**](JobsAPI.md#V1GetJobStatus) | **Get** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
+[**V1JobApprovalChecklist**](JobsAPI.md#V1JobApprovalChecklist) | **Get** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 [**V1RetryJob**](JobsAPI.md#V1RetryJob) | **Post** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 
 
@@ -509,6 +510,76 @@ Name | Type | Description  | Notes
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1JobApprovalChecklist
+
+> V1JobApprovalChecklist200Response V1JobApprovalChecklist(ctx, jobId).Execute()
+
+GET /v1/jobs/{job_id}/approval
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	jobId := int32(56) // int32 | Bulk job identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.JobsAPI.V1JobApprovalChecklist(context.Background(), jobId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1JobApprovalChecklist``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1JobApprovalChecklist`: V1JobApprovalChecklist200Response
+	fmt.Fprintf(os.Stdout, "Response from `JobsAPI.V1JobApprovalChecklist`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**jobId** | **int32** | Bulk job identifier | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1JobApprovalChecklistRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**V1JobApprovalChecklist200Response**](V1JobApprovalChecklist200Response.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

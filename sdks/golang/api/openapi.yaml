@@ -697,6 +697,30 @@ paths:
       summary: "GET /v1/jobs/{job_id}"
       tags:
       - Jobs
+  /v1/jobs/{job_id}/approval:
+    get:
+      description: Returns a pre-send approval checklist summarizing list quality.
+      operationId: v1_job_approval_checklist
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1_job_approval_checklist_200_response"
+          description: Pre-send approval checklist
+      summary: "GET /v1/jobs/{job_id}/approval"
+      tags:
+      - Jobs
   /v1/jobs/{job_id}/cancel:
     post:
       description: Requests cancellation for a tenant-scoped bulk job.
@@ -2934,6 +2958,37 @@ components:
       - Smtp
       title: YahooVerifMethod
       type: string
+    v1_job_approval_checklist_200_response:
+      example:
+        safe_to_send_count: 6
+        risk_flags: "{}"
+        job_id: 0
+        total_records: 5
+        safe_to_send_pct: 1.4658129805029452
+        recommendation: recommendation
+        categories: "{}"
+        ready_to_send: true
+      properties:
+        categories:
+          type: object
+        job_id:
+          format: int32
+          type: integer
+        ready_to_send:
+          type: boolean
+        recommendation:
+          type: string
+        risk_flags:
+          type: object
+        safe_to_send_count:
+          format: int64
+          type: integer
+        safe_to_send_pct:
+          type: number
+        total_records:
+          format: int32
+          type: integer
+      type: object
     CheckEmailOutput_misc:
       description: Additional information about the email account.
       oneOf:

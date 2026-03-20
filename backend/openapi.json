@@ -2441,6 +2441,69 @@
         ]
       }
     },
+    "/v1/jobs/{job_id}/approval": {
+      "get": {
+        "description": "Returns a pre-send approval checklist summarizing list quality.",
+        "operationId": "v1_job_approval_checklist",
+        "parameters": [
+          {
+            "description": "Bulk job identifier",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "categories": {
+                      "type": "object"
+                    },
+                    "job_id": {
+                      "format": "int32",
+                      "type": "integer"
+                    },
+                    "ready_to_send": {
+                      "type": "boolean"
+                    },
+                    "recommendation": {
+                      "type": "string"
+                    },
+                    "risk_flags": {
+                      "type": "object"
+                    },
+                    "safe_to_send_count": {
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "safe_to_send_pct": {
+                      "type": "number"
+                    },
+                    "total_records": {
+                      "format": "int32",
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Pre-send approval checklist"
+          }
+        },
+        "summary": "GET /v1/jobs/{job_id}/approval",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
     "/v1/jobs/{job_id}/cancel": {
       "post": {
         "description": "Requests cancellation for a tenant-scoped bulk job.",

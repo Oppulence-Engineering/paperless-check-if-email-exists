@@ -77,6 +77,7 @@ docs/TaskWebhook.md
 docs/TenantApi.md
 docs/V0Api.md
 docs/V1Api.md
+docs/V1JobApprovalChecklist200Response.md
 docs/VerifMethod.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
@@ -137,6 +138,7 @@ models/suppression-list-response.ts
 models/suppression-reason.ts
 models/syntax-details.ts
 models/task-webhook.ts
+models/v1-job-approval-checklist200-response.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts

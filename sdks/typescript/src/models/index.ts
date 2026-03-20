@@ -52,6 +52,7 @@ export * from './suppression-list-response';
 export * from './suppression-reason';
 export * from './syntax-details';
 export * from './task-webhook';
+export * from './v1-job-approval-checklist200-response';
 export * from './verif-method';
 export * from './webhook';
 export * from './yahoo-verif-method';

@@ -11,6 +11,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1GetJobEvents**](#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events|
 |[**v1GetJobResults**](#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results|
 |[**v1GetJobStatus**](#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}|
+|[**v1JobApprovalChecklist**](#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval|
 |[**v1RetryJob**](#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry|
 
 # **v1CancelJob**
@@ -394,6 +395,57 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress summary |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1JobApprovalChecklist**
+> V1JobApprovalChecklist200Response v1JobApprovalChecklist()
+
+Returns a pre-send approval checklist summarizing list quality.
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; //Bulk job identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1JobApprovalChecklist(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] | Bulk job identifier | defaults to undefined|
+
+
+### Return type
+
+**V1JobApprovalChecklist200Response**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pre-send approval checklist |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
