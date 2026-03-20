@@ -18,6 +18,9 @@
 import type { EmailCategory } from './email-category';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { Freshness } from './freshness';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { ReasonCode } from './reason-code';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -34,10 +37,22 @@ import type { SubReason } from './sub-reason';
 export interface EmailScore {
     /**
      * 
+     * @type {number}
+     * @memberof EmailScore
+     */
+    'age_days'?: number;
+    /**
+     * 
      * @type {EmailCategory}
      * @memberof EmailScore
      */
     'category': EmailCategory;
+    /**
+     * 
+     * @type {Freshness}
+     * @memberof EmailScore
+     */
+    'freshness'?: Freshness;
     /**
      * 
      * @type {Array<ReasonCode>}
@@ -68,6 +83,12 @@ export interface EmailScore {
      * @memberof EmailScore
      */
     'sub_reason': SubReason;
+    /**
+     * 
+     * @type {string}
+     * @memberof EmailScore
+     */
+    'verified_at'?: string;
 }
 
 

@@ -838,6 +838,31 @@ paths:
       summary: "GET /v1/jobs/{job_id}/results"
       tags:
       - Jobs
+  /v1/jobs/{job_id}/retry:
+    post:
+      description: Retries all failed or dead-lettered tasks in a tenant-scoped bulk
+        job.
+      operationId: v1_retry_job
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryJobResponse"
+          description: Retry initiated
+      summary: "POST /v1/jobs/{job_id}/retry"
+      tags:
+      - Jobs
   /v1/lists:
     get:
       operationId: v1_list_lists
@@ -1399,7 +1424,8 @@ components:
             reason_codes:
             - deliverable
             - deliverable
-            score: 14
+            age_days: 1
+            score: 59
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -1415,7 +1441,9 @@ components:
               is_role_account: true
               smtp_error: true
               has_domain_suggestion: true
+            verified_at: 2000-01-23T04:56:07.000+00:00
             category: valid
+            freshness: fresh
             safe_to_send: true
             sub_reason: deliverable
           debug:
@@ -1454,7 +1482,8 @@ components:
             reason_codes:
             - deliverable
             - deliverable
-            score: 14
+            age_days: 1
+            score: 59
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -1470,7 +1499,9 @@ components:
               is_role_account: true
               smtp_error: true
               has_domain_suggestion: true
+            verified_at: 2000-01-23T04:56:07.000+00:00
             category: valid
+            freshness: fresh
             safe_to_send: true
             sub_reason: deliverable
           debug:
@@ -1550,7 +1581,8 @@ components:
           reason_codes:
           - deliverable
           - deliverable
-          score: 14
+          age_days: 1
+          score: 59
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -1566,7 +1598,9 @@ components:
             is_role_account: true
             smtp_error: true
             has_domain_suggestion: true
+          verified_at: 2000-01-23T04:56:07.000+00:00
           category: valid
+          freshness: fresh
           safe_to_send: true
           sub_reason: deliverable
         debug:
@@ -1859,7 +1893,8 @@ components:
         reason_codes:
         - deliverable
         - deliverable
-        score: 14
+        age_days: 1
+        score: 59
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -1875,12 +1910,19 @@ components:
           is_role_account: true
           smtp_error: true
           has_domain_suggestion: true
+        verified_at: 2000-01-23T04:56:07.000+00:00
         category: valid
+        freshness: fresh
         safe_to_send: true
         sub_reason: deliverable
       properties:
+        age_days:
+          format: int64
+          type: integer
         category:
           $ref: "#/components/schemas/EmailCategory"
+        freshness:
+          $ref: "#/components/schemas/Freshness"
         reason_codes:
           items:
             $ref: "#/components/schemas/ReasonCode"
@@ -1896,6 +1938,9 @@ components:
           $ref: "#/components/schemas/ScoringSignals"
         sub_reason:
           $ref: "#/components/schemas/SubReason"
+        verified_at:
+          format: date-time
+          type: string
       required:
       - category
       - reason_codes
@@ -2054,6 +2099,14 @@ components:
       - score
       - sub_reason
       type: object
+    Freshness:
+      enum:
+      - fresh
+      - recent
+      - aging
+      - stale
+      - expired
+      type: string
     GmailVerifMethod:
       description: Enumeration describing the method used to verify Gmail emails.
       enum:
@@ -2464,6 +2517,25 @@ components:
       - domain_info
       - risk_level
       - score
+      type: object
+    RetryJobResponse:
+      example:
+        tasks_retried: 6
+        job_id: 0
+        status: status
+      properties:
+        job_id:
+          format: int32
+          type: integer
+        status:
+          type: string
+        tasks_retried:
+          format: int64
+          type: integer
+      required:
+      - job_id
+      - status
+      - tasks_retried
       type: object
     ReverificationStatusResponse:
       example:
