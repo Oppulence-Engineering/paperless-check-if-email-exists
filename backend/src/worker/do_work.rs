@@ -481,11 +481,13 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 			}
 		}
 
-		// Propagate results (including errors) to duplicate task rows
+		// Propagate results (including errors) to duplicate task rows and
+		// transition them to 'completed' (they were 'queued' until now).
 		let _ = sqlx::query(
 			r#"
 			UPDATE v1_task_result AS dup
-			SET result = pri.result, error = pri.error,
+			SET task_state = 'completed'::task_state,
+				result = pri.result, error = pri.error,
 				score = pri.score, score_category = pri.score_category,
 				sub_reason = pri.sub_reason, safe_to_send = pri.safe_to_send,
 				reason_codes = pri.reason_codes, completed_at = NOW(), updated_at = NOW()
@@ -513,10 +515,9 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 						.ok()
 						.flatten()
 						.unwrap_or_default();
-				// Count rows with actual results (not just completed state, since
-				// dedup rows are marked completed immediately but have no result yet)
+				// Count rows with results, errors, or cancelled state as terminal
 				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL)",
+					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')",
 				)
 				.bind(list_id)
 				.fetch_one(&pool)

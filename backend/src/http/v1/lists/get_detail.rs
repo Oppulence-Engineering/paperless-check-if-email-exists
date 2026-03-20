@@ -102,7 +102,7 @@ pub async fn list_summary(pg_pool: &PgPool, list_id: i32) -> Result<Summary, Rea
 			COUNT(*) FILTER (WHERE score_category = 'risky') AS total_risky,
 			COUNT(*) FILTER (WHERE score_category = 'unknown') AS total_unknown,
 			COUNT(*) FILTER (WHERE score_category = 'invalid') AS total_invalid,
-			COUNT(*) FILTER (WHERE result IS NOT NULL OR error IS NOT NULL) AS total_processed
+			COUNT(*) FILTER (WHERE result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled') AS total_processed
 		FROM v1_task_result
 		WHERE (extra->>'list_id')::INTEGER = $1
 		"#,

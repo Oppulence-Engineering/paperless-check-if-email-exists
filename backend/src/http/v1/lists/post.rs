@@ -253,13 +253,15 @@ async fn http_handler(
 				"row_index": dup_index as i32,
 				"email_column": parsed.email_column,
 			});
+			// Mark as 'queued' (not 'completed') so polling consumers don't see
+			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
 			sqlx::query(
 				r#"
 				INSERT INTO v1_task_result (
 					job_id, payload, extra, task_state, tenant_id,
 					canonical_email, is_duplicate, canonical_task_id
 				)
-				VALUES ($1, $2, $3, 'completed', $4, $5, true, $6)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6)
 				"#,
 			)
 			.bind(job_id)
