@@ -25,6 +25,18 @@ import (
 type V1API interface {
 
 	/*
+	V1AddSuppressions POST /v1/suppressions
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1AddSuppressionsRequest
+	*/
+	V1AddSuppressions(ctx context.Context) V1APIV1AddSuppressionsRequest
+
+	// V1AddSuppressionsExecute executes the request
+	//  @return AddSuppressionsResponse
+	V1AddSuppressionsExecute(r V1APIV1AddSuppressionsRequest) (*AddSuppressionsResponse, *http.Response, error)
+
+	/*
 	V1CheckEmail POST /v1/check_email
 
 	Verifies an email address and returns a result.
@@ -49,6 +61,18 @@ type V1API interface {
 	// V1CheckReputationExecute executes the request
 	//  @return ReputationCheckResponse
 	V1CheckReputationExecute(r V1APIV1CheckReputationRequest) (*ReputationCheckResponse, *http.Response, error)
+
+	/*
+	V1CheckSuppression GET /v1/suppressions/check
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1CheckSuppressionRequest
+	*/
+	V1CheckSuppression(ctx context.Context) V1APIV1CheckSuppressionRequest
+
+	// V1CheckSuppressionExecute executes the request
+	//  @return SuppressionCheckResponse
+	V1CheckSuppressionExecute(r V1APIV1CheckSuppressionRequest) (*SuppressionCheckResponse, *http.Response, error)
 
 	/*
 	V1CreateBulkJob Create the v1 bulk endpoint.
@@ -87,6 +111,19 @@ type V1API interface {
 	// V1DeleteListExecute executes the request
 	//  @return ListDeleteResponse
 	V1DeleteListExecute(r V1APIV1DeleteListRequest) (*ListDeleteResponse, *http.Response, error)
+
+	/*
+	V1DeleteSuppression DELETE /v1/suppressions/{id}
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id Suppression entry identifier
+	@return V1APIV1DeleteSuppressionRequest
+	*/
+	V1DeleteSuppression(ctx context.Context, id int32) V1APIV1DeleteSuppressionRequest
+
+	// V1DeleteSuppressionExecute executes the request
+	//  @return SuppressionDeleteResponse
+	V1DeleteSuppressionExecute(r V1APIV1DeleteSuppressionRequest) (*SuppressionDeleteResponse, *http.Response, error)
 
 	/*
 	V1DownloadList GET /v1/lists/{list_id}/download
@@ -150,10 +187,144 @@ type V1API interface {
 	// V1ListListsExecute executes the request
 	//  @return ListListResponse
 	V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListResponse, *http.Response, error)
+
+	/*
+	V1ListSuppressions GET /v1/suppressions
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1ListSuppressionsRequest
+	*/
+	V1ListSuppressions(ctx context.Context) V1APIV1ListSuppressionsRequest
+
+	// V1ListSuppressionsExecute executes the request
+	//  @return SuppressionListResponse
+	V1ListSuppressionsExecute(r V1APIV1ListSuppressionsRequest) (*SuppressionListResponse, *http.Response, error)
 }
 
 // V1APIService V1API service
 type V1APIService service
+
+type V1APIV1AddSuppressionsRequest struct {
+	ctx context.Context
+	ApiService V1API
+	addSuppressionsRequest *AddSuppressionsRequest
+}
+
+func (r V1APIV1AddSuppressionsRequest) AddSuppressionsRequest(addSuppressionsRequest AddSuppressionsRequest) V1APIV1AddSuppressionsRequest {
+	r.addSuppressionsRequest = &addSuppressionsRequest
+	return r
+}
+
+func (r V1APIV1AddSuppressionsRequest) Execute() (*AddSuppressionsResponse, *http.Response, error) {
+	return r.ApiService.V1AddSuppressionsExecute(r)
+}
+
+/*
+V1AddSuppressions POST /v1/suppressions
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1AddSuppressionsRequest
+*/
+func (a *V1APIService) V1AddSuppressions(ctx context.Context) V1APIV1AddSuppressionsRequest {
+	return V1APIV1AddSuppressionsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return AddSuppressionsResponse
+func (a *V1APIService) V1AddSuppressionsExecute(r V1APIV1AddSuppressionsRequest) (*AddSuppressionsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *AddSuppressionsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1AddSuppressions")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.addSuppressionsRequest == nil {
+		return localVarReturnValue, nil, reportError("addSuppressionsRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.addSuppressionsRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
 
 type V1APIV1CheckEmailRequest struct {
 	ctx context.Context
@@ -360,6 +531,127 @@ func (a *V1APIService) V1CheckReputationExecute(r V1APIV1CheckReputationRequest)
 	}
 	// body params
 	localVarPostBody = r.reputationCheckRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1CheckSuppressionRequest struct {
+	ctx context.Context
+	ApiService V1API
+	email *string
+}
+
+func (r V1APIV1CheckSuppressionRequest) Email(email string) V1APIV1CheckSuppressionRequest {
+	r.email = &email
+	return r
+}
+
+func (r V1APIV1CheckSuppressionRequest) Execute() (*SuppressionCheckResponse, *http.Response, error) {
+	return r.ApiService.V1CheckSuppressionExecute(r)
+}
+
+/*
+V1CheckSuppression GET /v1/suppressions/check
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1CheckSuppressionRequest
+*/
+func (a *V1APIService) V1CheckSuppression(ctx context.Context) V1APIV1CheckSuppressionRequest {
+	return V1APIV1CheckSuppressionRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return SuppressionCheckResponse
+func (a *V1APIService) V1CheckSuppressionExecute(r V1APIV1CheckSuppressionRequest) (*SuppressionCheckResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SuppressionCheckResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1CheckSuppression")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions/check"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.email == nil {
+		return localVarReturnValue, nil, reportError("email is required and must be specified")
+	}
+
+	parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "form", "")
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -718,6 +1010,121 @@ func (a *V1APIService) V1DeleteListExecute(r V1APIV1DeleteListRequest) (*ListDel
 
 	localVarPath := localBasePath + "/v1/lists/{list_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1DeleteSuppressionRequest struct {
+	ctx context.Context
+	ApiService V1API
+	id int32
+}
+
+func (r V1APIV1DeleteSuppressionRequest) Execute() (*SuppressionDeleteResponse, *http.Response, error) {
+	return r.ApiService.V1DeleteSuppressionExecute(r)
+}
+
+/*
+V1DeleteSuppression DELETE /v1/suppressions/{id}
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id Suppression entry identifier
+ @return V1APIV1DeleteSuppressionRequest
+*/
+func (a *V1APIService) V1DeleteSuppression(ctx context.Context, id int32) V1APIV1DeleteSuppressionRequest {
+	return V1APIV1DeleteSuppressionRequest{
+		ApiService: a,
+		ctx: ctx,
+		id: id,
+	}
+}
+
+// Execute executes the request
+//  @return SuppressionDeleteResponse
+func (a *V1APIService) V1DeleteSuppressionExecute(r V1APIV1DeleteSuppressionRequest) (*SuppressionDeleteResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SuppressionDeleteResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1DeleteSuppression")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1336,6 +1743,144 @@ func (a *V1APIService) V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListR
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ListSuppressionsRequest struct {
+	ctx context.Context
+	ApiService V1API
+	limit *int64
+	offset *int64
+	reason *string
+}
+
+func (r V1APIV1ListSuppressionsRequest) Limit(limit int64) V1APIV1ListSuppressionsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) Offset(offset int64) V1APIV1ListSuppressionsRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) Reason(reason string) V1APIV1ListSuppressionsRequest {
+	r.reason = &reason
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) Execute() (*SuppressionListResponse, *http.Response, error) {
+	return r.ApiService.V1ListSuppressionsExecute(r)
+}
+
+/*
+V1ListSuppressions GET /v1/suppressions
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1ListSuppressionsRequest
+*/
+func (a *V1APIService) V1ListSuppressions(ctx context.Context) V1APIV1ListSuppressionsRequest {
+	return V1APIV1ListSuppressionsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return SuppressionListResponse
+func (a *V1APIService) V1ListSuppressionsExecute(r V1APIV1ListSuppressionsRequest) (*SuppressionListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SuppressionListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ListSuppressions")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	if r.reason != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "reason", r.reason, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

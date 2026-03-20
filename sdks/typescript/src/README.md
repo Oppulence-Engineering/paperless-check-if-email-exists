@@ -103,20 +103,26 @@ Class | Method | HTTP request | Description
 *V0Api* | [**getBulkJobResult**](docs/V0Api.md#getbulkjobresult) | **GET** /v0/bulk/{job_id}/results | GET /v0/bulk/{job_id}/results
 *V0Api* | [**getBulkJobStatus**](docs/V0Api.md#getbulkjobstatus) | **GET** /v0/bulk/{job_id} | GET /v0/bulk/{job_id}
 *V0Api* | [**postCheckEmail**](docs/V0Api.md#postcheckemail) | **POST** /v0/check_email | POST /v0/check_email
+*V1Api* | [**v1AddSuppressions**](docs/V1Api.md#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions
 *V1Api* | [**v1CheckEmail**](docs/V1Api.md#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email
 *V1Api* | [**v1CheckReputation**](docs/V1Api.md#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check
+*V1Api* | [**v1CheckSuppression**](docs/V1Api.md#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check
 *V1Api* | [**v1CreateBulkJob**](docs/V1Api.md#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.
 *V1Api* | [**v1CreateList**](docs/V1Api.md#v1createlist) | **POST** /v1/lists | POST /v1/lists
 *V1Api* | [**v1DeleteList**](docs/V1Api.md#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
+*V1Api* | [**v1DeleteSuppression**](docs/V1Api.md#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 *V1Api* | [**v1DownloadList**](docs/V1Api.md#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
 *V1Api* | [**v1FindEmail**](docs/V1Api.md#v1findemail) | **POST** /v1/find_email | POST /v1/find_email
 *V1Api* | [**v1GetFindEmail**](docs/V1Api.md#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
+*V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 
 
 ### Documentation For Models
 
+ - [AddSuppressionsRequest](docs/AddSuppressionsRequest.md)
+ - [AddSuppressionsResponse](docs/AddSuppressionsResponse.md)
  - [BlacklistResult](docs/BlacklistResult.md)
  - [BulkJobResultsResponse](docs/BulkJobResultsResponse.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)
@@ -158,6 +164,11 @@ Class | Method | HTTP request | Description
  - [ScoringSignals](docs/ScoringSignals.md)
  - [SmtpDetails](docs/SmtpDetails.md)
  - [SubReason](docs/SubReason.md)
+ - [SuppressionCheckResponse](docs/SuppressionCheckResponse.md)
+ - [SuppressionDeleteResponse](docs/SuppressionDeleteResponse.md)
+ - [SuppressionEntry](docs/SuppressionEntry.md)
+ - [SuppressionListResponse](docs/SuppressionListResponse.md)
+ - [SuppressionReason](docs/SuppressionReason.md)
  - [SyntaxDetails](docs/SyntaxDetails.md)
  - [TaskWebhook](docs/TaskWebhook.md)
  - [VerifMethod](docs/VerifMethod.md)

@@ -4,17 +4,85 @@ All URIs are relative to *https://api.reacher.email*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**V1AddSuppressions**](V1API.md#V1AddSuppressions) | **Post** /v1/suppressions | POST /v1/suppressions
 [**V1CheckEmail**](V1API.md#V1CheckEmail) | **Post** /v1/check_email | POST /v1/check_email
 [**V1CheckReputation**](V1API.md#V1CheckReputation) | **Post** /v1/reputation/check | POST /v1/reputation/check
+[**V1CheckSuppression**](V1API.md#V1CheckSuppression) | **Get** /v1/suppressions/check | GET /v1/suppressions/check
 [**V1CreateBulkJob**](V1API.md#V1CreateBulkJob) | **Post** /v1/bulk | Create the v1 bulk endpoint.
 [**V1CreateList**](V1API.md#V1CreateList) | **Post** /v1/lists | POST /v1/lists
 [**V1DeleteList**](V1API.md#V1DeleteList) | **Delete** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
+[**V1DeleteSuppression**](V1API.md#V1DeleteSuppression) | **Delete** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 [**V1DownloadList**](V1API.md#V1DownloadList) | **Get** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
 [**V1FindEmail**](V1API.md#V1FindEmail) | **Post** /v1/find_email | POST /v1/find_email
 [**V1GetFindEmail**](V1API.md#V1GetFindEmail) | **Get** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
+[**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
 
+
+
+## V1AddSuppressions
+
+> AddSuppressionsResponse V1AddSuppressions(ctx).AddSuppressionsRequest(addSuppressionsRequest).Execute()
+
+POST /v1/suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	addSuppressionsRequest := *openapiclient.NewAddSuppressionsRequest([]string{"Emails_example"}) // AddSuppressionsRequest | 
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1AddSuppressions(context.Background()).AddSuppressionsRequest(addSuppressionsRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1AddSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1AddSuppressions`: AddSuppressionsResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1AddSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1AddSuppressionsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **addSuppressionsRequest** | [**AddSuppressionsRequest**](AddSuppressionsRequest.md) |  | 
+
+### Return type
+
+[**AddSuppressionsResponse**](AddSuppressionsResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## V1CheckEmail
@@ -142,6 +210,70 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1CheckSuppression
+
+> SuppressionCheckResponse V1CheckSuppression(ctx).Email(email).Execute()
+
+GET /v1/suppressions/check
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	email := "email_example" // string | 
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1CheckSuppression(context.Background()).Email(email).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CheckSuppression``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1CheckSuppression`: SuppressionCheckResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1CheckSuppression`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1CheckSuppressionRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **email** | **string** |  | 
+
+### Return type
+
+[**SuppressionCheckResponse**](SuppressionCheckResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -334,6 +466,74 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListDeleteResponse**](ListDeleteResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1DeleteSuppression
+
+> SuppressionDeleteResponse V1DeleteSuppression(ctx, id).Execute()
+
+DELETE /v1/suppressions/{id}
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	id := int32(56) // int32 | Suppression entry identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1DeleteSuppression(context.Background(), id).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1DeleteSuppression``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1DeleteSuppression`: SuppressionDeleteResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1DeleteSuppression`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **int32** | Suppression entry identifier | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1DeleteSuppressionRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**SuppressionDeleteResponse**](SuppressionDeleteResponse.md)
 
 ### Authorization
 
@@ -672,6 +872,74 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListListResponse**](ListListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ListSuppressions
+
+> SuppressionListResponse V1ListSuppressions(ctx).Limit(limit).Offset(offset).Reason(reason).Execute()
+
+GET /v1/suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
+	reason := "reason_example" // string |  (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ListSuppressions(context.Background()).Limit(limit).Offset(offset).Reason(reason).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListSuppressions`: SuppressionListResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ListSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListSuppressionsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int64** |  | 
+ **offset** | **int64** |  | 
+ **reason** | **string** |  | 
+
+### Return type
+
+[**SuppressionListResponse**](SuppressionListResponse.md)
 
 ### Authorization
 

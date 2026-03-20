@@ -24,5 +24,6 @@ pub mod lists;
 pub mod me;
 pub mod onboard;
 pub mod reputation;
+pub mod suppressions;
 pub mod tenant_domains;
 pub mod tenant_settings;

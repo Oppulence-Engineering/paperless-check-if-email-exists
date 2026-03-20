@@ -41,6 +41,10 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::download::v1_download_list,
 		crate::http::v1::lists::delete::v1_delete_list,
 		crate::http::v1::reputation::check::v1_check_reputation,
+		crate::http::v1::suppressions::add::v1_add_suppressions,
+		crate::http::v1::suppressions::list::v1_list_suppressions,
+		crate::http::v1::suppressions::check::v1_check_suppression,
+		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::me::v1_me,
 		account_api_keys::get_api_key,
 		account_api_keys::list_api_keys,
@@ -707,6 +711,93 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["domain", "score", "risk_level", "blacklist_results", "dns_records", "domain_info", "cached"]
 		}),
 	);
+	insert_schema(
+		spec,
+		"SuppressionReason",
+		json!({
+			"type": "string",
+			"enum": ["manual", "bounce", "invalid", "spam_trap", "unsubscribe", "complaint", "auto_invalid"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"AddSuppressionsRequest",
+		json!({
+			"type": "object",
+			"properties": {
+				"emails": { "type": "array", "items": { "type": "string" } },
+				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"source": { "type": "string", "nullable": true },
+				"notes": { "type": "string", "nullable": true }
+			},
+			"required": ["emails"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"AddSuppressionsResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"added": { "type": "integer", "format": "int64" },
+				"duplicates": { "type": "integer", "format": "int64" }
+			},
+			"required": ["added", "duplicates"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionEntry",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int32" },
+				"email": { "type": "string" },
+				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"source": { "type": "string", "nullable": true },
+				"notes": { "type": "string", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "email", "reason", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionListResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"entries": { "type": "array", "items": { "$ref": "#/components/schemas/SuppressionEntry" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["entries", "total"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionCheckResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"suppressed": { "type": "boolean" },
+				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"source": { "type": "string", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time", "nullable": true }
+			},
+			"required": ["suppressed"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"deleted": { "type": "boolean" }
+			},
+			"required": ["deleted"]
+		}),
+	);
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
@@ -861,6 +952,43 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("ReputationCheckResponse", "Reputation check response"),
+	);
+
+	set_request_body(
+		spec,
+		"/v1/suppressions",
+		"post",
+		"application/json",
+		"AddSuppressionsRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v1/suppressions",
+		"post",
+		"200",
+		json_response("AddSuppressionsResponse", "Suppression entries added"),
+	);
+	set_response(
+		spec,
+		"/v1/suppressions",
+		"get",
+		"200",
+		json_response("SuppressionListResponse", "Suppression list"),
+	);
+	set_response(
+		spec,
+		"/v1/suppressions/check",
+		"get",
+		"200",
+		json_response("SuppressionCheckResponse", "Suppression check result"),
+	);
+	set_response(
+		spec,
+		"/v1/suppressions/{id}",
+		"delete",
+		"200",
+		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
 	);
 }
 
