@@ -25,6 +25,12 @@ import type { ListSummary } from './list-summary';
 export interface ListDetailResponse {
     /**
      * 
+     * @type {number}
+     * @memberof ListDetailResponse
+     */
+    'deduplicated_count'?: number | null;
+    /**
+     * 
      * @type {string}
      * @memberof ListDetailResponse
      */
@@ -65,5 +71,11 @@ export interface ListDetailResponse {
      * @memberof ListDetailResponse
      */
     'total_rows': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ListDetailResponse
+     */
+    'unique_emails'?: number | null;
 }
 

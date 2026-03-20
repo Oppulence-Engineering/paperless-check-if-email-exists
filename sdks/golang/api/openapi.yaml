@@ -2138,17 +2138,23 @@ components:
       example:
         email_column: email_column
         summary:
-          total_unknown: 2
+          total_unknown: 7
           total_processed: 5
-          total_invalid: 1
-          total_valid: 7
-          total_risky: 5
-        job_id: 6
-        total_rows: 9
+          total_invalid: 5
+          total_valid: 9
+          total_risky: 2
+        deduplicated_count: 0
+        job_id: 1
+        unique_emails: 2
+        total_rows: 3
         name: name
-        id: 0
+        id: 6
         status: status
       properties:
+        deduplicated_count:
+          format: int32
+          nullable: true
+          type: integer
         email_column:
           type: string
         id:
@@ -2165,6 +2171,10 @@ components:
           $ref: "#/components/schemas/ListSummary"
         total_rows:
           format: int32
+          type: integer
+        unique_emails:
+          format: int32
+          nullable: true
           type: integer
       required:
       - email_column
@@ -2236,11 +2246,11 @@ components:
       type: object
     ListSummary:
       example:
-        total_unknown: 2
+        total_unknown: 7
         total_processed: 5
-        total_invalid: 1
-        total_valid: 7
-        total_risky: 5
+        total_invalid: 5
+        total_valid: 9
+        total_risky: 2
       properties:
         total_invalid:
           format: int64

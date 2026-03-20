@@ -5,6 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**deduplicated_count** | **number** |  | [optional] [default to undefined]
 **email_column** | **string** |  | [default to undefined]
 **id** | **number** |  | [default to undefined]
 **job_id** | **number** |  | [default to undefined]
@@ -12,6 +13,7 @@ Name | Type | Description | Notes
 **status** | **string** |  | [default to undefined]
 **summary** | [**ListSummary**](ListSummary.md) |  | [default to undefined]
 **total_rows** | **number** |  | [default to undefined]
+**unique_emails** | **number** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -19,6 +21,7 @@ Name | Type | Description | Notes
 import { ListDetailResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListDetailResponse = {
+    deduplicated_count,
     email_column,
     id,
     job_id,
@@ -26,6 +29,7 @@ const instance: ListDetailResponse = {
     status,
     summary,
     total_rows,
+    unique_emails,
 };
 ```
 

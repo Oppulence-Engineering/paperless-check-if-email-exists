@@ -579,7 +579,9 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
 				"email_column": { "type": "string" },
-				"summary": { "$ref": "#/components/schemas/ListSummary" }
+				"summary": { "$ref": "#/components/schemas/ListSummary" },
+				"unique_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"deduplicated_count": { "type": "integer", "format": "int32", "nullable": true }
 			},
 			"required": ["id", "job_id", "name", "status", "total_rows", "email_column", "summary"]
 		}),

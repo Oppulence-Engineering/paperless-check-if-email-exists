@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**DeduplicatedCount** | Pointer to **NullableInt32** |  | [optional] 
 **EmailColumn** | **string** |  | 
 **Id** | **int32** |  | 
 **JobId** | **int32** |  | 
@@ -11,6 +12,7 @@ Name | Type | Description | Notes
 **Status** | **string** |  | 
 **Summary** | [**ListSummary**](ListSummary.md) |  | 
 **TotalRows** | **int32** |  | 
+**UniqueEmails** | Pointer to **NullableInt32** |  | [optional] 
 
 ## Methods
 
@@ -31,6 +33,41 @@ NewListDetailResponseWithDefaults instantiates a new ListDetailResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
+### GetDeduplicatedCount
+
+`func (o *ListDetailResponse) GetDeduplicatedCount() int32`
+
+GetDeduplicatedCount returns the DeduplicatedCount field if non-nil, zero value otherwise.
+
+### GetDeduplicatedCountOk
+
+`func (o *ListDetailResponse) GetDeduplicatedCountOk() (*int32, bool)`
+
+GetDeduplicatedCountOk returns a tuple with the DeduplicatedCount field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDeduplicatedCount
+
+`func (o *ListDetailResponse) SetDeduplicatedCount(v int32)`
+
+SetDeduplicatedCount sets DeduplicatedCount field to given value.
+
+### HasDeduplicatedCount
+
+`func (o *ListDetailResponse) HasDeduplicatedCount() bool`
+
+HasDeduplicatedCount returns a boolean if a field has been set.
+
+### SetDeduplicatedCountNil
+
+`func (o *ListDetailResponse) SetDeduplicatedCountNil(b bool)`
+
+ SetDeduplicatedCountNil sets the value for DeduplicatedCount to be an explicit nil
+
+### UnsetDeduplicatedCount
+`func (o *ListDetailResponse) UnsetDeduplicatedCount()`
+
+UnsetDeduplicatedCount ensures that no value is present for DeduplicatedCount, not even an explicit nil
 ### GetEmailColumn
 
 `func (o *ListDetailResponse) GetEmailColumn() string`
@@ -171,6 +208,41 @@ and a boolean to check if the value has been set.
 SetTotalRows sets TotalRows field to given value.
 
 
+### GetUniqueEmails
+
+`func (o *ListDetailResponse) GetUniqueEmails() int32`
+
+GetUniqueEmails returns the UniqueEmails field if non-nil, zero value otherwise.
+
+### GetUniqueEmailsOk
+
+`func (o *ListDetailResponse) GetUniqueEmailsOk() (*int32, bool)`
+
+GetUniqueEmailsOk returns a tuple with the UniqueEmails field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUniqueEmails
+
+`func (o *ListDetailResponse) SetUniqueEmails(v int32)`
+
+SetUniqueEmails sets UniqueEmails field to given value.
+
+### HasUniqueEmails
+
+`func (o *ListDetailResponse) HasUniqueEmails() bool`
+
+HasUniqueEmails returns a boolean if a field has been set.
+
+### SetUniqueEmailsNil
+
+`func (o *ListDetailResponse) SetUniqueEmailsNil(b bool)`
+
+ SetUniqueEmailsNil sets the value for UniqueEmails to be an explicit nil
+
+### UnsetUniqueEmails
+`func (o *ListDetailResponse) UnsetUniqueEmails()`
+
+UnsetUniqueEmails ensures that no value is present for UniqueEmails, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
