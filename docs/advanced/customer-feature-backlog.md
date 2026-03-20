@@ -10,7 +10,7 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
-### Completed
+## Completed
 
 | # | Area | Feature | PR | Shipped |
 |---|---|---|---|---|
@@ -26,7 +26,7 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 
-### Remaining
+## Remaining
 
 | # | Area | Feature | Why customers would care | Priority |
 |---|---|---|---|---|

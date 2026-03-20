@@ -264,6 +264,27 @@ async fn handle_without_worker(
 		.map_err(ReacherResponseError::from)?;
 
 	let result = result_ok.unwrap();
+
+	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
+	if let Some(pool) = config.get_pg_pool() {
+		if let Some(tenant_id) = _tenant_ctx.tenant_id {
+			let email_score = crate::scoring::compute_score(&result);
+			crate::worker::actions::evaluate_post_completion_actions(
+				&pool,
+				tenant_id,
+				&body.to_email,
+				Some(email_score.score),
+				Some(
+					&serde_json::to_value(&email_score.category)
+						.ok()
+						.and_then(|v| v.as_str().map(ToOwned::to_owned))
+						.unwrap_or_else(|| "unknown".to_string()),
+				),
+			)
+			.await;
+		}
+	}
+
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
 	Ok(scored_response_fresh(&result).map_err(ReacherResponseError::from)?)
 }

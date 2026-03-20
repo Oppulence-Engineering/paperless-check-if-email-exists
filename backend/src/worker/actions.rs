@@ -30,6 +30,9 @@ pub async fn evaluate_post_completion_actions(
 
 	if should_suppress {
 		let normalized_email = email.trim().to_lowercase();
+		if normalized_email.is_empty() {
+			return;
+		}
 		let result = sqlx::query(
 			r#"
 			INSERT INTO v1_suppression_entries (tenant_id, email, reason, source)
