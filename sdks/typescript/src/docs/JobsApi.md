@@ -11,6 +11,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1GetJobEvents**](#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events|
 |[**v1GetJobResults**](#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results|
 |[**v1GetJobStatus**](#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}|
+|[**v1RetryJob**](#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry|
 
 # **v1CancelJob**
 > v1CancelJob()
@@ -393,6 +394,57 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress summary |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1RetryJob**
+> RetryJobResponse v1RetryJob()
+
+Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; //Bulk job identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1RetryJob(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] | Bulk job identifier | defaults to undefined|
+
+
+### Return type
+
+**RetryJobResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Retry initiated |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

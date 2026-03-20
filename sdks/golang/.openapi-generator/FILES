@@ -38,6 +38,7 @@ docs/FindEmailRequest.md
 docs/FindEmailStatusResponse.md
 docs/FinderBestMatch.md
 docs/FinderCandidateResult.md
+docs/Freshness.md
 docs/GmailVerifMethod.md
 docs/HealthAPI.md
 docs/HotmailB2BVerifMethod.md
@@ -58,6 +59,7 @@ docs/Reachable.md
 docs/ReasonCode.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
+docs/RetryJobResponse.md
 docs/ReverificationStatusResponse.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
@@ -100,6 +102,7 @@ model_find_email_request.go
 model_find_email_status_response.go
 model_finder_best_match.go
 model_finder_candidate_result.go
+model_freshness.go
 model_gmail_verif_method.go
 model_hotmail_b2_b_verif_method.go
 model_hotmail_b2_c_verif_method.go
@@ -118,6 +121,7 @@ model_reachable.go
 model_reason_code.go
 model_reputation_check_request.go
 model_reputation_check_response.go
+model_retry_job_response.go
 model_reverification_status_response.go
 model_scoring_signals.go
 model_smtp_details.go

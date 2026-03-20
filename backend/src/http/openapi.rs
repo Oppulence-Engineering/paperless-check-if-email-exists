@@ -35,6 +35,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::jobs::get_events::v1_get_job_events,
 		crate::http::v1::jobs::get_results::v1_get_job_results,
 		crate::http::v1::jobs::download::v1_download_job_results,
+		crate::http::v1::jobs::retry::v1_retry_job,
 		crate::http::v1::lists::post::v1_create_list,
 		crate::http::v1::lists::get_list::v1_list_lists,
 		crate::http::v1::lists::get_detail::v1_get_list,
@@ -388,6 +389,14 @@ fn add_phase_two_schemas(spec: &mut Value) {
 	);
 	insert_schema(
 		spec,
+		"Freshness",
+		json!({
+			"type": "string",
+			"enum": ["fresh", "recent", "aging", "stale", "expired"]
+		}),
+	);
+	insert_schema(
+		spec,
 		"EmailScore",
 		json!({
 			"type": "object",
@@ -400,7 +409,10 @@ fn add_phase_two_schemas(spec: &mut Value) {
 					"type": "array",
 					"items": { "$ref": "#/components/schemas/ReasonCode" }
 				},
-				"signals": { "$ref": "#/components/schemas/ScoringSignals" }
+				"signals": { "$ref": "#/components/schemas/ScoringSignals" },
+				"verified_at": { "type": "string", "format": "date-time" },
+				"age_days": { "type": "integer", "format": "int64" },
+				"freshness": { "$ref": "#/components/schemas/Freshness" }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),
@@ -803,6 +815,19 @@ fn add_phase_two_schemas(spec: &mut Value) {
 	);
 	insert_schema(
 		spec,
+		"RetryJobResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"job_id": { "type": "integer", "format": "int32" },
+				"status": { "type": "string" },
+				"tasks_retried": { "type": "integer", "format": "int64" }
+			},
+			"required": ["job_id", "status", "tasks_retried"]
+		}),
+	);
+	insert_schema(
+		spec,
 		"ReverificationStatusResponse",
 		json!({
 			"type": "object",
@@ -1009,6 +1034,13 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"delete",
 		"200",
 		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
+	);
+	set_response(
+		spec,
+		"/v1/jobs/{job_id}/retry",
+		"post",
+		"200",
+		json_response("RetryJobResponse", "Retry initiated"),
 	);
 	set_response(
 		spec,

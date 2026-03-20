@@ -13,6 +13,7 @@ package reacher
 
 import (
 	"encoding/json"
+	"time"
 	"bytes"
 	"fmt"
 )
@@ -22,12 +23,15 @@ var _ MappedNullable = &EmailScore{}
 
 // EmailScore struct for EmailScore
 type EmailScore struct {
+	AgeDays *int64 `json:"age_days,omitempty"`
 	Category EmailCategory `json:"category"`
+	Freshness *Freshness `json:"freshness,omitempty"`
 	ReasonCodes []ReasonCode `json:"reason_codes"`
 	SafeToSend bool `json:"safe_to_send"`
 	Score int32 `json:"score"`
 	Signals ScoringSignals `json:"signals"`
 	SubReason SubReason `json:"sub_reason"`
+	VerifiedAt *time.Time `json:"verified_at,omitempty"`
 }
 
 type _EmailScore EmailScore
@@ -55,6 +59,38 @@ func NewEmailScoreWithDefaults() *EmailScore {
 	return &this
 }
 
+// GetAgeDays returns the AgeDays field value if set, zero value otherwise.
+func (o *EmailScore) GetAgeDays() int64 {
+	if o == nil || IsNil(o.AgeDays) {
+		var ret int64
+		return ret
+	}
+	return *o.AgeDays
+}
+
+// GetAgeDaysOk returns a tuple with the AgeDays field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetAgeDaysOk() (*int64, bool) {
+	if o == nil || IsNil(o.AgeDays) {
+		return nil, false
+	}
+	return o.AgeDays, true
+}
+
+// HasAgeDays returns a boolean if a field has been set.
+func (o *EmailScore) HasAgeDays() bool {
+	if o != nil && !IsNil(o.AgeDays) {
+		return true
+	}
+
+	return false
+}
+
+// SetAgeDays gets a reference to the given int64 and assigns it to the AgeDays field.
+func (o *EmailScore) SetAgeDays(v int64) {
+	o.AgeDays = &v
+}
+
 // GetCategory returns the Category field value
 func (o *EmailScore) GetCategory() EmailCategory {
 	if o == nil {
@@ -77,6 +113,38 @@ func (o *EmailScore) GetCategoryOk() (*EmailCategory, bool) {
 // SetCategory sets field value
 func (o *EmailScore) SetCategory(v EmailCategory) {
 	o.Category = v
+}
+
+// GetFreshness returns the Freshness field value if set, zero value otherwise.
+func (o *EmailScore) GetFreshness() Freshness {
+	if o == nil || IsNil(o.Freshness) {
+		var ret Freshness
+		return ret
+	}
+	return *o.Freshness
+}
+
+// GetFreshnessOk returns a tuple with the Freshness field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetFreshnessOk() (*Freshness, bool) {
+	if o == nil || IsNil(o.Freshness) {
+		return nil, false
+	}
+	return o.Freshness, true
+}
+
+// HasFreshness returns a boolean if a field has been set.
+func (o *EmailScore) HasFreshness() bool {
+	if o != nil && !IsNil(o.Freshness) {
+		return true
+	}
+
+	return false
+}
+
+// SetFreshness gets a reference to the given Freshness and assigns it to the Freshness field.
+func (o *EmailScore) SetFreshness(v Freshness) {
+	o.Freshness = &v
 }
 
 // GetReasonCodes returns the ReasonCodes field value
@@ -199,6 +267,38 @@ func (o *EmailScore) SetSubReason(v SubReason) {
 	o.SubReason = v
 }
 
+// GetVerifiedAt returns the VerifiedAt field value if set, zero value otherwise.
+func (o *EmailScore) GetVerifiedAt() time.Time {
+	if o == nil || IsNil(o.VerifiedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.VerifiedAt
+}
+
+// GetVerifiedAtOk returns a tuple with the VerifiedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetVerifiedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.VerifiedAt) {
+		return nil, false
+	}
+	return o.VerifiedAt, true
+}
+
+// HasVerifiedAt returns a boolean if a field has been set.
+func (o *EmailScore) HasVerifiedAt() bool {
+	if o != nil && !IsNil(o.VerifiedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetVerifiedAt gets a reference to the given time.Time and assigns it to the VerifiedAt field.
+func (o *EmailScore) SetVerifiedAt(v time.Time) {
+	o.VerifiedAt = &v
+}
+
 func (o EmailScore) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -209,12 +309,21 @@ func (o EmailScore) MarshalJSON() ([]byte, error) {
 
 func (o EmailScore) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.AgeDays) {
+		toSerialize["age_days"] = o.AgeDays
+	}
 	toSerialize["category"] = o.Category
+	if !IsNil(o.Freshness) {
+		toSerialize["freshness"] = o.Freshness
+	}
 	toSerialize["reason_codes"] = o.ReasonCodes
 	toSerialize["safe_to_send"] = o.SafeToSend
 	toSerialize["score"] = o.Score
 	toSerialize["signals"] = o.Signals
 	toSerialize["sub_reason"] = o.SubReason
+	if !IsNil(o.VerifiedAt) {
+		toSerialize["verified_at"] = o.VerifiedAt
+	}
 	return toSerialize, nil
 }
 

@@ -30,6 +30,7 @@ use crate::http::csv_shared::{csv_rows, TaskResultRecord};
 use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
 use crate::tenant::context::TenantContext;
+use chrono::{DateTime, Utc};
 
 /// Defines the download format, passed in as a query param.
 #[derive(Clone, Copy)]
@@ -123,33 +124,38 @@ fn parse_response_format(format: Option<&str>) -> Result<ResponseFormat, warp::R
 	}
 }
 
+fn safe_i64(value: u64) -> i64 {
+	value.min(i64::MAX as u64) as i64
+}
+
 async fn job_result_as_iter(
 	job_id: i32,
 	limit: Option<u64>,
 	offset: u64,
 	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
-	let query = sqlx::query!(
+	let rows = sqlx::query(
 		r#"
-		SELECT result FROM v1_task_result
+		SELECT result, completed_at FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
 		LIMIT $2 OFFSET $3
 		"#,
-		job_id,
-		limit.map(|l| l as i64),
-		offset as i64
-	);
+	)
+	.bind(job_id)
+	.bind(limit.map(safe_i64))
+	.bind(safe_i64(offset))
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
-	let rows = pg_pool
-		.fetch_all(query)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	Ok(Box::new(
-		rows.into_iter()
-			.map(|row| row.get::<serde_json::Value, &str>("result")),
-	))
+	Ok(Box::new(rows.into_iter().map(|row| {
+		let mut result: serde_json::Value = row.get("result");
+		if let Some(completed_at) = row.get::<Option<DateTime<Utc>>, _>("completed_at") {
+			crate::scoring::response::inject_freshness_into_result(&mut result, completed_at);
+		}
+		result
+	})))
 }
 
 async fn job_result_json(
@@ -176,7 +182,7 @@ async fn job_result_csv(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
@@ -184,8 +190,8 @@ async fn job_result_csv(
 		"#,
 	)
 	.bind(job_id)
-	.bind(limit.map(|l| l as i64))
-	.bind(offset as i64)
+	.bind(limit.map(safe_i64))
+	.bind(safe_i64(offset))
 	.fetch_all(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -202,6 +208,7 @@ async fn job_result_csv(
 			sub_reason: row.get("sub_reason"),
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
+			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
 		})
 		.collect();
 

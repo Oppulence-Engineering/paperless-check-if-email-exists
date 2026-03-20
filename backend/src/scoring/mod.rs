@@ -60,6 +60,39 @@ pub struct EmailScore {
 	pub signals: ScoringSignals,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Freshness {
+	Fresh,
+	Recent,
+	Aging,
+	Stale,
+	Expired,
+}
+
+pub struct FreshnessInfo {
+	pub verified_at: String,
+	pub age_days: i64,
+	pub freshness: Freshness,
+}
+
+pub fn compute_freshness(completed_at: chrono::DateTime<chrono::Utc>) -> FreshnessInfo {
+	let age = chrono::Utc::now() - completed_at;
+	let age_days = age.num_days().max(0);
+	let freshness = match age_days {
+		0..=7 => Freshness::Fresh,
+		8..=30 => Freshness::Recent,
+		31..=60 => Freshness::Aging,
+		61..=90 => Freshness::Stale,
+		_ => Freshness::Expired,
+	};
+	FreshnessInfo {
+		verified_at: completed_at.to_rfc3339(),
+		age_days,
+		freshness,
+	}
+}
+
 pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let signals = extract_signals(output);
 
@@ -540,5 +573,57 @@ mod tests {
 		let codes = collect_reason_codes(&signals);
 		assert!(codes.contains(&"spam_trap".to_string()));
 		assert!(!codes.contains(&"deliverable".to_string()));
+	}
+
+	#[test]
+	fn freshness_tier_fresh() {
+		let now = chrono::Utc::now();
+		assert_eq!(compute_freshness(now).freshness, Freshness::Fresh);
+		assert_eq!(compute_freshness(now).age_days, 0);
+		let seven_days_ago = now - chrono::Duration::days(7);
+		assert_eq!(
+			compute_freshness(seven_days_ago).freshness,
+			Freshness::Fresh
+		);
+	}
+
+	#[test]
+	fn freshness_tier_recent() {
+		let now = chrono::Utc::now();
+		let eight_days_ago = now - chrono::Duration::days(8);
+		assert_eq!(
+			compute_freshness(eight_days_ago).freshness,
+			Freshness::Recent
+		);
+		let thirty_days_ago = now - chrono::Duration::days(30);
+		assert_eq!(
+			compute_freshness(thirty_days_ago).freshness,
+			Freshness::Recent
+		);
+	}
+
+	#[test]
+	fn freshness_tier_aging() {
+		let now = chrono::Utc::now();
+		let thirty_one = now - chrono::Duration::days(31);
+		assert_eq!(compute_freshness(thirty_one).freshness, Freshness::Aging);
+		let sixty = now - chrono::Duration::days(60);
+		assert_eq!(compute_freshness(sixty).freshness, Freshness::Aging);
+	}
+
+	#[test]
+	fn freshness_tier_stale() {
+		let now = chrono::Utc::now();
+		let sixty_one = now - chrono::Duration::days(61);
+		assert_eq!(compute_freshness(sixty_one).freshness, Freshness::Stale);
+		let ninety = now - chrono::Duration::days(90);
+		assert_eq!(compute_freshness(ninety).freshness, Freshness::Stale);
+	}
+
+	#[test]
+	fn freshness_tier_expired() {
+		let now = chrono::Utc::now();
+		let ninety_one = now - chrono::Duration::days(91);
+		assert_eq!(compute_freshness(ninety_one).freshness, Freshness::Expired);
 	}
 }

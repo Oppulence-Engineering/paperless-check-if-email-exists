@@ -86,6 +86,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetJobEvents**](docs/JobsApi.md#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events
 *JobsApi* | [**v1GetJobResults**](docs/JobsApi.md#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
+*JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
 *TenantApi* | [**v1ClearTenantWebhook**](docs/TenantApi.md#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook
@@ -145,6 +146,7 @@ Class | Method | HTTP request | Description
  - [FindEmailStatusResponse](docs/FindEmailStatusResponse.md)
  - [FinderBestMatch](docs/FinderBestMatch.md)
  - [FinderCandidateResult](docs/FinderCandidateResult.md)
+ - [Freshness](docs/Freshness.md)
  - [GmailVerifMethod](docs/GmailVerifMethod.md)
  - [HotmailB2BVerifMethod](docs/HotmailB2BVerifMethod.md)
  - [HotmailB2CVerifMethod](docs/HotmailB2CVerifMethod.md)
@@ -162,6 +164,7 @@ Class | Method | HTTP request | Description
  - [ReasonCode](docs/ReasonCode.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
+ - [RetryJobResponse](docs/RetryJobResponse.md)
  - [ReverificationStatusResponse](docs/ReverificationStatusResponse.md)
  - [ScoringSignals](docs/ScoringSignals.md)
  - [SmtpDetails](docs/SmtpDetails.md)

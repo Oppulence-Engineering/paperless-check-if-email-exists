@@ -87,6 +87,7 @@ pub fn create_routes(
 		.or(v1::jobs::get_events::v1_get_job_events(Arc::clone(&config)).boxed())
 		.or(v1::jobs::get_results::v1_get_job_results(Arc::clone(&config)).boxed())
 		.or(v1::jobs::download::v1_download_job_results(Arc::clone(&config)).boxed())
+		.or(v1::jobs::retry::v1_retry_job(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_me_routes = v1::me::v1_me(Arc::clone(&config)).boxed();

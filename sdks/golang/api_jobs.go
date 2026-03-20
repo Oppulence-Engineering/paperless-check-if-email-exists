@@ -124,6 +124,21 @@ type JobsAPI interface {
 
 	// V1GetJobStatusExecute executes the request
 	V1GetJobStatusExecute(r JobsAPIV1GetJobStatusRequest) (*http.Response, error)
+
+	/*
+	V1RetryJob POST /v1/jobs/{job_id}/retry
+
+	Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param jobId Bulk job identifier
+	@return JobsAPIV1RetryJobRequest
+	*/
+	V1RetryJob(ctx context.Context, jobId int32) JobsAPIV1RetryJobRequest
+
+	// V1RetryJobExecute executes the request
+	//  @return RetryJobResponse
+	V1RetryJobExecute(r JobsAPIV1RetryJobRequest) (*RetryJobResponse, *http.Response, error)
 }
 
 // JobsAPIService JobsAPI service
@@ -985,4 +1000,121 @@ func (a *JobsAPIService) V1GetJobStatusExecute(r JobsAPIV1GetJobStatusRequest) (
 	}
 
 	return localVarHTTPResponse, nil
+}
+
+type JobsAPIV1RetryJobRequest struct {
+	ctx context.Context
+	ApiService JobsAPI
+	jobId int32
+}
+
+func (r JobsAPIV1RetryJobRequest) Execute() (*RetryJobResponse, *http.Response, error) {
+	return r.ApiService.V1RetryJobExecute(r)
+}
+
+/*
+V1RetryJob POST /v1/jobs/{job_id}/retry
+
+Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param jobId Bulk job identifier
+ @return JobsAPIV1RetryJobRequest
+*/
+func (a *JobsAPIService) V1RetryJob(ctx context.Context, jobId int32) JobsAPIV1RetryJobRequest {
+	return JobsAPIV1RetryJobRequest{
+		ApiService: a,
+		ctx: ctx,
+		jobId: jobId,
+	}
+}
+
+// Execute executes the request
+//  @return RetryJobResponse
+func (a *JobsAPIService) V1RetryJobExecute(r JobsAPIV1RetryJobRequest) (*RetryJobResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *RetryJobResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "JobsAPIService.V1RetryJob")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/jobs/{job_id}/retry"
+	localVarPath = strings.Replace(localVarPath, "{"+"job_id"+"}", url.PathEscape(parameterValueToString(r.jobId, "jobId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
