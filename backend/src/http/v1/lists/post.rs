@@ -190,6 +190,7 @@ async fn http_handler(
 			"row_index": primary_index as i32,
 			"email_column": parsed.email_column,
 		});
+		// Use the canonical email for verification (not the raw first-seen email)
 		let primary_task_id: i32 = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate)
@@ -199,7 +200,7 @@ async fn http_handler(
 		)
 		.bind(job_id)
 		.bind(serde_json::json!({
-			"input": {"to_email": primary_email},
+			"input": {"to_email": canonical},
 			"job_id": {"bulk": job_id},
 			"webhook": null
 		}))
@@ -212,7 +213,7 @@ async fn http_handler(
 
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
-				to_email: primary_email.clone(),
+				to_email: canonical.clone(),
 				..Default::default()
 			}
 			.to_check_email_input(Arc::clone(&config)),

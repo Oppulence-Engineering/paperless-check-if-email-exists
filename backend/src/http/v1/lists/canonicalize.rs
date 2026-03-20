@@ -8,23 +8,37 @@
 /// Returns None if the email doesn't contain exactly one '@'.
 pub fn canonicalize_email(email: &str) -> Option<String> {
 	let email = email.trim().to_lowercase();
+
+	// Must contain exactly one '@'
+	if email.matches('@').count() != 1 {
+		return None;
+	}
+
 	let (local, domain) = email.rsplit_once('@')?;
 
 	if local.is_empty() || domain.is_empty() {
 		return None;
 	}
 
-	match domain {
+	let result = match domain {
 		"gmail.com" | "googlemail.com" => {
 			let local = strip_subaddress(local);
 			let local: String = local.chars().filter(|c| *c != '.').collect();
-			Some(format!("{}@gmail.com", local))
+			if local.is_empty() {
+				return None;
+			}
+			format!("{}@gmail.com", local)
 		}
 		_ => {
 			let local = strip_subaddress(local);
-			Some(format!("{}@{}", local, domain))
+			if local.is_empty() {
+				return None;
+			}
+			format!("{}@{}", local, domain)
 		}
-	}
+	};
+
+	Some(result)
 }
 
 fn strip_subaddress(local: &str) -> &str {
@@ -120,6 +134,17 @@ mod tests {
 	#[test]
 	fn test_empty_domain_returns_none() {
 		assert_eq!(canonicalize_email("user@"), None);
+	}
+
+	#[test]
+	fn test_multiple_at_returns_none() {
+		assert_eq!(canonicalize_email("user@@example.com"), None);
+		assert_eq!(canonicalize_email("user@host@example.com"), None);
+	}
+
+	#[test]
+	fn test_gmail_dots_only_local_returns_none() {
+		assert_eq!(canonicalize_email("+tag@gmail.com"), None);
 	}
 
 	#[test]

@@ -481,11 +481,12 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 			}
 		}
 
-		// Propagate results to duplicate task rows that reference this task
+		// Propagate results (including errors) to duplicate task rows
 		let _ = sqlx::query(
 			r#"
 			UPDATE v1_task_result AS dup
-			SET result = pri.result, score = pri.score, score_category = pri.score_category,
+			SET result = pri.result, error = pri.error,
+				score = pri.score, score_category = pri.score_category,
 				sub_reason = pri.sub_reason, safe_to_send = pri.safe_to_send,
 				reason_codes = pri.reason_codes, completed_at = NOW(), updated_at = NOW()
 			FROM v1_task_result AS pri
