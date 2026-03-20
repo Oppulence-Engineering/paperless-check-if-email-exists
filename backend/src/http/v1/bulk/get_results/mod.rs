@@ -130,27 +130,28 @@ async fn job_result_as_iter(
 	offset: u64,
 	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
-	let query = sqlx::query!(
+	let rows = sqlx::query(
 		r#"
-		SELECT result FROM v1_task_result
+		SELECT result, completed_at FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
 		LIMIT $2 OFFSET $3
 		"#,
-		job_id,
-		limit.map(|l| l as i64),
-		offset as i64
-	);
+	)
+	.bind(job_id)
+	.bind(limit.map(|l| l as i64))
+	.bind(offset as i64)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
-	let rows = pg_pool
-		.fetch_all(query)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	Ok(Box::new(
-		rows.into_iter()
-			.map(|row| row.get::<serde_json::Value, &str>("result")),
-	))
+	Ok(Box::new(rows.into_iter().map(|row| {
+		let mut result: serde_json::Value = row.get("result");
+		if let Some(completed_at) = row.get::<Option<DateTime<Utc>>, _>("completed_at") {
+			crate::scoring::response::inject_freshness_into_result(&mut result, completed_at);
+		}
+		result
+	})))
 }
 
 async fn job_result_json(
