@@ -20,6 +20,7 @@ pub mod config;
 pub mod finder;
 pub mod http;
 pub mod reputation;
+pub mod reverification;
 pub mod scoring;
 pub mod storage;
 pub mod tenant;

@@ -45,6 +45,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::suppressions::list::v1_list_suppressions,
 		crate::http::v1::suppressions::check::v1_check_suppression,
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
+		crate::http::v1::reverification::status::v1_reverification_status,
 		crate::http::v1::me::v1_me,
 		account_api_keys::get_api_key,
 		account_api_keys::list_api_keys,
@@ -798,6 +799,23 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["deleted"]
 		}),
 	);
+	insert_schema(
+		spec,
+		"ReverificationStatusResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"enabled": { "type": "boolean" },
+				"staleness_days": { "type": "integer", "format": "int32" },
+				"batch_size": { "type": "integer", "format": "int32" },
+				"last_run_at": { "type": "string", "format": "date-time", "nullable": true },
+				"next_run_at": { "type": "string", "format": "date-time", "nullable": true },
+				"last_job_id": { "type": "integer", "format": "int32", "nullable": true },
+				"emails_requeued": { "type": "integer", "format": "int32" }
+			},
+			"required": ["enabled"]
+		}),
+	);
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
@@ -989,6 +1007,16 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"delete",
 		"200",
 		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
+	);
+	set_response(
+		spec,
+		"/v1/reverification/status",
+		"get",
+		"200",
+		json_response(
+			"ReverificationStatusResponse",
+			"Reverification schedule status",
+		),
 	);
 }
 

@@ -38,6 +38,7 @@ export * from './reachable';
 export * from './reason-code';
 export * from './reputation-check-request';
 export * from './reputation-check-response';
+export * from './reverification-status-response';
 export * from './scoring-signals';
 export * from './smtp-details';
 export * from './sub-reason';

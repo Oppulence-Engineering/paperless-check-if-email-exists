@@ -22,7 +22,7 @@ pub mod idempotency;
 pub mod openapi;
 pub mod shared;
 mod v0;
-mod v1;
+pub mod v1;
 mod version;
 
 use crate::config::BackendConfig;
@@ -78,6 +78,7 @@ pub fn create_routes(
 		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)).boxed())
 		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)).boxed())
 		.or(v1::bulk::get_results::v1_get_bulk_job_results(Arc::clone(&config)).boxed())
+		.or(v1::reverification::status::v1_reverification_status(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_job_routes = v1::jobs::get_status::v1_get_job_status(Arc::clone(&config))
@@ -166,10 +167,22 @@ pub async fn run_warp_server(
 
 	// Spawn idempotency key cleanup if Postgres is configured
 	if let Some(pool) = config.get_pg_pool() {
-		idempotency::spawn_idempotency_cleanup(pool);
-		if let Some(pool) = config.get_pg_pool() {
-			crate::reputation::spawn_cache_cleanup(pool);
+		idempotency::spawn_idempotency_cleanup(pool.clone());
+		crate::reputation::spawn_cache_cleanup(pool.clone());
+
+		if config.reverification.enable && config.worker.enable {
+			crate::reverification::spawn_reverification_scheduler(Arc::clone(&config), pool);
+		} else if config.reverification.enable {
+			tracing::warn!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Reverification is enabled but worker mode is disabled. Scheduler will not start."
+			);
 		}
+	} else if config.reverification.enable {
+		tracing::error!(
+			target: check_if_email_exists::LOG_TARGET,
+			"Reverification is enabled but no Postgres pool is configured. Reverification will not run."
+		);
 	}
 
 	// Run v0 bulk job listener.

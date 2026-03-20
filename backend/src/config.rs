@@ -81,6 +81,10 @@ pub struct BackendConfig {
 	/// Throttle configuration for all requests
 	pub throttle: ThrottleConfig,
 
+	/// Scheduled re-verification configuration
+	#[serde(default)]
+	pub reverification: ReverificationConfig,
+
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
@@ -117,6 +121,7 @@ impl BackendConfig {
 			storage: Some(StorageConfig::Noop),
 			commercial_license_trial: None,
 			throttle: ThrottleConfig::new_without_throttle(),
+			reverification: ReverificationConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
 			throttle_manager: Arc::new(
@@ -313,6 +318,39 @@ impl ThrottleConfig {
 			max_requests_per_minute: None,
 			max_requests_per_hour: None,
 			max_requests_per_day: None,
+		}
+	}
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct ReverificationConfig {
+	#[serde(default)]
+	pub enable: bool,
+	#[serde(default = "default_reverification_interval")]
+	pub interval_seconds: u64,
+	#[serde(default = "default_staleness_days")]
+	pub default_staleness_days: i32,
+	#[serde(default = "default_reverification_batch_size")]
+	pub default_batch_size: i32,
+}
+
+fn default_reverification_interval() -> u64 {
+	3600
+}
+fn default_staleness_days() -> i32 {
+	30
+}
+fn default_reverification_batch_size() -> i32 {
+	100
+}
+
+impl Default for ReverificationConfig {
+	fn default() -> Self {
+		Self {
+			enable: false,
+			interval_seconds: default_reverification_interval(),
+			default_staleness_days: default_staleness_days(),
+			default_batch_size: default_reverification_batch_size(),
 		}
 	}
 }

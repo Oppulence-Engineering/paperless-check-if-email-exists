@@ -117,6 +117,7 @@ Class | Method | HTTP request | Description
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
+*V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
 
 
 ### Documentation For Models
@@ -161,6 +162,7 @@ Class | Method | HTTP request | Description
  - [ReasonCode](docs/ReasonCode.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
+ - [ReverificationStatusResponse](docs/ReverificationStatusResponse.md)
  - [ScoringSignals](docs/ScoringSignals.md)
  - [SmtpDetails](docs/SmtpDetails.md)
  - [SubReason](docs/SubReason.md)

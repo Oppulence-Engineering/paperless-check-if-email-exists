@@ -48,6 +48,8 @@ import type { ReputationCheckRequest } from '../models';
 // @ts-ignore
 import type { ReputationCheckResponse } from '../models';
 // @ts-ignore
+import type { ReverificationStatusResponse } from '../models';
+// @ts-ignore
 import type { SuppressionCheckResponse } from '../models';
 // @ts-ignore
 import type { SuppressionDeleteResponse } from '../models';
@@ -636,6 +638,39 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary GET /v1/reverification/status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReverificationStatus: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/reverification/status`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -836,6 +871,18 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1ListSuppressions']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary GET /v1/reverification/status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ReverificationStatus(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ReverificationStatusResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReverificationStatus(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1ReverificationStatus']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -986,6 +1033,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse> {
             return localVarFp.v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary GET /v1/reverification/status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReverificationStatus(options?: RawAxiosRequestConfig): AxiosPromise<ReverificationStatusResponse> {
+            return localVarFp.v1ReverificationStatus(options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -1134,6 +1190,15 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1ListSuppressions(requestParameters?: V1ApiV1ListSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse>;
+
+    /**
+     * 
+     * @summary GET /v1/reverification/status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1ReverificationStatus(options?: RawAxiosRequestConfig): AxiosPromise<ReverificationStatusResponse>;
 
 }
 
@@ -1562,6 +1627,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary GET /v1/reverification/status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1ReverificationStatus(options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1ReverificationStatus(options).then((request) => request(this.axios, this.basePath));
     }
 }
 

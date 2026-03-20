@@ -18,6 +18,7 @@ Method | HTTP request | Description
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
+[**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
 
 
 
@@ -940,6 +941,65 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**SuppressionListResponse**](SuppressionListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ReverificationStatus
+
+> ReverificationStatusResponse V1ReverificationStatus(ctx).Execute()
+
+GET /v1/reverification/status
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ReverificationStatus(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ReverificationStatus``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ReverificationStatus`: ReverificationStatusResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ReverificationStatus`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ReverificationStatusRequest struct via the builder pattern
+
+
+### Return type
+
+[**ReverificationStatusResponse**](ReverificationStatusResponse.md)
 
 ### Authorization
 

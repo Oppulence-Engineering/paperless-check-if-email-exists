@@ -190,6 +190,92 @@ pub async fn resolve_from_api_key(
 	})
 }
 
+/// Resolve a TenantContext directly from a tenant UUID.
+/// Used by background tasks (e.g. reverification) that don't have an API key.
+pub async fn resolve_tenant_context_by_id(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+) -> Result<TenantContext> {
+	let row = sqlx::query(
+		r#"
+		SELECT
+			id, name, plan_tier::TEXT, status::TEXT,
+			max_requests_per_second, max_requests_per_minute,
+			max_requests_per_hour, max_requests_per_day,
+			monthly_email_limit, used_this_period, period_reset_at,
+			default_webhook_url, webhook_signing_secret, result_retention_days
+		FROM tenants
+		WHERE id = $1
+		"#,
+	)
+	.bind(tenant_id)
+	.fetch_optional(pg_pool)
+	.await?;
+
+	let row = match row {
+		Some(r) => r,
+		None => bail!("Tenant not found: {}", tenant_id),
+	};
+
+	use sqlx::Row;
+	let status_str: String = row.get("status");
+	let tenant_status: TenantStatus = match status_str.as_str() {
+		"active" => TenantStatus::Active,
+		"suspended" => TenantStatus::Suspended,
+		"deactivated" => TenantStatus::Deactivated,
+		_ => bail!("Unknown tenant status: {}", status_str),
+	};
+
+	match tenant_status {
+		TenantStatus::Suspended => bail!("Tenant account is suspended"),
+		TenantStatus::Deactivated => bail!("Tenant account is deactivated"),
+		TenantStatus::Active => {}
+	}
+
+	let plan_str: String = row.get("plan_tier");
+	let plan_tier: PlanTier = match plan_str.as_str() {
+		"free" => PlanTier::Free,
+		"starter" => PlanTier::Starter,
+		"professional" => PlanTier::Professional,
+		"enterprise" => PlanTier::Enterprise,
+		_ => bail!("Unknown plan tier: {}", plan_str),
+	};
+
+	// No global throttle fallback: background tasks (reverification) run at
+	// the tenant's own rate limits without inheriting server-wide defaults.
+	// This differs from resolve_from_api_key which merges with global_throttle.
+	let throttle = ThrottleConfig {
+		max_requests_per_second: row
+			.get::<Option<i32>, _>("max_requests_per_second")
+			.map(|v| v as u32),
+		max_requests_per_minute: row
+			.get::<Option<i32>, _>("max_requests_per_minute")
+			.map(|v| v as u32),
+		max_requests_per_hour: row
+			.get::<Option<i32>, _>("max_requests_per_hour")
+			.map(|v| v as u32),
+		max_requests_per_day: row
+			.get::<Option<i32>, _>("max_requests_per_day")
+			.map(|v| v as u32),
+	};
+
+	Ok(TenantContext {
+		tenant_id: Some(row.get("id")),
+		api_key_id: None,
+		tenant_name: row.get("name"),
+		plan_tier,
+		status: tenant_status,
+		throttle,
+		monthly_email_limit: row.get("monthly_email_limit"),
+		used_this_period: row.get("used_this_period"),
+		period_reset_at: row.get("period_reset_at"),
+		default_webhook_url: row.get("default_webhook_url"),
+		webhook_signing_secret: row.get("webhook_signing_secret"),
+		result_retention_days: row.get("result_retention_days"),
+		is_legacy: false,
+	})
+}
+
 /// Update the last_used_at timestamp for an API key.
 async fn update_last_used_at(pg_pool: &PgPool, api_key_id: Uuid) -> Result<()> {
 	sqlx::query!(
