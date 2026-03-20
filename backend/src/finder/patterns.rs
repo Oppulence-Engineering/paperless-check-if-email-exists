@@ -23,6 +23,18 @@ pub fn normalize_domain(input: &str) -> String {
 	input.trim().to_lowercase()
 }
 
+/// Returns the RabbitMQ priority (1-5) for a pattern.
+/// Higher priority = verified first in waterfall strategy.
+pub fn pattern_priority(pattern: &str) -> u8 {
+	match pattern {
+		"first.last" | "firstlast" | "first_last" | "first-last" => 5,
+		"f.last" | "flast" | "f_last" | "first.l" | "firstl" => 3,
+		"last.first" | "lastf" => 2,
+		"first" | "last" => 1,
+		_ => 1,
+	}
+}
+
 pub fn generate_candidates(first_name: &str, last_name: &str, domain: &str) -> Vec<Candidate> {
 	let first = normalize_name(first_name);
 	let last = normalize_name(last_name);

@@ -1,5 +1,7 @@
 use crate::config::BackendConfig;
-use crate::finder::patterns::{generate_candidates, normalize_domain, normalize_name};
+use crate::finder::patterns::{
+	generate_candidates, normalize_domain, normalize_name, pattern_priority,
+};
 use crate::finder::{precheck_domain, require_tenant_id};
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
@@ -21,6 +23,10 @@ struct Request {
 	first_name: String,
 	last_name: String,
 	domain: String,
+	/// Search strategy: "parallel" (default, all at once) or "waterfall"
+	/// (high-quality patterns verified first with higher priority).
+	#[serde(default)]
+	strategy: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -154,11 +160,21 @@ async fn http_handler(
 		));
 	}
 
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1);
+	let use_waterfall = body
+		.strategy
+		.as_deref()
+		.map(|s| s.eq_ignore_ascii_case("waterfall"))
+		.unwrap_or(false);
 
 	for candidate in candidates {
+		let priority = if use_waterfall {
+			pattern_priority(&candidate.pattern)
+		} else {
+			1
+		};
+		let properties = BasicProperties::default()
+			.with_content_type("application/json".into())
+			.with_priority(priority);
 		let task_payload = CheckEmailRequest {
 			to_email: candidate.email.clone(),
 			..Default::default()
