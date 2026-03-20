@@ -55,6 +55,22 @@ async fn http_handler(
 		.into());
 	}
 
+	// Validate strategy early, before any DB or quota work
+	let use_waterfall = match body.strategy.as_deref() {
+		None | Some("parallel") => false,
+		Some("waterfall") => true,
+		Some(other) => {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!(
+					"Invalid strategy '{}'. Expected 'parallel' or 'waterfall'.",
+					other
+				),
+			)
+			.into())
+		}
+	};
+
 	let candidates = generate_candidates(&body.first_name, &body.last_name, &body.domain);
 	if candidates.is_empty() {
 		return Err(ReacherResponseError::new(
@@ -160,20 +176,12 @@ async fn http_handler(
 		));
 	}
 
-	let use_waterfall = match body.strategy.as_deref() {
-		None | Some("parallel") => false,
-		Some("waterfall") => true,
-		Some(other) => {
-			return Err(ReacherResponseError::new(
-				StatusCode::BAD_REQUEST,
-				format!(
-					"Invalid strategy '{}'. Expected 'parallel' or 'waterfall'.",
-					other
-				),
-			)
-			.into())
-		}
-	};
+	// Sort candidates by priority (descending) in waterfall mode so
+	// high-quality patterns are published and consumed first.
+	let mut candidates = candidates;
+	if use_waterfall {
+		candidates.sort_by(|a, b| pattern_priority(&b.pattern).cmp(&pattern_priority(&a.pattern)));
+	}
 
 	for candidate in candidates {
 		let priority = if use_waterfall {
