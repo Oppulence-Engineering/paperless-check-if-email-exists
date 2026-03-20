@@ -71,10 +71,15 @@ pub async fn handle_check_email(
 	// throttle checks, or quota consumption.
 	if body.sandbox {
 		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
-		let body = scored_response_fresh(&mock_result).map_err(ReacherResponseError::from)?;
+		let mut json = scored_response_fresh(&mock_result).map_err(ReacherResponseError::from)?;
+		// Inject sandbox marker so consumers know this is mock data
+		if let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(&json) {
+			value["_sandbox"] = serde_json::Value::Bool(true);
+			json = serde_json::to_vec(&value).unwrap_or(json);
+		}
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
-			body,
+			body: json,
 		});
 	}
 

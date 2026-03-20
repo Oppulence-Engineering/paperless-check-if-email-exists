@@ -23,7 +23,16 @@ pub async fn evaluate_post_completion_actions(
 	.await
 	{
 		Ok(Some(Some(s))) => s,
-		_ => return,
+		Ok(_) => return, // no settings configured
+		Err(e) => {
+			debug!(
+				target: LOG_TARGET,
+				tenant_id = %tenant_id,
+				error = ?e,
+				"Failed to load tenant settings for auto-suppression"
+			);
+			return;
+		}
 	};
 
 	let should_suppress = check_auto_suppress(&settings, score, category);
@@ -45,18 +54,19 @@ pub async fn evaluate_post_completion_actions(
 		.execute(pg_pool)
 		.await;
 
+		let domain = normalized_email.split('@').nth(1).unwrap_or("unknown");
 		match result {
 			Ok(r) if r.rows_affected() > 0 => {
 				debug!(
 					target: LOG_TARGET,
-					email = email,
+					domain = domain,
 					"Auto-suppressed based on conditional action rules"
 				);
 			}
 			Err(e) => {
 				debug!(
 					target: LOG_TARGET,
-					email = email,
+					domain = domain,
 					error = ?e,
 					"Failed to auto-suppress"
 				);
