@@ -399,7 +399,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1JobApprovalChecklist**
-> V1JobApprovalChecklist200Response v1JobApprovalChecklist()
+> ApprovalChecklistResponse v1JobApprovalChecklist()
 
 Returns a pre-send approval checklist summarizing list quality.
 
@@ -430,7 +430,7 @@ const { status, data } = await apiInstance.v1JobApprovalChecklist(
 
 ### Return type
 
-**V1JobApprovalChecklist200Response**
+**ApprovalChecklistResponse**
 
 ### Authorization
 

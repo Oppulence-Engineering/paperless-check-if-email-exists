@@ -22,13 +22,13 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { ApprovalChecklistResponse } from '../models';
+// @ts-ignore
 import type { BulkJobResultsResponse } from '../models';
 // @ts-ignore
 import type { JobResultPageResponse } from '../models';
 // @ts-ignore
 import type { RetryJobResponse } from '../models';
-// @ts-ignore
-import type { V1JobApprovalChecklist200Response } from '../models';
 /**
  * JobsApi - axios parameter creator
  * @export
@@ -530,7 +530,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1JobApprovalChecklist(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1JobApprovalChecklist200Response>> {
+        async v1JobApprovalChecklist(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ApprovalChecklistResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobApprovalChecklist(jobId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobApprovalChecklist']?.[localVarOperationServerIndex]?.url;
@@ -636,7 +636,7 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1JobApprovalChecklist200Response> {
+        v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<ApprovalChecklistResponse> {
             return localVarFp.v1JobApprovalChecklist(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -736,7 +736,7 @@ export interface JobsApiInterface {
      * @throws {RequiredError}
      * @memberof JobsApiInterface
      */
-    v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1JobApprovalChecklist200Response>;
+    v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<ApprovalChecklistResponse>;
 
     /**
      * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.

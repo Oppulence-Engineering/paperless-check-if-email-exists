@@ -25,6 +25,8 @@ type FindEmailRequest struct {
 	Domain string `json:"domain"`
 	FirstName string `json:"first_name"`
 	LastName string `json:"last_name"`
+	// Search strategy: parallel (all at once) or waterfall (high-quality patterns first)
+	Strategy *string `json:"strategy,omitempty"`
 }
 
 type _FindEmailRequest FindEmailRequest
@@ -38,6 +40,8 @@ func NewFindEmailRequest(domain string, firstName string, lastName string) *Find
 	this.Domain = domain
 	this.FirstName = firstName
 	this.LastName = lastName
+	var strategy string = "parallel"
+	this.Strategy = &strategy
 	return &this
 }
 
@@ -46,6 +50,8 @@ func NewFindEmailRequest(domain string, firstName string, lastName string) *Find
 // but it doesn't guarantee that properties required by API are set
 func NewFindEmailRequestWithDefaults() *FindEmailRequest {
 	this := FindEmailRequest{}
+	var strategy string = "parallel"
+	this.Strategy = &strategy
 	return &this
 }
 
@@ -121,6 +127,38 @@ func (o *FindEmailRequest) SetLastName(v string) {
 	o.LastName = v
 }
 
+// GetStrategy returns the Strategy field value if set, zero value otherwise.
+func (o *FindEmailRequest) GetStrategy() string {
+	if o == nil || IsNil(o.Strategy) {
+		var ret string
+		return ret
+	}
+	return *o.Strategy
+}
+
+// GetStrategyOk returns a tuple with the Strategy field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *FindEmailRequest) GetStrategyOk() (*string, bool) {
+	if o == nil || IsNil(o.Strategy) {
+		return nil, false
+	}
+	return o.Strategy, true
+}
+
+// HasStrategy returns a boolean if a field has been set.
+func (o *FindEmailRequest) HasStrategy() bool {
+	if o != nil && !IsNil(o.Strategy) {
+		return true
+	}
+
+	return false
+}
+
+// SetStrategy gets a reference to the given string and assigns it to the Strategy field.
+func (o *FindEmailRequest) SetStrategy(v string) {
+	o.Strategy = &v
+}
+
 func (o FindEmailRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -134,6 +172,9 @@ func (o FindEmailRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["domain"] = o.Domain
 	toSerialize["first_name"] = o.FirstName
 	toSerialize["last_name"] = o.LastName
+	if !IsNil(o.Strategy) {
+		toSerialize["strategy"] = o.Strategy
+	}
 	return toSerialize, nil
 }
 

@@ -44,6 +44,112 @@
         ],
         "type": "object"
       },
+      "ApprovalCategoryBreakdown": {
+        "properties": {
+          "invalid": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "risky": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "unknown": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "unprocessed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "valid": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "valid",
+          "risky",
+          "unknown",
+          "invalid",
+          "unprocessed"
+        ],
+        "type": "object"
+      },
+      "ApprovalChecklistResponse": {
+        "properties": {
+          "categories": {
+            "$ref": "#/components/schemas/ApprovalCategoryBreakdown"
+          },
+          "job_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "ready_to_send": {
+            "type": "boolean"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "risk_flags": {
+            "$ref": "#/components/schemas/ApprovalRiskFlags"
+          },
+          "safe_to_send_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "safe_to_send_pct": {
+            "type": "number"
+          },
+          "total_records": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "total_records",
+          "categories",
+          "risk_flags",
+          "safe_to_send_count",
+          "safe_to_send_pct",
+          "recommendation",
+          "ready_to_send"
+        ],
+        "type": "object"
+      },
+      "ApprovalRiskFlags": {
+        "properties": {
+          "catch_all_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "disposable_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "role_account_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "spam_trap_count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "suppressed_count": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "disposable_count",
+          "catch_all_count",
+          "role_account_count",
+          "spam_trap_count",
+          "suppressed_count"
+        ],
+        "type": "object"
+      },
       "BlacklistResult": {
         "properties": {
           "listed": {
@@ -559,6 +665,15 @@
             "type": "string"
           },
           "last_name": {
+            "type": "string"
+          },
+          "strategy": {
+            "default": "parallel",
+            "description": "Search strategy: parallel (all at once) or waterfall (high-quality patterns first)",
+            "enum": [
+              "parallel",
+              "waterfall"
+            ],
             "type": "string"
           }
         },
@@ -2462,36 +2577,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "categories": {
-                      "type": "object"
-                    },
-                    "job_id": {
-                      "format": "int32",
-                      "type": "integer"
-                    },
-                    "ready_to_send": {
-                      "type": "boolean"
-                    },
-                    "recommendation": {
-                      "type": "string"
-                    },
-                    "risk_flags": {
-                      "type": "object"
-                    },
-                    "safe_to_send_count": {
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "safe_to_send_pct": {
-                      "type": "number"
-                    },
-                    "total_records": {
-                      "format": "int32",
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/components/schemas/ApprovalChecklistResponse"
                 }
               }
             },

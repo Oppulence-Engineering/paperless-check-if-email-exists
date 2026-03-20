@@ -19,6 +19,9 @@ docs/AddSuppressionsRequest.md
 docs/AddSuppressionsResponse.md
 docs/AdminApi.md
 docs/AdminJobsApi.md
+docs/ApprovalCategoryBreakdown.md
+docs/ApprovalChecklistResponse.md
+docs/ApprovalRiskFlags.md
 docs/BlacklistResult.md
 docs/BulkJobResultsResponse.md
 docs/CheckEmailInputProxy.md
@@ -77,7 +80,6 @@ docs/TaskWebhook.md
 docs/TenantApi.md
 docs/V0Api.md
 docs/V1Api.md
-docs/V1JobApprovalChecklist200Response.md
 docs/VerifMethod.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
@@ -85,6 +87,9 @@ git_push.sh
 index.ts
 models/add-suppressions-request.ts
 models/add-suppressions-response.ts
+models/approval-category-breakdown.ts
+models/approval-checklist-response.ts
+models/approval-risk-flags.ts
 models/blacklist-result.ts
 models/bulk-job-results-response.ts
 models/check-email-input-proxy.ts
@@ -138,7 +143,6 @@ models/suppression-list-response.ts
 models/suppression-reason.ts
 models/syntax-details.ts
 models/task-webhook.ts
-models/v1-job-approval-checklist200-response.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts

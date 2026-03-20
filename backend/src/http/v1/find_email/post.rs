@@ -160,11 +160,20 @@ async fn http_handler(
 		));
 	}
 
-	let use_waterfall = body
-		.strategy
-		.as_deref()
-		.map(|s| s.eq_ignore_ascii_case("waterfall"))
-		.unwrap_or(false);
+	let use_waterfall = match body.strategy.as_deref() {
+		None | Some("parallel") => false,
+		Some("waterfall") => true,
+		Some(other) => {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!(
+					"Invalid strategy '{}'. Expected 'parallel' or 'waterfall'.",
+					other
+				),
+			)
+			.into())
+		}
+	};
 
 	for candidate in candidates {
 		let priority = if use_waterfall {

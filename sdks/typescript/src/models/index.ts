@@ -1,5 +1,8 @@
 export * from './add-suppressions-request';
 export * from './add-suppressions-response';
+export * from './approval-category-breakdown';
+export * from './approval-checklist-response';
+export * from './approval-risk-flags';
 export * from './blacklist-result';
 export * from './bulk-job-results-response';
 export * from './check-email-input-proxy';
@@ -52,7 +55,6 @@ export * from './suppression-list-response';
 export * from './suppression-reason';
 export * from './syntax-details';
 export * from './task-webhook';
-export * from './v1-job-approval-checklist200-response';
 export * from './verif-method';
 export * from './webhook';
 export * from './yahoo-verif-method';

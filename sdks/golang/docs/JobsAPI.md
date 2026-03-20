@@ -518,7 +518,7 @@ Name | Type | Description  | Notes
 
 ## V1JobApprovalChecklist
 
-> V1JobApprovalChecklist200Response V1JobApprovalChecklist(ctx, jobId).Execute()
+> ApprovalChecklistResponse V1JobApprovalChecklist(ctx, jobId).Execute()
 
 GET /v1/jobs/{job_id}/approval
 
@@ -546,7 +546,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1JobApprovalChecklist``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1JobApprovalChecklist`: V1JobApprovalChecklist200Response
+	// response from `V1JobApprovalChecklist`: ApprovalChecklistResponse
 	fmt.Fprintf(os.Stdout, "Response from `JobsAPI.V1JobApprovalChecklist`: %v\n", resp)
 }
 ```
@@ -570,7 +570,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**V1JobApprovalChecklist200Response**](V1JobApprovalChecklist200Response.md)
+[**ApprovalChecklistResponse**](ApprovalChecklistResponse.md)
 
 ### Authorization
 

@@ -112,7 +112,7 @@ async fn http_handler(
 	.bind(job_id)
 	.fetch_one(&pg_pool)
 	.await
-	.unwrap_or(0);
+	.map_err(ReacherResponseError::from)?;
 
 	let total = total_records.max(1) as f64;
 	let safe_pct = (safe_to_send_count as f64 / total * 100.0).round() / 1.0;

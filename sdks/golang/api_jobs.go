@@ -137,8 +137,8 @@ type JobsAPI interface {
 	V1JobApprovalChecklist(ctx context.Context, jobId int32) JobsAPIV1JobApprovalChecklistRequest
 
 	// V1JobApprovalChecklistExecute executes the request
-	//  @return V1JobApprovalChecklist200Response
-	V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChecklistRequest) (*V1JobApprovalChecklist200Response, *http.Response, error)
+	//  @return ApprovalChecklistResponse
+	V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChecklistRequest) (*ApprovalChecklistResponse, *http.Response, error)
 
 	/*
 	V1RetryJob POST /v1/jobs/{job_id}/retry
@@ -1023,7 +1023,7 @@ type JobsAPIV1JobApprovalChecklistRequest struct {
 	jobId int32
 }
 
-func (r JobsAPIV1JobApprovalChecklistRequest) Execute() (*V1JobApprovalChecklist200Response, *http.Response, error) {
+func (r JobsAPIV1JobApprovalChecklistRequest) Execute() (*ApprovalChecklistResponse, *http.Response, error) {
 	return r.ApiService.V1JobApprovalChecklistExecute(r)
 }
 
@@ -1045,13 +1045,13 @@ func (a *JobsAPIService) V1JobApprovalChecklist(ctx context.Context, jobId int32
 }
 
 // Execute executes the request
-//  @return V1JobApprovalChecklist200Response
-func (a *JobsAPIService) V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChecklistRequest) (*V1JobApprovalChecklist200Response, *http.Response, error) {
+//  @return ApprovalChecklistResponse
+func (a *JobsAPIService) V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChecklistRequest) (*ApprovalChecklistResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *V1JobApprovalChecklist200Response
+		localVarReturnValue  *ApprovalChecklistResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "JobsAPIService.V1JobApprovalChecklist")

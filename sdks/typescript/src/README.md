@@ -126,6 +126,9 @@ Class | Method | HTTP request | Description
 
  - [AddSuppressionsRequest](docs/AddSuppressionsRequest.md)
  - [AddSuppressionsResponse](docs/AddSuppressionsResponse.md)
+ - [ApprovalCategoryBreakdown](docs/ApprovalCategoryBreakdown.md)
+ - [ApprovalChecklistResponse](docs/ApprovalChecklistResponse.md)
+ - [ApprovalRiskFlags](docs/ApprovalRiskFlags.md)
  - [BlacklistResult](docs/BlacklistResult.md)
  - [BulkJobResultsResponse](docs/BulkJobResultsResponse.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)
@@ -178,7 +181,6 @@ Class | Method | HTTP request | Description
  - [SuppressionReason](docs/SuppressionReason.md)
  - [SyntaxDetails](docs/SyntaxDetails.md)
  - [TaskWebhook](docs/TaskWebhook.md)
- - [V1JobApprovalChecklist200Response](docs/V1JobApprovalChecklist200Response.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)
