@@ -130,7 +130,43 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Reset retryable rows
+	// Publish tasks to RabbitMQ BEFORE committing DB changes.
+	// If publish fails, the transaction rolls back and tasks stay retryable.
+	let channel = config
+		.must_worker_config()
+		.map_err(ReacherResponseError::from)?
+		.channel;
+
+	let properties = BasicProperties::default()
+		.with_content_type("application/json".into())
+		.with_priority(1);
+
+	for row in &retryable_tasks {
+		let payload: serde_json::Value = row.get("payload");
+		let task_db_id: i32 = row.get("id");
+
+		let mut task: CheckEmailTask =
+			serde_json::from_value(payload).map_err(ReacherResponseError::from)?;
+
+		// Update metadata with the existing task_db_id
+		if let Some(ref mut metadata) = task.metadata {
+			metadata.task_db_id = Some(task_db_id);
+		} else {
+			task.metadata = Some(crate::worker::do_work::TaskMetadata {
+				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+				request_id: None,
+				correlation_id: None,
+				created_by: None,
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: Some(task_db_id),
+			});
+		}
+
+		publish_task(channel.clone(), task, properties.clone()).await?;
+	}
+
+	// All tasks published successfully — now reset DB rows and commit
 	sqlx::query(
 		r#"
 		UPDATE v1_task_result
@@ -169,41 +205,6 @@ async fn http_handler(
 	};
 
 	tx.commit().await.map_err(ReacherResponseError::from)?;
-
-	// Re-publish tasks to RabbitMQ (outside transaction)
-	let channel = config
-		.must_worker_config()
-		.map_err(ReacherResponseError::from)?
-		.channel;
-
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1);
-
-	for row in &retryable_tasks {
-		let payload: serde_json::Value = row.get("payload");
-		let task_db_id: i32 = row.get("id");
-
-		let mut task: CheckEmailTask =
-			serde_json::from_value(payload).map_err(ReacherResponseError::from)?;
-
-		// Update metadata with the existing task_db_id
-		if let Some(ref mut metadata) = task.metadata {
-			metadata.task_db_id = Some(task_db_id);
-		} else {
-			task.metadata = Some(crate::worker::do_work::TaskMetadata {
-				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
-				request_id: None,
-				correlation_id: None,
-				created_by: None,
-				retry_policy: None,
-				dedupe_key: None,
-				task_db_id: Some(task_db_id),
-			});
-		}
-
-		publish_task(channel.clone(), task, properties.clone()).await?;
-	}
 
 	info!(
 		target: LOG_TARGET,

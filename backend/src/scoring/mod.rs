@@ -78,7 +78,7 @@ pub struct FreshnessInfo {
 
 pub fn compute_freshness(completed_at: chrono::DateTime<chrono::Utc>) -> FreshnessInfo {
 	let age = chrono::Utc::now() - completed_at;
-	let age_days = age.num_days();
+	let age_days = age.num_days().max(0);
 	let freshness = match age_days {
 		0..=7 => Freshness::Fresh,
 		8..=30 => Freshness::Recent,
