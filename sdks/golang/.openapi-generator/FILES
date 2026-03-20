@@ -13,6 +13,8 @@ api_v1.go
 client.go
 configuration.go
 docs/AccountAPI.md
+docs/AddSuppressionsRequest.md
+docs/AddSuppressionsResponse.md
 docs/AdminAPI.md
 docs/AdminJobsAPI.md
 docs/BlacklistResult.md
@@ -59,6 +61,11 @@ docs/ReputationCheckResponse.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
 docs/SubReason.md
+docs/SuppressionCheckResponse.md
+docs/SuppressionDeleteResponse.md
+docs/SuppressionEntry.md
+docs/SuppressionListResponse.md
+docs/SuppressionReason.md
 docs/SyntaxDetails.md
 docs/SystemAPI.md
 docs/TaskWebhook.md
@@ -69,6 +76,8 @@ docs/VerifMethod.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
 git_push.sh
+model_add_suppressions_request.go
+model_add_suppressions_response.go
 model_blacklist_result.go
 model_bulk_job_results_response.go
 model_check_email_input_proxy.go
@@ -111,6 +120,11 @@ model_reputation_check_response.go
 model_scoring_signals.go
 model_smtp_details.go
 model_sub_reason.go
+model_suppression_check_response.go
+model_suppression_delete_response.go
+model_suppression_entry.go
+model_suppression_list_response.go
+model_suppression_reason.go
 model_syntax_details.go
 model_task_webhook.go
 model_verif_method.go

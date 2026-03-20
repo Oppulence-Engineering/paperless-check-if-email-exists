@@ -4,16 +4,71 @@ All URIs are relative to *https://api.reacher.email*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
+|[**v1AddSuppressions**](#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions|
 |[**v1CheckEmail**](#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email|
 |[**v1CheckReputation**](#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check|
+|[**v1CheckSuppression**](#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check|
 |[**v1CreateBulkJob**](#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.|
 |[**v1CreateList**](#v1createlist) | **POST** /v1/lists | POST /v1/lists|
 |[**v1DeleteList**](#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}|
+|[**v1DeleteSuppression**](#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}|
 |[**v1DownloadList**](#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download|
 |[**v1FindEmail**](#v1findemail) | **POST** /v1/find_email | POST /v1/find_email|
 |[**v1GetFindEmail**](#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}|
 |[**v1GetList**](#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}|
 |[**v1ListLists**](#v1listlists) | **GET** /v1/lists | GET /v1/lists|
+|[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
+
+# **v1AddSuppressions**
+> AddSuppressionsResponse v1AddSuppressions(addSuppressionsRequest)
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration,
+    AddSuppressionsRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let addSuppressionsRequest: AddSuppressionsRequest; //
+
+const { status, data } = await apiInstance.v1AddSuppressions(
+    addSuppressionsRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **addSuppressionsRequest** | **AddSuppressionsRequest**|  | |
+
+
+### Return type
+
+**AddSuppressionsResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression entries added |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CheckEmail**
 > CheckEmailOutput v1CheckEmail(checkEmailRequest)
@@ -118,6 +173,56 @@ const { status, data } = await apiInstance.v1CheckReputation(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Reputation check response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CheckSuppression**
+> SuppressionCheckResponse v1CheckSuppression()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let email: string; // (default to undefined)
+
+const { status, data } = await apiInstance.v1CheckSuppression(
+    email
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **email** | [**string**] |  | defaults to undefined|
+
+
+### Return type
+
+**SuppressionCheckResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression check result |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -275,6 +380,56 @@ const { status, data } = await apiInstance.v1DeleteList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List deleted |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1DeleteSuppression**
+> SuppressionDeleteResponse v1DeleteSuppression()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let id: number; //Suppression entry identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1DeleteSuppression(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**number**] | Suppression entry identifier | defaults to undefined|
+
+
+### Return type
+
+**SuppressionDeleteResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression entry deleted |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -535,6 +690,62 @@ const { status, data } = await apiInstance.v1ListLists(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List resources |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListSuppressions**
+> SuppressionListResponse v1ListSuppressions()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+let reason: string; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ListSuppressions(
+    limit,
+    offset,
+    reason
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+| **reason** | [**string**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**SuppressionListResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression list |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

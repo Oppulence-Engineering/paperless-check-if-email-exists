@@ -22,6 +22,10 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { AddSuppressionsRequest } from '../models';
+// @ts-ignore
+import type { AddSuppressionsResponse } from '../models';
+// @ts-ignore
 import type { CheckEmailOutput } from '../models';
 // @ts-ignore
 import type { CheckEmailRequest } from '../models';
@@ -43,12 +47,57 @@ import type { ListUploadResponse } from '../models';
 import type { ReputationCheckRequest } from '../models';
 // @ts-ignore
 import type { ReputationCheckResponse } from '../models';
+// @ts-ignore
+import type { SuppressionCheckResponse } from '../models';
+// @ts-ignore
+import type { SuppressionDeleteResponse } from '../models';
+// @ts-ignore
+import type { SuppressionListResponse } from '../models';
 /**
  * V1Api - axios parameter creator
  * @export
  */
 export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * 
+         * @summary POST /v1/suppressions
+         * @param {AddSuppressionsRequest} addSuppressionsRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1AddSuppressions: async (addSuppressionsRequest: AddSuppressionsRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'addSuppressionsRequest' is not null or undefined
+            assertParamExists('v1AddSuppressions', 'addSuppressionsRequest', addSuppressionsRequest)
+            const localVarPath = `/v1/suppressions`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(addSuppressionsRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Verifies an email address and returns a result.
          * @summary POST /v1/check_email
@@ -125,6 +174,46 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(reputationCheckRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary GET /v1/suppressions/check
+         * @param {string} email 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CheckSuppression: async (email: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'email' is not null or undefined
+            assertParamExists('v1CheckSuppression', 'email', email)
+            const localVarPath = `/v1/suppressions/check`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (email !== undefined) {
+                localVarQueryParameter['email'] = email;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -234,6 +323,43 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             assertParamExists('v1DeleteList', 'listId', listId)
             const localVarPath = `/v1/lists/{list_id}`
                 .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary DELETE /v1/suppressions/{id}
+         * @param {number} id Suppression entry identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteSuppression: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1DeleteSuppression', 'id', id)
+            const localVarPath = `/v1/suppressions/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -462,6 +588,54 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary GET /v1/suppressions
+         * @param {number} [limit] 
+         * @param {number} [offset] 
+         * @param {string} [reason] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListSuppressions: async (limit?: number, offset?: number, reason?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/suppressions`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (reason !== undefined) {
+                localVarQueryParameter['reason'] = reason;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -472,6 +646,19 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
 export const V1ApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = V1ApiAxiosParamCreator(configuration)
     return {
+        /**
+         * 
+         * @summary POST /v1/suppressions
+         * @param {AddSuppressionsRequest} addSuppressionsRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1AddSuppressions(addSuppressionsRequest: AddSuppressionsRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AddSuppressionsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1AddSuppressions(addSuppressionsRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1AddSuppressions']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Verifies an email address and returns a result.
          * @summary POST /v1/check_email
@@ -497,6 +684,19 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1CheckReputation(reputationCheckRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1CheckReputation']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary GET /v1/suppressions/check
+         * @param {string} email 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CheckSuppression(email: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SuppressionCheckResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CheckSuppression(email, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1CheckSuppression']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -538,6 +738,19 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteList(listId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1DeleteList']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary DELETE /v1/suppressions/{id}
+         * @param {number} id Suppression entry identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DeleteSuppression(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SuppressionDeleteResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteSuppression(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1DeleteSuppression']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -608,6 +821,21 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1ListLists']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary GET /v1/suppressions
+         * @param {number} [limit] 
+         * @param {number} [offset] 
+         * @param {string} [reason] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListSuppressions(limit?: number, offset?: number, reason?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SuppressionListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListSuppressions(limit, offset, reason, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1ListSuppressions']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -618,6 +846,16 @@ export const V1ApiFp = function(configuration?: Configuration) {
 export const V1ApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = V1ApiFp(configuration)
     return {
+        /**
+         * 
+         * @summary POST /v1/suppressions
+         * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1AddSuppressions(requestParameters: V1ApiV1AddSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<AddSuppressionsResponse> {
+            return localVarFp.v1AddSuppressions(requestParameters.addSuppressionsRequest, options).then((request) => request(axios, basePath));
+        },
         /**
          * Verifies an email address and returns a result.
          * @summary POST /v1/check_email
@@ -637,6 +875,16 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          */
         v1CheckReputation(requestParameters: V1ApiV1CheckReputationRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReputationCheckResponse> {
             return localVarFp.v1CheckReputation(requestParameters.reputationCheckRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary GET /v1/suppressions/check
+         * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CheckSuppression(requestParameters: V1ApiV1CheckSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionCheckResponse> {
+            return localVarFp.v1CheckSuppression(requestParameters.email, options).then((request) => request(axios, basePath));
         },
         /**
          * Creates a tenant-scoped bulk job for async processing.
@@ -667,6 +915,16 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          */
         v1DeleteList(requestParameters: V1ApiV1DeleteListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDeleteResponse> {
             return localVarFp.v1DeleteList(requestParameters.listId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary DELETE /v1/suppressions/{id}
+         * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteSuppression(requestParameters: V1ApiV1DeleteSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionDeleteResponse> {
+            return localVarFp.v1DeleteSuppression(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -718,6 +976,16 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         v1ListLists(requestParameters: V1ApiV1ListListsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListListResponse> {
             return localVarFp.v1ListLists(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary GET /v1/suppressions
+         * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse> {
+            return localVarFp.v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -727,6 +995,16 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
  * @interface V1Api
  */
 export interface V1ApiInterface {
+    /**
+     * 
+     * @summary POST /v1/suppressions
+     * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1AddSuppressions(requestParameters: V1ApiV1AddSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<AddSuppressionsResponse>;
+
     /**
      * Verifies an email address and returns a result.
      * @summary POST /v1/check_email
@@ -746,6 +1024,16 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1CheckReputation(requestParameters: V1ApiV1CheckReputationRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReputationCheckResponse>;
+
+    /**
+     * 
+     * @summary GET /v1/suppressions/check
+     * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1CheckSuppression(requestParameters: V1ApiV1CheckSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionCheckResponse>;
 
     /**
      * Creates a tenant-scoped bulk job for async processing.
@@ -776,6 +1064,16 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1DeleteList(requestParameters: V1ApiV1DeleteListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDeleteResponse>;
+
+    /**
+     * 
+     * @summary DELETE /v1/suppressions/{id}
+     * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1DeleteSuppression(requestParameters: V1ApiV1DeleteSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionDeleteResponse>;
 
     /**
      * 
@@ -827,6 +1125,30 @@ export interface V1ApiInterface {
      */
     v1ListLists(requestParameters?: V1ApiV1ListListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListListResponse>;
 
+    /**
+     * 
+     * @summary GET /v1/suppressions
+     * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1ListSuppressions(requestParameters?: V1ApiV1ListSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse>;
+
+}
+
+/**
+ * Request parameters for v1AddSuppressions operation in V1Api.
+ * @export
+ * @interface V1ApiV1AddSuppressionsRequest
+ */
+export interface V1ApiV1AddSuppressionsRequest {
+    /**
+     * 
+     * @type {AddSuppressionsRequest}
+     * @memberof V1ApiV1AddSuppressions
+     */
+    readonly addSuppressionsRequest: AddSuppressionsRequest
 }
 
 /**
@@ -862,6 +1184,20 @@ export interface V1ApiV1CheckReputationRequest {
      * @memberof V1ApiV1CheckReputation
      */
     readonly reputationCheckRequest: ReputationCheckRequest
+}
+
+/**
+ * Request parameters for v1CheckSuppression operation in V1Api.
+ * @export
+ * @interface V1ApiV1CheckSuppressionRequest
+ */
+export interface V1ApiV1CheckSuppressionRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ApiV1CheckSuppression
+     */
+    readonly email: string
 }
 
 /**
@@ -918,6 +1254,20 @@ export interface V1ApiV1DeleteListRequest {
      * @memberof V1ApiV1DeleteList
      */
     readonly listId: number
+}
+
+/**
+ * Request parameters for v1DeleteSuppression operation in V1Api.
+ * @export
+ * @interface V1ApiV1DeleteSuppressionRequest
+ */
+export interface V1ApiV1DeleteSuppressionRequest {
+    /**
+     * Suppression entry identifier
+     * @type {number}
+     * @memberof V1ApiV1DeleteSuppression
+     */
+    readonly id: number
 }
 
 /**
@@ -1012,12 +1362,52 @@ export interface V1ApiV1ListListsRequest {
 }
 
 /**
+ * Request parameters for v1ListSuppressions operation in V1Api.
+ * @export
+ * @interface V1ApiV1ListSuppressionsRequest
+ */
+export interface V1ApiV1ListSuppressionsRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ApiV1ListSuppressions
+     */
+    readonly limit?: number
+
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ApiV1ListSuppressions
+     */
+    readonly offset?: number
+
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ApiV1ListSuppressions
+     */
+    readonly reason?: string
+}
+
+/**
  * V1Api - object-oriented interface
  * @export
  * @class V1Api
  * @extends {BaseAPI}
  */
 export class V1Api extends BaseAPI implements V1ApiInterface {
+    /**
+     * 
+     * @summary POST /v1/suppressions
+     * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1AddSuppressions(requestParameters: V1ApiV1AddSuppressionsRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1AddSuppressions(requestParameters.addSuppressionsRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Verifies an email address and returns a result.
      * @summary POST /v1/check_email
@@ -1040,6 +1430,18 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1CheckReputation(requestParameters: V1ApiV1CheckReputationRequest, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1CheckReputation(requestParameters.reputationCheckRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary GET /v1/suppressions/check
+     * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1CheckSuppression(requestParameters: V1ApiV1CheckSuppressionRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1CheckSuppression(requestParameters.email, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1076,6 +1478,18 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1DeleteList(requestParameters: V1ApiV1DeleteListRequest, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1DeleteList(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary DELETE /v1/suppressions/{id}
+     * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1DeleteSuppression(requestParameters: V1ApiV1DeleteSuppressionRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1DeleteSuppression(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1136,6 +1550,18 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1ListLists(requestParameters: V1ApiV1ListListsRequest = {}, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1ListLists(requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary GET /v1/suppressions
+     * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

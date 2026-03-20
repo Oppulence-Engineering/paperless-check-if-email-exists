@@ -1,3 +1,5 @@
+export * from './add-suppressions-request';
+export * from './add-suppressions-response';
 export * from './blacklist-result';
 export * from './bulk-job-results-response';
 export * from './check-email-input-proxy';
@@ -39,6 +41,11 @@ export * from './reputation-check-response';
 export * from './scoring-signals';
 export * from './smtp-details';
 export * from './sub-reason';
+export * from './suppression-check-response';
+export * from './suppression-delete-response';
+export * from './suppression-entry';
+export * from './suppression-list-response';
+export * from './suppression-reason';
 export * from './syntax-details';
 export * from './task-webhook';
 export * from './verif-method';
