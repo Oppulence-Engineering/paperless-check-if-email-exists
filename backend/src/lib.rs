@@ -21,6 +21,7 @@ pub mod finder;
 pub mod http;
 pub mod reputation;
 pub mod reverification;
+pub mod sandbox;
 pub mod scoring;
 pub mod storage;
 pub mod tenant;

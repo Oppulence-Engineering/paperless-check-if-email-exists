@@ -460,6 +460,19 @@ fn add_phase_two_schemas(spec: &mut Value) {
 	);
 	insert_schema(
 		spec,
+		"ConfidenceExplanation",
+		json!({
+			"type": "object",
+			"properties": {
+				"score": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"level": { "type": "string", "enum": ["high", "medium", "low", "very_low"] },
+				"factors": { "type": "array", "items": { "type": "string" } }
+			},
+			"required": ["score", "level", "factors"]
+		}),
+	);
+	insert_schema(
+		spec,
 		"FinderCandidateResult",
 		json!({
 			"type": "object",
@@ -470,6 +483,10 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"category": { "$ref": "#/components/schemas/EmailCategory" },
 				"sub_reason": { "$ref": "#/components/schemas/SubReason" },
 				"is_reachable": { "$ref": "#/components/schemas/Reachable" },
+				"confidence": {
+					"nullable": true,
+					"allOf": [{ "$ref": "#/components/schemas/ConfidenceExplanation" }]
+				},
 				"result": {
 					"nullable": true,
 					"allOf": [{ "$ref": "#/components/schemas/CheckEmailOutput" }]

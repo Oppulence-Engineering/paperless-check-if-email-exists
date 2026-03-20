@@ -32,6 +32,8 @@ type CheckEmailRequest struct {
 	Hotmailb2bVerifMethod *HotmailB2BVerifMethod `json:"hotmailb2b_verif_method,omitempty"`
 	Hotmailb2cVerifMethod *HotmailB2CVerifMethod `json:"hotmailb2c_verif_method,omitempty"`
 	Proxy *CheckEmailInputProxy `json:"proxy,omitempty"`
+	// When true, returns deterministic mock results without consuming credits or making real SMTP connections.
+	Sandbox *bool `json:"sandbox,omitempty"`
 	// SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
 	SmtpPort *float32 `json:"smtp_port,omitempty"`
 	// The email address to check.
@@ -47,6 +49,8 @@ type _CheckEmailRequest CheckEmailRequest
 // will change when the set of required properties is changed
 func NewCheckEmailRequest(toEmail string) *CheckEmailRequest {
 	this := CheckEmailRequest{}
+	var sandbox bool = false
+	this.Sandbox = &sandbox
 	this.ToEmail = toEmail
 	return &this
 }
@@ -56,6 +60,8 @@ func NewCheckEmailRequest(toEmail string) *CheckEmailRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCheckEmailRequestWithDefaults() *CheckEmailRequest {
 	this := CheckEmailRequest{}
+	var sandbox bool = false
+	this.Sandbox = &sandbox
 	return &this
 }
 
@@ -283,6 +289,38 @@ func (o *CheckEmailRequest) SetProxy(v CheckEmailInputProxy) {
 	o.Proxy = &v
 }
 
+// GetSandbox returns the Sandbox field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetSandbox() bool {
+	if o == nil || IsNil(o.Sandbox) {
+		var ret bool
+		return ret
+	}
+	return *o.Sandbox
+}
+
+// GetSandboxOk returns a tuple with the Sandbox field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetSandboxOk() (*bool, bool) {
+	if o == nil || IsNil(o.Sandbox) {
+		return nil, false
+	}
+	return o.Sandbox, true
+}
+
+// HasSandbox returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasSandbox() bool {
+	if o != nil && !IsNil(o.Sandbox) {
+		return true
+	}
+
+	return false
+}
+
+// SetSandbox gets a reference to the given bool and assigns it to the Sandbox field.
+func (o *CheckEmailRequest) SetSandbox(v bool) {
+	o.Sandbox = &v
+}
+
 // GetSmtpPort returns the SmtpPort field value if set, zero value otherwise.
 func (o *CheckEmailRequest) GetSmtpPort() float32 {
 	if o == nil || IsNil(o.SmtpPort) {
@@ -401,6 +439,9 @@ func (o CheckEmailRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Proxy) {
 		toSerialize["proxy"] = o.Proxy
+	}
+	if !IsNil(o.Sandbox) {
+		toSerialize["sandbox"] = o.Sandbox
 	}
 	if !IsNil(o.SmtpPort) {
 		toSerialize["smtp_port"] = o.SmtpPort

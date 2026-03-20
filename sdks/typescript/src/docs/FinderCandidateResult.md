@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **category** | [**EmailCategory**](EmailCategory.md) |  | [default to undefined]
+**confidence** | [**ConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional] [default to undefined]
 **email** | **string** |  | [default to undefined]
 **is_reachable** | [**Reachable**](Reachable.md) |  | [default to undefined]
 **pattern** | **string** |  | [default to undefined]
@@ -20,6 +21,7 @@ import { FinderCandidateResult } from '@oppulence/reacher-sdk';
 
 const instance: FinderCandidateResult = {
     category,
+    confidence,
     email,
     is_reachable,
     pattern,

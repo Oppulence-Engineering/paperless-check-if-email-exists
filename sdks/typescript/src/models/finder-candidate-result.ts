@@ -18,6 +18,9 @@
 import type { CheckEmailOutput } from './check-email-output';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { ConfidenceExplanation } from './confidence-explanation';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { EmailCategory } from './email-category';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -38,6 +41,12 @@ export interface FinderCandidateResult {
      * @memberof FinderCandidateResult
      */
     'category': EmailCategory;
+    /**
+     * 
+     * @type {ConfidenceExplanation}
+     * @memberof FinderCandidateResult
+     */
+    'confidence'?: ConfidenceExplanation | null;
     /**
      * 
      * @type {string}

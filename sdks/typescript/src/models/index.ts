@@ -8,6 +8,7 @@ export * from './check-email-output-misc';
 export * from './check-email-output-mx';
 export * from './check-email-output-smtp';
 export * from './check-email-request';
+export * from './confidence-explanation';
 export * from './core-error';
 export * from './debug-details';
 export * from './debug-details-smtp';

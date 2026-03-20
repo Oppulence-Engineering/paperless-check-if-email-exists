@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] 
 **Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] 
 **Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] 
+**Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional] [default to false]
 **SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] 
 **ToEmail** | **string** | The email address to check. | 
 **YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] 
@@ -208,6 +209,31 @@ SetProxy sets Proxy field to given value.
 `func (o *CheckEmailRequest) HasProxy() bool`
 
 HasProxy returns a boolean if a field has been set.
+
+### GetSandbox
+
+`func (o *CheckEmailRequest) GetSandbox() bool`
+
+GetSandbox returns the Sandbox field if non-nil, zero value otherwise.
+
+### GetSandboxOk
+
+`func (o *CheckEmailRequest) GetSandboxOk() (*bool, bool)`
+
+GetSandboxOk returns a tuple with the Sandbox field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSandbox
+
+`func (o *CheckEmailRequest) SetSandbox(v bool)`
+
+SetSandbox sets Sandbox field to given value.
+
+### HasSandbox
+
+`func (o *CheckEmailRequest) HasSandbox() bool`
+
+HasSandbox returns a boolean if a field has been set.
 
 ### GetSmtpPort
 

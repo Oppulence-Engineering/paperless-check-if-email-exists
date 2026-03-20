@@ -424,6 +424,28 @@ pub async fn do_check_email_work(
 		)
 		.await?;
 
+		// Evaluate conditional actions (auto-suppression) after successful completion
+		if let (Some(pool), Ok(output)) = (config.get_pg_pool(), &worker_output) {
+			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
+				if let Ok(tenant_uuid) = tenant_id_str.parse::<uuid::Uuid>() {
+					let email_score = crate::scoring::compute_score(output);
+					crate::worker::actions::evaluate_post_completion_actions(
+						&pool,
+						tenant_uuid,
+						&task.input.to_email,
+						Some(email_score.score),
+						Some(
+							&serde_json::to_value(&email_score.category)
+								.ok()
+								.and_then(|v| v.as_str().map(ToOwned::to_owned))
+								.unwrap_or_else(|| "unknown".to_string()),
+						),
+					)
+					.await;
+				}
+			}
+		}
+
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,
 			worker_output=?worker_output.as_ref().map(|o| &o.is_reachable),

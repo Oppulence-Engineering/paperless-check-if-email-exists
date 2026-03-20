@@ -10,35 +10,47 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
+## Completed
+
+| # | Area | Feature | PR | Shipped |
+|---|---|---|---|---|
+| 1 | Verification | `safe_to_send` recommendation flag | [#15](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/15) | Yes |
+| 2 | Verification | Expanded reason-code taxonomy | [#16](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/16) | Yes |
+| 3 | Verification | Scheduled re-verification | [#19](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/19) | Yes |
+| 4 | Verification | Spam-trap / honeypot detection | [#17](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/17) | Yes |
+| 5 | List Cleaning | Workspace suppression list management | [#18](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/18) | Yes |
+| 6 | List Cleaning | Smart deduplication and canonicalization | [#20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/20) | Yes |
+| 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
+| 27 | Verification | Result freshness / confidence decay | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
+| 9 | Finder / Enrichment | Finder confidence explanation | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+
+## Remaining
+
 | # | Area | Feature | Why customers would care | Priority |
 |---|---|---|---|---|
-| 1 | Verification | `safe_to_send` recommendation flag | Simplifies decision-making for marketers and ops teams without forcing them to interpret raw fields | Critical |
-| 2 | Verification | Expanded reason-code taxonomy | Gives customers exact machine-readable causes for invalid, risky, and unknown outcomes | Critical |
-| 3 | Verification | Scheduled re-verification | Keeps lists fresh automatically before campaigns or outbound sequences | Critical |
-| 4 | Verification | Spam-trap / honeypot detection | Protects sender reputation and reduces deliverability risk | Critical |
-| 5 | List Cleaning | Workspace suppression list management | Prevents teams from repeatedly emailing bounced, blocked, or unsubscribed contacts | Critical |
-| 6 | List Cleaning | Smart deduplication and canonicalization | Removes duplicate records across aliases and formatting differences | Critical |
 | 7 | List Cleaning | One-click suppression sync back to ESPs and CRMs | Saves customers from manually pushing bad records into downstream systems | Critical |
 | 8 | Finder / Enrichment | Contact waterfall search strategy | Increases match rates by chaining multiple candidate-generation and verification steps | Critical |
-| 9 | Finder / Enrichment | Finder confidence explanation | Shows why one candidate won, which improves trust in results | Critical |
+| ~~9~~ | ~~Finder / Enrichment~~ | ~~Finder confidence explanation~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
 | 10 | Integrations | Native HubSpot sync | Reduces manual export/import steps for CRM-driven teams | Critical |
 | 11 | Integrations | Native Salesforce sync | Makes enterprise sales and marketing workflows much easier to operationalize | Critical |
 | 12 | Integrations | Zapier connector | Expands automation reach for non-technical customers | Critical |
 | 13 | Integrations | Google Sheets sync | Gives spreadsheet-heavy teams a native workflow instead of CSV round-trips | Critical |
 | 14 | Automation | Scheduled list-cleaning pipelines | Lets customers keep recurring imports clean without manual uploads every time | Critical |
-| 15 | Automation | Conditional actions based on score and category | Makes the product more useful as a decision engine instead of a reporting tool | Critical |
+| ~~15~~ | ~~Automation~~ | ~~Conditional actions based on score and category~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
 | 16 | Verification | Provider-specific syntax validation | Prevents false positives by applying Gmail, Outlook, Yahoo, and other provider rules more precisely | Critical |
 | 17 | Verification | Bounce-risk prediction model | Gives customers a forward-looking risk estimate beyond raw SMTP checks | Critical |
 | 18 | Analytics / Reporting | Campaign outcome feedback loop | Lets customers feed bounce and engagement outcomes back into verification decisions | Critical |
 | 19 | Analytics / Reporting | Deliverability trends dashboard | Helps customers monitor quality changes over time instead of treating each job in isolation | Critical |
 | 20 | Finder / Enrichment | Account-based bulk people finder | Lets teams discover multiple likely contacts for a target company in one workflow | Critical |
-| 21 | Developer / API | Sandbox mode with deterministic mock results | Helps customers and partners build safely before using real credits or data | Critical |
-| 22 | Developer / API | Partial retry endpoint for failed bulk rows | Saves time and credits by rerunning only the records that need another attempt | Critical |
+| ~~21~~ | ~~Developer / API~~ | ~~Sandbox mode with deterministic mock results~~ | ~~Shipped in PR #22~~ | ~~Done~~ |
+| ~~22~~ | ~~Developer / API~~ | ~~Partial retry endpoint for failed bulk rows~~ | ~~Shipped in PR #21~~ | ~~Done~~ |
 | 23 | Team / Admin | SSO / SAML / SCIM | Required by many larger customers before they can adopt a new vendor | Critical |
 | 24 | Team / Admin | Role-based access control | Prevents accidental access to lists, exports, and admin actions | Critical |
 | 25 | Team / Admin | Retention policy controls | Lets customers define how long contact and verification data should be stored | Critical |
 | 26 | Security / Compliance | Consent and provenance tracking | Lets customers retain where contact data came from and whether it can be used | Critical |
-| 27 | Verification | Result freshness / confidence decay | Helps customers understand when an old verification result should no longer be trusted | High |
+| ~~27~~ | ~~Verification~~ | ~~Result freshness / confidence decay~~ | ~~Shipped in PR #21~~ | ~~Done~~ |
 | 28 | Verification | Historical verification timeline | Lets customers see how an address changed across checks over time | High |
 | 29 | Verification | Mailbox status change alerts | Notifies teams when previously valid contacts become risky or invalid | High |
 | 30 | Verification | Accept-all severity tiers | Distinguishes between mild catch-all risk and high-risk accept-all domains | High |
@@ -117,8 +129,8 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 
 If the goal is maximum customer value, the strongest next sequence would be:
 
-1. `safe_to_send`, richer reason codes, and spam-trap / honeypot detection
-2. scheduled re-verification, suppression lists, and smart deduplication
+1. ~~`safe_to_send`, richer reason codes, and spam-trap / honeypot detection~~ — **Done** (PRs #15-#17)
+2. ~~scheduled re-verification, suppression lists, and smart deduplication~~ — **Done** (PRs #18-#20)
 3. HubSpot, Salesforce, Zapier, and Google Sheets integrations
 4. finder confidence explanations plus contact waterfall improvements
 5. RBAC, SSO, retention controls, and audit log search

@@ -27,6 +27,7 @@ docs/CheckEmailOutputMisc.md
 docs/CheckEmailOutputMx.md
 docs/CheckEmailOutputSmtp.md
 docs/CheckEmailRequest.md
+docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
@@ -91,6 +92,7 @@ models/check-email-output-mx.ts
 models/check-email-output-smtp.ts
 models/check-email-output.ts
 models/check-email-request.ts
+models/confidence-explanation.ts
 models/core-error.ts
 models/debug-details-smtp.ts
 models/debug-details.ts

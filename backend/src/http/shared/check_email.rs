@@ -67,6 +67,31 @@ pub async fn handle_check_email(
 		.into());
 	}
 
+	// Sandbox mode: return deterministic mock results without SMTP,
+	// throttle checks, or quota consumption. Freshness fields are
+	// hardcoded so responses are fully deterministic across time.
+	if body.sandbox {
+		use crate::scoring::response::scored_json;
+		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
+		let mut value = scored_json(&mock_result).map_err(ReacherResponseError::from)?;
+		if let Some(score_obj) = value.get_mut("score").and_then(|v| v.as_object_mut()) {
+			score_obj.insert(
+				"verified_at".into(),
+				serde_json::Value::String("2025-01-01T00:00:00+00:00".into()),
+			);
+			score_obj.insert("age_days".into(), serde_json::Value::from(0));
+			score_obj.insert(
+				"freshness".into(),
+				serde_json::Value::String("fresh".into()),
+			);
+		}
+		let json = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
+		return Ok(CheckEmailResponse {
+			status_code: StatusCode::OK,
+			body: json,
+		});
+	}
+
 	let mut idempotency_record_id: Option<i64> = None;
 	let mut idempotency_pool: Option<sqlx::PgPool> = None;
 
@@ -253,6 +278,27 @@ async fn handle_without_worker(
 		.map_err(ReacherResponseError::from)?;
 
 	let result = result_ok.unwrap();
+
+	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
+	if let Some(pool) = config.get_pg_pool() {
+		if let Some(tenant_id) = _tenant_ctx.tenant_id {
+			let email_score = crate::scoring::compute_score(&result);
+			crate::worker::actions::evaluate_post_completion_actions(
+				&pool,
+				tenant_id,
+				&body.to_email,
+				Some(email_score.score),
+				Some(
+					&serde_json::to_value(&email_score.category)
+						.ok()
+						.and_then(|v| v.as_str().map(ToOwned::to_owned))
+						.unwrap_or_else(|| "unknown".to_string()),
+				),
+			)
+			.await;
+		}
+	}
+
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
 	Ok(scored_response_fresh(&result).map_err(ReacherResponseError::from)?)
 }

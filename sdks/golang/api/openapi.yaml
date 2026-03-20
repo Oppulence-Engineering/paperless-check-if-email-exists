@@ -1703,6 +1703,7 @@ components:
         smtp_port: 6.027456183070403
         hello_name: hello_name
         gmail_verif_method: Smtp
+        sandbox: false
         check_gravatar: true
         hotmailb2c_verif_method: Smtp
         yahoo_verif_method: Api
@@ -1724,6 +1725,11 @@ components:
           $ref: "#/components/schemas/HotmailB2CVerifMethod"
         proxy:
           $ref: "#/components/schemas/CheckEmailInputProxy"
+        sandbox:
+          default: false
+          description: "When true, returns deterministic mock results without consuming\
+            \ credits or making real SMTP connections."
+          type: boolean
         smtp_port:
           description: "SMTP port to use for email validation. Defaults to 25, but\
             \ 465, 587, and 2525 are sometimes also used."
@@ -1739,6 +1745,29 @@ components:
       type: object
       x-stoplight:
         id: 834398a8ce480
+    ConfidenceExplanation:
+      properties:
+        factors:
+          items:
+            type: string
+          type: array
+        level:
+          enum:
+          - high
+          - medium
+          - low
+          - very_low
+          type: string
+        score:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+      required:
+      - factors
+      - level
+      - score
+      type: object
     CoreError:
       description: Details of an error encountered during the verification process.
       properties:
@@ -2000,6 +2029,7 @@ components:
         - result: ""
           score: 5
           is_reachable: invalid
+          confidence: ""
           pattern: pattern
           category: valid
           email: email
@@ -2007,6 +2037,7 @@ components:
         - result: ""
           score: 5
           is_reachable: invalid
+          confidence: ""
           pattern: pattern
           category: valid
           email: email
@@ -2069,6 +2100,7 @@ components:
         result: ""
         score: 5
         is_reachable: invalid
+        confidence: ""
         pattern: pattern
         category: valid
         email: email
@@ -2076,6 +2108,10 @@ components:
       properties:
         category:
           $ref: "#/components/schemas/EmailCategory"
+        confidence:
+          allOf:
+          - $ref: "#/components/schemas/ConfidenceExplanation"
+          nullable: true
         email:
           type: string
         is_reachable:

@@ -78,6 +78,12 @@ export interface CheckEmailRequest {
      */
     'proxy'?: CheckEmailInputProxy;
     /**
+     * When true, returns deterministic mock results without consuming credits or making real SMTP connections.
+     * @type {boolean}
+     * @memberof CheckEmailRequest
+     */
+    'sandbox'?: boolean;
+    /**
      * SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
      * @type {number}
      * @memberof CheckEmailRequest
