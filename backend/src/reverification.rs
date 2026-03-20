@@ -29,6 +29,8 @@ async fn run_reverification_cycle(
 	config: &BackendConfig,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
+	// Claim due schedules atomically with FOR UPDATE SKIP LOCKED so multiple
+	// instances don't process the same schedule concurrently.
 	let schedules = sqlx::query_as::<_, ScheduleRow>(
 		r#"
 		SELECT rs.id, rs.tenant_id, rs.staleness_days, rs.batch_size
@@ -37,6 +39,7 @@ async fn run_reverification_cycle(
 		WHERE rs.enabled = true
 		  AND t.status = 'active'
 		  AND (rs.next_run_at IS NULL OR rs.next_run_at <= NOW())
+		FOR UPDATE OF rs SKIP LOCKED
 		"#,
 	)
 	.fetch_all(pg_pool)
@@ -73,23 +76,27 @@ async fn process_schedule(
 	let staleness_days = schedule.staleness_days;
 	let batch_size = schedule.batch_size;
 
-	// Find stale emails that need re-verification
+	// Find emails whose LATEST completion is stale. The subquery ensures we
+	// only pick emails where the most recent completed_at is older than the
+	// threshold, not emails that happen to have any old result.
 	let stale_emails: Vec<StaleEmail> = sqlx::query_as::<_, StaleEmail>(
 		r#"
-		SELECT DISTINCT ON (payload->'input'->>'to_email')
-			payload->'input'->>'to_email' AS email
-		FROM v1_task_result
-		WHERE tenant_id = $1
-		  AND task_state = 'completed'
-		  AND completed_at IS NOT NULL
-		  AND completed_at < NOW() - make_interval(days => $2)
+		SELECT email FROM (
+			SELECT payload->'input'->>'to_email' AS email,
+				   MAX(completed_at) AS latest_completed
+			FROM v1_task_result
+			WHERE tenant_id = $1
+			  AND task_state = 'completed'
+			  AND completed_at IS NOT NULL
+			GROUP BY payload->'input'->>'to_email'
+		) sub
+		WHERE sub.latest_completed < NOW() - make_interval(days => $2)
 		  AND NOT EXISTS (
 			SELECT 1 FROM v1_task_result t2
 			WHERE t2.tenant_id = $1
-			  AND t2.payload->'input'->>'to_email' = v1_task_result.payload->'input'->>'to_email'
+			  AND t2.payload->'input'->>'to_email' = sub.email
 			  AND t2.task_state IN ('queued', 'running', 'retrying')
 		  )
-		ORDER BY payload->'input'->>'to_email', completed_at DESC
 		LIMIT $3
 		"#,
 	)
@@ -100,7 +107,6 @@ async fn process_schedule(
 	.await?;
 
 	if stale_emails.is_empty() {
-		// Update next_run_at even if nothing to do
 		sqlx::query(
 			"UPDATE reverification_schedules SET last_run_at = NOW(), next_run_at = NOW() + make_interval(secs => $2), updated_at = NOW() WHERE id = $1",
 		)
@@ -132,7 +138,6 @@ async fn process_schedule(
 				tenant_id = %schedule.tenant_id,
 				"Skipping reverification: quota exceeded"
 			);
-			// Still update next_run_at so we don't spin
 			sqlx::query(
 				"UPDATE reverification_schedules SET last_run_at = NOW(), next_run_at = NOW() + make_interval(secs => $2), updated_at = NOW() WHERE id = $1",
 			)
@@ -161,6 +166,8 @@ async fn process_schedule(
 		.with_priority(0); // Lower priority than normal tasks
 
 	let mut published = 0;
+	let mut failed_task_ids: Vec<i32> = Vec::new();
+
 	for stale in &stale_emails {
 		let task_row_id: i32 = sqlx::query_scalar(
 			r#"
@@ -206,9 +213,31 @@ async fn process_schedule(
 				error = ?err,
 				"Failed to publish reverification task"
 			);
+			failed_task_ids.push(task_row_id);
 			continue;
 		}
 		published += 1;
+	}
+
+	// Mark failed-to-publish task rows so they don't stay orphaned as 'queued'
+	for task_id in &failed_task_ids {
+		let _ = sqlx::query(
+			"UPDATE v1_task_result SET task_state = 'failed'::task_state, error = 'publish_failed', completed_at = NOW(), updated_at = NOW() WHERE id = $1",
+		)
+		.bind(task_id)
+		.execute(pg_pool)
+		.await;
+	}
+
+	if !failed_task_ids.is_empty() {
+		warn!(
+			target: LOG_TARGET,
+			tenant_id = %schedule.tenant_id,
+			job_id = job_id,
+			published = published,
+			failed = failed_task_ids.len(),
+			"Partial reverification publish failure"
+		);
 	}
 
 	// Update schedule
