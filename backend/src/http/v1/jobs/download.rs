@@ -5,6 +5,7 @@ use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
+use chrono::{DateTime, Utc};
 use futures::stream;
 use serde::Deserialize;
 use sqlx::{PgPool, Row};
@@ -153,7 +154,7 @@ async fn fetch_batch(
 ) -> Result<Vec<TaskResultRecord>, ReacherResponseError> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 		FROM v1_task_result
 		WHERE job_id = $1 AND id > $2
 		ORDER BY id ASC
@@ -179,6 +180,7 @@ async fn fetch_batch(
 			sub_reason: row.get("sub_reason"),
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
+			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
 		})
 		.collect())
 }

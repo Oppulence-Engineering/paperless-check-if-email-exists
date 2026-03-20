@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::do_work::TaskError;
-use crate::scoring::response::scored_response;
+use crate::scoring::response::scored_response_fresh;
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
@@ -46,7 +46,7 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 
 	fn try_from(result: &Result<CheckEmailOutput, TaskError>) -> Result<Self, Self::Error> {
 		match result {
-			Ok(output) => Ok(Self::Ok(scored_response(output)?)),
+			Ok(output) => Ok(Self::Ok(scored_response_fresh(output)?)),
 			Err(TaskError::Throttle(e)) => Ok(Self::Err((
 				TaskError::Throttle(e.clone()).to_string(),
 				StatusCode::TOO_MANY_REQUESTS.as_u16(),

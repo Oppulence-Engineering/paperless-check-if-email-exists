@@ -7,6 +7,7 @@ use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
+use chrono::{DateTime, Utc};
 use futures::stream;
 use serde::Deserialize;
 use serde_json::{Map, Value};
@@ -181,7 +182,8 @@ async fn fetch_batch(
 			score_category,
 			sub_reason,
 			safe_to_send,
-			reason_codes
+			reason_codes,
+			completed_at
 		FROM v1_task_result
 		WHERE (extra->>'list_id')::INTEGER = $1
 		  AND (extra->>'row_index')::INTEGER > $2
@@ -212,6 +214,7 @@ async fn fetch_batch(
 					sub_reason: row.get("sub_reason"),
 					safe_to_send: row.get("safe_to_send"),
 					reason_codes: row.get("reason_codes"),
+					completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
 				},
 			)
 		})
@@ -260,6 +263,9 @@ fn render_row(
 			.unwrap_or_default(),
 	);
 	row.push(flat.error.clone().unwrap_or_default());
+	row.push(flat.verified_at.clone().unwrap_or_default());
+	row.push(flat.age_days.map(|v| v.to_string()).unwrap_or_default());
+	row.push(flat.freshness.clone().unwrap_or_default());
 	writer.write_record(&row).expect("csv row write");
 	writer.into_inner().expect("csv row bytes")
 }
@@ -278,6 +284,9 @@ fn render_header(headers: &[String]) -> Vec<u8> {
 		"is_disposable".to_string(),
 		"smtp_is_deliverable".to_string(),
 		"error".to_string(),
+		"verified_at".to_string(),
+		"age_days".to_string(),
+		"freshness".to_string(),
 	]);
 	writer.write_record(&row).expect("csv header write");
 	writer.into_inner().expect("csv header bytes")

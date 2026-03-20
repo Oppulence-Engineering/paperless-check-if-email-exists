@@ -30,6 +30,7 @@ use crate::http::csv_shared::{csv_rows, TaskResultRecord};
 use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
 use crate::tenant::context::TenantContext;
+use chrono::{DateTime, Utc};
 
 /// Defines the download format, passed in as a query param.
 #[derive(Clone, Copy)]
@@ -176,7 +177,7 @@ async fn job_result_csv(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
 		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
@@ -202,6 +203,7 @@ async fn job_result_csv(
 			sub_reason: row.get("sub_reason"),
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
+			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
 		})
 		.collect();
 

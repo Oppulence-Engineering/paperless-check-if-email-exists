@@ -17,7 +17,7 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
-use crate::scoring::response::scored_response;
+use crate::scoring::response::scored_response_fresh;
 use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, QuotaCheckResult};
@@ -254,7 +254,7 @@ async fn handle_without_worker(
 
 	let result = result_ok.unwrap();
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
-	Ok(scored_response(&result).map_err(ReacherResponseError::from)?)
+	Ok(scored_response_fresh(&result).map_err(ReacherResponseError::from)?)
 }
 
 async fn handle_with_worker(

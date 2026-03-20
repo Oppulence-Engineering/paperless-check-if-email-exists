@@ -1,8 +1,10 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
+use crate::scoring::response::inject_freshness_into_result;
 use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -51,10 +53,19 @@ async fn http_handler(
 	let limit = query.limit.unwrap_or(50).min(200);
 	let state_filter = query.state.as_deref().unwrap_or("completed");
 
-	let results =
-		sqlx::query_as::<_, (i32, String, Option<serde_json::Value>, Option<String>, i32)>(
-			r#"
-		SELECT id, task_state::TEXT, result, error, retry_count
+	let results = sqlx::query_as::<
+		_,
+		(
+			i32,
+			String,
+			Option<serde_json::Value>,
+			Option<String>,
+			i32,
+			Option<DateTime<Utc>>,
+		),
+	>(
+		r#"
+		SELECT id, task_state::TEXT, result, error, retry_count, completed_at
 		FROM v1_task_result
 		WHERE job_id = $1
 		  AND task_state = $4::task_state
@@ -62,25 +73,31 @@ async fn http_handler(
 		ORDER BY id ASC
 		LIMIT $3
 		"#,
-		)
-		.bind(job_id)
-		.bind(query.cursor)
-		.bind(limit + 1)
-		.bind(state_filter)
-		.fetch_all(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	)
+	.bind(job_id)
+	.bind(query.cursor)
+	.bind(limit + 1)
+	.bind(state_filter)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	let has_more = results.len() as i64 > limit;
 	let results: Vec<TaskResult> = results
 		.into_iter()
 		.take(limit as usize)
-		.map(|r| TaskResult {
-			id: r.0 as i64,
-			task_state: r.1,
-			result: r.2,
-			error: r.3,
-			retry_count: r.4,
+		.map(|r| {
+			let mut result = r.2;
+			if let (Some(ref mut res), Some(completed_at)) = (&mut result, r.5) {
+				inject_freshness_into_result(res, completed_at);
+			}
+			TaskResult {
+				id: r.0 as i64,
+				task_state: r.1,
+				result,
+				error: r.3,
+				retry_count: r.4,
+			}
 		})
 		.collect();
 

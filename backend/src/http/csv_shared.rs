@@ -1,3 +1,5 @@
+use crate::scoring::{compute_freshness, Freshness};
+use chrono::{DateTime, Utc};
 use csv::WriterBuilder;
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -13,6 +15,7 @@ pub struct TaskResultRecord {
 	pub sub_reason: Option<String>,
 	pub safe_to_send: Option<bool>,
 	pub reason_codes: Option<Vec<String>>,
+	pub completed_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -31,10 +34,13 @@ pub struct CsvDownloadRow {
 	pub smtp_is_catch_all: Option<bool>,
 	pub smtp_is_deliverable: Option<bool>,
 	pub error: Option<String>,
+	pub verified_at: Option<String>,
+	pub age_days: Option<i64>,
+	pub freshness: Option<String>,
 }
 
 pub const CSV_HEADER: &str =
-	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error\n";
+	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness\n";
 
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
@@ -93,6 +99,27 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		})
 		.or_else(|| record.reason_codes.as_ref().map(|codes| codes.join("|")));
 
+	let (verified_at, age_days, freshness) = match record.completed_at {
+		Some(ts) => {
+			let info = compute_freshness(ts);
+			(
+				Some(info.verified_at),
+				Some(info.age_days),
+				Some(
+					match info.freshness {
+						Freshness::Fresh => "fresh",
+						Freshness::Recent => "recent",
+						Freshness::Aging => "aging",
+						Freshness::Stale => "stale",
+						Freshness::Expired => "expired",
+					}
+					.to_string(),
+				),
+			)
+		}
+		None => (None, None, None),
+	};
+
 	CsvDownloadRow {
 		input,
 		is_reachable,
@@ -111,6 +138,9 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		smtp_is_deliverable: result_value(record, &["smtp", "is_deliverable"])
 			.and_then(Value::as_bool),
 		error: record.error.clone(),
+		verified_at,
+		age_days,
+		freshness,
 	}
 }
 
@@ -157,6 +187,11 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 			}
 			map.insert("score".into(), Value::Object(score));
 		}
+
+		// Inject freshness into the score sub-object
+		if let Some(completed_at) = record.completed_at {
+			crate::scoring::response::inject_freshness_into_result(&mut line, completed_at);
+		}
 	}
 
 	serde_json::to_vec(&line)
@@ -201,6 +236,7 @@ mod tests {
 			sub_reason: None,
 			safe_to_send: None,
 			reason_codes: None,
+			completed_at: None,
 		});
 
 		assert_eq!(row.input, "user@example.com");
