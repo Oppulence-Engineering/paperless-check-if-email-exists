@@ -1,12 +1,12 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
-use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Serialize)]
@@ -35,7 +35,8 @@ async fn http_handler(
 	let row = sqlx::query(
 		r#"
 		SELECT enabled, staleness_days, batch_size,
-			   last_run_at::TEXT, next_run_at::TEXT,
+			   TO_CHAR(last_run_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_run_at,
+			   TO_CHAR(next_run_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS next_run_at,
 			   last_job_id, emails_requeued
 		FROM reverification_schedules
 		WHERE tenant_id = $1
@@ -68,6 +69,23 @@ async fn http_handler(
 	}
 }
 
+/// Pool-only filter that doesn't require worker mode.
+fn with_pg_pool(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let config = Arc::clone(&config);
+		async move {
+			config.get_pg_pool().ok_or_else(|| {
+				warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Database not configured",
+				))
+			})
+		}
+	})
+}
+
 /// GET /v1/reverification/status
 #[utoipa::path(
 	get,
@@ -81,7 +99,7 @@ pub fn v1_reverification_status(
 	warp::path!("v1" / "reverification" / "status")
 		.and(warp::get())
 		.and(resolve_tenant(Arc::clone(&config)))
-		.and(with_worker_db(config))
+		.and(with_pg_pool(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
 }

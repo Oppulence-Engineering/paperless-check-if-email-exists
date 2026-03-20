@@ -170,8 +170,13 @@ pub async fn run_warp_server(
 		idempotency::spawn_idempotency_cleanup(pool.clone());
 		crate::reputation::spawn_cache_cleanup(pool.clone());
 
-		if config.reverification.enable {
+		if config.reverification.enable && config.worker.enable {
 			crate::reverification::spawn_reverification_scheduler(Arc::clone(&config), pool);
+		} else if config.reverification.enable {
+			tracing::warn!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Reverification is enabled but worker mode is disabled. Scheduler will not start."
+			);
 		}
 	} else if config.reverification.enable {
 		tracing::error!(

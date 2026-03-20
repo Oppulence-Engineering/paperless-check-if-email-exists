@@ -29,19 +29,23 @@ async fn run_reverification_cycle(
 	config: &BackendConfig,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
-	// Claim due schedules atomically with FOR UPDATE SKIP LOCKED so multiple
-	// instances don't process the same schedule concurrently.
+	// Atomically claim due schedules by advancing next_run_at in a single
+	// UPDATE ... RETURNING, preventing concurrent instances from processing
+	// the same schedule (no transaction needed, the UPDATE itself is atomic).
 	let schedules = sqlx::query_as::<_, ScheduleRow>(
 		r#"
-		SELECT rs.id, rs.tenant_id, rs.staleness_days, rs.batch_size
-		FROM reverification_schedules rs
-		JOIN tenants t ON t.id = rs.tenant_id
-		WHERE rs.enabled = true
+		UPDATE reverification_schedules rs
+		SET next_run_at = NOW() + make_interval(secs => $1),
+			updated_at = NOW()
+		FROM tenants t
+		WHERE t.id = rs.tenant_id
+		  AND rs.enabled = true
 		  AND t.status = 'active'
 		  AND (rs.next_run_at IS NULL OR rs.next_run_at <= NOW())
-		FOR UPDATE OF rs SKIP LOCKED
+		RETURNING rs.id, rs.tenant_id, rs.staleness_days, rs.batch_size
 		"#,
 	)
+	.bind(reverification_config.interval_seconds as f64)
 	.fetch_all(pg_pool)
 	.await?;
 
@@ -107,13 +111,12 @@ async fn process_schedule(
 	.await?;
 
 	if stale_emails.is_empty() {
-		sqlx::query(
-			"UPDATE reverification_schedules SET last_run_at = NOW(), next_run_at = NOW() + make_interval(secs => $2), updated_at = NOW() WHERE id = $1",
-		)
-		.bind(schedule.id)
-		.bind(reverification_config.interval_seconds as f64)
-		.execute(pg_pool)
-		.await?;
+		// next_run_at already advanced by the atomic claim; just update last_run_at
+		let _ =
+			sqlx::query("UPDATE reverification_schedules SET last_run_at = NOW() WHERE id = $1")
+				.bind(schedule.id)
+				.execute(pg_pool)
+				.await;
 		return Ok(());
 	}
 
@@ -138,13 +141,7 @@ async fn process_schedule(
 				tenant_id = %schedule.tenant_id,
 				"Skipping reverification: quota exceeded"
 			);
-			sqlx::query(
-				"UPDATE reverification_schedules SET last_run_at = NOW(), next_run_at = NOW() + make_interval(secs => $2), updated_at = NOW() WHERE id = $1",
-			)
-			.bind(schedule.id)
-			.bind(reverification_config.interval_seconds as f64)
-			.execute(pg_pool)
-			.await?;
+			// next_run_at already advanced by the atomic claim
 			return Ok(());
 		}
 	}
@@ -240,20 +237,18 @@ async fn process_schedule(
 		);
 	}
 
-	// Update schedule
+	// Update schedule (next_run_at already set by the atomic claim)
 	sqlx::query(
 		r#"
 		UPDATE reverification_schedules
 		SET last_run_at = NOW(),
-			next_run_at = NOW() + make_interval(secs => $2),
-			last_job_id = $3,
-			emails_requeued = emails_requeued + $4,
+			last_job_id = $2,
+			emails_requeued = emails_requeued + $3,
 			updated_at = NOW()
 		WHERE id = $1
 		"#,
 	)
 	.bind(schedule.id)
-	.bind(reverification_config.interval_seconds as f64)
 	.bind(job_id)
 	.bind(published)
 	.execute(pg_pool)
