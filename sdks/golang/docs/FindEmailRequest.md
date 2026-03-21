@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **Domain** | **string** |  | 
 **FirstName** | **string** |  | 
 **LastName** | **string** |  | 
+**Strategy** | Pointer to **string** | Search strategy: parallel (all at once) or waterfall (high-quality patterns first) | [optional] [default to "parallel"]
 
 ## Methods
 
@@ -86,6 +87,31 @@ and a boolean to check if the value has been set.
 
 SetLastName sets LastName field to given value.
 
+
+### GetStrategy
+
+`func (o *FindEmailRequest) GetStrategy() string`
+
+GetStrategy returns the Strategy field if non-nil, zero value otherwise.
+
+### GetStrategyOk
+
+`func (o *FindEmailRequest) GetStrategyOk() (*string, bool)`
+
+GetStrategyOk returns a tuple with the Strategy field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStrategy
+
+`func (o *FindEmailRequest) SetStrategy(v string)`
+
+SetStrategy sets Strategy field to given value.
+
+### HasStrategy
+
+`func (o *FindEmailRequest) HasStrategy() bool`
+
+HasStrategy returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

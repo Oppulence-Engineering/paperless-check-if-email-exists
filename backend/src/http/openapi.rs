@@ -36,6 +36,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::jobs::get_results::v1_get_job_results,
 		crate::http::v1::jobs::download::v1_download_job_results,
 		crate::http::v1::jobs::retry::v1_retry_job,
+		crate::http::v1::jobs::approval_checklist::v1_job_approval_checklist,
 		crate::http::v1::lists::post::v1_create_list,
 		crate::http::v1::lists::get_list::v1_list_lists,
 		crate::http::v1::lists::get_detail::v1_get_list,
@@ -428,7 +429,8 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"first_name": { "type": "string" },
 				"last_name": { "type": "string" },
-				"domain": { "type": "string" }
+				"domain": { "type": "string" },
+				"strategy": { "type": "string", "enum": ["parallel", "waterfall"], "default": "parallel", "description": "Search strategy: parallel (all at once) or waterfall (high-quality patterns first)" }
 			},
 			"required": ["first_name", "last_name", "domain"]
 		}),
@@ -1061,6 +1063,61 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("RetryJobResponse", "Retry initiated"),
+	);
+	insert_schema(
+		spec,
+		"ApprovalCategoryBreakdown",
+		json!({
+			"type": "object",
+			"properties": {
+				"valid": { "type": "integer", "format": "int64" },
+				"risky": { "type": "integer", "format": "int64" },
+				"unknown": { "type": "integer", "format": "int64" },
+				"invalid": { "type": "integer", "format": "int64" },
+				"unprocessed": { "type": "integer", "format": "int64" }
+			},
+			"required": ["valid", "risky", "unknown", "invalid", "unprocessed"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ApprovalRiskFlags",
+		json!({
+			"type": "object",
+			"properties": {
+				"disposable_count": { "type": "integer", "format": "int64" },
+				"catch_all_count": { "type": "integer", "format": "int64" },
+				"role_account_count": { "type": "integer", "format": "int64" },
+				"spam_trap_count": { "type": "integer", "format": "int64" },
+				"suppressed_count": { "type": "integer", "format": "int64" }
+			},
+			"required": ["disposable_count", "catch_all_count", "role_account_count", "spam_trap_count", "suppressed_count"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ApprovalChecklistResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"job_id": { "type": "integer", "format": "int32" },
+				"total_records": { "type": "integer", "format": "int32" },
+				"categories": { "$ref": "#/components/schemas/ApprovalCategoryBreakdown" },
+				"risk_flags": { "$ref": "#/components/schemas/ApprovalRiskFlags" },
+				"safe_to_send_count": { "type": "integer", "format": "int64" },
+				"safe_to_send_pct": { "type": "number" },
+				"recommendation": { "type": "string" },
+				"ready_to_send": { "type": "boolean" }
+			},
+			"required": ["job_id", "total_records", "categories", "risk_flags", "safe_to_send_count", "safe_to_send_pct", "recommendation", "ready_to_send"]
+		}),
+	);
+	set_response(
+		spec,
+		"/v1/jobs/{job_id}/approval",
+		"get",
+		"200",
+		json_response("ApprovalChecklistResponse", "Pre-send approval checklist"),
 	);
 	set_response(
 		spec,

@@ -1,5 +1,7 @@
 use crate::config::BackendConfig;
-use crate::finder::patterns::{generate_candidates, normalize_domain, normalize_name};
+use crate::finder::patterns::{
+	generate_candidates, normalize_domain, normalize_name, pattern_priority,
+};
 use crate::finder::{precheck_domain, require_tenant_id};
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
@@ -21,6 +23,10 @@ struct Request {
 	first_name: String,
 	last_name: String,
 	domain: String,
+	/// Search strategy: "parallel" (default, all at once) or "waterfall"
+	/// (high-quality patterns verified first with higher priority).
+	#[serde(default)]
+	strategy: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -48,6 +54,22 @@ async fn http_handler(
 		)
 		.into());
 	}
+
+	// Validate strategy early, before any DB or quota work
+	let use_waterfall = match body.strategy.as_deref() {
+		None | Some("parallel") => false,
+		Some("waterfall") => true,
+		Some(other) => {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!(
+					"Invalid strategy '{}'. Expected 'parallel' or 'waterfall'.",
+					other
+				),
+			)
+			.into())
+		}
+	};
 
 	let candidates = generate_candidates(&body.first_name, &body.last_name, &body.domain);
 	if candidates.is_empty() {
@@ -154,11 +176,22 @@ async fn http_handler(
 		));
 	}
 
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1);
+	// Sort candidates by priority (descending) in waterfall mode so
+	// high-quality patterns are published and consumed first.
+	let mut candidates = candidates;
+	if use_waterfall {
+		candidates.sort_by(|a, b| pattern_priority(&b.pattern).cmp(&pattern_priority(&a.pattern)));
+	}
 
 	for candidate in candidates {
+		let priority = if use_waterfall {
+			pattern_priority(&candidate.pattern)
+		} else {
+			1
+		};
+		let properties = BasicProperties::default()
+			.with_content_type("application/json".into())
+			.with_priority(priority);
 		let task_payload = CheckEmailRequest {
 			to_email: candidate.email.clone(),
 			..Default::default()

@@ -86,6 +86,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetJobEvents**](docs/JobsApi.md#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events
 *JobsApi* | [**v1GetJobResults**](docs/JobsApi.md#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
+*JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
@@ -125,6 +126,9 @@ Class | Method | HTTP request | Description
 
  - [AddSuppressionsRequest](docs/AddSuppressionsRequest.md)
  - [AddSuppressionsResponse](docs/AddSuppressionsResponse.md)
+ - [ApprovalCategoryBreakdown](docs/ApprovalCategoryBreakdown.md)
+ - [ApprovalChecklistResponse](docs/ApprovalChecklistResponse.md)
+ - [ApprovalRiskFlags](docs/ApprovalRiskFlags.md)
  - [BlacklistResult](docs/BlacklistResult.md)
  - [BulkJobResultsResponse](docs/BulkJobResultsResponse.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)

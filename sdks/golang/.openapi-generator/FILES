@@ -17,6 +17,9 @@ docs/AddSuppressionsRequest.md
 docs/AddSuppressionsResponse.md
 docs/AdminAPI.md
 docs/AdminJobsAPI.md
+docs/ApprovalCategoryBreakdown.md
+docs/ApprovalChecklistResponse.md
+docs/ApprovalRiskFlags.md
 docs/BlacklistResult.md
 docs/BulkJobResultsResponse.md
 docs/CheckEmailInputProxy.md
@@ -82,6 +85,9 @@ docs/YahooVerifMethod.md
 git_push.sh
 model_add_suppressions_request.go
 model_add_suppressions_response.go
+model_approval_category_breakdown.go
+model_approval_checklist_response.go
+model_approval_risk_flags.go
 model_blacklist_result.go
 model_bulk_job_results_response.go
 model_check_email_input_proxy.go

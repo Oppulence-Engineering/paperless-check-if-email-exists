@@ -38,5 +38,19 @@ export interface FindEmailRequest {
      * @memberof FindEmailRequest
      */
     'last_name': string;
+    /**
+     * Search strategy: parallel (all at once) or waterfall (high-quality patterns first)
+     * @type {string}
+     * @memberof FindEmailRequest
+     */
+    'strategy'?: FindEmailRequestStrategyEnum;
 }
+
+export const FindEmailRequestStrategyEnum = {
+    Parallel: 'parallel',
+    Waterfall: 'waterfall'
+} as const;
+
+export type FindEmailRequestStrategyEnum = typeof FindEmailRequestStrategyEnum[keyof typeof FindEmailRequestStrategyEnum];
+
 
