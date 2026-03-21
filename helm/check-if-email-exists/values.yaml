@@ -37,7 +37,13 @@ ingress:
           pathType: ImplementationSpecific
   tls: []
 
-resources: {}
+resources:
+  requests:
+    cpu: 5m
+    memory: 32Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
 
 livenessProbe:
   httpGet:
@@ -49,10 +55,11 @@ readinessProbe:
     port: http
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
+  enabled: true
+  minReplicas: 2
   maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
+  targetCPUUtilizationPercentage: 95
+  targetMemoryUtilizationPercentage: 95
 
 config:
   createConfigMap: true
