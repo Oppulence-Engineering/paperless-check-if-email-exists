@@ -381,6 +381,7 @@ mod quota_tests {
 			result_retention_days: 30,
 			webhook_signing_secret: None,
 			is_legacy: false,
+			scopes: vec![],
 		}
 	}
 

@@ -204,6 +204,7 @@ async fn connect_existing_db(url: String) -> TestDb {
 		.expect("Failed to connect to existing test database");
 
 	// Clean up data from previous runs (keep schema)
+	let _ = sqlx::query("DELETE FROM job_comments").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM idempotency_keys")
 		.execute(&pool)
@@ -269,6 +270,21 @@ pub async fn insert_api_key(pool: &PgPool, tenant_id: uuid::Uuid) -> (String, uu
 	)
 	.bind(tenant_id).bind(&prefix).bind(&hash)
 	.fetch_one(pool).await.expect("insert_api_key failed");
+	(full_key, row.get("id"))
+}
+
+pub async fn insert_api_key_with_scopes(
+	pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	scopes: &[&str],
+) -> (String, uuid::Uuid) {
+	let (full_key, prefix, hash) = reacher_backend::tenant::auth::generate_api_key();
+	let scope_vec: Vec<String> = scopes.iter().map(|s| s.to_string()).collect();
+	let row = sqlx::query(
+		"INSERT INTO api_keys (tenant_id, key_prefix, key_hash, name, status, scopes) VALUES ($1, $2, $3, 'scoped-key', 'active', $4) RETURNING id",
+	)
+	.bind(tenant_id).bind(&prefix).bind(&hash).bind(&scope_vec)
+	.fetch_one(pool).await.expect("insert_api_key_with_scopes failed");
 	(full_key, row.get("id"))
 }
 

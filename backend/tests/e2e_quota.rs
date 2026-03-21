@@ -40,6 +40,7 @@ mod tests {
 			webhook_signing_secret: None,
 			result_retention_days: 30,
 			is_legacy: false,
+			scopes: vec![],
 		}
 	}
 
