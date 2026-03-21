@@ -120,7 +120,7 @@ async fn http_handler(
 	// Subtract suppressed from safe count for accurate readiness assessment
 	let effective_safe = (safe_to_send_count - suppressed).max(0);
 	let safe_ratio = effective_safe as f64 / total * 100.0;
-	let safe_pct = (safe_to_send_count as f64 / total * 100.0).round();
+	let safe_pct = safe_ratio.round();
 
 	// Distinguish cancelled (terminal) from actively processing
 	let job_status: String = job.get("status");
