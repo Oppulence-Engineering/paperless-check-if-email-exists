@@ -44,6 +44,36 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	// Load custom thresholds from tenant settings if configured
+	let custom_thresholds: Option<(f64, f64)> = if let Some(tid) = tenant_ctx.tenant_id {
+		sqlx::query_scalar::<_, Option<serde_json::Value>>(
+			"SELECT settings FROM tenants WHERE id = $1",
+		)
+		.bind(tid)
+		.fetch_optional(&pg_pool)
+		.await
+		.ok()
+		.flatten()
+		.flatten()
+		.and_then(|settings| {
+			let excellent = settings
+				.get("approval_excellent_threshold")
+				.and_then(|v| v.as_f64());
+			let good = settings
+				.get("approval_good_threshold")
+				.and_then(|v| v.as_f64());
+			match (excellent, good) {
+				(Some(e), Some(g)) => Some((e, g)),
+				_ => None,
+			}
+		})
+	} else {
+		None
+	};
+
+	let excellent_threshold = custom_thresholds.map(|(e, _)| e).unwrap_or(90.0);
+	let good_threshold = custom_thresholds.map(|(_, g)| g).unwrap_or(70.0);
+
 	let job = sqlx::query(
 		"SELECT id, total_records, status::TEXT as status FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)",
 	)
@@ -139,7 +169,7 @@ async fn http_handler(
 			),
 			false,
 		)
-	} else if suppressed > 0 && safe_ratio < 90.0 {
+	} else if suppressed > 0 && safe_ratio < excellent_threshold {
 		(
 			format!(
 				"List has {} suppressed addresses. Remove suppressed recipients before sending.",
@@ -147,9 +177,9 @@ async fn http_handler(
 			),
 			false,
 		)
-	} else if safe_ratio >= 90.0 {
+	} else if safe_ratio >= excellent_threshold {
 		("List quality is excellent. Safe to send.".to_string(), true)
-	} else if safe_ratio >= 70.0 {
+	} else if safe_ratio >= good_threshold {
 		(
 			"List quality is good. Consider removing risky and invalid addresses before sending."
 				.to_string(),

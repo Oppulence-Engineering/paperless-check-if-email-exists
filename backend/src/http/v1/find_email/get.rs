@@ -11,6 +11,14 @@ use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Serialize)]
+struct AlternativeContact {
+	email: String,
+	score: i16,
+	pattern: String,
+	confidence: Option<crate::finder::ConfidenceExplanation>,
+}
+
+#[derive(Debug, Serialize)]
 struct Response {
 	job_id: i32,
 	bulk_job_id: i32,
@@ -20,6 +28,7 @@ struct Response {
 	candidates_checked: i32,
 	results: Vec<FinderCandidateResult>,
 	best_match: Option<FinderBestMatch>,
+	alternatives: Vec<AlternativeContact>,
 }
 
 async fn http_handler(
@@ -57,6 +66,20 @@ async fn http_handler(
 		row.get::<String, _>("status")
 	};
 
+	// Build alternatives: candidates ranked 2nd-5th that scored >= 50
+	let alternatives: Vec<AlternativeContact> = results
+		.iter()
+		.skip(1) // skip best match
+		.filter(|c| c.score >= 50)
+		.take(4)
+		.map(|c| AlternativeContact {
+			email: c.email.clone(),
+			score: c.score,
+			pattern: c.pattern.clone(),
+			confidence: c.confidence.clone(),
+		})
+		.collect();
+
 	Ok(warp::reply::json(&Response {
 		job_id: row.get("id"),
 		bulk_job_id: row.get("bulk_job_id"),
@@ -66,6 +89,7 @@ async fn http_handler(
 		candidates_checked: row.get("candidates_checked"),
 		results,
 		best_match,
+		alternatives,
 	}))
 }
 

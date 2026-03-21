@@ -21,6 +21,18 @@ pub struct TenantContext {
 	pub webhook_signing_secret: Option<String>,
 	pub result_retention_days: i32,
 	pub is_legacy: bool,
+	pub scopes: Vec<String>,
+}
+
+pub mod scope {
+	pub const VERIFY: &str = "verify";
+	pub const BULK: &str = "bulk";
+	pub const FIND: &str = "find";
+	pub const LISTS: &str = "lists";
+	pub const SUPPRESSIONS: &str = "suppressions";
+	pub const REPUTATION: &str = "reputation";
+	pub const SETTINGS: &str = "settings";
+	pub const ADMIN: &str = "admin";
 }
 
 impl TenantContext {
@@ -42,7 +54,17 @@ impl TenantContext {
 			webhook_signing_secret: None,
 			result_retention_days: 30,
 			is_legacy: true,
+			scopes: vec![],
 		}
+	}
+
+	/// Returns true if this context has the given scope.
+	/// Empty scopes or legacy mode grants full access.
+	pub fn has_scope(&self, scope: &str) -> bool {
+		if self.is_legacy || self.scopes.is_empty() {
+			return true;
+		}
+		self.scopes.iter().any(|s| s == "*" || s == scope)
 	}
 
 	/// Returns the tenant_id as a string for use in idempotency keys and
@@ -82,6 +104,42 @@ mod tests {
 		assert_eq!(ctx.result_retention_days, 30);
 		assert_eq!(ctx.throttle.max_requests_per_second, Some(10));
 		assert_eq!(ctx.throttle.max_requests_per_minute, Some(100));
+		assert!(ctx.scopes.is_empty());
+	}
+
+	#[test]
+	fn test_has_scope_legacy_grants_all() {
+		let ctx = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		assert!(ctx.has_scope("verify"));
+		assert!(ctx.has_scope("admin"));
+		assert!(ctx.has_scope("anything"));
+	}
+
+	#[test]
+	fn test_has_scope_empty_grants_all() {
+		let mut ctx = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		ctx.is_legacy = false;
+		ctx.scopes = vec![];
+		assert!(ctx.has_scope("verify"));
+	}
+
+	#[test]
+	fn test_has_scope_specific() {
+		let mut ctx = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		ctx.is_legacy = false;
+		ctx.scopes = vec!["verify".to_string(), "lists".to_string()];
+		assert!(ctx.has_scope("verify"));
+		assert!(ctx.has_scope("lists"));
+		assert!(!ctx.has_scope("admin"));
+		assert!(!ctx.has_scope("bulk"));
+	}
+
+	#[test]
+	fn test_has_scope_wildcard() {
+		let mut ctx = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		ctx.is_legacy = false;
+		ctx.scopes = vec!["*".to_string()];
+		assert!(ctx.has_scope("anything"));
 	}
 
 	#[test]

@@ -68,6 +68,7 @@ pub fn create_routes(
 		.or(v1::lists::post::v1_create_list(Arc::clone(&config)).boxed())
 		.or(v1::lists::get_list::v1_list_lists(Arc::clone(&config)).boxed())
 		.or(v1::lists::get_detail::v1_get_list(Arc::clone(&config)).boxed())
+		.or(v1::lists::quality::v1_list_quality(Arc::clone(&config)).boxed())
 		.or(v1::lists::download::v1_download_list(Arc::clone(&config)).boxed())
 		.or(v1::lists::delete::v1_delete_list(Arc::clone(&config)).boxed())
 		.or(v1::reputation::check::v1_check_reputation(Arc::clone(&config)).boxed())
@@ -79,6 +80,12 @@ pub fn create_routes(
 		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)).boxed())
 		.or(v1::bulk::get_results::v1_get_bulk_job_results(Arc::clone(&config)).boxed())
 		.or(v1::reverification::status::v1_reverification_status(Arc::clone(&config)).boxed())
+		.or(v1::events::v1_list_events(Arc::clone(&config)).boxed())
+		.or(v1::email_history::v1_email_history(Arc::clone(&config)).boxed())
+		.or(v1::query::v1_query_results(Arc::clone(&config)).boxed())
+		.or(v1::comments::v1_create_comment(Arc::clone(&config)).boxed())
+		.or(v1::comments::v1_list_comments(Arc::clone(&config)).boxed())
+		.or(v1::comments::v1_delete_comment(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_job_routes = v1::jobs::get_status::v1_get_job_status(Arc::clone(&config))
@@ -89,6 +96,7 @@ pub fn create_routes(
 		.or(v1::jobs::download::v1_download_job_results(Arc::clone(&config)).boxed())
 		.or(v1::jobs::retry::v1_retry_job(Arc::clone(&config)).boxed())
 		.or(v1::jobs::approval_checklist::v1_job_approval_checklist(Arc::clone(&config)).boxed())
+		.or(v1::jobs::latency::v1_job_latency(Arc::clone(&config)).boxed())
 		.boxed();
 
 	let v1_me_routes = v1::me::v1_me(Arc::clone(&config)).boxed();
@@ -203,6 +211,19 @@ pub async fn run_warp_server(
 	warp::serve(routes).run((host, port)).await;
 
 	Ok(runner)
+}
+
+/// Check that the tenant context has the required scope.
+/// Returns 403 Forbidden if the scope is missing.
+pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejection> {
+	if ctx.has_scope(scope) {
+		Ok(())
+	} else {
+		Err(warp::reject::custom(ReacherResponseError::new(
+			StatusCode::FORBIDDEN,
+			format!("API key lacks required scope: {}", scope),
+		)))
+	}
 }
 
 /// The header which holds the Reacher backend secret.
