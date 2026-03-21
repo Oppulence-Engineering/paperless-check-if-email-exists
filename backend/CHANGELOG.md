@@ -1,5 +1,70 @@
 # Changelog
 
+## [4.1.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.0.0...v4.1.0) (2026-03-21)
+
+
+### Features
+
+* add conditional auto-suppression actions after task completion ([d25e5ef](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d25e5ef7f4cd2d45e6abdeb5bd88f473ee26e638))
+* add finder confidence explanation with pattern quality and domain signals ([ae39bc5](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/ae39bc55bb2ad5f39d74786ece943cc410ab114e))
+* add POST /v1/jobs/{job_id}/retry endpoint for partial retry of failed tasks ([b12a7da](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b12a7dafa9f45f0e3199aead5f19caf693341485))
+* add pre-send audience approval checklist endpoint ([58016da](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/58016dad53d090cfb310d95c554e5d27e6c8d8db))
+* add reason_codes array for expanded verification findings ([4ffdfe1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4ffdfe1c69aac557077e0ed9420ebfc5b1090b3b))
+* add reason_codes array to expose all applicable verification findings ([b1ff51e](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b1ff51e5a6fd4ebaf3f274f5102b3a970eddc812))
+* add result freshness metadata (verified_at, age_days, freshness tier) ([4332558](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/433255899dd14f9b4a5ee54551741d82418e2c34))
+* add safe_to_send recommendation flag ([433fc00](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/433fc00750a3a99dbe55f83d21924a227fe405b5))
+* add safe_to_send recommendation flag to email verification responses ([16bde57](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/16bde57186c490bc53a43543f78ebfd07998564c))
+* add sandbox mode for deterministic mock verification results ([217c0f0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/217c0f053d6411a7274246ead895e37470ab3928))
+* add scheduled re-verification for stale email results ([5142c60](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/5142c60e6818394c616f2273356512b1e8300d15))
+* add smart deduplication and canonicalization for list uploads ([8302ada](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8302ada8121d4aaaefe806c0dc638574c9648bb8))
+* add spam-trap and honeypot domain detection ([6477a20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6477a2005b2cecfe0b39a71321d4985789253c57))
+* add spam-trap and honeypot domain detection ([e275340](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e275340e38f9ccf87b46ef26e2b50f2c2338bc97))
+* add waterfall search strategy for finder ([eac3853](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/eac38534e6d9a0dd76352222ebc39eb4c3c30125))
+* add workspace suppression list management ([b25eef8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b25eef8354e101e354ceb5e6f17052716c441fab))
+* add workspace suppression list management ([1da9474](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1da947414945d4828562ebf1a79f40244f331da1))
+* approval checklist, waterfall search, backlog cleanup ([d0b451d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d0b451da7426932519eb81e286769d3a415e73b9))
+* domain typo suggestions, catch-all severity tiers, alias normalization ([7286d91](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/7286d919f08fab704aebfc83a0c8d55304f6b017))
+* domain typo suggestions, catch-all severity tiers, alias normalization ([89ad7b6](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/89ad7b6aed8ae587250d5313552ec6d48bbafc42))
+* finder confidence, sandbox mode, conditional auto-suppression ([674abb3](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/674abb3072affcee68231a2343999d5330fe51fc))
+* partial retry endpoint + result freshness metadata ([931e542](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/931e54296879499c4b20df7dc3fcd908bbbacc70))
+* Phase 1 multi-tenant platform with onboarding endpoint ([6a33c56](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6a33c56d6364ce37097d7f1a928826dc02ea355c))
+* scheduled re-verification for stale email results ([d3f00e7](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d3f00e70bafafbe67ff21d3590a92805edbd33d7))
+* scheduled re-verification for stale email results ([#19](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/19)) ([d3f00e7](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d3f00e70bafafbe67ff21d3590a92805edbd33d7))
+* smart deduplication and canonicalization for list uploads ([e8a128c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e8a128cbf04ca2e8dd00d909d43e598c3c844893))
+* smart deduplication and canonicalization for list uploads ([#20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/20)) ([e8a128c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e8a128cbf04ca2e8dd00d909d43e598c3c844893))
+
+
+### Bug Fixes
+
+* address review feedback on deduplication PR ([236f407](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/236f407be0532a27875ef775e61f6f744b1f34a0))
+* address review feedback on reverification PR ([d8f736a](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d8f736ae309ac845a38728499bbeadf34bd70000))
+* atomic schedule claim, pool-only status endpoint, RFC3339 timestamps ([c2e6e05](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/c2e6e050a6b6e7b41267412abaf6daf7a7604dab))
+* atomic schedule claiming, correct stale query, failed publish cleanup ([75fb30a](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/75fb30a4c2ffcf4d003e589c19f8e1605220796c))
+* auto-suppress in direct check path, guard blank emails, fix md headings ([29c4ab9](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/29c4ab944225db3e29b98037cfb209179e79ce38))
+* clear job completed_at on retry, keep quota check before publish ([c7cf38b](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/c7cf38b98cd450852b825c57a9c64a3c2b22a081))
+* compute safe_to_send_pct from effective_safe to match recommendation ([819481d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/819481d72b12a0a3cfed747bbee77f3f62762ea3))
+* correct bind order in auto-suppression INSERT (tenant_id, email, reason) ([84d321b](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/84d321bc7dff59b571ebe2dc4e6ad173740dfd3b))
+* count cancelled rows as incomplete, use unrounded ratio for thresholds ([f3dcd93](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f3dcd9309140aaa5d5be5165ea7d115b2522d4f6))
+* dynamic suppress reason, deterministic sandbox timestamps, remove _sandbox field ([1d946e3](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1d946e318ab0626f039e0f2a7e4c9b4021d758fb))
+* factor suppression into readiness, distinguish cancelled jobs, fix join ([3ffdb3e](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/3ffdb3eadb39030579083a0140cb01845ea9dc73))
+* guard pagination u64→i64 casts to prevent negative SQL bounds ([8db2aa0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8db2aa0126637a064340161dd9403551310934dd))
+* hardcode sandbox freshness fields for fully deterministic responses ([d36a6c6](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d36a6c670156a6e0c250a5b5739f6c82abfc9a15))
+* inject freshness into bulk JSON results path ([1207023](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/12070233f6990ff33e8cd33975b4825ac7487bfc))
+* keep duplicates non-terminal until propagation, count cancelled tasks ([f36303c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f36303cae8b2ffc4a47d4bf105d7eb728c7ca69d))
+* lock retryable rows with FOR UPDATE, use exact count for quota, reset by ID ([f6c7c2e](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f6c7c2ef97bf70ef45082062d55cc1818f06e8c1))
+* log settings query errors, redact PII from logs, add sandbox marker ([cbd67ac](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/cbd67ac2655d616169b6200b90ef3503ca0681e6))
+* normalize email in auto-suppress, validate sandbox input, update backlog ([ae2988b](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/ae2988b1d6e35ae8bd8ae0e2fba5cb2ac75ad667))
+* only subtract safe-to-send suppressed rows from readiness ratio ([3fe2301](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/3fe230198b7ed5634db0267858fea35b37cda81b))
+* publish to RabbitMQ before committing DB state, clamp negative age_days ([e5ba97c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e5ba97cb111226859719be959bf7e450cd45beb6))
+* replace sqlx query_scalar! macro with runtime version in tests ([e96b8b5](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e96b8b5f69b95c7d1c10a93dfc4860d39e29fcfd))
+* resolve CI failures — formatting and service containers ([f6b4090](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f6b4090aa06a9d59adf9f6d1954e1128c3e09b3f))
+* resolve test failures across multiple test suites ([2704bdc](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/2704bdc27dada9302af5c98be0c3a423a2458737))
+* stop stripping +subaddress for non-Gmail providers ([836ced4](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/836ced427b2ee28af98f6f5726840dc3a1425c16))
+* treat canonicalization failures as invalid, not billable ([ba63dd0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/ba63dd0bd8360107ae975551cd57db11c0e589f4))
+* typed approval schema, reject invalid strategy, propagate DB errors ([f5b4638](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f5b4638b3ead3a1eed88a67eb7f33062df47a78e))
+* update list CSV assertions for reason_codes column ([8b47a23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8b47a23ebdabeace6d8b04c7c3a1765910d7fa6b))
+* validate strategy before DB work, sort candidates by priority in waterfall ([5d27a6c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/5d27a6c914a99c5f34ddf4ea85b3f1725e51c78b))
+
 ## [4.0.0](https://github.com/Oppulence-Engineering/check-if-email-exists/compare/v3.0.2...v4.0.0) (2025-12-12)
 
 

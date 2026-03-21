@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.0.0...v4.1.0) (2026-03-21)
+
+
+### Features
+
+* Phase 1 multi-tenant platform with onboarding endpoint ([6a33c56](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6a33c56d6364ce37097d7f1a928826dc02ea355c))
+
 ## [4.0.0](https://github.com/Oppulence-Engineering/check-if-email-exists/compare/v3.0.2...v4.0.0) (2025-12-12)
 
 

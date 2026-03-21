@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.1.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.0.0...v4.1.0) (2026-03-21)
+
+
+### Features
+
+* add spam-trap and honeypot domain detection ([6477a20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6477a2005b2cecfe0b39a71321d4985789253c57))
+* add spam-trap and honeypot domain detection ([e275340](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e275340e38f9ccf87b46ef26e2b50f2c2338bc97))
+
+
+### Bug Fixes
+
+* **smtp:** treat permanent 5.1.1 and 5.7.1 responses as invalid recipients ([#1631](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/1631)) ([b3d6b07](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b3d6b0751ae95c874014d99fb437e4cca4899d14))
+
 ## [4.0.0](https://github.com/Oppulence-Engineering/check-if-email-exists/compare/v3.0.2...v4.0.0) (2025-12-12)
 
 
