@@ -101,11 +101,13 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Count suppressed emails in this job
+	// Count suppressed emails in this job (fall back to payload email if result is NULL)
 	let suppressed: i64 = sqlx::query_scalar(
 		r#"
 		SELECT COUNT(*) FROM v1_task_result t
-		JOIN v1_suppression_entries s ON s.email = LOWER(t.result->>'input') AND s.tenant_id = t.tenant_id
+		JOIN v1_suppression_entries s
+		  ON s.email = LOWER(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))
+		  AND s.tenant_id = t.tenant_id
 		WHERE t.job_id = $1
 		"#,
 	)
@@ -115,12 +117,34 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let total = total_records.max(1) as f64;
-	let safe_ratio = safe_to_send_count as f64 / total * 100.0;
-	let safe_pct = safe_ratio.round();
+	// Subtract suppressed from safe count for accurate readiness assessment
+	let effective_safe = (safe_to_send_count - suppressed).max(0);
+	let safe_ratio = effective_safe as f64 / total * 100.0;
+	let safe_pct = (safe_to_send_count as f64 / total * 100.0).round();
 
-	let (recommendation, ready) = if unprocessed > 0 {
+	// Distinguish cancelled (terminal) from actively processing
+	let job_status: String = job.get("status");
+	let is_terminal = matches!(job_status.as_str(), "completed" | "failed" | "cancelled");
+
+	let (recommendation, ready) = if unprocessed > 0 && !is_terminal {
 		(
 			"Job is still processing. Wait for completion before sending.".to_string(),
+			false,
+		)
+	} else if unprocessed > 0 && is_terminal {
+		(
+			format!(
+				"Job has {} unprocessed rows (cancelled/pending). Review before sending.",
+				unprocessed
+			),
+			false,
+		)
+	} else if suppressed > 0 && safe_ratio < 90.0 {
+		(
+			format!(
+				"List has {} suppressed addresses. Remove suppressed recipients before sending.",
+				suppressed
+			),
 			false,
 		)
 	} else if safe_ratio >= 90.0 {
