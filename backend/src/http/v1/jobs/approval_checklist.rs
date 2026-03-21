@@ -108,7 +108,7 @@ async fn http_handler(
 		JOIN v1_suppression_entries s
 		  ON s.email = LOWER(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))
 		  AND s.tenant_id = t.tenant_id
-		WHERE t.job_id = $1
+		WHERE t.job_id = $1 AND t.safe_to_send = true
 		"#,
 	)
 	.bind(job_id)
