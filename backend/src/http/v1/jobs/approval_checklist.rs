@@ -1,7 +1,7 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
@@ -44,6 +44,8 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	// Load custom thresholds from tenant settings if configured
 	let custom_thresholds: Option<(f64, f64)> = if let Some(tid) = tenant_ctx.tenant_id {
 		sqlx::query_scalar::<_, Option<serde_json::Value>>(
