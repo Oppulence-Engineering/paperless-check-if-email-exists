@@ -26,7 +26,7 @@ struct QueryParams {
 #[derive(Debug, Serialize)]
 struct ResultRow {
 	id: i32,
-	job_id: i32,
+	job_id: Option<i32>,
 	email: Option<String>,
 	score: Option<i16>,
 	category: Option<String>,
@@ -51,8 +51,8 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::BULK)?;
 
-	let limit = query.limit.unwrap_or(50).min(500);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(0, 500);
+	let offset = query.offset.unwrap_or(0).max(0);
 
 	let since = query
 		.since

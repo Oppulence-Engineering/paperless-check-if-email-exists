@@ -17,7 +17,7 @@ struct Query {
 
 #[derive(Debug, Serialize)]
 struct HistoryEntry {
-	job_id: i32,
+	job_id: Option<i32>,
 	score: Option<i16>,
 	category: Option<String>,
 	sub_reason: Option<String>,
@@ -42,7 +42,7 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::VERIFY)?;
 
-	let limit = query.limit.unwrap_or(50).min(200);
+	let limit = query.limit.unwrap_or(50).clamp(0, 200);
 	let email_lower = email.to_lowercase();
 
 	let total: i64 = sqlx::query_scalar(

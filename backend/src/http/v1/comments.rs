@@ -43,13 +43,22 @@ struct ListResponse {
 	total: i64,
 }
 
+/// Pick the required scope from the referenced resource type.
+fn required_scope(job_id: Option<i32>, list_id: Option<i32>) -> &'static str {
+	if list_id.is_some() {
+		scope::LISTS
+	} else if job_id.is_some() {
+		scope::BULK
+	} else {
+		scope::BULK
+	}
+}
+
 async fn create_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 	body: CreateCommentRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, scope::BULK)?;
-
 	if body.body.trim().is_empty() {
 		return Err(
 			ReacherResponseError::new(StatusCode::BAD_REQUEST, "Comment body cannot be empty")
@@ -62,6 +71,40 @@ async fn create_handler(
 			"Either job_id or list_id is required",
 		)
 		.into());
+	}
+
+	check_scope(&tenant_ctx, required_scope(body.job_id, body.list_id))?;
+
+	// Validate that the referenced job/list belongs to this tenant
+	if let Some(jid) = body.job_id {
+		let exists: bool = sqlx::query_scalar(
+			"SELECT EXISTS(SELECT 1 FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL))",
+		)
+		.bind(jid)
+		.bind(tenant_ctx.tenant_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if !exists {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into(),
+			);
+		}
+	}
+	if let Some(lid) = body.list_id {
+		let exists: bool = sqlx::query_scalar(
+			"SELECT EXISTS(SELECT 1 FROM v1_lists WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL))",
+		)
+		.bind(lid)
+		.bind(tenant_ctx.tenant_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if !exists {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found").into(),
+			);
+		}
 	}
 
 	let row = sqlx::query(
@@ -100,10 +143,10 @@ async fn list_handler(
 	pg_pool: PgPool,
 	query: ListQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, scope::BULK)?;
+	check_scope(&tenant_ctx, required_scope(query.job_id, query.list_id))?;
 
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(0, 200);
+	let offset = query.offset.unwrap_or(0).max(0);
 
 	let total: i64 = sqlx::query_scalar(
 		r#"
@@ -160,7 +203,10 @@ async fn delete_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, scope::BULK)?;
+	// Allow delete if tenant has either bulk or lists scope
+	if !tenant_ctx.has_scope(scope::BULK) && !tenant_ctx.has_scope(scope::LISTS) {
+		check_scope(&tenant_ctx, scope::BULK)?;
+	}
 
 	let deleted = sqlx::query_scalar::<_, i64>(
 		"DELETE FROM job_comments WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) RETURNING id",

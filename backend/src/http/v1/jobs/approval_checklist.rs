@@ -63,7 +63,13 @@ async fn http_handler(
 				.get("approval_good_threshold")
 				.and_then(|v| v.as_f64());
 			match (excellent, good) {
-				(Some(e), Some(g)) => Some((e, g)),
+				(Some(e), Some(g))
+					if (0.0..=100.0).contains(&e)
+						&& (0.0..=100.0).contains(&g)
+						&& e > g =>
+				{
+					Some((e, g))
+				}
 				_ => None,
 			}
 		})
