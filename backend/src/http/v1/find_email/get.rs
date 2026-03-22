@@ -1,14 +1,22 @@
 use crate::config::BackendConfig;
 use crate::finder::{sync_finder_results, FinderBestMatch, FinderCandidateResult};
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
+
+#[derive(Debug, Serialize)]
+struct AlternativeContact {
+	email: String,
+	score: i16,
+	pattern: String,
+	confidence: Option<crate::finder::ConfidenceExplanation>,
+}
 
 #[derive(Debug, Serialize)]
 struct Response {
@@ -20,6 +28,7 @@ struct Response {
 	candidates_checked: i32,
 	results: Vec<FinderCandidateResult>,
 	best_match: Option<FinderBestMatch>,
+	alternatives: Vec<AlternativeContact>,
 }
 
 async fn http_handler(
@@ -27,6 +36,8 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::FIND)?;
+
 	let row = sqlx::query(
 		r#"
 		SELECT id, bulk_job_id, status::TEXT AS status, domain_has_mx, domain_is_catch_all, candidates_checked
@@ -57,6 +68,20 @@ async fn http_handler(
 		row.get::<String, _>("status")
 	};
 
+	// Build alternatives: candidates ranked 2nd-5th that scored >= 50
+	let alternatives: Vec<AlternativeContact> = results
+		.iter()
+		.skip(1) // skip best match
+		.filter(|c| c.score >= 50)
+		.take(4)
+		.map(|c| AlternativeContact {
+			email: c.email.clone(),
+			score: c.score,
+			pattern: c.pattern.clone(),
+			confidence: c.confidence.clone(),
+		})
+		.collect();
+
 	Ok(warp::reply::json(&Response {
 		job_id: row.get("id"),
 		bulk_job_id: row.get("bulk_job_id"),
@@ -66,6 +91,7 @@ async fn http_handler(
 		candidates_checked: row.get("candidates_checked"),
 		results,
 		best_match,
+		alternatives,
 	}))
 }
 

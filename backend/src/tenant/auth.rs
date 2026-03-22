@@ -70,17 +70,20 @@ pub async fn resolve_from_api_key(
 		None // No HMAC configured, primary hash is already SHA-256
 	};
 
-	let row = sqlx::query!(
+	use sqlx::Row;
+
+	let row = sqlx::query(
 		r#"
 		SELECT
 			ak.id as api_key_id,
 			ak.key_hash,
-			ak.status as "api_key_status: ApiKeyStatus",
+			ak.status::TEXT as api_key_status,
 			ak.expires_at,
+			ak.scopes,
 			t.id as tenant_id,
 			t.name as tenant_name,
-			t.plan_tier as "plan_tier: PlanTier",
-			t.status as "tenant_status: TenantStatus",
+			t.plan_tier::TEXT as plan_tier,
+			t.status::TEXT as tenant_status,
 			t.max_requests_per_second,
 			t.max_requests_per_minute,
 			t.max_requests_per_hour,
@@ -95,9 +98,9 @@ pub async fn resolve_from_api_key(
 		JOIN tenants t ON ak.tenant_id = t.id
 		WHERE ak.key_hash = $1 OR ak.key_hash = $2
 		"#,
-		key_hash,
-		legacy_hash.as_deref().unwrap_or(""),
 	)
+	.bind(&key_hash)
+	.bind(legacy_hash.as_deref().unwrap_or(""))
 	.fetch_optional(pg_pool)
 	.await?;
 
@@ -106,87 +109,108 @@ pub async fn resolve_from_api_key(
 		None => bail!("Invalid API key"),
 	};
 
+	let key_hash_from_db: String = row.get("key_hash");
+
 	// If matched via legacy hash (not the current HMAC hash), upgrade in background
 	let matched_via_legacy = legacy_hash
 		.as_deref()
-		.map_or(false, |lh| row.key_hash == lh);
+		.map_or(false, |lh| key_hash_from_db == lh);
 	if matched_via_legacy {
 		let pool = pg_pool.clone();
 		let new_hash = key_hash.clone();
-		let api_key_id = row.api_key_id;
+		let api_key_id: Uuid = row.get("api_key_id");
 		tokio::spawn(async move {
-			let _ = sqlx::query!(
-				"UPDATE api_keys SET key_hash = $1 WHERE id = $2",
-				new_hash,
-				api_key_id,
-			)
-			.execute(&pool)
-			.await;
+			let _ = sqlx::query("UPDATE api_keys SET key_hash = $1 WHERE id = $2")
+				.bind(new_hash)
+				.bind(api_key_id)
+				.execute(&pool)
+				.await;
 		});
 	}
 
 	// Validate API key status
-	match row.api_key_status {
-		ApiKeyStatus::Revoked => bail!("API key has been revoked"),
-		ApiKeyStatus::Expired => bail!("API key has expired"),
-		ApiKeyStatus::Active => {}
+	let api_key_status: String = row.get("api_key_status");
+	match api_key_status.as_str() {
+		"revoked" => bail!("API key has been revoked"),
+		"expired" => bail!("API key has expired"),
+		"active" => {}
+		_ => bail!("Unknown API key status: {}", api_key_status),
 	}
 
 	// Check expiry
-	if let Some(expires_at) = row.expires_at {
+	let expires_at: Option<chrono::DateTime<Utc>> = row.get("expires_at");
+	if let Some(expires_at) = expires_at {
 		if expires_at < Utc::now() {
 			bail!("API key has expired");
 		}
 	}
 
 	// Validate tenant status
-	match row.tenant_status {
-		TenantStatus::Suspended => bail!("Tenant account is suspended"),
-		TenantStatus::Deactivated => bail!("Tenant account is deactivated"),
-		TenantStatus::Active => {}
-	}
+	let tenant_status_str: String = row.get("tenant_status");
+	let tenant_status = match tenant_status_str.as_str() {
+		"active" => TenantStatus::Active,
+		"suspended" => {
+			bail!("Tenant account is suspended")
+		}
+		"deactivated" => {
+			bail!("Tenant account is deactivated")
+		}
+		_ => bail!("Unknown tenant status: {}", tenant_status_str),
+	};
+
+	let plan_tier_str: String = row.get("plan_tier");
+	let plan_tier = match plan_tier_str.as_str() {
+		"free" => PlanTier::Free,
+		"starter" => PlanTier::Starter,
+		"professional" => PlanTier::Professional,
+		"enterprise" => PlanTier::Enterprise,
+		_ => bail!("Unknown plan tier: {}", plan_tier_str),
+	};
 
 	// Build throttle config: use tenant overrides where present, fall back to global
 	let throttle = ThrottleConfig {
 		max_requests_per_second: row
-			.max_requests_per_second
+			.get::<Option<i32>, _>("max_requests_per_second")
 			.map(|v| v as u32)
 			.or(global_throttle.max_requests_per_second),
 		max_requests_per_minute: row
-			.max_requests_per_minute
+			.get::<Option<i32>, _>("max_requests_per_minute")
 			.map(|v| v as u32)
 			.or(global_throttle.max_requests_per_minute),
 		max_requests_per_hour: row
-			.max_requests_per_hour
+			.get::<Option<i32>, _>("max_requests_per_hour")
 			.map(|v| v as u32)
 			.or(global_throttle.max_requests_per_hour),
 		max_requests_per_day: row
-			.max_requests_per_day
+			.get::<Option<i32>, _>("max_requests_per_day")
 			.map(|v| v as u32)
 			.or(global_throttle.max_requests_per_day),
 	};
 
+	let api_key_id: Uuid = row.get("api_key_id");
+	let scopes: Vec<String> = row.get("scopes");
+
 	// Fire-and-forget update of last_used_at
 	let pool = pg_pool.clone();
-	let api_key_id = row.api_key_id;
 	tokio::spawn(async move {
 		let _ = update_last_used_at(&pool, api_key_id).await;
 	});
 
 	Ok(TenantContext {
-		tenant_id: Some(row.tenant_id),
-		api_key_id: Some(row.api_key_id),
-		tenant_name: row.tenant_name,
-		plan_tier: row.plan_tier,
-		status: row.tenant_status,
+		tenant_id: Some(row.get("tenant_id")),
+		api_key_id: Some(api_key_id),
+		tenant_name: row.get("tenant_name"),
+		plan_tier,
+		status: tenant_status,
 		throttle,
-		monthly_email_limit: row.monthly_email_limit,
-		used_this_period: row.used_this_period,
-		period_reset_at: row.period_reset_at,
-		default_webhook_url: row.default_webhook_url,
-		webhook_signing_secret: row.webhook_signing_secret,
-		result_retention_days: row.result_retention_days,
+		monthly_email_limit: row.get("monthly_email_limit"),
+		used_this_period: row.get("used_this_period"),
+		period_reset_at: row.get("period_reset_at"),
+		default_webhook_url: row.get("default_webhook_url"),
+		webhook_signing_secret: row.get("webhook_signing_secret"),
+		result_retention_days: row.get("result_retention_days"),
 		is_legacy: false,
+		scopes,
 	})
 }
 
@@ -273,6 +297,7 @@ pub async fn resolve_tenant_context_by_id(
 		webhook_signing_secret: row.get("webhook_signing_secret"),
 		result_retention_days: row.get("result_retention_days"),
 		is_legacy: false,
+		scopes: vec![],
 	})
 }
 
