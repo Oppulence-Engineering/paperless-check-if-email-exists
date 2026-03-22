@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -54,16 +55,22 @@ async fn http_handler(
 	let limit = query.limit.unwrap_or(50).clamp(0, 500);
 	let offset = query.offset.unwrap_or(0).max(0);
 
-	let since = query
-		.since
-		.as_deref()
-		.and_then(|s| DateTime::parse_from_rfc3339(s).ok())
-		.map(|dt| dt.with_timezone(&Utc));
-	let until = query
-		.until
-		.as_deref()
-		.and_then(|s| DateTime::parse_from_rfc3339(s).ok())
-		.map(|dt| dt.with_timezone(&Utc));
+	let since = match &query.since {
+		Some(s) => Some(
+			DateTime::parse_from_rfc3339(s)
+				.map(|dt| dt.with_timezone(&Utc))
+				.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid 'since' date format. Expected RFC3339."))?,
+		),
+		None => None,
+	};
+	let until = match &query.until {
+		Some(s) => Some(
+			DateTime::parse_from_rfc3339(s)
+				.map(|dt| dt.with_timezone(&Utc))
+				.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid 'until' date format. Expected RFC3339."))?,
+		),
+		None => None,
+	};
 
 	let total: i64 = sqlx::query_scalar(
 		r#"

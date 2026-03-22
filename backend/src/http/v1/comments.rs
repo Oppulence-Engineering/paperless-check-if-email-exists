@@ -203,13 +203,9 @@ async fn delete_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	// Allow delete if tenant has either bulk or lists scope
-	if !tenant_ctx.has_scope(scope::BULK) && !tenant_ctx.has_scope(scope::LISTS) {
-		check_scope(&tenant_ctx, scope::BULK)?;
-	}
-
-	let deleted = sqlx::query_scalar::<_, i64>(
-		"DELETE FROM job_comments WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) RETURNING id",
+	// Look up the comment to determine its target type for scope checking
+	let comment_row = sqlx::query(
+		"SELECT job_id, list_id FROM job_comments WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)",
 	)
 	.bind(comment_id)
 	.bind(tenant_ctx.tenant_id)
@@ -217,11 +213,24 @@ async fn delete_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	if deleted.is_none() {
-		return Err(
-			ReacherResponseError::new(StatusCode::NOT_FOUND, "Comment not found").into(),
-		);
-	}
+	let comment_row = match comment_row {
+		Some(r) => r,
+		None => {
+			return Err(
+				ReacherResponseError::new(StatusCode::NOT_FOUND, "Comment not found").into(),
+			);
+		}
+	};
+
+	let cjid: Option<i32> = comment_row.get("job_id");
+	let clid: Option<i32> = comment_row.get("list_id");
+	check_scope(&tenant_ctx, required_scope(cjid, clid))?;
+
+	sqlx::query("DELETE FROM job_comments WHERE id = $1")
+		.bind(comment_id)
+		.execute(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::json(&serde_json::json!({"deleted": true, "id": comment_id})))
 }
