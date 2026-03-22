@@ -47,11 +47,25 @@ struct ListResponse {
 fn required_scope(job_id: Option<i32>, list_id: Option<i32>) -> &'static str {
 	if list_id.is_some() {
 		scope::LISTS
-	} else if job_id.is_some() {
-		scope::BULK
 	} else {
 		scope::BULK
 	}
+}
+
+/// For unfiltered listings, require both scopes since results span resources.
+fn check_list_scope(
+	ctx: &TenantContext,
+	job_id: Option<i32>,
+	list_id: Option<i32>,
+) -> Result<(), warp::Rejection> {
+	if job_id.is_none() && list_id.is_none() {
+		// Unfiltered: require both scopes
+		check_scope(ctx, scope::BULK)?;
+		check_scope(ctx, scope::LISTS)?;
+	} else {
+		check_scope(ctx, required_scope(job_id, list_id))?;
+	}
+	Ok(())
 }
 
 async fn create_handler(
@@ -69,6 +83,13 @@ async fn create_handler(
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
 			"Either job_id or list_id is required",
+		)
+		.into());
+	}
+	if body.job_id.is_some() && body.list_id.is_some() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Provide either job_id or list_id, not both",
 		)
 		.into());
 	}
@@ -143,7 +164,7 @@ async fn list_handler(
 	pg_pool: PgPool,
 	query: ListQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, required_scope(query.job_id, query.list_id))?;
+	check_list_scope(&tenant_ctx, query.job_id, query.list_id)?;
 
 	let limit = query.limit.unwrap_or(50).clamp(0, 200);
 	let offset = query.offset.unwrap_or(0).max(0);
