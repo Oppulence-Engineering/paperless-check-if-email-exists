@@ -44,11 +44,12 @@ impl PostgresStorage {
 
 		info!(target: LOG_TARGET, table="v1_task_result", "Connected to DB, Reacher will write verification results to DB");
 
-		let read_pool = if let Some(replica_url) = read_replica_url {
-			info!(target: LOG_TARGET, "Connecting to read replica");
-			PgPoolOptions::new().connect(replica_url).await?
-		} else {
-			pg_pool.clone()
+		let read_pool = match read_replica_url {
+			Some(url) if !url.is_empty() => {
+				info!(target: LOG_TARGET, "Connecting to read replica");
+				PgPoolOptions::new().connect(url).await?
+			}
+			_ => pg_pool.clone(),
 		};
 
 		Ok(Self {
