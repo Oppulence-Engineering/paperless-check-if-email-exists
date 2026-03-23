@@ -56,8 +56,8 @@ jobs:
         id: image_tag
         run: echo "value=${{ steps.meta.outputs.version }}" >> "$GITHUB_OUTPUT"
 
-  deploy-backend-chart:
-    name: "Deploy Backend – ${{ matrix.cluster }}"
+  deploy-production:
+    name: "Production – ${{ matrix.cluster }}"
     needs: docker
     strategy:
       fail-fast: false
@@ -79,6 +79,40 @@ jobs:
       image_tag: ${{ needs.docker.outputs.image_tag }}
       secret_env_overrides: |
         RCH__STORAGE__POSTGRES__DB_URL=$HELM_POSTGRES_URL
+        RCH__STORAGE__POSTGRES__READ_REPLICA_URL=$HELM_READ_REPLICA_URL
+        RCH__WORKER__RABBITMQ__URL=$HELM_RABBIT_URL
+        RCH__PROXY__HOST=$RCH__PROXY__HOST
+        RCH__PROXY__PORT=$RCH__PROXY__PORT
+        RCH__PROXY__USERNAME=$RCH__PROXY__USERNAME
+        RCH__PROXY__PASSWORD=$RCH__PROXY__PASSWORD
+        RCH__HEADER_SECRET=$RCH__HEADER_SECRET
+        RCH__SENTRY_DSN=$HELM_SENTRY_DSN
+    secrets: inherit
+
+  deploy-staging:
+    name: "Staging – ${{ matrix.cluster }}"
+    needs: docker
+    strategy:
+      fail-fast: false
+      matrix:
+        cluster: [us-east, eu-central, us-west]
+    uses: ./.github/workflows/deploy-helm-direct-template.yml
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      cluster: ${{ matrix.cluster }}
+      service_name: check-if-email-exists-staging
+      service_path: backend
+      chart_repository: ./helm/check-if-email-exists
+      values_file: ./helm/check-if-email-exists/values.staging.yaml
+      namespace: paperless-staging
+      create_namespace: true
+      image_repository: ghcr.io/oppulence-engineering/check-if-email-exists-backend
+      image_tag: ${{ needs.docker.outputs.image_tag }}
+      secret_env_overrides: |
+        RCH__STORAGE__POSTGRES__DB_URL=$HELM_POSTGRES_URL_STAGING
         RCH__STORAGE__POSTGRES__READ_REPLICA_URL=$HELM_READ_REPLICA_URL
         RCH__WORKER__RABBITMQ__URL=$HELM_RABBIT_URL
         RCH__PROXY__HOST=$RCH__PROXY__HOST

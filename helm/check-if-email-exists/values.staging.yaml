@@ -1,0 +1,5 @@
+# Staging overrides — 1 replica, no HPA
+replicaCount: 1
+
+autoscaling:
+  enabled: false

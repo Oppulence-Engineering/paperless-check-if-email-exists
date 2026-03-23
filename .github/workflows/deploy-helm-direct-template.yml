@@ -157,11 +157,21 @@ jobs:
       - name: Select per-cluster read replica
         id: replica
         run: |
-          case "${{ inputs.cluster }}" in
-            us-east)     echo "url=" >> "$GITHUB_OUTPUT" ;;
-            eu-central)  echo "url=${{ secrets.HELM_READ_REPLICA_URL_EU_CENTRAL }}" >> "$GITHUB_OUTPUT" ;;
-            us-west)     echo "url=${{ secrets.HELM_READ_REPLICA_URL_US_WEST }}" >> "$GITHUB_OUTPUT" ;;
-          esac
+          NS="${{ inputs.namespace }}"
+          CLUSTER="${{ inputs.cluster }}"
+          if [[ "$NS" == *staging* ]]; then
+            case "$CLUSTER" in
+              us-east)     echo "url=" >> "$GITHUB_OUTPUT" ;;
+              eu-central)  echo "url=${{ secrets.HELM_READ_REPLICA_URL_STAGING_EU_CENTRAL }}" >> "$GITHUB_OUTPUT" ;;
+              us-west)     echo "url=${{ secrets.HELM_READ_REPLICA_URL_STAGING_US_WEST }}" >> "$GITHUB_OUTPUT" ;;
+            esac
+          else
+            case "$CLUSTER" in
+              us-east)     echo "url=" >> "$GITHUB_OUTPUT" ;;
+              eu-central)  echo "url=${{ secrets.HELM_READ_REPLICA_URL_EU_CENTRAL }}" >> "$GITHUB_OUTPUT" ;;
+              us-west)     echo "url=${{ secrets.HELM_READ_REPLICA_URL_US_WEST }}" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
 
       - name: Deploy Helm Chart
         env:
