@@ -176,6 +176,7 @@ jobs:
       - name: Deploy Helm Chart
         env:
           HELM_POSTGRES_URL: ${{ secrets.HELM_POSTGRES_URL }}
+          HELM_POSTGRES_URL_STAGING: ${{ secrets.HELM_POSTGRES_URL_STAGING }}
           HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           RCH__PROXY__HOST: ${{ secrets.RCH__PROXY__HOST }}
