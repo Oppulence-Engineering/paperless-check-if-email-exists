@@ -50,3 +50,27 @@ pub fn with_worker_db(
 		}
 	})
 }
+
+/// Like with_worker_db but returns the read replica pool (for SELECT-only endpoints).
+pub fn with_worker_read_db(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
+	warp::any().and_then(move || {
+		let config = Arc::clone(&config);
+		let pool = config.get_read_pg_pool();
+		async move {
+			if !config.worker.enable {
+				return Err(warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Please enable worker mode on Reacher before calling this endpoint",
+				)));
+			}
+			pool.ok_or_else(|| {
+				warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Please configure a Postgres database on Reacher before calling this endpoint",
+				))
+			})
+		}
+	})
+}

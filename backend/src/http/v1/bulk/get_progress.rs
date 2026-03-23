@@ -25,7 +25,7 @@ use sqlx::PgPool;
 use warp::http::StatusCode;
 use warp::Filter;
 
-use super::with_worker_db;
+use super::with_worker_read_db;
 use crate::config::BackendConfig;
 use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
@@ -157,7 +157,7 @@ pub fn v1_get_bulk_job_progress(
 	warp::path!("v1" / "bulk" / i32)
 		.and(warp::get())
 		.and(resolve_tenant(Arc::clone(&config)))
-		.and(with_worker_db(config))
+		.and(with_worker_read_db(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
 }

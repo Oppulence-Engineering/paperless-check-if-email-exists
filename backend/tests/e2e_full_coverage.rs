@@ -248,7 +248,7 @@ mod shared_check_email_coverage {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("s".into());
 		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -802,7 +802,7 @@ mod do_check_email_work_coverage {
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url(),
 			extra: None,
 		}));
@@ -1051,7 +1051,7 @@ mod do_check_email_work_retry_coverage {
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url(),
 			extra: None,
 		}));
@@ -1266,7 +1266,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_new_connects_and_migrates() {
-		let storage = PostgresStorage::new(&db_url(), None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
 		// Verify we can query
 		let row = sqlx::query("SELECT 1 as v")
 			.fetch_one(&storage.pg_pool)
@@ -1279,7 +1279,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_ok_result() {
-		let storage = PostgresStorage::new(&db_url(), None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
 		let task = make_task(None);
 		let output = CheckEmailOutput {
 			input: "store@test.com".into(),
@@ -1292,7 +1292,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_err_result() {
-		let storage = PostgresStorage::new(&db_url(), None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
 		let task = make_task(None);
 		let err: Result<CheckEmailOutput, TaskError> =
 			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
@@ -1303,7 +1303,7 @@ mod postgres_storage_coverage {
 	#[serial]
 	async fn test_store_with_extra() {
 		let extra = Some(serde_json::json!({"key": "value"}));
-		let storage = PostgresStorage::new(&db_url(), extra.clone())
+		let storage = PostgresStorage::new(&db_url(), None, extra.clone())
 			.await
 			.unwrap();
 		assert_eq!(storage.get_extra(), extra);
@@ -1320,7 +1320,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_with_tenant_id() {
-		let storage = PostgresStorage::new(&db_url(), None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
 		// Create a tenant
 		let row = sqlx::query("INSERT INTO tenants (name, slug, contact_email) VALUES ('T', 'store-cov', 's@t.com') RETURNING id")
 			.fetch_one(&storage.pg_pool).await.unwrap();

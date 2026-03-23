@@ -145,7 +145,7 @@ mod v0_bulk_results_coverage {
 		// get_pg_pool() works through the storage adapter. We do this by
 		// connecting via the real path.
 		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -542,7 +542,7 @@ mod readiness_coverage {
 
 		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -607,7 +607,7 @@ mod readiness_coverage {
 
 		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -623,7 +623,7 @@ mod readiness_coverage {
 		// but worker channel missing.
 		let db_url2 = crate::test_helpers::test_db_url();
 		let mut base_config = BackendConfig::empty();
-		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url2,
 			extra: None,
 		}));
@@ -647,7 +647,7 @@ mod readiness_coverage {
 		// we'll use a trick: connect a non-worker config first, then flip the flag.
 		let db_url3 = crate::test_helpers::test_db_url();
 		let mut trick_config = BackendConfig::empty();
-		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url3,
 			extra: None,
 		}));
@@ -842,7 +842,7 @@ mod v0_bulk_get_running_coverage {
 		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -1025,7 +1025,7 @@ mod v1_bulk_results_csv_coverage {
 		let db_url = crate::test_helpers::test_db_url();
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url,
 			extra: None,
 		}));

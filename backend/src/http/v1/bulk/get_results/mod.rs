@@ -24,7 +24,7 @@ use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 
-use super::with_worker_db;
+use super::with_worker_read_db;
 use crate::config::BackendConfig;
 use crate::http::csv_shared::{csv_rows, TaskResultRecord};
 use crate::http::resolve_tenant;
@@ -233,7 +233,7 @@ pub fn v1_get_bulk_job_results(
 	warp::path!("v1" / "bulk" / i32 / "results")
 		.and(warp::get())
 		.and(resolve_tenant(Arc::clone(&config)))
-		.and(with_worker_db(config))
+		.and(with_worker_read_db(config))
 		.and(warp::query::<Request>())
 		.and_then(http_handler)
 		// View access logs by setting `RUST_LOG=reacher_backend`.

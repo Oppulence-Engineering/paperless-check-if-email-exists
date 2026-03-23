@@ -154,9 +154,19 @@ jobs:
           echo "Targeting cluster: ${{ inputs.cluster }}"
           kubectl get nodes
 
+      - name: Select per-cluster read replica
+        id: replica
+        run: |
+          case "${{ inputs.cluster }}" in
+            us-east)     echo "url=" >> "$GITHUB_OUTPUT" ;;
+            eu-central)  echo "url=${{ secrets.HELM_READ_REPLICA_URL_EU_CENTRAL }}" >> "$GITHUB_OUTPUT" ;;
+            us-west)     echo "url=${{ secrets.HELM_READ_REPLICA_URL_US_WEST }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       - name: Deploy Helm Chart
         env:
           HELM_POSTGRES_URL: ${{ secrets.HELM_POSTGRES_URL }}
+          HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           RCH__PROXY__HOST: ${{ secrets.RCH__PROXY__HOST }}
           RCH__PROXY__PORT: ${{ secrets.RCH__PROXY__PORT }}
@@ -213,8 +223,8 @@ jobs:
                 value="${!env_name:-}"
               fi
               if [ -z "$value" ]; then
-                echo "Secret override '$key' has an empty value."
-                exit 1
+                echo "Skipping secret override '$key' (empty value)."
+                continue
               fi
               SECRET_ENV_FLAGS+=(--set-string "config.secretEnv.${key}=${value}")
             done <<<"$SECRET_ENV_OVERRIDES"

@@ -204,9 +204,13 @@ impl BackendConfig {
 	pub async fn connect(&mut self) -> Result<(), anyhow::Error> {
 		match &self.storage {
 			Some(StorageConfig::Postgres(config)) => {
-				let storage = PostgresStorage::new(&config.db_url, config.extra.clone())
-					.await
-					.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
+				let storage = PostgresStorage::new(
+					&config.db_url,
+					config.read_replica_url.as_deref(),
+					config.extra.clone(),
+				)
+				.await
+				.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
 
 				self.storage_adapter = Arc::new(StorageAdapter::Postgres(storage));
 			}
@@ -241,6 +245,14 @@ impl BackendConfig {
 	pub fn get_pg_pool(&self) -> Option<PgPool> {
 		match self.storage_adapter.as_ref() {
 			StorageAdapter::Postgres(storage) => Some(storage.pg_pool.clone()),
+			StorageAdapter::Noop => None,
+		}
+	}
+
+	/// Get the read-only Postgres connection pool (replica if configured, primary otherwise).
+	pub fn get_read_pg_pool(&self) -> Option<PgPool> {
+		match self.storage_adapter.as_ref() {
+			StorageAdapter::Postgres(storage) => Some(storage.read_pool.clone()),
 			StorageAdapter::Noop => None,
 		}
 	}
@@ -365,9 +377,11 @@ pub enum StorageConfig {
 	Noop,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Serialize)]
+#[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
 pub struct PostgresConfig {
 	pub db_url: String,
+	#[serde(default)]
+	pub read_replica_url: Option<String>,
 	pub extra: Option<serde_json::Value>,
 }
 
@@ -590,6 +604,7 @@ type = "smtp"
 			cfg.storage,
 			Some(StorageConfig::Postgres(PostgresConfig {
 				db_url: "test2".to_string(),
+				read_replica_url: None,
 				extra: None,
 			}))
 		);
@@ -599,6 +614,7 @@ type = "smtp"
 	async fn test_serialize_storage_config() {
 		let storage_config = StorageConfig::Postgres(PostgresConfig {
 			db_url: "postgres://localhost:5432/test1".to_string(),
+			read_replica_url: None,
 			extra: None,
 		});
 

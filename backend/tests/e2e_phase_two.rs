@@ -16,7 +16,7 @@ mod tests {
 	async fn db_config(db_url: &str, secret: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some(secret.to_string());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));
@@ -27,7 +27,7 @@ mod tests {
 	async fn worker_config(db_url: &str, amqp_url: &str, secret: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some(secret.to_string());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));

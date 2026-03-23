@@ -75,6 +75,7 @@ config:
     RCH__WEBDRIVER_ADDR: http://localhost:9515
   secretEnv:
     RCH__STORAGE__POSTGRES__DB_URL: ""
+    RCH__STORAGE__POSTGRES__READ_REPLICA_URL: ""
     RCH__WORKER__RABBITMQ__URL: ""
     RCH__PROXY__HOST: ""
     RCH__PROXY__PORT: ""

@@ -22,7 +22,7 @@ mod coverage_final {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
 		let db = crate::test_helpers::test_db_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));
@@ -35,7 +35,7 @@ mod coverage_final {
 		c.header_secret = Some("s".into());
 		let db = crate::test_helpers::test_db_url();
 		let rmq = crate::test_helpers::test_amqp_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));

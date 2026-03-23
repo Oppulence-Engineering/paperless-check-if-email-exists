@@ -29,7 +29,7 @@ mod worker_loop_tests {
 	async fn make_worker_config(throttle: ThrottleConfig) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.backend_name = "test-worker".into();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url(),
 			extra: None,
 		}));

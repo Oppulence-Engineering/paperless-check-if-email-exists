@@ -79,6 +79,7 @@ jobs:
       image_tag: ${{ needs.docker.outputs.image_tag }}
       secret_env_overrides: |
         RCH__STORAGE__POSTGRES__DB_URL=$HELM_POSTGRES_URL
+        RCH__STORAGE__POSTGRES__READ_REPLICA_URL=$HELM_READ_REPLICA_URL
         RCH__WORKER__RABBITMQ__URL=$HELM_RABBIT_URL
         RCH__PROXY__HOST=$RCH__PROXY__HOST
         RCH__PROXY__PORT=$RCH__PROXY__PORT

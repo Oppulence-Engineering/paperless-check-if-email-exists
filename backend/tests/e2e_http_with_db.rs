@@ -19,7 +19,7 @@ mod tests {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test-secret".to_string());
 
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));

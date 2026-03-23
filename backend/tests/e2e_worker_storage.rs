@@ -76,6 +76,7 @@ mod postgres_storage_tests {
 				db.pool().connect_options().get_port()
 			),
 			None,
+			None,
 		)
 		.await;
 

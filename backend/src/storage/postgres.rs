@@ -27,11 +27,16 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct PostgresStorage {
 	pub pg_pool: PgPool,
+	pub read_pool: PgPool,
 	extra: Option<serde_json::Value>,
 }
 
 impl PostgresStorage {
-	pub async fn new(db_url: &str, extra: Option<serde_json::Value>) -> Result<Self, StorageError> {
+	pub async fn new(
+		db_url: &str,
+		read_replica_url: Option<&str>,
+		extra: Option<serde_json::Value>,
+	) -> Result<Self, StorageError> {
 		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
 		let pg_pool = PgPoolOptions::new().connect(db_url).await?;
 
@@ -39,7 +44,18 @@ impl PostgresStorage {
 
 		info!(target: LOG_TARGET, table="v1_task_result", "Connected to DB, Reacher will write verification results to DB");
 
-		Ok(Self { pg_pool, extra })
+		let read_pool = if let Some(replica_url) = read_replica_url {
+			info!(target: LOG_TARGET, "Connecting to read replica");
+			PgPoolOptions::new().connect(replica_url).await?
+		} else {
+			pg_pool.clone()
+		};
+
+		Ok(Self {
+			pg_pool,
+			read_pool,
+			extra,
+		})
 	}
 
 	pub async fn store(
