@@ -723,9 +723,43 @@ Refer to `backend/backend_config.toml` for the canonical schema and to `docs/sel
 
 ## Troubleshooting Checklist
 
-1. **DNS issues inside containers** – `docker exec worker1 nslookup gmail.com`. If this fails, set explicit DNS servers in `docker-compose.yaml` (`dns: ["8.8.8.8", "1.1.1.1"]`).
-2. **Proxy errors** – `"Unsupported SOCKS version 72"` means the proxy is speaking HTTP; switch to Bright Data’s SOCKS5 endpoint or another compatible provider.
+1. **DNS issues inside containers** – `docker exec worker1 nslookup gmail.com`. If this fails, set explicit DNS servers in `docker-compose.yaml` (`dns: [“8.8.8.8”, “1.1.1.1”]`).
+2. **Proxy errors** – `”Unsupported SOCKS version 72”` means the proxy is speaking HTTP; switch to Bright Data’s SOCKS5 endpoint or another compatible provider.
 3. **SMTP failures for demo addresses** – Many demo domains lack MX records. Use a mailbox with real MX (e.g., `*@gmail.com`) when validating connectivity.
 4. **CI Helm failures** – Confirm every secret referenced in `deploy-helm-direct-template.yml` exists (`HELM_DIRECT_SERVER`, `HELM_DIRECT_CA_DATA`, etc.). The workflow now validates presence before writing kubeconfig.
 5. **Bulk jobs stuck in “Processing”** – Inspect RabbitMQ queue depth (`docker exec rabbitmq rabbitmqctl list_queues name messages_ready`) and ensure workers have network access to the proxy and databases.
+
+## Ralph (Autonomous Agent Loop)
+
+Ralph runs Claude Code in a loop to work through tasks from a PRD. Each iteration picks up one task, implements it, commits, and logs progress.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `PRD.md` | Your requirements document -- Ralph reads this to find what to build next |
+| `progress.txt` | Tracks completed work across iterations |
+| `ralph-once.sh` | Human-in-the-loop -- runs one task, pauses for review |
+| `afk-ralph.sh` | Fully autonomous -- runs N iterations in a Docker sandbox |
+
+### Usage
+
+**Create a PRD first.** Use Claude’s plan mode (`claude` then `shift-tab`) or write one manually.
+
+```bash
+# Interactive: one task at a time, review between runs
+./ralph-once.sh
+
+# Autonomous: run up to 20 tasks unattended in Docker sandbox
+./afk-ralph.sh 20
+```
+
+The AFK version uses `docker sandbox run` for isolation. It stops early if Claude determines the PRD is complete.
+
+**First-time setup for AFK mode:**
+```bash
+docker sandbox run claude
+```
+
+See [Getting Started with Ralph](https://www.aihero.dev/getting-started-with-ralph) for the full walkthrough.
 
