@@ -3,6 +3,10 @@ name: Deploy Helm Chart Directly
 on:
   workflow_call:
     inputs:
+      cluster:
+        description: 'Target cluster (us-east, eu-central, us-west)'
+        required: true
+        type: string
       service_name:
         description: 'Name of the service to deploy (e.g., oppulence-unified-api)'
         required: true
@@ -48,6 +52,14 @@ on:
         default: ''
   workflow_dispatch:
     inputs:
+      cluster:
+        description: 'Target cluster (us-east, eu-central, us-west)'
+        required: true
+        type: choice
+        options:
+          - us-east
+          - eu-central
+          - us-west
       service_name:
         description: 'Name of the service to deploy (e.g., oppulence-unified-api)'
         required: true
@@ -123,13 +135,24 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Load kubeconfig
+        env:
+          KC_US_EAST: ${{ secrets.KUBE_CONFIG_US_EAST }}
+          KC_EU_CENTRAL: ${{ secrets.KUBE_CONFIG_EU_CENTRAL }}
+          KC_US_WEST: ${{ secrets.KUBE_CONFIG_US_WEST }}
         run: |
           mkdir -p "$HOME/.kube"
-          printf '%s' "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          case "${{ inputs.cluster }}" in
+            us-east)     printf '%s' "$KC_US_EAST" ;;
+            eu-central)  printf '%s' "$KC_EU_CENTRAL" ;;
+            us-west)     printf '%s' "$KC_US_WEST" ;;
+            *) echo "Unknown cluster: ${{ inputs.cluster }}"; exit 1 ;;
+          esac > "$HOME/.kube/config"
           chmod 600 "$HOME/.kube/config"
 
       - name: Verify cluster connectivity
-        run: kubectl get nodes
+        run: |
+          echo "Targeting cluster: ${{ inputs.cluster }}"
+          kubectl get nodes
 
       - name: Deploy Helm Chart
         env:
