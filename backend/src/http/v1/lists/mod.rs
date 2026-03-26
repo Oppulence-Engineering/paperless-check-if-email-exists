@@ -5,3 +5,4 @@ pub mod download;
 pub mod get_detail;
 pub mod get_list;
 pub mod post;
+pub mod quality;
