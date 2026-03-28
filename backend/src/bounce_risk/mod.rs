@@ -13,6 +13,7 @@ use sqlx::{PgPool, Row};
 use std::cmp::Reverse;
 use std::collections::BTreeSet;
 use std::fs;
+use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
@@ -365,7 +366,7 @@ fn resolve_model_path(config_path: &str) -> PathBuf {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 struct DomainInfraCachePayload {
-	dns_records: DnsRecordResults,
+	dns_records: Option<DnsRecordResults>,
 	website_present: Option<bool>,
 }
 
@@ -403,22 +404,14 @@ async fn collect_signal_bundle(
 	let hard_override_reason = detect_hard_override_reason(email_score);
 	let (provider_from_mx, mx_count, mx_priority_spread) = collect_mx_signals(output);
 
-	let history_signals = if context.allow_external_enrichment {
-		collect_history_signals(
-			read_pool,
-			context.tenant_id,
-			&output.input,
-			&email_score.category,
-			runtime.history_limit,
-		)
-		.await?
-	} else {
-		HistorySignals {
-			count: None,
-			consistency: None,
-			days_since_last_verification: None,
-		}
-	};
+	let history_signals = collect_history_signals(
+		read_pool,
+		context.tenant_id,
+		&output.input,
+		&email_score.category,
+		runtime.history_limit,
+	)
+	.await?;
 
 	let domain_signals = if context.allow_external_enrichment {
 		collect_domain_signals(output, read_pool, write_pool, runtime).await?
@@ -730,7 +723,9 @@ async fn load_domain_cache(
 
 	Ok(Some(CachedDomainRow {
 		domain_info,
-		dns_records: infra.as_ref().map(|payload| payload.dns_records.clone()),
+		dns_records: infra
+			.as_ref()
+			.and_then(|payload| payload.dns_records.clone()),
 		website_present: infra.and_then(|payload| payload.website_present),
 		infra_stale,
 	}))
@@ -744,7 +739,7 @@ async fn store_domain_cache(
 	website_present: Option<bool>,
 ) -> Result<(), anyhow::Error> {
 	let rdap_payload = domain_info.as_ref().map(serde_json::to_value).transpose()?;
-	let infra_payload = if let Some(dns_records) = dns_records {
+	let infra_payload = if dns_records.is_some() || website_present.is_some() {
 		Some(serde_json::to_value(DomainInfraCachePayload {
 			dns_records,
 			website_present,
@@ -1170,6 +1165,16 @@ pub fn derive_provider_from_mx_host(mx_host: &str) -> String {
 }
 
 pub async fn probe_website_presence(client: &reqwest::Client, domain: &str) -> Option<bool> {
+	if let Err(error) = validate_public_website_target(domain).await {
+		warn!(
+			target: LOG_TARGET,
+			domain = %domain,
+			error = ?error,
+			"Skipping bounce-risk website probe for non-public or unresolvable domain"
+		);
+		return None;
+	}
+
 	let mut saw_response = false;
 	for url in [format!("https://{domain}"), format!("http://{domain}")] {
 		match client.get(&url).send().await {
@@ -1201,6 +1206,46 @@ fn record_website_probe_response(
 
 fn finalize_website_probe_result(saw_response: bool) -> Option<bool> {
 	saw_response.then_some(false)
+}
+
+async fn validate_public_website_target(domain: &str) -> Result<(), anyhow::Error> {
+	let mut addresses = tokio::net::lookup_host((domain, 80))
+		.await
+		.with_context(|| format!("failed to resolve {domain} for website probe"))?;
+	let mut saw_address = false;
+	for address in addresses.by_ref() {
+		saw_address = true;
+		if is_disallowed_probe_ip(address.ip()) {
+			anyhow::bail!("domain {domain} resolved to a private or local address");
+		}
+	}
+
+	if !saw_address {
+		anyhow::bail!("domain {domain} did not resolve to any addresses");
+	}
+
+	Ok(())
+}
+
+fn is_disallowed_probe_ip(ip: IpAddr) -> bool {
+	match ip {
+		IpAddr::V4(ip) => {
+			ip.is_private()
+				|| ip.is_loopback()
+				|| ip.is_link_local()
+				|| ip.is_broadcast()
+				|| ip.is_documentation()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+		IpAddr::V6(ip) => {
+			ip.is_loopback()
+				|| ip.is_unique_local()
+				|| ip.is_unicast_link_local()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+	}
 }
 
 pub fn parse_domain_info_from_rdap_value(value: &serde_json::Value) -> DomainInfo {
@@ -1509,6 +1554,34 @@ mod tests {
 		refresh_domain_info_age(&mut domain_info);
 
 		assert!(matches!(domain_info.domain_age_days, Some(days) if days >= 44));
+	}
+
+	#[test]
+	fn website_cache_payload_can_store_website_only_results() {
+		let payload = DomainInfraCachePayload {
+			dns_records: None,
+			website_present: Some(false),
+		};
+
+		let value = serde_json::to_value(&payload).unwrap();
+		let round_trip: DomainInfraCachePayload = serde_json::from_value(value).unwrap();
+
+		assert!(round_trip.dns_records.is_none());
+		assert_eq!(round_trip.website_present, Some(false));
+	}
+
+	#[test]
+	fn probe_target_rejects_private_and_loopback_ips() {
+		assert!(is_disallowed_probe_ip(IpAddr::V4(
+			"127.0.0.1".parse().unwrap(),
+		)));
+		assert!(is_disallowed_probe_ip(IpAddr::V4(
+			"169.254.169.254".parse().unwrap(),
+		)));
+		assert!(is_disallowed_probe_ip(IpAddr::V6("::1".parse().unwrap())));
+		assert!(!is_disallowed_probe_ip(IpAddr::V4(
+			"8.8.8.8".parse().unwrap(),
+		)));
 	}
 
 	#[test]

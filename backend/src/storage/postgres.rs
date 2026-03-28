@@ -152,6 +152,7 @@ impl PostgresStorage {
 				SET payload = $1,
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    result = $3,
+				    error = NULL,
 				    tenant_id = $4,
 				    score = $5,
 				    score_category = $6,
