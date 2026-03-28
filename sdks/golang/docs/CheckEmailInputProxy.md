@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Host** | **string** | The proxy host address. | 
-**Password** | Pointer to **string** | Password for proxy authentication. | [optional] 
-**Port** | **int32** | The proxy port number. | 
-**Username** | Pointer to **string** | Username for proxy authentication. | [optional] 
+**Host** | **string** | The proxy host address. | [required]
+**Password** | Pointer to **string** | Password for proxy authentication. | [optional]
+**Port** | **int32** | The proxy port number. | [required]
+**Username** | Pointer to **string** | Username for proxy authentication. | [optional]
 
 ## Methods
 
 ### NewCheckEmailInputProxy
 
-`func NewCheckEmailInputProxy(host string, port int32, ) *CheckEmailInputProxy`
+`func NewCheckEmailInputProxy(host string, port int32) *CheckEmailInputProxy`
 
 NewCheckEmailInputProxy instantiates a new CheckEmailInputProxy object
 This constructor will assign default values to properties that have it defined,
@@ -120,5 +120,3 @@ HasUsername returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

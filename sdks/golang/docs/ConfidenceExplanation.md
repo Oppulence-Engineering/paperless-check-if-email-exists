@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Factors** | **[]string** |  | 
-**Level** | **string** |  | 
-**Score** | **int32** |  | 
+**Factors** | **[]string** |  | [required]
+**Level** | **string** |  | [required]
+**Score** | **int32** |  | [required]
 
 ## Methods
 
 ### NewConfidenceExplanation
 
-`func NewConfidenceExplanation(factors []string, level string, score int32, ) *ConfidenceExplanation`
+`func NewConfidenceExplanation(factors []string, level string, score int32) *ConfidenceExplanation`
 
 NewConfidenceExplanation instantiates a new ConfidenceExplanation object
 This constructor will assign default values to properties that have it defined,
@@ -35,7 +35,7 @@ GetFactors returns the Factors field if non-nil, zero value otherwise.
 
 ### GetFactorsOk
 
-`func (o *ConfidenceExplanation) GetFactorsOk() (*[]string, bool)`
+`func (o *ConfidenceExplanation) GetFactorsOk() ([]string, bool)`
 
 GetFactorsOk returns a tuple with the Factors field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -89,5 +89,3 @@ SetScore sets Score field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

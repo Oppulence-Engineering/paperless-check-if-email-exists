@@ -32,6 +32,9 @@ pub mod scope {
 	pub const SUPPRESSIONS: &str = "suppressions";
 	pub const REPUTATION: &str = "reputation";
 	pub const SETTINGS: &str = "settings";
+	pub const PIPELINES_READ: &str = "pipelines.read";
+	pub const PIPELINES_WRITE: &str = "pipelines.write";
+	pub const PIPELINES_TRIGGER: &str = "pipelines.trigger";
 	pub const ADMIN: &str = "admin";
 }
 

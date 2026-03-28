@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**confidence** | **string** |  | [default to undefined]
-**email** | **string** |  | [default to undefined]
-**pattern** | **string** |  | [default to undefined]
-**score** | **number** |  | [default to undefined]
+**confidence** | **string** |  | [required]
+**email** | **string** |  | [required]
+**pattern** | **string** |  | [required]
+**score** | **number** |  | [required]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { FinderBestMatch } from '@oppulence/reacher-sdk';
 
 const instance: FinderBestMatch = {
-    confidence,
-    email,
-    pattern,
-    score,
+    confidence: 'example',
+    email: 'example',
+    pattern: 'example',
+    score: 0,
 };
 ```
 

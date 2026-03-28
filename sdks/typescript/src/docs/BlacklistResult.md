@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**listed** | **boolean** |  | [default to undefined]
-**lookup_time_ms** | **number** |  | [default to undefined]
-**provider** | **string** |  | [default to undefined]
+**listed** | **boolean** |  | [required]
+**lookup_time_ms** | **number** |  | [required]
+**provider** | **string** |  | [required]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { BlacklistResult } from '@oppulence/reacher-sdk';
 
 const instance: BlacklistResult = {
-    listed,
-    lookup_time_ms,
-    provider,
+    listed: true,
+    lookup_time_ms: 0,
+    provider: 'mailchimp',
 };
 ```
 

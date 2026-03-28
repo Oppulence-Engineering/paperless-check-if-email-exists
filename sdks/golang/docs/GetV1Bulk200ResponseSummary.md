@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**TotalSafe** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | 
-**TotalInvalid** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | 
-**TotalRisky** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | 
-**TotalUnknown** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | 
+**TotalSafe** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [required]
+**TotalInvalid** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [required]
+**TotalRisky** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [required]
+**TotalUnknown** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [required]
 
 ## Methods
 
 ### NewGetV1Bulk200ResponseSummary
 
-`func NewGetV1Bulk200ResponseSummary(totalSafe int32, totalInvalid int32, totalRisky int32, totalUnknown int32, ) *GetV1Bulk200ResponseSummary`
+`func NewGetV1Bulk200ResponseSummary(totalSafe int32, totalInvalid int32, totalRisky int32, totalUnknown int32) *GetV1Bulk200ResponseSummary`
 
 NewGetV1Bulk200ResponseSummary instantiates a new GetV1Bulk200ResponseSummary object
 This constructor will assign default values to properties that have it defined,
@@ -110,5 +110,3 @@ SetTotalUnknown sets TotalUnknown field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

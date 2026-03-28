@@ -4,21 +4,21 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**DeduplicatedCount** | Pointer to **NullableInt32** |  | [optional] 
-**EmailColumn** | **string** |  | 
-**Id** | **int32** |  | 
-**JobId** | **int32** |  | 
-**Name** | **string** |  | 
-**Status** | **string** |  | 
-**Summary** | [**ListSummary**](ListSummary.md) |  | 
-**TotalRows** | **int32** |  | 
-**UniqueEmails** | Pointer to **NullableInt32** |  | [optional] 
+**DeduplicatedCount** | Pointer to **NullableInt32** |  | [optional]
+**EmailColumn** | **string** |  | [required]
+**Id** | **int32** |  | [required]
+**JobId** | **int32** |  | [required]
+**Name** | **string** |  | [required]
+**Status** | **string** |  | [required]
+**Summary** | [**ListSummary**](ListSummary.md) |  | [required]
+**TotalRows** | **int32** |  | [required]
+**UniqueEmails** | Pointer to **NullableInt32** |  | [optional]
 
 ## Methods
 
 ### NewListDetailResponse
 
-`func NewListDetailResponse(emailColumn string, id int32, jobId int32, name string, status string, summary ListSummary, totalRows int32, ) *ListDetailResponse`
+`func NewListDetailResponse(emailColumn string, id int32, jobId int32, name string, status string, summary ListSummary, totalRows int32) *ListDetailResponse`
 
 NewListDetailResponse instantiates a new ListDetailResponse object
 This constructor will assign default values to properties that have it defined,
@@ -60,7 +60,7 @@ HasDeduplicatedCount returns a boolean if a field has been set.
 
 ### SetDeduplicatedCountNil
 
-`func (o *ListDetailResponse) SetDeduplicatedCountNil(b bool)`
+`func (o *ListDetailResponse) SetDeduplicatedCountNil()`
 
  SetDeduplicatedCountNil sets the value for DeduplicatedCount to be an explicit nil
 
@@ -68,6 +68,7 @@ HasDeduplicatedCount returns a boolean if a field has been set.
 `func (o *ListDetailResponse) UnsetDeduplicatedCount()`
 
 UnsetDeduplicatedCount ensures that no value is present for DeduplicatedCount, not even an explicit nil
+
 ### GetEmailColumn
 
 `func (o *ListDetailResponse) GetEmailColumn() string`
@@ -235,7 +236,7 @@ HasUniqueEmails returns a boolean if a field has been set.
 
 ### SetUniqueEmailsNil
 
-`func (o *ListDetailResponse) SetUniqueEmailsNil(b bool)`
+`func (o *ListDetailResponse) SetUniqueEmailsNil()`
 
  SetUniqueEmailsNil sets the value for UniqueEmails to be an explicit nil
 
@@ -245,5 +246,3 @@ HasUniqueEmails returns a boolean if a field has been set.
 UnsetUniqueEmails ensures that no value is present for UniqueEmails, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

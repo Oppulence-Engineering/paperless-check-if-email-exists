@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | Pointer to **NullableTime** |  | [optional] 
-**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional] 
-**Source** | Pointer to **NullableString** |  | [optional] 
-**Suppressed** | **bool** |  | 
+**CreatedAt** | Pointer to **NullableTime** |  | [optional]
+**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional]
+**Source** | Pointer to **NullableString** |  | [optional]
+**Suppressed** | **bool** |  | [required]
 
 ## Methods
 
 ### NewSuppressionCheckResponse
 
-`func NewSuppressionCheckResponse(suppressed bool, ) *SuppressionCheckResponse`
+`func NewSuppressionCheckResponse(suppressed bool) *SuppressionCheckResponse`
 
 NewSuppressionCheckResponse instantiates a new SuppressionCheckResponse object
 This constructor will assign default values to properties that have it defined,
@@ -55,7 +55,7 @@ HasCreatedAt returns a boolean if a field has been set.
 
 ### SetCreatedAtNil
 
-`func (o *SuppressionCheckResponse) SetCreatedAtNil(b bool)`
+`func (o *SuppressionCheckResponse) SetCreatedAtNil()`
 
  SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 
@@ -63,6 +63,7 @@ HasCreatedAt returns a boolean if a field has been set.
 `func (o *SuppressionCheckResponse) UnsetCreatedAt()`
 
 UnsetCreatedAt ensures that no value is present for CreatedAt, not even an explicit nil
+
 ### GetReason
 
 `func (o *SuppressionCheckResponse) GetReason() SuppressionReason`
@@ -115,7 +116,7 @@ HasSource returns a boolean if a field has been set.
 
 ### SetSourceNil
 
-`func (o *SuppressionCheckResponse) SetSourceNil(b bool)`
+`func (o *SuppressionCheckResponse) SetSourceNil()`
 
  SetSourceNil sets the value for Source to be an explicit nil
 
@@ -123,6 +124,7 @@ HasSource returns a boolean if a field has been set.
 `func (o *SuppressionCheckResponse) UnsetSource()`
 
 UnsetSource ensures that no value is present for Source, not even an explicit nil
+
 ### GetSuppressed
 
 `func (o *SuppressionCheckResponse) GetSuppressed() bool`
@@ -145,5 +147,3 @@ SetSuppressed sets Suppressed field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

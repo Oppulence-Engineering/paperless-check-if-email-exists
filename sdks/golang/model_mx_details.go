@@ -138,7 +138,6 @@ func (o *MxDetails) UnmarshalJSON(data []byte) (err error) {
 	varMxDetails := _MxDetails{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varMxDetails)
 
 	if err != nil {

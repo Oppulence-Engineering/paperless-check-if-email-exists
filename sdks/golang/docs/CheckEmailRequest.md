@@ -4,24 +4,23 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional] 
-**FromEmail** | Pointer to **string** | In the SMTP connection, the FROM email address. | [optional] 
-**GmailVerifMethod** | Pointer to [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional] 
-**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional] 
-**Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] 
-**Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] 
-**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] 
-**Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional] [default to false]
-**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] 
-**StrictProviderRules** | Pointer to **bool** | When false, skips provider-specific syntax validation even if the provider is recognized. | [optional] 
-**ToEmail** | **string** | The email address to check. | 
-**YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] 
+**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional]
+**FromEmail** | Pointer to **string** | In the SMTP connection, the FROM email address. | [optional]
+**GmailVerifMethod** | Pointer to [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional]
+**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional]
+**Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional]
+**Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional]
+**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional]
+**Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional]
+**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional]
+**ToEmail** | **string** | The email address to check. | [required]
+**YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional]
 
 ## Methods
 
 ### NewCheckEmailRequest
 
-`func NewCheckEmailRequest(toEmail string, ) *CheckEmailRequest`
+`func NewCheckEmailRequest(toEmail string) *CheckEmailRequest`
 
 NewCheckEmailRequest instantiates a new CheckEmailRequest object
 This constructor will assign default values to properties that have it defined,
@@ -261,31 +260,6 @@ SetSmtpPort sets SmtpPort field to given value.
 
 HasSmtpPort returns a boolean if a field has been set.
 
-### GetStrictProviderRules
-
-`func (o *CheckEmailRequest) GetStrictProviderRules() bool`
-
-GetStrictProviderRules returns the StrictProviderRules field if non-nil, zero value otherwise.
-
-### GetStrictProviderRulesOk
-
-`func (o *CheckEmailRequest) GetStrictProviderRulesOk() (*bool, bool)`
-
-GetStrictProviderRulesOk returns a tuple with the StrictProviderRules field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetStrictProviderRules
-
-`func (o *CheckEmailRequest) SetStrictProviderRules(v bool)`
-
-SetStrictProviderRules sets StrictProviderRules field to given value.
-
-### HasStrictProviderRules
-
-`func (o *CheckEmailRequest) HasStrictProviderRules() bool`
-
-HasStrictProviderRules returns a boolean if a field has been set.
-
 ### GetToEmail
 
 `func (o *CheckEmailRequest) GetToEmail() string`
@@ -333,5 +307,3 @@ HasYahooVerifMethod returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

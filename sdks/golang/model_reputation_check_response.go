@@ -276,7 +276,6 @@ func (o *ReputationCheckResponse) UnmarshalJSON(data []byte) (err error) {
 	varReputationCheckResponse := _ReputationCheckResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varReputationCheckResponse)
 
 	if err != nil {

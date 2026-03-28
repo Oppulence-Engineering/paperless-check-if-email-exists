@@ -5,14 +5,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**category** | [**EmailCategory**](EmailCategory.md) |  | [default to undefined]
-**confidence** | [**ConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional] [default to undefined]
-**email** | **string** |  | [default to undefined]
-**is_reachable** | [**Reachable**](Reachable.md) |  | [default to undefined]
-**pattern** | **string** |  | [default to undefined]
-**result** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional] [default to undefined]
-**score** | **number** |  | [default to undefined]
-**sub_reason** | [**SubReason**](SubReason.md) |  | [default to undefined]
+**category** | [**EmailCategory**](EmailCategory.md) |  | [required]
+**confidence** | [**ConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional]
+**email** | **string** |  | [required]
+**is_reachable** | [**Reachable**](Reachable.md) |  | [required]
+**pattern** | **string** |  | [required]
+**result** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
+**score** | **number** |  | [required]
+**sub_reason** | [**SubReason**](SubReason.md) |  | [required]
 
 ## Example
 
@@ -20,14 +20,14 @@ Name | Type | Description | Notes
 import { FinderCandidateResult } from '@oppulence/reacher-sdk';
 
 const instance: FinderCandidateResult = {
-    category,
-    confidence,
-    email,
-    is_reachable,
-    pattern,
-    result,
-    score,
-    sub_reason,
+    category: {} as any,
+    confidence: {} as any,
+    email: 'example',
+    is_reachable: {} as any,
+    pattern: 'example',
+    result: {} as any,
+    score: 0,
+    sub_reason: {} as any,
 };
 ```
 

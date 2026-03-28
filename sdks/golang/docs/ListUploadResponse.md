@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**EmailColumn** | **string** |  | 
-**JobId** | **int32** |  | 
-**ListId** | **int32** |  | 
-**TotalRows** | **int32** |  | 
+**EmailColumn** | **string** |  | [required]
+**JobId** | **int32** |  | [required]
+**ListId** | **int32** |  | [required]
+**TotalRows** | **int32** |  | [required]
 
 ## Methods
 
 ### NewListUploadResponse
 
-`func NewListUploadResponse(emailColumn string, jobId int32, listId int32, totalRows int32, ) *ListUploadResponse`
+`func NewListUploadResponse(emailColumn string, jobId int32, listId int32, totalRows int32) *ListUploadResponse`
 
 NewListUploadResponse instantiates a new ListUploadResponse object
 This constructor will assign default values to properties that have it defined,
@@ -110,5 +110,3 @@ SetTotalRows sets TotalRows field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

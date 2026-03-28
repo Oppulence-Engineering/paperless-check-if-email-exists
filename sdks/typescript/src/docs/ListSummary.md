@@ -5,11 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**total_invalid** | **number** |  | [default to undefined]
-**total_processed** | **number** |  | [default to undefined]
-**total_risky** | **number** |  | [default to undefined]
-**total_unknown** | **number** |  | [default to undefined]
-**total_valid** | **number** |  | [default to undefined]
+**total_invalid** | **number** |  | [required]
+**total_processed** | **number** |  | [required]
+**total_risky** | **number** |  | [required]
+**total_unknown** | **number** |  | [required]
+**total_valid** | **number** |  | [required]
 
 ## Example
 
@@ -17,11 +17,11 @@ Name | Type | Description | Notes
 import { ListSummary } from '@oppulence/reacher-sdk';
 
 const instance: ListSummary = {
-    total_invalid,
-    total_processed,
-    total_risky,
-    total_unknown,
-    total_valid,
+    total_invalid: 0,
+    total_processed: 0,
+    total_risky: 0,
+    total_unknown: 0,
+    total_valid: 0,
 };
 ```
 

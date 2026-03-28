@@ -6,7 +6,7 @@ SMTP details used for debugging, including the verification method.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**verif_method** | [**VerifMethod**](VerifMethod.md) |  | [optional] [default to undefined]
+**verif_method** | [**VerifMethod**](VerifMethod.md) |  | [optional]
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { DebugDetailsSmtp } from '@oppulence/reacher-sdk';
 
 const instance: DebugDetailsSmtp = {
-    verif_method,
+    verif_method: {} as any,
 };
 ```
 

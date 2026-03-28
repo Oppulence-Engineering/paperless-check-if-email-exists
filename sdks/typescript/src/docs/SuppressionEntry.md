@@ -5,12 +5,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**created_at** | **string** |  | [default to undefined]
-**email** | **string** |  | [default to undefined]
-**id** | **number** |  | [default to undefined]
-**notes** | **string** |  | [optional] [default to undefined]
-**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [default to undefined]
-**source** | **string** |  | [optional] [default to undefined]
+**created_at** | **string** |  | [required]
+**email** | **string** |  | [required]
+**id** | **number** |  | [required]
+**notes** | **string** |  | [optional]
+**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [required]
+**source** | **string** |  | [optional]
 
 ## Example
 
@@ -18,12 +18,12 @@ Name | Type | Description | Notes
 import { SuppressionEntry } from '@oppulence/reacher-sdk';
 
 const instance: SuppressionEntry = {
-    created_at,
-    email,
-    id,
-    notes,
-    reason,
-    source,
+    created_at: 'example',
+    email: 'example',
+    id: 0,
+    notes: 'example',
+    reason: {} as any,
+    source: 'example',
 };
 ```
 

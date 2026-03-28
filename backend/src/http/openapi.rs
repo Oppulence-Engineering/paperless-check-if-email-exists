@@ -42,6 +42,16 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::download::v1_download_list,
 		crate::http::v1::lists::delete::v1_delete_list,
+		crate::http::v1::pipelines::v1_create_pipeline,
+		crate::http::v1::pipelines::v1_list_pipelines,
+		crate::http::v1::pipelines::v1_get_pipeline,
+		crate::http::v1::pipelines::v1_update_pipeline,
+		crate::http::v1::pipelines::v1_delete_pipeline,
+		crate::http::v1::pipelines::v1_pause_pipeline,
+		crate::http::v1::pipelines::v1_resume_pipeline,
+		crate::http::v1::pipelines::v1_trigger_pipeline,
+		crate::http::v1::pipelines::v1_list_pipeline_runs,
+		crate::http::v1::pipelines::v1_get_pipeline_run,
 		crate::http::v1::reputation::check::v1_check_reputation,
 		crate::http::v1::suppressions::add::v1_add_suppressions,
 		crate::http::v1::suppressions::list::v1_list_suppressions,
@@ -92,6 +102,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "v0", description = "Legacy v0 API endpoints"),
 		(name = "v1", description = "Primary v1 API endpoints"),
 		(name = "Jobs", description = "Job lifecycle and results endpoints"),
+		(name = "Pipelines", description = "Scheduled list-cleaning pipeline endpoints"),
 		(name = "Account", description = "Account-level endpoints"),
 		(name = "Admin", description = "Administrative endpoints"),
 		(name = "Admin Jobs", description = "Administrative job endpoints"),
@@ -107,6 +118,21 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 	) {
 		for (path, value) in generated_paths {
 			base_paths.insert(path.clone(), value.clone());
+		}
+	}
+
+	if let Some(generated_tags) = generated.get("tags").and_then(Value::as_array) {
+		let base_tags = base
+			.as_object_mut()
+			.expect("openapi spec root object")
+			.entry("tags")
+			.or_insert_with(|| Value::Array(Vec::new()))
+			.as_array_mut()
+			.expect("tags array");
+		for tag in generated_tags {
+			if !base_tags.iter().any(|existing| existing == tag) {
+				base_tags.push(tag.clone());
+			}
 		}
 	}
 
@@ -128,6 +154,23 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 fn normalize_nullable_types(value: &mut Value) {
 	match value {
 		Value::Object(map) => {
+			if let Some(Value::Array(one_of)) = map.get("oneOf") {
+				let null_index = one_of.iter().position(|entry| {
+					entry.as_object().is_some_and(|obj| {
+						obj.get("type") == Some(&Value::String("null".to_string()))
+					})
+				});
+				if one_of.len() == 2 {
+					if let Some(null_index) = null_index {
+						let non_null_index = if null_index == 0 { 1 } else { 0 };
+						let non_null_schema = one_of[non_null_index].clone();
+						map.remove("oneOf");
+						map.insert("nullable".to_string(), Value::Bool(true));
+						map.insert("allOf".to_string(), Value::Array(vec![non_null_schema]));
+					}
+				}
+			}
+
 			if let Some(Value::Array(type_values)) = map.get("type") {
 				let mut non_null_types = type_values
 					.iter()
@@ -157,6 +200,38 @@ fn normalize_nullable_types(value: &mut Value) {
 		}
 		_ => {}
 	}
+}
+
+fn strip_unsupported_schema_keywords(value: &mut Value) {
+	match value {
+		Value::Object(map) => {
+			if is_schema_node(map) {
+				map.remove("propertyNames");
+			}
+			for child in map.values_mut() {
+				strip_unsupported_schema_keywords(child);
+			}
+		}
+		Value::Array(items) => {
+			for child in items {
+				strip_unsupported_schema_keywords(child);
+			}
+		}
+		_ => {}
+	}
+}
+
+fn is_schema_node(map: &Map<String, Value>) -> bool {
+	map.contains_key("type")
+		|| map.contains_key("properties")
+		|| map.contains_key("$ref")
+		|| map.contains_key("allOf")
+		|| map.contains_key("oneOf")
+		|| map.contains_key("anyOf")
+		|| map.contains_key("items")
+		|| map.contains_key("additionalProperties")
+		|| map.contains_key("enum")
+		|| map.contains_key("const")
 }
 
 fn components_mut(spec: &mut Value) -> &mut Map<String, Value> {
@@ -261,6 +336,50 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 			.as_object_mut()
 			.expect("responses object")
 			.insert(status.to_string(), response);
+	}
+}
+
+fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
+	if let Some(schema) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	{
+		schema.insert("example".to_string(), example);
+	}
+}
+
+fn set_schema_property(spec: &mut Value, schema_name: &str, property_name: &str, schema: Value) {
+	let Some(schema_obj) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	else {
+		return;
+	};
+	let properties = schema_obj
+		.entry("properties".to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("schema properties object");
+	properties.insert(property_name.to_string(), schema);
+}
+
+fn set_schema_discriminator(
+	spec: &mut Value,
+	schema_name: &str,
+	property_name: &str,
+	mapping: Value,
+) {
+	if let Some(schema) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	{
+		schema.insert(
+			"discriminator".to_string(),
+			json!({
+				"propertyName": property_name,
+				"mapping": mapping,
+			}),
+		);
 	}
 }
 
@@ -972,6 +1091,45 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["enabled"]
 		}),
 	);
+	insert_schema(
+		spec,
+		"PipelineRunResultLocation",
+		json!({
+			"type": "object",
+			"properties": {
+				"download_url": { "type": "string" }
+			},
+			"required": ["download_url"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"PipelineRunStats",
+		json!({
+			"type": "object",
+			"properties": {
+				"trigger_reason": { "type": "string", "nullable": true },
+				"delta_mode": { "type": "boolean", "nullable": true },
+				"freshness_days": { "type": "integer", "format": "int32", "nullable": true },
+				"changed_only_export": { "type": "boolean", "nullable": true },
+				"selected_unique_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"skipped_unchanged": { "type": "integer", "format": "int32", "nullable": true },
+				"queued_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"published_tasks": { "type": "integer", "format": "int32", "nullable": true },
+				"completed_tasks": { "type": "integer", "format": "int32", "nullable": true },
+				"valid": { "type": "integer", "format": "int32", "nullable": true },
+				"invalid": { "type": "integer", "format": "int32", "nullable": true },
+				"risky": { "type": "integer", "format": "int32", "nullable": true },
+				"unknown": { "type": "integer", "format": "int32", "nullable": true },
+				"billed_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"source_name": { "type": "string", "nullable": true },
+				"source_filename": { "type": "string", "nullable": true },
+				"source_row_count": { "type": "integer", "format": "int32", "nullable": true },
+				"source_unique_emails": { "type": "integer", "format": "int32", "nullable": true }
+			},
+			"additionalProperties": true
+		}),
+	);
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
@@ -1243,6 +1401,152 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 	ensure_check_email_output_scored(spec);
 	ensure_check_email_request_provider_flag(spec);
 	patch_phase_two_paths(spec);
+	set_schema_discriminator(
+		spec,
+		"PipelineSource",
+		"type",
+		json!({
+			"list_snapshot": "#/components/schemas/PipelineSource_oneOf",
+			"integration": "#/components/schemas/PipelineSource_oneOf_1",
+			"push": "#/components/schemas/PipelineSource_oneOf_2",
+			"bucket": "#/components/schemas/PipelineSource_oneOf_3",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineDeliveryConfig",
+		json!({
+			"dashboard": true,
+			"max_attempts": 5,
+			"retry_backoff_seconds": 300,
+			"webhook": Value::Null,
+		}),
+	);
+	set_schema_example(
+		spec,
+		"CreatePipelineInput",
+		json!({
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"UpdatePipelineInput",
+		json!({
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineView",
+		json!({
+			"id": 1,
+			"tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+			"next_run_at": "2000-01-23T04:56:07.000+00:00",
+			"last_scheduled_at": "2000-01-23T04:56:07.000+00:00",
+			"last_run_id": 5,
+			"created_at": "2000-01-23T04:56:07.000+00:00",
+			"updated_at": "2000-01-23T04:56:07.000+00:00",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineRunView",
+		json!({
+			"id": 1,
+			"pipeline_id": 2,
+			"tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+			"trigger_type": "manual",
+			"status": "completed",
+			"source_snapshot": { "type": "list_snapshot", "list_id": 123 },
+			"stats": {
+				"trigger_reason": "manual",
+				"delta_mode": true,
+				"freshness_days": 30,
+				"source_name": "Weekly Cleanup",
+				"source_filename": "seed.csv",
+				"selected_unique_emails": 1,
+				"billed_emails": 1
+			},
+			"billed_emails": 1,
+			"delivery_status": "not_requested",
+			"delivery_attempts": 0,
+			"created_at": "2000-01-23T04:56:07.000+00:00",
+			"updated_at": "2000-01-23T04:56:07.000+00:00",
+			"scheduled_for": "2000-01-23T04:56:07.000+00:00",
+			"started_at": "2000-01-23T04:56:07.000+00:00",
+			"completed_at": "2000-01-23T04:56:07.000+00:00",
+			"job_id": 5,
+			"list_id": 5,
+			"result_location": { "download_url": "/v1/lists/5/download" },
+			"last_delivery_attempt_at": Value::Null,
+			"next_delivery_attempt_at": Value::Null,
+			"delivery_error": Value::Null,
+			"error_code": Value::Null,
+			"error_message": Value::Null,
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"source_snapshot",
+		json!({
+			"$ref": "#/components/schemas/PipelineSource"
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"stats",
+		json!({
+			"$ref": "#/components/schemas/PipelineRunStats"
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"result_location",
+		json!({
+			"nullable": true,
+			"allOf": [
+				{ "$ref": "#/components/schemas/PipelineRunResultLocation" }
+			]
+		}),
+	);
 }
 
 pub fn build_spec() -> Result<Value, ReacherResponseError> {
@@ -1252,6 +1556,7 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 
 	merge_openapi(&mut spec, generated_spec);
 	normalize_nullable_types(&mut spec);
+	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
 	Ok(spec)
 }

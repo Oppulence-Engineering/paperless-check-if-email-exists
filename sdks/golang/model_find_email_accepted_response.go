@@ -192,7 +192,6 @@ func (o *FindEmailAcceptedResponse) UnmarshalJSON(data []byte) (err error) {
 	varFindEmailAcceptedResponse := _FindEmailAcceptedResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varFindEmailAcceptedResponse)
 
 	if err != nil {

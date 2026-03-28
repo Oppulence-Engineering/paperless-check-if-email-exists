@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**added** | **number** |  | [default to undefined]
-**duplicates** | **number** |  | [default to undefined]
+**added** | **number** |  | [required]
+**duplicates** | **number** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { AddSuppressionsResponse } from '@oppulence/reacher-sdk';
 
 const instance: AddSuppressionsResponse = {
-    added,
-    duplicates,
+    added: 0,
+    duplicates: 0,
 };
 ```
 

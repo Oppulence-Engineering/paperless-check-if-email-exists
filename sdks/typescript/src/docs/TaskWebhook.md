@@ -6,7 +6,7 @@ Optional webhook configuration for sending email verification results during bul
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**on_each_email** | [**Webhook**](Webhook.md) |  | [optional] [default to undefined]
+**on_each_email** | [**Webhook**](Webhook.md) |  | [optional]
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { TaskWebhook } from '@oppulence/reacher-sdk';
 
 const instance: TaskWebhook = {
-    on_each_email,
+    on_each_email: {} as any,
 };
 ```
 

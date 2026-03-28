@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | Pointer to **NullableString** |  | [optional] 
-**DomainAgeDays** | Pointer to **NullableInt64** |  | [optional] 
-**Registrar** | Pointer to **NullableString** |  | [optional] 
+**CreatedAt** | Pointer to **NullableString** |  | [optional]
+**DomainAgeDays** | Pointer to **NullableInt64** |  | [optional]
+**Registrar** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 
@@ -54,7 +54,7 @@ HasCreatedAt returns a boolean if a field has been set.
 
 ### SetCreatedAtNil
 
-`func (o *DomainInfo) SetCreatedAtNil(b bool)`
+`func (o *DomainInfo) SetCreatedAtNil()`
 
  SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 
@@ -62,6 +62,7 @@ HasCreatedAt returns a boolean if a field has been set.
 `func (o *DomainInfo) UnsetCreatedAt()`
 
 UnsetCreatedAt ensures that no value is present for CreatedAt, not even an explicit nil
+
 ### GetDomainAgeDays
 
 `func (o *DomainInfo) GetDomainAgeDays() int64`
@@ -89,7 +90,7 @@ HasDomainAgeDays returns a boolean if a field has been set.
 
 ### SetDomainAgeDaysNil
 
-`func (o *DomainInfo) SetDomainAgeDaysNil(b bool)`
+`func (o *DomainInfo) SetDomainAgeDaysNil()`
 
  SetDomainAgeDaysNil sets the value for DomainAgeDays to be an explicit nil
 
@@ -97,6 +98,7 @@ HasDomainAgeDays returns a boolean if a field has been set.
 `func (o *DomainInfo) UnsetDomainAgeDays()`
 
 UnsetDomainAgeDays ensures that no value is present for DomainAgeDays, not even an explicit nil
+
 ### GetRegistrar
 
 `func (o *DomainInfo) GetRegistrar() string`
@@ -124,7 +126,7 @@ HasRegistrar returns a boolean if a field has been set.
 
 ### SetRegistrarNil
 
-`func (o *DomainInfo) SetRegistrarNil(b bool)`
+`func (o *DomainInfo) SetRegistrarNil()`
 
  SetRegistrarNil sets the value for Registrar to be an explicit nil
 
@@ -134,5 +136,3 @@ HasRegistrar returns a boolean if a field has been set.
 UnsetRegistrar ensures that no value is present for Registrar, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

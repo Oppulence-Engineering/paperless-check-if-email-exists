@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**EmailColumn** | **string** |  | 
-**Id** | **int32** |  | 
-**Name** | **string** |  | 
-**OriginalFilename** | **string** |  | 
-**Status** | **string** |  | 
-**TotalRows** | **int32** |  | 
+**EmailColumn** | **string** |  | [required]
+**Id** | **int32** |  | [required]
+**Name** | **string** |  | [required]
+**OriginalFilename** | **string** |  | [required]
+**Status** | **string** |  | [required]
+**TotalRows** | **int32** |  | [required]
 
 ## Methods
 
 ### NewListItem
 
-`func NewListItem(emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32, ) *ListItem`
+`func NewListItem(emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32) *ListItem`
 
 NewListItem instantiates a new ListItem object
 This constructor will assign default values to properties that have it defined,
@@ -152,5 +152,3 @@ SetTotalRows sets TotalRows field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

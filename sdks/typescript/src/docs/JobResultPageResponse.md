@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**has_more** | **boolean** |  | [default to undefined]
-**next_cursor** | **number** |  | [optional] [default to undefined]
-**results** | [**Array&lt;JobTaskResult&gt;**](JobTaskResult.md) |  | [default to undefined]
+**has_more** | **boolean** |  | [required]
+**next_cursor** | **number** |  | [optional]
+**results** | [**Array&lt;JobTaskResult&gt;**](JobTaskResult.md) |  | [required]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { JobResultPageResponse } from '@oppulence/reacher-sdk';
 
 const instance: JobResultPageResponse = {
-    has_more,
-    next_cursor,
-    results,
+    has_more: true,
+    next_cursor: 0,
+    results: [],
 };
 ```
 

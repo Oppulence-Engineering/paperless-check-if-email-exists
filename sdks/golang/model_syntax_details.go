@@ -167,7 +167,6 @@ func (o *SyntaxDetails) UnmarshalJSON(data []byte) (err error) {
 	varSyntaxDetails := _SyntaxDetails{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varSyntaxDetails)
 
 	if err != nil {

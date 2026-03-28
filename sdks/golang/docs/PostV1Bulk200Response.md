@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**JobId** | **int32** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | 
+**JobId** | **int32** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | [required]
 
 ## Methods
 
 ### NewPostV1Bulk200Response
 
-`func NewPostV1Bulk200Response(jobId int32, ) *PostV1Bulk200Response`
+`func NewPostV1Bulk200Response(jobId int32) *PostV1Bulk200Response`
 
 NewPostV1Bulk200Response instantiates a new PostV1Bulk200Response object
 This constructor will assign default values to properties that have it defined,
@@ -47,5 +47,3 @@ SetJobId sets JobId field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

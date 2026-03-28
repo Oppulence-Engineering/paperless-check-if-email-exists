@@ -108,7 +108,6 @@ func (o *GetV1BulkResults200Response) UnmarshalJSON(data []byte) (err error) {
 	varGetV1BulkResults200Response := _GetV1BulkResults200Response{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varGetV1BulkResults200Response)
 
 	if err != nil {

@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Nanos** | **float32** | Duration in nanoseconds. | 
-**Secs** | **float32** | Duration in seconds. | 
+**Nanos** | **float32** | Duration in nanoseconds. | [required]
+**Secs** | **float32** | Duration in seconds. | [required]
 
 ## Methods
 
 ### NewDuration
 
-`func NewDuration(nanos float32, secs float32, ) *Duration`
+`func NewDuration(nanos float32, secs float32) *Duration`
 
 NewDuration instantiates a new Duration object
 This constructor will assign default values to properties that have it defined,
@@ -68,5 +68,3 @@ SetSecs sets Secs field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

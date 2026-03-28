@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Added** | **int64** |  | 
-**Duplicates** | **int64** |  | 
+**Added** | **int64** |  | [required]
+**Duplicates** | **int64** |  | [required]
 
 ## Methods
 
 ### NewAddSuppressionsResponse
 
-`func NewAddSuppressionsResponse(added int64, duplicates int64, ) *AddSuppressionsResponse`
+`func NewAddSuppressionsResponse(added int64, duplicates int64) *AddSuppressionsResponse`
 
 NewAddSuppressionsResponse instantiates a new AddSuppressionsResponse object
 This constructor will assign default values to properties that have it defined,
@@ -68,5 +68,3 @@ SetDuplicates sets Duplicates field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

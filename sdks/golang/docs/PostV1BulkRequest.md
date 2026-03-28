@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Input** | **[]string** | A list of emails to verify. | 
-**Webhook** | Pointer to [**TaskWebhook**](TaskWebhook.md) |  | [optional] 
+**Input** | **[]string** | A list of emails to verify. | [required]
+**Webhook** | Pointer to [**TaskWebhook**](TaskWebhook.md) |  | [optional]
 
 ## Methods
 
 ### NewPostV1BulkRequest
 
-`func NewPostV1BulkRequest(input []string, ) *PostV1BulkRequest`
+`func NewPostV1BulkRequest(input []string) *PostV1BulkRequest`
 
 NewPostV1BulkRequest instantiates a new PostV1BulkRequest object
 This constructor will assign default values to properties that have it defined,
@@ -34,7 +34,7 @@ GetInput returns the Input field if non-nil, zero value otherwise.
 
 ### GetInputOk
 
-`func (o *PostV1BulkRequest) GetInputOk() (*[]string, bool)`
+`func (o *PostV1BulkRequest) GetInputOk() ([]string, bool)`
 
 GetInputOk returns a tuple with the Input field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -73,5 +73,3 @@ HasWebhook returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

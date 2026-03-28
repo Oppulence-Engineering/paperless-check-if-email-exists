@@ -136,7 +136,6 @@ func (o *SuppressionListResponse) UnmarshalJSON(data []byte) (err error) {
 	varSuppressionListResponse := _SuppressionListResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varSuppressionListResponse)
 
 	if err != nil {

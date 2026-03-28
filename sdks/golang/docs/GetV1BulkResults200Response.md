@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | 
+**Results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [required]
 
 ## Methods
 
 ### NewGetV1BulkResults200Response
 
-`func NewGetV1BulkResults200Response(results CheckEmailOutput, ) *GetV1BulkResults200Response`
+`func NewGetV1BulkResults200Response(results CheckEmailOutput) *GetV1BulkResults200Response`
 
 NewGetV1BulkResults200Response instantiates a new GetV1BulkResults200Response object
 This constructor will assign default values to properties that have it defined,
@@ -47,5 +47,3 @@ SetResults sets Results field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

@@ -5,14 +5,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**categories** | [**ApprovalCategoryBreakdown**](ApprovalCategoryBreakdown.md) |  | [default to undefined]
-**job_id** | **number** |  | [default to undefined]
-**ready_to_send** | **boolean** |  | [default to undefined]
-**recommendation** | **string** |  | [default to undefined]
-**risk_flags** | [**ApprovalRiskFlags**](ApprovalRiskFlags.md) |  | [default to undefined]
-**safe_to_send_count** | **number** |  | [default to undefined]
-**safe_to_send_pct** | **number** |  | [default to undefined]
-**total_records** | **number** |  | [default to undefined]
+**categories** | [**ApprovalCategoryBreakdown**](ApprovalCategoryBreakdown.md) |  | [required]
+**job_id** | **number** |  | [required]
+**ready_to_send** | **boolean** |  | [required]
+**recommendation** | **string** |  | [required]
+**risk_flags** | [**ApprovalRiskFlags**](ApprovalRiskFlags.md) |  | [required]
+**safe_to_send_count** | **number** |  | [required]
+**safe_to_send_pct** | **number** |  | [required]
+**total_records** | **number** |  | [required]
 
 ## Example
 
@@ -20,14 +20,14 @@ Name | Type | Description | Notes
 import { ApprovalChecklistResponse } from '@oppulence/reacher-sdk';
 
 const instance: ApprovalChecklistResponse = {
-    categories,
-    job_id,
-    ready_to_send,
-    recommendation,
-    risk_flags,
-    safe_to_send_count,
-    safe_to_send_pct,
-    total_records,
+    categories: {} as any,
+    job_id: 0,
+    ready_to_send: true,
+    recommendation: 'example',
+    risk_flags: {} as any,
+    safe_to_send_count: 0,
+    safe_to_send_pct: 0,
+    total_records: 0,
 };
 ```
 

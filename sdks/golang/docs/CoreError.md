@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Message** | **string** | A human-readable description of the error. | 
-**Type** | **string** | The type of error. | 
+**Message** | **string** | A human-readable description of the error. | [required]
+**Type** | **string** | The type of error. | [required]
 
 ## Methods
 
 ### NewCoreError
 
-`func NewCoreError(message string, type_ string, ) *CoreError`
+`func NewCoreError(message string, type_ string) *CoreError`
 
 NewCoreError instantiates a new CoreError object
 This constructor will assign default values to properties that have it defined,
@@ -68,5 +68,3 @@ SetType sets Type field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

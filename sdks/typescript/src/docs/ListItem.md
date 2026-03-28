@@ -5,12 +5,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**email_column** | **string** |  | [default to undefined]
-**id** | **number** |  | [default to undefined]
-**name** | **string** |  | [default to undefined]
-**original_filename** | **string** |  | [default to undefined]
-**status** | **string** |  | [default to undefined]
-**total_rows** | **number** |  | [default to undefined]
+**email_column** | **string** |  | [required]
+**id** | **number** |  | [required]
+**name** | **string** |  | [required]
+**original_filename** | **string** |  | [required]
+**status** | **string** |  | [required]
+**total_rows** | **number** |  | [required]
 
 ## Example
 
@@ -18,12 +18,12 @@ Name | Type | Description | Notes
 import { ListItem } from '@oppulence/reacher-sdk';
 
 const instance: ListItem = {
-    email_column,
-    id,
-    name,
-    original_filename,
-    status,
-    total_rows,
+    email_column: 'example',
+    id: 0,
+    name: 'Weekly Cleanup',
+    original_filename: 'example',
+    status: 'example',
+    total_rows: 0,
 };
 ```
 

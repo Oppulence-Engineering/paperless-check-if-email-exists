@@ -4,24 +4,24 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AgeDays** | Pointer to **int64** |  | [optional] 
-**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional] 
-**Category** | [**EmailCategory**](EmailCategory.md) |  | 
-**DomainSuggestion** | Pointer to **string** | Suggested corrected email when a likely domain typo is detected | [optional] 
-**Freshness** | Pointer to [**Freshness**](Freshness.md) |  | [optional] 
-**NormalizedEmail** | Pointer to **string** | Canonical form of the email after alias/plus-address normalization | [optional] 
-**ReasonCodes** | [**[]ReasonCode**](ReasonCode.md) |  | 
-**SafeToSend** | **bool** |  | 
-**Score** | **int32** |  | 
-**Signals** | [**ScoringSignals**](ScoringSignals.md) |  | 
-**SubReason** | [**SubReason**](SubReason.md) |  | 
-**VerifiedAt** | Pointer to **time.Time** |  | [optional] 
+**AgeDays** | Pointer to **int64** |  | [optional]
+**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional]
+**Category** | [**EmailCategory**](EmailCategory.md) |  | [required]
+**DomainSuggestion** | Pointer to **string** | Suggested corrected email when a likely domain typo is detected | [optional]
+**Freshness** | Pointer to [**Freshness**](Freshness.md) |  | [optional]
+**NormalizedEmail** | Pointer to **string** | Canonical form of the email after alias/plus-address normalization | [optional]
+**ReasonCodes** | [**[]ReasonCode**](ReasonCode.md) |  | [required]
+**SafeToSend** | **bool** |  | [required]
+**Score** | **int32** |  | [required]
+**Signals** | [**ScoringSignals**](ScoringSignals.md) |  | [required]
+**SubReason** | [**SubReason**](SubReason.md) |  | [required]
+**VerifiedAt** | Pointer to **time.Time** |  | [optional]
 
 ## Methods
 
 ### NewEmailScore
 
-`func NewEmailScore(category EmailCategory, reasonCodes []ReasonCode, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason, ) *EmailScore`
+`func NewEmailScore(category EmailCategory, reasonCodes []ReasonCode, safeToSend bool, score int32, signals ScoringSignals, subReason SubReason) *EmailScore`
 
 NewEmailScore instantiates a new EmailScore object
 This constructor will assign default values to properties that have it defined,
@@ -189,7 +189,7 @@ GetReasonCodes returns the ReasonCodes field if non-nil, zero value otherwise.
 
 ### GetReasonCodesOk
 
-`func (o *EmailScore) GetReasonCodesOk() (*[]ReasonCode, bool)`
+`func (o *EmailScore) GetReasonCodesOk() ([]ReasonCode, bool)`
 
 GetReasonCodesOk returns a tuple with the ReasonCodes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -308,5 +308,3 @@ HasVerifiedAt returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

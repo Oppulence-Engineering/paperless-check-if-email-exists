@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**factors** | **Array&lt;string&gt;** |  | [default to undefined]
-**level** | **string** |  | [default to undefined]
-**score** | **number** |  | [default to undefined]
+**factors** | **Array&lt;string&gt;** |  | [required]
+**level** | **string** |  | [required]
+**score** | **number** |  | [required]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { ConfidenceExplanation } from '@oppulence/reacher-sdk';
 
 const instance: ConfidenceExplanation = {
-    factors,
-    level,
-    score,
+    factors: [],
+    level: 'example',
+    score: 0,
 };
 ```
 

@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Emails** | **[]string** |  | 
-**Notes** | Pointer to **NullableString** |  | [optional] 
-**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional] 
-**Source** | Pointer to **NullableString** |  | [optional] 
+**Emails** | **[]string** |  | [required]
+**Notes** | Pointer to **NullableString** |  | [optional]
+**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional]
+**Source** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 
 ### NewAddSuppressionsRequest
 
-`func NewAddSuppressionsRequest(emails []string, ) *AddSuppressionsRequest`
+`func NewAddSuppressionsRequest(emails []string) *AddSuppressionsRequest`
 
 NewAddSuppressionsRequest instantiates a new AddSuppressionsRequest object
 This constructor will assign default values to properties that have it defined,
@@ -36,7 +36,7 @@ GetEmails returns the Emails field if non-nil, zero value otherwise.
 
 ### GetEmailsOk
 
-`func (o *AddSuppressionsRequest) GetEmailsOk() (*[]string, bool)`
+`func (o *AddSuppressionsRequest) GetEmailsOk() ([]string, bool)`
 
 GetEmailsOk returns a tuple with the Emails field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -75,7 +75,7 @@ HasNotes returns a boolean if a field has been set.
 
 ### SetNotesNil
 
-`func (o *AddSuppressionsRequest) SetNotesNil(b bool)`
+`func (o *AddSuppressionsRequest) SetNotesNil()`
 
  SetNotesNil sets the value for Notes to be an explicit nil
 
@@ -83,6 +83,7 @@ HasNotes returns a boolean if a field has been set.
 `func (o *AddSuppressionsRequest) UnsetNotes()`
 
 UnsetNotes ensures that no value is present for Notes, not even an explicit nil
+
 ### GetReason
 
 `func (o *AddSuppressionsRequest) GetReason() SuppressionReason`
@@ -135,7 +136,7 @@ HasSource returns a boolean if a field has been set.
 
 ### SetSourceNil
 
-`func (o *AddSuppressionsRequest) SetSourceNil(b bool)`
+`func (o *AddSuppressionsRequest) SetSourceNil()`
 
  SetSourceNil sets the value for Source to be an explicit nil
 
@@ -145,5 +146,3 @@ HasSource returns a boolean if a field has been set.
 UnsetSource ensures that no value is present for Source, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

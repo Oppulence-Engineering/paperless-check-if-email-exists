@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Invalid** | **int64** |  | 
-**Risky** | **int64** |  | 
-**Unknown** | **int64** |  | 
-**Unprocessed** | **int64** |  | 
-**Valid** | **int64** |  | 
+**Invalid** | **int64** |  | [required]
+**Risky** | **int64** |  | [required]
+**Unknown** | **int64** |  | [required]
+**Unprocessed** | **int64** |  | [required]
+**Valid** | **int64** |  | [required]
 
 ## Methods
 
 ### NewApprovalCategoryBreakdown
 
-`func NewApprovalCategoryBreakdown(invalid int64, risky int64, unknown int64, unprocessed int64, valid int64, ) *ApprovalCategoryBreakdown`
+`func NewApprovalCategoryBreakdown(invalid int64, risky int64, unknown int64, unprocessed int64, valid int64) *ApprovalCategoryBreakdown`
 
 NewApprovalCategoryBreakdown instantiates a new ApprovalCategoryBreakdown object
 This constructor will assign default values to properties that have it defined,
@@ -131,5 +131,3 @@ SetValid sets Valid field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

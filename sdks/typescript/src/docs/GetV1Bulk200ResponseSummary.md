@@ -6,10 +6,10 @@ A summary of the processed emails.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**total_safe** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [default to undefined]
-**total_invalid** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [default to undefined]
-**total_risky** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [default to undefined]
-**total_unknown** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [default to undefined]
+**total_safe** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [required]
+**total_invalid** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [required]
+**total_risky** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [required]
+**total_unknown** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [required]
 
 ## Example
 
@@ -17,10 +17,10 @@ Name | Type | Description | Notes
 import { GetV1Bulk200ResponseSummary } from '@oppulence/reacher-sdk';
 
 const instance: GetV1Bulk200ResponseSummary = {
-    total_safe,
-    total_invalid,
-    total_risky,
-    total_unknown,
+    total_safe: 0,
+    total_invalid: 0,
+    total_risky: 0,
+    total_unknown: 0,
 };
 ```
 

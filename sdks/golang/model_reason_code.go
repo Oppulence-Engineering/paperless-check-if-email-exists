@@ -24,16 +24,6 @@ const (
 	REASONCODE_DELIVERABLE ReasonCode = "deliverable"
 	REASONCODE_INVALID_SYNTAX ReasonCode = "invalid_syntax"
 	REASONCODE_INVALID_RECIPIENT ReasonCode = "invalid_recipient"
-	REASONCODE_PROVIDER_REJECTED ReasonCode = "provider_rejected"
-	REASONCODE_PROVIDER_LOCAL_PART_TOO_SHORT ReasonCode = "provider_local_part_too_short"
-	REASONCODE_PROVIDER_LOCAL_PART_TOO_LONG ReasonCode = "provider_local_part_too_long"
-	REASONCODE_PROVIDER_INVALID_CHARACTER ReasonCode = "provider_invalid_character"
-	REASONCODE_PROVIDER_CONSECUTIVE_SPECIAL_CHARACTERS ReasonCode = "provider_consecutive_special_characters"
-	REASONCODE_PROVIDER_INVALID_START_CHARACTER ReasonCode = "provider_invalid_start_character"
-	REASONCODE_PROVIDER_INVALID_END_CHARACTER ReasonCode = "provider_invalid_end_character"
-	REASONCODE_PROVIDER_PLUS_ADDRESSING_NOT_SUPPORTED ReasonCode = "provider_plus_addressing_not_supported"
-	REASONCODE_PROVIDER_RESERVED_WORD ReasonCode = "provider_reserved_word"
-	REASONCODE_PROVIDER_FORMAT_VIOLATION ReasonCode = "provider_format_violation"
 	REASONCODE_SMTP_UNDELIVERABLE ReasonCode = "smtp_undeliverable"
 	REASONCODE_DISABLED_MAILBOX ReasonCode = "disabled_mailbox"
 	REASONCODE_NO_MX ReasonCode = "no_mx"
@@ -54,16 +44,6 @@ var AllowedReasonCodeEnumValues = []ReasonCode{
 	"deliverable",
 	"invalid_syntax",
 	"invalid_recipient",
-	"provider_rejected",
-	"provider_local_part_too_short",
-	"provider_local_part_too_long",
-	"provider_invalid_character",
-	"provider_consecutive_special_characters",
-	"provider_invalid_start_character",
-	"provider_invalid_end_character",
-	"provider_plus_addressing_not_supported",
-	"provider_reserved_word",
-	"provider_format_violation",
 	"smtp_undeliverable",
 	"disabled_mailbox",
 	"no_mx",

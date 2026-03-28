@@ -109,7 +109,6 @@ func (o *VerifMethod) UnmarshalJSON(data []byte) (err error) {
 	varVerifMethod := _VerifMethod{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varVerifMethod)
 
 	if err != nil {

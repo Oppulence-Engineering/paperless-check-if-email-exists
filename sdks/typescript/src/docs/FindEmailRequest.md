@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**domain** | **string** |  | [default to undefined]
-**first_name** | **string** |  | [default to undefined]
-**last_name** | **string** |  | [default to undefined]
-**strategy** | **string** | Search strategy: parallel (all at once) or waterfall (high-quality patterns first) | [optional] [default to StrategyEnum_Parallel]
+**domain** | **string** |  | [required]
+**first_name** | **string** |  | [required]
+**last_name** | **string** |  | [required]
+**strategy** | **string** | Search strategy: parallel (all at once) or waterfall (high-quality patterns first) | [optional]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { FindEmailRequest } from '@oppulence/reacher-sdk';
 
 const instance: FindEmailRequest = {
-    domain,
-    first_name,
-    last_name,
-    strategy,
+    domain: 'example',
+    first_name: 'example',
+    last_name: 'example',
+    strategy: 'example',
 };
 ```
 

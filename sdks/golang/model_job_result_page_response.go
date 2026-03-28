@@ -182,7 +182,6 @@ func (o *JobResultPageResponse) UnmarshalJSON(data []byte) (err error) {
 	varJobResultPageResponse := _JobResultPageResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varJobResultPageResponse)
 
 	if err != nil {

@@ -30,15 +30,6 @@ import type { DebugDetails } from './debug-details';
 import type { EmailScore } from './email-score';
 // May contain unused imports in some cases
 // @ts-ignore
-import type { Provider } from './provider';
-// May contain unused imports in some cases
-// @ts-ignore
-import type { ProviderConfidence } from './provider-confidence';
-// May contain unused imports in some cases
-// @ts-ignore
-import type { ProviderRejectionReason } from './provider-rejection-reason';
-// May contain unused imports in some cases
-// @ts-ignore
 import type { Reachable } from './reachable';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -80,30 +71,6 @@ export interface CheckEmailOutput {
      * @memberof CheckEmailOutput
      */
     'mx': CheckEmailOutputMx;
-    /**
-     * 
-     * @type {Provider}
-     * @memberof CheckEmailOutput
-     */
-    'provider'?: Provider;
-    /**
-     * 
-     * @type {ProviderConfidence}
-     * @memberof CheckEmailOutput
-     */
-    'provider_confidence'?: ProviderConfidence;
-    /**
-     * 
-     * @type {ProviderRejectionReason}
-     * @memberof CheckEmailOutput
-     */
-    'provider_rejection_reason'?: ProviderRejectionReason;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CheckEmailOutput
-     */
-    'provider_rules_applied': boolean;
     /**
      * 
      * @type {EmailScore}

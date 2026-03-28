@@ -220,7 +220,6 @@ func (o *ApprovalRiskFlags) UnmarshalJSON(data []byte) (err error) {
 	varApprovalRiskFlags := _ApprovalRiskFlags{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varApprovalRiskFlags)
 
 	if err != nil {

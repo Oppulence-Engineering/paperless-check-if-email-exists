@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**input** | **Array&lt;string&gt;** | A list of emails to verify. | [default to undefined]
-**webhook** | [**TaskWebhook**](TaskWebhook.md) |  | [optional] [default to undefined]
+**input** | **Array&lt;string&gt;** | A list of emails to verify. | [required]
+**webhook** | [**TaskWebhook**](TaskWebhook.md) |  | [optional]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { PostV1BulkRequest } from '@oppulence/reacher-sdk';
 
 const instance: PostV1BulkRequest = {
-    input,
-    webhook,
+    input: [],
+    webhook: {} as any,
 };
 ```
 

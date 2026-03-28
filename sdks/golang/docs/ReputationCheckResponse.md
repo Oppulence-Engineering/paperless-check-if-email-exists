@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**BlacklistResults** | [**[]BlacklistResult**](BlacklistResult.md) |  | 
-**Cached** | **bool** |  | 
-**DnsRecords** | [**DnsRecordResults**](DnsRecordResults.md) |  | 
-**Domain** | **string** |  | 
-**DomainInfo** | [**DomainInfo**](DomainInfo.md) |  | 
-**RiskLevel** | **string** |  | 
-**Score** | **int32** |  | 
+**BlacklistResults** | [**[]BlacklistResult**](BlacklistResult.md) |  | [required]
+**Cached** | **bool** |  | [required]
+**DnsRecords** | [**DnsRecordResults**](DnsRecordResults.md) |  | [required]
+**Domain** | **string** |  | [required]
+**DomainInfo** | [**DomainInfo**](DomainInfo.md) |  | [required]
+**RiskLevel** | **string** |  | [required]
+**Score** | **int32** |  | [required]
 
 ## Methods
 
 ### NewReputationCheckResponse
 
-`func NewReputationCheckResponse(blacklistResults []BlacklistResult, cached bool, dnsRecords DnsRecordResults, domain string, domainInfo DomainInfo, riskLevel string, score int32, ) *ReputationCheckResponse`
+`func NewReputationCheckResponse(blacklistResults []BlacklistResult, cached bool, dnsRecords DnsRecordResults, domain string, domainInfo DomainInfo, riskLevel string, score int32) *ReputationCheckResponse`
 
 NewReputationCheckResponse instantiates a new ReputationCheckResponse object
 This constructor will assign default values to properties that have it defined,
@@ -39,7 +39,7 @@ GetBlacklistResults returns the BlacklistResults field if non-nil, zero value ot
 
 ### GetBlacklistResultsOk
 
-`func (o *ReputationCheckResponse) GetBlacklistResultsOk() (*[]BlacklistResult, bool)`
+`func (o *ReputationCheckResponse) GetBlacklistResultsOk() ([]BlacklistResult, bool)`
 
 GetBlacklistResultsOk returns a tuple with the BlacklistResults field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -173,5 +173,3 @@ SetScore sets Score field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

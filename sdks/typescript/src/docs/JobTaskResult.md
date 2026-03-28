@@ -5,11 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**error** | **string** |  | [optional] [default to undefined]
-**id** | **number** |  | [default to undefined]
-**result** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional] [default to undefined]
-**retry_count** | **number** |  | [default to undefined]
-**task_state** | **string** |  | [default to undefined]
+**error** | **string** |  | [optional]
+**id** | **number** |  | [required]
+**result** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
+**retry_count** | **number** |  | [required]
+**task_state** | **string** |  | [required]
 
 ## Example
 
@@ -17,11 +17,11 @@ Name | Type | Description | Notes
 import { JobTaskResult } from '@oppulence/reacher-sdk';
 
 const instance: JobTaskResult = {
-    error,
-    id,
-    result,
-    retry_count,
-    task_state,
+    error: 'example',
+    id: 0,
+    result: {} as any,
+    retry_count: 0,
+    task_state: 'example',
 };
 ```
 

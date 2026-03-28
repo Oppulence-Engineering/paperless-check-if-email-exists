@@ -4,20 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**BestMatch** | Pointer to [**NullableFinderBestMatch**](FinderBestMatch.md) |  | [optional] 
-**BulkJobId** | **int32** |  | 
-**CandidatesChecked** | **int32** |  | 
-**DomainHasMx** | **bool** |  | 
-**DomainIsCatchAll** | **bool** |  | 
-**JobId** | **int32** |  | 
-**Results** | [**[]FinderCandidateResult**](FinderCandidateResult.md) |  | 
-**Status** | **string** |  | 
+**BestMatch** | Pointer to [**NullableFinderBestMatch**](FinderBestMatch.md) |  | [optional]
+**BulkJobId** | **int32** |  | [required]
+**CandidatesChecked** | **int32** |  | [required]
+**DomainHasMx** | **bool** |  | [required]
+**DomainIsCatchAll** | **bool** |  | [required]
+**JobId** | **int32** |  | [required]
+**Results** | [**[]FinderCandidateResult**](FinderCandidateResult.md) |  | [required]
+**Status** | **string** |  | [required]
 
 ## Methods
 
 ### NewFindEmailStatusResponse
 
-`func NewFindEmailStatusResponse(bulkJobId int32, candidatesChecked int32, domainHasMx bool, domainIsCatchAll bool, jobId int32, results []FinderCandidateResult, status string, ) *FindEmailStatusResponse`
+`func NewFindEmailStatusResponse(bulkJobId int32, candidatesChecked int32, domainHasMx bool, domainIsCatchAll bool, jobId int32, results []FinderCandidateResult, status string) *FindEmailStatusResponse`
 
 NewFindEmailStatusResponse instantiates a new FindEmailStatusResponse object
 This constructor will assign default values to properties that have it defined,
@@ -59,7 +59,7 @@ HasBestMatch returns a boolean if a field has been set.
 
 ### SetBestMatchNil
 
-`func (o *FindEmailStatusResponse) SetBestMatchNil(b bool)`
+`func (o *FindEmailStatusResponse) SetBestMatchNil()`
 
  SetBestMatchNil sets the value for BestMatch to be an explicit nil
 
@@ -67,6 +67,7 @@ HasBestMatch returns a boolean if a field has been set.
 `func (o *FindEmailStatusResponse) UnsetBestMatch()`
 
 UnsetBestMatch ensures that no value is present for BestMatch, not even an explicit nil
+
 ### GetBulkJobId
 
 `func (o *FindEmailStatusResponse) GetBulkJobId() int32`
@@ -175,7 +176,7 @@ GetResults returns the Results field if non-nil, zero value otherwise.
 
 ### GetResultsOk
 
-`func (o *FindEmailStatusResponse) GetResultsOk() (*[]FinderCandidateResult, bool)`
+`func (o *FindEmailStatusResponse) GetResultsOk() ([]FinderCandidateResult, bool)`
 
 GetResultsOk returns a tuple with the Results field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -209,5 +210,3 @@ SetStatus sets Status field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

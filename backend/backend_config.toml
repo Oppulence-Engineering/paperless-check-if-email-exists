@@ -208,6 +208,34 @@ url = "amqp://guest:guest@localhost:5672"
 # Env variable: RCH__WORKER__RABBITMQ__CONCURRENCY
 concurrency = 5
 
+# Scheduled list-cleaning pipelines.
+[pipelines]
+# Enable the scheduler loop for recurring list-cleaning pipelines.
+#
+# Env variable: RCH__PIPELINES__ENABLE
+enable = false
+
+# How often the scheduler scans for due pipelines.
+#
+# Env variable: RCH__PIPELINES__TICK_SECONDS
+tick_seconds = 60
+
+# Maximum number of due pipelines claimed in one scheduler tick.
+#
+# Env variable: RCH__PIPELINES__MAX_DUE_PER_TICK
+max_due_per_tick = 25
+
+# If a scheduled run is older than this threshold, it is skipped and the next
+# future occurrence is scheduled instead.
+#
+# Env variable: RCH__PIPELINES__MAX_MISSED_RUN_AGE_HOURS
+max_missed_run_age_hours = 24
+
+# Minimum allowed interval between scheduled runs, in seconds.
+#
+# Env variable: RCH__PIPELINES__MIN_INTERVAL_SECONDS
+min_interval_seconds = 3600
+
 # Below are the configurations for the storage of the email verification
 # results. We currently support the following storage backends:
 # - Postgres

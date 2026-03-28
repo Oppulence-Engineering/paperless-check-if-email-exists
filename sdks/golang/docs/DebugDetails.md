@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Duration** | [**Duration**](Duration.md) |  | 
-**EndTime** | **string** | The timestamp when the email verification ended. | 
-**ServerName** | **string** | The name of the server that performed the verification. | 
-**Smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | 
-**StartTime** | **string** | The timestamp when the email verification started. | 
+**Duration** | [**Duration**](Duration.md) |  | [required]
+**EndTime** | **string** | The timestamp when the email verification ended. | [required]
+**ServerName** | **string** | The name of the server that performed the verification. | [required]
+**Smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | [required]
+**StartTime** | **string** | The timestamp when the email verification started. | [required]
 
 ## Methods
 
 ### NewDebugDetails
 
-`func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string, ) *DebugDetails`
+`func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string) *DebugDetails`
 
 NewDebugDetails instantiates a new DebugDetails object
 This constructor will assign default values to properties that have it defined,
@@ -131,5 +131,3 @@ SetStartTime sets StartTime field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

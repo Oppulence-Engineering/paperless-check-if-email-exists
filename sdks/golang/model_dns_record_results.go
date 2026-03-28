@@ -294,7 +294,6 @@ func (o *DnsRecordResults) UnmarshalJSON(data []byte) (err error) {
 	varDnsRecordResults := _DnsRecordResults{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varDnsRecordResults)
 
 	if err != nil {

@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**entries** | [**Array&lt;SuppressionEntry&gt;**](SuppressionEntry.md) |  | [default to undefined]
-**total** | **number** |  | [default to undefined]
+**entries** | [**Array&lt;SuppressionEntry&gt;**](SuppressionEntry.md) |  | [required]
+**total** | **number** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { SuppressionListResponse } from '@oppulence/reacher-sdk';
 
 const instance: SuppressionListResponse = {
-    entries,
-    total,
+    entries: [],
+    total: 0,
 };
 ```
 

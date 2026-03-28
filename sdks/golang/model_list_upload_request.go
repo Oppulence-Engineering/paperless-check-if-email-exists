@@ -201,7 +201,6 @@ func (o *ListUploadRequest) UnmarshalJSON(data []byte) (err error) {
 	varListUploadRequest := _ListUploadRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varListUploadRequest)
 
 	if err != nil {

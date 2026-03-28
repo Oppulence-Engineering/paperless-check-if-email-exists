@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**job_id** | **number** |  | [default to undefined]
-**status** | **string** |  | [default to undefined]
-**tasks_retried** | **number** |  | [default to undefined]
+**job_id** | **number** |  | [required]
+**status** | **string** |  | [required]
+**tasks_retried** | **number** |  | [required]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { RetryJobResponse } from '@oppulence/reacher-sdk';
 
 const instance: RetryJobResponse = {
-    job_id,
-    status,
-    tasks_retried,
+    job_id: 0,
+    status: 'example',
+    tasks_retried: 0,
 };
 ```
 

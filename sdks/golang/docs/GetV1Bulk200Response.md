@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**JobId** | **int32** |  | 
-**CreatedAt** | **time.Time** | The date and time when the bulk verification job was created. | 
-**FinishedAt** | Pointer to **time.Time** | If the bulk verification job is completed, the date and time when it was finished. | [optional] 
-**TotalRecords** | **int32** | The number of emails to verify in the bulk verification job. | 
-**TotalProcessed** | **int32** | The number of emails that have been verified at the time of the query. | 
-**Summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | 
-**JobStatus** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | 
+**JobId** | **int32** |  | [required]
+**CreatedAt** | **time.Time** | The date and time when the bulk verification job was created. | [required]
+**FinishedAt** | Pointer to **time.Time** | If the bulk verification job is completed, the date and time when it was finished. | [optional]
+**TotalRecords** | **int32** | The number of emails to verify in the bulk verification job. | [required]
+**TotalProcessed** | **int32** | The number of emails that have been verified at the time of the query. | [required]
+**Summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | [required]
+**JobStatus** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | [required]
 
 ## Methods
 
 ### NewGetV1Bulk200Response
 
-`func NewGetV1Bulk200Response(jobId int32, createdAt time.Time, totalRecords int32, totalProcessed int32, summary GetV1Bulk200ResponseSummary, jobStatus string, ) *GetV1Bulk200Response`
+`func NewGetV1Bulk200Response(jobId int32, createdAt time.Time, totalRecords int32, totalProcessed int32, summary GetV1Bulk200ResponseSummary, jobStatus string) *GetV1Bulk200Response`
 
 NewGetV1Bulk200Response instantiates a new GetV1Bulk200Response object
 This constructor will assign default values to properties that have it defined,
@@ -178,5 +178,3 @@ SetJobStatus sets JobStatus field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

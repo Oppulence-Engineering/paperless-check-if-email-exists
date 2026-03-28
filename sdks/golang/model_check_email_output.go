@@ -28,10 +28,6 @@ type CheckEmailOutput struct {
 	IsReachable Reachable `json:"is_reachable"`
 	Misc CheckEmailOutputMisc `json:"misc"`
 	Mx CheckEmailOutputMx `json:"mx"`
-	Provider *Provider `json:"provider,omitempty"`
-	ProviderConfidence *ProviderConfidence `json:"provider_confidence,omitempty"`
-	ProviderRejectionReason *ProviderRejectionReason `json:"provider_rejection_reason,omitempty"`
-	ProviderRulesApplied bool `json:"provider_rules_applied"`
 	Score EmailScore `json:"score"`
 	Smtp CheckEmailOutputSmtp `json:"smtp"`
 	Syntax SyntaxDetails `json:"syntax"`
@@ -43,13 +39,12 @@ type _CheckEmailOutput CheckEmailOutput
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, providerRulesApplied bool, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput {
+func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput {
 	this := CheckEmailOutput{}
 	this.Input = input
 	this.IsReachable = isReachable
 	this.Misc = misc
 	this.Mx = mx
-	this.ProviderRulesApplied = providerRulesApplied
 	this.Score = score
 	this.Smtp = smtp
 	this.Syntax = syntax
@@ -192,126 +187,6 @@ func (o *CheckEmailOutput) SetMx(v CheckEmailOutputMx) {
 	o.Mx = v
 }
 
-// GetProvider returns the Provider field value if set, zero value otherwise.
-func (o *CheckEmailOutput) GetProvider() Provider {
-	if o == nil || IsNil(o.Provider) {
-		var ret Provider
-		return ret
-	}
-	return *o.Provider
-}
-
-// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailOutput) GetProviderOk() (*Provider, bool) {
-	if o == nil || IsNil(o.Provider) {
-		return nil, false
-	}
-	return o.Provider, true
-}
-
-// HasProvider returns a boolean if a field has been set.
-func (o *CheckEmailOutput) HasProvider() bool {
-	if o != nil && !IsNil(o.Provider) {
-		return true
-	}
-
-	return false
-}
-
-// SetProvider gets a reference to the given Provider and assigns it to the Provider field.
-func (o *CheckEmailOutput) SetProvider(v Provider) {
-	o.Provider = &v
-}
-
-// GetProviderConfidence returns the ProviderConfidence field value if set, zero value otherwise.
-func (o *CheckEmailOutput) GetProviderConfidence() ProviderConfidence {
-	if o == nil || IsNil(o.ProviderConfidence) {
-		var ret ProviderConfidence
-		return ret
-	}
-	return *o.ProviderConfidence
-}
-
-// GetProviderConfidenceOk returns a tuple with the ProviderConfidence field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailOutput) GetProviderConfidenceOk() (*ProviderConfidence, bool) {
-	if o == nil || IsNil(o.ProviderConfidence) {
-		return nil, false
-	}
-	return o.ProviderConfidence, true
-}
-
-// HasProviderConfidence returns a boolean if a field has been set.
-func (o *CheckEmailOutput) HasProviderConfidence() bool {
-	if o != nil && !IsNil(o.ProviderConfidence) {
-		return true
-	}
-
-	return false
-}
-
-// SetProviderConfidence gets a reference to the given ProviderConfidence and assigns it to the ProviderConfidence field.
-func (o *CheckEmailOutput) SetProviderConfidence(v ProviderConfidence) {
-	o.ProviderConfidence = &v
-}
-
-// GetProviderRejectionReason returns the ProviderRejectionReason field value if set, zero value otherwise.
-func (o *CheckEmailOutput) GetProviderRejectionReason() ProviderRejectionReason {
-	if o == nil || IsNil(o.ProviderRejectionReason) {
-		var ret ProviderRejectionReason
-		return ret
-	}
-	return *o.ProviderRejectionReason
-}
-
-// GetProviderRejectionReasonOk returns a tuple with the ProviderRejectionReason field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CheckEmailOutput) GetProviderRejectionReasonOk() (*ProviderRejectionReason, bool) {
-	if o == nil || IsNil(o.ProviderRejectionReason) {
-		return nil, false
-	}
-	return o.ProviderRejectionReason, true
-}
-
-// HasProviderRejectionReason returns a boolean if a field has been set.
-func (o *CheckEmailOutput) HasProviderRejectionReason() bool {
-	if o != nil && !IsNil(o.ProviderRejectionReason) {
-		return true
-	}
-
-	return false
-}
-
-// SetProviderRejectionReason gets a reference to the given ProviderRejectionReason and assigns it to the ProviderRejectionReason field.
-func (o *CheckEmailOutput) SetProviderRejectionReason(v ProviderRejectionReason) {
-	o.ProviderRejectionReason = &v
-}
-
-// GetProviderRulesApplied returns the ProviderRulesApplied field value
-func (o *CheckEmailOutput) GetProviderRulesApplied() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.ProviderRulesApplied
-}
-
-// GetProviderRulesAppliedOk returns a tuple with the ProviderRulesApplied field value
-// and a boolean to check if the value has been set.
-func (o *CheckEmailOutput) GetProviderRulesAppliedOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.ProviderRulesApplied, true
-}
-
-// SetProviderRulesApplied sets field value
-func (o *CheckEmailOutput) SetProviderRulesApplied(v bool) {
-	o.ProviderRulesApplied = v
-}
-
 // GetScore returns the Score field value
 func (o *CheckEmailOutput) GetScore() EmailScore {
 	if o == nil {
@@ -401,16 +276,6 @@ func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 	toSerialize["is_reachable"] = o.IsReachable
 	toSerialize["misc"] = o.Misc
 	toSerialize["mx"] = o.Mx
-	if !IsNil(o.Provider) {
-		toSerialize["provider"] = o.Provider
-	}
-	if !IsNil(o.ProviderConfidence) {
-		toSerialize["provider_confidence"] = o.ProviderConfidence
-	}
-	if !IsNil(o.ProviderRejectionReason) {
-		toSerialize["provider_rejection_reason"] = o.ProviderRejectionReason
-	}
-	toSerialize["provider_rules_applied"] = o.ProviderRulesApplied
 	toSerialize["score"] = o.Score
 	toSerialize["smtp"] = o.Smtp
 	toSerialize["syntax"] = o.Syntax
@@ -426,7 +291,6 @@ func (o *CheckEmailOutput) UnmarshalJSON(data []byte) (err error) {
 		"is_reachable",
 		"misc",
 		"mx",
-		"provider_rules_applied",
 		"score",
 		"smtp",
 		"syntax",
@@ -449,7 +313,6 @@ func (o *CheckEmailOutput) UnmarshalJSON(data []byte) (err error) {
 	varCheckEmailOutput := _CheckEmailOutput{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCheckEmailOutput)
 
 	if err != nil {

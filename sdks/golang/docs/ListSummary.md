@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**TotalInvalid** | **int64** |  | 
-**TotalProcessed** | **int64** |  | 
-**TotalRisky** | **int64** |  | 
-**TotalUnknown** | **int64** |  | 
-**TotalValid** | **int64** |  | 
+**TotalInvalid** | **int64** |  | [required]
+**TotalProcessed** | **int64** |  | [required]
+**TotalRisky** | **int64** |  | [required]
+**TotalUnknown** | **int64** |  | [required]
+**TotalValid** | **int64** |  | [required]
 
 ## Methods
 
 ### NewListSummary
 
-`func NewListSummary(totalInvalid int64, totalProcessed int64, totalRisky int64, totalUnknown int64, totalValid int64, ) *ListSummary`
+`func NewListSummary(totalInvalid int64, totalProcessed int64, totalRisky int64, totalUnknown int64, totalValid int64) *ListSummary`
 
 NewListSummary instantiates a new ListSummary object
 This constructor will assign default values to properties that have it defined,
@@ -131,5 +131,3 @@ SetTotalValid sets TotalValid field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

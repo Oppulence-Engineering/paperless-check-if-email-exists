@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CatchAllCount** | **int64** |  | 
-**DisposableCount** | **int64** |  | 
-**RoleAccountCount** | **int64** |  | 
-**SpamTrapCount** | **int64** |  | 
-**SuppressedCount** | **int64** |  | 
+**CatchAllCount** | **int64** |  | [required]
+**DisposableCount** | **int64** |  | [required]
+**RoleAccountCount** | **int64** |  | [required]
+**SpamTrapCount** | **int64** |  | [required]
+**SuppressedCount** | **int64** |  | [required]
 
 ## Methods
 
 ### NewApprovalRiskFlags
 
-`func NewApprovalRiskFlags(catchAllCount int64, disposableCount int64, roleAccountCount int64, spamTrapCount int64, suppressedCount int64, ) *ApprovalRiskFlags`
+`func NewApprovalRiskFlags(catchAllCount int64, disposableCount int64, roleAccountCount int64, spamTrapCount int64, suppressedCount int64) *ApprovalRiskFlags`
 
 NewApprovalRiskFlags instantiates a new ApprovalRiskFlags object
 This constructor will assign default values to properties that have it defined,
@@ -131,5 +131,3 @@ SetSuppressedCount sets SuppressedCount field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

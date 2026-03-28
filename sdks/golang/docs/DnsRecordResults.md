@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**DmarcPolicy** | Pointer to **NullableString** |  | [optional] 
-**HasDkim** | **bool** |  | 
-**HasDmarc** | **bool** |  | 
-**HasMx** | **bool** |  | 
-**HasSpf** | **bool** |  | 
-**MxRecords** | **[]string** |  | 
-**SpfValid** | **bool** |  | 
+**DmarcPolicy** | Pointer to **NullableString** |  | [optional]
+**HasDkim** | **bool** |  | [required]
+**HasDmarc** | **bool** |  | [required]
+**HasMx** | **bool** |  | [required]
+**HasSpf** | **bool** |  | [required]
+**MxRecords** | **[]string** |  | [required]
+**SpfValid** | **bool** |  | [required]
 
 ## Methods
 
 ### NewDnsRecordResults
 
-`func NewDnsRecordResults(hasDkim bool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfValid bool, ) *DnsRecordResults`
+`func NewDnsRecordResults(hasDkim bool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfValid bool) *DnsRecordResults`
 
 NewDnsRecordResults instantiates a new DnsRecordResults object
 This constructor will assign default values to properties that have it defined,
@@ -58,7 +58,7 @@ HasDmarcPolicy returns a boolean if a field has been set.
 
 ### SetDmarcPolicyNil
 
-`func (o *DnsRecordResults) SetDmarcPolicyNil(b bool)`
+`func (o *DnsRecordResults) SetDmarcPolicyNil()`
 
  SetDmarcPolicyNil sets the value for DmarcPolicy to be an explicit nil
 
@@ -66,6 +66,7 @@ HasDmarcPolicy returns a boolean if a field has been set.
 `func (o *DnsRecordResults) UnsetDmarcPolicy()`
 
 UnsetDmarcPolicy ensures that no value is present for DmarcPolicy, not even an explicit nil
+
 ### GetHasDkim
 
 `func (o *DnsRecordResults) GetHasDkim() bool`
@@ -154,7 +155,7 @@ GetMxRecords returns the MxRecords field if non-nil, zero value otherwise.
 
 ### GetMxRecordsOk
 
-`func (o *DnsRecordResults) GetMxRecordsOk() (*[]string, bool)`
+`func (o *DnsRecordResults) GetMxRecordsOk() ([]string, bool)`
 
 GetMxRecordsOk returns a tuple with the MxRecords field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -188,5 +189,3 @@ SetSpfValid sets SpfValid field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

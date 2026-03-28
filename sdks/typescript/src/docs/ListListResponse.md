@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**lists** | [**Array&lt;ListItem&gt;**](ListItem.md) |  | [default to undefined]
-**total** | **number** |  | [default to undefined]
+**lists** | [**Array&lt;ListItem&gt;**](ListItem.md) |  | [required]
+**total** | **number** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { ListListResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListListResponse = {
-    lists,
-    total,
+    lists: [],
+    total: 0,
 };
 ```
 

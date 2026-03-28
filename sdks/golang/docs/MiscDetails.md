@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional] 
-**IsB2c** | **bool** | Is this a B2C email address? | 
-**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
-**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
+**GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional]
+**IsB2c** | **bool** | Is this a B2C email address? | [required]
+**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | [required]
+**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | [required]
 
 ## Methods
 
 ### NewMiscDetails
 
-`func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool, ) *MiscDetails`
+`func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool) *MiscDetails`
 
 NewMiscDetails instantiates a new MiscDetails object
 This constructor will assign default values to properties that have it defined,
@@ -115,5 +115,3 @@ SetIsRoleAccount sets IsRoleAccount field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

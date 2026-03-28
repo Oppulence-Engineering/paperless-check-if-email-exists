@@ -6,18 +6,17 @@ A request object to perform an email verification. The `to_email` field is requi
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**check_gravatar** | **boolean** | Whether to check if a Gravatar image exists for the given email. | [optional] [default to undefined]
-**from_email** | **string** | In the SMTP connection, the FROM email address. | [optional] [default to undefined]
-**gmail_verif_method** | [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional] [default to undefined]
-**hello_name** | **string** | In the SMTP connection, the EHLO hostname. | [optional] [default to undefined]
-**hotmailb2b_verif_method** | [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] [default to undefined]
-**hotmailb2c_verif_method** | [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] [default to undefined]
-**proxy** | [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] [default to undefined]
-**sandbox** | **boolean** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional] [default to false]
-**smtp_port** | **number** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] [default to undefined]
-**strict_provider_rules** | **boolean** | When false, skips provider-specific syntax validation even if the provider is recognized. | [optional] [default to undefined]
-**to_email** | **string** | The email address to check. | [default to undefined]
-**yahoo_verif_method** | [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] [default to undefined]
+**check_gravatar** | **boolean** | Whether to check if a Gravatar image exists for the given email. | [optional]
+**from_email** | **string** | In the SMTP connection, the FROM email address. | [optional]
+**gmail_verif_method** | [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional]
+**hello_name** | **string** | In the SMTP connection, the EHLO hostname. | [optional]
+**hotmailb2b_verif_method** | [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional]
+**hotmailb2c_verif_method** | [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional]
+**proxy** | [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional]
+**sandbox** | **boolean** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional]
+**smtp_port** | **number** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional]
+**to_email** | **string** | The email address to check. | [required]
+**yahoo_verif_method** | [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional]
 
 ## Example
 
@@ -25,18 +24,17 @@ Name | Type | Description | Notes
 import { CheckEmailRequest } from '@oppulence/reacher-sdk';
 
 const instance: CheckEmailRequest = {
-    check_gravatar,
-    from_email,
-    gmail_verif_method,
-    hello_name,
-    hotmailb2b_verif_method,
-    hotmailb2c_verif_method,
-    proxy,
-    sandbox,
-    smtp_port,
-    strict_provider_rules,
-    to_email,
-    yahoo_verif_method,
+    check_gravatar: true,
+    from_email: 'example',
+    gmail_verif_method: {} as any,
+    hello_name: 'example',
+    hotmailb2b_verif_method: {} as any,
+    hotmailb2c_verif_method: {} as any,
+    proxy: {} as any,
+    sandbox: true,
+    smtp_port: 0,
+    to_email: 'example',
+    yahoo_verif_method: {} as any,
 };
 ```
 

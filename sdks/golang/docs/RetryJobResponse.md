@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**JobId** | **int32** |  | 
-**Status** | **string** |  | 
-**TasksRetried** | **int64** |  | 
+**JobId** | **int32** |  | [required]
+**Status** | **string** |  | [required]
+**TasksRetried** | **int64** |  | [required]
 
 ## Methods
 
 ### NewRetryJobResponse
 
-`func NewRetryJobResponse(jobId int32, status string, tasksRetried int64, ) *RetryJobResponse`
+`func NewRetryJobResponse(jobId int32, status string, tasksRetried int64) *RetryJobResponse`
 
 NewRetryJobResponse instantiates a new RetryJobResponse object
 This constructor will assign default values to properties that have it defined,
@@ -89,5 +89,3 @@ SetTasksRetried sets TasksRetried field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

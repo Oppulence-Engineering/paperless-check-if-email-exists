@@ -4,26 +4,26 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**HasDomainSuggestion** | **bool** |  | 
-**HasMxRecords** | **bool** |  | 
-**IsDisposable** | **bool** |  | 
-**IsFreeProvider** | **bool** |  | 
-**IsRoleAccount** | **bool** |  | 
-**IsSpamTrapDomain** | **bool** |  | 
-**Reachable** | [**Reachable**](Reachable.md) |  | 
-**SmtpCanConnect** | **bool** |  | 
-**SmtpError** | **bool** |  | 
-**SmtpHasFullInbox** | **bool** |  | 
-**SmtpIsCatchAll** | **bool** |  | 
-**SmtpIsDeliverable** | **bool** |  | 
-**SmtpIsDisabled** | **bool** |  | 
-**ValidSyntax** | **bool** |  | 
+**HasDomainSuggestion** | **bool** |  | [required]
+**HasMxRecords** | **bool** |  | [required]
+**IsDisposable** | **bool** |  | [required]
+**IsFreeProvider** | **bool** |  | [required]
+**IsRoleAccount** | **bool** |  | [required]
+**IsSpamTrapDomain** | **bool** |  | [required]
+**Reachable** | [**Reachable**](Reachable.md) |  | [required]
+**SmtpCanConnect** | **bool** |  | [required]
+**SmtpError** | **bool** |  | [required]
+**SmtpHasFullInbox** | **bool** |  | [required]
+**SmtpIsCatchAll** | **bool** |  | [required]
+**SmtpIsDeliverable** | **bool** |  | [required]
+**SmtpIsDisabled** | **bool** |  | [required]
+**ValidSyntax** | **bool** |  | [required]
 
 ## Methods
 
 ### NewScoringSignals
 
-`func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, isSpamTrapDomain bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool, ) *ScoringSignals`
+`func NewScoringSignals(hasDomainSuggestion bool, hasMxRecords bool, isDisposable bool, isFreeProvider bool, isRoleAccount bool, isSpamTrapDomain bool, reachable Reachable, smtpCanConnect bool, smtpError bool, smtpHasFullInbox bool, smtpIsCatchAll bool, smtpIsDeliverable bool, smtpIsDisabled bool, validSyntax bool) *ScoringSignals`
 
 NewScoringSignals instantiates a new ScoringSignals object
 This constructor will assign default values to properties that have it defined,
@@ -320,5 +320,3 @@ SetValidSyntax sets ValidSyntax field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

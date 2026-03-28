@@ -85,6 +85,10 @@ pub struct BackendConfig {
 	#[serde(default)]
 	pub reverification: ReverificationConfig,
 
+	/// Scheduled pipeline configuration
+	#[serde(default)]
+	pub pipelines: PipelinesConfig,
+
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
 	channel: Option<Arc<Channel>>,
@@ -122,6 +126,7 @@ impl BackendConfig {
 			commercial_license_trial: None,
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
+			pipelines: PipelinesConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
 			throttle_manager: Arc::new(
@@ -344,6 +349,45 @@ pub struct ReverificationConfig {
 	pub default_staleness_days: i32,
 	#[serde(default = "default_reverification_batch_size")]
 	pub default_batch_size: i32,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct PipelinesConfig {
+	#[serde(default)]
+	pub enable: bool,
+	#[serde(default = "default_pipeline_tick_seconds")]
+	pub tick_seconds: u64,
+	#[serde(default = "default_pipeline_max_due_per_tick")]
+	pub max_due_per_tick: i32,
+	#[serde(default = "default_pipeline_max_missed_hours")]
+	pub max_missed_run_age_hours: i32,
+	#[serde(default = "default_pipeline_min_interval_seconds")]
+	pub min_interval_seconds: i32,
+}
+
+fn default_pipeline_tick_seconds() -> u64 {
+	60
+}
+fn default_pipeline_max_due_per_tick() -> i32 {
+	25
+}
+fn default_pipeline_max_missed_hours() -> i32 {
+	24
+}
+fn default_pipeline_min_interval_seconds() -> i32 {
+	3600
+}
+
+impl Default for PipelinesConfig {
+	fn default() -> Self {
+		Self {
+			enable: false,
+			tick_seconds: default_pipeline_tick_seconds(),
+			max_due_per_tick: default_pipeline_max_due_per_tick(),
+			max_missed_run_age_hours: default_pipeline_max_missed_hours(),
+			min_interval_seconds: default_pipeline_min_interval_seconds(),
+		}
+	}
 }
 
 fn default_reverification_interval() -> u64 {

@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**domain** | **string** |  | [default to undefined]
-**force_refresh** | **boolean** |  | [optional] [default to false]
+**domain** | **string** |  | [required]
+**force_refresh** | **boolean** |  | [optional]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { ReputationCheckRequest } from '@oppulence/reacher-sdk';
 
 const instance: ReputationCheckRequest = {
-    domain,
-    force_refresh,
+    domain: 'example',
+    force_refresh: true,
 };
 ```
 

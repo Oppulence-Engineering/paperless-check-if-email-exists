@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**emails** | **Array&lt;string&gt;** |  | [default to undefined]
-**notes** | **string** |  | [optional] [default to undefined]
-**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [optional] [default to undefined]
-**source** | **string** |  | [optional] [default to undefined]
+**emails** | **Array&lt;string&gt;** |  | [required]
+**notes** | **string** |  | [optional]
+**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [optional]
+**source** | **string** |  | [optional]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { AddSuppressionsRequest } from '@oppulence/reacher-sdk';
 
 const instance: AddSuppressionsRequest = {
-    emails,
-    notes,
-    reason,
-    source,
+    emails: [],
+    notes: 'example',
+    reason: {} as any,
+    source: 'example',
 };
 ```
 
