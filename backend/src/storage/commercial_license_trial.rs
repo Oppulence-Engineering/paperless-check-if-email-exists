@@ -27,14 +27,14 @@ use warp::http::StatusCode;
 pub async fn send_to_reacher(
 	config: Arc<BackendConfig>,
 	email: &str,
-	worker_output: &Result<CheckEmailOutput, TaskError>,
+	worker_output: Result<&CheckEmailOutput, &TaskError>,
 ) -> Result<(), ReacherResponseError> {
 	if let Some(CommercialLicenseTrialConfig { api_token, url }) = &config.commercial_license_trial
 	{
 		let res = reqwest::Client::new()
 			.post(url)
 			.header("Authorization", api_token)
-			.json(worker_output)
+			.json(&worker_output)
 			.send()
 			.await?;
 
@@ -65,21 +65,20 @@ mod tests {
 	#[tokio::test]
 	async fn test_send_to_reacher_no_config_is_noop() {
 		let config = Arc::new(BackendConfig::empty());
-		let output: Result<CheckEmailOutput, TaskError> = Ok(CheckEmailOutput {
+		let output = CheckEmailOutput {
 			input: "test@example.com".into(),
 			is_reachable: Reachable::Invalid,
 			..Default::default()
-		});
-		let result = send_to_reacher(config, "test@example.com", &output).await;
+		};
+		let result = send_to_reacher(config, "test@example.com", Ok(&output)).await;
 		assert!(result.is_ok());
 	}
 
 	#[tokio::test]
 	async fn test_send_to_reacher_with_error_result() {
 		let config = Arc::new(BackendConfig::empty());
-		let output: Result<CheckEmailOutput, TaskError> =
-			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
-		let result = send_to_reacher(config, "test@example.com", &output).await;
+		let output = TaskError::Lapin(lapin::Error::InvalidChannel(0));
+		let result = send_to_reacher(config, "test@example.com", Err(&output)).await;
 		assert!(result.is_ok());
 	}
 }

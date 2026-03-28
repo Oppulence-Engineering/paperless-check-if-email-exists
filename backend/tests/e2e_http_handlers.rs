@@ -558,6 +558,107 @@ mod tests {
 		}
 	}
 
+	#[tokio::test]
+	#[serial]
+	async fn test_v1_check_email_worker_rpc_preserves_tenant_metadata() {
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "worker-rpc-meta", Some(100), 0).await;
+		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let routes = create_routes(Arc::clone(&config));
+		let tenant_id_string = tenant_id.to_string();
+
+		let wc = config.must_worker_config().unwrap();
+		let ch = wc.channel;
+		let ch2 = Arc::clone(&ch);
+		let (task_tx, task_rx) = tokio::sync::oneshot::channel();
+
+		tokio::spawn(async move {
+			use futures::StreamExt;
+			use std::convert::TryFrom;
+
+			let mut consumer = ch
+				.basic_consume(
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
+					"test-worker-metadata",
+					lapin::options::BasicConsumeOptions::default(),
+					lapin::types::FieldTable::default(),
+				)
+				.await
+				.unwrap();
+			let mut task_tx = Some(task_tx);
+
+			while let Some(Ok(delivery)) = consumer.next().await {
+				if let Ok(task) = serde_json::from_slice::<
+					reacher_backend::worker::do_work::CheckEmailTask,
+				>(&delivery.data)
+				{
+					if let Some(task_tx) = task_tx.take() {
+						let _ = task_tx.send(task.metadata.clone());
+					}
+
+					let output =
+						reacher_backend::worker::do_work::check_email_and_send_result(&task, None)
+							.await;
+					if let (Some(reply_to), Some(corr_id)) = (
+						delivery.properties.reply_to(),
+						delivery.properties.correlation_id(),
+					) {
+						let reply =
+							reacher_backend::worker::single_shot::SingleShotReply::try_from(
+								&output,
+							)
+							.unwrap();
+						let payload = serde_json::to_vec(&reply).unwrap();
+						let _ = ch2
+							.basic_publish(
+								"",
+								reply_to.as_str(),
+								lapin::options::BasicPublishOptions::default(),
+								&payload,
+								lapin::BasicProperties::default()
+									.with_correlation_id(corr_id.to_owned()),
+							)
+							.await;
+					}
+					let _ = delivery
+						.ack(lapin::options::BasicAckOptions::default())
+						.await;
+					break;
+				}
+			}
+		});
+
+		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+		let resp = tokio::time::timeout(
+			std::time::Duration::from_secs(30),
+			request()
+				.path("/v1/check_email")
+				.method("POST")
+				.header("Authorization", format!("Bearer {api_key}"))
+				.json(
+					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
+						r#"{"to_email": "tenant-worker@test.com"}"#,
+					)
+					.unwrap(),
+				)
+				.reply(&routes),
+		)
+		.await
+		.unwrap();
+
+		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
+		let metadata = task_rx.await.unwrap().expect("task metadata");
+		assert_eq!(
+			metadata.tenant_id.as_deref(),
+			Some(tenant_id_string.as_str())
+		);
+		assert_eq!(metadata.created_by.as_deref(), Some("api"));
+		assert!(metadata.task_db_id.is_none());
+	}
+
 	// ── v0/bulk endpoints ──────────────────────────────
 
 	#[tokio::test]

@@ -1,0 +1,53 @@
+model_version = "bounce-risk-phase1-v1"
+
+[hard_overrides]
+invalid_syntax = 98
+invalid_recipient = 98
+smtp_undeliverable = 98
+disabled_mailbox = 98
+disposable = 90
+mailbox_full = 75
+
+[thresholds]
+safe_max = 20
+low_max = 40
+medium_max = 60
+high_max = 80
+
+[weights]
+base_risk = 20
+corporate_catch_all = 20
+free_provider_catch_all = 12
+role_account = 10
+smtp_unknown_error = 20
+missing_spf = 6
+missing_dkim = 2
+missing_dmarc = 8
+missing_website = 6
+consistent_history = -10
+inconsistent_history = 15
+
+[weights.domain_age]
+under_30_days = 25
+under_90_days = 15
+under_365_days = 5
+
+[weights.last_verification]
+within_7_days = -10
+within_30_days = -5
+over_90_days = 8
+
+[confidence_weights]
+verification_core = 2.0
+provider_from_mx = 0.5
+free_provider_flag = 0.5
+mx_count = 0.5
+mx_priority_spread = 0.5
+domain_age = 1.0
+website_presence = 0.75
+spf = 0.75
+dkim = 0.5
+dmarc = 0.75
+history_count = 0.5
+history_consistency = 1.0
+last_verification = 1.0

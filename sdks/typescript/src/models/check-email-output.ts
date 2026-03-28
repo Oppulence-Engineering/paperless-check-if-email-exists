@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { BounceRiskAssessment } from './bounce-risk-assessment';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { CheckEmailOutputMisc } from './check-email-output-misc';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -41,6 +44,12 @@ import type { SyntaxDetails } from './syntax-details';
  * @interface CheckEmailOutput
  */
 export interface CheckEmailOutput {
+    /**
+     * 
+     * @type {BounceRiskAssessment}
+     * @memberof CheckEmailOutput
+     */
+    'bounce_risk'?: BounceRiskAssessment | null;
     /**
      * 
      * @type {DebugDetails}

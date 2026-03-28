@@ -6,13 +6,14 @@ use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, CheckEmailRequest, ReacherResponseError};
-use crate::scoring::response::scored_json;
+use crate::scoring::response::{prepare_verification_response, PreparedVerificationResponse};
 use crate::tenant::context::TenantContext;
 use crate::tenant::models::PlanTier;
 use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use bytes::Buf;
 use check_if_email_exists::{CheckEmailOutput, Reachable, LOG_TARGET};
+use chrono::Utc;
 use futures::TryStreamExt;
 use lapin::BasicProperties;
 use serde::Serialize;
@@ -156,17 +157,21 @@ async fn http_handler(
 			"row_index": index as i32,
 			"email_column": parsed.email_column,
 		});
-		let invalid_result = blank_email_result();
+		let invalid_result = blank_email_result(config.as_ref())
+			.await
+			.map_err(ReacherResponseError::from)?;
 		sqlx::query(
 			r#"
 			INSERT INTO v1_task_result (
 				job_id, payload, extra, result, tenant_id, task_state,
 				score, score_category, sub_reason, safe_to_send, reason_codes,
+				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
+				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
 				completed_at, canonical_email, is_duplicate
 			)
-			VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, ARRAY['invalid_syntax'], NOW(), NULL, false)
-			"#,
-		)
+				VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NULL, false)
+				"#,
+			)
 		.bind(job_id)
 		.bind(serde_json::json!({
 			"input": {"to_email": ""},
@@ -174,8 +179,46 @@ async fn http_handler(
 			"webhook": null
 		}))
 		.bind(extra)
-		.bind(invalid_result)
+		.bind(invalid_result.json)
 		.bind(tenant_id)
+		.bind(i32::from(invalid_result.score.score))
+		.bind(
+			serde_json::to_value(&invalid_result.score.category)
+				.ok()
+				.and_then(|value| value.as_str().map(ToOwned::to_owned))
+				.unwrap_or_else(|| "invalid".to_string()),
+		)
+		.bind(
+			serde_json::to_value(&invalid_result.score.sub_reason)
+				.ok()
+				.and_then(|value| value.as_str().map(ToOwned::to_owned))
+				.unwrap_or_else(|| "invalid_syntax".to_string()),
+		)
+		.bind(invalid_result.score.safe_to_send)
+		.bind(&invalid_result.score.reason_codes)
+		.bind(invalid_result.bounce_risk.as_ref().map(|risk| i32::from(risk.score)))
+		.bind(
+			invalid_result
+				.bounce_risk
+				.as_ref()
+				.and_then(|risk| serde_json::to_value(&risk.category).ok())
+				.and_then(|value| value.as_str().map(ToOwned::to_owned)),
+		)
+		.bind(invalid_result.bounce_risk.as_ref().map(|risk| risk.confidence))
+		.bind(
+			invalid_result
+				.bounce_risk
+				.as_ref()
+				.and_then(|risk| serde_json::to_value(&risk.action).ok())
+				.and_then(|value| value.as_str().map(ToOwned::to_owned)),
+		)
+			.bind(
+				invalid_result
+					.bounce_risk
+					.as_ref()
+					.map(|risk| risk.model_version.clone()),
+			)
+			.bind(invalid_result.bounce_risk_signals)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -184,7 +227,7 @@ async fn http_handler(
 	// Handle canonical groups: first occurrence is primary, rest are duplicates
 	for (canonical, indices) in &canonical_groups {
 		let primary_index = indices[0];
-		let primary_email = parsed.rows[primary_index]
+		let _primary_email = parsed.rows[primary_index]
 			.get(&parsed.email_column)
 			.and_then(Value::as_str)
 			.unwrap_or_default()
@@ -384,19 +427,15 @@ fn build_original_data(parsed: &ParsedCsv) -> serde_json::Value {
 	Value::Object(root)
 }
 
-fn blank_email_result() -> serde_json::Value {
+async fn blank_email_result(
+	config: &BackendConfig,
+) -> Result<PreparedVerificationResponse, anyhow::Error> {
 	let output = CheckEmailOutput {
 		input: "".to_string(),
 		is_reachable: Reachable::Invalid,
 		..Default::default()
 	};
-	scored_json(&output).unwrap_or_else(|_| {
-		serde_json::json!({
-			"input": "",
-			"is_reachable": "invalid",
-			"score": {"score": 0, "category": "invalid", "sub_reason": "invalid_syntax", "safe_to_send": false, "reason_codes": ["invalid_syntax"]}
-		})
-	})
+	prepare_verification_response(config, &output, None, Utc::now(), false).await
 }
 
 fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {

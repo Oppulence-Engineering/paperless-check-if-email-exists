@@ -4,20 +4,25 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional]
-**Input** | **string** | The email address that was verified. | [required]
-**IsReachable** | [**Reachable**](Reachable.md) |  | [required]
-**Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
-**Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [required]
-**Score** | [**EmailScore**](EmailScore.md) |  | [required]
-**Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [required]
-**Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [required]
+**BounceRisk** | Pointer to [**NullableBounceRiskAssessment**](BounceRiskAssessment.md) |  | [optional] 
+**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional] 
+**Input** | **string** | The email address that was verified. | 
+**IsReachable** | [**Reachable**](Reachable.md) |  | 
+**Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | 
+**Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | 
+**Provider** | Pointer to [**Provider**](Provider.md) |  | [optional] 
+**ProviderConfidence** | Pointer to [**ProviderConfidence**](ProviderConfidence.md) |  | [optional] 
+**ProviderRejectionReason** | Pointer to [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional] 
+**ProviderRulesApplied** | **bool** |  | 
+**Score** | [**EmailScore**](EmailScore.md) |  | 
+**Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | 
+**Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | 
 
 ## Methods
 
 ### NewCheckEmailOutput
 
-`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput`
+`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, providerRulesApplied bool, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
 
 NewCheckEmailOutput instantiates a new CheckEmailOutput object
 This constructor will assign default values to properties that have it defined,
@@ -32,6 +37,41 @@ NewCheckEmailOutputWithDefaults instantiates a new CheckEmailOutput object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
+### GetBounceRisk
+
+`func (o *CheckEmailOutput) GetBounceRisk() BounceRiskAssessment`
+
+GetBounceRisk returns the BounceRisk field if non-nil, zero value otherwise.
+
+### GetBounceRiskOk
+
+`func (o *CheckEmailOutput) GetBounceRiskOk() (*BounceRiskAssessment, bool)`
+
+GetBounceRiskOk returns a tuple with the BounceRisk field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBounceRisk
+
+`func (o *CheckEmailOutput) SetBounceRisk(v BounceRiskAssessment)`
+
+SetBounceRisk sets BounceRisk field to given value.
+
+### HasBounceRisk
+
+`func (o *CheckEmailOutput) HasBounceRisk() bool`
+
+HasBounceRisk returns a boolean if a field has been set.
+
+### SetBounceRiskNil
+
+`func (o *CheckEmailOutput) SetBounceRiskNil(b bool)`
+
+ SetBounceRiskNil sets the value for BounceRisk to be an explicit nil
+
+### UnsetBounceRisk
+`func (o *CheckEmailOutput) UnsetBounceRisk()`
+
+UnsetBounceRisk ensures that no value is present for BounceRisk, not even an explicit nil
 ### GetDebug
 
 `func (o *CheckEmailOutput) GetDebug() DebugDetails`

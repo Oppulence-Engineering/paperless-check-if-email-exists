@@ -81,59 +81,23 @@ pub async fn check_domain(
 	Ok(response)
 }
 
-async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
+pub async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
+	let client = reqwest::Client::new();
+	fetch_domain_info_with_client(&client, domain).await
+}
+
+pub async fn fetch_domain_info_with_client(
+	client: &reqwest::Client,
+	domain: &str,
+) -> Result<DomainInfo, ReacherResponseError> {
 	let url = format!("https://rdap.org/domain/{}", domain);
-	let response = reqwest::Client::new()
+	let response = client
 		.get(url)
 		.send()
 		.await
 		.map_err(ReacherResponseError::from)?;
 	let value: serde_json::Value = response.json().await.map_err(ReacherResponseError::from)?;
-	let events = value.get("events").and_then(|value| value.as_array());
-	let created = events.and_then(|events| {
-		events.iter().find_map(|event| {
-			let action = event.get("eventAction").and_then(|value| value.as_str())?;
-			if matches!(action, "registration" | "creation") {
-				event
-					.get("eventDate")
-					.and_then(|value| value.as_str())
-					.map(ToOwned::to_owned)
-			} else {
-				None
-			}
-		})
-	});
-	let registrar = value
-		.get("entities")
-		.and_then(|value| value.as_array())
-		.and_then(|entities| {
-			entities.iter().find_map(|entity| {
-				entity
-					.get("vcardArray")
-					.and_then(|value| value.as_array())
-					.and_then(|items| items.get(1))
-					.and_then(|value| value.as_array())
-					.and_then(|items| {
-						items.iter().find_map(|item| {
-							let item = item.as_array()?;
-							if item.first()?.as_str()? == "fn" {
-								item.get(3)?.as_str().map(ToOwned::to_owned)
-							} else {
-								None
-							}
-						})
-					})
-			})
-		});
-	let domain_age_days = created.as_deref().and_then(|created_at| {
-		chrono::DateTime::parse_from_rfc3339(created_at)
-			.ok()
-			.map(|date| (chrono::Utc::now() - date.with_timezone(&chrono::Utc)).num_days())
-	});
-
-	Ok(DomainInfo {
-		domain_age_days,
-		registrar,
-		created_at: created,
-	})
+	Ok(crate::bounce_risk::parse_domain_info_from_rdap_value(
+		&value,
+	))
 }

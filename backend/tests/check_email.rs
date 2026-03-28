@@ -36,6 +36,14 @@ mod tests {
 		Arc::new(config)
 	}
 
+	fn create_bounce_risk_config() -> Arc<BackendConfig> {
+		let mut config = BackendConfig::empty();
+		config.header_secret = None;
+		config.bounce_risk.enabled = true;
+		config.refresh_bounce_risk_service();
+		Arc::new(config)
+	}
+
 	fn parse_json(body: &[u8]) -> Value {
 		serde_json::from_slice(body).expect("response body should be valid JSON")
 	}
@@ -326,6 +334,42 @@ mod tests {
 			.unwrap()
 			.iter()
 			.any(|v| v.as_str() == Some("provider_local_part_too_short")));
+	}
+
+	#[tokio::test]
+	async fn test_v1_check_email_surfaces_bounce_risk_when_enabled() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.json(&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "foo@bar"}"#).unwrap())
+			.reply(&create_routes(create_bounce_risk_config()))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		let body = parse_json(resp.body());
+		assert_eq!(body["bounce_risk"]["score"], 98);
+		assert_eq!(body["bounce_risk"]["category"], "dangerous");
+		assert_eq!(body["bounce_risk"]["action"], "do_not_send");
+	}
+
+	#[tokio::test]
+	async fn test_v1_sandbox_surfaces_bounce_risk_when_enabled() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.json(
+				&serde_json::from_str::<CheckEmailRequest>(
+					r#"{"to_email": "user@invalid.example.com", "sandbox": true}"#,
+				)
+				.unwrap(),
+			)
+			.reply(&create_routes(create_bounce_risk_config()))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		let body = parse_json(resp.body());
+		assert_eq!(body["bounce_risk"]["score"], 98);
+		assert_eq!(body["score"]["verified_at"], "2025-01-01T00:00:00+00:00");
 	}
 
 	#[tokio::test]

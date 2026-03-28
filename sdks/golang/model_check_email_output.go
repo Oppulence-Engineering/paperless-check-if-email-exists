@@ -22,6 +22,7 @@ var _ MappedNullable = &CheckEmailOutput{}
 
 // CheckEmailOutput The result of the email verification process.
 type CheckEmailOutput struct {
+	BounceRisk NullableBounceRiskAssessment `json:"bounce_risk,omitempty"`
 	Debug *DebugDetails `json:"debug,omitempty"`
 	// The email address that was verified.
 	Input string `json:"input"`
@@ -57,6 +58,48 @@ func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOut
 func NewCheckEmailOutputWithDefaults() *CheckEmailOutput {
 	this := CheckEmailOutput{}
 	return &this
+}
+
+// GetBounceRisk returns the BounceRisk field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CheckEmailOutput) GetBounceRisk() BounceRiskAssessment {
+	if o == nil || IsNil(o.BounceRisk.Get()) {
+		var ret BounceRiskAssessment
+		return ret
+	}
+	return *o.BounceRisk.Get()
+}
+
+// GetBounceRiskOk returns a tuple with the BounceRisk field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CheckEmailOutput) GetBounceRiskOk() (*BounceRiskAssessment, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BounceRisk.Get(), o.BounceRisk.IsSet()
+}
+
+// HasBounceRisk returns a boolean if a field has been set.
+func (o *CheckEmailOutput) HasBounceRisk() bool {
+	if o != nil && o.BounceRisk.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBounceRisk gets a reference to the given NullableBounceRiskAssessment and assigns it to the BounceRisk field.
+func (o *CheckEmailOutput) SetBounceRisk(v BounceRiskAssessment) {
+	o.BounceRisk.Set(&v)
+}
+// SetBounceRiskNil sets the value for BounceRisk to be an explicit nil
+func (o *CheckEmailOutput) SetBounceRiskNil() {
+	o.BounceRisk.Set(nil)
+}
+
+// UnsetBounceRisk ensures that no value is present for BounceRisk, not even an explicit nil
+func (o *CheckEmailOutput) UnsetBounceRisk() {
+	o.BounceRisk.Unset()
 }
 
 // GetDebug returns the Debug field value if set, zero value otherwise.
@@ -269,6 +312,9 @@ func (o CheckEmailOutput) MarshalJSON() ([]byte, error) {
 
 func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.BounceRisk.IsSet() {
+		toSerialize["bounce_risk"] = o.BounceRisk.Get()
+	}
 	if !IsNil(o.Debug) {
 		toSerialize["debug"] = o.Debug
 	}

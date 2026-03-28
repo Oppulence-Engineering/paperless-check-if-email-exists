@@ -18,6 +18,7 @@ pub mod commercial_license_trial;
 pub mod error;
 pub mod postgres;
 
+use crate::scoring::response::PreparedCheckEmailSuccess;
 use crate::worker::do_work::{CheckEmailTask, TaskError};
 use check_if_email_exists::CheckEmailOutput;
 use error::StorageError;
@@ -40,6 +41,30 @@ impl StorageAdapter {
 	) -> Result<(), StorageError> {
 		match self {
 			StorageAdapter::Postgres(storage) => storage.store(task, worker_output, extra).await,
+			StorageAdapter::Noop => Ok(()),
+		}
+	}
+
+	pub async fn store_prepared(
+		&self,
+		task: &CheckEmailTask,
+		success: &PreparedCheckEmailSuccess,
+		extra: Option<serde_json::Value>,
+	) -> Result<(), StorageError> {
+		match self {
+			StorageAdapter::Postgres(storage) => storage.store_prepared(task, success, extra).await,
+			StorageAdapter::Noop => Ok(()),
+		}
+	}
+
+	pub async fn store_error(
+		&self,
+		task: &CheckEmailTask,
+		error: &TaskError,
+		extra: Option<serde_json::Value>,
+	) -> Result<(), StorageError> {
+		match self {
+			StorageAdapter::Postgres(storage) => storage.store_error_only(task, error, extra).await,
 			StorageAdapter::Noop => Ok(()),
 		}
 	}

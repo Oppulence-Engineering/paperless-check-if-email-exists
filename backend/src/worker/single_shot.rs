@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::do_work::TaskError;
-use crate::scoring::response::scored_response_fresh;
+use crate::scoring::response::{scored_response_fresh, PreparedCheckEmailSuccess};
 use anyhow::bail;
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use lapin::message::Delivery;
@@ -59,6 +59,26 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 	}
 }
 
+impl TryFrom<&Result<PreparedCheckEmailSuccess, TaskError>> for SingleShotReply {
+	type Error = serde_json::Error;
+
+	fn try_from(
+		result: &Result<PreparedCheckEmailSuccess, TaskError>,
+	) -> Result<Self, Self::Error> {
+		match result {
+			Ok(success) => Ok(Self::Ok(success.response.body.clone())),
+			Err(TaskError::Throttle(e)) => Ok(Self::Err((
+				TaskError::Throttle(e.clone()).to_string(),
+				StatusCode::TOO_MANY_REQUESTS.as_u16(),
+			))),
+			Err(e) => Ok(Self::Err((
+				e.to_string(),
+				StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+			))),
+		}
+	}
+}
+
 /// Send reply, in an "RPC mode", to the queue that initiated the request. We
 /// follow this guide:
 /// https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html
@@ -68,7 +88,7 @@ impl TryFrom<&Result<CheckEmailOutput, TaskError>> for SingleShotReply {
 pub async fn send_single_shot_reply(
 	channel: Arc<Channel>,
 	delivery: &Delivery,
-	worker_output: &Result<CheckEmailOutput, TaskError>,
+	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
 ) -> Result<(), anyhow::Error> {
 	if let (Some(reply_to), Some(correlation_id)) = (
 		delivery.properties.reply_to(),

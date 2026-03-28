@@ -17,13 +17,14 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
-use crate::scoring::response::scored_response_fresh;
+use crate::scoring::response::{prepare_check_email_success, prepare_verification_response};
 use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, QuotaCheckResult};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::single_shot::SingleShotReply;
+use chrono::{TimeZone, Utc};
 
 #[derive(Debug)]
 pub struct CheckEmailResponse {
@@ -71,24 +72,23 @@ pub async fn handle_check_email(
 	// throttle checks, or quota consumption. Freshness fields are
 	// hardcoded so responses are fully deterministic across time.
 	if body.sandbox {
-		use crate::scoring::response::scored_json;
 		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
-		let mut value = scored_json(&mock_result).map_err(ReacherResponseError::from)?;
-		if let Some(score_obj) = value.get_mut("score").and_then(|v| v.as_object_mut()) {
-			score_obj.insert(
-				"verified_at".into(),
-				serde_json::Value::String("2025-01-01T00:00:00+00:00".into()),
-			);
-			score_obj.insert("age_days".into(), serde_json::Value::from(0));
-			score_obj.insert(
-				"freshness".into(),
-				serde_json::Value::String("fresh".into()),
-			);
-		}
-		let json = serde_json::to_vec(&value).map_err(ReacherResponseError::from)?;
+		let completed_at = Utc
+			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
+			.single()
+			.expect("static sandbox timestamp");
+		let prepared = prepare_verification_response(
+			config.as_ref(),
+			&mock_result,
+			tenant_ctx.tenant_id,
+			completed_at,
+			false,
+		)
+		.await
+		.map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
-			body: json,
+			body: prepared.body,
 		});
 	}
 
@@ -217,7 +217,7 @@ pub async fn handle_check_email(
 			}
 		}
 	} else {
-		let response = handle_with_worker(Arc::clone(&config), body).await;
+		let response = handle_with_worker(Arc::clone(&config), body, tenant_ctx).await;
 		match response {
 			Ok(body) => {
 				let response = CheckEmailResponse {
@@ -249,47 +249,52 @@ async fn handle_without_worker(
 	config: Arc<BackendConfig>,
 	body: &CheckEmailRequest,
 	throttle_manager: &crate::throttle::ThrottleManager,
-	_tenant_ctx: &TenantContext,
+	tenant_ctx: &TenantContext,
 ) -> Result<Vec<u8>, warp::Rejection> {
 	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
 	let result = check_email(&input).await;
-	let result_ok = Ok(result);
+	let prepared = prepare_check_email_success(
+		config.as_ref(),
+		result,
+		tenant_ctx.tenant_id,
+		Utc::now(),
+		true,
+	)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	throttle_manager.increment_counters().await;
 
 	let storage = Arc::clone(&config).get_storage_adapter();
 	storage
-		.store(
+		.store_prepared(
 			&CheckEmailTask {
 				input: body.to_check_email_input(Arc::clone(&config)),
 				job_id: CheckEmailJobId::SingleShot,
 				webhook: None,
 				metadata: None,
 			},
-			&result_ok,
+			&prepared,
 			storage.get_extra(),
 		)
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	send_to_reacher(Arc::clone(&config), &body.to_email, &result_ok)
+	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared.output))
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	let result = result_ok.unwrap();
-
 	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
 	if let Some(pool) = config.get_pg_pool() {
-		if let Some(tenant_id) = _tenant_ctx.tenant_id {
-			let email_score = crate::scoring::compute_score(&result);
+		if let Some(tenant_id) = tenant_ctx.tenant_id {
 			crate::worker::actions::evaluate_post_completion_actions(
 				&pool,
 				tenant_id,
 				&body.to_email,
-				Some(email_score.score),
+				Some(prepared.response.score.score),
 				Some(
-					&serde_json::to_value(&email_score.category)
+					&serde_json::to_value(&prepared.response.score.category)
 						.ok()
 						.and_then(|v| v.as_str().map(ToOwned::to_owned))
 						.unwrap_or_else(|| "unknown".to_string()),
@@ -299,13 +304,14 @@ async fn handle_without_worker(
 		}
 	}
 
-	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?result.is_reachable, "Done verification");
-	Ok(scored_response_fresh(&result).map_err(ReacherResponseError::from)?)
+	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?prepared.output.is_reachable, "Done verification");
+	Ok(prepared.response.body)
 }
 
 async fn handle_with_worker(
 	config: Arc<BackendConfig>,
 	body: &CheckEmailRequest,
+	tenant_ctx: &TenantContext,
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let channel = config
 		.must_worker_config()
@@ -339,7 +345,15 @@ async fn handle_with_worker(
 			input: body.to_check_email_input(config.clone()),
 			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
-			metadata: None,
+			metadata: Some(crate::worker::do_work::TaskMetadata {
+				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+				request_id: None,
+				correlation_id: None,
+				created_by: Some("api".to_string()),
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: None,
+			}),
 		},
 		properties,
 	)

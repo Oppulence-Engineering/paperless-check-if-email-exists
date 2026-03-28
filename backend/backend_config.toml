@@ -236,6 +236,37 @@ max_missed_run_age_hours = 24
 # Env variable: RCH__PIPELINES__MIN_INTERVAL_SECONDS
 min_interval_seconds = 3600
 
+[bounce_risk]
+# Enable additive bounce-risk enrichment on verification responses.
+#
+# Env variable: RCH__BOUNCE_RISK__ENABLED
+enabled = true
+
+# Path to the bounce-risk heuristic model TOML file.
+#
+# Env variable: RCH__BOUNCE_RISK__CONFIG_PATH
+config_path = "bounce_risk.toml"
+
+# Poll the model file for mtime changes at most every 30 seconds.
+#
+# Env variable: RCH__BOUNCE_RISK__RELOAD_INTERVAL_SECONDS
+reload_interval_seconds = 30
+
+# Number of tenant-scoped historical verifications to inspect.
+#
+# Env variable: RCH__BOUNCE_RISK__HISTORY_LIMIT
+history_limit = 10
+
+# Timeout for RDAP and other network fetches in milliseconds.
+#
+# Env variable: RCH__BOUNCE_RISK__NETWORK_TIMEOUT_MS
+network_timeout_ms = 5000
+
+# Timeout for website presence probes in milliseconds.
+#
+# Env variable: RCH__BOUNCE_RISK__WEBSITE_PROBE_TIMEOUT_MS
+website_probe_timeout_ms = 3000
+
 # Below are the configurations for the storage of the email verification
 # results. We currently support the following storage backends:
 # - Postgres
