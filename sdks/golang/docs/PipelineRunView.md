@@ -18,11 +18,11 @@ Name | Type | Description | Notes
 **ListId** | Pointer to **NullableInt32** |  | [optional]
 **NextDeliveryAttemptAt** | Pointer to **NullableTime** |  | [optional]
 **PipelineId** | **int64** |  | [required]
-**ResultLocation** | Pointer to **interface{}** |  | [optional]
+**ResultLocation** | Pointer to [**NullablePipelineRunResultLocation**](PipelineRunResultLocation.md) |  | [optional]
 **ScheduledFor** | Pointer to **NullableTime** |  | [optional]
-**SourceSnapshot** | **interface{}** |  | [required]
+**SourceSnapshot** | [**PipelineSource**](PipelineSource.md) |  | [required]
 **StartedAt** | Pointer to **NullableTime** |  | [optional]
-**Stats** | **interface{}** |  | [required]
+**Stats** | [**PipelineRunStats**](PipelineRunStats.md) |  | [required]
 **Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
 **TenantId** | **string** |  | [required]
 **TriggerType** | **string** |  | [required]
@@ -32,7 +32,7 @@ Name | Type | Description | Notes
 
 ### NewPipelineRunView
 
-`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot interface{}, stats interface{}, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView`
+`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot PipelineSource, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView`
 
 NewPipelineRunView instantiates a new PipelineRunView object
 This constructor will assign default values to properties that have it defined,
@@ -457,20 +457,20 @@ SetPipelineId sets PipelineId field to given value.
 
 ### GetResultLocation
 
-`func (o *PipelineRunView) GetResultLocation() interface{}`
+`func (o *PipelineRunView) GetResultLocation() PipelineRunResultLocation`
 
 GetResultLocation returns the ResultLocation field if non-nil, zero value otherwise.
 
 ### GetResultLocationOk
 
-`func (o *PipelineRunView) GetResultLocationOk() (*interface{}, bool)`
+`func (o *PipelineRunView) GetResultLocationOk() (*PipelineRunResultLocation, bool)`
 
 GetResultLocationOk returns a tuple with the ResultLocation field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetResultLocation
 
-`func (o *PipelineRunView) SetResultLocation(v interface{})`
+`func (o *PipelineRunView) SetResultLocation(v PipelineRunResultLocation)`
 
 SetResultLocation sets ResultLocation field to given value.
 
@@ -479,6 +479,17 @@ SetResultLocation sets ResultLocation field to given value.
 `func (o *PipelineRunView) HasResultLocation() bool`
 
 HasResultLocation returns a boolean if a field has been set.
+
+### SetResultLocationNil
+
+`func (o *PipelineRunView) SetResultLocationNil()`
+
+ SetResultLocationNil sets the value for ResultLocation to be an explicit nil
+
+### UnsetResultLocation
+`func (o *PipelineRunView) UnsetResultLocation()`
+
+UnsetResultLocation ensures that no value is present for ResultLocation, not even an explicit nil
 
 ### GetScheduledFor
 
@@ -518,20 +529,20 @@ UnsetScheduledFor ensures that no value is present for ScheduledFor, not even an
 
 ### GetSourceSnapshot
 
-`func (o *PipelineRunView) GetSourceSnapshot() interface{}`
+`func (o *PipelineRunView) GetSourceSnapshot() PipelineSource`
 
 GetSourceSnapshot returns the SourceSnapshot field if non-nil, zero value otherwise.
 
 ### GetSourceSnapshotOk
 
-`func (o *PipelineRunView) GetSourceSnapshotOk() (*interface{}, bool)`
+`func (o *PipelineRunView) GetSourceSnapshotOk() (*PipelineSource, bool)`
 
 GetSourceSnapshotOk returns a tuple with the SourceSnapshot field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetSourceSnapshot
 
-`func (o *PipelineRunView) SetSourceSnapshot(v interface{})`
+`func (o *PipelineRunView) SetSourceSnapshot(v PipelineSource)`
 
 SetSourceSnapshot sets SourceSnapshot field to given value.
 
@@ -574,20 +585,20 @@ UnsetStartedAt ensures that no value is present for StartedAt, not even an expli
 
 ### GetStats
 
-`func (o *PipelineRunView) GetStats() interface{}`
+`func (o *PipelineRunView) GetStats() PipelineRunStats`
 
 GetStats returns the Stats field if non-nil, zero value otherwise.
 
 ### GetStatsOk
 
-`func (o *PipelineRunView) GetStatsOk() (*interface{}, bool)`
+`func (o *PipelineRunView) GetStatsOk() (*PipelineRunStats, bool)`
 
 GetStatsOk returns a tuple with the Stats field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetStats
 
-`func (o *PipelineRunView) SetStats(v interface{})`
+`func (o *PipelineRunView) SetStats(v PipelineRunStats)`
 
 SetStats sets Stats field to given value.
 

@@ -18,7 +18,16 @@
 import type { PipelineDeliveryStatus } from './pipeline-delivery-status';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { PipelineRunResultLocation } from './pipeline-run-result-location';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { PipelineRunStats } from './pipeline-run-stats';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { PipelineRunStatus } from './pipeline-run-status';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { PipelineSource } from './pipeline-source';
 
 /**
  * 
@@ -112,10 +121,10 @@ export interface PipelineRunView {
     'pipeline_id': number;
     /**
      * 
-     * @type {any}
+     * @type {PipelineRunResultLocation}
      * @memberof PipelineRunView
      */
-    'result_location'?: any;
+    'result_location'?: PipelineRunResultLocation | null;
     /**
      * 
      * @type {string}
@@ -124,10 +133,10 @@ export interface PipelineRunView {
     'scheduled_for'?: string | null;
     /**
      * 
-     * @type {any}
+     * @type {PipelineSource}
      * @memberof PipelineRunView
      */
-    'source_snapshot': any;
+    'source_snapshot': PipelineSource;
     /**
      * 
      * @type {string}
@@ -136,10 +145,10 @@ export interface PipelineRunView {
     'started_at'?: string | null;
     /**
      * 
-     * @type {any}
+     * @type {PipelineRunStats}
      * @memberof PipelineRunView
      */
-    'stats': any;
+    'stats': PipelineRunStats;
     /**
      * 
      * @type {PipelineRunStatus}

@@ -121,6 +121,21 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 		}
 	}
 
+	if let Some(generated_tags) = generated.get("tags").and_then(Value::as_array) {
+		let base_tags = base
+			.as_object_mut()
+			.expect("openapi spec root object")
+			.entry("tags")
+			.or_insert_with(|| Value::Array(Vec::new()))
+			.as_array_mut()
+			.expect("tags array");
+		for tag in generated_tags {
+			if !base_tags.iter().any(|existing| existing == tag) {
+				base_tags.push(tag.clone());
+			}
+		}
+	}
+
 	if let (Some(base_schemas), Some(generated_schemas)) = (
 		base.get_mut("components")
 			.and_then(|v| v.get_mut("schemas"))
@@ -325,9 +340,27 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 }
 
 fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
-	if let Some(schema) = schemas_mut(spec).get_mut(schema_name).and_then(Value::as_object_mut) {
+	if let Some(schema) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	{
 		schema.insert("example".to_string(), example);
 	}
+}
+
+fn set_schema_property(spec: &mut Value, schema_name: &str, property_name: &str, schema: Value) {
+	let Some(schema_obj) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	else {
+		return;
+	};
+	let properties = schema_obj
+		.entry("properties".to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("schema properties object");
+	properties.insert(property_name.to_string(), schema);
 }
 
 fn set_schema_discriminator(
@@ -336,7 +369,10 @@ fn set_schema_discriminator(
 	property_name: &str,
 	mapping: Value,
 ) {
-	if let Some(schema) = schemas_mut(spec).get_mut(schema_name).and_then(Value::as_object_mut) {
+	if let Some(schema) = schemas_mut(spec)
+		.get_mut(schema_name)
+		.and_then(Value::as_object_mut)
+	{
 		schema.insert(
 			"discriminator".to_string(),
 			json!({
@@ -948,6 +984,45 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["enabled"]
 		}),
 	);
+	insert_schema(
+		spec,
+		"PipelineRunResultLocation",
+		json!({
+			"type": "object",
+			"properties": {
+				"download_url": { "type": "string" }
+			},
+			"required": ["download_url"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"PipelineRunStats",
+		json!({
+			"type": "object",
+			"properties": {
+				"trigger_reason": { "type": "string", "nullable": true },
+				"delta_mode": { "type": "boolean", "nullable": true },
+				"freshness_days": { "type": "integer", "format": "int32", "nullable": true },
+				"changed_only_export": { "type": "boolean", "nullable": true },
+				"selected_unique_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"skipped_unchanged": { "type": "integer", "format": "int32", "nullable": true },
+				"queued_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"published_tasks": { "type": "integer", "format": "int32", "nullable": true },
+				"completed_tasks": { "type": "integer", "format": "int32", "nullable": true },
+				"valid": { "type": "integer", "format": "int32", "nullable": true },
+				"invalid": { "type": "integer", "format": "int32", "nullable": true },
+				"risky": { "type": "integer", "format": "int32", "nullable": true },
+				"unknown": { "type": "integer", "format": "int32", "nullable": true },
+				"billed_emails": { "type": "integer", "format": "int32", "nullable": true },
+				"source_name": { "type": "string", "nullable": true },
+				"source_filename": { "type": "string", "nullable": true },
+				"source_row_count": { "type": "integer", "format": "int32", "nullable": true },
+				"source_unique_emails": { "type": "integer", "format": "int32", "nullable": true }
+			},
+			"additionalProperties": true
+		}),
+	);
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
@@ -1308,10 +1383,18 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"pipeline_id": 2,
 			"tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
 			"trigger_type": "manual",
-			"status": "queued",
+			"status": "completed",
 			"source_snapshot": { "type": "list_snapshot", "list_id": 123 },
-			"stats": { "trigger_reason": "manual" },
-			"billed_emails": 0,
+			"stats": {
+				"trigger_reason": "manual",
+				"delta_mode": true,
+				"freshness_days": 30,
+				"source_name": "Weekly Cleanup",
+				"source_filename": "seed.csv",
+				"selected_unique_emails": 1,
+				"billed_emails": 1
+			},
+			"billed_emails": 1,
 			"delivery_status": "not_requested",
 			"delivery_attempts": 0,
 			"created_at": "2000-01-23T04:56:07.000+00:00",
@@ -1322,11 +1405,38 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"job_id": 5,
 			"list_id": 5,
 			"result_location": { "download_url": "/v1/lists/5/download" },
-			"last_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
-			"next_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
-			"delivery_error": "delivery_error",
-			"error_code": "error_code",
-			"error_message": "error_message",
+			"last_delivery_attempt_at": Value::Null,
+			"next_delivery_attempt_at": Value::Null,
+			"delivery_error": Value::Null,
+			"error_code": Value::Null,
+			"error_message": Value::Null,
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"source_snapshot",
+		json!({
+			"$ref": "#/components/schemas/PipelineSource"
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"stats",
+		json!({
+			"$ref": "#/components/schemas/PipelineRunStats"
+		}),
+	);
+	set_schema_property(
+		spec,
+		"PipelineRunView",
+		"result_location",
+		json!({
+			"nullable": true,
+			"allOf": [
+				{ "$ref": "#/components/schemas/PipelineRunResultLocation" }
+			]
 		}),
 	);
 }

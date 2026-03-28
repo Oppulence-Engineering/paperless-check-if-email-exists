@@ -3,6 +3,7 @@ mod test_helpers;
 use crate::test_helpers::{
 	insert_api_key_with_scopes, insert_tenant, test_amqp_url, test_db_url, TestDb,
 };
+use anyhow::{anyhow, bail, Result};
 use reacher_backend::config::{
 	BackendConfig, PipelinesConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
 };
@@ -14,9 +15,12 @@ use reacher_backend::pipelines::{
 use serial_test::serial;
 use sqlx::Row;
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use tokio::time::{sleep, timeout, Duration};
 use warp::http::StatusCode;
 use warp::test::request;
+
+const WAIT_TIMEOUT: Duration = Duration::from_secs(10);
+const POLL_INTERVAL: Duration = Duration::from_millis(100);
 
 async fn worker_pipeline_config(enable_scheduler: bool) -> Arc<BackendConfig> {
 	let mut c = BackendConfig::empty();
@@ -79,67 +83,72 @@ async fn insert_source_list_with_data(
 	.unwrap()
 }
 
-async fn wait_for_usage_events(pool: &sqlx::PgPool, pipeline_id: i64, expected: i64) -> i64 {
-	for _ in 0..40 {
-		let usage_count: i64 =
-			sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
-				.bind(pipeline_id)
-				.fetch_one(pool)
-				.await
-				.unwrap();
-		if usage_count >= expected {
-			return usage_count;
+async fn wait_for_usage_events(
+	pool: &sqlx::PgPool,
+	pipeline_id: i64,
+	expected: i64,
+) -> Result<i64> {
+	timeout(WAIT_TIMEOUT, async {
+		loop {
+			let usage_count: i64 =
+				sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
+					.bind(pipeline_id)
+					.fetch_one(pool)
+					.await
+					.map_err(anyhow::Error::from)?;
+			if usage_count >= expected {
+				return Ok(usage_count);
+			}
+			sleep(POLL_INTERVAL).await;
 		}
-		sleep(Duration::from_millis(50)).await;
-	}
-
-	sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
-		.bind(pipeline_id)
-		.fetch_one(pool)
-		.await
-		.unwrap()
+	})
+	.await
+	.map_err(|_| {
+		anyhow!(
+			"Timed out waiting for {} usage events on pipeline {} after {:?}",
+			expected,
+			pipeline_id,
+			WAIT_TIMEOUT
+		)
+	})?
 }
 
 async fn wait_for_run_details(
 	pool: &sqlx::PgPool,
 	run_id: i64,
-) -> (
+) -> Result<(
 	String,
 	Option<i32>,
 	Option<i32>,
 	Option<chrono::DateTime<chrono::Utc>>,
-) {
-	for _ in 0..40 {
-		let row = sqlx::query(
-			"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
-		)
-		.bind(run_id)
-		.fetch_one(pool)
-		.await
-		.unwrap();
-		let status: String = row.get("status");
-		let job_id: Option<i32> = row.get("job_id");
-		let list_id: Option<i32> = row.get("list_id");
-		let started_at: Option<chrono::DateTime<chrono::Utc>> = row.get("started_at");
-		if job_id.is_some() && list_id.is_some() && started_at.is_some() {
-			return (status, job_id, list_id, started_at);
+)> {
+	timeout(WAIT_TIMEOUT, async {
+		loop {
+			let row = sqlx::query(
+				"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
+			)
+			.bind(run_id)
+			.fetch_one(pool)
+			.await
+			.map_err(anyhow::Error::from)?;
+			let status: String = row.get("status");
+			let job_id: Option<i32> = row.get("job_id");
+			let list_id: Option<i32> = row.get("list_id");
+			let started_at: Option<chrono::DateTime<chrono::Utc>> = row.get("started_at");
+			if job_id.is_some() && list_id.is_some() && started_at.is_some() {
+				return Ok((status, job_id, list_id, started_at));
+			}
+			sleep(POLL_INTERVAL).await;
 		}
-		sleep(Duration::from_millis(50)).await;
-	}
-
-	let row = sqlx::query(
-		"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
-	)
-	.bind(run_id)
-	.fetch_one(pool)
+	})
 	.await
-	.unwrap();
-	(
-		row.get("status"),
-		row.get("job_id"),
-		row.get("list_id"),
-		row.get("started_at"),
-	)
+	.map_err(|_| {
+		anyhow!(
+			"Timed out waiting for run {} to start after {:?}",
+			run_id,
+			WAIT_TIMEOUT
+		)
+	})?
 }
 
 async fn wait_for_run_view(
@@ -147,39 +156,48 @@ async fn wait_for_run_view(
 	api_key: &str,
 	pipeline_id: i64,
 	run_id: i64,
-) -> serde_json::Value {
-	for _ in 0..40 {
-		let response = request()
-			.method("GET")
-			.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
-			.header("Authorization", format!("Bearer {}", api_key))
-			.reply(&create_routes(Arc::clone(config)))
-			.await;
-		assert_eq!(response.status(), StatusCode::OK);
+) -> Result<serde_json::Value> {
+	timeout(WAIT_TIMEOUT, async {
+		loop {
+			let response = request()
+				.method("GET")
+				.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
+				.header("Authorization", format!("Bearer {}", api_key))
+				.reply(&create_routes(Arc::clone(config)))
+				.await;
+			if response.status() != StatusCode::OK {
+				bail!(
+					"Expected GET /v1/pipelines/{}/runs/{} to return 200 while waiting, got {}",
+					pipeline_id,
+					run_id,
+					response.status()
+				);
+			}
 
-		let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
-		let has_job_id = body["job_id"].as_i64().is_some_and(|value| value > 0);
-		let has_list_id = body["list_id"].as_i64().is_some_and(|value| value > 0);
-		if has_job_id && has_list_id {
-			return body;
+			let body: serde_json::Value = serde_json::from_slice(response.body())?;
+			let has_job_id = body["job_id"].as_i64().is_some_and(|value| value > 0);
+			let has_list_id = body["list_id"].as_i64().is_some_and(|value| value > 0);
+			if has_job_id && has_list_id {
+				return Ok(body);
+			}
+
+			sleep(POLL_INTERVAL).await;
 		}
-
-		sleep(Duration::from_millis(50)).await;
-	}
-
-	let response = request()
-		.method("GET")
-		.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
-		.header("Authorization", format!("Bearer {}", api_key))
-		.reply(&create_routes(Arc::clone(config)))
-		.await;
-	assert_eq!(response.status(), StatusCode::OK);
-	serde_json::from_slice(response.body()).unwrap()
+	})
+	.await
+	.map_err(|_| {
+		anyhow!(
+			"Timed out waiting for pipeline {}/run {} view to populate after {:?}",
+			pipeline_id,
+			run_id,
+			WAIT_TIMEOUT
+		)
+	})?
 }
 
 #[tokio::test]
 #[serial]
-async fn test_pipeline_api_create_get_list_and_trigger() {
+async fn test_pipeline_api_create_get_list_and_trigger() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-api", Some(1000), 0).await;
 	let list_id = insert_source_list(db.pool(), tenant_id).await;
@@ -238,11 +256,12 @@ async fn test_pipeline_api_create_get_list_and_trigger() {
 	let trigger_body: serde_json::Value = serde_json::from_slice(trigger_response.body()).unwrap();
 	let run_id = trigger_body["run_id"].as_i64().unwrap();
 
-	let run_body = wait_for_run_view(&config, &api_key, pipeline_id, run_id).await;
+	let run_body = wait_for_run_view(&config, &api_key, pipeline_id, run_id).await?;
 	assert_eq!(run_body["pipeline_id"], pipeline_id);
-	assert_eq!(run_body["job_id"].as_i64().unwrap() > 0, true);
-	assert_eq!(run_body["list_id"].as_i64().unwrap() > 0, true);
+	assert!(run_body["job_id"].as_i64().unwrap() > 0);
+	assert!(run_body["list_id"].as_i64().unwrap() > 0);
 	assert_eq!(run_body["stats"]["trigger_reason"], "manual smoke test");
+	Ok(())
 }
 
 #[tokio::test]
@@ -302,7 +321,7 @@ async fn test_pipeline_list_endpoints_clamp_negative_pagination() {
 
 #[tokio::test]
 #[serial]
-async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
+async fn test_pipeline_scheduler_cycle_creates_run_and_usage() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-scheduler", Some(1000), 0).await;
 	let list_id = insert_source_list(db.pool(), tenant_id).await;
@@ -346,7 +365,7 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 			.unwrap();
 	assert_eq!(run_count, 1);
 
-	let usage_count = wait_for_usage_events(db.pool(), pipeline.id, 1).await;
+	let usage_count = wait_for_usage_events(db.pool(), pipeline.id, 1).await?;
 	assert_eq!(usage_count, 1);
 
 	let run_id: i64 = sqlx::query_scalar(
@@ -356,13 +375,15 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 	.fetch_one(db.pool())
 	.await
 	.unwrap();
-	let (run_status, job_id, list_id, _started_at) = wait_for_run_details(db.pool(), run_id).await;
+	let (run_status, job_id, list_id, _started_at) =
+		wait_for_run_details(db.pool(), run_id).await?;
 	assert!(job_id.is_some());
 	assert!(list_id.is_some());
 	assert!(matches!(
 		run_status.as_str(),
 		"publishing" | "running" | "completed" | "failed" | "delivering" | "cancelled"
 	));
+	Ok(())
 }
 
 #[tokio::test]
@@ -426,7 +447,8 @@ async fn test_pipeline_scheduler_respects_global_missed_run_cap() {
 
 #[tokio::test]
 #[serial]
-async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_others() {
+async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_others() -> Result<()>
+{
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-invalid-schedule", Some(1000), 0).await;
 	let list_id = insert_source_list(db.pool(), tenant_id).await;
@@ -482,7 +504,7 @@ async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_oth
 		.await
 		.unwrap();
 
-	let valid_usage_count = wait_for_usage_events(db.pool(), valid_pipeline.id, 1).await;
+	let valid_usage_count = wait_for_usage_events(db.pool(), valid_pipeline.id, 1).await?;
 	assert_eq!(valid_usage_count, 1);
 
 	let invalid_row = sqlx::query(
@@ -514,11 +536,12 @@ async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_oth
 	assert!(invalid_error_message
 		.as_deref()
 		.is_some_and(|message| message.contains("schedule validation failed")));
+	Ok(())
 }
 
 #[tokio::test]
 #[serial]
-async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
+async fn test_pipeline_scheduler_recovers_stranded_queued_runs() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-recover-queued", Some(1000), 0).await;
 	let list_id = insert_source_list(db.pool(), tenant_id).await;
@@ -562,7 +585,7 @@ async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 		.await
 		.unwrap();
 
-	let (status, job_id, list_id, started_at) = wait_for_run_details(db.pool(), run_id).await;
+	let (status, job_id, list_id, started_at) = wait_for_run_details(db.pool(), run_id).await?;
 	assert!(job_id.is_some());
 	assert!(list_id.is_some());
 	assert!(started_at.is_some());
@@ -570,6 +593,84 @@ async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 		status.as_str(),
 		"publishing" | "running" | "completed" | "failed" | "cancelled" | "delivering"
 	));
+	Ok(())
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_scheduler_leaves_force_queued_run_blocked_behind_active_run() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-force-recovery", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let config = worker_pipeline_config(true).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Force Recovery Guard".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats)
+		VALUES ($1, $2, 'manual', 'running', $3, '{}'::jsonb)
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.execute(db.pool())
+	.await
+	.unwrap();
+
+	let blocked_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{"trigger_reason":"forced queue"}'::jsonb, NOW() - INTERVAL '10 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let queued_row = sqlx::query(
+		"SELECT status::TEXT, started_at, job_id, list_id FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(blocked_run_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let queued_status: String = queued_row.get("status");
+	let started_at: Option<chrono::DateTime<chrono::Utc>> = queued_row.get("started_at");
+	let job_id: Option<i32> = queued_row.get("job_id");
+	let created_list_id: Option<i32> = queued_row.get("list_id");
+	assert_eq!(queued_status, "queued");
+	assert!(started_at.is_none());
+	assert!(job_id.is_none());
+	assert!(created_list_id.is_none());
+	Ok(())
 }
 
 #[tokio::test]
@@ -685,13 +786,12 @@ async fn test_pipeline_force_trigger_queues_when_active_run_exists() {
 	let run_id = trigger_body["run_id"].as_i64().unwrap();
 	assert_eq!(trigger_body["status"], "queued");
 
-	let run_row = sqlx::query(
-		"SELECT status::TEXT, started_at, stats FROM v1_pipeline_runs WHERE id = $1",
-	)
-	.bind(run_id)
-	.fetch_one(db.pool())
-	.await
-	.unwrap();
+	let run_row =
+		sqlx::query("SELECT status::TEXT, started_at, stats FROM v1_pipeline_runs WHERE id = $1")
+			.bind(run_id)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
 	let run_status: String = run_row.get("status");
 	let started_at: Option<chrono::DateTime<chrono::Utc>> = run_row.get("started_at");
 	let stats: serde_json::Value = run_row.get("stats");
@@ -783,7 +883,7 @@ async fn test_pipeline_patch_preserves_due_next_run_at() {
 
 #[tokio::test]
 #[serial]
-async fn test_pipeline_recovered_run_executes_from_snapshot_source() {
+async fn test_pipeline_recovered_run_executes_from_snapshot_source() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-source-snapshot", Some(1000), 0).await;
 	let original_list_id = insert_source_list_with_data(
@@ -852,7 +952,7 @@ async fn test_pipeline_recovered_run_executes_from_snapshot_source() {
 		.unwrap();
 
 	let (_status, _job_id, created_list_id, _started_at) =
-		wait_for_run_details(db.pool(), run_id).await;
+		wait_for_run_details(db.pool(), run_id).await?;
 	let created_list_id = created_list_id.unwrap();
 
 	let source_list_id: Option<i32> =
@@ -862,4 +962,5 @@ async fn test_pipeline_recovered_run_executes_from_snapshot_source() {
 			.await
 			.unwrap();
 	assert_eq!(source_list_id, Some(original_list_id));
+	Ok(())
 }

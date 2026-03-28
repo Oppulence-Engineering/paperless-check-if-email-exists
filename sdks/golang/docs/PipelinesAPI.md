@@ -379,7 +379,7 @@ import (
 )
 
 func main() {
-	status := "status_example" // string |  (optional)
+	status := openapiclient.PipelineStatus("active") // PipelineStatus |  (optional)
 	limit := int64(789) // int64 |  (optional)
 	offset := int64(789) // int64 |  (optional)
 
@@ -406,7 +406,7 @@ Other parameters are passed through a pointer to a apiV1ListPipelinesRequest str
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **status** | **string** |  | 
+ **status** | [**PipelineStatus**](PipelineStatus.md) |  | 
  **limit** | **int64** |  | 
  **offset** | **int64** |  | 
 

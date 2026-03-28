@@ -1321,10 +1321,123 @@
         ],
         "type": "object"
       },
+      "PipelineErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
       "PipelinePolicyConfig": {
         "properties": {
           "missed_run_window_hours": {
             "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PipelineRunResultLocation": {
+        "properties": {
+          "download_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "download_url"
+        ],
+        "type": "object"
+      },
+      "PipelineRunStats": {
+        "additionalProperties": true,
+        "properties": {
+          "billed_emails": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "changed_only_export": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "completed_tasks": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "delta_mode": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "freshness_days": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "invalid": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "published_tasks": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "queued_emails": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "risky": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "selected_unique_emails": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "skipped_unchanged": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "source_filename": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_row_count": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "source_unique_emails": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "trigger_reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unknown": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "valid": {
+            "format": "int32",
+            "nullable": true,
             "type": "integer"
           }
         },
@@ -1347,19 +1460,19 @@
       },
       "PipelineRunView": {
         "example": {
-          "billed_emails": 0,
+          "billed_emails": 1,
           "completed_at": "2000-01-23T04:56:07.000+00:00",
           "created_at": "2000-01-23T04:56:07.000+00:00",
           "delivery_attempts": 0,
-          "delivery_error": "delivery_error",
+          "delivery_error": null,
           "delivery_status": "not_requested",
-          "error_code": "error_code",
-          "error_message": "error_message",
+          "error_code": null,
+          "error_message": null,
           "id": 1,
           "job_id": 5,
-          "last_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+          "last_delivery_attempt_at": null,
           "list_id": 5,
-          "next_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+          "next_delivery_attempt_at": null,
           "pipeline_id": 2,
           "result_location": {
             "download_url": "/v1/lists/5/download"
@@ -1371,9 +1484,15 @@
           },
           "started_at": "2000-01-23T04:56:07.000+00:00",
           "stats": {
+            "billed_emails": 1,
+            "delta_mode": true,
+            "freshness_days": 30,
+            "selected_unique_emails": 1,
+            "source_filename": "seed.csv",
+            "source_name": "Weekly Cleanup",
             "trigger_reason": "manual"
           },
-          "status": "queued",
+          "status": "completed",
           "tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
           "trigger_type": "manual",
           "updated_at": "2000-01-23T04:56:07.000+00:00"
@@ -1439,19 +1558,30 @@
             "format": "int64",
             "type": "integer"
           },
-          "result_location": {},
+          "result_location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PipelineRunResultLocation"
+              }
+            ],
+            "nullable": true
+          },
           "scheduled_for": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
-          "source_snapshot": {},
+          "source_snapshot": {
+            "$ref": "#/components/schemas/PipelineSource"
+          },
           "started_at": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
-          "stats": {},
+          "stats": {
+            "$ref": "#/components/schemas/PipelineRunStats"
+          },
           "status": {
             "$ref": "#/components/schemas/PipelineRunStatus"
           },
@@ -4003,7 +4133,7 @@
             "name": "status",
             "required": false,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/PipelineStatus"
             }
           },
           {
@@ -4040,7 +4170,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4050,7 +4180,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4060,7 +4190,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4070,7 +4200,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4109,7 +4239,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4119,7 +4249,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4129,7 +4259,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4139,7 +4269,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4182,7 +4312,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4192,7 +4322,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4202,7 +4332,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4212,7 +4342,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4253,7 +4383,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4263,7 +4393,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4273,7 +4403,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4283,7 +4413,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4334,7 +4464,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4344,7 +4474,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4354,7 +4484,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4364,7 +4494,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4374,7 +4504,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4417,7 +4547,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4427,7 +4557,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4437,7 +4567,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4447,7 +4577,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4490,7 +4620,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4500,7 +4630,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4510,7 +4640,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4520,7 +4650,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4581,7 +4711,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4591,7 +4721,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4601,7 +4731,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4611,7 +4741,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4664,7 +4794,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4674,7 +4804,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4684,7 +4814,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4694,7 +4824,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4747,7 +4877,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4757,7 +4887,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4767,7 +4897,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4777,7 +4907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4787,7 +4917,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -4797,7 +4927,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PipelineErrorResponse"
                 }
               }
             },
@@ -5029,6 +5159,48 @@
     {
       "description": "Reacher Production",
       "url": "https://api.reacher.email"
+    }
+  ],
+  "tags": [
+    {
+      "description": "System and service metadata endpoints",
+      "name": "System"
+    },
+    {
+      "description": "Service health endpoints",
+      "name": "Health"
+    },
+    {
+      "description": "Legacy v0 API endpoints",
+      "name": "v0"
+    },
+    {
+      "description": "Primary v1 API endpoints",
+      "name": "v1"
+    },
+    {
+      "description": "Job lifecycle and results endpoints",
+      "name": "Jobs"
+    },
+    {
+      "description": "Scheduled list-cleaning pipeline endpoints",
+      "name": "Pipelines"
+    },
+    {
+      "description": "Account-level endpoints",
+      "name": "Account"
+    },
+    {
+      "description": "Administrative endpoints",
+      "name": "Admin"
+    },
+    {
+      "description": "Administrative job endpoints",
+      "name": "Admin Jobs"
+    },
+    {
+      "description": "Tenant-scoped account settings and domain endpoints",
+      "name": "Tenant"
     }
   ]
 }

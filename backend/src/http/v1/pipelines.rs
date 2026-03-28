@@ -13,6 +13,7 @@ use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
+use tracing::error;
 use warp::http::StatusCode;
 use warp::Filter;
 
@@ -34,13 +35,14 @@ pub struct DeletePipelineResponse {
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct ErrorResponse {
+pub struct PipelineErrorResponse {
 	pub error: String,
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 #[into_params(parameter_in = Query)]
 struct PipelineListQuery {
+	#[param(value_type = Option<PipelineStatus>)]
 	status: Option<String>,
 	limit: Option<i64>,
 	offset: Option<i64>,
@@ -69,13 +71,30 @@ fn parse_status(value: Option<String>) -> Result<Option<PipelineStatus>, warp::R
 
 fn map_pipeline_request_error(err: anyhow::Error) -> ReacherResponseError {
 	if let Some(pipeline_err) = err.downcast_ref::<PipelineRequestError>() {
-		let status = match pipeline_err {
-			PipelineRequestError::Validation(_) => StatusCode::BAD_REQUEST,
-			PipelineRequestError::NotFound(_) => StatusCode::NOT_FOUND,
-			PipelineRequestError::Conflict(_) => StatusCode::CONFLICT,
-			PipelineRequestError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+		return match pipeline_err {
+			PipelineRequestError::Validation(_)
+			| PipelineRequestError::NotFound(_)
+			| PipelineRequestError::Conflict(_) => {
+				let status = match pipeline_err {
+					PipelineRequestError::Validation(_) => StatusCode::BAD_REQUEST,
+					PipelineRequestError::NotFound(_) => StatusCode::NOT_FOUND,
+					PipelineRequestError::Conflict(_) => StatusCode::CONFLICT,
+					PipelineRequestError::Internal(_) => unreachable!(),
+				};
+				ReacherResponseError::new(status, pipeline_err.to_string())
+			}
+			PipelineRequestError::Internal(inner) => {
+				error!(
+					target: LOG_TARGET,
+					error = ?inner,
+					"Pipeline request failed with internal error"
+				);
+				ReacherResponseError::new(
+					StatusCode::INTERNAL_SERVER_ERROR,
+					"internal server error",
+				)
+			}
 		};
-		return ReacherResponseError::new(status, pipeline_err.to_string());
 	}
 
 	ReacherResponseError::from(err)
@@ -274,10 +293,10 @@ async fn get_run_handler(
 	request_body = CreatePipelineInput,
 	responses(
 		(status = 201, description = "Pipeline created", body = PipelineView),
-		(status = 400, description = "Bad request", body = ErrorResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 400, description = "Bad request", body = PipelineErrorResponse),
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_create_pipeline(
@@ -302,10 +321,10 @@ pub fn v1_create_pipeline(
 	params(PipelineListQuery),
 	responses(
 		(status = 200, description = "Pipeline list", body = ListPipelinesResponse),
-		(status = 400, description = "Bad request", body = ErrorResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 400, description = "Bad request", body = PipelineErrorResponse),
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_list_pipelines(
@@ -328,10 +347,10 @@ pub fn v1_list_pipelines(
 	params(("pipeline_id" = i64, Path, description = "Pipeline identifier")),
 	responses(
 		(status = 200, description = "Pipeline detail", body = PipelineView),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_get_pipeline(
@@ -354,11 +373,11 @@ pub fn v1_get_pipeline(
 	request_body = UpdatePipelineInput,
 	responses(
 		(status = 200, description = "Pipeline updated", body = PipelineView),
-		(status = 400, description = "Bad request", body = ErrorResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 400, description = "Bad request", body = PipelineErrorResponse),
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_update_pipeline(
@@ -383,10 +402,10 @@ pub fn v1_update_pipeline(
 	params(("pipeline_id" = i64, Path, description = "Pipeline identifier")),
 	responses(
 		(status = 200, description = "Pipeline deleted", body = DeletePipelineResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_delete_pipeline(
@@ -408,10 +427,10 @@ pub fn v1_delete_pipeline(
 	params(("pipeline_id" = i64, Path, description = "Pipeline identifier")),
 	responses(
 		(status = 200, description = "Pipeline paused", body = PipelineView),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_pause_pipeline(
@@ -443,10 +462,10 @@ pub fn v1_pause_pipeline(
 	params(("pipeline_id" = i64, Path, description = "Pipeline identifier")),
 	responses(
 		(status = 200, description = "Pipeline resumed", body = PipelineView),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_resume_pipeline(
@@ -479,12 +498,12 @@ pub fn v1_resume_pipeline(
 	request_body = TriggerPipelineInput,
 	responses(
 		(status = 202, description = "Pipeline run triggered", body = TriggerPipelineResponse),
-		(status = 400, description = "Bad request", body = ErrorResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 409, description = "Conflict", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 400, description = "Bad request", body = PipelineErrorResponse),
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 409, description = "Conflict", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_trigger_pipeline(
@@ -509,10 +528,10 @@ pub fn v1_trigger_pipeline(
 	params(("pipeline_id" = i64, Path, description = "Pipeline identifier"), PipelineRunListQuery),
 	responses(
 		(status = 200, description = "Pipeline run history", body = ListPipelineRunsResponse),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_list_pipeline_runs(
@@ -540,10 +559,10 @@ pub fn v1_list_pipeline_runs(
 	),
 	responses(
 		(status = 200, description = "Pipeline run detail", body = PipelineRunView),
-		(status = 403, description = "Forbidden", body = ErrorResponse),
-		(status = 404, description = "Not found", body = ErrorResponse),
-		(status = 503, description = "Service unavailable", body = ErrorResponse),
-		(status = 500, description = "Internal server error", body = ErrorResponse)
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse),
+		(status = 500, description = "Internal server error", body = PipelineErrorResponse)
 	)
 )]
 pub fn v1_get_pipeline_run(

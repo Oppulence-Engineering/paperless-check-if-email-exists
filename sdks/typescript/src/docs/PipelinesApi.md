@@ -310,7 +310,7 @@ import {
 const configuration = new Configuration();
 const apiInstance = new PipelinesApi(configuration);
 
-let status: string; // (optional) (default to undefined)
+let status: PipelineStatus; // (optional) (default to undefined)
 let limit: number; // (optional) (default to undefined)
 let offset: number; // (optional) (default to undefined)
 
@@ -325,7 +325,7 @@ const { status, data } = await apiInstance.v1ListPipelines(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **status** | [**string**] |  | (optional) defaults to undefined|
+| **status** | **PipelineStatus** |  | (optional) defaults to undefined|
 | **limit** | [**number**] |  | (optional) defaults to undefined|
 | **offset** | [**number**] |  | (optional) defaults to undefined|
 

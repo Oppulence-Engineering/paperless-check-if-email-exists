@@ -68,7 +68,10 @@ docs/MxDetails.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
+docs/PipelineErrorResponse.md
 docs/PipelinePolicyConfig.md
+docs/PipelineRunResultLocation.md
+docs/PipelineRunStats.md
 docs/PipelineRunStatus.md
 docs/PipelineRunView.md
 docs/PipelineSchedule.md
@@ -158,7 +161,10 @@ model_mx_details.go
 model_pipeline_delivery_config.go
 model_pipeline_delivery_status.go
 model_pipeline_delivery_webhook.go
+model_pipeline_error_response.go
 model_pipeline_policy_config.go
+model_pipeline_run_result_location.go
+model_pipeline_run_stats.go
 model_pipeline_run_status.go
 model_pipeline_run_view.go
 model_pipeline_schedule.go

@@ -674,6 +674,20 @@ async fn recover_stranded_queued_pipeline_runs(
 			  AND pr.updated_at < NOW() - INTERVAL '5 minutes'
 			  AND p.deleted_at IS NULL
 			  AND t.status = 'active'::tenant_status
+			  AND NOT EXISTS (
+				SELECT 1
+				FROM v1_pipeline_runs sibling
+				WHERE sibling.pipeline_id = pr.pipeline_id
+				  AND sibling.id <> pr.id
+				  AND sibling.status IN (
+					'queued'::pipeline_run_status,
+					'preparing'::pipeline_run_status,
+					'fetching_source'::pipeline_run_status,
+					'publishing'::pipeline_run_status,
+					'running'::pipeline_run_status,
+					'delivering'::pipeline_run_status
+				  )
+			  )
 			ORDER BY pr.created_at ASC
 			LIMIT $1
 			FOR UPDATE SKIP LOCKED
@@ -1532,6 +1546,8 @@ async fn execute_pipeline_run_inner(
 	let tenant_id: Uuid = run.get("tenant_id");
 	let source_snapshot: Value = run.get("source_snapshot");
 	let source = parse_pipeline_source_snapshot(&source_snapshot)?;
+	let normalized_source_snapshot =
+		serde_json::to_value(&source).context("failed to serialize pipeline source snapshot")?;
 	let verification: PipelineVerificationSettings =
 		serde_json::from_value(run.get::<Value, _>("verification_settings")).unwrap_or_default();
 	let delivery: PipelineDeliveryConfig =
@@ -1548,21 +1564,13 @@ async fn execute_pipeline_run_inner(
 	let (prepared_list, delta_summary) =
 		apply_delta_selection(pg_pool, pipeline_id, &verification, prepared_list).await?;
 	let tenant_ctx = resolve_tenant_context_by_id(pg_pool, tenant_id).await?;
-	let source_snapshot = json!({
-		"source": source,
-		"source_name": prepared_list.source_name,
-		"source_filename": prepared_list.source_filename,
-		"row_count": prepared_list.rows.len(),
-		"unique_emails": prepared_list.unique_email_count,
-		"delta_mode": verification.delta_mode,
-		"freshness_days": verification.freshness_days,
-		"changed_only_export": verification.delta_mode,
-		"selected_unique_emails": delta_summary.selected_unique_emails,
-		"skipped_unchanged": delta_summary.skipped_unchanged
-	});
 	let updated_stats = merge_pipeline_run_stats(
 		run.get::<Value, _>("stats"),
 		json!({
+			"source_name": prepared_list.source_name.clone(),
+			"source_filename": prepared_list.source_filename.clone(),
+			"source_row_count": prepared_list.rows.len(),
+			"source_unique_emails": prepared_list.unique_email_count,
 			"delta_mode": verification.delta_mode,
 			"freshness_days": verification.freshness_days,
 			"selected_unique_emails": delta_summary.selected_unique_emails,
@@ -1574,7 +1582,7 @@ async fn execute_pipeline_run_inner(
 		"UPDATE v1_pipeline_runs SET status = 'fetching_source'::pipeline_run_status, source_snapshot = $2, stats = $3, updated_at = NOW() WHERE id = $1",
 	)
 	.bind(run_id)
-	.bind(&source_snapshot)
+	.bind(&normalized_source_snapshot)
 	.bind(updated_stats)
 	.execute(pg_pool)
 	.await?;
@@ -1599,7 +1607,7 @@ async fn execute_pipeline_run_inner(
 				run_id,
 				"insufficient_credits",
 				"Tenant quota would be exceeded by this pipeline run",
-				&source_snapshot,
+				&normalized_source_snapshot,
 			)
 			.await?;
 			return Ok(());
@@ -2567,11 +2575,12 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 }
 
 fn compute_delivery_retry_delay_seconds(base_delay_seconds: i32, attempt_number: i32) -> i32 {
+	let base_delay_seconds = base_delay_seconds.clamp(1, 86_400);
 	let exponent = attempt_number.saturating_sub(1).min(6) as u32;
 	let multiplier = 2i32.saturating_pow(exponent);
 	base_delay_seconds
 		.saturating_mul(multiplier)
-		.clamp(base_delay_seconds.max(1), 86_400)
+		.clamp(base_delay_seconds, 86_400)
 }
 
 async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) -> Result<()> {
@@ -3141,6 +3150,12 @@ mod tests {
 		assert_eq!(next.hour(), 13);
 		assert_eq!(next.minute(), 0);
 		assert_eq!(next.second(), 0);
+	}
+
+	#[test]
+	fn test_compute_delivery_retry_delay_clamps_large_base_delay() {
+		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 1), 86_400);
+		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 4), 86_400);
 	}
 
 	#[test]

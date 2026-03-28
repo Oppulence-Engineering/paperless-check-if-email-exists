@@ -264,7 +264,7 @@ func (a *PipelinesAPIService) V1CreatePipelineExecute(r PipelinesAPIV1CreatePipe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -275,7 +275,7 @@ func (a *PipelinesAPIService) V1CreatePipelineExecute(r PipelinesAPIV1CreatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -286,7 +286,7 @@ func (a *PipelinesAPIService) V1CreatePipelineExecute(r PipelinesAPIV1CreatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -297,7 +297,7 @@ func (a *PipelinesAPIService) V1CreatePipelineExecute(r PipelinesAPIV1CreatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -422,7 +422,7 @@ func (a *PipelinesAPIService) V1DeletePipelineExecute(r PipelinesAPIV1DeletePipe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -433,7 +433,7 @@ func (a *PipelinesAPIService) V1DeletePipelineExecute(r PipelinesAPIV1DeletePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -444,7 +444,7 @@ func (a *PipelinesAPIService) V1DeletePipelineExecute(r PipelinesAPIV1DeletePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -455,7 +455,7 @@ func (a *PipelinesAPIService) V1DeletePipelineExecute(r PipelinesAPIV1DeletePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -580,7 +580,7 @@ func (a *PipelinesAPIService) V1GetPipelineExecute(r PipelinesAPIV1GetPipelineRe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -591,7 +591,7 @@ func (a *PipelinesAPIService) V1GetPipelineExecute(r PipelinesAPIV1GetPipelineRe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -602,7 +602,7 @@ func (a *PipelinesAPIService) V1GetPipelineExecute(r PipelinesAPIV1GetPipelineRe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -613,7 +613,7 @@ func (a *PipelinesAPIService) V1GetPipelineExecute(r PipelinesAPIV1GetPipelineRe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -742,7 +742,7 @@ func (a *PipelinesAPIService) V1GetPipelineRunExecute(r PipelinesAPIV1GetPipelin
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -753,7 +753,7 @@ func (a *PipelinesAPIService) V1GetPipelineRunExecute(r PipelinesAPIV1GetPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -764,7 +764,7 @@ func (a *PipelinesAPIService) V1GetPipelineRunExecute(r PipelinesAPIV1GetPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -775,7 +775,7 @@ func (a *PipelinesAPIService) V1GetPipelineRunExecute(r PipelinesAPIV1GetPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -918,7 +918,7 @@ func (a *PipelinesAPIService) V1ListPipelineRunsExecute(r PipelinesAPIV1ListPipe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -929,7 +929,7 @@ func (a *PipelinesAPIService) V1ListPipelineRunsExecute(r PipelinesAPIV1ListPipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -940,7 +940,7 @@ func (a *PipelinesAPIService) V1ListPipelineRunsExecute(r PipelinesAPIV1ListPipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -951,7 +951,7 @@ func (a *PipelinesAPIService) V1ListPipelineRunsExecute(r PipelinesAPIV1ListPipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -978,12 +978,12 @@ func (a *PipelinesAPIService) V1ListPipelineRunsExecute(r PipelinesAPIV1ListPipe
 type PipelinesAPIV1ListPipelinesRequest struct {
 	ctx context.Context
 	ApiService PipelinesAPI
-	status *string
+	status *PipelineStatus
 	limit *int64
 	offset *int64
 }
 
-func (r PipelinesAPIV1ListPipelinesRequest) Status(status string) PipelinesAPIV1ListPipelinesRequest {
+func (r PipelinesAPIV1ListPipelinesRequest) Status(status PipelineStatus) PipelinesAPIV1ListPipelinesRequest {
 	r.status = &status
 	return r
 }
@@ -1099,7 +1099,7 @@ func (a *PipelinesAPIService) V1ListPipelinesExecute(r PipelinesAPIV1ListPipelin
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1110,7 +1110,7 @@ func (a *PipelinesAPIService) V1ListPipelinesExecute(r PipelinesAPIV1ListPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1121,7 +1121,7 @@ func (a *PipelinesAPIService) V1ListPipelinesExecute(r PipelinesAPIV1ListPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1132,7 +1132,7 @@ func (a *PipelinesAPIService) V1ListPipelinesExecute(r PipelinesAPIV1ListPipelin
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1257,7 +1257,7 @@ func (a *PipelinesAPIService) V1PausePipelineExecute(r PipelinesAPIV1PausePipeli
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1268,7 +1268,7 @@ func (a *PipelinesAPIService) V1PausePipelineExecute(r PipelinesAPIV1PausePipeli
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1279,7 +1279,7 @@ func (a *PipelinesAPIService) V1PausePipelineExecute(r PipelinesAPIV1PausePipeli
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1290,7 +1290,7 @@ func (a *PipelinesAPIService) V1PausePipelineExecute(r PipelinesAPIV1PausePipeli
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1415,7 +1415,7 @@ func (a *PipelinesAPIService) V1ResumePipelineExecute(r PipelinesAPIV1ResumePipe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1426,7 +1426,7 @@ func (a *PipelinesAPIService) V1ResumePipelineExecute(r PipelinesAPIV1ResumePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1437,7 +1437,7 @@ func (a *PipelinesAPIService) V1ResumePipelineExecute(r PipelinesAPIV1ResumePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1448,7 +1448,7 @@ func (a *PipelinesAPIService) V1ResumePipelineExecute(r PipelinesAPIV1ResumePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1584,7 +1584,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1595,7 +1595,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1606,7 +1606,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1617,7 +1617,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 409 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1628,7 +1628,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1639,7 +1639,7 @@ func (a *PipelinesAPIService) V1TriggerPipelineExecute(r PipelinesAPIV1TriggerPi
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1775,7 +1775,7 @@ func (a *PipelinesAPIService) V1UpdatePipelineExecute(r PipelinesAPIV1UpdatePipe
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1786,7 +1786,7 @@ func (a *PipelinesAPIService) V1UpdatePipelineExecute(r PipelinesAPIV1UpdatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1797,7 +1797,7 @@ func (a *PipelinesAPIService) V1UpdatePipelineExecute(r PipelinesAPIV1UpdatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1808,7 +1808,7 @@ func (a *PipelinesAPIService) V1UpdatePipelineExecute(r PipelinesAPIV1UpdatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -1819,7 +1819,7 @@ func (a *PipelinesAPIService) V1UpdatePipelineExecute(r PipelinesAPIV1UpdatePipe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
-			var v ErrorResponse
+			var v PipelineErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()

@@ -3,6 +3,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -12,7 +13,7 @@ TS_DOCS_DIR = ROOT / "sdks" / "typescript" / "src" / "docs"
 GO_DOCS_DIR = GO_SDK_DIR / "docs"
 
 
-def load_schemas() -> dict[str, dict]:
+def load_schemas() -> Dict[str, Dict[str, Any]]:
     spec = json.loads(SPEC_PATH.read_text())
     return spec.get("components", {}).get("schemas", {})
 
@@ -54,7 +55,7 @@ def camel_to_snake(name: str) -> str:
     return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", first_pass).lower()
 
 
-def required_fields(schema_name: str) -> set[str]:
+def required_fields(schema_name: str) -> Set[str]:
     spec_required = set(SCHEMAS.get(schema_name, {}).get("required", []))
     if spec_required or schema_name in SPECIAL_REQUIRED_FIELDS:
         return spec_required | SPECIAL_REQUIRED_FIELDS.get(schema_name, set())
@@ -66,12 +67,33 @@ def write_if_changed(path: Path, content: str) -> None:
         path.write_text(content)
 
 
-def replace_or_raise(text: str, old: str, new: str, *, file: Path, label: str) -> str:
+def replace_or_raise(
+    text: str,
+    old: str,
+    new: str,
+    *,
+    file: Path,
+    label: str,
+    patched_marker: Optional[str] = None,
+) -> str:
     if old in text:
         return text.replace(old, new)
-    if new in text:
+    marker = patched_marker if patched_marker is not None else new
+    if marker in text:
         return text
     raise RuntimeError(f"Postprocess failed in {file}: missing expected snippet for {label}")
+
+
+def remove_or_raise(text: str, snippet: str, *, file: Path, label: str, residual_marker: str) -> str:
+    if snippet in text:
+        return text.replace(snippet, "")
+    if residual_marker not in text:
+        return text
+    raise RuntimeError(f"Postprocess failed in {file}: expected to remove {label}")
+
+
+def strip_prefix(value: str, prefix: str) -> str:
+    return value[len(prefix) :] if value.startswith(prefix) else value
 
 
 def go_model_path(model_name: str) -> Path:
@@ -87,7 +109,7 @@ def go_model_path(model_name: str) -> Path:
     return direct_path
 
 
-def required_fields_from_go_model(model_name: str) -> set[str]:
+def required_fields_from_go_model(model_name: str) -> Set[str]:
     model_path = go_model_path(model_name)
     if not model_path.exists():
         return set()
@@ -113,12 +135,12 @@ def required_fields_from_go_model(model_name: str) -> set[str]:
     return required
 
 
-def extract_go_signatures(model_name: str) -> dict[str, str]:
+def extract_go_signatures(model_name: str) -> Dict[str, str]:
     model_path = go_model_path(model_name)
     if not model_path.exists():
         return {}
 
-    signatures: dict[str, str] = {}
+    signatures: Dict[str, str] = {}
     function_pattern = re.compile(r"^func\s+(?:\(([^)]*)\)\s+)?([A-Za-z0-9_]+)\(")
     for line in model_path.read_text().splitlines():
         stripped = line.strip()
@@ -166,7 +188,7 @@ def normalize_go_doc_methods(text: str, model_name: str) -> str:
             index += 1
             continue
 
-        title = lines[index].removeprefix("### ").strip()
+        title = strip_prefix(lines[index], "### ").strip()
         next_index = index + 1
         while next_index < footer_index and not lines[next_index].startswith("### "):
             next_index += 1
@@ -227,12 +249,24 @@ def normalize_go_models() -> None:
     utils_path = GO_SDK_DIR / "utils.go"
     if utils_path.exists():
         utils_text = utils_path.read_text()
-        utils_text = utils_text.replace("\tdec.DisallowUnknownFields()\n", "")
+        utils_text = remove_or_raise(
+            utils_text,
+            "\tdec.DisallowUnknownFields()\n",
+            file=utils_path,
+            label="utils.go DisallowUnknownFields",
+            residual_marker="DisallowUnknownFields",
+        )
         write_if_changed(utils_path, utils_text)
 
     for path in GO_SDK_DIR.glob("model_*.go"):
         text = path.read_text()
-        text = text.replace("\tdecoder.DisallowUnknownFields()\n", "")
+        text = remove_or_raise(
+            text,
+            "\tdecoder.DisallowUnknownFields()\n",
+            file=path,
+            label=f"{path.name} DisallowUnknownFields",
+            residual_marker="DisallowUnknownFields",
+        )
 
         if path.name == "model_pipeline_source.go":
             text = replace_or_raise(
@@ -271,6 +305,7 @@ def normalize_go_models() -> None:
                 "toSerialize[\"source_snapshot\"] = o.SourceSnapshot",
                 file=path,
                 label="PipelineRunView:source_snapshot serialization",
+                patched_marker="if o.ScheduledFor.IsSet() {\n\t\ttoSerialize[\"scheduled_for\"] = o.ScheduledFor.Get()\n\t}\n\ttoSerialize[\"source_snapshot\"] = o.SourceSnapshot",
             )
             text = replace_or_raise(
                 text,
@@ -278,6 +313,7 @@ def normalize_go_models() -> None:
                 "toSerialize[\"stats\"] = o.Stats",
                 file=path,
                 label="PipelineRunView:stats serialization",
+                patched_marker="if o.StartedAt.IsSet() {\n\t\ttoSerialize[\"started_at\"] = o.StartedAt.Get()\n\t}\n\ttoSerialize[\"stats\"] = o.Stats",
             )
 
         pipeline_source_variant_patches = {
@@ -325,7 +361,7 @@ def normalize_go_docs() -> None:
         return
     for path in GO_DOCS_DIR.glob("*.md"):
         text = path.read_text()
-        model_name = text.splitlines()[0].removeprefix("# ").strip()
+        model_name = strip_prefix(text.splitlines()[0], "# ").strip()
         if model_name in GO_UNION_DOCS:
             write_if_changed(path, render_go_union_doc(model_name))
             continue
@@ -428,7 +464,7 @@ def ts_value(model_name: str, prop_name: str, type_text: str) -> str:
     return "{} as any"
 
 
-def replace_ts_example(text: str, model_name: str, properties: list[tuple[str, str]]) -> str:
+def replace_ts_example(text: str, model_name: str, properties: List[Tuple[str, str]]) -> str:
     if model_name == "CreatePipelineInput":
         example_lines = [
             "    name: 'Weekly Cleanup',",
@@ -470,12 +506,12 @@ def normalize_typescript_docs() -> None:
         return
     for path in TS_DOCS_DIR.glob("*.md"):
         text = path.read_text()
-        model_name = text.splitlines()[0].removeprefix("# ").strip()
+        model_name = strip_prefix(text.splitlines()[0], "# ").strip()
         required = required_fields(model_name)
 
         lines = text.splitlines()
         in_properties = False
-        properties: list[tuple[str, str]] = []
+        properties: List[Tuple[str, str]] = []
         for idx, line in enumerate(lines):
             if line.strip() == "## Properties":
                 in_properties = True
@@ -522,7 +558,7 @@ def normalize_typescript_readme() -> None:
         "v1UpdatePipeline",
     }
 
-    normalized_lines: list[str] = []
+    normalized_lines: List[str] = []
     for line in text.splitlines():
         if not line.startswith("*PipelinesApi* |"):
             normalized_lines.append(line)

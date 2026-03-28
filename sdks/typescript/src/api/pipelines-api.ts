@@ -26,13 +26,15 @@ import type { CreatePipelineInput } from '../models';
 // @ts-ignore
 import type { DeletePipelineResponse } from '../models';
 // @ts-ignore
-import type { ErrorResponse } from '../models';
-// @ts-ignore
 import type { ListPipelineRunsResponse } from '../models';
 // @ts-ignore
 import type { ListPipelinesResponse } from '../models';
 // @ts-ignore
+import type { PipelineErrorResponse } from '../models';
+// @ts-ignore
 import type { PipelineRunView } from '../models';
+// @ts-ignore
+import type { PipelineStatus } from '../models';
 // @ts-ignore
 import type { PipelineView } from '../models';
 // @ts-ignore
@@ -251,13 +253,13 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
         /**
          * 
          * @summary GET /v1/pipelines
-         * @param {string} [status] 
+         * @param {PipelineStatus} [status] 
          * @param {number} [limit] 
          * @param {number} [offset] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ListPipelines: async (status?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1ListPipelines: async (status?: PipelineStatus, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/pipelines`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -537,13 +539,13 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary GET /v1/pipelines
-         * @param {string} [status] 
+         * @param {PipelineStatus} [status] 
          * @param {number} [limit] 
          * @param {number} [offset] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ListPipelines(status?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListPipelinesResponse>> {
+        async v1ListPipelines(status?: PipelineStatus, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListPipelinesResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListPipelines(status, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['PipelinesApi.v1ListPipelines']?.[localVarOperationServerIndex]?.url;
@@ -923,10 +925,10 @@ export interface PipelinesApiV1ListPipelineRunsRequest {
 export interface PipelinesApiV1ListPipelinesRequest {
     /**
      * 
-     * @type {string}
+     * @type {PipelineStatus}
      * @memberof PipelinesApiV1ListPipelines
      */
-    readonly status?: string
+    readonly status?: PipelineStatus
 
     /**
      * 

@@ -37,11 +37,11 @@ type PipelineRunView struct {
 	ListId NullableInt32 `json:"list_id,omitempty"`
 	NextDeliveryAttemptAt NullableTime `json:"next_delivery_attempt_at,omitempty"`
 	PipelineId int64 `json:"pipeline_id"`
-	ResultLocation interface{} `json:"result_location,omitempty"`
+	ResultLocation NullablePipelineRunResultLocation `json:"result_location,omitempty"`
 	ScheduledFor NullableTime `json:"scheduled_for,omitempty"`
-	SourceSnapshot interface{} `json:"source_snapshot"`
+	SourceSnapshot PipelineSource `json:"source_snapshot"`
 	StartedAt NullableTime `json:"started_at,omitempty"`
-	Stats interface{} `json:"stats"`
+	Stats PipelineRunStats `json:"stats"`
 	Status PipelineRunStatus `json:"status"`
 	TenantId string `json:"tenant_id"`
 	TriggerType string `json:"trigger_type"`
@@ -54,7 +54,7 @@ type _PipelineRunView PipelineRunView
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot interface{}, stats interface{}, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView {
+func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot PipelineSource, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView {
 	this := PipelineRunView{}
 	this.BilledEmails = billedEmails
 	this.CreatedAt = createdAt
@@ -560,36 +560,45 @@ func (o *PipelineRunView) SetPipelineId(v int64) {
 }
 
 // GetResultLocation returns the ResultLocation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunView) GetResultLocation() interface{} {
-	if o == nil {
-		var ret interface{}
+func (o *PipelineRunView) GetResultLocation() PipelineRunResultLocation {
+	if o == nil || IsNil(o.ResultLocation.Get()) {
+		var ret PipelineRunResultLocation
 		return ret
 	}
-	return o.ResultLocation
+	return *o.ResultLocation.Get()
 }
 
 // GetResultLocationOk returns a tuple with the ResultLocation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunView) GetResultLocationOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.ResultLocation) {
+func (o *PipelineRunView) GetResultLocationOk() (*PipelineRunResultLocation, bool) {
+	if o == nil {
 		return nil, false
 	}
-	return &o.ResultLocation, true
+	return o.ResultLocation.Get(), o.ResultLocation.IsSet()
 }
 
 // HasResultLocation returns a boolean if a field has been set.
 func (o *PipelineRunView) HasResultLocation() bool {
-	if o != nil && !IsNil(o.ResultLocation) {
+	if o != nil && o.ResultLocation.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetResultLocation gets a reference to the given interface{} and assigns it to the ResultLocation field.
-func (o *PipelineRunView) SetResultLocation(v interface{}) {
-	o.ResultLocation = v
+// SetResultLocation gets a reference to the given NullablePipelineRunResultLocation and assigns it to the ResultLocation field.
+func (o *PipelineRunView) SetResultLocation(v PipelineRunResultLocation) {
+	o.ResultLocation.Set(&v)
+}
+// SetResultLocationNil sets the value for ResultLocation to be an explicit nil
+func (o *PipelineRunView) SetResultLocationNil() {
+	o.ResultLocation.Set(nil)
+}
+
+// UnsetResultLocation ensures that no value is present for ResultLocation, not even an explicit nil
+func (o *PipelineRunView) UnsetResultLocation() {
+	o.ResultLocation.Unset()
 }
 
 // GetScheduledFor returns the ScheduledFor field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -635,10 +644,9 @@ func (o *PipelineRunView) UnsetScheduledFor() {
 }
 
 // GetSourceSnapshot returns the SourceSnapshot field value
-// If the value is explicit nil, the zero value for interface{} will be returned
-func (o *PipelineRunView) GetSourceSnapshot() interface{} {
+func (o *PipelineRunView) GetSourceSnapshot() PipelineSource {
 	if o == nil {
-		var ret interface{}
+		var ret PipelineSource
 		return ret
 	}
 
@@ -647,16 +655,15 @@ func (o *PipelineRunView) GetSourceSnapshot() interface{} {
 
 // GetSourceSnapshotOk returns a tuple with the SourceSnapshot field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunView) GetSourceSnapshotOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.SourceSnapshot) {
+func (o *PipelineRunView) GetSourceSnapshotOk() (*PipelineSource, bool) {
+	if o == nil {
 		return nil, false
 	}
 	return &o.SourceSnapshot, true
 }
 
 // SetSourceSnapshot sets field value
-func (o *PipelineRunView) SetSourceSnapshot(v interface{}) {
+func (o *PipelineRunView) SetSourceSnapshot(v PipelineSource) {
 	o.SourceSnapshot = v
 }
 
@@ -703,10 +710,9 @@ func (o *PipelineRunView) UnsetStartedAt() {
 }
 
 // GetStats returns the Stats field value
-// If the value is explicit nil, the zero value for interface{} will be returned
-func (o *PipelineRunView) GetStats() interface{} {
+func (o *PipelineRunView) GetStats() PipelineRunStats {
 	if o == nil {
-		var ret interface{}
+		var ret PipelineRunStats
 		return ret
 	}
 
@@ -715,16 +721,15 @@ func (o *PipelineRunView) GetStats() interface{} {
 
 // GetStatsOk returns a tuple with the Stats field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunView) GetStatsOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.Stats) {
+func (o *PipelineRunView) GetStatsOk() (*PipelineRunStats, bool) {
+	if o == nil {
 		return nil, false
 	}
 	return &o.Stats, true
 }
 
 // SetStats sets field value
-func (o *PipelineRunView) SetStats(v interface{}) {
+func (o *PipelineRunView) SetStats(v PipelineRunStats) {
 	o.Stats = v
 }
 
@@ -864,8 +869,8 @@ func (o PipelineRunView) ToMap() (map[string]interface{}, error) {
 		toSerialize["next_delivery_attempt_at"] = o.NextDeliveryAttemptAt.Get()
 	}
 	toSerialize["pipeline_id"] = o.PipelineId
-	if o.ResultLocation != nil {
-		toSerialize["result_location"] = o.ResultLocation
+	if o.ResultLocation.IsSet() {
+		toSerialize["result_location"] = o.ResultLocation.Get()
 	}
 	if o.ScheduledFor.IsSet() {
 		toSerialize["scheduled_for"] = o.ScheduledFor.Get()
