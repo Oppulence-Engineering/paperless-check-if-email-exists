@@ -2414,11 +2414,19 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 		return Ok(());
 	}
 
+	let delivery_status = parse_pipeline_delivery_status(&row.get::<String, _>("delivery_status"))?;
+	let next_delivery_attempt_at: Option<DateTime<Utc>> = row.get("next_delivery_attempt_at");
 	let delivery: PipelineDeliveryConfig =
 		serde_json::from_value(row.get("delivery_config")).unwrap_or_default();
 	let default_webhook_url: Option<String> = row.get("default_webhook_url");
 	let has_webhook_target = delivery.webhook.is_some() || default_webhook_url.is_some();
 	if !has_webhook_target {
+		if matches!(
+			delivery_status,
+			PipelineDeliveryStatus::Delivered | PipelineDeliveryStatus::Failed
+		) {
+			return Ok(());
+		}
 		sqlx::query(
 			r#"
 			UPDATE v1_pipeline_runs
@@ -2435,8 +2443,6 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 		return Ok(());
 	}
 
-	let delivery_status = parse_pipeline_delivery_status(&row.get::<String, _>("delivery_status"))?;
-	let next_delivery_attempt_at: Option<DateTime<Utc>> = row.get("next_delivery_attempt_at");
 	if !force {
 		match delivery_status {
 			PipelineDeliveryStatus::Delivered
@@ -2474,12 +2480,14 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 			    updated_at = NOW()
 			WHERE id = $1
 			  AND delivery_status = $3::pipeline_delivery_status
+			  AND next_delivery_attempt_at IS NOT DISTINCT FROM $4
 			RETURNING id
 			"#,
 		)
 		.bind(run_id)
 		.bind(in_flight_retry_at)
 		.bind(enum_str(&delivery_status))
+		.bind(next_delivery_attempt_at)
 		.fetch_optional(pg_pool)
 		.await?
 	};
