@@ -426,6 +426,98 @@ async fn test_pipeline_scheduler_respects_global_missed_run_cap() {
 
 #[tokio::test]
 #[serial]
+async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_others() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-invalid-schedule", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let config = worker_pipeline_config(true).await;
+
+	let valid_pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Valid Scheduled Cleanup".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	let invalid_pipeline_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipelines (
+			tenant_id, name, status, source_type, source_config, schedule_cron, schedule_timezone,
+			verification_settings, policy_config, delivery_config, next_run_at
+		)
+		VALUES (
+			$1, 'Invalid Scheduled Cleanup', 'active'::pipeline_status, 'list_snapshot'::pipeline_source_type,
+			$2, '*/5 * * * *', 'UTC', '{}'::jsonb, '{}'::jsonb, '{"dashboard":true}'::jsonb,
+			NOW() - INTERVAL '1 minute'
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	sqlx::query("UPDATE v1_pipelines SET next_run_at = NOW() - INTERVAL '1 minute' WHERE id = $1")
+		.bind(valid_pipeline.id)
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let valid_usage_count = wait_for_usage_events(db.pool(), valid_pipeline.id, 1).await;
+	assert_eq!(valid_usage_count, 1);
+
+	let invalid_row = sqlx::query(
+		"SELECT status::TEXT, next_run_at, last_run_id FROM v1_pipelines WHERE id = $1",
+	)
+	.bind(invalid_pipeline_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let invalid_status: String = invalid_row.get("status");
+	let invalid_next_run_at: Option<chrono::DateTime<chrono::Utc>> = invalid_row.get("next_run_at");
+	let invalid_last_run_id: Option<i64> = invalid_row.get("last_run_id");
+	assert_eq!(invalid_status, "paused");
+	assert!(invalid_next_run_at.is_none());
+	assert!(invalid_last_run_id.is_some());
+
+	let invalid_run = sqlx::query(
+		"SELECT status::TEXT, error_code, error_message FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(invalid_last_run_id.unwrap())
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let invalid_run_status: String = invalid_run.get("status");
+	let invalid_error_code: Option<String> = invalid_run.get("error_code");
+	let invalid_error_message: Option<String> = invalid_run.get("error_message");
+	assert_eq!(invalid_run_status, "skipped");
+	assert_eq!(invalid_error_code.as_deref(), Some("invalid_schedule"));
+	assert!(invalid_error_message
+		.as_deref()
+		.is_some_and(|message| message.contains("schedule validation failed")));
+}
+
+#[tokio::test]
+#[serial]
 async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-recover-queued", Some(1000), 0).await;
@@ -536,6 +628,76 @@ async fn test_pipeline_trigger_returns_conflict_for_active_run() {
 		error_body["error"].as_str(),
 		Some("Pipeline already has an active run")
 	);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_force_trigger_queues_when_active_run_exists() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-force-queue", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let (api_key, _) = insert_api_key_with_scopes(
+		db.pool(),
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let config = worker_pipeline_config(false).await;
+
+	let create_response = request()
+		.method("POST")
+		.path("/v1/pipelines")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({
+			"name": "Force Queue Trigger",
+			"source": { "type": "list_snapshot", "list_id": list_id },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"status": "active"
+		}))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(create_response.status(), StatusCode::CREATED);
+	let created: serde_json::Value = serde_json::from_slice(create_response.body()).unwrap();
+	let pipeline_id = created["id"].as_i64().unwrap();
+
+	sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{}'::jsonb)
+		"#,
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.execute(db.pool())
+	.await
+	.unwrap();
+
+	let trigger_response = request()
+		.method("POST")
+		.path(&format!("/v1/pipelines/{pipeline_id}/trigger"))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({ "force": true, "reason": "queue behind active run" }))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(trigger_response.status(), StatusCode::ACCEPTED);
+	let trigger_body: serde_json::Value = serde_json::from_slice(trigger_response.body()).unwrap();
+	let run_id = trigger_body["run_id"].as_i64().unwrap();
+	assert_eq!(trigger_body["status"], "queued");
+
+	let run_row = sqlx::query(
+		"SELECT status::TEXT, started_at, stats FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(run_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let run_status: String = run_row.get("status");
+	let started_at: Option<chrono::DateTime<chrono::Utc>> = run_row.get("started_at");
+	let stats: serde_json::Value = run_row.get("stats");
+	assert_eq!(run_status, "queued");
+	assert!(started_at.is_none());
+	assert_eq!(stats["trigger_reason"], "queue behind active run");
 }
 
 #[tokio::test]

@@ -443,6 +443,46 @@ fn spawn_pipeline_run_execution(config: Arc<BackendConfig>, pg_pool: PgPool, run
 	});
 }
 
+async fn pause_pipeline_for_invalid_schedule<'a>(
+	tx: &mut sqlx::Transaction<'a, sqlx::Postgres>,
+	pipeline: &PipelineRowForUpdate,
+	scheduled_for: DateTime<Utc>,
+	error_message: &str,
+) -> Result<ClaimedRun> {
+	let run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (
+			pipeline_id, tenant_id, trigger_type, status, scheduled_for,
+			completed_at, source_snapshot, stats, error_code, error_message
+		)
+		VALUES ($1, $2, 'schedule', 'skipped', $3, NOW(), $4, '{}'::jsonb, $5, $6)
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(pipeline.tenant_id)
+	.bind(scheduled_for)
+	.bind(&pipeline.source_config)
+	.bind("invalid_schedule")
+	.bind(error_message)
+	.fetch_one(&mut **tx)
+	.await?;
+
+	sqlx::query(
+		"UPDATE v1_pipelines SET status = 'paused'::pipeline_status, next_run_at = NULL, last_scheduled_at = NOW(), last_run_id = $2, updated_at = NOW() WHERE id = $1",
+	)
+	.bind(pipeline.id)
+	.bind(run_id)
+	.execute(&mut **tx)
+	.await?;
+
+	Ok(ClaimedRun {
+		run_id,
+		pipeline_id: pipeline.id,
+		skipped: true,
+	})
+}
+
 async fn claim_due_pipeline_runs(
 	pipeline_config: &PipelinesConfig,
 	pg_pool: &PgPool,
@@ -479,12 +519,34 @@ async fn claim_due_pipeline_runs(
 		let effective_missed_run_window_hours = policy
 			.missed_run_window_hours
 			.min(pipeline_config.max_missed_run_age_hours.max(1));
-		let next_future_run = compute_next_run_at(
+		let next_future_run = match compute_next_run_at(
 			&pipeline.schedule_cron,
 			&pipeline.schedule_timezone,
 			Utc::now(),
 			pipeline_config.min_interval_seconds,
-		)?;
+		) {
+			Ok(next_future_run) => next_future_run,
+			Err(err) => {
+				warn!(
+					target: LOG_TARGET,
+					pipeline_id = pipeline.id,
+					error = ?err,
+					"Pausing pipeline with invalid schedule during due-run claim"
+				);
+				claimed.push(
+					pause_pipeline_for_invalid_schedule(
+						&mut tx,
+						&pipeline,
+						next_run_at,
+						&format!(
+							"Pipeline paused because schedule validation failed during scheduler claim: {err}"
+						),
+					)
+					.await?,
+				);
+				continue;
+			}
+		};
 		if has_active_run(&mut tx, pipeline.id).await? {
 			let run_id: i64 = sqlx::query_scalar(
 				r#"
@@ -1020,9 +1082,11 @@ pub async fn create_manual_pipeline_run(
 		_ => return Err(PipelineRequestError::not_found("Pipeline not found").into()),
 	};
 
-	if !force {
-		ensure_no_active_run(&mut tx, pipeline_id).await?;
+	let has_active_run = has_active_run(&mut tx, pipeline_id).await?;
+	if !force && has_active_run {
+		return Err(PipelineRequestError::conflict("Pipeline already has an active run").into());
 	}
+	let should_queue_only = force && has_active_run;
 	let run_id: i64 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats)
@@ -1047,7 +1111,9 @@ pub async fn create_manual_pipeline_run(
 		.await?;
 
 	tx.commit().await?;
-	execute_pipeline_run(config, pg_pool, run_id).await?;
+	if !should_queue_only {
+		execute_pipeline_run(config, pg_pool, run_id).await?;
+	}
 
 	let actual_status: String =
 		sqlx::query_scalar("SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1")
@@ -2936,16 +3002,6 @@ fn row_to_pipeline_run_view(row: &sqlx::postgres::PgRow) -> Result<PipelineRunVi
 		created_at: row.get("created_at"),
 		updated_at: row.get("updated_at"),
 	})
-}
-
-async fn ensure_no_active_run(
-	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-	pipeline_id: i64,
-) -> Result<()> {
-	if has_active_run(tx, pipeline_id).await? {
-		return Err(PipelineRequestError::conflict("Pipeline already has an active run").into());
-	}
-	Ok(())
 }
 
 async fn has_active_run(
