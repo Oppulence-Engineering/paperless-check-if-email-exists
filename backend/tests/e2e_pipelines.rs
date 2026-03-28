@@ -332,7 +332,7 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 	assert!(list_id.is_some());
 	assert!(matches!(
 		run_status.as_str(),
-		"running" | "completed" | "failed" | "delivering" | "cancelled"
+		"publishing" | "running" | "completed" | "failed" | "delivering" | "cancelled"
 	));
 }
 
@@ -447,7 +447,7 @@ async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 	assert!(started_at.is_some());
 	assert!(matches!(
 		status.as_str(),
-		"running" | "completed" | "failed" | "cancelled" | "delivering"
+		"publishing" | "running" | "completed" | "failed" | "cancelled" | "delivering"
 	));
 }
 

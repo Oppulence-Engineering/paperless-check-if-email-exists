@@ -603,12 +603,16 @@ async fn recover_stranded_queued_pipeline_runs(
 	let rows = sqlx::query(
 		r#"
 		WITH candidates AS (
-			SELECT id, pipeline_id
-			FROM v1_pipeline_runs
-			WHERE status = 'queued'::pipeline_run_status
-			  AND started_at IS NULL
-			  AND updated_at < NOW() - INTERVAL '5 minutes'
-			ORDER BY created_at ASC
+			SELECT pr.id, pr.pipeline_id
+			FROM v1_pipeline_runs pr
+			INNER JOIN v1_pipelines p ON p.id = pr.pipeline_id
+			INNER JOIN tenants t ON t.id = pr.tenant_id
+			WHERE pr.status = 'queued'::pipeline_run_status
+			  AND pr.started_at IS NULL
+			  AND pr.updated_at < NOW() - INTERVAL '5 minutes'
+			  AND p.deleted_at IS NULL
+			  AND t.status = 'active'::tenant_status
+			ORDER BY pr.created_at ASC
 			LIMIT $1
 			FOR UPDATE SKIP LOCKED
 		)
@@ -2224,7 +2228,7 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 	let row = sqlx::query(
 		r#"
 		SELECT pr.id, pr.pipeline_id, pr.status::TEXT, pr.job_id, pr.list_id, pr.stats,
-		       pr.delivery_status::TEXT, pr.delivery_attempts,
+		       pr.delivery_status::TEXT, pr.delivery_attempts, pr.next_delivery_attempt_at,
 		       p.delivery_config, t.default_webhook_url, t.webhook_signing_secret
 		FROM v1_pipeline_runs pr
 		INNER JOIN v1_pipelines p ON p.id = pr.pipeline_id
@@ -2266,8 +2270,15 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 	}
 
 	let delivery_status = parse_pipeline_delivery_status(&row.get::<String, _>("delivery_status"))?;
-	if !force && matches!(delivery_status, PipelineDeliveryStatus::Delivered) {
-		return Ok(());
+	let next_delivery_attempt_at: Option<DateTime<Utc>> = row.get("next_delivery_attempt_at");
+	if !force {
+		match delivery_status {
+			PipelineDeliveryStatus::Delivered
+			| PipelineDeliveryStatus::Failed
+			| PipelineDeliveryStatus::RetryScheduled => return Ok(()),
+			PipelineDeliveryStatus::Pending if next_delivery_attempt_at.is_some() => return Ok(()),
+			PipelineDeliveryStatus::Pending | PipelineDeliveryStatus::NotRequested => {}
+		}
 	}
 
 	let attempt_number = row.get::<i32, _>("delivery_attempts") + 1;
