@@ -22,6 +22,7 @@ export * from './domain-info';
 export * from './duration';
 export * from './email-category';
 export * from './email-score';
+export * from './error-response';
 export * from './find-email-accepted-response';
 export * from './find-email-request';
 export * from './find-email-status-response';

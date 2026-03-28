@@ -8,7 +8,7 @@ use crate::tenant::quota::{
 };
 use crate::tenant::webhook::{sign_payload, WEBHOOK_SIGNATURE_HEADER};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use chrono::{DateTime, Duration, Utc};
 use chrono_tz::Tz;
@@ -79,6 +79,38 @@ pub enum PipelineDeliveryStatus {
 	Delivered,
 	RetryScheduled,
 	Failed,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PipelineRequestError {
+	#[error("{0}")]
+	Validation(String),
+	#[error("{0}")]
+	NotFound(String),
+	#[error("{0}")]
+	Conflict(String),
+	#[error(transparent)]
+	Internal(#[from] anyhow::Error),
+}
+
+impl PipelineRequestError {
+	fn validation(message: impl Into<String>) -> Self {
+		Self::Validation(message.into())
+	}
+
+	fn not_found(message: impl Into<String>) -> Self {
+		Self::NotFound(message.into())
+	}
+
+	fn conflict(message: impl Into<String>) -> Self {
+		Self::Conflict(message.into())
+	}
+}
+
+impl From<sqlx::Error> for PipelineRequestError {
+	fn from(err: sqlx::Error) -> Self {
+		Self::Internal(err.into())
+	}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -444,6 +476,9 @@ async fn claim_due_pipeline_runs(
 		let pipeline = fetch_pipeline_row_for_update(&mut tx, pipeline_id).await?;
 		let policy: PipelinePolicyConfig =
 			serde_json::from_value(pipeline.policy_config.clone()).unwrap_or_default();
+		let effective_missed_run_window_hours = policy
+			.missed_run_window_hours
+			.min(pipeline_config.max_missed_run_age_hours.max(1));
 		let next_future_run = compute_next_run_at(
 			&pipeline.schedule_cron,
 			&pipeline.schedule_timezone,
@@ -486,7 +521,8 @@ async fn claim_due_pipeline_runs(
 			});
 			continue;
 		}
-		if Utc::now() - next_run_at > Duration::hours(i64::from(policy.missed_run_window_hours)) {
+		if Utc::now() - next_run_at > Duration::hours(i64::from(effective_missed_run_window_hours))
+		{
 			let run_id: i64 = sqlx::query_scalar(
 				r#"
 				INSERT INTO v1_pipeline_runs (
@@ -681,7 +717,10 @@ pub async fn create_pipeline(
 	pipeline_config: &PipelinesConfig,
 ) -> Result<PipelineView> {
 	if input.status == PipelineStatus::Deleted {
-		bail!("Use the delete endpoint to delete a pipeline");
+		return Err(PipelineRequestError::validation(
+			"Use the delete endpoint to delete a pipeline",
+		)
+		.into());
 	}
 
 	validate_pipeline_input(
@@ -815,7 +854,10 @@ pub async fn update_pipeline(
 	pipeline_config: &PipelinesConfig,
 ) -> Result<Option<PipelineView>> {
 	if input.status.as_ref() == Some(&PipelineStatus::Deleted) {
-		bail!("Use the delete endpoint to delete a pipeline");
+		return Err(PipelineRequestError::validation(
+			"Use the delete endpoint to delete a pipeline",
+		)
+		.into());
 	}
 
 	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
@@ -961,7 +1003,7 @@ pub async fn create_manual_pipeline_run(
 	let mut tx = pg_pool.begin().await?;
 	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
 		row if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
-		_ => return Err(anyhow!("Pipeline not found")),
+		_ => return Err(PipelineRequestError::not_found("Pipeline not found").into()),
 	};
 
 	if !force {
@@ -2545,19 +2587,27 @@ async fn validate_pipeline_input(
 	policy: &PipelinePolicyConfig,
 	delivery: &PipelineDeliveryConfig,
 	min_interval_seconds: i32,
-) -> Result<()> {
-	validate_cron_expression(&schedule.cron, &schedule.timezone, min_interval_seconds)?;
+) -> std::result::Result<(), PipelineRequestError> {
+	validate_cron_expression(&schedule.cron, &schedule.timezone, min_interval_seconds)
+		.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
 	if policy.missed_run_window_hours < 1 {
-		bail!("Pipeline missed_run_window_hours must be at least 1");
+		return Err(PipelineRequestError::validation(
+			"Pipeline missed_run_window_hours must be at least 1",
+		));
 	}
 	if delivery.max_attempts < 1 {
-		bail!("Pipeline delivery max_attempts must be at least 1");
+		return Err(PipelineRequestError::validation(
+			"Pipeline delivery max_attempts must be at least 1",
+		));
 	}
 	if delivery.retry_backoff_seconds < 1 {
-		bail!("Pipeline delivery retry_backoff_seconds must be at least 1");
+		return Err(PipelineRequestError::validation(
+			"Pipeline delivery retry_backoff_seconds must be at least 1",
+		));
 	}
 	if let Some(webhook) = &delivery.webhook {
-		validate_webhook_url(&webhook.url)?;
+		validate_webhook_url(&webhook.url)
+			.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
 	}
 	match source {
 		PipelineSource::ListSnapshot { list_id } => {
@@ -2569,10 +2619,16 @@ async fn validate_pipeline_input(
 			.fetch_one(pg_pool)
 			.await?;
 			if !exists {
-				bail!("Referenced source list does not exist for this tenant");
+				return Err(PipelineRequestError::validation(
+					"Referenced source list does not exist for this tenant",
+				));
 			}
 		}
-		_ => bail!("Only list_snapshot sources are supported in phase 1"),
+		_ => {
+			return Err(PipelineRequestError::validation(
+				"Only list_snapshot sources are supported in phase 1",
+			));
+		}
 	}
 	Ok(())
 }
@@ -2776,7 +2832,7 @@ async fn ensure_no_active_run(
 	pipeline_id: i64,
 ) -> Result<()> {
 	if has_active_run(tx, pipeline_id).await? {
-		bail!("Pipeline already has an active run");
+		return Err(PipelineRequestError::conflict("Pipeline already has an active run").into());
 	}
 	Ok(())
 }

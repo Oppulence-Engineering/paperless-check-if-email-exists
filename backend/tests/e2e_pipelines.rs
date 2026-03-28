@@ -338,6 +338,65 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 
 #[tokio::test]
 #[serial]
+async fn test_pipeline_scheduler_respects_global_missed_run_cap() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-global-cap", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let mut config = worker_pipeline_config(true).await;
+	Arc::get_mut(&mut config)
+		.unwrap()
+		.pipelines
+		.max_missed_run_age_hours = 1;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Stale Skip".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: reacher_backend::pipelines::PipelinePolicyConfig {
+				missed_run_window_hours: 48,
+			},
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	sqlx::query("UPDATE v1_pipelines SET next_run_at = NOW() - INTERVAL '2 hours' WHERE id = $1")
+		.bind(pipeline.id)
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let row = sqlx::query(
+		"SELECT status::TEXT, error_code, job_id FROM v1_pipeline_runs WHERE pipeline_id = $1 ORDER BY id DESC LIMIT 1",
+	)
+	.bind(pipeline.id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let status: String = row.get("status");
+	let error_code: Option<String> = row.get("error_code");
+	let job_id: Option<i32> = row.get("job_id");
+	assert_eq!(status, "skipped");
+	assert_eq!(error_code.as_deref(), Some("missed_schedule_window"));
+	assert!(job_id.is_none());
+}
+
+#[tokio::test]
+#[serial]
 async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-recover-queued", Some(1000), 0).await;
@@ -390,6 +449,64 @@ async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 		status.as_str(),
 		"running" | "completed" | "failed" | "cancelled" | "delivering"
 	));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_trigger_returns_conflict_for_active_run() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-trigger-conflict", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let (api_key, _) = insert_api_key_with_scopes(
+		db.pool(),
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let config = worker_pipeline_config(false).await;
+
+	let create_response = request()
+		.method("POST")
+		.path("/v1/pipelines")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({
+			"name": "Conflict Trigger",
+			"source": { "type": "list_snapshot", "list_id": list_id },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"status": "active"
+		}))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(create_response.status(), StatusCode::CREATED);
+	let created: serde_json::Value = serde_json::from_slice(create_response.body()).unwrap();
+	let pipeline_id = created["id"].as_i64().unwrap();
+
+	sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{}'::jsonb)
+		"#,
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.execute(db.pool())
+	.await
+	.unwrap();
+
+	let trigger_response = request()
+		.method("POST")
+		.path(&format!("/v1/pipelines/{pipeline_id}/trigger"))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({ "force": false }))
+		.reply(&create_routes(config))
+		.await;
+	assert_eq!(trigger_response.status(), StatusCode::CONFLICT);
+	let error_body: serde_json::Value = serde_json::from_slice(trigger_response.body()).unwrap();
+	assert_eq!(
+		error_body["error"].as_str(),
+		Some("Pipeline already has an active run")
+	);
 }
 
 #[tokio::test]

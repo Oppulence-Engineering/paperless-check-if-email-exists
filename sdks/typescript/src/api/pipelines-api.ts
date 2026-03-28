@@ -26,6 +26,8 @@ import type { CreatePipelineInput } from '../models';
 // @ts-ignore
 import type { DeletePipelineResponse } from '../models';
 // @ts-ignore
+import type { ErrorResponse } from '../models';
+// @ts-ignore
 import type { ListPipelineRunsResponse } from '../models';
 // @ts-ignore
 import type { ListPipelinesResponse } from '../models';

@@ -1273,6 +1273,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListPipelinesResponse"
           description: Pipeline list
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: GET /v1/pipelines
       tags:
       - Pipelines
@@ -1291,6 +1303,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: POST /v1/pipelines
       tags:
       - Pipelines
@@ -1314,6 +1338,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/DeletePipelineResponse"
           description: Pipeline deleted
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "DELETE /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1336,6 +1372,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline detail
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "GET /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1364,6 +1412,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline updated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "PATCH /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1387,6 +1453,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline paused
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "POST /v1/pipelines/{pipeline_id}/pause"
       tags:
       - Pipelines
@@ -1410,6 +1488,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline resumed
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "POST /v1/pipelines/{pipeline_id}/resume"
       tags:
       - Pipelines
@@ -1449,6 +1539,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListPipelineRunsResponse"
           description: Pipeline run history
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "GET /v1/pipelines/{pipeline_id}/runs"
       tags:
       - Pipelines
@@ -1481,6 +1583,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineRunView"
           description: Pipeline run detail
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "GET /v1/pipelines/{pipeline_id}/runs/{run_id}"
       tags:
       - Pipelines
@@ -1510,6 +1624,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/TriggerPipelineResponse"
           description: Pipeline run triggered
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
       summary: "POST /v1/pipelines/{pipeline_id}/trigger"
       tags:
       - Pipelines
@@ -2458,6 +2596,15 @@ components:
       - score
       - signals
       - sub_reason
+      type: object
+    ErrorResponse:
+      example:
+        error: error
+      properties:
+        error:
+          type: string
+      required:
+      - error
       type: object
     FindEmailAcceptedResponse:
       example:

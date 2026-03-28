@@ -42,6 +42,7 @@ docs/DomainInfo.md
 docs/Duration.md
 docs/EmailCategory.md
 docs/EmailScore.md
+docs/ErrorResponse.md
 docs/FindEmailAcceptedResponse.md
 docs/FindEmailRequest.md
 docs/FindEmailStatusResponse.md
@@ -133,6 +134,7 @@ models/domain-info.ts
 models/duration.ts
 models/email-category.ts
 models/email-score.ts
+models/error-response.ts
 models/find-email-accepted-response.ts
 models/find-email-request.ts
 models/find-email-status-response.ts

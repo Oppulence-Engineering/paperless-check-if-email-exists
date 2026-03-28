@@ -158,6 +158,7 @@ Class | Method | HTTP request | Description
  - [Duration](docs/Duration.md)
  - [EmailCategory](docs/EmailCategory.md)
  - [EmailScore](docs/EmailScore.md)
+ - [ErrorResponse](docs/ErrorResponse.md)
  - [FindEmailAcceptedResponse](docs/FindEmailAcceptedResponse.md)
  - [FindEmailRequest](docs/FindEmailRequest.md)
  - [FindEmailStatusResponse](docs/FindEmailStatusResponse.md)
