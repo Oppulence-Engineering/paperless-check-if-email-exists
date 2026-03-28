@@ -130,15 +130,15 @@ impl ProviderCatalog {
 		let parsed: ProviderCatalogJson = serde_json::from_str(raw)?;
 		let mut by_domain = HashMap::new();
 		for rule in parsed.providers {
+			let provider = rule.provider;
 			let provider_rule = ProviderRule {
-				provider: rule.provider,
+				provider: provider.clone(),
 				min_local_length: rule.min_local_length,
 				max_local_length: rule.max_local_length,
-				allowed_special_chars: rule
-					.allowed_special_chars
-					.into_iter()
-					.filter_map(|entry| entry.chars().next())
-					.collect(),
+				allowed_special_chars: validate_allowed_special_chars(
+					rule.allowed_special_chars,
+					&provider,
+				)?,
 				must_start_with_alphanumeric: rule.must_start_with_alphanumeric,
 				consecutive_special_allowed: rule.consecutive_special_allowed,
 				leading_trailing_special_allowed: rule.leading_trailing_special_allowed,
@@ -154,6 +154,28 @@ impl ProviderCatalog {
 			by_domain,
 		})
 	}
+}
+
+fn validate_allowed_special_chars(
+	allowed_special_chars: Vec<String>,
+	provider: &Provider,
+) -> Result<Vec<char>, serde_json::Error> {
+	allowed_special_chars
+		.into_iter()
+		.map(|entry| {
+			let mut chars = entry.chars();
+			match (chars.next(), chars.next()) {
+				(Some(ch), None) => Ok(ch),
+				_ => Err(serde_json::Error::io(std::io::Error::new(
+					std::io::ErrorKind::InvalidData,
+					format!(
+						"provider {:?} has invalid rule.allowed_special_chars entry {:?}; each allowed_special_chars value must contain exactly one character instead of relying on chars().next() truncation",
+						provider, entry
+					),
+				))),
+			}
+		})
+		.collect()
 }
 
 pub fn canonical_domain(domain: &str) -> String {
@@ -264,11 +286,19 @@ pub fn has_provider_rule(provider: &Provider) -> bool {
 	provider_rule(provider).is_some()
 }
 
+pub fn should_apply_provider_rule(provider: &DetectedProvider) -> bool {
+	matches!(provider.confidence, ProviderConfidence::High) && has_provider_rule(&provider.provider)
+}
+
 fn provider_rule(provider: &Provider) -> Option<&'static ProviderRule> {
 	PROVIDER_RULES
 		.by_domain
 		.values()
 		.find(|rule| &rule.provider == provider)
+}
+
+fn matches_domain_or_subdomain(domain: &str, suffix: &str) -> bool {
+	domain == suffix || domain.ends_with(&format!(".{suffix}"))
 }
 
 fn detect_provider_from_mx_host(domain: &str, mx_host: &str) -> Option<DetectedProvider> {
@@ -306,9 +336,9 @@ fn detect_provider_from_mx_host(domain: &str, mx_host: &str) -> Option<DetectedP
 	if is_yahoo(mx_host) {
 		return Some(DetectedProvider {
 			provider: Provider::Yahoo,
-			confidence: if domain.ends_with("yahoo.com")
-				|| domain.ends_with("rocketmail.com")
-				|| domain.ends_with("ymail.com")
+			confidence: if matches_domain_or_subdomain(domain, "yahoo.com")
+				|| matches_domain_or_subdomain(domain, "rocketmail.com")
+				|| matches_domain_or_subdomain(domain, "ymail.com")
 			{
 				ProviderConfidence::High
 			} else {
@@ -342,12 +372,24 @@ fn detect_provider_from_mx_host(domain: &str, mx_host: &str) -> Option<DetectedP
 
 fn get_cached_provider(domain: &str) -> Option<DetectedProvider> {
 	let now = SystemTime::now();
-	let cache = PROVIDER_CACHE.read().ok()?;
-	let cached = cache.get(domain)?;
-	if cached.expires_at <= now {
-		return None;
+	{
+		let cache = PROVIDER_CACHE.read().ok()?;
+		match cache.get(domain) {
+			Some(cached) if cached.expires_at > now => return Some(cached.detected.clone()),
+			Some(_) => {}
+			None => return None,
+		}
 	}
-	Some(cached.detected.clone())
+	if let Ok(mut cache) = PROVIDER_CACHE.write() {
+		if cache
+			.get(domain)
+			.map(|cached| cached.expires_at <= now)
+			.unwrap_or(false)
+		{
+			cache.remove(domain);
+		}
+	}
+	None
 }
 
 fn cache_provider(domain: &str, detected: DetectedProvider) {
@@ -499,11 +541,32 @@ mod tests {
 			},
 		);
 		assert!(get_cached_provider("expired.example").is_none());
+		assert!(PROVIDER_CACHE
+			.read()
+			.unwrap()
+			.get("expired.example")
+			.is_none());
 	}
 
 	#[test]
 	fn provider_rules_have_version() {
 		assert!(!provider_rules_version().is_empty());
+	}
+
+	#[test]
+	fn yahoo_custom_domains_stay_medium_confidence() {
+		let detected = detect_provider("notyahoo.com", Some("mta7.am0.yahoodns.net.")).unwrap();
+		assert_eq!(detected.provider, Provider::Yahoo);
+		assert_eq!(detected.confidence, ProviderConfidence::Medium);
+	}
+
+	#[test]
+	fn provider_rules_only_apply_for_high_confidence_matches() {
+		let detected = DetectedProvider {
+			provider: Provider::Yahoo,
+			confidence: ProviderConfidence::Medium,
+		};
+		assert!(!should_apply_provider_rule(&detected));
 	}
 
 	#[test]

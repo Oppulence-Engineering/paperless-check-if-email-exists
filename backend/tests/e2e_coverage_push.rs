@@ -138,13 +138,9 @@ mod v0_bulk_results_coverage {
 	use warp::test::request;
 
 	/// Build a config with just Postgres (no auth, no worker).
-	async fn db_only_config(_pool: sqlx::PgPool) -> Arc<BackendConfig> {
+	async fn db_only_config(db_url: String) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
-		// We already have a pool from TestDb; set up config storage so
-		// get_pg_pool() works through the storage adapter. We do this by
-		// connecting via the real path.
-		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
 			db_url,
@@ -212,13 +208,14 @@ mod v0_bulk_results_coverage {
 	#[serial]
 	async fn test_v0_bulk_results_csv_format() {
 		let db = TestDb::start().await;
+		let db_url = db.db_url().to_string();
 		let pool = db.pool_owned();
 		cleanup_v0(&pool).await;
 
 		let job_id = insert_v0_bulk_job(&pool, 1).await;
 		insert_v0_email_result(&pool, job_id, &valid_result_json()).await;
 
-		let config = db_only_config(pool).await;
+		let config = db_only_config(db_url).await;
 		let routes = reacher_backend::http::create_routes(config);
 
 		let resp = request()
@@ -254,6 +251,7 @@ mod v0_bulk_results_coverage {
 	#[serial]
 	async fn test_v0_bulk_results_json_with_pagination() {
 		let db = TestDb::start().await;
+		let db_url = db.db_url().to_string();
 		let pool = db.pool_owned();
 		cleanup_v0(&pool).await;
 
@@ -263,7 +261,7 @@ mod v0_bulk_results_coverage {
 		result2["input"] = serde_json::json!("other@example.com");
 		insert_v0_email_result(&pool, job_id, &result2).await;
 
-		let config = db_only_config(pool).await;
+		let config = db_only_config(db_url).await;
 		let routes = reacher_backend::http::create_routes(config);
 
 		// Request with limit=1
@@ -283,6 +281,7 @@ mod v0_bulk_results_coverage {
 	#[serial]
 	async fn test_v0_bulk_running_job_rejects_results() {
 		let db = TestDb::start().await;
+		let db_url = db.db_url().to_string();
 		let pool = db.pool_owned();
 		cleanup_v0(&pool).await;
 
@@ -291,7 +290,7 @@ mod v0_bulk_results_coverage {
 		insert_v0_email_result(&pool, job_id, &valid_result_json()).await;
 		insert_v0_email_result(&pool, job_id, &valid_result_json()).await;
 
-		let config = db_only_config(pool).await;
+		let config = db_only_config(db_url).await;
 		let routes = reacher_backend::http::create_routes(config);
 
 		let resp = request()
@@ -312,13 +311,14 @@ mod v0_bulk_results_coverage {
 	#[serial]
 	async fn test_v0_bulk_results_json_default_format() {
 		let db = TestDb::start().await;
+		let db_url = db.db_url().to_string();
 		let pool = db.pool_owned();
 		cleanup_v0(&pool).await;
 
 		let job_id = insert_v0_bulk_job(&pool, 1).await;
 		insert_v0_email_result(&pool, job_id, &valid_result_json()).await;
 
-		let config = db_only_config(pool).await;
+		let config = db_only_config(db_url).await;
 		let routes = reacher_backend::http::create_routes(config);
 
 		// No format query param -> defaults to JSON
@@ -337,13 +337,14 @@ mod v0_bulk_results_coverage {
 	#[serial]
 	async fn test_v0_bulk_results_csv_deprecation_headers() {
 		let db = TestDb::start().await;
+		let db_url = db.db_url().to_string();
 		let pool = db.pool_owned();
 		cleanup_v0(&pool).await;
 
 		let job_id = insert_v0_bulk_job(&pool, 1).await;
 		insert_v0_email_result(&pool, job_id, &valid_result_json()).await;
 
-		let config = db_only_config(pool).await;
+		let config = db_only_config(db_url).await;
 		let routes = reacher_backend::http::create_routes(config);
 
 		let resp = request()
@@ -606,54 +607,14 @@ mod readiness_coverage {
 		// (not degraded, since unavailable + ok = unavailable per the match)
 		let db = TestDb::start().await;
 		let _ = db.pool();
+		let db_url = db.db_url().to_string();
 
-		let db_url = crate::test_helpers::ensure_test_db_url().await;
-		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			read_replica_url: None,
-			db_url,
-			extra: None,
-		}));
-		config.worker = WorkerConfig {
-			enable: true,
-			rabbitmq: None,
-			webhook: None,
-		};
-		// Connect postgres but not rabbitmq
-		// We can't call config.connect() because it would try to set up rabbitmq.
-		// Instead, just set the storage adapter manually by re-creating with
-		// a partial connect. We'll create a new config with storage connected
-		// but worker channel missing.
-		let db_url2 = crate::test_helpers::ensure_test_db_url().await;
-		let mut base_config = BackendConfig::empty();
-		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			read_replica_url: None,
-			db_url: db_url2,
-			extra: None,
-		}));
-		// First connect storage only (worker disabled)
-		base_config.connect().await.unwrap();
-
-		// Now copy the storage adapter but enable worker without channel
-		// We need to construct the final config with the pg_pool but worker.enable=true
-		// and no channel. We achieve this by building a config that has Postgres storage
-		// connected and worker enabled but no rabbitmq config (no channel).
-		// The readiness check will see worker.enable=true, call must_worker_config(),
-		// which returns Err, and set rmq to "unavailable".
-		let mut final_config = BackendConfig::empty();
-		final_config.worker = WorkerConfig {
-			enable: true,
-			rabbitmq: None,
-			webhook: None,
-		};
-		final_config.storage = base_config.storage.clone();
-		// We need the storage adapter connected. Since BackendConfig::empty() sets Noop,
-		// we'll use a trick: connect a non-worker config first, then flip the flag.
-		let db_url3 = crate::test_helpers::ensure_test_db_url().await;
+		// Connect storage only, then enable the worker afterward so readiness
+		// sees Postgres as healthy but RabbitMQ as unavailable.
 		let mut trick_config = BackendConfig::empty();
 		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
-			db_url: db_url3,
+			db_url,
 			extra: None,
 		}));
 		trick_config.worker.enable = false;

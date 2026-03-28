@@ -498,7 +498,7 @@ mod comments_tests {
 	}
 }
 
-// ===== #34: Custom Threshold Policies =====
+// ===== #34: Approval Threshold Policies =====
 
 #[cfg(test)]
 mod custom_threshold_tests {
@@ -506,7 +506,7 @@ mod custom_threshold_tests {
 
 	#[tokio::test]
 	#[serial]
-	async fn test_approval_with_custom_thresholds() {
+	async fn test_approval_default_threshold_behavior() {
 		let db = TestDb::start().await;
 		let tid = insert_tenant(db.pool(), "custom-thresh", None, 0).await;
 		let (key, _) = insert_api_key(db.pool(), tid).await;
@@ -520,7 +520,6 @@ mod custom_threshold_tests {
 			.await;
 		assert_eq!(r.status(), StatusCode::OK);
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
-		// With 1/3 safe_to_send (~33%), quality should be "poor" regardless of thresholds
 		assert!(!b["ready_to_send"].as_bool().unwrap());
 	}
 

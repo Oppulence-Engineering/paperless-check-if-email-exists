@@ -1,5 +1,7 @@
 /// Shared test infrastructure for E2E tests.
-/// Uses TEST_DATABASE_URL if set (fast, no Docker), otherwise testcontainers.
+/// Uses per-process testcontainers by default to avoid cross-binary collisions.
+/// Set USE_LOCAL_TEST_INFRA=1 to opt into TEST_DATABASE_URL / TEST_AMQP_URL or
+/// the default local ports instead.
 use lapin::{Connection, ConnectionProperties};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
@@ -20,6 +22,19 @@ static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(||
 
 const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
 const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
+const USE_LOCAL_TEST_INFRA_ENV: &str = "USE_LOCAL_TEST_INFRA";
+
+fn use_local_test_infra() -> bool {
+	std::env::var(USE_LOCAL_TEST_INFRA_ENV)
+		.ok()
+		.map(|value| {
+			matches!(
+				value.trim().to_ascii_lowercase().as_str(),
+				"1" | "true" | "yes" | "on"
+			)
+		})
+		.unwrap_or(false)
+}
 
 fn set_current_test_db_url(url: &str) {
 	*CURRENT_TEST_DB_URL.lock().expect("db url mutex poisoned") = Some(url.to_string());
@@ -61,24 +76,26 @@ pub async fn ensure_test_db_url() -> String {
 		return url;
 	}
 
-	if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
-		ensure_test_db_schema(&url)
-			.await
-			.expect("TEST_DATABASE_URL schema should be ready");
-		set_current_test_db_url(&url);
-		return url;
-	}
+	if use_local_test_infra() {
+		if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
+			ensure_test_db_schema(&url)
+				.await
+				.expect("TEST_DATABASE_URL schema should be ready");
+			set_current_test_db_url(&url);
+			return url;
+		}
 
-	if PgPoolOptions::new()
-		.max_connections(1)
-		.acquire_timeout(Duration::from_secs(2))
-		.connect(DEFAULT_TEST_DB_URL)
-		.await
-		.is_ok()
-	{
-		if ensure_test_db_schema(DEFAULT_TEST_DB_URL).await.is_ok() {
-			set_current_test_db_url(DEFAULT_TEST_DB_URL);
-			return DEFAULT_TEST_DB_URL.to_string();
+		if PgPoolOptions::new()
+			.max_connections(1)
+			.acquire_timeout(Duration::from_secs(2))
+			.connect(DEFAULT_TEST_DB_URL)
+			.await
+			.is_ok()
+		{
+			if ensure_test_db_schema(DEFAULT_TEST_DB_URL).await.is_ok() {
+				set_current_test_db_url(DEFAULT_TEST_DB_URL);
+				return DEFAULT_TEST_DB_URL.to_string();
+			}
 		}
 	}
 
@@ -179,24 +196,25 @@ impl TestRabbitMq {
 			};
 		}
 
-		// Check for existing RabbitMQ via env var
-		if let Ok(url) = std::env::var("TEST_AMQP_URL") {
-			set_current_test_amqp_url(&url);
-			return Self {
-				amqp_url: url,
-				_container: None,
-			};
-		}
+		if use_local_test_infra() {
+			if let Ok(url) = std::env::var("TEST_AMQP_URL") {
+				set_current_test_amqp_url(&url);
+				return Self {
+					amqp_url: url,
+					_container: None,
+				};
+			}
 
-		if Connection::connect(DEFAULT_TEST_AMQP_URL, ConnectionProperties::default())
-			.await
-			.is_ok()
-		{
-			set_current_test_amqp_url(DEFAULT_TEST_AMQP_URL);
-			return Self {
-				amqp_url: DEFAULT_TEST_AMQP_URL.to_string(),
-				_container: None,
-			};
+			if Connection::connect(DEFAULT_TEST_AMQP_URL, ConnectionProperties::default())
+				.await
+				.is_ok()
+			{
+				set_current_test_amqp_url(DEFAULT_TEST_AMQP_URL);
+				return Self {
+					amqp_url: DEFAULT_TEST_AMQP_URL.to_string(),
+					_container: None,
+				};
+			}
 		}
 
 		let amqp_url = SHARED_AMQP_URL

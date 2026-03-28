@@ -300,6 +300,35 @@ mod tests {
 	}
 
 	#[tokio::test]
+	async fn test_v1_provider_specific_rejection_non_strict() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(
+				&serde_json::from_str::<CheckEmailRequest>(
+					r#"{"to_email": "abc@gmail.com", "strict_provider_rules": false}"#,
+				)
+				.unwrap(),
+			)
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		let body = parse_json(resp.body());
+		assert_eq!(body["provider"], "gmail");
+		assert_eq!(body["provider_rules_applied"], false);
+		assert!(body["provider_rejection_reason"].is_null());
+		assert_eq!(body["provider_confidence"], "high");
+		assert_ne!(body["score"]["sub_reason"], "provider_rejected");
+		assert!(!body["score"]["reason_codes"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.any(|v| v.as_str() == Some("provider_local_part_too_short")));
+	}
+
+	#[tokio::test]
 	async fn test_v1_check_email_missing_auth() {
 		let resp = request()
 			.path("/v1/check_email")

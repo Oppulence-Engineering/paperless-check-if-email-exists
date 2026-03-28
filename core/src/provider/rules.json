@@ -35,7 +35,7 @@
       "consecutive_special_allowed": false,
       "leading_trailing_special_allowed": false,
       "plus_addressing": false,
-      "reserved_words": ["admin"]
+      "reserved_words": ["admin", "abuse", "hostmaster", "postmaster", "webmaster"]
     }
   ]
 }

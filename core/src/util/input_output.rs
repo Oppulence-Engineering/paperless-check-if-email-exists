@@ -310,10 +310,16 @@ impl Serialize for CheckEmailOutput {
 			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
-		map.serialize_entry("provider", &self.provider)?;
+		if let Some(provider) = &self.provider {
+			map.serialize_entry("provider", provider)?;
+		}
 		map.serialize_entry("provider_rules_applied", &self.provider_rules_applied)?;
-		map.serialize_entry("provider_rejection_reason", &self.provider_rejection_reason)?;
-		map.serialize_entry("provider_confidence", &self.provider_confidence)?;
+		if let Some(reason) = &self.provider_rejection_reason {
+			map.serialize_entry("provider_rejection_reason", reason)?;
+		}
+		if let Some(confidence) = &self.provider_confidence {
+			map.serialize_entry("provider_confidence", confidence)?;
+		}
 		map.serialize_entry("debug", &self.debug)?;
 		map.end()
 	}
@@ -376,5 +382,8 @@ mod tests {
 		// Make sure the `description` is NOT present.
 		let expected = r#""smtp":{"error":{"type":"AsyncSmtpError","message":"transient: foobar; 8BITMIME; SIZE 42"}}"#;
 		assert!(actual.contains(expected));
+		assert!(!actual.contains(r#""provider":null"#));
+		assert!(!actual.contains(r#""provider_rejection_reason":null"#));
+		assert!(!actual.contains(r#""provider_confidence":null"#));
 	}
 }

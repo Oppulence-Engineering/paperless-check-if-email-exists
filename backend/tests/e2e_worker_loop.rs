@@ -25,6 +25,12 @@ mod worker_loop_tests {
 	async fn db_url() -> String {
 		crate::test_helpers::ensure_test_db_url().await
 	}
+	async fn rabbitmq_config() -> RabbitMQConfig {
+		RabbitMQConfig {
+			url: rmq_url().await,
+			concurrency: 4,
+		}
+	}
 
 	async fn make_worker_config(throttle: ThrottleConfig) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
@@ -82,10 +88,7 @@ mod worker_loop_tests {
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
 		// Set up queue + purge
-		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url().await,
-			concurrency: 4,
-		};
+		let rmq_cfg = rabbitmq_config().await;
 		let pub_channel = setup_rabbit_mq("test-pub-loop", &rmq_cfg).await.unwrap();
 		purge(&pub_channel).await;
 
@@ -162,10 +165,7 @@ mod worker_loop_tests {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
-		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url().await,
-			concurrency: 4,
-		};
+		let rmq_cfg = rabbitmq_config().await;
 		let pub_channel = setup_rabbit_mq("test-cancel-loop", &rmq_cfg).await.unwrap();
 		purge(&pub_channel).await;
 
@@ -244,10 +244,7 @@ mod worker_loop_tests {
 		})
 		.await;
 
-		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url().await,
-			concurrency: 4,
-		};
+		let rmq_cfg = rabbitmq_config().await;
 		let pub_channel = setup_rabbit_mq("test-throttle-loop", &rmq_cfg)
 			.await
 			.unwrap();
@@ -336,10 +333,7 @@ mod worker_loop_tests {
 		})
 		.await;
 
-		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url().await,
-			concurrency: 4,
-		};
+		let rmq_cfg = rabbitmq_config().await;
 		let pub_channel = setup_rabbit_mq("test-throttle-bulk", &rmq_cfg)
 			.await
 			.unwrap();
@@ -399,10 +393,7 @@ mod worker_loop_tests {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
-		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url().await,
-			concurrency: 4,
-		};
+		let rmq_cfg = rabbitmq_config().await;
 		let pub_channel = setup_rabbit_mq("test-retry-events", &rmq_cfg)
 			.await
 			.unwrap();

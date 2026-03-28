@@ -3,30 +3,33 @@ mod test_helpers;
 use crate::test_helpers::{
 	insert_event, insert_job, insert_task, insert_tenant, safe_result, TestDb,
 };
+use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig};
+use std::sync::Arc;
+
+async fn admin_config() -> Arc<BackendConfig> {
+	let mut config = BackendConfig::empty();
+	config.header_secret = Some("admin-secret".into());
+	let db_url = crate::test_helpers::ensure_test_db_url().await;
+	config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		read_replica_url: None,
+		db_url,
+		extra: None,
+	}));
+	config.connect().await.unwrap();
+	Arc::new(config)
+}
 
 #[cfg(test)]
 mod tenant_crud {
+	use super::admin_config;
 	use crate::test_helpers::TestDb;
-	use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig};
+	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 	use serial_test::serial;
 	use sqlx::Row;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
 	use warp::test::request;
-
-	async fn admin_config() -> Arc<BackendConfig> {
-		let mut config = BackendConfig::empty();
-		config.header_secret = Some("admin-secret".into());
-		let db_url = crate::test_helpers::ensure_test_db_url().await;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			read_replica_url: None,
-			db_url,
-			extra: None,
-		}));
-		config.connect().await.unwrap();
-		Arc::new(config)
-	}
 
 	#[tokio::test]
 	#[serial]
@@ -651,29 +654,17 @@ mod tenant_crud {
 
 #[cfg(test)]
 mod api_key_crud {
+	use super::admin_config;
 	use crate::test_helpers::{
 		insert_event, insert_job, insert_task, insert_tenant, safe_result, TestDb,
 	};
-	use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig};
+	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 	use serial_test::serial;
 	use sqlx::Row;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
 	use warp::test::request;
-
-	async fn admin_config() -> Arc<BackendConfig> {
-		let mut config = BackendConfig::empty();
-		config.header_secret = Some("admin-secret".into());
-		let db_url = crate::test_helpers::ensure_test_db_url().await;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
-			read_replica_url: None,
-			db_url,
-			extra: None,
-		}));
-		config.connect().await.unwrap();
-		Arc::new(config)
-	}
 
 	async fn create_tenant(routes: &(impl warp::Reply + Clone + Send + Sync), _unused: ()) {
 		// Can't call create_routes twice easily, so we use a helper
