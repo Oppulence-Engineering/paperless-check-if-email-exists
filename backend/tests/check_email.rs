@@ -62,6 +62,10 @@ mod tests {
 		assert!(body["misc"].is_object());
 		assert!(body["mx"].is_object() || body["mx"].is_null());
 		assert!(body["smtp"].is_object() || body["smtp"].is_null());
+		assert!(body["provider"].is_null());
+		assert_eq!(body["provider_rules_applied"], false);
+		assert!(body["provider_rejection_reason"].is_null());
+		assert!(body["provider_confidence"].is_null());
 		assert_eq!(body["score"]["score"], 0);
 		assert_eq!(body["score"]["category"], "invalid");
 		assert_eq!(body["score"]["sub_reason"], sub_reason);
@@ -262,6 +266,37 @@ mod tests {
 			"",
 			"invalid_syntax",
 		);
+	}
+
+	#[tokio::test]
+	async fn test_v1_provider_specific_rejection() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(
+				&serde_json::from_str::<CheckEmailRequest>(r#"{"to_email": "abc@gmail.com"}"#)
+					.unwrap(),
+			)
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		let body = parse_json(resp.body());
+		assert_eq!(body["is_reachable"], "invalid");
+		assert_eq!(body["provider"], "gmail");
+		assert_eq!(body["provider_rules_applied"], true);
+		assert_eq!(
+			body["provider_rejection_reason"],
+			"provider_local_part_too_short"
+		);
+		assert_eq!(body["provider_confidence"], "high");
+		assert_eq!(body["score"]["sub_reason"], "provider_rejected");
+		assert!(body["score"]["reason_codes"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.any(|v| v.as_str() == Some("provider_local_part_too_short")));
 	}
 
 	#[tokio::test]

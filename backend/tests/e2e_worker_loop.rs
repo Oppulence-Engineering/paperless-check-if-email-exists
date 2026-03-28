@@ -19,24 +19,25 @@ mod worker_loop_tests {
 	use sqlx::Row;
 	use std::sync::Arc;
 
-	fn rmq_url() -> String {
-		crate::test_helpers::test_amqp_url()
+	async fn rmq_url() -> String {
+		crate::test_helpers::ensure_test_amqp_url().await
 	}
-	fn db_url() -> String {
-		crate::test_helpers::test_db_url()
+	async fn db_url() -> String {
+		crate::test_helpers::ensure_test_db_url().await
 	}
 
 	async fn make_worker_config(throttle: ThrottleConfig) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.backend_name = "test-worker".into();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
-			db_url: db_url(),
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
+			db_url: db_url().await,
 			extra: None,
 		}));
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
-				url: rmq_url(),
+				url: rmq_url().await,
 				concurrency: 4,
 			}),
 			webhook: None,
@@ -82,7 +83,7 @@ mod worker_loop_tests {
 
 		// Set up queue + purge
 		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let pub_channel = setup_rabbit_mq("test-pub-loop", &rmq_cfg).await.unwrap();
@@ -162,7 +163,7 @@ mod worker_loop_tests {
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
 		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let pub_channel = setup_rabbit_mq("test-cancel-loop", &rmq_cfg).await.unwrap();
@@ -244,7 +245,7 @@ mod worker_loop_tests {
 		.await;
 
 		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let pub_channel = setup_rabbit_mq("test-throttle-loop", &rmq_cfg)
@@ -336,7 +337,7 @@ mod worker_loop_tests {
 		.await;
 
 		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let pub_channel = setup_rabbit_mq("test-throttle-bulk", &rmq_cfg)
@@ -399,7 +400,7 @@ mod worker_loop_tests {
 		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
 
 		let rmq_cfg = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let pub_channel = setup_rabbit_mq("test-retry-events", &rmq_cfg)

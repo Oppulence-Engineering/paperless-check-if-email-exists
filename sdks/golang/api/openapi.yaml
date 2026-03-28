@@ -1553,7 +1553,8 @@ components:
     BulkJobResultsResponse:
       example:
         results:
-        - input: input
+        - provider_rejection_reason: provider_local_part_too_short
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -1600,6 +1601,8 @@ components:
             is_disabled: true
             is_deliverable: true
           is_reachable: invalid
+          provider: gmail
+          provider_confidence: high
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -1614,7 +1617,9 @@ components:
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
-        - input: input
+          provider_rules_applied: true
+        - provider_rejection_reason: provider_local_part_too_short
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -1661,6 +1666,8 @@ components:
             is_disabled: true
             is_deliverable: true
           is_reachable: invalid
+          provider: gmail
+          provider_confidence: high
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -1675,6 +1682,7 @@ components:
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
+          provider_rules_applied: true
       properties:
         results:
           items:
@@ -1716,6 +1724,7 @@ components:
     CheckEmailOutput:
       description: The result of the email verification process.
       example:
+        provider_rejection_reason: provider_local_part_too_short
         input: input
         score:
           reason_codes:
@@ -1763,6 +1772,8 @@ components:
           is_disabled: true
           is_deliverable: true
         is_reachable: invalid
+        provider: gmail
+        provider_confidence: high
         syntax:
           domain: domain
           is_valid_syntax: true
@@ -1777,6 +1788,7 @@ components:
           gravatar_url: gravatar_url
           is_role_account: true
           is_disposable: true
+        provider_rules_applied: true
       properties:
         debug:
           $ref: "#/components/schemas/DebugDetails"
@@ -1790,6 +1802,14 @@ components:
           $ref: "#/components/schemas/CheckEmailOutput_misc"
         mx:
           $ref: "#/components/schemas/CheckEmailOutput_mx"
+        provider:
+          $ref: "#/components/schemas/Provider"
+        provider_confidence:
+          $ref: "#/components/schemas/ProviderConfidence"
+        provider_rejection_reason:
+          $ref: "#/components/schemas/ProviderRejectionReason"
+        provider_rules_applied:
+          type: boolean
         score:
           $ref: "#/components/schemas/EmailScore"
         smtp:
@@ -1801,6 +1821,7 @@ components:
       - is_reachable
       - misc
       - mx
+      - provider_rules_applied
       - score
       - smtp
       - syntax
@@ -1845,6 +1866,7 @@ components:
         from_email: from_email
         smtp_port: 6.027456183070403
         hello_name: hello_name
+        strict_provider_rules: true
         gmail_verif_method: Smtp
         sandbox: false
         check_gravatar: true
@@ -1877,6 +1899,10 @@ components:
           description: "SMTP port to use for email validation. Defaults to 25, but\
             \ 465, 587, and 2525 are sometimes also used."
           type: number
+        strict_provider_rules:
+          description: "When false, skips provider-specific syntax validation even\
+            \ if the provider is recognized."
+          type: boolean
         to_email:
           description: The email address to check.
           type: string
@@ -2632,6 +2658,35 @@ components:
       - records
       title: MxDetails
       type: object
+    Provider:
+      enum:
+      - gmail
+      - google_workspace
+      - outlook_consumer
+      - microsoft365
+      - yahoo
+      - apple_icloud
+      - proton
+      - zoho
+      type: string
+    ProviderConfidence:
+      enum:
+      - high
+      - medium
+      - low
+      type: string
+    ProviderRejectionReason:
+      enum:
+      - provider_local_part_too_short
+      - provider_local_part_too_long
+      - provider_invalid_character
+      - provider_consecutive_special_characters
+      - provider_invalid_start_character
+      - provider_invalid_end_character
+      - provider_plus_addressing_not_supported
+      - provider_reserved_word
+      - provider_format_violation
+      type: string
     Reachable:
       description: "An enumeration describing the confidence level that the recipient\
         \ address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our\
@@ -2648,6 +2703,16 @@ components:
       - deliverable
       - invalid_syntax
       - invalid_recipient
+      - provider_rejected
+      - provider_local_part_too_short
+      - provider_local_part_too_long
+      - provider_invalid_character
+      - provider_consecutive_special_characters
+      - provider_invalid_start_character
+      - provider_invalid_end_character
+      - provider_plus_addressing_not_supported
+      - provider_reserved_word
+      - provider_format_violation
       - smtp_undeliverable
       - disabled_mailbox
       - no_mx
@@ -2884,6 +2949,7 @@ components:
       - deliverable
       - invalid_syntax
       - invalid_recipient
+      - provider_rejected
       - smtp_undeliverable
       - disabled_mailbox
       - no_mx

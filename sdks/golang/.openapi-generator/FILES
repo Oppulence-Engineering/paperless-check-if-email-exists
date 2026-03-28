@@ -59,6 +59,9 @@ docs/ListUploadRequest.md
 docs/ListUploadResponse.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/Provider.md
+docs/ProviderConfidence.md
+docs/ProviderRejectionReason.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/ReputationCheckRequest.md
@@ -125,6 +128,9 @@ model_list_upload_request.go
 model_list_upload_response.go
 model_misc_details.go
 model_mx_details.go
+model_provider.go
+model_provider_confidence.go
+model_provider_rejection_reason.go
 model_reachable.go
 model_reason_code.go
 model_reputation_check_request.go

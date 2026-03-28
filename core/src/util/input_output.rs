@@ -16,6 +16,7 @@
 
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
+use crate::provider::{Provider, ProviderConfidence, ProviderRejectionReason};
 use crate::smtp::verif_method::VerifMethod;
 use crate::smtp::{SmtpDebug, SmtpDetails, SmtpError, SmtpErrorDesc};
 use crate::syntax::SyntaxDetails;
@@ -143,6 +144,11 @@ pub struct CheckEmailInput {
 	///
 	/// Defaults to None.
 	pub sentry_dsn: Option<String>,
+	/// Whether to apply provider-specific syntax validation when a provider
+	/// can be identified.
+	///
+	/// Defaults to `None`, which resolves to enabled behavior.
+	pub strict_provider_rules: Option<bool>,
 }
 
 impl Default for CheckEmailInput {
@@ -156,6 +162,7 @@ impl Default for CheckEmailInput {
 			webdriver_config: WebdriverConfig::default(),
 			backend_name: "backend-dev".into(),
 			sentry_dsn: None,
+			strict_provider_rules: None,
 		}
 	}
 }
@@ -223,6 +230,14 @@ pub struct CheckEmailOutput {
 	pub smtp: Result<SmtpDetails, SmtpError>,
 	/// Details about the email address.
 	pub syntax: SyntaxDetails,
+	/// The detected email provider, if one was recognized.
+	pub provider: Option<Provider>,
+	/// Whether provider-specific syntax rules were applied.
+	pub provider_rules_applied: bool,
+	/// The provider-specific rejection reason if validation failed early.
+	pub provider_rejection_reason: Option<ProviderRejectionReason>,
+	/// Confidence in the detected provider.
+	pub provider_confidence: Option<ProviderConfidence>,
 	/// Details about the email verification used for debugging.
 	pub debug: DebugDetails,
 }
@@ -236,6 +251,10 @@ impl Default for CheckEmailOutput {
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails::default()),
 			syntax: SyntaxDetails::default(),
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: DebugDetails::default(),
 		}
 	}
@@ -291,6 +310,10 @@ impl Serialize for CheckEmailOutput {
 			)?,
 		}
 		map.serialize_entry("syntax", &self.syntax)?;
+		map.serialize_entry("provider", &self.provider)?;
+		map.serialize_entry("provider_rules_applied", &self.provider_rules_applied)?;
+		map.serialize_entry("provider_rejection_reason", &self.provider_rejection_reason)?;
+		map.serialize_entry("provider_confidence", &self.provider_confidence)?;
 		map.serialize_entry("debug", &self.debug)?;
 		map.end()
 	}
@@ -327,6 +350,10 @@ mod tests {
 				mx: Ok(super::MxDetails::default()),
 				syntax: super::SyntaxDetails::default(),
 				smtp: Err(super::SmtpError::AsyncSmtpError(r.into())),
+				provider: None,
+				provider_rules_applied: false,
+				provider_rejection_reason: None,
+				provider_confidence: None,
 				debug: DebugDetails::default(),
 			}
 		}

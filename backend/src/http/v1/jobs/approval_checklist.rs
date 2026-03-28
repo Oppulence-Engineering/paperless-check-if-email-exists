@@ -66,9 +66,7 @@ async fn http_handler(
 				.and_then(|v| v.as_f64());
 			match (excellent, good) {
 				(Some(e), Some(g))
-					if (0.0..=100.0).contains(&e)
-						&& (0.0..=100.0).contains(&g)
-						&& e > g =>
+					if (0.0..=100.0).contains(&e) && (0.0..=100.0).contains(&g) && e > g =>
 				{
 					Some((e, g))
 				}

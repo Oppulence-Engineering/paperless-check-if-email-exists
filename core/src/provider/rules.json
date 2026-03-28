@@ -1,0 +1,41 @@
+{
+  "version": "2026-03-28",
+  "providers": [
+    {
+      "provider": "gmail",
+      "domains": ["gmail.com", "googlemail.com"],
+      "min_local_length": 6,
+      "max_local_length": 30,
+      "allowed_special_chars": [".", "+"],
+      "must_start_with_alphanumeric": true,
+      "consecutive_special_allowed": false,
+      "leading_trailing_special_allowed": false,
+      "plus_addressing": true,
+      "reserved_words": []
+    },
+    {
+      "provider": "outlook_consumer",
+      "domains": ["outlook.com", "hotmail.com", "live.com"],
+      "min_local_length": 1,
+      "max_local_length": 64,
+      "allowed_special_chars": [".", "_", "-", "+"],
+      "must_start_with_alphanumeric": true,
+      "consecutive_special_allowed": false,
+      "leading_trailing_special_allowed": false,
+      "plus_addressing": true,
+      "reserved_words": []
+    },
+    {
+      "provider": "yahoo",
+      "domains": ["yahoo.com", "ymail.com", "rocketmail.com"],
+      "min_local_length": 4,
+      "max_local_length": 32,
+      "allowed_special_chars": [".", "_", "-"],
+      "must_start_with_alphanumeric": true,
+      "consecutive_special_allowed": false,
+      "leading_trailing_special_allowed": false,
+      "plus_addressing": false,
+      "reserved_words": ["admin"]
+    }
+  ]
+}

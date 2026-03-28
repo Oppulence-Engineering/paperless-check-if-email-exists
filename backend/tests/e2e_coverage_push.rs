@@ -144,8 +144,9 @@ mod v0_bulk_results_coverage {
 		// We already have a pool from TestDb; set up config storage so
 		// get_pg_pool() works through the storage adapter. We do this by
 		// connecting via the real path.
-		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -540,9 +541,10 @@ mod readiness_coverage {
 		let db = TestDb::start().await;
 		let _ = db.pool();
 
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -605,9 +607,10 @@ mod readiness_coverage {
 		let db = TestDb::start().await;
 		let _ = db.pool();
 
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -621,9 +624,10 @@ mod readiness_coverage {
 		// Instead, just set the storage adapter manually by re-creating with
 		// a partial connect. We'll create a new config with storage connected
 		// but worker channel missing.
-		let db_url2 = crate::test_helpers::test_db_url();
+		let db_url2 = crate::test_helpers::ensure_test_db_url().await;
 		let mut base_config = BackendConfig::empty();
-		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		base_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url2,
 			extra: None,
 		}));
@@ -645,9 +649,10 @@ mod readiness_coverage {
 		final_config.storage = base_config.storage.clone();
 		// We need the storage adapter connected. Since BackendConfig::empty() sets Noop,
 		// we'll use a trick: connect a non-worker config first, then flip the flag.
-		let db_url3 = crate::test_helpers::test_db_url();
+		let db_url3 = crate::test_helpers::ensure_test_db_url().await;
 		let mut trick_config = BackendConfig::empty();
-		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		trick_config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url3,
 			extra: None,
 		}));
@@ -839,10 +844,11 @@ mod v0_bulk_get_running_coverage {
 
 	async fn db_config() -> (TestDb, Arc<BackendConfig>) {
 		let db = TestDb::start().await;
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -1022,10 +1028,11 @@ mod v1_bulk_results_csv_coverage {
 	/// but no actual RabbitMQ channel (sufficient for the results endpoint).
 	async fn worker_db_config() -> (TestDb, Arc<BackendConfig>) {
 		let db = TestDb::start().await;
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		let mut config = BackendConfig::empty();
 		config.header_secret = None;
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));

@@ -370,6 +370,10 @@ mod publish_consume_tests {
 		let received: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		assert_eq!(received.input.to_email, "publish-test@example.com");
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
+		channel
+			.basic_cancel("test-consumer", BasicCancelOptions::default())
+			.await
+			.unwrap();
 	}
 
 	#[tokio::test]
@@ -381,28 +385,74 @@ mod publish_consume_tests {
 			concurrency: 10,
 		};
 		let channel = setup_rabbit_mq("multi-pub", &config).await.unwrap();
+		let queue_name = format!("multi-pub-{}", uuid::Uuid::new_v4().simple());
 		channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
-			.await
-			.unwrap();
-
-		for i in 0..5 {
-			let task = make_task(&format!("multi-{}@test.com", i));
-			publish_task_raw(&channel, &task, BasicProperties::default().with_priority(1)).await;
-		}
-
-		let queue = channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				&queue_name,
 				QueueDeclareOptions {
-					passive: true,
+					auto_delete: true,
+					durable: false,
 					..Default::default()
 				},
 				FieldTable::default(),
 			)
 			.await
 			.unwrap();
-		assert_eq!(queue.message_count(), 5);
+
+		for i in 0..5 {
+			let task = make_task(&format!("multi-{}@test.com", i));
+			let task_json = serde_json::to_vec(&task).unwrap();
+			channel
+				.basic_publish(
+					"",
+					&queue_name,
+					BasicPublishOptions::default(),
+					&task_json,
+					BasicProperties::default().with_priority(1),
+				)
+				.await
+				.unwrap()
+				.await
+				.unwrap();
+		}
+
+		let mut consumer = channel
+			.basic_consume(
+				&queue_name,
+				"multi-pub-consumer",
+				BasicConsumeOptions::default(),
+				FieldTable::default(),
+			)
+			.await
+			.unwrap();
+
+		let mut emails = Vec::new();
+		for _ in 0..5 {
+			let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
+				.await
+				.unwrap()
+				.unwrap()
+				.unwrap();
+			let received: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+			emails.push(received.input.to_email);
+			delivery.ack(BasicAckOptions::default()).await.unwrap();
+		}
+
+		emails.sort();
+		assert_eq!(
+			emails,
+			vec![
+				"multi-0@test.com".to_string(),
+				"multi-1@test.com".to_string(),
+				"multi-2@test.com".to_string(),
+				"multi-3@test.com".to_string(),
+				"multi-4@test.com".to_string(),
+			]
+		);
+		channel
+			.basic_cancel("multi-pub-consumer", BasicCancelOptions::default())
+			.await
+			.unwrap();
 	}
 
 	#[tokio::test]
@@ -461,6 +511,19 @@ mod publish_consume_tests {
 			"Higher priority first"
 		);
 		first.ack(BasicAckOptions::default()).await.unwrap();
+
+		let second = tokio::time::timeout(std::time::Duration::from_secs(5), consumer.next())
+			.await
+			.unwrap()
+			.unwrap()
+			.unwrap();
+		let second_task: CheckEmailTask = serde_json::from_slice(&second.data).unwrap();
+		assert_eq!(second_task.input.to_email, "low@test.com");
+		second.ack(BasicAckOptions::default()).await.unwrap();
+		channel
+			.basic_cancel("prio-con", BasicCancelOptions::default())
+			.await
+			.unwrap();
 	}
 
 	#[tokio::test]
@@ -524,6 +587,10 @@ mod publish_consume_tests {
 		assert_eq!(meta.request_id.as_deref(), Some("req-456"));
 		assert_eq!(meta.task_db_id, Some(99));
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
+		channel
+			.basic_cancel("meta-con", BasicCancelOptions::default())
+			.await
+			.unwrap();
 	}
 }
 
@@ -602,6 +669,13 @@ mod full_pipeline_tests {
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("pipeline-test", &config).await.unwrap();
+		channel
+			.queue_purge(
+				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
+				QueuePurgeOptions::default(),
+			)
+			.await
+			.unwrap();
 
 		let job_row =
 			sqlx::query("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
@@ -655,6 +729,10 @@ mod full_pipeline_tests {
 
 		let received_task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
+		channel
+			.basic_cancel("pipeline-consumer", BasicCancelOptions::default())
+			.await
+			.unwrap();
 
 		// Run check_email directly
 		let output =

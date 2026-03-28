@@ -18,8 +18,9 @@ mod tenant_crud {
 	async fn admin_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
-		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -664,8 +665,9 @@ mod api_key_crud {
 	async fn admin_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
-		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));

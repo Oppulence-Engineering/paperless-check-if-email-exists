@@ -20,11 +20,7 @@
  * @enum {string}
  */
 
-export const ReasonCode = {
-    Deliverable: 'deliverable',
-    InvalidSyntax: 'invalid_syntax',
-    InvalidRecipient: 'invalid_recipient',
-    ProviderRejected: 'provider_rejected',
+export const ProviderRejectionReason = {
     ProviderLocalPartTooShort: 'provider_local_part_too_short',
     ProviderLocalPartTooLong: 'provider_local_part_too_long',
     ProviderInvalidCharacter: 'provider_invalid_character',
@@ -33,23 +29,10 @@ export const ReasonCode = {
     ProviderInvalidEndCharacter: 'provider_invalid_end_character',
     ProviderPlusAddressingNotSupported: 'provider_plus_addressing_not_supported',
     ProviderReservedWord: 'provider_reserved_word',
-    ProviderFormatViolation: 'provider_format_violation',
-    SmtpUndeliverable: 'smtp_undeliverable',
-    DisabledMailbox: 'disabled_mailbox',
-    NoMx: 'no_mx',
-    SmtpError: 'smtp_error',
-    SmtpUnreachable: 'smtp_unreachable',
-    CatchAll: 'catch_all',
-    FullInbox: 'full_inbox',
-    Disposable: 'disposable',
-    RoleAccount: 'role_account',
-    SpamTrap: 'spam_trap',
-    UnknownDeliverability: 'unknown_deliverability',
-    FreeProvider: 'free_provider',
-    PossibleTypo: 'possible_typo'
+    ProviderFormatViolation: 'provider_format_violation'
 } as const;
 
-export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];
+export type ProviderRejectionReason = typeof ProviderRejectionReason[keyof typeof ProviderRejectionReason];
 
 
 

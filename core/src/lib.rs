@@ -82,6 +82,7 @@
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
+pub mod provider;
 mod rules;
 pub mod smtp;
 pub mod syntax;
@@ -89,6 +90,7 @@ mod util;
 
 use misc::{check_misc, MiscDetails};
 use mx::check_mx;
+use provider::{detect_provider, has_provider_rule, validate_provider_email};
 use rustls::crypto::ring;
 use smtp::{check_smtp, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
@@ -168,6 +170,32 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		};
 	}
 
+	let strict_provider_rules = input.strict_provider_rules.unwrap_or(true);
+	let mut detected_provider = detect_provider(&my_syntax.domain, None);
+	let mut provider_rejection_reason = None;
+	let mut provider_rules_applied = false;
+
+	if strict_provider_rules {
+		if let Some(provider) = detected_provider.as_ref() {
+			if has_provider_rule(&provider.provider) {
+				provider_rules_applied = true;
+				if let Err(reason) = validate_provider_email(provider, &my_syntax.username) {
+					provider_rejection_reason = Some(reason);
+					return CheckEmailOutput {
+						input: to_email.to_string(),
+						is_reachable: Reachable::Invalid,
+						syntax: my_syntax,
+						provider: Some(provider.provider.clone()),
+						provider_rules_applied,
+						provider_rejection_reason,
+						provider_confidence: Some(provider.confidence.clone()),
+						..Default::default()
+					};
+				}
+			}
+		}
+	}
+
 	tracing::debug!(
 		target: LOG_TARGET,
 		email=%to_email,
@@ -187,6 +215,14 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 				is_reachable: Reachable::Unknown,
 				mx: e,
 				syntax: my_syntax,
+				provider: detected_provider
+					.as_ref()
+					.map(|value| value.provider.clone()),
+				provider_rules_applied,
+				provider_rejection_reason,
+				provider_confidence: detected_provider
+					.as_ref()
+					.map(|value| value.confidence.clone()),
 				..Default::default()
 			};
 		}
@@ -201,6 +237,14 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			is_reachable: Reachable::Invalid,
 			mx: Ok(my_mx),
 			syntax: my_syntax,
+			provider: detected_provider
+				.as_ref()
+				.map(|value| value.provider.clone()),
+			provider_rules_applied,
+			provider_rejection_reason,
+			provider_confidence: detected_provider
+				.as_ref()
+				.map(|value| value.confidence.clone()),
 			..Default::default()
 		};
 	}
@@ -243,6 +287,33 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.min_by_key(|a| a.preference())
 		.expect("There should be at least one MX record after filtering.");
 	let host = mx_records;
+	let mx_host = host.exchange().to_string();
+
+	if detected_provider.is_none() {
+		detected_provider = detect_provider(&my_syntax.domain, Some(&mx_host));
+	}
+
+	if strict_provider_rules {
+		if let Some(provider) = detected_provider.as_ref() {
+			if !provider_rules_applied && has_provider_rule(&provider.provider) {
+				provider_rules_applied = true;
+				if let Err(reason) = validate_provider_email(provider, &my_syntax.username) {
+					provider_rejection_reason = Some(reason);
+					return CheckEmailOutput {
+						input: to_email.to_string(),
+						is_reachable: Reachable::Invalid,
+						mx: Ok(my_mx),
+						syntax: my_syntax,
+						provider: Some(provider.provider.clone()),
+						provider_rules_applied,
+						provider_rejection_reason,
+						provider_confidence: Some(provider.confidence.clone()),
+						..Default::default()
+					};
+				}
+			}
+		}
+	}
 
 	let (my_smtp, smtp_debug) = check_smtp(
 		my_syntax
@@ -268,6 +339,14 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		mx: Ok(my_mx),
 		smtp: my_smtp,
 		syntax: my_syntax,
+		provider: detected_provider
+			.as_ref()
+			.map(|value| value.provider.clone()),
+		provider_rules_applied,
+		provider_rejection_reason,
+		provider_confidence: detected_provider
+			.as_ref()
+			.map(|value| value.confidence.clone()),
 		debug: DebugDetails {
 			start_time: start_time.into(),
 			end_time: end_time.into(),
@@ -283,4 +362,31 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 	log_unknown_errors(&output, &input.backend_name);
 
 	output
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::provider::{Provider, ProviderRejectionReason};
+	use crate::CheckEmailInputBuilder;
+
+	#[tokio::test]
+	async fn provider_invalid_email_short_circuits_before_mx_and_smtp() {
+		let input = CheckEmailInputBuilder::default()
+			.to_email("abc@gmail.com".to_string())
+			.build()
+			.unwrap();
+
+		let output = check_email(&input).await;
+
+		assert_eq!(output.is_reachable, Reachable::Invalid);
+		assert_eq!(output.provider, Some(Provider::Gmail));
+		assert!(output.provider_rules_applied);
+		assert_eq!(
+			output.provider_rejection_reason,
+			Some(ProviderRejectionReason::LocalPartTooShort)
+		);
+		assert!(output.mx.as_ref().unwrap().lookup.is_err());
+		assert!(!output.smtp.as_ref().unwrap().is_deliverable);
+	}
 }
