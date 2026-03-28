@@ -15,7 +15,7 @@ mod me_endpoint {
 	async fn config_with_db() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test-secret".into());
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
 			db_url,
@@ -252,7 +252,7 @@ mod admin_tenant_quota {
 	async fn admin_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
 			db_url,

@@ -255,6 +255,21 @@
               }
             ]
           },
+          "provider": {
+            "$ref": "#/components/schemas/Provider",
+            "nullable": true
+          },
+          "provider_confidence": {
+            "$ref": "#/components/schemas/ProviderConfidence",
+            "nullable": true
+          },
+          "provider_rejection_reason": {
+            "$ref": "#/components/schemas/ProviderRejectionReason",
+            "nullable": true
+          },
+          "provider_rules_applied": {
+            "type": "boolean"
+          },
           "score": {
             "$ref": "#/components/schemas/EmailScore"
           },
@@ -280,7 +295,8 @@
           "mx",
           "smtp",
           "syntax",
-          "score"
+          "score",
+          "provider_rules_applied"
         ],
         "title": "CheckEmailOutput",
         "type": "object",
@@ -352,6 +368,10 @@
           "smtp_port": {
             "description": "SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.",
             "type": "number"
+          },
+          "strict_provider_rules": {
+            "description": "When false, skips provider-specific syntax validation even if the provider is recognized.",
+            "type": "boolean"
           },
           "to_email": {
             "description": "The email address to check.",
@@ -1866,6 +1886,41 @@
         ],
         "type": "object"
       },
+      "Provider": {
+        "enum": [
+          "gmail",
+          "google_workspace",
+          "outlook_consumer",
+          "microsoft365",
+          "yahoo",
+          "apple_icloud",
+          "proton",
+          "zoho"
+        ],
+        "type": "string"
+      },
+      "ProviderConfidence": {
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "type": "string"
+      },
+      "ProviderRejectionReason": {
+        "enum": [
+          "provider_local_part_too_short",
+          "provider_local_part_too_long",
+          "provider_invalid_character",
+          "provider_consecutive_special_characters",
+          "provider_invalid_start_character",
+          "provider_invalid_end_character",
+          "provider_plus_addressing_not_supported",
+          "provider_reserved_word",
+          "provider_format_violation"
+        ],
+        "type": "string"
+      },
       "Reachable": {
         "description": "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
         "enum": [
@@ -1882,6 +1937,16 @@
           "deliverable",
           "invalid_syntax",
           "invalid_recipient",
+          "provider_rejected",
+          "provider_local_part_too_short",
+          "provider_local_part_too_long",
+          "provider_invalid_character",
+          "provider_consecutive_special_characters",
+          "provider_invalid_start_character",
+          "provider_invalid_end_character",
+          "provider_plus_addressing_not_supported",
+          "provider_reserved_word",
+          "provider_format_violation",
           "smtp_undeliverable",
           "disabled_mailbox",
           "no_mx",
@@ -2115,6 +2180,7 @@
           "deliverable",
           "invalid_syntax",
           "invalid_recipient",
+          "provider_rejected",
           "smtp_undeliverable",
           "disabled_mailbox",
           "no_mx",

@@ -37,6 +37,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_deliverable: false,
 				is_disabled: false,
 			}),
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		};
 	};
@@ -65,6 +69,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_disabled: false,
 			}),
 			syntax,
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		},
 		"risky.example.com" => CheckEmailOutput {
@@ -80,6 +88,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_disabled: false,
 			}),
 			syntax,
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		},
 		"unknown.example.com" => CheckEmailOutput {
@@ -91,6 +103,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				std::io::Error::other("sandbox: simulated SMTP timeout"),
 			)),
 			syntax,
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		},
 		"disposable.example.com" => CheckEmailOutput {
@@ -109,6 +125,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_disabled: false,
 			}),
 			syntax,
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		},
 		_ => CheckEmailOutput {
@@ -124,6 +144,10 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_disabled: false,
 			}),
 			syntax,
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 			debug: Default::default(),
 		},
 	}

@@ -47,6 +47,9 @@ pub struct CheckEmailRequest {
 	/// or making real SMTP connections.
 	#[serde(default)]
 	pub sandbox: bool,
+	/// When false, skips provider-specific syntax validation even if the
+	/// provider is recognized.
+	pub strict_provider_rules: Option<bool>,
 	// The following fields are for backward compatibility.
 	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,
 	pub hotmailb2c_verif_method: Option<BackwardCompatHotmailB2CVerifMethod>,
@@ -108,6 +111,7 @@ impl CheckEmailRequest {
 			sentry_dsn: config.sentry_dsn.clone(),
 			backend_name: config.backend_name.clone(),
 			webdriver_config: config.webdriver.clone(),
+			strict_provider_rules: self.strict_provider_rules,
 			..Default::default()
 		}
 	}

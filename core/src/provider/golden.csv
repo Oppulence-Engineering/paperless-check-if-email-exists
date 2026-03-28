@@ -1,0 +1,10 @@
+email,provider,valid,reason,confidence
+valid.user+tag@gmail.com,gmail,true,,high
+abc@gmail.com,gmail,false,provider_local_part_too_short,high
+a..bcdef@gmail.com,gmail,false,provider_consecutive_special_characters,high
+valid_user@live.com,outlook_consumer,true,,high
+.leading@outlook.com,outlook_consumer,false,provider_invalid_start_character,high
+valid_user@yahoo.com,yahoo,true,,high
+admn@yahoo.com,yahoo,true,,high
+admin@yahoo.com,yahoo,false,provider_reserved_word,high
+valid+tag@rocketmail.com,yahoo,false,provider_plus_addressing_not_supported,high

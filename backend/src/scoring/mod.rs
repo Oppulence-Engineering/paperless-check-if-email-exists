@@ -1,6 +1,6 @@
 pub mod response;
 
-use check_if_email_exists::{CheckEmailOutput, Reachable};
+use check_if_email_exists::{provider::ProviderRejectionReason, CheckEmailOutput, Reachable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -18,6 +18,7 @@ pub enum SubReason {
 	Deliverable,
 	InvalidSyntax,
 	InvalidRecipient,
+	ProviderRejected,
 	SmtpUndeliverable,
 	DisabledMailbox,
 	NoMx,
@@ -97,7 +98,8 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let signals = extract_signals(output);
 
 	if !signals.valid_syntax {
-		let reason_codes = collect_reason_codes(&signals);
+		let reason_codes =
+			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -108,8 +110,22 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 		};
 	}
 
+	if output.provider_rejection_reason.is_some() {
+		let reason_codes =
+			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		return EmailScore {
+			score: 0,
+			category: EmailCategory::Invalid,
+			sub_reason: SubReason::ProviderRejected,
+			safe_to_send: false,
+			reason_codes,
+			signals,
+		};
+	}
+
 	if matches!(signals.reachable, Reachable::Invalid) {
-		let reason_codes = collect_reason_codes(&signals);
+		let reason_codes =
+			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -121,7 +137,8 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	}
 
 	if !signals.smtp_is_deliverable {
-		let reason_codes = collect_reason_codes(&signals);
+		let reason_codes =
+			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -133,7 +150,8 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	}
 
 	if signals.smtp_is_disabled {
-		let reason_codes = collect_reason_codes(&signals);
+		let reason_codes =
+			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -216,7 +234,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 		&& !signals.is_role_account
 		&& !signals.is_spam_trap_domain;
 
-	let reason_codes = collect_reason_codes(&signals);
+	let reason_codes = collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
 
 	EmailScore {
 		score,
@@ -228,10 +246,21 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	}
 }
 
-fn collect_reason_codes(signals: &ScoringSignals) -> Vec<String> {
+fn collect_reason_codes(
+	signals: &ScoringSignals,
+	provider_rejection_reason: Option<&ProviderRejectionReason>,
+) -> Vec<String> {
 	let mut codes = Vec::new();
 	if !signals.valid_syntax {
 		codes.push("invalid_syntax".to_string());
+	}
+	if let Some(reason) = provider_rejection_reason {
+		codes.push("provider_rejected".to_string());
+		codes.push(reason.code().to_string());
+		if signals.has_domain_suggestion {
+			codes.push("possible_typo".to_string());
+		}
+		return codes;
 	}
 	if matches!(signals.reachable, Reachable::Invalid) {
 		codes.push("invalid_recipient".to_string());
@@ -318,7 +347,8 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 mod tests {
 	use super::*;
 	use check_if_email_exists::{
-		misc::MiscDetails, mx::MxDetails, smtp::SmtpDetails, syntax::SyntaxDetails,
+		misc::MiscDetails, mx::MxDetails, provider::ProviderRejectionReason, smtp::SmtpDetails,
+		syntax::SyntaxDetails,
 	};
 
 	fn base_output() -> CheckEmailOutput {
@@ -343,6 +373,10 @@ mod tests {
 				suggestion: None,
 			},
 			debug: Default::default(),
+			provider: None,
+			provider_rules_applied: false,
+			provider_rejection_reason: None,
+			provider_confidence: None,
 		}
 	}
 
@@ -386,6 +420,27 @@ mod tests {
 		assert_eq!(score.score, 0);
 		assert_eq!(score.category, EmailCategory::Invalid);
 		assert_eq!(score.sub_reason, SubReason::NoMx);
+	}
+
+	#[test]
+	fn compute_score_provider_rejected_short_circuits() {
+		let mut output = base_output();
+		output.is_reachable = Reachable::Invalid;
+		output.provider_rules_applied = true;
+		output.provider_rejection_reason = Some(ProviderRejectionReason::LocalPartTooShort);
+		let score = compute_score(&output);
+		assert_eq!(score.score, 0);
+		assert_eq!(score.category, EmailCategory::Invalid);
+		assert_eq!(score.sub_reason, SubReason::ProviderRejected);
+		assert!(score
+			.reason_codes
+			.contains(&"provider_rejected".to_string()));
+		assert!(score
+			.reason_codes
+			.contains(&"provider_local_part_too_short".to_string()));
+		assert!(!score
+			.reason_codes
+			.contains(&"invalid_recipient".to_string()));
 	}
 
 	#[test]
@@ -517,7 +572,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals);
+		let codes = collect_reason_codes(&signals, None);
 		assert_eq!(codes, vec!["deliverable"]);
 	}
 
@@ -570,7 +625,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals);
+		let codes = collect_reason_codes(&signals, None);
 		assert!(codes.contains(&"spam_trap".to_string()));
 		assert!(!codes.contains(&"deliverable".to_string()));
 	}

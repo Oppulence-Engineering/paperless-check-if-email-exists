@@ -1,5 +1,8 @@
 /// Shared test infrastructure for E2E tests.
-/// Uses TEST_DATABASE_URL if set (fast, no Docker), otherwise testcontainers.
+/// Uses per-process testcontainers by default to avoid cross-binary collisions.
+/// Set USE_LOCAL_TEST_INFRA=1 to opt into TEST_DATABASE_URL / TEST_AMQP_URL or
+/// the default local ports instead.
+use lapin::{Connection, ConnectionProperties};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
 use std::sync::{LazyLock, Mutex};
@@ -12,11 +15,26 @@ use tokio::sync::OnceCell;
 use tokio::time::{sleep, Duration};
 
 static SHARED_AMQP_URL: OnceCell<String> = OnceCell::const_new();
+static SHARED_DB_URL: OnceCell<String> = OnceCell::const_new();
+static TEST_DB_SCHEMA_READY: OnceCell<()> = OnceCell::const_new();
 static CURRENT_TEST_DB_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
 static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
 
 const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
 const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
+const USE_LOCAL_TEST_INFRA_ENV: &str = "USE_LOCAL_TEST_INFRA";
+
+fn use_local_test_infra() -> bool {
+	std::env::var(USE_LOCAL_TEST_INFRA_ENV)
+		.ok()
+		.map(|value| {
+			matches!(
+				value.trim().to_ascii_lowercase().as_str(),
+				"1" | "true" | "yes" | "on"
+			)
+		})
+		.unwrap_or(false)
+}
 
 fn set_current_test_db_url(url: &str) {
 	*CURRENT_TEST_DB_URL.lock().expect("db url mutex poisoned") = Some(url.to_string());
@@ -46,6 +64,112 @@ pub fn test_amqp_url() -> String {
 		.unwrap_or_else(|| DEFAULT_TEST_AMQP_URL.to_string())
 }
 
+pub async fn ensure_test_db_url() -> String {
+	if let Some(url) = CURRENT_TEST_DB_URL
+		.lock()
+		.expect("db url mutex poisoned")
+		.clone()
+	{
+		ensure_test_db_schema(&url)
+			.await
+			.expect("current test database schema should be ready");
+		return url;
+	}
+
+	if use_local_test_infra() {
+		if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
+			ensure_test_db_schema(&url)
+				.await
+				.expect("TEST_DATABASE_URL schema should be ready");
+			set_current_test_db_url(&url);
+			return url;
+		}
+
+		if PgPoolOptions::new()
+			.max_connections(1)
+			.acquire_timeout(Duration::from_secs(2))
+			.connect(DEFAULT_TEST_DB_URL)
+			.await
+			.is_ok()
+		{
+			if ensure_test_db_schema(DEFAULT_TEST_DB_URL).await.is_ok() {
+				set_current_test_db_url(DEFAULT_TEST_DB_URL);
+				return DEFAULT_TEST_DB_URL.to_string();
+			}
+		}
+	}
+
+	let db_url = SHARED_DB_URL
+		.get_or_try_init(|| async {
+			let mut last_error = None;
+			for attempt in 1..=3 {
+				match Postgres::default()
+					.with_startup_timeout(Duration::from_secs(120))
+					.start()
+					.await
+				{
+					Ok(container) => {
+						let host_port = container
+							.get_host_port_ipv4(5432)
+							.await
+							.map_err(|err| format!("Failed to get Postgres port: {err}"))?;
+						let db_url =
+							format!("postgres://postgres:postgres@127.0.0.1:{host_port}/postgres");
+
+						ensure_test_db_schema(&db_url).await.map_err(|err| {
+							format!("Failed to prepare shared test database schema: {err}")
+						})?;
+
+						set_current_test_db_url(&db_url);
+						let _ = Box::leak(Box::new(container));
+						return Ok::<String, String>(db_url);
+					}
+					Err(err) => {
+						last_error = Some(err.to_string());
+						if attempt < 3 {
+							sleep(Duration::from_secs(2)).await;
+						}
+					}
+				}
+			}
+
+			Err(format!(
+				"Failed to start Postgres container: {}",
+				last_error.unwrap_or_else(|| "unknown error".to_string())
+			))
+		})
+		.await
+		.expect("shared Postgres init")
+		.clone();
+
+	set_current_test_db_url(&db_url);
+	db_url
+}
+
+async fn ensure_test_db_schema(url: &str) -> Result<(), String> {
+	TEST_DB_SCHEMA_READY
+		.get_or_try_init(|| async move {
+			let pool = PgPoolOptions::new()
+				.max_connections(10)
+				.connect(url)
+				.await
+				.map_err(|err| format!("Failed to connect for test migrations: {err}"))?;
+
+			sqlx::migrate!("./migrations")
+				.run(&pool)
+				.await
+				.map_err(|err| format!("Failed to run test migrations: {err}"))?;
+
+			Ok::<(), String>(())
+		})
+		.await
+		.map(|_| ())
+}
+
+pub async fn ensure_test_amqp_url() -> String {
+	TestRabbitMq::start().await.amqp_url
+}
+
 /// Wrapper that holds a PgPool. If using testcontainers, also holds the container.
 pub struct TestDb {
 	pool: PgPool,
@@ -61,13 +185,38 @@ pub struct TestRabbitMq {
 
 impl TestRabbitMq {
 	pub async fn start() -> Self {
-		// Check for existing RabbitMQ via env var
-		if let Ok(url) = std::env::var("TEST_AMQP_URL") {
+		if let Some(url) = CURRENT_TEST_AMQP_URL
+			.lock()
+			.expect("amqp url mutex poisoned")
+			.clone()
+		{
 			return Self {
 				amqp_url: url,
 				_container: None,
 			};
 		}
+
+		if use_local_test_infra() {
+			if let Ok(url) = std::env::var("TEST_AMQP_URL") {
+				set_current_test_amqp_url(&url);
+				return Self {
+					amqp_url: url,
+					_container: None,
+				};
+			}
+
+			if Connection::connect(DEFAULT_TEST_AMQP_URL, ConnectionProperties::default())
+				.await
+				.is_ok()
+			{
+				set_current_test_amqp_url(DEFAULT_TEST_AMQP_URL);
+				return Self {
+					amqp_url: DEFAULT_TEST_AMQP_URL.to_string(),
+					_container: None,
+				};
+			}
+		}
+
 		let amqp_url = SHARED_AMQP_URL
 			.get_or_try_init(|| async {
 				let mut last_error = None;
@@ -113,74 +262,7 @@ impl TestRabbitMq {
 
 impl TestDb {
 	pub async fn start() -> Self {
-		// Fast path: use existing Postgres via env var (works under llvm-cov)
-		if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
-			set_current_test_db_url(&url);
-			return connect_existing_db(url).await;
-		}
-
-		// Secondary fast path: prefer the default local docker-compose DB if it is up,
-		// even when TEST_DATABASE_URL is not explicitly exported.
-		if PgPoolOptions::new()
-			.max_connections(1)
-			.acquire_timeout(Duration::from_secs(2))
-			.connect(DEFAULT_TEST_DB_URL)
-			.await
-			.is_ok()
-		{
-			set_current_test_db_url(DEFAULT_TEST_DB_URL);
-			return connect_existing_db(DEFAULT_TEST_DB_URL.to_string()).await;
-		}
-
-		// Slow path: testcontainers
-		let mut last_error = None;
-		for attempt in 1..=3 {
-			match Postgres::default()
-				.with_startup_timeout(Duration::from_secs(120))
-				.start()
-				.await
-			{
-				Ok(container) => {
-					let host_port = container
-						.get_host_port_ipv4(5432)
-						.await
-						.expect("Failed to get Postgres port");
-					let db_url = format!(
-						"postgres://postgres:postgres@127.0.0.1:{}/postgres",
-						host_port
-					);
-
-					let pool = PgPoolOptions::new()
-						.max_connections(10)
-						.connect(&db_url)
-						.await
-						.expect("Failed to connect to test database");
-
-					sqlx::migrate!("./migrations")
-						.run(&pool)
-						.await
-						.expect("Failed to run migrations");
-					set_current_test_db_url(&db_url);
-
-					return Self {
-						pool,
-						db_url,
-						_container: Some(container),
-					};
-				}
-				Err(err) => {
-					last_error = Some(err.to_string());
-					if attempt < 3 {
-						sleep(Duration::from_secs(2)).await;
-					}
-				}
-			}
-		}
-
-		panic!(
-			"Failed to start Postgres container: {}",
-			last_error.unwrap_or_else(|| "unknown error".to_string())
-		);
+		connect_existing_db(ensure_test_db_url().await).await
 	}
 
 	pub fn pool(&self) -> &PgPool {
@@ -197,6 +279,10 @@ impl TestDb {
 }
 
 async fn connect_existing_db(url: String) -> TestDb {
+	ensure_test_db_schema(&url)
+		.await
+		.expect("existing test database schema should be ready");
+
 	let pool = PgPoolOptions::new()
 		.max_connections(10)
 		.connect(&url)

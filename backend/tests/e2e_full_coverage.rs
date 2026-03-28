@@ -15,15 +15,15 @@ mod consume_coverage {
 	};
 	use serial_test::serial;
 
-	fn rmq_url() -> String {
-		crate::test_helpers::test_amqp_url()
+	async fn rmq_url() -> String {
+		crate::test_helpers::ensure_test_amqp_url().await
 	}
 
 	#[tokio::test]
 	#[serial]
 	async fn test_setup_connects_and_declares_queue() {
 		let config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("cov-test-1", &config).await.unwrap();
@@ -48,7 +48,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_sets_qos() {
 		let config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 8,
 		};
 		let channel = setup_rabbit_mq("cov-test-qos", &config).await.unwrap();
@@ -90,8 +90,8 @@ mod do_work_coverage {
 	use serial_test::serial;
 	use std::collections::HashMap;
 
-	fn rmq_url() -> String {
-		crate::test_helpers::test_amqp_url()
+	async fn rmq_url() -> String {
+		crate::test_helpers::ensure_test_amqp_url().await
 	}
 
 	#[tokio::test]
@@ -144,7 +144,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_publish_consume_roundtrip() {
 		let config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = setup_rabbit_mq("dowork-rt", &config).await.unwrap();
@@ -247,7 +247,7 @@ mod shared_check_email_coverage {
 	async fn config_with_db() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("s".into());
-		let db_url = crate::test_helpers::test_db_url();
+		let db_url = crate::test_helpers::ensure_test_db_url().await;
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
 			db_url,
@@ -793,25 +793,25 @@ mod do_check_email_work_coverage {
 	use sqlx::Row;
 	use std::sync::Arc;
 
-	fn rmq_url() -> String {
-		crate::test_helpers::test_amqp_url()
+	async fn rmq_url() -> String {
+		crate::test_helpers::ensure_test_amqp_url().await
 	}
 
-	fn db_url() -> String {
-		crate::test_helpers::test_db_url()
+	async fn db_url() -> String {
+		crate::test_helpers::ensure_test_db_url().await
 	}
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
-			db_url: db_url(),
+			db_url: db_url().await,
 			extra: None,
 		}));
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
-				url: rmq_url(),
+				url: rmq_url().await,
 				concurrency: 4,
 			}),
 			webhook: None,
@@ -826,7 +826,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = Arc::new(
@@ -937,7 +937,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-dl", &rmq_config).await.unwrap());
@@ -1044,24 +1044,24 @@ mod do_check_email_work_retry_coverage {
 	use sqlx::Row;
 	use std::sync::Arc;
 
-	fn rmq_url() -> String {
-		crate::test_helpers::test_amqp_url()
+	async fn rmq_url() -> String {
+		crate::test_helpers::ensure_test_amqp_url().await
 	}
-	fn db_url() -> String {
-		crate::test_helpers::test_db_url()
+	async fn db_url() -> String {
+		crate::test_helpers::ensure_test_db_url().await
 	}
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
 			read_replica_url: None,
-			db_url: db_url(),
+			db_url: db_url().await,
 			extra: None,
 		}));
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
-				url: rmq_url(),
+				url: rmq_url().await,
 				concurrency: 4,
 			}),
 			webhook: None,
@@ -1076,7 +1076,7 @@ mod do_check_email_work_retry_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-ss", &rmq_config).await.unwrap());
@@ -1153,7 +1153,7 @@ mod do_check_email_work_retry_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
-			url: rmq_url(),
+			url: rmq_url().await,
 			concurrency: 4,
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-retry", &rmq_config).await.unwrap());
@@ -1250,8 +1250,8 @@ mod postgres_storage_coverage {
 	};
 	use serial_test::serial;
 
-	fn db_url() -> String {
-		crate::test_helpers::test_db_url()
+	async fn db_url() -> String {
+		crate::test_helpers::ensure_test_db_url().await
 	}
 
 	fn make_task(metadata: Option<TaskMetadata>) -> CheckEmailTask {
@@ -1269,7 +1269,9 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_new_connects_and_migrates() {
-		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url().await, None, None)
+			.await
+			.unwrap();
 		// Verify we can query
 		let row = sqlx::query("SELECT 1 as v")
 			.fetch_one(&storage.pg_pool)
@@ -1282,7 +1284,9 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_ok_result() {
-		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url().await, None, None)
+			.await
+			.unwrap();
 		let task = make_task(None);
 		let output = CheckEmailOutput {
 			input: "store@test.com".into(),
@@ -1295,7 +1299,9 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_err_result() {
-		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url().await, None, None)
+			.await
+			.unwrap();
 		let task = make_task(None);
 		let err: Result<CheckEmailOutput, TaskError> =
 			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
@@ -1306,7 +1312,7 @@ mod postgres_storage_coverage {
 	#[serial]
 	async fn test_store_with_extra() {
 		let extra = Some(serde_json::json!({"key": "value"}));
-		let storage = PostgresStorage::new(&db_url(), None, extra.clone())
+		let storage = PostgresStorage::new(&db_url().await, None, extra.clone())
 			.await
 			.unwrap();
 		assert_eq!(storage.get_extra(), extra);
@@ -1323,7 +1329,9 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_with_tenant_id() {
-		let storage = PostgresStorage::new(&db_url(), None, None).await.unwrap();
+		let storage = PostgresStorage::new(&db_url().await, None, None)
+			.await
+			.unwrap();
 		// Create a tenant
 		let row = sqlx::query("INSERT INTO tenants (name, slug, contact_email) VALUES ('T', 'store-cov', 's@t.com') RETURNING id")
 			.fetch_one(&storage.pg_pool).await.unwrap();
