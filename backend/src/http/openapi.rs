@@ -42,6 +42,16 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::download::v1_download_list,
 		crate::http::v1::lists::delete::v1_delete_list,
+		crate::http::v1::pipelines::v1_create_pipeline,
+		crate::http::v1::pipelines::v1_list_pipelines,
+		crate::http::v1::pipelines::v1_get_pipeline,
+		crate::http::v1::pipelines::v1_update_pipeline,
+		crate::http::v1::pipelines::v1_delete_pipeline,
+		crate::http::v1::pipelines::v1_pause_pipeline,
+		crate::http::v1::pipelines::v1_resume_pipeline,
+		crate::http::v1::pipelines::v1_trigger_pipeline,
+		crate::http::v1::pipelines::v1_list_pipeline_runs,
+		crate::http::v1::pipelines::v1_get_pipeline_run,
 		crate::http::v1::reputation::check::v1_check_reputation,
 		crate::http::v1::suppressions::add::v1_add_suppressions,
 		crate::http::v1::suppressions::list::v1_list_suppressions,
@@ -92,6 +102,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "v0", description = "Legacy v0 API endpoints"),
 		(name = "v1", description = "Primary v1 API endpoints"),
 		(name = "Jobs", description = "Job lifecycle and results endpoints"),
+		(name = "Pipelines", description = "Scheduled list-cleaning pipeline endpoints"),
 		(name = "Account", description = "Account-level endpoints"),
 		(name = "Admin", description = "Administrative endpoints"),
 		(name = "Admin Jobs", description = "Administrative job endpoints"),
@@ -153,6 +164,23 @@ fn normalize_nullable_types(value: &mut Value) {
 		Value::Array(items) => {
 			for child in items {
 				normalize_nullable_types(child);
+			}
+		}
+		_ => {}
+	}
+}
+
+fn strip_unsupported_schema_keywords(value: &mut Value) {
+	match value {
+		Value::Object(map) => {
+			map.remove("propertyNames");
+			for child in map.values_mut() {
+				strip_unsupported_schema_keywords(child);
+			}
+		}
+		Value::Array(items) => {
+			for child in items {
+				strip_unsupported_schema_keywords(child);
 			}
 		}
 		_ => {}
@@ -1144,6 +1172,7 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 
 	merge_openapi(&mut spec, generated_spec);
 	normalize_nullable_types(&mut spec);
+	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
 	Ok(spec)
 }

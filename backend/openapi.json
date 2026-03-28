@@ -423,6 +423,37 @@
           "id": "a872ead6474cd"
         }
       },
+      "CreatePipelineInput": {
+        "properties": {
+          "delivery": {
+            "$ref": "#/components/schemas/PipelineDeliveryConfig"
+          },
+          "name": {
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PipelinePolicyConfig"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/PipelineSchedule"
+          },
+          "source": {
+            "$ref": "#/components/schemas/PipelineSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PipelineStatus"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/PipelineVerificationSettings"
+          }
+        },
+        "required": [
+          "name",
+          "source",
+          "schedule"
+        ],
+        "type": "object"
+      },
       "DebugDetails": {
         "properties": {
           "duration": {
@@ -478,6 +509,17 @@
         "x-stoplight": {
           "id": "2a90bzapppo0j"
         }
+      },
+      "DeletePipelineResponse": {
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "type": "object"
       },
       "DnsRecordResults": {
         "properties": {
@@ -1017,6 +1059,44 @@
         ],
         "type": "object"
       },
+      "ListPipelineRunsResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineRunView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "runs",
+          "total"
+        ],
+        "type": "object"
+      },
+      "ListPipelinesResponse": {
+        "properties": {
+          "pipelines": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pipelines",
+          "total"
+        ],
+        "type": "object"
+      },
       "ListSummary": {
         "properties": {
           "total_invalid": {
@@ -1146,6 +1226,401 @@
           "records"
         ],
         "title": "MxDetails",
+        "type": "object"
+      },
+      "PipelineDeliveryConfig": {
+        "properties": {
+          "dashboard": {
+            "type": "boolean"
+          },
+          "max_attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "retry_backoff_seconds": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "webhook": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineDeliveryWebhook"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PipelineDeliveryStatus": {
+        "enum": [
+          "not_requested",
+          "pending",
+          "delivered",
+          "retry_scheduled",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "PipelineDeliveryWebhook": {
+        "properties": {
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "PipelinePolicyConfig": {
+        "properties": {
+          "missed_run_window_hours": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PipelineRunStatus": {
+        "enum": [
+          "queued",
+          "preparing",
+          "fetching_source",
+          "publishing",
+          "running",
+          "delivering",
+          "completed",
+          "failed",
+          "cancelled",
+          "skipped"
+        ],
+        "type": "string"
+      },
+      "PipelineRunView": {
+        "properties": {
+          "billed_emails": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "completed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delivery_attempts": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "delivery_error": {
+            "nullable": true,
+            "type": "string"
+          },
+          "delivery_status": {
+            "$ref": "#/components/schemas/PipelineDeliveryStatus"
+          },
+          "error_code": {
+            "nullable": true,
+            "type": "string"
+          },
+          "error_message": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "job_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "last_delivery_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "list_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "next_delivery_attempt_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "pipeline_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "result_location": {},
+          "scheduled_for": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_snapshot": {},
+          "started_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "stats": {},
+          "status": {
+            "$ref": "#/components/schemas/PipelineRunStatus"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "trigger_type": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pipeline_id",
+          "tenant_id",
+          "trigger_type",
+          "status",
+          "source_snapshot",
+          "stats",
+          "billed_emails",
+          "delivery_status",
+          "delivery_attempts",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "PipelineSchedule": {
+        "properties": {
+          "cron": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cron",
+          "timezone"
+        ],
+        "type": "object"
+      },
+      "PipelineSource": {
+        "oneOf": [
+          {
+            "properties": {
+              "list_id": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "type": {
+                "enum": [
+                  "list_snapshot"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "list_id",
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "audience_id": {
+                "type": "string"
+              },
+              "connection_id": {
+                "type": "string"
+              },
+              "field_mapping": {},
+              "provider": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "integration"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "provider",
+              "connection_id",
+              "audience_id",
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "accepted_format": {
+                "type": "string"
+              },
+              "token_id": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "push"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "token_id",
+              "accepted_format",
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "bucket": {
+                "type": "string"
+              },
+              "path_pattern": {
+                "nullable": true,
+                "type": "string"
+              },
+              "prefix": {
+                "nullable": true,
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "region": {
+                "nullable": true,
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "bucket"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "provider",
+              "bucket",
+              "type"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "PipelineStatus": {
+        "enum": [
+          "active",
+          "paused",
+          "deleted"
+        ],
+        "type": "string"
+      },
+      "PipelineVerificationSettings": {
+        "properties": {
+          "delta_mode": {
+            "type": "boolean"
+          },
+          "freshness_days": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PipelineView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/PipelineDeliveryConfig"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_run_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "last_scheduled_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "next_run_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PipelinePolicyConfig"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/PipelineSchedule"
+          },
+          "source": {
+            "$ref": "#/components/schemas/PipelineSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PipelineStatus"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/PipelineVerificationSettings"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "status",
+          "source",
+          "schedule",
+          "verification",
+          "policy",
+          "delivery",
+          "created_at",
+          "updated_at"
+        ],
         "type": "object"
       },
       "Reachable": {
@@ -1546,6 +2021,103 @@
         "x-stoplight": {
           "id": "6053d3ngu2hfn"
         }
+      },
+      "TriggerPipelineInput": {
+        "properties": {
+          "force": {
+            "type": "boolean"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TriggerPipelineResponse": {
+        "properties": {
+          "run_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PipelineRunStatus"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "UpdatePipelineInput": {
+        "properties": {
+          "delivery": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineDeliveryConfig"
+              }
+            ]
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "policy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelinePolicyConfig"
+              }
+            ]
+          },
+          "schedule": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineSchedule"
+              }
+            ]
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineSource"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineStatus"
+              }
+            ]
+          },
+          "verification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PipelineVerificationSettings"
+              }
+            ]
+          }
+        },
+        "type": "object"
       },
       "VerifMethod": {
         "description": "The method used for email verification.",
@@ -3293,6 +3865,392 @@
         "summary": "PATCH /v1/me/webhook",
         "tags": [
           "Tenant"
+        ]
+      }
+    },
+    "/v1/pipelines": {
+      "get": {
+        "operationId": "v1_list_pipelines",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPipelinesResponse"
+                }
+              }
+            },
+            "description": "Pipeline list"
+          }
+        },
+        "summary": "GET /v1/pipelines",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_pipeline",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePipelineInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineView"
+                }
+              }
+            },
+            "description": "Pipeline created"
+          }
+        },
+        "summary": "POST /v1/pipelines",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}": {
+      "delete": {
+        "operationId": "v1_delete_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletePipelineResponse"
+                }
+              }
+            },
+            "description": "Pipeline deleted"
+          }
+        },
+        "summary": "DELETE /v1/pipelines/{pipeline_id}",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "get": {
+        "operationId": "v1_get_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineView"
+                }
+              }
+            },
+            "description": "Pipeline detail"
+          }
+        },
+        "summary": "GET /v1/pipelines/{pipeline_id}",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "patch": {
+        "operationId": "v1_update_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePipelineInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineView"
+                }
+              }
+            },
+            "description": "Pipeline updated"
+          }
+        },
+        "summary": "PATCH /v1/pipelines/{pipeline_id}",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}/pause": {
+      "post": {
+        "operationId": "v1_pause_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineView"
+                }
+              }
+            },
+            "description": "Pipeline paused"
+          }
+        },
+        "summary": "POST /v1/pipelines/{pipeline_id}/pause",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}/resume": {
+      "post": {
+        "operationId": "v1_resume_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineView"
+                }
+              }
+            },
+            "description": "Pipeline resumed"
+          }
+        },
+        "summary": "POST /v1/pipelines/{pipeline_id}/resume",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}/runs": {
+      "get": {
+        "operationId": "v1_list_pipeline_runs",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPipelineRunsResponse"
+                }
+              }
+            },
+            "description": "Pipeline run history"
+          }
+        },
+        "summary": "GET /v1/pipelines/{pipeline_id}/runs",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}/runs/{run_id}": {
+      "get": {
+        "operationId": "v1_get_pipeline_run",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Pipeline run identifier",
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineRunView"
+                }
+              }
+            },
+            "description": "Pipeline run detail"
+          }
+        },
+        "summary": "GET /v1/pipelines/{pipeline_id}/runs/{run_id}",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/v1/pipelines/{pipeline_id}/trigger": {
+      "post": {
+        "operationId": "v1_trigger_pipeline",
+        "parameters": [
+          {
+            "description": "Pipeline identifier",
+            "in": "path",
+            "name": "pipeline_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerPipelineInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerPipelineResponse"
+                }
+              }
+            },
+            "description": "Pipeline run triggered"
+          }
+        },
+        "summary": "POST /v1/pipelines/{pipeline_id}/trigger",
+        "tags": [
+          "Pipelines"
         ]
       }
     },

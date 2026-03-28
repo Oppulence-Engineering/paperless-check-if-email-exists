@@ -599,6 +599,8 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 			.execute(&pool)
 			.await;
 		}
+
+		let _ = crate::pipelines::maybe_finalize_pipeline_run_for_job(config, &pool, job_id).await;
 	}
 }
 

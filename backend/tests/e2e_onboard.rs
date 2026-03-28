@@ -15,7 +15,8 @@ mod tests {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
 		let db = crate::test_helpers::test_db_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));

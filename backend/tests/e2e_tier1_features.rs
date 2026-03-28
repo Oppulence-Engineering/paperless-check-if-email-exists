@@ -38,10 +38,7 @@ async fn setup_tenant_with_key(pool: &sqlx::PgPool) -> (uuid::Uuid, String) {
 	(tid, key)
 }
 
-async fn setup_job_with_tasks(
-	pool: &sqlx::PgPool,
-	tid: uuid::Uuid,
-) -> i32 {
+async fn setup_job_with_tasks(pool: &sqlx::PgPool, tid: uuid::Uuid) -> i32 {
 	let jid = insert_job(pool, Some(tid), 3, "completed").await;
 	// Insert tasks with scores and timing
 	for (email, score, category, safe) in [
@@ -514,9 +511,13 @@ mod custom_threshold_tests {
 		let (key, _) = insert_api_key(db.pool(), tid).await;
 		// Set custom thresholds: excellent=80, good=60
 		sqlx::query("UPDATE tenants SET settings = $1 WHERE id = $2")
-			.bind(serde_json::json!({"approval_excellent_threshold": 80, "approval_good_threshold": 60}))
+			.bind(
+				serde_json::json!({"approval_excellent_threshold": 80, "approval_good_threshold": 60}),
+			)
 			.bind(tid)
-			.execute(db.pool()).await.unwrap();
+			.execute(db.pool())
+			.await
+			.unwrap();
 		let jid = setup_job_with_tasks(db.pool(), tid).await;
 		let c = worker_config().await;
 		let r = request()
@@ -575,7 +576,8 @@ mod list_quality_tests {
 			("c@t.com", 0, "invalid", false),
 		] {
 			let result = serde_json::json!({"input": email, "is_reachable": "safe", "misc": {"is_disposable": false, "is_role_account": false}, "smtp": {"is_catch_all": false, "has_full_inbox": false}});
-			let payload = serde_json::json!({"input": {"to_email": email}, "job_id": {"bulk": jid}});
+			let payload =
+				serde_json::json!({"input": {"to_email": email}, "job_id": {"bulk": jid}});
 			let extra = serde_json::json!({"list_id": list_id});
 			sqlx::query(
 				"INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, result, score, score_category, safe_to_send) VALUES ($1, $2, $3, 'completed'::task_state, $4, $5, $6, $7, $8)",
@@ -646,7 +648,8 @@ mod alternatives_tests {
 			("johndoe@example.com", "firstlast", 70),
 		] {
 			let result = serde_json::json!({"input": email, "is_reachable": "safe", "score": {"score": score, "category": "valid"}});
-			let payload = serde_json::json!({"input": {"to_email": email}, "job_id": {"bulk": jid}});
+			let payload =
+				serde_json::json!({"input": {"to_email": email}, "job_id": {"bulk": jid}});
 			let task_id: i32 = sqlx::query(
 				"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, result, score, score_category, sub_reason) VALUES ($1, $2, 'completed'::task_state, $3, $4, $5, 'valid', 'deliverable') RETURNING id",
 			)
@@ -667,7 +670,10 @@ mod alternatives_tests {
 			.await;
 		assert_eq!(r.status(), StatusCode::OK);
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
-		assert!(b.get("alternatives").is_some(), "response missing 'alternatives' field");
+		assert!(
+			b.get("alternatives").is_some(),
+			"response missing 'alternatives' field"
+		);
 		let alts = b["alternatives"].as_array().unwrap();
 		// Best match is john.doe (95), alternatives are jdoe (85) and johndoe (70)
 		assert_eq!(alts.len(), 2);

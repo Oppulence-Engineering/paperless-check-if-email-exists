@@ -71,6 +71,16 @@ pub fn create_routes(
 		.or(v1::lists::quality::v1_list_quality(Arc::clone(&config)).boxed())
 		.or(v1::lists::download::v1_download_list(Arc::clone(&config)).boxed())
 		.or(v1::lists::delete::v1_delete_list(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_create_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_list_pipelines(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_get_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_update_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_delete_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_pause_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_resume_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_trigger_pipeline(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_list_pipeline_runs(Arc::clone(&config)).boxed())
+		.or(v1::pipelines::v1_get_pipeline_run(Arc::clone(&config)).boxed())
 		.or(v1::reputation::check::v1_check_reputation(Arc::clone(&config)).boxed())
 		.or(v1::suppressions::add::v1_add_suppressions(Arc::clone(&config)).boxed())
 		.or(v1::suppressions::check::v1_check_suppression(Arc::clone(&config)).boxed())
@@ -188,11 +198,30 @@ pub async fn run_warp_server(
 				"Reverification is enabled but worker mode is disabled. Scheduler will not start."
 			);
 		}
-	} else if config.reverification.enable {
-		tracing::error!(
-			target: check_if_email_exists::LOG_TARGET,
-			"Reverification is enabled but no Postgres pool is configured. Reverification will not run."
-		);
+		if config.pipelines.enable && config.worker.enable {
+			crate::pipelines::spawn_pipeline_scheduler(
+				Arc::clone(&config),
+				config.get_pg_pool().expect("pg pool exists"),
+			);
+		} else if config.pipelines.enable {
+			tracing::warn!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Pipelines are enabled but worker mode is disabled. Scheduler will not start."
+			);
+		}
+	} else {
+		if config.reverification.enable {
+			tracing::error!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Reverification is enabled but no Postgres pool is configured. Reverification will not run."
+			);
+		}
+		if config.pipelines.enable {
+			tracing::error!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Pipelines are enabled but no Postgres pool is configured. Pipeline scheduler will not run."
+			);
+		}
 	}
 
 	// Run v0 bulk job listener.

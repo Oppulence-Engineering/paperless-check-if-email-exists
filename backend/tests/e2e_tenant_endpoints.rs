@@ -16,7 +16,8 @@ mod me_endpoint {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test-secret".into());
 		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -252,7 +253,8 @@ mod admin_tenant_quota {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("admin-secret".into());
 		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));

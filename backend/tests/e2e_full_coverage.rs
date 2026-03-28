@@ -248,7 +248,8 @@ mod shared_check_email_coverage {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("s".into());
 		let db_url = crate::test_helpers::test_db_url();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url,
 			extra: None,
 		}));
@@ -802,7 +803,8 @@ mod do_check_email_work_coverage {
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url(),
 			extra: None,
 		}));
@@ -1051,7 +1053,8 @@ mod do_check_email_work_retry_coverage {
 
 	async fn make_config() -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url(),
 			extra: None,
 		}));

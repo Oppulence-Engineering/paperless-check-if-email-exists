@@ -19,6 +19,7 @@ export * from './api/admin-api';
 export * from './api/admin-jobs-api';
 export * from './api/health-api';
 export * from './api/jobs-api';
+export * from './api/pipelines-api';
 export * from './api/system-api';
 export * from './api/tenant-api';
 export * from './api/v0-api';

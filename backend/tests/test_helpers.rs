@@ -203,6 +203,11 @@ async fn connect_existing_db(url: String) -> TestDb {
 		.await
 		.expect("Failed to connect to existing test database");
 
+	sqlx::migrate!("./migrations")
+		.run(&pool)
+		.await
+		.expect("Failed to run migrations on existing test database");
+
 	// Clean up data from previous runs (keep schema)
 	let _ = sqlx::query("DELETE FROM job_comments").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
@@ -218,6 +223,16 @@ async fn connect_existing_db(url: String) -> TestDb {
 	let _ = sqlx::query("DELETE FROM v1_finder_job")
 		.execute(&pool)
 		.await;
+	let _ = sqlx::query("DELETE FROM v1_usage_events")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_pipeline_contact_state")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_pipeline_runs")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_pipelines").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM v1_lists").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM v1_task_result")
 		.execute(&pool)

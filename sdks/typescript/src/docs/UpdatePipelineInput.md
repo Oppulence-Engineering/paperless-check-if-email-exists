@@ -1,0 +1,32 @@
+# UpdatePipelineInput
+
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional] [default to undefined]
+**name** | **string** |  | [optional] [default to undefined]
+**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional] [default to undefined]
+**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [optional] [default to undefined]
+**source** | [**PipelineSource**](PipelineSource.md) |  | [optional] [default to undefined]
+**status** | [**PipelineStatus**](PipelineStatus.md) |  | [optional] [default to undefined]
+**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional] [default to undefined]
+
+## Example
+
+```typescript
+import { UpdatePipelineInput } from '@oppulence/reacher-sdk';
+
+const instance: UpdatePipelineInput = {
+    delivery,
+    name,
+    policy,
+    schedule,
+    source,
+    status,
+    verification,
+};
+```
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

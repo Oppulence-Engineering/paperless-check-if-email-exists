@@ -19,6 +19,7 @@
 pub mod config;
 pub mod finder;
 pub mod http;
+pub mod pipelines;
 pub mod reputation;
 pub mod reverification;
 pub mod sandbox;

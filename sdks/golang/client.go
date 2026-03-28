@@ -60,6 +60,8 @@ type APIClient struct {
 
 	JobsAPI JobsAPI
 
+	PipelinesAPI PipelinesAPI
+
 	SystemAPI SystemAPI
 
 	TenantAPI TenantAPI
@@ -90,6 +92,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.AdminJobsAPI = (*AdminJobsAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.JobsAPI = (*JobsAPIService)(&c.common)
+	c.PipelinesAPI = (*PipelinesAPIService)(&c.common)
 	c.SystemAPI = (*SystemAPIService)(&c.common)
 	c.TenantAPI = (*TenantAPIService)(&c.common)
 	c.V0API = (*V0APIService)(&c.common)

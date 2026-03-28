@@ -26,6 +26,7 @@ pub mod jobs;
 pub mod lists;
 pub mod me;
 pub mod onboard;
+pub mod pipelines;
 pub mod query;
 pub mod reputation;
 pub mod reverification;

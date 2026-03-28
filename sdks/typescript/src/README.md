@@ -88,6 +88,16 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
+*PipelinesApi* | [**v1CreatePipeline**](docs/PipelinesApi.md#v1createpipeline) | **POST** /v1/pipelines | POST /v1/pipelines
+*PipelinesApi* | [**v1DeletePipeline**](docs/PipelinesApi.md#v1deletepipeline) | **DELETE** /v1/pipelines/{pipeline_id} | DELETE /v1/pipelines/{pipeline_id}
+*PipelinesApi* | [**v1GetPipeline**](docs/PipelinesApi.md#v1getpipeline) | **GET** /v1/pipelines/{pipeline_id} | GET /v1/pipelines/{pipeline_id}
+*PipelinesApi* | [**v1GetPipelineRun**](docs/PipelinesApi.md#v1getpipelinerun) | **GET** /v1/pipelines/{pipeline_id}/runs/{run_id} | GET /v1/pipelines/{pipeline_id}/runs/{run_id}
+*PipelinesApi* | [**v1ListPipelineRuns**](docs/PipelinesApi.md#v1listpipelineruns) | **GET** /v1/pipelines/{pipeline_id}/runs | GET /v1/pipelines/{pipeline_id}/runs
+*PipelinesApi* | [**v1ListPipelines**](docs/PipelinesApi.md#v1listpipelines) | **GET** /v1/pipelines | GET /v1/pipelines
+*PipelinesApi* | [**v1PausePipeline**](docs/PipelinesApi.md#v1pausepipeline) | **POST** /v1/pipelines/{pipeline_id}/pause | POST /v1/pipelines/{pipeline_id}/pause
+*PipelinesApi* | [**v1ResumePipeline**](docs/PipelinesApi.md#v1resumepipeline) | **POST** /v1/pipelines/{pipeline_id}/resume | POST /v1/pipelines/{pipeline_id}/resume
+*PipelinesApi* | [**v1TriggerPipeline**](docs/PipelinesApi.md#v1triggerpipeline) | **POST** /v1/pipelines/{pipeline_id}/trigger | POST /v1/pipelines/{pipeline_id}/trigger
+*PipelinesApi* | [**v1UpdatePipeline**](docs/PipelinesApi.md#v1updatepipeline) | **PATCH** /v1/pipelines/{pipeline_id} | PATCH /v1/pipelines/{pipeline_id}
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
 *TenantApi* | [**v1ClearTenantWebhook**](docs/TenantApi.md#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook
@@ -139,8 +149,10 @@ Class | Method | HTTP request | Description
  - [CheckEmailRequest](docs/CheckEmailRequest.md)
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [CoreError](docs/CoreError.md)
+ - [CreatePipelineInput](docs/CreatePipelineInput.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)
+ - [DeletePipelineResponse](docs/DeletePipelineResponse.md)
  - [DnsRecordResults](docs/DnsRecordResults.md)
  - [DomainInfo](docs/DomainInfo.md)
  - [Duration](docs/Duration.md)
@@ -161,10 +173,27 @@ Class | Method | HTTP request | Description
  - [ListDetailResponse](docs/ListDetailResponse.md)
  - [ListItem](docs/ListItem.md)
  - [ListListResponse](docs/ListListResponse.md)
+ - [ListPipelineRunsResponse](docs/ListPipelineRunsResponse.md)
+ - [ListPipelinesResponse](docs/ListPipelinesResponse.md)
  - [ListSummary](docs/ListSummary.md)
  - [ListUploadResponse](docs/ListUploadResponse.md)
  - [MiscDetails](docs/MiscDetails.md)
  - [MxDetails](docs/MxDetails.md)
+ - [PipelineDeliveryConfig](docs/PipelineDeliveryConfig.md)
+ - [PipelineDeliveryStatus](docs/PipelineDeliveryStatus.md)
+ - [PipelineDeliveryWebhook](docs/PipelineDeliveryWebhook.md)
+ - [PipelinePolicyConfig](docs/PipelinePolicyConfig.md)
+ - [PipelineRunStatus](docs/PipelineRunStatus.md)
+ - [PipelineRunView](docs/PipelineRunView.md)
+ - [PipelineSchedule](docs/PipelineSchedule.md)
+ - [PipelineSource](docs/PipelineSource.md)
+ - [PipelineSourceOneOf](docs/PipelineSourceOneOf.md)
+ - [PipelineSourceOneOf1](docs/PipelineSourceOneOf1.md)
+ - [PipelineSourceOneOf2](docs/PipelineSourceOneOf2.md)
+ - [PipelineSourceOneOf3](docs/PipelineSourceOneOf3.md)
+ - [PipelineStatus](docs/PipelineStatus.md)
+ - [PipelineVerificationSettings](docs/PipelineVerificationSettings.md)
+ - [PipelineView](docs/PipelineView.md)
  - [Reachable](docs/Reachable.md)
  - [ReasonCode](docs/ReasonCode.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
@@ -181,6 +210,9 @@ Class | Method | HTTP request | Description
  - [SuppressionReason](docs/SuppressionReason.md)
  - [SyntaxDetails](docs/SyntaxDetails.md)
  - [TaskWebhook](docs/TaskWebhook.md)
+ - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
+ - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
+ - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)
