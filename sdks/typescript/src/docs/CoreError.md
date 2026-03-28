@@ -6,8 +6,8 @@ Details of an error encountered during the verification process.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**message** | **string** | A human-readable description of the error. | [default to undefined]
-**type** | **string** | The type of error. | [default to undefined]
+**message** | **string** | A human-readable description of the error. | [required]
+**type** | **string** | The type of error. | [required]
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { CoreError } from '@oppulence/reacher-sdk';
 
 const instance: CoreError = {
-    message,
-    type,
+    message: 'example',
+    type: 'example',
 };
 ```
 

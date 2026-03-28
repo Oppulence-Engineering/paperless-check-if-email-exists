@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ListId** | **int32** |  | 
-**Type** | **string** |  | 
+**ListId** | **int32** |  | [required]
+**Type** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineSourceOneOf
 
-`func NewPipelineSourceOneOf(listId int32, type_ string, ) *PipelineSourceOneOf`
+`func NewPipelineSourceOneOf(listId int32, type_ string) *PipelineSourceOneOf`
 
 NewPipelineSourceOneOf instantiates a new PipelineSourceOneOf object
 This constructor will assign default values to properties that have it defined,

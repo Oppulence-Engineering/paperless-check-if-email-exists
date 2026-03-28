@@ -6,7 +6,7 @@ The method used for email verification.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**type** | **string** | The method used for the email verification. | [default to undefined]
+**type** | **string** | The method used for the email verification. | [required]
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { VerifMethod } from '@oppulence/reacher-sdk';
 
 const instance: VerifMethod = {
-    type,
+    type: 'example',
 };
 ```
 

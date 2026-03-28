@@ -4,23 +4,23 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional] 
-**FromEmail** | Pointer to **string** | In the SMTP connection, the FROM email address. | [optional] 
-**GmailVerifMethod** | Pointer to [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional] 
-**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional] 
-**Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional] 
-**Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional] 
-**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional] 
-**Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional] [default to false]
-**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional] 
-**ToEmail** | **string** | The email address to check. | 
-**YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional] 
+**CheckGravatar** | Pointer to **bool** | Whether to check if a Gravatar image exists for the given email. | [optional]
+**FromEmail** | Pointer to **string** | In the SMTP connection, the FROM email address. | [optional]
+**GmailVerifMethod** | Pointer to [**GmailVerifMethod**](GmailVerifMethod.md) |  | [optional]
+**HelloName** | Pointer to **string** | In the SMTP connection, the EHLO hostname. | [optional]
+**Hotmailb2bVerifMethod** | Pointer to [**HotmailB2BVerifMethod**](HotmailB2BVerifMethod.md) |  | [optional]
+**Hotmailb2cVerifMethod** | Pointer to [**HotmailB2CVerifMethod**](HotmailB2CVerifMethod.md) |  | [optional]
+**Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional]
+**Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional]
+**SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional]
+**ToEmail** | **string** | The email address to check. | [required]
+**YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional]
 
 ## Methods
 
 ### NewCheckEmailRequest
 
-`func NewCheckEmailRequest(toEmail string, ) *CheckEmailRequest`
+`func NewCheckEmailRequest(toEmail string) *CheckEmailRequest`
 
 NewCheckEmailRequest instantiates a new CheckEmailRequest object
 This constructor will assign default values to properties that have it defined,

@@ -308,7 +308,6 @@ func (o *CreatePipelineInput) UnmarshalJSON(data []byte) (err error) {
 	varCreatePipelineInput := _CreatePipelineInput{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCreatePipelineInput)
 
 	if err != nil {

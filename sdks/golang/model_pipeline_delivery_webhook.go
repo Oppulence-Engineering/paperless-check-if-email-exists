@@ -144,7 +144,6 @@ func (o *PipelineDeliveryWebhook) UnmarshalJSON(data []byte) (err error) {
 	varPipelineDeliveryWebhook := _PipelineDeliveryWebhook{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPipelineDeliveryWebhook)
 
 	if err != nil {

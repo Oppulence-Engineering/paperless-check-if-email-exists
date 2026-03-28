@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**list_id** | **number** |  | [default to undefined]
-**type** | **string** |  | [default to undefined]
+**list_id** | **number** |  | [required]
+**type** | **string** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { PipelineSourceOneOf } from '@oppulence/reacher-sdk';
 
 const instance: PipelineSourceOneOf = {
-    list_id,
-    type,
+    list_id: 123,
+    type: 'list_snapshot',
 };
 ```
 

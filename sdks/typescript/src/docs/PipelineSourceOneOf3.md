@@ -5,12 +5,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**bucket** | **string** |  | [default to undefined]
-**path_pattern** | **string** |  | [optional] [default to undefined]
-**prefix** | **string** |  | [optional] [default to undefined]
-**provider** | **string** |  | [default to undefined]
-**region** | **string** |  | [optional] [default to undefined]
-**type** | **string** |  | [default to undefined]
+**bucket** | **string** |  | [required]
+**path_pattern** | **string** |  | [optional]
+**prefix** | **string** |  | [optional]
+**provider** | **string** |  | [required]
+**region** | **string** |  | [optional]
+**type** | **string** |  | [required]
 
 ## Example
 
@@ -18,12 +18,12 @@ Name | Type | Description | Notes
 import { PipelineSourceOneOf3 } from '@oppulence/reacher-sdk';
 
 const instance: PipelineSourceOneOf3 = {
-    bucket,
-    path_pattern,
-    prefix,
-    provider,
-    region,
-    type,
+    bucket: 'example-bucket',
+    path_pattern: '*.csv',
+    prefix: 'imports/',
+    provider: 's3',
+    region: 'us-east-1',
+    type: 'bucket',
 };
 ```
 

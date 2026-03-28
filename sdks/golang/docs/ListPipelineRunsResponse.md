@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Runs** | [**[]PipelineRunView**](PipelineRunView.md) |  | 
-**Total** | **int64** |  | 
+**Runs** | [**[]PipelineRunView**](PipelineRunView.md) |  | [required]
+**Total** | **int64** |  | [required]
 
 ## Methods
 
 ### NewListPipelineRunsResponse
 
-`func NewListPipelineRunsResponse(runs []PipelineRunView, total int64, ) *ListPipelineRunsResponse`
+`func NewListPipelineRunsResponse(runs []PipelineRunView, total int64) *ListPipelineRunsResponse`
 
 NewListPipelineRunsResponse instantiates a new ListPipelineRunsResponse object
 This constructor will assign default values to properties that have it defined,
@@ -34,7 +34,7 @@ GetRuns returns the Runs field if non-nil, zero value otherwise.
 
 ### GetRunsOk
 
-`func (o *ListPipelineRunsResponse) GetRunsOk() (*[]PipelineRunView, bool)`
+`func (o *ListPipelineRunsResponse) GetRunsOk() ([]PipelineRunView, bool)`
 
 GetRunsOk returns a tuple with the Runs field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

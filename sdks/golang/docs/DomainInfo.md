@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | Pointer to **NullableString** |  | [optional] 
-**DomainAgeDays** | Pointer to **NullableInt64** |  | [optional] 
-**Registrar** | Pointer to **NullableString** |  | [optional] 
+**CreatedAt** | Pointer to **NullableString** |  | [optional]
+**DomainAgeDays** | Pointer to **NullableInt64** |  | [optional]
+**Registrar** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 

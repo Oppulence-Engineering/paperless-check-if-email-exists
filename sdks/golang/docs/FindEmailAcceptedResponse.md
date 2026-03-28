@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**BulkJobId** | **int32** |  | 
-**CandidatesChecked** | **int32** |  | 
-**JobId** | **int32** |  | 
-**Status** | **string** |  | 
+**BulkJobId** | **int32** |  | [required]
+**CandidatesChecked** | **int32** |  | [required]
+**JobId** | **int32** |  | [required]
+**Status** | **string** |  | [required]
 
 ## Methods
 
 ### NewFindEmailAcceptedResponse
 
-`func NewFindEmailAcceptedResponse(bulkJobId int32, candidatesChecked int32, jobId int32, status string, ) *FindEmailAcceptedResponse`
+`func NewFindEmailAcceptedResponse(bulkJobId int32, candidatesChecked int32, jobId int32, status string) *FindEmailAcceptedResponse`
 
 NewFindEmailAcceptedResponse instantiates a new FindEmailAcceptedResponse object
 This constructor will assign default values to properties that have it defined,

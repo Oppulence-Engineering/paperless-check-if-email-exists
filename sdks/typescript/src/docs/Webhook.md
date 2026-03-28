@@ -6,8 +6,8 @@ Configuration for a webhook to receive email verification results. The method wi
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**extra** | **object** |  | [optional] [default to undefined]
-**url** | **string** | The URL to send the email verification results to. | [default to undefined]
+**extra** | **object** |  | [optional]
+**url** | **string** | The URL to send the email verification results to. | [required]
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { Webhook } from '@oppulence/reacher-sdk';
 
 const instance: Webhook = {
-    extra,
-    url,
+    extra: {} as any,
+    url: 'https://example.com/webhook',
 };
 ```
 

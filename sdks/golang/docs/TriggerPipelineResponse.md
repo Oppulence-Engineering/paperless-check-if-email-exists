@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**RunId** | **int64** |  | 
-**Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | 
+**RunId** | **int64** |  | [required]
+**Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
 
 ## Methods
 
 ### NewTriggerPipelineResponse
 
-`func NewTriggerPipelineResponse(runId int64, status PipelineRunStatus, ) *TriggerPipelineResponse`
+`func NewTriggerPipelineResponse(runId int64, status PipelineRunStatus) *TriggerPipelineResponse`
 
 NewTriggerPipelineResponse instantiates a new TriggerPipelineResponse object
 This constructor will assign default values to properties that have it defined,

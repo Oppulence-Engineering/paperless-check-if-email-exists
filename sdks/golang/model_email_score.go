@@ -468,7 +468,6 @@ func (o *EmailScore) UnmarshalJSON(data []byte) (err error) {
 	varEmailScore := _EmailScore{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varEmailScore)
 
 	if err != nil {

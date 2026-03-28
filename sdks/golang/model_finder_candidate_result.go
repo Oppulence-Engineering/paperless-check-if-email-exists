@@ -340,7 +340,6 @@ func (o *FinderCandidateResult) UnmarshalJSON(data []byte) (err error) {
 	varFinderCandidateResult := _FinderCandidateResult{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varFinderCandidateResult)
 
 	if err != nil {

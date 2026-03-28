@@ -108,7 +108,6 @@ func (o *DeletePipelineResponse) UnmarshalJSON(data []byte) (err error) {
 	varDeletePipelineResponse := _DeletePipelineResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varDeletePipelineResponse)
 
 	if err != nil {

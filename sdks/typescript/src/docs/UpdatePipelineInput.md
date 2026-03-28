@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional] [default to undefined]
-**name** | **string** |  | [optional] [default to undefined]
-**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional] [default to undefined]
-**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [optional] [default to undefined]
-**source** | [**PipelineSource**](PipelineSource.md) |  | [optional] [default to undefined]
-**status** | [**PipelineStatus**](PipelineStatus.md) |  | [optional] [default to undefined]
-**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional] [default to undefined]
+**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional]
+**name** | **string** |  | [optional]
+**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional]
+**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [optional]
+**source** | [**PipelineSource**](PipelineSource.md) |  | [optional]
+**status** | [**PipelineStatus**](PipelineStatus.md) |  | [optional]
+**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { UpdatePipelineInput } from '@oppulence/reacher-sdk';
 
 const instance: UpdatePipelineInput = {
-    delivery,
-    name,
-    policy,
-    schedule,
-    source,
-    status,
-    verification,
+    delivery: {} as any,
+    name: 'Weekly Cleanup',
+    policy: {} as any,
+    schedule: {} as any,
+    source: {} as any,
+    status: {} as any,
+    verification: {} as any,
 };
 ```
 

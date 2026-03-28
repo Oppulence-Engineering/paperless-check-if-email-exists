@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | 
+**Results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
 
 ## Methods
 
 ### NewGetV1BulkResults200Response
 
-`func NewGetV1BulkResults200Response(results CheckEmailOutput, ) *GetV1BulkResults200Response`
+`func NewGetV1BulkResults200Response(results CheckEmailOutput) *GetV1BulkResults200Response`
 
 NewGetV1BulkResults200Response instantiates a new GetV1BulkResults200Response object
 This constructor will assign default values to properties that have it defined,

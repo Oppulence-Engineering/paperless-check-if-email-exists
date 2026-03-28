@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional] [default to undefined]
-**name** | **string** |  | [default to undefined]
-**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional] [default to undefined]
-**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [default to undefined]
-**source** | [**PipelineSource**](PipelineSource.md) |  | [default to undefined]
-**status** | [**PipelineStatus**](PipelineStatus.md) |  | [optional] [default to undefined]
-**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional] [default to undefined]
+**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional]
+**name** | **string** |  | [required]
+**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional]
+**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [required]
+**source** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**status** | [**PipelineStatus**](PipelineStatus.md) |  | [optional]
+**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional]
 
 ## Example
 
@@ -19,13 +19,9 @@ Name | Type | Description | Notes
 import { CreatePipelineInput } from '@oppulence/reacher-sdk';
 
 const instance: CreatePipelineInput = {
-    delivery,
-    name,
-    policy,
-    schedule,
-    source,
-    status,
-    verification,
+    name: 'Weekly Cleanup',
+    schedule: { cron: '0 9 * * 1', timezone: 'UTC' },
+    source: { type: 'list_snapshot', list_id: 123 },
 };
 ```
 

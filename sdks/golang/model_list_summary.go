@@ -220,7 +220,6 @@ func (o *ListSummary) UnmarshalJSON(data []byte) (err error) {
 	varListSummary := _ListSummary{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varListSummary)
 
 	if err != nil {

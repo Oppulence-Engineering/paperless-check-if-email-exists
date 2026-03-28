@@ -5,11 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**invalid** | **number** |  | [default to undefined]
-**risky** | **number** |  | [default to undefined]
-**unknown** | **number** |  | [default to undefined]
-**unprocessed** | **number** |  | [default to undefined]
-**valid** | **number** |  | [default to undefined]
+**invalid** | **number** |  | [required]
+**risky** | **number** |  | [required]
+**unknown** | **number** |  | [required]
+**unprocessed** | **number** |  | [required]
+**valid** | **number** |  | [required]
 
 ## Example
 
@@ -17,11 +17,11 @@ Name | Type | Description | Notes
 import { ApprovalCategoryBreakdown } from '@oppulence/reacher-sdk';
 
 const instance: ApprovalCategoryBreakdown = {
-    invalid,
-    risky,
-    unknown,
-    unprocessed,
-    valid,
+    invalid: 0,
+    risky: 0,
+    unknown: 0,
+    unprocessed: 0,
+    valid: 0,
 };
 ```
 

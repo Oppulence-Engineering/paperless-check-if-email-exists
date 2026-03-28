@@ -600,7 +600,16 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 			.await;
 		}
 
-		let _ = crate::pipelines::maybe_finalize_pipeline_run_for_job(config, &pool, job_id).await;
+		if let Err(err) =
+			crate::pipelines::maybe_finalize_pipeline_run_for_job(config, &pool, job_id).await
+		{
+			warn!(
+				target: LOG_TARGET,
+				job_id = job_id,
+				error = ?err,
+				"Failed to finalize pipeline run for job"
+			);
+		}
 	}
 }
 

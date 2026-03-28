@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Type** | **string** | The method used for the email verification. | 
+**Type** | **string** | The method used for the email verification. | [required]
 
 ## Methods
 
 ### NewVerifMethod
 
-`func NewVerifMethod(type_ string, ) *VerifMethod`
+`func NewVerifMethod(type_ string) *VerifMethod`
 
 NewVerifMethod instantiates a new VerifMethod object
 This constructor will assign default values to properties that have it defined,

@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**run_id** | **number** |  | [default to undefined]
-**status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [default to undefined]
+**run_id** | **number** |  | [required]
+**status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { TriggerPipelineResponse } from '@oppulence/reacher-sdk';
 
 const instance: TriggerPipelineResponse = {
-    run_id,
-    status,
+    run_id: 0,
+    status: {} as any,
 };
 ```
 

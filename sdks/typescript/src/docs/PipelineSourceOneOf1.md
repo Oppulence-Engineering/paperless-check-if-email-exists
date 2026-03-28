@@ -5,11 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**audience_id** | **string** |  | [default to undefined]
-**connection_id** | **string** |  | [default to undefined]
-**field_mapping** | **any** |  | [optional] [default to undefined]
-**provider** | **string** |  | [default to undefined]
-**type** | **string** |  | [default to undefined]
+**audience_id** | **string** |  | [required]
+**connection_id** | **string** |  | [required]
+**field_mapping** | **any** |  | [optional]
+**provider** | **string** |  | [required]
+**type** | **string** |  | [required]
 
 ## Example
 
@@ -17,11 +17,11 @@ Name | Type | Description | Notes
 import { PipelineSourceOneOf1 } from '@oppulence/reacher-sdk';
 
 const instance: PipelineSourceOneOf1 = {
-    audience_id,
-    connection_id,
-    field_mapping,
-    provider,
-    type,
+    audience_id: 'aud_123',
+    connection_id: 'conn_123',
+    field_mapping: {} as any,
+    provider: 'mailchimp',
+    type: 'integration',
 };
 ```
 

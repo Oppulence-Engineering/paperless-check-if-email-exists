@@ -192,7 +192,6 @@ func (o *FinderBestMatch) UnmarshalJSON(data []byte) (err error) {
 	varFinderBestMatch := _FinderBestMatch{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varFinderBestMatch)
 
 	if err != nil {

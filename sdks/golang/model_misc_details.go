@@ -204,7 +204,6 @@ func (o *MiscDetails) UnmarshalJSON(data []byte) (err error) {
 	varMiscDetails := _MiscDetails{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varMiscDetails)
 
 	if err != nil {

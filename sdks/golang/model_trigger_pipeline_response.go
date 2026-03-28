@@ -136,7 +136,6 @@ func (o *TriggerPipelineResponse) UnmarshalJSON(data []byte) (err error) {
 	varTriggerPipelineResponse := _TriggerPipelineResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varTriggerPipelineResponse)
 
 	if err != nil {

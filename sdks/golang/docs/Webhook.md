@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Extra** | Pointer to **map[string]interface{}** |  | [optional] 
-**Url** | **string** | The URL to send the email verification results to. | 
+**Extra** | Pointer to **map[string]interface{}** |  | [optional]
+**Url** | **string** | The URL to send the email verification results to. | [required]
 
 ## Methods
 
 ### NewWebhook
 
-`func NewWebhook(url string, ) *Webhook`
+`func NewWebhook(url string) *Webhook`
 
 NewWebhook instantiates a new Webhook object
 This constructor will assign default values to properties that have it defined,

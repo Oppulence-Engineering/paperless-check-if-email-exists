@@ -164,7 +164,6 @@ func (o *PipelineSourceOneOf2) UnmarshalJSON(data []byte) (err error) {
 	varPipelineSourceOneOf2 := _PipelineSourceOneOf2{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPipelineSourceOneOf2)
 
 	if err != nil {

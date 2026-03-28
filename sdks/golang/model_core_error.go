@@ -138,7 +138,6 @@ func (o *CoreError) UnmarshalJSON(data []byte) (err error) {
 	varCoreError := _CoreError{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCoreError)
 
 	if err != nil {

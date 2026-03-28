@@ -108,7 +108,6 @@ func (o *ListDeleteResponse) UnmarshalJSON(data []byte) (err error) {
 	varListDeleteResponse := _ListDeleteResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varListDeleteResponse)
 
 	if err != nil {

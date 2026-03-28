@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Deleted** | **bool** |  | 
+**Deleted** | **bool** |  | [required]
 
 ## Methods
 
 ### NewDeletePipelineResponse
 
-`func NewDeletePipelineResponse(deleted bool, ) *DeletePipelineResponse`
+`func NewDeletePipelineResponse(deleted bool) *DeletePipelineResponse`
 
 NewDeletePipelineResponse instantiates a new DeletePipelineResponse object
 This constructor will assign default values to properties that have it defined,

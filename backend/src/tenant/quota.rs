@@ -170,10 +170,14 @@ pub async fn increment_usage(pg_pool: Option<&PgPool>, tenant_id: Option<Uuid>) 
 /// Release previously reserved usage back to the tenant counter.
 /// This is used when a workflow reserves quota up front but publishes fewer
 /// emails than expected.
-pub async fn release_reserved_usage(pg_pool: Option<&PgPool>, tenant_id: Option<Uuid>, count: i32) {
+pub async fn release_reserved_usage(
+	pg_pool: Option<&PgPool>,
+	tenant_id: Option<Uuid>,
+	count: i32,
+) -> Result<(), sqlx::Error> {
 	let (pool, id) = match (pg_pool, tenant_id) {
 		(Some(p), Some(id)) if count > 0 => (p, id),
-		_ => return,
+		_ => return Ok(()),
 	};
 
 	let result = sqlx::query(
@@ -186,7 +190,10 @@ pub async fn release_reserved_usage(pg_pool: Option<&PgPool>, tenant_id: Option<
 
 	if let Err(e) = result {
 		warn!(target: LOG_TARGET, tenant_id=?id, count=count, error=?e, "Failed to release reserved usage");
+		return Err(e);
 	}
+
+	Ok(())
 }
 
 /// Reset the billing period: set used_this_period = 0 and advance period_reset_at

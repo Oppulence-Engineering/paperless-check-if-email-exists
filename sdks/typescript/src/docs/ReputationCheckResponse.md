@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**blacklist_results** | [**Array&lt;BlacklistResult&gt;**](BlacklistResult.md) |  | [default to undefined]
-**cached** | **boolean** |  | [default to undefined]
-**dns_records** | [**DnsRecordResults**](DnsRecordResults.md) |  | [default to undefined]
-**domain** | **string** |  | [default to undefined]
-**domain_info** | [**DomainInfo**](DomainInfo.md) |  | [default to undefined]
-**risk_level** | **string** |  | [default to undefined]
-**score** | **number** |  | [default to undefined]
+**blacklist_results** | [**Array&lt;BlacklistResult&gt;**](BlacklistResult.md) |  | [required]
+**cached** | **boolean** |  | [required]
+**dns_records** | [**DnsRecordResults**](DnsRecordResults.md) |  | [required]
+**domain** | **string** |  | [required]
+**domain_info** | [**DomainInfo**](DomainInfo.md) |  | [required]
+**risk_level** | **string** |  | [required]
+**score** | **number** |  | [required]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { ReputationCheckResponse } from '@oppulence/reacher-sdk';
 
 const instance: ReputationCheckResponse = {
-    blacklist_results,
-    cached,
-    dns_records,
-    domain,
-    domain_info,
-    risk_level,
-    score,
+    blacklist_results: {} as any,
+    cached: true,
+    dns_records: {} as any,
+    domain: 'example',
+    domain_info: {} as any,
+    risk_level: 'example',
+    score: 0,
 };
 ```
 

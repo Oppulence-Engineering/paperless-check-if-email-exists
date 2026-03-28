@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**HasMore** | **bool** |  | 
-**NextCursor** | Pointer to **NullableInt64** |  | [optional] 
-**Results** | [**[]JobTaskResult**](JobTaskResult.md) |  | 
+**HasMore** | **bool** |  | [required]
+**NextCursor** | Pointer to **NullableInt64** |  | [optional]
+**Results** | [**[]JobTaskResult**](JobTaskResult.md) |  | [required]
 
 ## Methods
 
 ### NewJobResultPageResponse
 
-`func NewJobResultPageResponse(hasMore bool, results []JobTaskResult, ) *JobResultPageResponse`
+`func NewJobResultPageResponse(hasMore bool, results []JobTaskResult) *JobResultPageResponse`
 
 NewJobResultPageResponse instantiates a new JobResultPageResponse object
 This constructor will assign default values to properties that have it defined,
@@ -90,7 +90,7 @@ GetResults returns the Results field if non-nil, zero value otherwise.
 
 ### GetResultsOk
 
-`func (o *JobResultPageResponse) GetResultsOk() (*[]JobTaskResult, bool)`
+`func (o *JobResultPageResponse) GetResultsOk() ([]JobTaskResult, bool)`
 
 GetResultsOk returns a tuple with the Results field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

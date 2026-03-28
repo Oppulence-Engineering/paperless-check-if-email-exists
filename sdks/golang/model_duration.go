@@ -138,7 +138,6 @@ func (o *Duration) UnmarshalJSON(data []byte) (err error) {
 	varDuration := _Duration{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varDuration)
 
 	if err != nil {

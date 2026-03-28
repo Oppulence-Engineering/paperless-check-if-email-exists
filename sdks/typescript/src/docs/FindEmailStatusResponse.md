@@ -5,14 +5,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**best_match** | [**FinderBestMatch**](FinderBestMatch.md) |  | [optional] [default to undefined]
-**bulk_job_id** | **number** |  | [default to undefined]
-**candidates_checked** | **number** |  | [default to undefined]
-**domain_has_mx** | **boolean** |  | [default to undefined]
-**domain_is_catch_all** | **boolean** |  | [default to undefined]
-**job_id** | **number** |  | [default to undefined]
-**results** | [**Array&lt;FinderCandidateResult&gt;**](FinderCandidateResult.md) |  | [default to undefined]
-**status** | **string** |  | [default to undefined]
+**best_match** | [**FinderBestMatch**](FinderBestMatch.md) |  | [optional]
+**bulk_job_id** | **number** |  | [required]
+**candidates_checked** | **number** |  | [required]
+**domain_has_mx** | **boolean** |  | [required]
+**domain_is_catch_all** | **boolean** |  | [required]
+**job_id** | **number** |  | [required]
+**results** | [**Array&lt;FinderCandidateResult&gt;**](FinderCandidateResult.md) |  | [required]
+**status** | **string** |  | [required]
 
 ## Example
 
@@ -20,14 +20,14 @@ Name | Type | Description | Notes
 import { FindEmailStatusResponse } from '@oppulence/reacher-sdk';
 
 const instance: FindEmailStatusResponse = {
-    best_match,
-    bulk_job_id,
-    candidates_checked,
-    domain_has_mx,
-    domain_is_catch_all,
-    job_id,
-    results,
-    status,
+    best_match: {} as any,
+    bulk_job_id: 0,
+    candidates_checked: 0,
+    domain_has_mx: true,
+    domain_is_catch_all: true,
+    job_id: 0,
+    results: {} as any,
+    status: 'example',
 };
 ```
 

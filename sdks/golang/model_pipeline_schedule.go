@@ -136,7 +136,6 @@ func (o *PipelineSchedule) UnmarshalJSON(data []byte) (err error) {
 	varPipelineSchedule := _PipelineSchedule{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPipelineSchedule)
 
 	if err != nil {

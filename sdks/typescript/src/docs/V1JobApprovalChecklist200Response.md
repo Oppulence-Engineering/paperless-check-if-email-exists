@@ -5,14 +5,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**categories** | **object** |  | [optional] [default to undefined]
-**job_id** | **number** |  | [optional] [default to undefined]
-**ready_to_send** | **boolean** |  | [optional] [default to undefined]
-**recommendation** | **string** |  | [optional] [default to undefined]
-**risk_flags** | **object** |  | [optional] [default to undefined]
-**safe_to_send_count** | **number** |  | [optional] [default to undefined]
-**safe_to_send_pct** | **number** |  | [optional] [default to undefined]
-**total_records** | **number** |  | [optional] [default to undefined]
+**categories** | **object** |  | [optional]
+**job_id** | **number** |  | [optional]
+**ready_to_send** | **boolean** |  | [optional]
+**recommendation** | **string** |  | [optional]
+**risk_flags** | **object** |  | [optional]
+**safe_to_send_count** | **number** |  | [optional]
+**safe_to_send_pct** | **number** |  | [optional]
+**total_records** | **number** |  | [optional]
 
 ## Example
 
@@ -20,14 +20,14 @@ Name | Type | Description | Notes
 import { V1JobApprovalChecklist200Response } from '@oppulence/reacher-sdk';
 
 const instance: V1JobApprovalChecklist200Response = {
-    categories,
-    job_id,
-    ready_to_send,
-    recommendation,
-    risk_flags,
-    safe_to_send_count,
-    safe_to_send_pct,
-    total_records,
+    categories: {} as any,
+    job_id: 0,
+    ready_to_send: true,
+    recommendation: 'example',
+    risk_flags: {} as any,
+    safe_to_send_count: 0,
+    safe_to_send_pct: 0,
+    total_records: 0,
 };
 ```
 

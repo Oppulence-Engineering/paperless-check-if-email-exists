@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**runs** | [**Array&lt;PipelineRunView&gt;**](PipelineRunView.md) |  | [default to undefined]
-**total** | **number** |  | [default to undefined]
+**runs** | [**Array&lt;PipelineRunView&gt;**](PipelineRunView.md) |  | [required]
+**total** | **number** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { ListPipelineRunsResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListPipelineRunsResponse = {
-    runs,
-    total,
+    runs: {} as any,
+    total: 0,
 };
 ```
 

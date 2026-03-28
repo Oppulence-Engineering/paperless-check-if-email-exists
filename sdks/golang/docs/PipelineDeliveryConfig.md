@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Dashboard** | Pointer to **bool** |  | [optional] 
-**MaxAttempts** | Pointer to **int32** |  | [optional] 
-**RetryBackoffSeconds** | Pointer to **int32** |  | [optional] 
-**Webhook** | Pointer to [**NullablePipelineDeliveryWebhook**](PipelineDeliveryWebhook.md) |  | [optional] 
+**Dashboard** | Pointer to **bool** |  | [optional]
+**MaxAttempts** | Pointer to **int32** |  | [optional]
+**RetryBackoffSeconds** | Pointer to **int32** |  | [optional]
+**Webhook** | Pointer to [**NullablePipelineDeliveryWebhook**](PipelineDeliveryWebhook.md) |  | [optional]
 
 ## Methods
 

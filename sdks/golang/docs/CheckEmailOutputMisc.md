@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional] 
-**IsB2c** | **bool** | Is this a B2C email address? | 
-**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | 
-**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | 
-**Message** | **string** | A human-readable description of the error. | 
-**Type** | **string** | The type of error. | 
+**GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional]
+**IsB2c** | **bool** | Is this a B2C email address? | [optional]
+**IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | [optional]
+**IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | [optional]
+**Message** | **string** | A human-readable description of the error. | [optional]
+**Type** | **string** | The type of error. | [optional]
 
 ## Methods
 
 ### NewCheckEmailOutputMisc
 
-`func NewCheckEmailOutputMisc(isB2c bool, isDisposable bool, isRoleAccount bool, message string, type_ string, ) *CheckEmailOutputMisc`
+`func NewCheckEmailOutputMisc(isB2c bool, isDisposable bool, isRoleAccount bool, message string, type_ string) *CheckEmailOutputMisc`
 
 NewCheckEmailOutputMisc instantiates a new CheckEmailOutputMisc object
 This constructor will assign default values to properties that have it defined,

@@ -5,29 +5,29 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**billed_emails** | **number** |  | [default to undefined]
-**completed_at** | **string** |  | [optional] [default to undefined]
-**created_at** | **string** |  | [default to undefined]
-**delivery_attempts** | **number** |  | [default to undefined]
-**delivery_error** | **string** |  | [optional] [default to undefined]
-**delivery_status** | [**PipelineDeliveryStatus**](PipelineDeliveryStatus.md) |  | [default to undefined]
-**error_code** | **string** |  | [optional] [default to undefined]
-**error_message** | **string** |  | [optional] [default to undefined]
-**id** | **number** |  | [default to undefined]
-**job_id** | **number** |  | [optional] [default to undefined]
-**last_delivery_attempt_at** | **string** |  | [optional] [default to undefined]
-**list_id** | **number** |  | [optional] [default to undefined]
-**next_delivery_attempt_at** | **string** |  | [optional] [default to undefined]
-**pipeline_id** | **number** |  | [default to undefined]
-**result_location** | **any** |  | [optional] [default to undefined]
-**scheduled_for** | **string** |  | [optional] [default to undefined]
-**source_snapshot** | **any** |  | [default to undefined]
-**started_at** | **string** |  | [optional] [default to undefined]
-**stats** | **any** |  | [default to undefined]
-**status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [default to undefined]
-**tenant_id** | **string** |  | [default to undefined]
-**trigger_type** | **string** |  | [default to undefined]
-**updated_at** | **string** |  | [default to undefined]
+**billed_emails** | **number** |  | [required]
+**completed_at** | **string** |  | [optional]
+**created_at** | **string** |  | [required]
+**delivery_attempts** | **number** |  | [required]
+**delivery_error** | **string** |  | [optional]
+**delivery_status** | [**PipelineDeliveryStatus**](PipelineDeliveryStatus.md) |  | [required]
+**error_code** | **string** |  | [optional]
+**error_message** | **string** |  | [optional]
+**id** | **number** |  | [required]
+**job_id** | **number** |  | [optional]
+**last_delivery_attempt_at** | **string** |  | [optional]
+**list_id** | **number** |  | [optional]
+**next_delivery_attempt_at** | **string** |  | [optional]
+**pipeline_id** | **number** |  | [required]
+**result_location** | **any** |  | [optional]
+**scheduled_for** | **string** |  | [optional]
+**source_snapshot** | **any** |  | [required]
+**started_at** | **string** |  | [optional]
+**stats** | **any** |  | [required]
+**status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
+**tenant_id** | **string** |  | [required]
+**trigger_type** | **string** |  | [required]
+**updated_at** | **string** |  | [required]
 
 ## Example
 
@@ -35,29 +35,29 @@ Name | Type | Description | Notes
 import { PipelineRunView } from '@oppulence/reacher-sdk';
 
 const instance: PipelineRunView = {
-    billed_emails,
-    completed_at,
-    created_at,
-    delivery_attempts,
-    delivery_error,
-    delivery_status,
-    error_code,
-    error_message,
-    id,
-    job_id,
-    last_delivery_attempt_at,
-    list_id,
-    next_delivery_attempt_at,
-    pipeline_id,
-    result_location,
-    scheduled_for,
-    source_snapshot,
-    started_at,
-    stats,
-    status,
-    tenant_id,
-    trigger_type,
-    updated_at,
+    billed_emails: 0,
+    completed_at: 'example',
+    created_at: 'example',
+    delivery_attempts: 0,
+    delivery_error: 'example',
+    delivery_status: {} as any,
+    error_code: 'example',
+    error_message: 'example',
+    id: 0,
+    job_id: 0,
+    last_delivery_attempt_at: 'example',
+    list_id: 0,
+    next_delivery_attempt_at: 'example',
+    pipeline_id: 0,
+    result_location: {} as any,
+    scheduled_for: 'example',
+    source_snapshot: {} as any,
+    started_at: 'example',
+    stats: {} as any,
+    status: {} as any,
+    tenant_id: 'example',
+    trigger_type: 'example',
+    updated_at: 'example',
 };
 ```
 

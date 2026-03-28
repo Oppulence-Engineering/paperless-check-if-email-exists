@@ -4,20 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Categories** | [**ApprovalCategoryBreakdown**](ApprovalCategoryBreakdown.md) |  | 
-**JobId** | **int32** |  | 
-**ReadyToSend** | **bool** |  | 
-**Recommendation** | **string** |  | 
-**RiskFlags** | [**ApprovalRiskFlags**](ApprovalRiskFlags.md) |  | 
-**SafeToSendCount** | **int64** |  | 
-**SafeToSendPct** | **float32** |  | 
-**TotalRecords** | **int32** |  | 
+**Categories** | [**ApprovalCategoryBreakdown**](ApprovalCategoryBreakdown.md) |  | [required]
+**JobId** | **int32** |  | [required]
+**ReadyToSend** | **bool** |  | [required]
+**Recommendation** | **string** |  | [required]
+**RiskFlags** | [**ApprovalRiskFlags**](ApprovalRiskFlags.md) |  | [required]
+**SafeToSendCount** | **int64** |  | [required]
+**SafeToSendPct** | **float32** |  | [required]
+**TotalRecords** | **int32** |  | [required]
 
 ## Methods
 
 ### NewApprovalChecklistResponse
 
-`func NewApprovalChecklistResponse(categories ApprovalCategoryBreakdown, jobId int32, readyToSend bool, recommendation string, riskFlags ApprovalRiskFlags, safeToSendCount int64, safeToSendPct float32, totalRecords int32, ) *ApprovalChecklistResponse`
+`func NewApprovalChecklistResponse(categories ApprovalCategoryBreakdown, jobId int32, readyToSend bool, recommendation string, riskFlags ApprovalRiskFlags, safeToSendCount int64, safeToSendPct float32, totalRecords int32) *ApprovalChecklistResponse`
 
 NewApprovalChecklistResponse instantiates a new ApprovalChecklistResponse object
 This constructor will assign default values to properties that have it defined,

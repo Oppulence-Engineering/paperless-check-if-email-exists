@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CanConnectSmtp** | **bool** | Indicates if the mail exchanger can be contacted successfully. | 
-**HasFullInbox** | **bool** | Indicates if the mailbox is full. | 
-**IsCatchAll** | **bool** | Indicates if the email address is a catch-all address. | 
-**IsDeliverable** | **bool** | Indicates if an email sent to this address is deliverable. | 
-**IsDisabled** | **bool** | Indicates if the email address has been disabled by the provider. | 
-**Message** | **string** | A human-readable description of the error. | 
-**Type** | **string** | The type of error. | 
+**CanConnectSmtp** | **bool** | Indicates if the mail exchanger can be contacted successfully. | [optional]
+**HasFullInbox** | **bool** | Indicates if the mailbox is full. | [optional]
+**IsCatchAll** | **bool** | Indicates if the email address is a catch-all address. | [optional]
+**IsDeliverable** | **bool** | Indicates if an email sent to this address is deliverable. | [optional]
+**IsDisabled** | **bool** | Indicates if the email address has been disabled by the provider. | [optional]
+**Message** | **string** | A human-readable description of the error. | [optional]
+**Type** | **string** | The type of error. | [optional]
 
 ## Methods
 
 ### NewCheckEmailOutputSmtp
 
-`func NewCheckEmailOutputSmtp(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool, message string, type_ string, ) *CheckEmailOutputSmtp`
+`func NewCheckEmailOutputSmtp(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool, message string, type_ string) *CheckEmailOutputSmtp`
 
 NewCheckEmailOutputSmtp instantiates a new CheckEmailOutputSmtp object
 This constructor will assign default values to properties that have it defined,

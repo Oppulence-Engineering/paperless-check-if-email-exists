@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**dashboard** | **boolean** |  | [optional] [default to undefined]
-**max_attempts** | **number** |  | [optional] [default to undefined]
-**retry_backoff_seconds** | **number** |  | [optional] [default to undefined]
-**webhook** | [**PipelineDeliveryWebhook**](PipelineDeliveryWebhook.md) |  | [optional] [default to undefined]
+**dashboard** | **boolean** |  | [optional]
+**max_attempts** | **number** |  | [optional]
+**retry_backoff_seconds** | **number** |  | [optional]
+**webhook** | [**PipelineDeliveryWebhook**](PipelineDeliveryWebhook.md) |  | [optional]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { PipelineDeliveryConfig } from '@oppulence/reacher-sdk';
 
 const instance: PipelineDeliveryConfig = {
-    dashboard,
-    max_attempts,
-    retry_backoff_seconds,
-    webhook,
+    dashboard: true,
+    max_attempts: 5,
+    retry_backoff_seconds: 300,
+    webhook: {} as any,
 };
 ```
 

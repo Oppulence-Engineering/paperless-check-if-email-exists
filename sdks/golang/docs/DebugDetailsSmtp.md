@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**VerifMethod** | Pointer to [**VerifMethod**](VerifMethod.md) |  | [optional] 
+**VerifMethod** | Pointer to [**VerifMethod**](VerifMethod.md) |  | [optional]
 
 ## Methods
 

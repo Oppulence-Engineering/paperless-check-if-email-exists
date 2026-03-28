@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**email_column** | **string** |  | [default to undefined]
-**job_id** | **number** |  | [default to undefined]
-**list_id** | **number** |  | [default to undefined]
-**total_rows** | **number** |  | [default to undefined]
+**email_column** | **string** |  | [required]
+**job_id** | **number** |  | [required]
+**list_id** | **number** |  | [required]
+**total_rows** | **number** |  | [required]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { ListUploadResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListUploadResponse = {
-    email_column,
-    job_id,
-    list_id,
-    total_rows,
+    email_column: 'example',
+    job_id: 0,
+    list_id: 0,
+    total_rows: 0,
 };
 ```
 

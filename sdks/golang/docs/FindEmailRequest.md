@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Domain** | **string** |  | 
-**FirstName** | **string** |  | 
-**LastName** | **string** |  | 
-**Strategy** | Pointer to **string** | Search strategy: parallel (all at once) or waterfall (high-quality patterns first) | [optional] [default to "parallel"]
+**Domain** | **string** |  | [required]
+**FirstName** | **string** |  | [required]
+**LastName** | **string** |  | [required]
+**Strategy** | Pointer to **string** | Search strategy: parallel (all at once) or waterfall (high-quality patterns first) | [optional]
 
 ## Methods
 
 ### NewFindEmailRequest
 
-`func NewFindEmailRequest(domain string, firstName string, lastName string, ) *FindEmailRequest`
+`func NewFindEmailRequest(domain string, firstName string, lastName string) *FindEmailRequest`
 
 NewFindEmailRequest instantiates a new FindEmailRequest object
 This constructor will assign default values to properties that have it defined,

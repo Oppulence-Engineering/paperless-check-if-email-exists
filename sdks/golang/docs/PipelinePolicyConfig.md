@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**MissedRunWindowHours** | Pointer to **int32** |  | [optional] 
+**MissedRunWindowHours** | Pointer to **int32** |  | [optional]
 
 ## Methods
 

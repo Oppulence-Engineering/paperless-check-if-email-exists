@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**dmarc_policy** | **string** |  | [optional] [default to undefined]
-**has_dkim** | **boolean** |  | [default to undefined]
-**has_dmarc** | **boolean** |  | [default to undefined]
-**has_mx** | **boolean** |  | [default to undefined]
-**has_spf** | **boolean** |  | [default to undefined]
-**mx_records** | **Array&lt;string&gt;** |  | [default to undefined]
-**spf_valid** | **boolean** |  | [default to undefined]
+**dmarc_policy** | **string** |  | [optional]
+**has_dkim** | **boolean** |  | [required]
+**has_dmarc** | **boolean** |  | [required]
+**has_mx** | **boolean** |  | [required]
+**has_spf** | **boolean** |  | [required]
+**mx_records** | **Array&lt;string&gt;** |  | [required]
+**spf_valid** | **boolean** |  | [required]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { DnsRecordResults } from '@oppulence/reacher-sdk';
 
 const instance: DnsRecordResults = {
-    dmarc_policy,
-    has_dkim,
-    has_dmarc,
-    has_mx,
-    has_spf,
-    mx_records,
-    spf_valid,
+    dmarc_policy: 'example',
+    has_dkim: true,
+    has_dmarc: true,
+    has_mx: true,
+    has_spf: true,
+    mx_records: [],
+    spf_valid: true,
 };
 ```
 

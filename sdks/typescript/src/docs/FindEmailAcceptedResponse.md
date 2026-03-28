@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**bulk_job_id** | **number** |  | [default to undefined]
-**candidates_checked** | **number** |  | [default to undefined]
-**job_id** | **number** |  | [default to undefined]
-**status** | **string** |  | [default to undefined]
+**bulk_job_id** | **number** |  | [required]
+**candidates_checked** | **number** |  | [required]
+**job_id** | **number** |  | [required]
+**status** | **string** |  | [required]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { FindEmailAcceptedResponse } from '@oppulence/reacher-sdk';
 
 const instance: FindEmailAcceptedResponse = {
-    bulk_job_id,
-    candidates_checked,
-    job_id,
-    status,
+    bulk_job_id: 0,
+    candidates_checked: 0,
+    job_id: 0,
+    status: 'example',
 };
 ```
 

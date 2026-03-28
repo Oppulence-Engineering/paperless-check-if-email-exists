@@ -304,7 +304,6 @@ func (o *ApprovalChecklistResponse) UnmarshalJSON(data []byte) (err error) {
 	varApprovalChecklistResponse := _ApprovalChecklistResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varApprovalChecklistResponse)
 
 	if err != nil {

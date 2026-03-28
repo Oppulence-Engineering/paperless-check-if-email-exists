@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**cron** | **string** |  | [default to undefined]
-**timezone** | **string** |  | [default to undefined]
+**cron** | **string** |  | [required]
+**timezone** | **string** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { PipelineSchedule } from '@oppulence/reacher-sdk';
 
 const instance: PipelineSchedule = {
-    cron,
-    timezone,
+    cron: '0 9 * * 1',
+    timezone: 'UTC',
 };
 ```
 

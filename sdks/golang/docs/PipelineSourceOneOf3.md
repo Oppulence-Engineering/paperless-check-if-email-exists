@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Bucket** | **string** |  | 
-**PathPattern** | Pointer to **NullableString** |  | [optional] 
-**Prefix** | Pointer to **NullableString** |  | [optional] 
-**Provider** | **string** |  | 
-**Region** | Pointer to **NullableString** |  | [optional] 
-**Type** | **string** |  | 
+**Bucket** | **string** |  | [required]
+**PathPattern** | Pointer to **NullableString** |  | [optional]
+**Prefix** | Pointer to **NullableString** |  | [optional]
+**Provider** | **string** |  | [required]
+**Region** | Pointer to **NullableString** |  | [optional]
+**Type** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineSourceOneOf3
 
-`func NewPipelineSourceOneOf3(bucket string, provider string, type_ string, ) *PipelineSourceOneOf3`
+`func NewPipelineSourceOneOf3(bucket string, provider string, type_ string) *PipelineSourceOneOf3`
 
 NewPipelineSourceOneOf3 instantiates a new PipelineSourceOneOf3 object
 This constructor will assign default values to properties that have it defined,

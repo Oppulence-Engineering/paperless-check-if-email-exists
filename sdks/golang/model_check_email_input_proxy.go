@@ -212,7 +212,6 @@ func (o *CheckEmailInputProxy) UnmarshalJSON(data []byte) (err error) {
 	varCheckEmailInputProxy := _CheckEmailInputProxy{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCheckEmailInputProxy)
 
 	if err != nil {

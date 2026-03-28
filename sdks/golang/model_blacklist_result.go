@@ -164,7 +164,6 @@ func (o *BlacklistResult) UnmarshalJSON(data []byte) (err error) {
 	varBlacklistResult := _BlacklistResult{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varBlacklistResult)
 
 	if err != nil {

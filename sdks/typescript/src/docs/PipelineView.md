@@ -5,20 +5,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**created_at** | **string** |  | [default to undefined]
-**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [default to undefined]
-**id** | **number** |  | [default to undefined]
-**last_run_id** | **number** |  | [optional] [default to undefined]
-**last_scheduled_at** | **string** |  | [optional] [default to undefined]
-**name** | **string** |  | [default to undefined]
-**next_run_at** | **string** |  | [optional] [default to undefined]
-**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [default to undefined]
-**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [default to undefined]
-**source** | [**PipelineSource**](PipelineSource.md) |  | [default to undefined]
-**status** | [**PipelineStatus**](PipelineStatus.md) |  | [default to undefined]
-**tenant_id** | **string** |  | [default to undefined]
-**updated_at** | **string** |  | [default to undefined]
-**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [default to undefined]
+**created_at** | **string** |  | [required]
+**delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [required]
+**id** | **number** |  | [required]
+**last_run_id** | **number** |  | [optional]
+**last_scheduled_at** | **string** |  | [optional]
+**name** | **string** |  | [required]
+**next_run_at** | **string** |  | [optional]
+**policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [required]
+**schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [required]
+**source** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**status** | [**PipelineStatus**](PipelineStatus.md) |  | [required]
+**tenant_id** | **string** |  | [required]
+**updated_at** | **string** |  | [required]
+**verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [required]
 
 ## Example
 
@@ -26,20 +26,20 @@ Name | Type | Description | Notes
 import { PipelineView } from '@oppulence/reacher-sdk';
 
 const instance: PipelineView = {
-    created_at,
-    delivery,
-    id,
-    last_run_id,
-    last_scheduled_at,
-    name,
-    next_run_at,
-    policy,
-    schedule,
-    source,
-    status,
-    tenant_id,
-    updated_at,
-    verification,
+    created_at: 'example',
+    delivery: {} as any,
+    id: 0,
+    last_run_id: 0,
+    last_scheduled_at: 'example',
+    name: 'Weekly Cleanup',
+    next_run_at: 'example',
+    policy: {} as any,
+    schedule: {} as any,
+    source: {} as any,
+    status: {} as any,
+    tenant_id: 'example',
+    updated_at: 'example',
+    verification: {} as any,
 };
 ```
 

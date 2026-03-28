@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Domain** | **string** | The domain part of the email address. | 
-**IsValidSyntax** | **bool** | Indicates if the email address syntax is valid. | 
-**Username** | **string** | The username part of the email address. | 
+**Domain** | **string** | The domain part of the email address. | [required]
+**IsValidSyntax** | **bool** | Indicates if the email address syntax is valid. | [required]
+**Username** | **string** | The username part of the email address. | [required]
 
 ## Methods
 
 ### NewSyntaxDetails
 
-`func NewSyntaxDetails(domain string, isValidSyntax bool, username string, ) *SyntaxDetails`
+`func NewSyntaxDetails(domain string, isValidSyntax bool, username string) *SyntaxDetails`
 
 NewSyntaxDetails instantiates a new SyntaxDetails object
 This constructor will assign default values to properties that have it defined,

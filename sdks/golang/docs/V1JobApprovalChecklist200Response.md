@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Categories** | Pointer to **map[string]interface{}** |  | [optional] 
-**JobId** | Pointer to **int32** |  | [optional] 
-**ReadyToSend** | Pointer to **bool** |  | [optional] 
-**Recommendation** | Pointer to **string** |  | [optional] 
-**RiskFlags** | Pointer to **map[string]interface{}** |  | [optional] 
-**SafeToSendCount** | Pointer to **int64** |  | [optional] 
-**SafeToSendPct** | Pointer to **float32** |  | [optional] 
-**TotalRecords** | Pointer to **int32** |  | [optional] 
+**Categories** | Pointer to **map[string]interface{}** |  | [optional]
+**JobId** | Pointer to **int32** |  | [optional]
+**ReadyToSend** | Pointer to **bool** |  | [optional]
+**Recommendation** | Pointer to **string** |  | [optional]
+**RiskFlags** | Pointer to **map[string]interface{}** |  | [optional]
+**SafeToSendCount** | Pointer to **int64** |  | [optional]
+**SafeToSendPct** | Pointer to **float32** |  | [optional]
+**TotalRecords** | Pointer to **int32** |  | [optional]
 
 ## Methods
 

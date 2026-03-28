@@ -256,7 +256,6 @@ func (o *JobTaskResult) UnmarshalJSON(data []byte) (err error) {
 	varJobTaskResult := _JobTaskResult{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varJobTaskResult)
 
 	if err != nil {

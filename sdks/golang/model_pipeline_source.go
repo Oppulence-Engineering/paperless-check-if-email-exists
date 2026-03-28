@@ -65,7 +65,7 @@ func (dst *PipelineSource) UnmarshalJSON(data []byte) error {
 		if string(jsonPipelineSourceOneOf) == "{}" { // empty struct
 			dst.PipelineSourceOneOf = nil
 		} else {
-			if err = validator.Validate(dst.PipelineSourceOneOf); err != nil {
+			if err = validator.Validate(dst.PipelineSourceOneOf); err != nil || dst.PipelineSourceOneOf.Type != "list_snapshot" {
 				dst.PipelineSourceOneOf = nil
 			} else {
 				match++
@@ -82,7 +82,7 @@ func (dst *PipelineSource) UnmarshalJSON(data []byte) error {
 		if string(jsonPipelineSourceOneOf1) == "{}" { // empty struct
 			dst.PipelineSourceOneOf1 = nil
 		} else {
-			if err = validator.Validate(dst.PipelineSourceOneOf1); err != nil {
+			if err = validator.Validate(dst.PipelineSourceOneOf1); err != nil || dst.PipelineSourceOneOf1.Type != "integration" {
 				dst.PipelineSourceOneOf1 = nil
 			} else {
 				match++
@@ -99,7 +99,7 @@ func (dst *PipelineSource) UnmarshalJSON(data []byte) error {
 		if string(jsonPipelineSourceOneOf2) == "{}" { // empty struct
 			dst.PipelineSourceOneOf2 = nil
 		} else {
-			if err = validator.Validate(dst.PipelineSourceOneOf2); err != nil {
+			if err = validator.Validate(dst.PipelineSourceOneOf2); err != nil || dst.PipelineSourceOneOf2.Type != "push" {
 				dst.PipelineSourceOneOf2 = nil
 			} else {
 				match++
@@ -116,7 +116,7 @@ func (dst *PipelineSource) UnmarshalJSON(data []byte) error {
 		if string(jsonPipelineSourceOneOf3) == "{}" { // empty struct
 			dst.PipelineSourceOneOf3 = nil
 		} else {
-			if err = validator.Validate(dst.PipelineSourceOneOf3); err != nil {
+			if err = validator.Validate(dst.PipelineSourceOneOf3); err != nil || dst.PipelineSourceOneOf3.Type != "bucket" {
 				dst.PipelineSourceOneOf3 = nil
 			} else {
 				match++

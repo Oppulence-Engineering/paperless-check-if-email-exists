@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**BatchSize** | Pointer to **int32** |  | [optional] 
-**EmailsRequeued** | Pointer to **int32** |  | [optional] 
-**Enabled** | **bool** |  | 
-**LastJobId** | Pointer to **NullableInt32** |  | [optional] 
-**LastRunAt** | Pointer to **NullableTime** |  | [optional] 
-**NextRunAt** | Pointer to **NullableTime** |  | [optional] 
-**StalenessDays** | Pointer to **int32** |  | [optional] 
+**BatchSize** | Pointer to **int32** |  | [optional]
+**EmailsRequeued** | Pointer to **int32** |  | [optional]
+**Enabled** | **bool** |  | [required]
+**LastJobId** | Pointer to **NullableInt32** |  | [optional]
+**LastRunAt** | Pointer to **NullableTime** |  | [optional]
+**NextRunAt** | Pointer to **NullableTime** |  | [optional]
+**StalenessDays** | Pointer to **int32** |  | [optional]
 
 ## Methods
 
 ### NewReverificationStatusResponse
 
-`func NewReverificationStatusResponse(enabled bool, ) *ReverificationStatusResponse`
+`func NewReverificationStatusResponse(enabled bool) *ReverificationStatusResponse`
 
 NewReverificationStatusResponse instantiates a new ReverificationStatusResponse object
 This constructor will assign default values to properties that have it defined,

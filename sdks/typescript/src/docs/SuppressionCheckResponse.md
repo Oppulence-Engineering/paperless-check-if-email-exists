@@ -5,10 +5,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**created_at** | **string** |  | [optional] [default to undefined]
-**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [optional] [default to undefined]
-**source** | **string** |  | [optional] [default to undefined]
-**suppressed** | **boolean** |  | [default to undefined]
+**created_at** | **string** |  | [optional]
+**reason** | [**SuppressionReason**](SuppressionReason.md) |  | [optional]
+**source** | **string** |  | [optional]
+**suppressed** | **boolean** |  | [required]
 
 ## Example
 
@@ -16,10 +16,10 @@ Name | Type | Description | Notes
 import { SuppressionCheckResponse } from '@oppulence/reacher-sdk';
 
 const instance: SuppressionCheckResponse = {
-    created_at,
-    reason,
-    source,
-    suppressed,
+    created_at: 'example',
+    reason: {} as any,
+    source: 'example',
+    suppressed: true,
 };
 ```
 

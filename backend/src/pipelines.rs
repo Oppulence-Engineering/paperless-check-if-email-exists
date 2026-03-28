@@ -324,6 +324,7 @@ struct PreparedList {
 	deduplicated_count: i32,
 	canonical_groups: HashMap<String, Vec<usize>>,
 	blank_indices: Vec<usize>,
+	invalid_indices: Vec<usize>,
 }
 
 #[derive(Debug, Default)]
@@ -376,15 +377,7 @@ pub async fn run_pipeline_scheduler_cycle(
 		);
 
 		for run in recovered {
-			if let Err(err) = execute_pipeline_run(Arc::clone(&config), pg_pool, run.run_id).await {
-				warn!(
-					target: LOG_TARGET,
-					pipeline_id = run.pipeline_id,
-					run_id = run.run_id,
-					error = ?err,
-					"Failed to execute recovered pipeline run"
-				);
-			}
+			spawn_pipeline_run_execution(Arc::clone(&config), pg_pool.clone(), run);
 		}
 	}
 
@@ -396,15 +389,7 @@ pub async fn run_pipeline_scheduler_cycle(
 			if run.skipped {
 				continue;
 			}
-			if let Err(err) = execute_pipeline_run(Arc::clone(&config), pg_pool, run.run_id).await {
-				warn!(
-					target: LOG_TARGET,
-					pipeline_id = run.pipeline_id,
-					run_id = run.run_id,
-					error = ?err,
-					"Failed to execute scheduled pipeline run"
-				);
-			}
+			spawn_pipeline_run_execution(Arc::clone(&config), pg_pool.clone(), run);
 		}
 	}
 
@@ -412,6 +397,20 @@ pub async fn run_pipeline_scheduler_cycle(
 	retry_due_pipeline_deliveries(pg_pool, config.pipelines.max_due_per_tick).await?;
 
 	Ok(())
+}
+
+fn spawn_pipeline_run_execution(config: Arc<BackendConfig>, pg_pool: PgPool, run: ClaimedRun) {
+	tokio::spawn(async move {
+		if let Err(err) = execute_pipeline_run(config, &pg_pool, run.run_id).await {
+			warn!(
+				target: LOG_TARGET,
+				pipeline_id = run.pipeline_id,
+				run_id = run.run_id,
+				error = ?err,
+				"Failed to execute pipeline run"
+			);
+		}
+	});
 }
 
 async fn claim_due_pipeline_runs(
@@ -681,6 +680,10 @@ pub async fn create_pipeline(
 	input: CreatePipelineInput,
 	pipeline_config: &PipelinesConfig,
 ) -> Result<PipelineView> {
+	if input.status == PipelineStatus::Deleted {
+		bail!("Use the delete endpoint to delete a pipeline");
+	}
+
 	validate_pipeline_input(
 		pg_pool,
 		tenant_id,
@@ -811,6 +814,10 @@ pub async fn update_pipeline(
 	input: UpdatePipelineInput,
 	pipeline_config: &PipelinesConfig,
 ) -> Result<Option<PipelineView>> {
+	if input.status.as_ref() == Some(&PipelineStatus::Deleted) {
+		bail!("Use the delete endpoint to delete a pipeline");
+	}
+
 	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
 		Some(p) => p,
 		None => return Ok(None),
@@ -1382,7 +1389,7 @@ async fn execute_pipeline_run_inner(
 	.bind(prepared_list.unique_email_count)
 	.bind(json!({
 			"verification": verification,
-			"delivery": delivery,
+			"delivery": sanitized_delivery_metadata(&delivery),
 		}))
 	.fetch_one(pg_pool)
 	.await?;
@@ -1588,9 +1595,46 @@ async fn execute_pipeline_run_inner(
 		.await?;
 	}
 
+	for &index in &prepared_list.invalid_indices {
+		let invalid_email = prepared_list.rows[index]
+			.get(&prepared_list.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
+		let extra = json!({
+			"list_id": list_id,
+			"row_index": index as i32,
+			"email_column": prepared_list.email_column,
+			"pipeline_id": pipeline_id,
+			"pipeline_run_id": run_id,
+		});
+		sqlx::query(
+			r#"
+			INSERT INTO v1_task_result (
+				job_id, payload, extra, result, tenant_id, task_state,
+				score, score_category, sub_reason, safe_to_send, reason_codes,
+				completed_at, canonical_email, is_duplicate
+			)
+			VALUES ($1, $2, $3, $4, $5, 'completed', 0, 'invalid', 'invalid_syntax', false, ARRAY['invalid_syntax'], NOW(), NULL, false)
+			"#,
+		)
+		.bind(job_id)
+		.bind(json!({
+				"input": {"to_email": invalid_email},
+				"job_id": {"bulk": job_id},
+				"webhook": null
+			}))
+		.bind(extra)
+		.bind(invalid_syntax_email_result(&invalid_email))
+		.bind(tenant_id)
+		.execute(pg_pool)
+		.await?;
+	}
+
 	let unused_reserved = prepared_list.unique_email_count - published_unique_groups;
 	if unused_reserved > 0 {
-		release_reserved_usage(Some(pg_pool), Some(tenant_id), unused_reserved).await;
+		release_reserved_usage(Some(pg_pool), Some(tenant_id), unused_reserved).await?;
 	}
 	sqlx::query(
 		r#"
@@ -1696,7 +1740,7 @@ async fn mark_pipeline_run_execution_failed(
 	.await?
 	.unwrap_or(0) as i32;
 	if reserved_emails > 0 {
-		release_reserved_usage(Some(pg_pool), Some(tenant_id), reserved_emails).await;
+		release_reserved_usage(Some(pg_pool), Some(tenant_id), reserved_emails).await?;
 	}
 
 	sqlx::query(
@@ -1877,7 +1921,8 @@ async fn load_source_list_snapshot(
 	let headers: Vec<String> = row.get("original_headers");
 	let email_column: String = row.get("email_column");
 
-	let (canonical_groups, blank_indices) = build_canonical_groups(&rows, &email_column);
+	let (canonical_groups, blank_indices, invalid_indices) =
+		build_canonical_groups(&rows, &email_column);
 	let unique_email_count = canonical_groups.len() as i32;
 	let deduplicated_count =
 		(canonical_groups.values().map(|v| v.len()).sum::<usize>() - canonical_groups.len()) as i32;
@@ -1893,15 +1938,17 @@ async fn load_source_list_snapshot(
 		deduplicated_count,
 		canonical_groups,
 		blank_indices,
+		invalid_indices,
 	})
 }
 
 fn build_canonical_groups(
 	rows: &[Map<String, Value>],
 	email_column: &str,
-) -> (HashMap<String, Vec<usize>>, Vec<usize>) {
+) -> (HashMap<String, Vec<usize>>, Vec<usize>, Vec<usize>) {
 	let mut canonical_groups: HashMap<String, Vec<usize>> = HashMap::new();
 	let mut blank_indices = Vec::new();
+	let mut invalid_indices = Vec::new();
 
 	for (index, row) in rows.iter().enumerate() {
 		let email = row
@@ -1916,11 +1963,11 @@ fn build_canonical_groups(
 		}
 		match canonicalize_email(&email) {
 			Some(canonical) => canonical_groups.entry(canonical).or_default().push(index),
-			None => blank_indices.push(index),
+			None => invalid_indices.push(index),
 		}
 	}
 
-	(canonical_groups, blank_indices)
+	(canonical_groups, blank_indices, invalid_indices)
 }
 
 fn parse_original_rows(original_data: &Value) -> Result<Vec<Map<String, Value>>> {
@@ -2021,6 +2068,7 @@ async fn apply_delta_selection(
 	}
 
 	selected_indices.extend(prepared.blank_indices.iter().copied());
+	selected_indices.extend(prepared.invalid_indices.iter().copied());
 	selected_indices.sort_unstable();
 	selected_indices.dedup();
 
@@ -2028,7 +2076,7 @@ async fn apply_delta_selection(
 		.into_iter()
 		.map(|index| prepared.rows[index].clone())
 		.collect::<Vec<_>>();
-	let (canonical_groups, blank_indices) =
+	let (canonical_groups, blank_indices, invalid_indices) =
 		build_canonical_groups(&selected_rows, &prepared.email_column);
 	let unique_email_count = canonical_groups.len() as i32;
 	let deduplicated_count =
@@ -2046,6 +2094,7 @@ async fn apply_delta_selection(
 			deduplicated_count,
 			canonical_groups,
 			blank_indices,
+			invalid_indices,
 		},
 		DeltaSelectionSummary {
 			selected_unique_emails: unique_email_count,
@@ -2108,6 +2157,7 @@ async fn deliver_pipeline_run_summary(
 	});
 
 	validate_webhook_url(&url)?;
+	validate_resolved_webhook_target(&url).await?;
 	let client = reqwest::Client::builder()
 		.timeout(std::time::Duration::from_secs(10))
 		.redirect(reqwest::redirect::Policy::none())
@@ -2321,7 +2371,7 @@ async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) ->
 	let email_column: String = run_row.get("email_column");
 	let original_data: Value = run_row.get("original_data");
 	let rows = parse_original_rows(&original_data)?;
-	let (canonical_groups, _) = build_canonical_groups(&rows, &email_column);
+	let (canonical_groups, _, _) = build_canonical_groups(&rows, &email_column);
 	if canonical_groups.is_empty() {
 		return Ok(());
 	}
@@ -2557,6 +2607,27 @@ fn validate_webhook_url(url: &str) -> Result<()> {
 	Ok(())
 }
 
+async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
+	let parsed = reqwest::Url::parse(url).context("Invalid webhook URL")?;
+	let host = parsed
+		.host_str()
+		.context("Webhook URL must have a valid host")?;
+	let port = parsed
+		.port_or_known_default()
+		.context("Webhook URL must use a known port")?;
+	let addrs = tokio::net::lookup_host((host, port))
+		.await
+		.with_context(|| format!("Failed to resolve webhook host: {host}"))?
+		.collect::<Vec<_>>();
+	if addrs.is_empty() {
+		bail!("Webhook URL host did not resolve to any addresses");
+	}
+	if addrs.iter().any(|addr| is_private_ip(addr.ip())) {
+		bail!("Webhook URL must not resolve to private or reserved IP addresses");
+	}
+	Ok(())
+}
+
 fn is_private_ip(ip: std::net::IpAddr) -> bool {
 	match ip {
 		std::net::IpAddr::V4(v4) => {
@@ -2564,11 +2635,32 @@ fn is_private_ip(ip: std::net::IpAddr) -> bool {
 				|| v4.is_private()
 				|| v4.is_link_local()
 				|| v4.is_broadcast()
+				|| v4.is_multicast()
 				|| v4.is_unspecified()
 				|| v4.octets()[0] == 169 && v4.octets()[1] == 254 // link-local
 				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64 // CGN 100.64/10
+				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 0 // 192.0.0.0/24 IETF protocol assignments
+				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 2 // 192.0.2.0/24 TEST-NET-1
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 18 // 198.18.0.0/15 benchmark
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 19
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 51 && v4.octets()[2] == 100 // 198.51.100.0/24 TEST-NET-2
+				|| v4.octets()[0] == 203 && v4.octets()[1] == 0 && v4.octets()[2] == 113 // 203.0.113.0/24 TEST-NET-3
+				|| v4.octets()[0] >= 240 // reserved + limited broadcast block
 		}
-		std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
+		std::net::IpAddr::V6(v6) => {
+			let first_segment = v6.segments()[0];
+			let mapped_private = v6
+				.to_ipv4_mapped()
+				.is_some_and(|mapped| is_private_ip(std::net::IpAddr::V4(mapped)));
+			v6.is_loopback()
+				|| v6.is_unspecified()
+				|| v6.is_multicast()
+				|| (first_segment & 0xffc0) == 0xfe80 // fe80::/10 link-local
+				|| (first_segment & 0xfe00) == 0xfc00 // fc00::/7 unique local
+				|| (first_segment & 0xffc0) == 0xfec0 // fec0::/10 site-local (deprecated but non-global)
+				|| (first_segment == 0x2001 && v6.segments()[1] == 0x0db8) // 2001:db8::/32 documentation
+				|| mapped_private
+		}
 	}
 }
 
@@ -2752,9 +2844,9 @@ async fn fetch_pipeline_row_for_update<'a>(
 	})
 }
 
-fn blank_email_result() -> Value {
+fn invalid_syntax_email_result(to_email: &str) -> Value {
 	json!({
-		"input": "",
+		"input": to_email,
 		"is_reachable": Reachable::Invalid,
 		"score": {
 			"score": 0,
@@ -2763,6 +2855,19 @@ fn blank_email_result() -> Value {
 			"safe_to_send": false,
 			"reason_codes": ["invalid_syntax"]
 		}
+	})
+}
+
+fn blank_email_result() -> Value {
+	invalid_syntax_email_result("")
+}
+
+fn sanitized_delivery_metadata(delivery: &PipelineDeliveryConfig) -> Value {
+	json!({
+		"dashboard": delivery.dashboard,
+		"has_webhook": delivery.webhook.is_some(),
+		"max_attempts": delivery.max_attempts,
+		"retry_backoff_seconds": delivery.retry_backoff_seconds,
 	})
 }
 
@@ -2811,7 +2916,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_build_canonical_groups_deduplicates_and_tracks_blanks() {
+	fn test_build_canonical_groups_deduplicates_and_tracks_blank_and_invalid_rows() {
 		let mut row_one = Map::new();
 		row_one.insert(
 			"email".to_string(),
@@ -2824,11 +2929,17 @@ mod tests {
 		);
 		let mut row_three = Map::new();
 		row_three.insert("email".to_string(), Value::String("".to_string()));
-		let rows = vec![row_one, row_two, row_three];
-		let (groups, blanks) = build_canonical_groups(&rows, "email");
+		let mut row_four = Map::new();
+		row_four.insert(
+			"email".to_string(),
+			Value::String("not-an-email".to_string()),
+		);
+		let rows = vec![row_one, row_two, row_three, row_four];
+		let (groups, blanks, invalids) = build_canonical_groups(&rows, "email");
 		assert_eq!(groups.len(), 1);
 		assert_eq!(groups.get("user@gmail.com").unwrap().len(), 2);
 		assert_eq!(blanks, vec![2]);
+		assert_eq!(invalids, vec![3]);
 	}
 
 	#[test]
@@ -2878,5 +2989,15 @@ mod tests {
 		let hash_one = hash_canonical_group(&rows, &[0]).unwrap();
 		let hash_two = hash_canonical_group(&rows, &[1]).unwrap();
 		assert_eq!(hash_one, hash_two);
+	}
+
+	#[test]
+	fn test_is_private_ip_covers_reserved_ipv6_ranges() {
+		assert!(is_private_ip("fe80::1".parse().unwrap()));
+		assert!(is_private_ip("fd00::1".parse().unwrap()));
+		assert!(is_private_ip("2001:db8::1".parse().unwrap()));
+		assert!(is_private_ip("ff01::1".parse().unwrap()));
+		assert!(is_private_ip("fec0::1".parse().unwrap()));
+		assert!(is_private_ip("::ffff:127.0.0.1".parse().unwrap()));
 	}
 }

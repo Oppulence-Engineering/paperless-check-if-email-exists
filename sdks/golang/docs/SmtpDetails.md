@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CanConnectSmtp** | **bool** | Indicates if the mail exchanger can be contacted successfully. | 
-**HasFullInbox** | **bool** | Indicates if the mailbox is full. | 
-**IsCatchAll** | **bool** | Indicates if the email address is a catch-all address. | 
-**IsDeliverable** | **bool** | Indicates if an email sent to this address is deliverable. | 
-**IsDisabled** | **bool** | Indicates if the email address has been disabled by the provider. | 
+**CanConnectSmtp** | **bool** | Indicates if the mail exchanger can be contacted successfully. | [required]
+**HasFullInbox** | **bool** | Indicates if the mailbox is full. | [required]
+**IsCatchAll** | **bool** | Indicates if the email address is a catch-all address. | [required]
+**IsDeliverable** | **bool** | Indicates if an email sent to this address is deliverable. | [required]
+**IsDisabled** | **bool** | Indicates if the email address has been disabled by the provider. | [required]
 
 ## Methods
 
 ### NewSmtpDetails
 
-`func NewSmtpDetails(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool, ) *SmtpDetails`
+`func NewSmtpDetails(canConnectSmtp bool, hasFullInbox bool, isCatchAll bool, isDeliverable bool, isDisabled bool) *SmtpDetails`
 
 NewSmtpDetails instantiates a new SmtpDetails object
 This constructor will assign default values to properties that have it defined,

@@ -6,11 +6,11 @@ Results from SMTP connection attempts to the mail server.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**can_connect_smtp** | **boolean** | Indicates if the mail exchanger can be contacted successfully. | [default to undefined]
-**has_full_inbox** | **boolean** | Indicates if the mailbox is full. | [default to undefined]
-**is_catch_all** | **boolean** | Indicates if the email address is a catch-all address. | [default to undefined]
-**is_deliverable** | **boolean** | Indicates if an email sent to this address is deliverable. | [default to undefined]
-**is_disabled** | **boolean** | Indicates if the email address has been disabled by the provider. | [default to undefined]
+**can_connect_smtp** | **boolean** | Indicates if the mail exchanger can be contacted successfully. | [required]
+**has_full_inbox** | **boolean** | Indicates if the mailbox is full. | [required]
+**is_catch_all** | **boolean** | Indicates if the email address is a catch-all address. | [required]
+**is_deliverable** | **boolean** | Indicates if an email sent to this address is deliverable. | [required]
+**is_disabled** | **boolean** | Indicates if the email address has been disabled by the provider. | [required]
 
 ## Example
 
@@ -18,11 +18,11 @@ Name | Type | Description | Notes
 import { SmtpDetails } from '@oppulence/reacher-sdk';
 
 const instance: SmtpDetails = {
-    can_connect_smtp,
-    has_full_inbox,
-    is_catch_all,
-    is_deliverable,
-    is_disabled,
+    can_connect_smtp: true,
+    has_full_inbox: true,
+    is_catch_all: true,
+    is_deliverable: true,
+    is_disabled: true,
 };
 ```
 

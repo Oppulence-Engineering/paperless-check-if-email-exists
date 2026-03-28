@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Deleted** | **bool** |  | 
+**Deleted** | **bool** |  | [required]
 
 ## Methods
 
 ### NewListDeleteResponse
 
-`func NewListDeleteResponse(deleted bool, ) *ListDeleteResponse`
+`func NewListDeleteResponse(deleted bool) *ListDeleteResponse`
 
 NewListDeleteResponse instantiates a new ListDeleteResponse object
 This constructor will assign default values to properties that have it defined,

@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Pipelines** | [**[]PipelineView**](PipelineView.md) |  | 
-**Total** | **int64** |  | 
+**Pipelines** | [**[]PipelineView**](PipelineView.md) |  | [required]
+**Total** | **int64** |  | [required]
 
 ## Methods
 
 ### NewListPipelinesResponse
 
-`func NewListPipelinesResponse(pipelines []PipelineView, total int64, ) *ListPipelinesResponse`
+`func NewListPipelinesResponse(pipelines []PipelineView, total int64) *ListPipelinesResponse`
 
 NewListPipelinesResponse instantiates a new ListPipelinesResponse object
 This constructor will assign default values to properties that have it defined,
@@ -34,7 +34,7 @@ GetPipelines returns the Pipelines field if non-nil, zero value otherwise.
 
 ### GetPipelinesOk
 
-`func (o *ListPipelinesResponse) GetPipelinesOk() (*[]PipelineView, bool)`
+`func (o *ListPipelinesResponse) GetPipelinesOk() ([]PipelineView, bool)`
 
 GetPipelinesOk returns a tuple with the Pipelines field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

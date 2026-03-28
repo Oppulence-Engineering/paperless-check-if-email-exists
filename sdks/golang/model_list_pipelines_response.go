@@ -136,7 +136,6 @@ func (o *ListPipelinesResponse) UnmarshalJSON(data []byte) (err error) {
 	varListPipelinesResponse := _ListPipelinesResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varListPipelinesResponse)
 
 	if err != nil {

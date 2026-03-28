@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Entries** | [**[]SuppressionEntry**](SuppressionEntry.md) |  | 
-**Total** | **int64** |  | 
+**Entries** | [**[]SuppressionEntry**](SuppressionEntry.md) |  | [required]
+**Total** | **int64** |  | [required]
 
 ## Methods
 
 ### NewSuppressionListResponse
 
-`func NewSuppressionListResponse(entries []SuppressionEntry, total int64, ) *SuppressionListResponse`
+`func NewSuppressionListResponse(entries []SuppressionEntry, total int64) *SuppressionListResponse`
 
 NewSuppressionListResponse instantiates a new SuppressionListResponse object
 This constructor will assign default values to properties that have it defined,
@@ -34,7 +34,7 @@ GetEntries returns the Entries field if non-nil, zero value otherwise.
 
 ### GetEntriesOk
 
-`func (o *SuppressionListResponse) GetEntriesOk() (*[]SuppressionEntry, bool)`
+`func (o *SuppressionListResponse) GetEntriesOk() ([]SuppressionEntry, bool)`
 
 GetEntriesOk returns a tuple with the Entries field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

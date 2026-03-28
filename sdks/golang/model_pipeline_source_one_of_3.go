@@ -302,7 +302,6 @@ func (o *PipelineSourceOneOf3) UnmarshalJSON(data []byte) (err error) {
 	varPipelineSourceOneOf3 := _PipelineSourceOneOf3{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPipelineSourceOneOf3)
 
 	if err != nil {

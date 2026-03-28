@@ -145,7 +145,6 @@ func (o *PostV1BulkRequest) UnmarshalJSON(data []byte) (err error) {
 	varPostV1BulkRequest := _PostV1BulkRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPostV1BulkRequest)
 
 	if err != nil {

@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**force** | **boolean** |  | [optional] [default to undefined]
-**reason** | **string** |  | [optional] [default to undefined]
+**force** | **boolean** |  | [optional]
+**reason** | **string** |  | [optional]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { TriggerPipelineInput } from '@oppulence/reacher-sdk';
 
 const instance: TriggerPipelineInput = {
-    force,
-    reason,
+    force: true,
+    reason: 'example',
 };
 ```
 

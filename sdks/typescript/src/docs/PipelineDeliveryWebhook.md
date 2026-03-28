@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**headers** | **{ [key: string]: string; }** |  | [optional] [default to undefined]
-**url** | **string** |  | [default to undefined]
+**headers** | **{ [key: string]: string; }** |  | [optional]
+**url** | **string** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { PipelineDeliveryWebhook } from '@oppulence/reacher-sdk';
 
 const instance: PipelineDeliveryWebhook = {
-    headers,
-    url,
+    headers: { Authorization: 'Bearer example' },
+    url: 'https://example.com/webhook',
 };
 ```
 

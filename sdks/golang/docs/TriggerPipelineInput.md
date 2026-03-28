@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Force** | Pointer to **bool** |  | [optional] 
-**Reason** | Pointer to **NullableString** |  | [optional] 
+**Force** | Pointer to **bool** |  | [optional]
+**Reason** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 

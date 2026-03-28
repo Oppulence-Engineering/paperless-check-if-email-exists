@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**delta_mode** | **boolean** |  | [optional] [default to undefined]
-**freshness_days** | **number** |  | [optional] [default to undefined]
+**delta_mode** | **boolean** |  | [optional]
+**freshness_days** | **number** |  | [optional]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { PipelineVerificationSettings } from '@oppulence/reacher-sdk';
 
 const instance: PipelineVerificationSettings = {
-    delta_mode,
-    freshness_days,
+    delta_mode: true,
+    freshness_days: 30,
 };
 ```
 

@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**EmailColumn** | Pointer to **NullableString** |  | [optional] 
-**File** | ***os.File** |  | 
-**Name** | Pointer to **NullableString** |  | [optional] 
+**EmailColumn** | Pointer to **NullableString** |  | [optional]
+**File** | ***os.File** |  | [required]
+**Name** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 
 ### NewListUploadRequest
 
-`func NewListUploadRequest(file *os.File, ) *ListUploadRequest`
+`func NewListUploadRequest(file *os.File) *ListUploadRequest`
 
 NewListUploadRequest instantiates a new ListUploadRequest object
 This constructor will assign default values to properties that have it defined,

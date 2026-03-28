@@ -4,26 +4,26 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | **time.Time** |  | 
-**Delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | 
-**Id** | **int64** |  | 
-**LastRunId** | Pointer to **NullableInt64** |  | [optional] 
-**LastScheduledAt** | Pointer to **NullableTime** |  | [optional] 
-**Name** | **string** |  | 
-**NextRunAt** | Pointer to **NullableTime** |  | [optional] 
-**Policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | 
-**Schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | 
-**Source** | [**PipelineSource**](PipelineSource.md) |  | 
-**Status** | [**PipelineStatus**](PipelineStatus.md) |  | 
-**TenantId** | **string** |  | 
-**UpdatedAt** | **time.Time** |  | 
-**Verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | 
+**CreatedAt** | **time.Time** |  | [required]
+**Delivery** | [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [required]
+**Id** | **int64** |  | [required]
+**LastRunId** | Pointer to **NullableInt64** |  | [optional]
+**LastScheduledAt** | Pointer to **NullableTime** |  | [optional]
+**Name** | **string** |  | [required]
+**NextRunAt** | Pointer to **NullableTime** |  | [optional]
+**Policy** | [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [required]
+**Schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [required]
+**Source** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**Status** | [**PipelineStatus**](PipelineStatus.md) |  | [required]
+**TenantId** | **string** |  | [required]
+**UpdatedAt** | **time.Time** |  | [required]
+**Verification** | [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [required]
 
 ## Methods
 
 ### NewPipelineView
 
-`func NewPipelineView(createdAt time.Time, delivery PipelineDeliveryConfig, id int64, name string, policy PipelinePolicyConfig, schedule PipelineSchedule, source PipelineSource, status PipelineStatus, tenantId string, updatedAt time.Time, verification PipelineVerificationSettings, ) *PipelineView`
+`func NewPipelineView(createdAt time.Time, delivery PipelineDeliveryConfig, id int64, name string, policy PipelinePolicyConfig, schedule PipelineSchedule, source PipelineSource, status PipelineStatus, tenantId string, updatedAt time.Time, verification PipelineVerificationSettings) *PipelineView`
 
 NewPipelineView instantiates a new PipelineView object
 This constructor will assign default values to properties that have it defined,

@@ -478,7 +478,6 @@ func (o *CheckEmailRequest) UnmarshalJSON(data []byte) (err error) {
 	varCheckEmailRequest := _CheckEmailRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCheckEmailRequest)
 
 	if err != nil {

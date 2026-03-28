@@ -4,20 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Category** | [**EmailCategory**](EmailCategory.md) |  | 
-**Confidence** | Pointer to [**NullableConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional] 
-**Email** | **string** |  | 
-**IsReachable** | [**Reachable**](Reachable.md) |  | 
-**Pattern** | **string** |  | 
-**Result** | Pointer to [**NullableCheckEmailOutput**](CheckEmailOutput.md) |  | [optional] 
-**Score** | **int32** |  | 
-**SubReason** | [**SubReason**](SubReason.md) |  | 
+**Category** | [**EmailCategory**](EmailCategory.md) |  | [required]
+**Confidence** | Pointer to [**NullableConfidenceExplanation**](ConfidenceExplanation.md) |  | [optional]
+**Email** | **string** |  | [required]
+**IsReachable** | [**Reachable**](Reachable.md) |  | [required]
+**Pattern** | **string** |  | [required]
+**Result** | Pointer to [**NullableCheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
+**Score** | **int32** |  | [required]
+**SubReason** | [**SubReason**](SubReason.md) |  | [required]
 
 ## Methods
 
 ### NewFinderCandidateResult
 
-`func NewFinderCandidateResult(category EmailCategory, email string, isReachable Reachable, pattern string, score int32, subReason SubReason, ) *FinderCandidateResult`
+`func NewFinderCandidateResult(category EmailCategory, email string, isReachable Reachable, pattern string, score int32, subReason SubReason) *FinderCandidateResult`
 
 NewFinderCandidateResult instantiates a new FinderCandidateResult object
 This constructor will assign default values to properties that have it defined,

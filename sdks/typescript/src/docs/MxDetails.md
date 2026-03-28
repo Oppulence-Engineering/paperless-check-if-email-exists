@@ -6,8 +6,8 @@ Details about the mail server\'s MX records.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**accepts_mail** | **boolean** | Indicates if the mail server accepts emails. | [default to undefined]
-**records** | **Array&lt;string&gt;** | List of Fully Qualified Domain Names (FQDN) of the mail server. | [default to undefined]
+**accepts_mail** | **boolean** | Indicates if the mail server accepts emails. | [required]
+**records** | **Array&lt;string&gt;** | List of Fully Qualified Domain Names (FQDN) of the mail server. | [required]
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { MxDetails } from '@oppulence/reacher-sdk';
 
 const instance: MxDetails = {
-    accepts_mail,
-    records,
+    accepts_mail: true,
+    records: [],
 };
 ```
 

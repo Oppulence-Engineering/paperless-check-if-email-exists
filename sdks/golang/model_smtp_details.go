@@ -225,7 +225,6 @@ func (o *SmtpDetails) UnmarshalJSON(data []byte) (err error) {
 	varSmtpDetails := _SmtpDetails{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varSmtpDetails)
 
 	if err != nil {

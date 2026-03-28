@@ -4,24 +4,24 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ListId** | **int32** |  | 
-**Type** | **string** |  | 
-**AudienceId** | **string** |  | 
-**ConnectionId** | **string** |  | 
-**FieldMapping** | Pointer to **interface{}** |  | [optional] 
-**Provider** | **string** |  | 
-**AcceptedFormat** | **string** |  | 
-**TokenId** | **string** |  | 
-**Bucket** | **string** |  | 
-**PathPattern** | Pointer to **NullableString** |  | [optional] 
-**Prefix** | Pointer to **NullableString** |  | [optional] 
-**Region** | Pointer to **NullableString** |  | [optional] 
+**ListId** | **int32** |  | [optional]
+**Type** | **string** |  | [optional]
+**AudienceId** | **string** |  | [optional]
+**ConnectionId** | **string** |  | [optional]
+**FieldMapping** | Pointer to **interface{}** |  | [optional]
+**Provider** | **string** |  | [optional]
+**AcceptedFormat** | **string** |  | [optional]
+**TokenId** | **string** |  | [optional]
+**Bucket** | **string** |  | [optional]
+**PathPattern** | Pointer to **NullableString** |  | [optional]
+**Prefix** | Pointer to **NullableString** |  | [optional]
+**Region** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 
 ### NewPipelineSource
 
-`func NewPipelineSource(listId int32, type_ string, audienceId string, connectionId string, provider string, acceptedFormat string, tokenId string, bucket string, ) *PipelineSource`
+`func NewPipelineSource(listId int32, type_ string, audienceId string, connectionId string, provider string, acceptedFormat string, tokenId string, bucket string) *PipelineSource`
 
 NewPipelineSource instantiates a new PipelineSource object
 This constructor will assign default values to properties that have it defined,

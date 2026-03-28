@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Error** | Pointer to **NullableString** |  | [optional] 
-**Id** | **int64** |  | 
-**Result** | Pointer to [**NullableCheckEmailOutput**](CheckEmailOutput.md) |  | [optional] 
-**RetryCount** | **int32** |  | 
-**TaskState** | **string** |  | 
+**Error** | Pointer to **NullableString** |  | [optional]
+**Id** | **int64** |  | [required]
+**Result** | Pointer to [**NullableCheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
+**RetryCount** | **int32** |  | [required]
+**TaskState** | **string** |  | [required]
 
 ## Methods
 
 ### NewJobTaskResult
 
-`func NewJobTaskResult(id int64, retryCount int32, taskState string, ) *JobTaskResult`
+`func NewJobTaskResult(id int64, retryCount int32, taskState string) *JobTaskResult`
 
 NewJobTaskResult instantiates a new JobTaskResult object
 This constructor will assign default values to properties that have it defined,

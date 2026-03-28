@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**OnEachEmail** | Pointer to [**Webhook**](Webhook.md) |  | [optional] 
+**OnEachEmail** | Pointer to [**Webhook**](Webhook.md) |  | [optional]
 
 ## Methods
 

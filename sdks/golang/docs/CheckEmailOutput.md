@@ -4,20 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional] 
-**Input** | **string** | The email address that was verified. | 
-**IsReachable** | [**Reachable**](Reachable.md) |  | 
-**Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | 
-**Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | 
-**Score** | [**EmailScore**](EmailScore.md) |  | 
-**Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | 
-**Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | 
+**Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional]
+**Input** | **string** | The email address that was verified. | [required]
+**IsReachable** | [**Reachable**](Reachable.md) |  | [required]
+**Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
+**Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [required]
+**Score** | [**EmailScore**](EmailScore.md) |  | [required]
+**Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [required]
+**Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [required]
 
 ## Methods
 
 ### NewCheckEmailOutput
 
-`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
+`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails) *CheckEmailOutput`
 
 NewCheckEmailOutput instantiates a new CheckEmailOutput object
 This constructor will assign default values to properties that have it defined,

@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AcceptedFormat** | **string** |  | 
-**TokenId** | **string** |  | 
-**Type** | **string** |  | 
+**AcceptedFormat** | **string** |  | [required]
+**TokenId** | **string** |  | [required]
+**Type** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineSourceOneOf2
 
-`func NewPipelineSourceOneOf2(acceptedFormat string, tokenId string, type_ string, ) *PipelineSourceOneOf2`
+`func NewPipelineSourceOneOf2(acceptedFormat string, tokenId string, type_ string) *PipelineSourceOneOf2`
 
 NewPipelineSourceOneOf2 instantiates a new PipelineSourceOneOf2 object
 This constructor will assign default values to properties that have it defined,

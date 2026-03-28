@@ -355,7 +355,6 @@ func (o *ReverificationStatusResponse) UnmarshalJSON(data []byte) (err error) {
 	varReverificationStatusResponse := _ReverificationStatusResponse{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varReverificationStatusResponse)
 
 	if err != nil {

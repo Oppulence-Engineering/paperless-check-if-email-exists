@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Listed** | **bool** |  | 
-**LookupTimeMs** | **int64** |  | 
-**Provider** | **string** |  | 
+**Listed** | **bool** |  | [required]
+**LookupTimeMs** | **int64** |  | [required]
+**Provider** | **string** |  | [required]
 
 ## Methods
 
 ### NewBlacklistResult
 
-`func NewBlacklistResult(listed bool, lookupTimeMs int64, provider string, ) *BlacklistResult`
+`func NewBlacklistResult(listed bool, lookupTimeMs int64, provider string) *BlacklistResult`
 
 NewBlacklistResult instantiates a new BlacklistResult object
 This constructor will assign default values to properties that have it defined,

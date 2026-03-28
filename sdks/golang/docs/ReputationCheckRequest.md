@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Domain** | **string** |  | 
-**ForceRefresh** | Pointer to **bool** |  | [optional] [default to false]
+**Domain** | **string** |  | [required]
+**ForceRefresh** | Pointer to **bool** |  | [optional]
 
 ## Methods
 
 ### NewReputationCheckRequest
 
-`func NewReputationCheckRequest(domain string, ) *ReputationCheckRequest`
+`func NewReputationCheckRequest(domain string) *ReputationCheckRequest`
 
 NewReputationCheckRequest instantiates a new ReputationCheckRequest object
 This constructor will assign default values to properties that have it defined,

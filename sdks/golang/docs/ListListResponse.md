@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Lists** | [**[]ListItem**](ListItem.md) |  | 
-**Total** | **int64** |  | 
+**Lists** | [**[]ListItem**](ListItem.md) |  | [required]
+**Total** | **int64** |  | [required]
 
 ## Methods
 
 ### NewListListResponse
 
-`func NewListListResponse(lists []ListItem, total int64, ) *ListListResponse`
+`func NewListListResponse(lists []ListItem, total int64) *ListListResponse`
 
 NewListListResponse instantiates a new ListListResponse object
 This constructor will assign default values to properties that have it defined,
@@ -34,7 +34,7 @@ GetLists returns the Lists field if non-nil, zero value otherwise.
 
 ### GetListsOk
 
-`func (o *ListListResponse) GetListsOk() (*[]ListItem, bool)`
+`func (o *ListListResponse) GetListsOk() ([]ListItem, bool)`
 
 GetListsOk returns a tuple with the Lists field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

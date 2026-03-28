@@ -6,9 +6,9 @@ Validation of the email address syntax.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**domain** | **string** | The domain part of the email address. | [default to undefined]
-**is_valid_syntax** | **boolean** | Indicates if the email address syntax is valid. | [default to undefined]
-**username** | **string** | The username part of the email address. | [default to undefined]
+**domain** | **string** | The domain part of the email address. | [required]
+**is_valid_syntax** | **boolean** | Indicates if the email address syntax is valid. | [required]
+**username** | **string** | The username part of the email address. | [required]
 
 ## Example
 
@@ -16,9 +16,9 @@ Name | Type | Description | Notes
 import { SyntaxDetails } from '@oppulence/reacher-sdk';
 
 const instance: SyntaxDetails = {
-    domain,
-    is_valid_syntax,
-    username,
+    domain: 'example',
+    is_valid_syntax: true,
+    username: 'example',
 };
 ```
 

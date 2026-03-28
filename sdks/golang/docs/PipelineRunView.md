@@ -4,35 +4,35 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**BilledEmails** | **int32** |  | 
-**CompletedAt** | Pointer to **NullableTime** |  | [optional] 
-**CreatedAt** | **time.Time** |  | 
-**DeliveryAttempts** | **int32** |  | 
-**DeliveryError** | Pointer to **NullableString** |  | [optional] 
-**DeliveryStatus** | [**PipelineDeliveryStatus**](PipelineDeliveryStatus.md) |  | 
-**ErrorCode** | Pointer to **NullableString** |  | [optional] 
-**ErrorMessage** | Pointer to **NullableString** |  | [optional] 
-**Id** | **int64** |  | 
-**JobId** | Pointer to **NullableInt32** |  | [optional] 
-**LastDeliveryAttemptAt** | Pointer to **NullableTime** |  | [optional] 
-**ListId** | Pointer to **NullableInt32** |  | [optional] 
-**NextDeliveryAttemptAt** | Pointer to **NullableTime** |  | [optional] 
-**PipelineId** | **int64** |  | 
-**ResultLocation** | Pointer to **interface{}** |  | [optional] 
-**ScheduledFor** | Pointer to **NullableTime** |  | [optional] 
-**SourceSnapshot** | **interface{}** |  | 
-**StartedAt** | Pointer to **NullableTime** |  | [optional] 
-**Stats** | **interface{}** |  | 
-**Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | 
-**TenantId** | **string** |  | 
-**TriggerType** | **string** |  | 
-**UpdatedAt** | **time.Time** |  | 
+**BilledEmails** | **int32** |  | [required]
+**CompletedAt** | Pointer to **NullableTime** |  | [optional]
+**CreatedAt** | **time.Time** |  | [required]
+**DeliveryAttempts** | **int32** |  | [required]
+**DeliveryError** | Pointer to **NullableString** |  | [optional]
+**DeliveryStatus** | [**PipelineDeliveryStatus**](PipelineDeliveryStatus.md) |  | [required]
+**ErrorCode** | Pointer to **NullableString** |  | [optional]
+**ErrorMessage** | Pointer to **NullableString** |  | [optional]
+**Id** | **int64** |  | [required]
+**JobId** | Pointer to **NullableInt32** |  | [optional]
+**LastDeliveryAttemptAt** | Pointer to **NullableTime** |  | [optional]
+**ListId** | Pointer to **NullableInt32** |  | [optional]
+**NextDeliveryAttemptAt** | Pointer to **NullableTime** |  | [optional]
+**PipelineId** | **int64** |  | [required]
+**ResultLocation** | Pointer to **interface{}** |  | [optional]
+**ScheduledFor** | Pointer to **NullableTime** |  | [optional]
+**SourceSnapshot** | **interface{}** |  | [required]
+**StartedAt** | Pointer to **NullableTime** |  | [optional]
+**Stats** | **interface{}** |  | [required]
+**Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
+**TenantId** | **string** |  | [required]
+**TriggerType** | **string** |  | [required]
+**UpdatedAt** | **time.Time** |  | [required]
 
 ## Methods
 
 ### NewPipelineRunView
 
-`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot interface{}, stats interface{}, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time, ) *PipelineRunView`
+`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot interface{}, stats interface{}, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView`
 
 NewPipelineRunView instantiates a new PipelineRunView object
 This constructor will assign default values to properties that have it defined,

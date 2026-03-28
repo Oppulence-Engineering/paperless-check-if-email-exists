@@ -472,7 +472,6 @@ func (o *ScoringSignals) UnmarshalJSON(data []byte) (err error) {
 	varScoringSignals := _ScoringSignals{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varScoringSignals)
 
 	if err != nil {

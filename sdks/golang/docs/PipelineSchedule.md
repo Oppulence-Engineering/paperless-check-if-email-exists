@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Cron** | **string** |  | 
-**Timezone** | **string** |  | 
+**Cron** | **string** |  | [required]
+**Timezone** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineSchedule
 
-`func NewPipelineSchedule(cron string, timezone string, ) *PipelineSchedule`
+`func NewPipelineSchedule(cron string, timezone string) *PipelineSchedule`
 
 NewPipelineSchedule instantiates a new PipelineSchedule object
 This constructor will assign default values to properties that have it defined,

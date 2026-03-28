@@ -220,7 +220,6 @@ func (o *ApprovalCategoryBreakdown) UnmarshalJSON(data []byte) (err error) {
 	varApprovalCategoryBreakdown := _ApprovalCategoryBreakdown{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varApprovalCategoryBreakdown)
 
 	if err != nil {

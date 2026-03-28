@@ -4,18 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | **time.Time** |  | 
-**Email** | **string** |  | 
-**Id** | **int32** |  | 
-**Notes** | Pointer to **NullableString** |  | [optional] 
-**Reason** | [**SuppressionReason**](SuppressionReason.md) |  | 
-**Source** | Pointer to **NullableString** |  | [optional] 
+**CreatedAt** | **time.Time** |  | [required]
+**Email** | **string** |  | [required]
+**Id** | **int32** |  | [required]
+**Notes** | Pointer to **NullableString** |  | [optional]
+**Reason** | [**SuppressionReason**](SuppressionReason.md) |  | [required]
+**Source** | Pointer to **NullableString** |  | [optional]
 
 ## Methods
 
 ### NewSuppressionEntry
 
-`func NewSuppressionEntry(createdAt time.Time, email string, id int32, reason SuppressionReason, ) *SuppressionEntry`
+`func NewSuppressionEntry(createdAt time.Time, email string, id int32, reason SuppressionReason) *SuppressionEntry`
 
 NewSuppressionEntry instantiates a new SuppressionEntry object
 This constructor will assign default values to properties that have it defined,

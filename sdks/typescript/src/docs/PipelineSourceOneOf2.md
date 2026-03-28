@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**accepted_format** | **string** |  | [default to undefined]
-**token_id** | **string** |  | [default to undefined]
-**type** | **string** |  | [default to undefined]
+**accepted_format** | **string** |  | [required]
+**token_id** | **string** |  | [required]
+**type** | **string** |  | [required]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { PipelineSourceOneOf2 } from '@oppulence/reacher-sdk';
 
 const instance: PipelineSourceOneOf2 = {
-    accepted_format,
-    token_id,
-    type,
+    accepted_format: 'csv',
+    token_id: 'tok_123',
+    type: 'push',
 };
 ```
 

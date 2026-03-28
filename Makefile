@@ -6,7 +6,8 @@ DOCKER_COMPOSE ?= docker-compose
 COMPOSE_FILE := $(CURDIR)/rabbitmq/docker-compose.yaml
 TEST_COMPOSE_FILE := $(CURDIR)/docker-compose.yml
 TEST_EMAIL_SCRIPT := ./scripts/test_email.go
-TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:25432/reacher_test
+TEST_DATABASE_NAME ?= reacher_test
+TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:25432/$(TEST_DATABASE_NAME)
 TEST_AMQP_URL ?= amqp://guest:guest@127.0.0.1:35672
 
 ###############################################################################
@@ -41,8 +42,8 @@ deploy-and-test:
 test-services-up:
 	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) up -d postgres rabbitmq
 	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres sh -lc "until pg_isready -U postgres -d postgres >/dev/null 2>&1; do sleep 1; done"
-	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'reacher_test'" | grep -q 1 || \
-		$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -c "CREATE DATABASE reacher_test"
+	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$(TEST_DATABASE_NAME)'" | grep -q 1 || \
+		$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -c "CREATE DATABASE $(TEST_DATABASE_NAME)"
 
 .PHONY: test-services-down
 test-services-down:
@@ -118,8 +119,12 @@ sdk-generate-golang: sdk-install-generator
 	rm -rf $(SDK_DIR)/golang/test
 	cd $(SDK_DIR)/golang && go mod tidy
 
+.PHONY: sdk-postprocess
+sdk-postprocess:
+	python3 ./scripts/postprocess_generated_sdks.py
+
 .PHONY: sdk-generate-all
-sdk-generate-all: sdk-generate-typescript sdk-generate-golang
+sdk-generate-all: sdk-generate-typescript sdk-generate-golang sdk-postprocess
 	@echo "SDKs generated successfully!"
 
 .PHONY: sdk-build-typescript

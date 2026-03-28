@@ -14,6 +14,7 @@ use reacher_backend::pipelines::{
 use serial_test::serial;
 use sqlx::Row;
 use std::sync::Arc;
+use tokio::time::{sleep, Duration};
 use warp::http::StatusCode;
 use warp::test::request;
 
@@ -76,6 +77,69 @@ async fn insert_source_list_with_data(
 	.fetch_one(pool)
 	.await
 	.unwrap()
+}
+
+async fn wait_for_usage_events(pool: &sqlx::PgPool, pipeline_id: i64, expected: i64) -> i64 {
+	for _ in 0..40 {
+		let usage_count: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
+				.bind(pipeline_id)
+				.fetch_one(pool)
+				.await
+				.unwrap();
+		if usage_count >= expected {
+			return usage_count;
+		}
+		sleep(Duration::from_millis(50)).await;
+	}
+
+	sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
+		.bind(pipeline_id)
+		.fetch_one(pool)
+		.await
+		.unwrap()
+}
+
+async fn wait_for_run_details(
+	pool: &sqlx::PgPool,
+	run_id: i64,
+) -> (
+	String,
+	Option<i32>,
+	Option<i32>,
+	Option<chrono::DateTime<chrono::Utc>>,
+) {
+	for _ in 0..40 {
+		let row = sqlx::query(
+			"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
+		)
+		.bind(run_id)
+		.fetch_one(pool)
+		.await
+		.unwrap();
+		let status: String = row.get("status");
+		let job_id: Option<i32> = row.get("job_id");
+		let list_id: Option<i32> = row.get("list_id");
+		let started_at: Option<chrono::DateTime<chrono::Utc>> = row.get("started_at");
+		if job_id.is_some() && list_id.is_some() && started_at.is_some() {
+			return (status, job_id, list_id, started_at);
+		}
+		sleep(Duration::from_millis(50)).await;
+	}
+
+	let row = sqlx::query(
+		"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(run_id)
+	.fetch_one(pool)
+	.await
+	.unwrap();
+	(
+		row.get("status"),
+		row.get("job_id"),
+		row.get("list_id"),
+		row.get("started_at"),
+	)
 }
 
 #[tokio::test]
@@ -253,27 +317,22 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 			.unwrap();
 	assert_eq!(run_count, 1);
 
-	let usage_count: i64 =
-		sqlx::query_scalar("SELECT COUNT(*) FROM v1_usage_events WHERE pipeline_id = $1")
-			.bind(pipeline.id)
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+	let usage_count = wait_for_usage_events(db.pool(), pipeline.id, 1).await;
 	assert_eq!(usage_count, 1);
 
-	let row = sqlx::query(
-		"SELECT job_id, list_id, status::TEXT FROM v1_pipeline_runs WHERE pipeline_id = $1 ORDER BY id DESC LIMIT 1",
+	let run_id: i64 = sqlx::query_scalar(
+		"SELECT id FROM v1_pipeline_runs WHERE pipeline_id = $1 ORDER BY id DESC LIMIT 1",
 	)
 	.bind(pipeline.id)
 	.fetch_one(db.pool())
 	.await
 	.unwrap();
-	let job_id: Option<i32> = row.get("job_id");
-	let run_status: String = row.get("status");
+	let (run_status, job_id, list_id, _started_at) = wait_for_run_details(db.pool(), run_id).await;
 	assert!(job_id.is_some());
+	assert!(list_id.is_some());
 	assert!(matches!(
 		run_status.as_str(),
-		"running" | "completed" | "failed"
+		"running" | "completed" | "failed" | "delivering" | "cancelled"
 	));
 }
 
@@ -323,17 +382,7 @@ async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
 		.await
 		.unwrap();
 
-	let row = sqlx::query(
-		"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
-	)
-	.bind(run_id)
-	.fetch_one(db.pool())
-	.await
-	.unwrap();
-	let status: String = row.get("status");
-	let job_id: Option<i32> = row.get("job_id");
-	let list_id: Option<i32> = row.get("list_id");
-	let started_at: Option<chrono::DateTime<chrono::Utc>> = row.get("started_at");
+	let (status, job_id, list_id, started_at) = wait_for_run_details(db.pool(), run_id).await;
 	assert!(job_id.is_some());
 	assert!(list_id.is_some());
 	assert!(started_at.is_some());
@@ -413,12 +462,9 @@ async fn test_pipeline_recovered_run_executes_from_snapshot_source() {
 		.await
 		.unwrap();
 
-	let created_list_id: i32 =
-		sqlx::query_scalar("SELECT list_id FROM v1_pipeline_runs WHERE id = $1")
-			.bind(run_id)
-			.fetch_one(db.pool())
-			.await
-			.unwrap();
+	let (_status, _job_id, created_list_id, _started_at) =
+		wait_for_run_details(db.pool(), run_id).await;
+	let created_list_id = created_list_id.unwrap();
 
 	let source_list_id: Option<i32> =
 		sqlx::query_scalar("SELECT source_list_id FROM v1_lists WHERE id = $1")

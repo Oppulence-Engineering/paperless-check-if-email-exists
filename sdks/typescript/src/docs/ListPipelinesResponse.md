@@ -5,8 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**pipelines** | [**Array&lt;PipelineView&gt;**](PipelineView.md) |  | [default to undefined]
-**total** | **number** |  | [default to undefined]
+**pipelines** | [**Array&lt;PipelineView&gt;**](PipelineView.md) |  | [required]
+**total** | **number** |  | [required]
 
 ## Example
 
@@ -14,8 +14,8 @@ Name | Type | Description | Notes
 import { ListPipelinesResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListPipelinesResponse = {
-    pipelines,
-    total,
+    pipelines: {} as any,
+    total: 0,
 };
 ```
 

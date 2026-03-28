@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**created_at** | **string** |  | [optional] [default to undefined]
-**domain_age_days** | **number** |  | [optional] [default to undefined]
-**registrar** | **string** |  | [optional] [default to undefined]
+**created_at** | **string** |  | [optional]
+**domain_age_days** | **number** |  | [optional]
+**registrar** | **string** |  | [optional]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { DomainInfo } from '@oppulence/reacher-sdk';
 
 const instance: DomainInfo = {
-    created_at,
-    domain_age_days,
-    registrar,
+    created_at: 'example',
+    domain_age_days: 0,
+    registrar: 'example',
 };
 ```
 

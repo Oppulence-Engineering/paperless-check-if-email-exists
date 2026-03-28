@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Deleted** | **bool** |  | 
+**Deleted** | **bool** |  | [required]
 
 ## Methods
 
 ### NewSuppressionDeleteResponse
 
-`func NewSuppressionDeleteResponse(deleted bool, ) *SuppressionDeleteResponse`
+`func NewSuppressionDeleteResponse(deleted bool) *SuppressionDeleteResponse`
 
 NewSuppressionDeleteResponse instantiates a new SuppressionDeleteResponse object
 This constructor will assign default values to properties that have it defined,

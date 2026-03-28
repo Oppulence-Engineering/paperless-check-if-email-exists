@@ -527,7 +527,6 @@ func (o *PipelineView) UnmarshalJSON(data []byte) (err error) {
 	varPipelineView := _PipelineView{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varPipelineView)
 
 	if err != nil {

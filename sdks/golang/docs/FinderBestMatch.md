@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Confidence** | **string** |  | 
-**Email** | **string** |  | 
-**Pattern** | **string** |  | 
-**Score** | **int32** |  | 
+**Confidence** | **string** |  | [required]
+**Email** | **string** |  | [required]
+**Pattern** | **string** |  | [required]
+**Score** | **int32** |  | [required]
 
 ## Methods
 
 ### NewFinderBestMatch
 
-`func NewFinderBestMatch(confidence string, email string, pattern string, score int32, ) *FinderBestMatch`
+`func NewFinderBestMatch(confidence string, email string, pattern string, score int32) *FinderBestMatch`
 
 NewFinderBestMatch instantiates a new FinderBestMatch object
 This constructor will assign default values to properties that have it defined,

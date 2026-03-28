@@ -164,7 +164,6 @@ func (o *ConfidenceExplanation) UnmarshalJSON(data []byte) (err error) {
 	varConfidenceExplanation := _ConfidenceExplanation{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varConfidenceExplanation)
 
 	if err != nil {

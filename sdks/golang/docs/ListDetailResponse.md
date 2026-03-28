@@ -4,21 +4,21 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**DeduplicatedCount** | Pointer to **NullableInt32** |  | [optional] 
-**EmailColumn** | **string** |  | 
-**Id** | **int32** |  | 
-**JobId** | **int32** |  | 
-**Name** | **string** |  | 
-**Status** | **string** |  | 
-**Summary** | [**ListSummary**](ListSummary.md) |  | 
-**TotalRows** | **int32** |  | 
-**UniqueEmails** | Pointer to **NullableInt32** |  | [optional] 
+**DeduplicatedCount** | Pointer to **NullableInt32** |  | [optional]
+**EmailColumn** | **string** |  | [required]
+**Id** | **int32** |  | [required]
+**JobId** | **int32** |  | [required]
+**Name** | **string** |  | [required]
+**Status** | **string** |  | [required]
+**Summary** | [**ListSummary**](ListSummary.md) |  | [required]
+**TotalRows** | **int32** |  | [required]
+**UniqueEmails** | Pointer to **NullableInt32** |  | [optional]
 
 ## Methods
 
 ### NewListDetailResponse
 
-`func NewListDetailResponse(emailColumn string, id int32, jobId int32, name string, status string, summary ListSummary, totalRows int32, ) *ListDetailResponse`
+`func NewListDetailResponse(emailColumn string, id int32, jobId int32, name string, status string, summary ListSummary, totalRows int32) *ListDetailResponse`
 
 NewListDetailResponse instantiates a new ListDetailResponse object
 This constructor will assign default values to properties that have it defined,

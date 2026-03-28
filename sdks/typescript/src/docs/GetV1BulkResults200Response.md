@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [default to undefined]
+**results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
 
 ## Example
 
@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 import { GetV1BulkResults200Response } from '@oppulence/reacher-sdk';
 
 const instance: GetV1BulkResults200Response = {
-    results,
+    results: {} as any,
 };
 ```
 

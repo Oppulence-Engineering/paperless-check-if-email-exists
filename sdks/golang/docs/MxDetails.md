@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AcceptsMail** | **bool** | Indicates if the mail server accepts emails. | 
-**Records** | **[]string** | List of Fully Qualified Domain Names (FQDN) of the mail server. | 
+**AcceptsMail** | **bool** | Indicates if the mail server accepts emails. | [required]
+**Records** | **[]string** | List of Fully Qualified Domain Names (FQDN) of the mail server. | [required]
 
 ## Methods
 
 ### NewMxDetails
 
-`func NewMxDetails(acceptsMail bool, records []string, ) *MxDetails`
+`func NewMxDetails(acceptsMail bool, records []string) *MxDetails`
 
 NewMxDetails instantiates a new MxDetails object
 This constructor will assign default values to properties that have it defined,
@@ -54,7 +54,7 @@ GetRecords returns the Records field if non-nil, zero value otherwise.
 
 ### GetRecordsOk
 
-`func (o *MxDetails) GetRecordsOk() (*[]string, bool)`
+`func (o *MxDetails) GetRecordsOk() ([]string, bool)`
 
 GetRecordsOk returns a tuple with the Records field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

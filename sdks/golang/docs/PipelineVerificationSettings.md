@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**DeltaMode** | Pointer to **bool** |  | [optional] 
-**FreshnessDays** | Pointer to **NullableInt32** |  | [optional] 
+**DeltaMode** | Pointer to **bool** |  | [optional]
+**FreshnessDays** | Pointer to **NullableInt32** |  | [optional]
 
 ## Methods
 

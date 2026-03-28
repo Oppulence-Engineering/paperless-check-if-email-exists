@@ -2204,10 +2204,7 @@ components:
     CreatePipelineInput:
       example:
         delivery:
-          webhook:
-            headers:
-              key: headers
-            url: url
+          webhook: ""
           max_attempts: 0
           dashboard: true
           retry_backoff_seconds: 6
@@ -2907,10 +2904,7 @@ components:
         pipelines:
         - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           delivery:
-            webhook:
-              headers:
-                key: headers
-              url: url
+            webhook: ""
             max_attempts: 0
             dashboard: true
             retry_backoff_seconds: 6
@@ -2935,10 +2929,7 @@ components:
           status: active
         - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           delivery:
-            webhook:
-              headers:
-                key: headers
-              url: url
+            webhook: ""
             max_attempts: 0
             dashboard: true
             retry_backoff_seconds: 6
@@ -3094,10 +3085,7 @@ components:
       type: object
     PipelineDeliveryConfig:
       example:
-        webhook:
-          headers:
-            key: headers
-          url: url
+        webhook: ""
         max_attempts: 0
         dashboard: true
         retry_backoff_seconds: 6
@@ -3111,7 +3099,9 @@ components:
           format: int32
           type: integer
         webhook:
-          $ref: "#/components/schemas/PipelineDeliveryWebhook"
+          allOf:
+          - $ref: "#/components/schemas/PipelineDeliveryWebhook"
+          nullable: true
       type: object
     PipelineDeliveryStatus:
       enum:
@@ -3122,10 +3112,6 @@ components:
       - failed
       type: string
     PipelineDeliveryWebhook:
-      example:
-        headers:
-          key: headers
-        url: url
       properties:
         headers:
           additionalProperties:
@@ -3305,10 +3291,7 @@ components:
       example:
         tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         delivery:
-          webhook:
-            headers:
-              key: headers
-            url: url
+          webhook: ""
           max_attempts: 0
           dashboard: true
           retry_backoff_seconds: 6
@@ -3806,43 +3789,41 @@ components:
       type: object
     UpdatePipelineInput:
       example:
-        delivery:
-          webhook:
-            headers:
-              key: headers
-            url: url
-          max_attempts: 0
-          dashboard: true
-          retry_backoff_seconds: 6
-        schedule:
-          cron: cron
-          timezone: timezone
+        delivery: ""
+        schedule: ""
         name: name
-        source:
-          list_id: 2
-          type: list_snapshot
-        verification:
-          freshness_days: 7
-          delta_mode: true
-        policy:
-          missed_run_window_hours: 5
-        status: active
+        source: ""
+        verification: ""
+        policy: ""
+        status: ""
       properties:
         delivery:
-          $ref: "#/components/schemas/PipelineDeliveryConfig"
+          allOf:
+          - $ref: "#/components/schemas/PipelineDeliveryConfig"
+          nullable: true
         name:
           nullable: true
           type: string
         policy:
-          $ref: "#/components/schemas/PipelinePolicyConfig"
+          allOf:
+          - $ref: "#/components/schemas/PipelinePolicyConfig"
+          nullable: true
         schedule:
-          $ref: "#/components/schemas/PipelineSchedule"
+          allOf:
+          - $ref: "#/components/schemas/PipelineSchedule"
+          nullable: true
         source:
-          $ref: "#/components/schemas/PipelineSource"
+          allOf:
+          - $ref: "#/components/schemas/PipelineSource"
+          nullable: true
         status:
-          $ref: "#/components/schemas/PipelineStatus"
+          allOf:
+          - $ref: "#/components/schemas/PipelineStatus"
+          nullable: true
         verification:
-          $ref: "#/components/schemas/PipelineVerificationSettings"
+          allOf:
+          - $ref: "#/components/schemas/PipelineVerificationSettings"
+          nullable: true
       type: object
     VerifMethod:
       description: The method used for email verification.

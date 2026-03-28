@@ -4,17 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AudienceId** | **string** |  | 
-**ConnectionId** | **string** |  | 
-**FieldMapping** | Pointer to **interface{}** |  | [optional] 
-**Provider** | **string** |  | 
-**Type** | **string** |  | 
+**AudienceId** | **string** |  | [required]
+**ConnectionId** | **string** |  | [required]
+**FieldMapping** | Pointer to **interface{}** |  | [optional]
+**Provider** | **string** |  | [required]
+**Type** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineSourceOneOf1
 
-`func NewPipelineSourceOneOf1(audienceId string, connectionId string, provider string, type_ string, ) *PipelineSourceOneOf1`
+`func NewPipelineSourceOneOf1(audienceId string, connectionId string, provider string, type_ string) *PipelineSourceOneOf1`
 
 NewPipelineSourceOneOf1 instantiates a new PipelineSourceOneOf1 object
 This constructor will assign default values to properties that have it defined,

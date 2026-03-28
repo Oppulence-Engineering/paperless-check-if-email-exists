@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Headers** | Pointer to **map[string]string** |  | [optional] 
-**Url** | **string** |  | 
+**Headers** | Pointer to **map[string]string** |  | [optional]
+**Url** | **string** |  | [required]
 
 ## Methods
 
 ### NewPipelineDeliveryWebhook
 
-`func NewPipelineDeliveryWebhook(url string, ) *PipelineDeliveryWebhook`
+`func NewPipelineDeliveryWebhook(url string) *PipelineDeliveryWebhook`
 
 NewPipelineDeliveryWebhook instantiates a new PipelineDeliveryWebhook object
 This constructor will assign default values to properties that have it defined,

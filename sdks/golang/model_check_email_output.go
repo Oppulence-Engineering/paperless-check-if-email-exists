@@ -313,7 +313,6 @@ func (o *CheckEmailOutput) UnmarshalJSON(data []byte) (err error) {
 	varCheckEmailOutput := _CheckEmailOutput{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varCheckEmailOutput)
 
 	if err != nil {

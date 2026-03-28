@@ -236,7 +236,6 @@ func (o *AddSuppressionsRequest) UnmarshalJSON(data []byte) (err error) {
 	varAddSuppressionsRequest := _AddSuppressionsRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varAddSuppressionsRequest)
 
 	if err != nil {

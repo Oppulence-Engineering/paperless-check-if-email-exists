@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AcceptsMail** | **bool** | Indicates if the mail server accepts emails. | 
-**Records** | **[]string** | List of Fully Qualified Domain Names (FQDN) of the mail server. | 
-**Message** | **string** | A human-readable description of the error. | 
-**Type** | **string** | The type of error. | 
+**AcceptsMail** | **bool** | Indicates if the mail server accepts emails. | [optional]
+**Records** | **[]string** | List of Fully Qualified Domain Names (FQDN) of the mail server. | [optional]
+**Message** | **string** | A human-readable description of the error. | [optional]
+**Type** | **string** | The type of error. | [optional]
 
 ## Methods
 
 ### NewCheckEmailOutputMx
 
-`func NewCheckEmailOutputMx(acceptsMail bool, records []string, message string, type_ string, ) *CheckEmailOutputMx`
+`func NewCheckEmailOutputMx(acceptsMail bool, records []string, message string, type_ string) *CheckEmailOutputMx`
 
 NewCheckEmailOutputMx instantiates a new CheckEmailOutputMx object
 This constructor will assign default values to properties that have it defined,
@@ -56,7 +56,7 @@ GetRecords returns the Records field if non-nil, zero value otherwise.
 
 ### GetRecordsOk
 
-`func (o *CheckEmailOutputMx) GetRecordsOk() (*[]string, bool)`
+`func (o *CheckEmailOutputMx) GetRecordsOk() ([]string, bool)`
 
 GetRecordsOk returns a tuple with the Records field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

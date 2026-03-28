@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Results** | [**[]CheckEmailOutput**](CheckEmailOutput.md) |  | 
+**Results** | [**[]CheckEmailOutput**](CheckEmailOutput.md) |  | [required]
 
 ## Methods
 
 ### NewBulkJobResultsResponse
 
-`func NewBulkJobResultsResponse(results []CheckEmailOutput, ) *BulkJobResultsResponse`
+`func NewBulkJobResultsResponse(results []CheckEmailOutput) *BulkJobResultsResponse`
 
 NewBulkJobResultsResponse instantiates a new BulkJobResultsResponse object
 This constructor will assign default values to properties that have it defined,
@@ -33,7 +33,7 @@ GetResults returns the Results field if non-nil, zero value otherwise.
 
 ### GetResultsOk
 
-`func (o *BulkJobResultsResponse) GetResultsOk() (*[]CheckEmailOutput, bool)`
+`func (o *BulkJobResultsResponse) GetResultsOk() ([]CheckEmailOutput, bool)`
 
 GetResultsOk returns a tuple with the Results field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.

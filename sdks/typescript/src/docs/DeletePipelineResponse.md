@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**deleted** | **boolean** |  | [default to undefined]
+**deleted** | **boolean** |  | [required]
 
 ## Example
 
@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 import { DeletePipelineResponse } from '@oppulence/reacher-sdk';
 
 const instance: DeletePipelineResponse = {
-    deleted,
+    deleted: true,
 };
 ```
 

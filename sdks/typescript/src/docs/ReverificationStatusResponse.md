@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**batch_size** | **number** |  | [optional] [default to undefined]
-**emails_requeued** | **number** |  | [optional] [default to undefined]
-**enabled** | **boolean** |  | [default to undefined]
-**last_job_id** | **number** |  | [optional] [default to undefined]
-**last_run_at** | **string** |  | [optional] [default to undefined]
-**next_run_at** | **string** |  | [optional] [default to undefined]
-**staleness_days** | **number** |  | [optional] [default to undefined]
+**batch_size** | **number** |  | [optional]
+**emails_requeued** | **number** |  | [optional]
+**enabled** | **boolean** |  | [required]
+**last_job_id** | **number** |  | [optional]
+**last_run_at** | **string** |  | [optional]
+**next_run_at** | **string** |  | [optional]
+**staleness_days** | **number** |  | [optional]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { ReverificationStatusResponse } from '@oppulence/reacher-sdk';
 
 const instance: ReverificationStatusResponse = {
-    batch_size,
-    emails_requeued,
-    enabled,
-    last_job_id,
-    last_run_at,
-    next_run_at,
-    staleness_days,
+    batch_size: 0,
+    emails_requeued: 0,
+    enabled: true,
+    last_job_id: 0,
+    last_run_at: 'example',
+    next_run_at: 'example',
+    staleness_days: 0,
 };
 ```
 

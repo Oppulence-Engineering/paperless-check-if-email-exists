@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**results** | [**Array&lt;CheckEmailOutput&gt;**](CheckEmailOutput.md) |  | [default to undefined]
+**results** | [**Array&lt;CheckEmailOutput&gt;**](CheckEmailOutput.md) |  | [required]
 
 ## Example
 
@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 import { BulkJobResultsResponse } from '@oppulence/reacher-sdk';
 
 const instance: BulkJobResultsResponse = {
-    results,
+    results: {} as any,
 };
 ```
 

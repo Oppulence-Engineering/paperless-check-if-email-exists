@@ -1242,14 +1242,12 @@
             "type": "integer"
           },
           "webhook": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineDeliveryWebhook"
               }
-            ]
+            ],
+            "nullable": true
           }
         },
         "type": "object"
@@ -2053,68 +2051,56 @@
       "UpdatePipelineInput": {
         "properties": {
           "delivery": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineDeliveryConfig"
               }
-            ]
+            ],
+            "nullable": true
           },
           "name": {
             "nullable": true,
             "type": "string"
           },
           "policy": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelinePolicyConfig"
               }
-            ]
+            ],
+            "nullable": true
           },
           "schedule": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineSchedule"
               }
-            ]
+            ],
+            "nullable": true
           },
           "source": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineSource"
               }
-            ]
+            ],
+            "nullable": true
           },
           "status": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineStatus"
               }
-            ]
+            ],
+            "nullable": true
           },
           "verification": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
+            "allOf": [
               {
                 "$ref": "#/components/schemas/PipelineVerificationSettings"
               }
-            ]
+            ],
+            "nullable": true
           }
         },
         "type": "object"

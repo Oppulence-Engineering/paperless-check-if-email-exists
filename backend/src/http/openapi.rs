@@ -139,6 +139,23 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 fn normalize_nullable_types(value: &mut Value) {
 	match value {
 		Value::Object(map) => {
+			if let Some(Value::Array(one_of)) = map.get("oneOf") {
+				let null_index = one_of.iter().position(|entry| {
+					entry.as_object().is_some_and(|obj| {
+						obj.get("type") == Some(&Value::String("null".to_string()))
+					})
+				});
+				if one_of.len() == 2 {
+					if let Some(null_index) = null_index {
+						let non_null_index = if null_index == 0 { 1 } else { 0 };
+						let non_null_schema = one_of[non_null_index].clone();
+						map.remove("oneOf");
+						map.insert("nullable".to_string(), Value::Bool(true));
+						map.insert("allOf".to_string(), Value::Array(vec![non_null_schema]));
+					}
+				}
+			}
+
 			if let Some(Value::Array(type_values)) = map.get("type") {
 				let mut non_null_types = type_values
 					.iter()
@@ -173,7 +190,9 @@ fn normalize_nullable_types(value: &mut Value) {
 fn strip_unsupported_schema_keywords(value: &mut Value) {
 	match value {
 		Value::Object(map) => {
-			map.remove("propertyNames");
+			if is_schema_node(map) {
+				map.remove("propertyNames");
+			}
 			for child in map.values_mut() {
 				strip_unsupported_schema_keywords(child);
 			}
@@ -185,6 +204,19 @@ fn strip_unsupported_schema_keywords(value: &mut Value) {
 		}
 		_ => {}
 	}
+}
+
+fn is_schema_node(map: &Map<String, Value>) -> bool {
+	map.contains_key("type")
+		|| map.contains_key("properties")
+		|| map.contains_key("$ref")
+		|| map.contains_key("allOf")
+		|| map.contains_key("oneOf")
+		|| map.contains_key("anyOf")
+		|| map.contains_key("items")
+		|| map.contains_key("additionalProperties")
+		|| map.contains_key("enum")
+		|| map.contains_key("const")
 }
 
 fn components_mut(spec: &mut Value) -> &mut Map<String, Value> {

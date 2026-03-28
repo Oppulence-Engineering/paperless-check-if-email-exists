@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Delivery** | Pointer to [**NullablePipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional] 
-**Name** | Pointer to **NullableString** |  | [optional] 
-**Policy** | Pointer to [**NullablePipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional] 
-**Schedule** | Pointer to [**NullablePipelineSchedule**](PipelineSchedule.md) |  | [optional] 
-**Source** | Pointer to [**NullablePipelineSource**](PipelineSource.md) |  | [optional] 
-**Status** | Pointer to [**NullablePipelineStatus**](PipelineStatus.md) |  | [optional] 
-**Verification** | Pointer to [**NullablePipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional] 
+**Delivery** | Pointer to [**NullablePipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional]
+**Name** | Pointer to **NullableString** |  | [optional]
+**Policy** | Pointer to [**NullablePipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional]
+**Schedule** | Pointer to [**NullablePipelineSchedule**](PipelineSchedule.md) |  | [optional]
+**Source** | Pointer to [**NullablePipelineSource**](PipelineSource.md) |  | [optional]
+**Status** | Pointer to [**NullablePipelineStatus**](PipelineStatus.md) |  | [optional]
+**Verification** | Pointer to [**NullablePipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional]
 
 ## Methods
 

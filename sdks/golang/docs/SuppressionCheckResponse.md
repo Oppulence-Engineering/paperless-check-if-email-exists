@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | Pointer to **NullableTime** |  | [optional] 
-**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional] 
-**Source** | Pointer to **NullableString** |  | [optional] 
-**Suppressed** | **bool** |  | 
+**CreatedAt** | Pointer to **NullableTime** |  | [optional]
+**Reason** | Pointer to [**SuppressionReason**](SuppressionReason.md) |  | [optional]
+**Source** | Pointer to **NullableString** |  | [optional]
+**Suppressed** | **bool** |  | [required]
 
 ## Methods
 
 ### NewSuppressionCheckResponse
 
-`func NewSuppressionCheckResponse(suppressed bool, ) *SuppressionCheckResponse`
+`func NewSuppressionCheckResponse(suppressed bool) *SuppressionCheckResponse`
 
 NewSuppressionCheckResponse instantiates a new SuppressionCheckResponse object
 This constructor will assign default values to properties that have it defined,

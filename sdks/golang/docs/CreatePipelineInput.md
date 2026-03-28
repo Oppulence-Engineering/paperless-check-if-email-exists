@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Delivery** | Pointer to [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional] 
-**Name** | **string** |  | 
-**Policy** | Pointer to [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional] 
-**Schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | 
-**Source** | [**PipelineSource**](PipelineSource.md) |  | 
-**Status** | Pointer to [**PipelineStatus**](PipelineStatus.md) |  | [optional] 
-**Verification** | Pointer to [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional] 
+**Delivery** | Pointer to [**PipelineDeliveryConfig**](PipelineDeliveryConfig.md) |  | [optional]
+**Name** | **string** |  | [required]
+**Policy** | Pointer to [**PipelinePolicyConfig**](PipelinePolicyConfig.md) |  | [optional]
+**Schedule** | [**PipelineSchedule**](PipelineSchedule.md) |  | [required]
+**Source** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**Status** | Pointer to [**PipelineStatus**](PipelineStatus.md) |  | [optional]
+**Verification** | Pointer to [**PipelineVerificationSettings**](PipelineVerificationSettings.md) |  | [optional]
 
 ## Methods
 
 ### NewCreatePipelineInput
 
-`func NewCreatePipelineInput(name string, schedule PipelineSchedule, source PipelineSource, ) *CreatePipelineInput`
+`func NewCreatePipelineInput(name string, schedule PipelineSchedule, source PipelineSource) *CreatePipelineInput`
 
 NewCreatePipelineInput instantiates a new CreatePipelineInput object
 This constructor will assign default values to properties that have it defined,
