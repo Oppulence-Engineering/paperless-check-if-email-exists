@@ -1,6 +1,6 @@
 use crate::config::BounceRiskConfig;
 use crate::http::v1::lists::canonicalize::canonicalize_email;
-use crate::reputation::checker::fetch_domain_info_with_client;
+use crate::reputation::checker::{fetch_domain_info_with_client, validate_public_domain_target};
 use crate::reputation::dns_records::check_dns_records;
 use crate::reputation::models::{DnsRecordResults, DomainInfo};
 use crate::scoring::EmailScore;
@@ -13,7 +13,6 @@ use sqlx::{PgPool, Row};
 use std::cmp::Reverse;
 use std::collections::BTreeSet;
 use std::fs;
-use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
@@ -356,6 +355,20 @@ fn resolve_model_path(config_path: &str) -> PathBuf {
 		return path.to_path_buf();
 	}
 
+	if let Ok(config_dir) = std::env::var("BOUNCE_RISK_CONFIG_DIR") {
+		let runtime_relative = Path::new(&config_dir).join(config_path);
+		if runtime_relative.exists() {
+			return runtime_relative;
+		}
+	}
+
+	if let Ok(current_dir) = std::env::current_dir() {
+		let cwd_relative = current_dir.join(config_path);
+		if cwd_relative.exists() {
+			return cwd_relative;
+		}
+	}
+
 	let manifest_relative = Path::new(env!("CARGO_MANIFEST_DIR")).join(config_path);
 	if manifest_relative.exists() {
 		return manifest_relative;
@@ -514,7 +527,7 @@ async fn collect_domain_signals(
 	if infra_stale || dns_records.is_none() || website_present.is_none() {
 		let website_client = reqwest::Client::builder()
 			.timeout(Duration::from_millis(runtime.website_probe_timeout_ms))
-			.redirect(reqwest::redirect::Policy::limited(5))
+			.redirect(reqwest::redirect::Policy::none())
 			.build()?;
 		let fetched_dns = check_dns_records(&domain).await.ok();
 		let fetched_website = probe_website_presence(&website_client, &domain).await;
@@ -1209,43 +1222,9 @@ fn finalize_website_probe_result(saw_response: bool) -> Option<bool> {
 }
 
 async fn validate_public_website_target(domain: &str) -> Result<(), anyhow::Error> {
-	let mut addresses = tokio::net::lookup_host((domain, 80))
+	validate_public_domain_target(domain)
 		.await
-		.with_context(|| format!("failed to resolve {domain} for website probe"))?;
-	let mut saw_address = false;
-	for address in addresses.by_ref() {
-		saw_address = true;
-		if is_disallowed_probe_ip(address.ip()) {
-			anyhow::bail!("domain {domain} resolved to a private or local address");
-		}
-	}
-
-	if !saw_address {
-		anyhow::bail!("domain {domain} did not resolve to any addresses");
-	}
-
-	Ok(())
-}
-
-fn is_disallowed_probe_ip(ip: IpAddr) -> bool {
-	match ip {
-		IpAddr::V4(ip) => {
-			ip.is_private()
-				|| ip.is_loopback()
-				|| ip.is_link_local()
-				|| ip.is_broadcast()
-				|| ip.is_documentation()
-				|| ip.is_multicast()
-				|| ip.is_unspecified()
-		}
-		IpAddr::V6(ip) => {
-			ip.is_loopback()
-				|| ip.is_unique_local()
-				|| ip.is_unicast_link_local()
-				|| ip.is_multicast()
-				|| ip.is_unspecified()
-		}
-	}
+		.map_err(anyhow::Error::from)
 }
 
 pub fn parse_domain_info_from_rdap_value(value: &serde_json::Value) -> DomainInfo {
@@ -1572,16 +1551,18 @@ mod tests {
 
 	#[test]
 	fn probe_target_rejects_private_and_loopback_ips() {
-		assert!(is_disallowed_probe_ip(IpAddr::V4(
-			"127.0.0.1".parse().unwrap(),
-		)));
-		assert!(is_disallowed_probe_ip(IpAddr::V4(
-			"169.254.169.254".parse().unwrap(),
-		)));
-		assert!(is_disallowed_probe_ip(IpAddr::V6("::1".parse().unwrap())));
-		assert!(!is_disallowed_probe_ip(IpAddr::V4(
-			"8.8.8.8".parse().unwrap(),
-		)));
+		assert!(crate::reputation::checker::is_disallowed_probe_ip(
+			std::net::IpAddr::V4("127.0.0.1".parse().unwrap()),
+		));
+		assert!(crate::reputation::checker::is_disallowed_probe_ip(
+			std::net::IpAddr::V4("169.254.169.254".parse().unwrap()),
+		));
+		assert!(crate::reputation::checker::is_disallowed_probe_ip(
+			std::net::IpAddr::V6("::1".parse().unwrap()),
+		));
+		assert!(!crate::reputation::checker::is_disallowed_probe_ip(
+			std::net::IpAddr::V4("8.8.8.8".parse().unwrap()),
+		));
 	}
 
 	#[test]

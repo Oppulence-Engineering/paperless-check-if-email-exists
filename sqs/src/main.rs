@@ -20,7 +20,7 @@ use reacher_backend::config::{load_config, BackendConfig};
 use reacher_backend::http::CheckEmailRequest;
 use reacher_backend::storage::commercial_license_trial::send_to_reacher;
 use reacher_backend::worker::do_work::{
-	check_email_and_send_result, CheckEmailJobId, CheckEmailTask, TaskWebhook,
+	check_email_and_send_result_with_config, CheckEmailJobId, CheckEmailTask, TaskWebhook,
 };
 use serde::Deserialize;
 use std::process::Command;
@@ -102,7 +102,8 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 	let task = task.into_check_email_task(backend_config.clone());
 	let task = &task;
 
-	let worker_output = check_email_and_send_result(task, None).await;
+	let worker_output =
+		check_email_and_send_result_with_config(task, Some(backend_config.clone()), None).await;
 	match worker_output.as_ref() {
 		Ok(success) => {
 			info!(email = ?success.output.input, is_reachable = ?success.output.is_reachable, "Task completed");

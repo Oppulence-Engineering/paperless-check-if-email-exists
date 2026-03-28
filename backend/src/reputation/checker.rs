@@ -4,6 +4,7 @@ use super::models::{DomainInfo, ReputationCheckResponse};
 use super::scorer::compute_score;
 use crate::http::ReacherResponseError;
 use sqlx::{PgPool, Row};
+use std::net::IpAddr;
 use warp::http::StatusCode;
 
 pub async fn check_domain(
@@ -90,6 +91,7 @@ pub async fn fetch_domain_info_with_client(
 	client: &reqwest::Client,
 	domain: &str,
 ) -> Result<DomainInfo, ReacherResponseError> {
+	validate_public_domain_target(domain).await?;
 	let url = format!("https://rdap.org/domain/{}", domain);
 	let response = client
 		.get(url)
@@ -100,4 +102,56 @@ pub async fn fetch_domain_info_with_client(
 	Ok(crate::bounce_risk::parse_domain_info_from_rdap_value(
 		&value,
 	))
+}
+
+pub async fn validate_public_domain_target(domain: &str) -> Result<(), ReacherResponseError> {
+	let mut addresses = tokio::net::lookup_host((domain, 80))
+		.await
+		.map_err(|error| {
+			ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("failed to resolve domain {domain}: {error}"),
+			)
+		})?;
+
+	let mut saw_address = false;
+	for address in addresses.by_ref() {
+		saw_address = true;
+		if is_disallowed_probe_ip(address.ip()) {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("domain {domain} resolved to a private or local address"),
+			));
+		}
+	}
+
+	if !saw_address {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			format!("domain {domain} did not resolve to any addresses"),
+		));
+	}
+
+	Ok(())
+}
+
+pub(crate) fn is_disallowed_probe_ip(ip: IpAddr) -> bool {
+	match ip {
+		IpAddr::V4(ip) => {
+			ip.is_private()
+				|| ip.is_loopback()
+				|| ip.is_link_local()
+				|| ip.is_broadcast()
+				|| ip.is_documentation()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+		IpAddr::V6(ip) => {
+			ip.is_loopback()
+				|| ip.is_unique_local()
+				|| ip.is_unicast_link_local()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+	}
 }

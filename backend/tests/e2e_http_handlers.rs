@@ -55,6 +55,22 @@ mod tests {
 		Arc::new(config)
 	}
 
+	async fn db_bounce_risk_config(db_url: &str) -> Arc<BackendConfig> {
+		let mut config = BackendConfig::empty();
+		config.header_secret = Some("test".into());
+		config.bounce_risk.enabled = true;
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
+			db_url: db_url.to_string(),
+			extra: None,
+		}));
+		config
+			.connect()
+			.await
+			.expect("Failed to connect bounce-risk db config");
+		Arc::new(config)
+	}
+
 	/// BackendConfig that behaves like worker mode for route gating but does not
 	/// require a live RabbitMQ connection.
 	async fn pseudo_worker_config(db_url: &str) -> Arc<BackendConfig> {
@@ -657,6 +673,95 @@ mod tests {
 		);
 		assert_eq!(metadata.created_by.as_deref(), Some("api"));
 		assert!(metadata.task_db_id.is_none());
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_v1_check_email_sandbox_ignores_tenant_history_for_bounce_risk() {
+		let db = TestDb::start().await;
+		let tenant_with_history =
+			insert_tenant(db.pool(), "sandbox-deterministic-history", Some(100), 0).await;
+		let (api_key_with_history, _) = insert_api_key(db.pool(), tenant_with_history).await;
+		let tenant_without_history =
+			insert_tenant(db.pool(), "sandbox-deterministic-clean", Some(100), 0).await;
+		let (api_key_without_history, _) = insert_api_key(db.pool(), tenant_without_history).await;
+		let config = db_bounce_risk_config(db.db_url()).await;
+		let routes = create_routes(config);
+
+		let history_email = "seed@risky.example.com";
+		sqlx::query(
+			r#"
+			INSERT INTO v1_task_result (
+				payload,
+				task_state,
+				tenant_id,
+				result,
+				score_category,
+				completed_at
+			)
+			VALUES ($1, 'completed'::task_state, $2, $3, 'risky', NOW())
+			"#,
+		)
+		.bind(serde_json::json!({
+			"input": { "to_email": history_email }
+		}))
+		.bind(tenant_with_history)
+		.bind(serde_json::json!({
+			"input": history_email,
+			"score": { "category": "risky" }
+		}))
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+		let response_with_history = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header("Authorization", format!("Bearer {api_key_with_history}"))
+			.json(&serde_json::json!({
+				"to_email": history_email,
+				"sandbox": true
+			}))
+			.reply(&routes)
+			.await;
+
+		let response_without_history = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header("Authorization", format!("Bearer {api_key_without_history}"))
+			.json(&serde_json::json!({
+				"to_email": history_email,
+				"sandbox": true
+			}))
+			.reply(&routes)
+			.await;
+
+		assert_eq!(
+			response_with_history.status(),
+			StatusCode::OK,
+			"{:?}",
+			response_with_history.body()
+		);
+		assert_eq!(
+			response_without_history.status(),
+			StatusCode::OK,
+			"{:?}",
+			response_without_history.body()
+		);
+
+		let body_with_history: serde_json::Value =
+			serde_json::from_slice(response_with_history.body()).unwrap();
+		let body_without_history: serde_json::Value =
+			serde_json::from_slice(response_without_history.body()).unwrap();
+
+		assert_eq!(
+			body_with_history["bounce_risk"],
+			body_without_history["bounce_risk"]
+		);
+		assert_eq!(
+			body_with_history["score"]["verified_at"],
+			"2025-01-01T00:00:00+00:00"
+		);
 	}
 
 	// ── v0/bulk endpoints ──────────────────────────────

@@ -77,15 +77,10 @@ pub async fn handle_check_email(
 			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
 			.single()
 			.expect("static sandbox timestamp");
-		let prepared = prepare_verification_response(
-			config.as_ref(),
-			&mock_result,
-			tenant_ctx.tenant_id,
-			completed_at,
-			false,
-		)
-		.await
-		.map_err(ReacherResponseError::from)?;
+		let prepared =
+			prepare_verification_response(config.as_ref(), &mock_result, None, completed_at, false)
+				.await
+				.map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
 			body: prepared.body,
