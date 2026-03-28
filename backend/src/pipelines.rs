@@ -366,6 +366,28 @@ pub async fn run_pipeline_scheduler_cycle(
 		return Ok(());
 	}
 
+	let recovered =
+		recover_stranded_queued_pipeline_runs(pg_pool, config.pipelines.max_due_per_tick).await?;
+	if !recovered.is_empty() {
+		info!(
+			target: LOG_TARGET,
+			count = recovered.len(),
+			"Recovered stranded queued pipeline runs"
+		);
+
+		for run in recovered {
+			if let Err(err) = execute_pipeline_run(Arc::clone(&config), pg_pool, run.run_id).await {
+				warn!(
+					target: LOG_TARGET,
+					pipeline_id = run.pipeline_id,
+					run_id = run.run_id,
+					error = ?err,
+					"Failed to execute recovered pipeline run"
+				);
+			}
+		}
+	}
+
 	let claimed = claim_due_pipeline_runs(&config.pipelines, pg_pool).await?;
 	if !claimed.is_empty() {
 		info!(target: LOG_TARGET, count = claimed.len(), "Claimed due pipeline runs");
@@ -537,6 +559,43 @@ async fn claim_due_pipeline_runs(
 
 	tx.commit().await?;
 	Ok(claimed)
+}
+
+async fn recover_stranded_queued_pipeline_runs(
+	pg_pool: &PgPool,
+	limit: i32,
+) -> Result<Vec<ClaimedRun>> {
+	let rows = sqlx::query(
+		r#"
+		WITH candidates AS (
+			SELECT id, pipeline_id
+			FROM v1_pipeline_runs
+			WHERE status = 'queued'::pipeline_run_status
+			  AND started_at IS NULL
+			  AND updated_at < NOW() - INTERVAL '5 minutes'
+			ORDER BY created_at ASC
+			LIMIT $1
+			FOR UPDATE SKIP LOCKED
+		)
+		UPDATE v1_pipeline_runs pr
+		SET updated_at = NOW()
+		FROM candidates c
+		WHERE pr.id = c.id
+		RETURNING pr.id, c.pipeline_id
+		"#,
+	)
+	.bind(limit)
+	.fetch_all(pg_pool)
+	.await?;
+
+	Ok(rows
+		.into_iter()
+		.map(|row| ClaimedRun {
+			run_id: row.get("id"),
+			pipeline_id: row.get("pipeline_id"),
+			skipped: false,
+		})
+		.collect())
 }
 
 /// Recovers deliveries stranded in 'pending' status (e.g., after a process crash).
@@ -1009,6 +1068,22 @@ pub async fn get_pipeline_run(
 		return Ok(None);
 	}
 
+	let owned_run_exists: Option<i64> = sqlx::query_scalar(
+		r#"
+		SELECT id
+		FROM v1_pipeline_runs
+		WHERE id = $1 AND pipeline_id = $2 AND tenant_id = $3
+		"#,
+	)
+	.bind(run_id)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.fetch_optional(pg_pool)
+	.await?;
+	if owned_run_exists.is_none() {
+		return Ok(None);
+	}
+
 	maybe_finalize_pipeline_run(config.as_ref(), pg_pool, run_id).await?;
 
 	let row = sqlx::query(
@@ -1225,9 +1300,8 @@ async fn execute_pipeline_run_inner(
 
 	let pipeline_id: i64 = run.get("pipeline_id");
 	let tenant_id: Uuid = run.get("tenant_id");
-	let source_config: Value = run.get("source_config");
-	let source: PipelineSource =
-		serde_json::from_value(source_config.clone()).context("invalid pipeline source config")?;
+	let source_snapshot: Value = run.get("source_snapshot");
+	let source = parse_pipeline_source_snapshot(&source_snapshot)?;
 	let verification: PipelineVerificationSettings =
 		serde_json::from_value(run.get::<Value, _>("verification_settings")).unwrap_or_default();
 	let delivery: PipelineDeliveryConfig =
@@ -2690,6 +2764,14 @@ fn blank_email_result() -> Value {
 			"reason_codes": ["invalid_syntax"]
 		}
 	})
+}
+
+fn parse_pipeline_source_snapshot(source_snapshot: &Value) -> Result<PipelineSource> {
+	let payload = source_snapshot
+		.get("source")
+		.cloned()
+		.unwrap_or_else(|| source_snapshot.clone());
+	serde_json::from_value(payload).context("invalid pipeline source snapshot")
 }
 
 #[cfg(test)]

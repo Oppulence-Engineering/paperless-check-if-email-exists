@@ -44,11 +44,23 @@ async fn worker_pipeline_config(enable_scheduler: bool) -> Arc<BackendConfig> {
 }
 
 async fn insert_source_list(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> i32 {
-	let original_data = serde_json::json!({
-		"0": { "email": "Alice@example.com", "name": "Alice" },
-		"1": { "email": "alice@example.com", "name": "Alice Dup" },
-		"2": { "email": "", "name": "Blank" }
-	});
+	insert_source_list_with_data(
+		pool,
+		tenant_id,
+		serde_json::json!({
+			"0": { "email": "Alice@example.com", "name": "Alice" },
+			"1": { "email": "alice@example.com", "name": "Alice Dup" },
+			"2": { "email": "", "name": "Blank" }
+		}),
+	)
+	.await
+}
+
+async fn insert_source_list_with_data(
+	pool: &sqlx::PgPool,
+	tenant_id: uuid::Uuid,
+	original_data: serde_json::Value,
+) -> i32 {
 	sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_lists (
@@ -263,4 +275,156 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 		run_status.as_str(),
 		"running" | "completed" | "failed"
 	));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_scheduler_recovers_stranded_queued_runs() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-recover-queued", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let config = worker_pipeline_config(true).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Recover Queued".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	let run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at)
+		VALUES ($1, $2, 'schedule', 'queued', $3, '{}'::jsonb, NOW() - INTERVAL '10 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let row = sqlx::query(
+		"SELECT status::TEXT, job_id, list_id, started_at FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(run_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let status: String = row.get("status");
+	let job_id: Option<i32> = row.get("job_id");
+	let list_id: Option<i32> = row.get("list_id");
+	let started_at: Option<chrono::DateTime<chrono::Utc>> = row.get("started_at");
+	assert!(job_id.is_some());
+	assert!(list_id.is_some());
+	assert!(started_at.is_some());
+	assert!(matches!(
+		status.as_str(),
+		"running" | "completed" | "failed" | "cancelled" | "delivering"
+	));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_recovered_run_executes_from_snapshot_source() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-source-snapshot", Some(1000), 0).await;
+	let original_list_id = insert_source_list_with_data(
+		db.pool(),
+		tenant_id,
+		serde_json::json!({
+			"0": { "email": "original@example.com", "name": "Original" }
+		}),
+	)
+	.await;
+	let edited_list_id = insert_source_list_with_data(
+		db.pool(),
+		tenant_id,
+		serde_json::json!({
+			"0": { "email": "edited@example.com", "name": "Edited" }
+		}),
+	)
+	.await;
+	let config = worker_pipeline_config(true).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Snapshot Source".to_string(),
+			source: PipelineSource::ListSnapshot {
+				list_id: original_list_id,
+			},
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	let run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at)
+		VALUES ($1, $2, 'schedule', 'queued', $3, '{}'::jsonb, NOW() - INTERVAL '10 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": original_list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	sqlx::query("UPDATE v1_pipelines SET source_config = $2 WHERE id = $1")
+		.bind(pipeline.id)
+		.bind(serde_json::json!({ "type": "list_snapshot", "list_id": edited_list_id }))
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let created_list_id: i32 =
+		sqlx::query_scalar("SELECT list_id FROM v1_pipeline_runs WHERE id = $1")
+			.bind(run_id)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+
+	let source_list_id: Option<i32> =
+		sqlx::query_scalar("SELECT source_list_id FROM v1_lists WHERE id = $1")
+			.bind(created_list_id)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	assert_eq!(source_list_id, Some(original_list_id));
 }
