@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**TotalSafe** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [optional]
-**TotalInvalid** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [optional]
-**TotalRisky** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [optional]
-**TotalUnknown** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [optional]
+**TotalSafe** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [required]
+**TotalInvalid** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [required]
+**TotalRisky** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [required]
+**TotalUnknown** | **int32** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [required]
 
 ## Methods
 
@@ -110,5 +110,3 @@ SetTotalUnknown sets TotalUnknown field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

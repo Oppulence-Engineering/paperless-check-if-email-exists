@@ -40,7 +40,7 @@ GetCategories returns the Categories field if non-nil, zero value otherwise.
 
 ### GetCategoriesOk
 
-`func (o *V1JobApprovalChecklist200Response) GetCategoriesOk() (*map[string]interface{}, bool)`
+`func (o *V1JobApprovalChecklist200Response) GetCategoriesOk() (map[string]interface{}, bool)`
 
 GetCategoriesOk returns a tuple with the Categories field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -140,7 +140,7 @@ GetRiskFlags returns the RiskFlags field if non-nil, zero value otherwise.
 
 ### GetRiskFlagsOk
 
-`func (o *V1JobApprovalChecklist200Response) GetRiskFlagsOk() (*map[string]interface{}, bool)`
+`func (o *V1JobApprovalChecklist200Response) GetRiskFlagsOk() (map[string]interface{}, bool)`
 
 GetRiskFlagsOk returns a tuple with the RiskFlags field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -234,5 +234,3 @@ HasTotalRecords returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

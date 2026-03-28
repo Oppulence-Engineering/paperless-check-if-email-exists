@@ -58,7 +58,7 @@ HasDmarcPolicy returns a boolean if a field has been set.
 
 ### SetDmarcPolicyNil
 
-`func (o *DnsRecordResults) SetDmarcPolicyNil(b bool)`
+`func (o *DnsRecordResults) SetDmarcPolicyNil()`
 
  SetDmarcPolicyNil sets the value for DmarcPolicy to be an explicit nil
 
@@ -66,6 +66,7 @@ HasDmarcPolicy returns a boolean if a field has been set.
 `func (o *DnsRecordResults) UnsetDmarcPolicy()`
 
 UnsetDmarcPolicy ensures that no value is present for DmarcPolicy, not even an explicit nil
+
 ### GetHasDkim
 
 `func (o *DnsRecordResults) GetHasDkim() bool`
@@ -188,5 +189,3 @@ SetSpfValid sets SpfValid field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

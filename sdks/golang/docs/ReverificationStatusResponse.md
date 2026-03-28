@@ -128,7 +128,7 @@ HasLastJobId returns a boolean if a field has been set.
 
 ### SetLastJobIdNil
 
-`func (o *ReverificationStatusResponse) SetLastJobIdNil(b bool)`
+`func (o *ReverificationStatusResponse) SetLastJobIdNil()`
 
  SetLastJobIdNil sets the value for LastJobId to be an explicit nil
 
@@ -136,6 +136,7 @@ HasLastJobId returns a boolean if a field has been set.
 `func (o *ReverificationStatusResponse) UnsetLastJobId()`
 
 UnsetLastJobId ensures that no value is present for LastJobId, not even an explicit nil
+
 ### GetLastRunAt
 
 `func (o *ReverificationStatusResponse) GetLastRunAt() time.Time`
@@ -163,7 +164,7 @@ HasLastRunAt returns a boolean if a field has been set.
 
 ### SetLastRunAtNil
 
-`func (o *ReverificationStatusResponse) SetLastRunAtNil(b bool)`
+`func (o *ReverificationStatusResponse) SetLastRunAtNil()`
 
  SetLastRunAtNil sets the value for LastRunAt to be an explicit nil
 
@@ -171,6 +172,7 @@ HasLastRunAt returns a boolean if a field has been set.
 `func (o *ReverificationStatusResponse) UnsetLastRunAt()`
 
 UnsetLastRunAt ensures that no value is present for LastRunAt, not even an explicit nil
+
 ### GetNextRunAt
 
 `func (o *ReverificationStatusResponse) GetNextRunAt() time.Time`
@@ -198,7 +200,7 @@ HasNextRunAt returns a boolean if a field has been set.
 
 ### SetNextRunAtNil
 
-`func (o *ReverificationStatusResponse) SetNextRunAtNil(b bool)`
+`func (o *ReverificationStatusResponse) SetNextRunAtNil()`
 
  SetNextRunAtNil sets the value for NextRunAt to be an explicit nil
 
@@ -206,6 +208,7 @@ HasNextRunAt returns a boolean if a field has been set.
 `func (o *ReverificationStatusResponse) UnsetNextRunAt()`
 
 UnsetNextRunAt ensures that no value is present for NextRunAt, not even an explicit nil
+
 ### GetStalenessDays
 
 `func (o *ReverificationStatusResponse) GetStalenessDays() int32`
@@ -233,5 +236,3 @@ HasStalenessDays returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

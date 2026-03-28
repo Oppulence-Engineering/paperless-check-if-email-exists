@@ -870,15 +870,11 @@ func (o PipelineRunView) ToMap() (map[string]interface{}, error) {
 	if o.ScheduledFor.IsSet() {
 		toSerialize["scheduled_for"] = o.ScheduledFor.Get()
 	}
-	if o.SourceSnapshot != nil {
-		toSerialize["source_snapshot"] = o.SourceSnapshot
-	}
+	toSerialize["source_snapshot"] = o.SourceSnapshot
 	if o.StartedAt.IsSet() {
 		toSerialize["started_at"] = o.StartedAt.Get()
 	}
-	if o.Stats != nil {
-		toSerialize["stats"] = o.Stats
-	}
+	toSerialize["stats"] = o.Stats
 	toSerialize["status"] = o.Status
 	toSerialize["tenant_id"] = o.TenantId
 	toSerialize["trigger_type"] = o.TriggerType

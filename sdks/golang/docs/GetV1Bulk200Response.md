@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**JobId** | **int32** |  | [optional]
-**CreatedAt** | **time.Time** | The date and time when the bulk verification job was created. | [optional]
+**JobId** | **int32** |  | [required]
+**CreatedAt** | **time.Time** | The date and time when the bulk verification job was created. | [required]
 **FinishedAt** | Pointer to **time.Time** | If the bulk verification job is completed, the date and time when it was finished. | [optional]
-**TotalRecords** | **int32** | The number of emails to verify in the bulk verification job. | [optional]
-**TotalProcessed** | **int32** | The number of emails that have been verified at the time of the query. | [optional]
-**Summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | [optional]
-**JobStatus** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | [optional]
+**TotalRecords** | **int32** | The number of emails to verify in the bulk verification job. | [required]
+**TotalProcessed** | **int32** | The number of emails that have been verified at the time of the query. | [required]
+**Summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | [required]
+**JobStatus** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | [required]
 
 ## Methods
 
@@ -178,5 +178,3 @@ SetJobStatus sets JobStatus field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

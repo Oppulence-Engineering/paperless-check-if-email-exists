@@ -56,7 +56,7 @@ HasError returns a boolean if a field has been set.
 
 ### SetErrorNil
 
-`func (o *JobTaskResult) SetErrorNil(b bool)`
+`func (o *JobTaskResult) SetErrorNil()`
 
  SetErrorNil sets the value for Error to be an explicit nil
 
@@ -64,6 +64,7 @@ HasError returns a boolean if a field has been set.
 `func (o *JobTaskResult) UnsetError()`
 
 UnsetError ensures that no value is present for Error, not even an explicit nil
+
 ### GetId
 
 `func (o *JobTaskResult) GetId() int64`
@@ -111,7 +112,7 @@ HasResult returns a boolean if a field has been set.
 
 ### SetResultNil
 
-`func (o *JobTaskResult) SetResultNil(b bool)`
+`func (o *JobTaskResult) SetResultNil()`
 
  SetResultNil sets the value for Result to be an explicit nil
 
@@ -119,6 +120,7 @@ HasResult returns a boolean if a field has been set.
 `func (o *JobTaskResult) UnsetResult()`
 
 UnsetResult ensures that no value is present for Result, not even an explicit nil
+
 ### GetRetryCount
 
 `func (o *JobTaskResult) GetRetryCount() int32`
@@ -161,5 +163,3 @@ SetTaskState sets TaskState field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

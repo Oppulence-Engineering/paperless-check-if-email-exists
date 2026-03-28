@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**job_id** | **number** |  | [optional]
-**created_at** | **string** | The date and time when the bulk verification job was created. | [optional]
+**job_id** | **number** |  | [required]
+**created_at** | **string** | The date and time when the bulk verification job was created. | [required]
 **finished_at** | **string** | If the bulk verification job is completed, the date and time when it was finished. | [optional]
-**total_records** | **number** | The number of emails to verify in the bulk verification job. | [optional]
-**total_processed** | **number** | The number of emails that have been verified at the time of the query. | [optional]
-**summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | [optional]
-**job_status** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | [optional]
+**total_records** | **number** | The number of emails to verify in the bulk verification job. | [required]
+**total_processed** | **number** | The number of emails that have been verified at the time of the query. | [required]
+**summary** | [**GetV1Bulk200ResponseSummary**](GetV1Bulk200ResponseSummary.md) |  | [required]
+**job_status** | **string** | The status of the job, either \&quot;Running\&quot; or \&quot;Completed\&quot;. | [required]
 
 ## Example
 

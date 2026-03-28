@@ -17,7 +17,7 @@ import { JobResultPageResponse } from '@oppulence/reacher-sdk';
 const instance: JobResultPageResponse = {
     has_more: true,
     next_cursor: 0,
-    results: {} as any,
+    results: [],
 };
 ```
 

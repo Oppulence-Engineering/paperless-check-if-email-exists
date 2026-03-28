@@ -54,7 +54,7 @@ HasEmailColumn returns a boolean if a field has been set.
 
 ### SetEmailColumnNil
 
-`func (o *ListUploadRequest) SetEmailColumnNil(b bool)`
+`func (o *ListUploadRequest) SetEmailColumnNil()`
 
  SetEmailColumnNil sets the value for EmailColumn to be an explicit nil
 
@@ -62,6 +62,7 @@ HasEmailColumn returns a boolean if a field has been set.
 `func (o *ListUploadRequest) UnsetEmailColumn()`
 
 UnsetEmailColumn ensures that no value is present for EmailColumn, not even an explicit nil
+
 ### GetFile
 
 `func (o *ListUploadRequest) GetFile() *os.File`
@@ -109,7 +110,7 @@ HasName returns a boolean if a field has been set.
 
 ### SetNameNil
 
-`func (o *ListUploadRequest) SetNameNil(b bool)`
+`func (o *ListUploadRequest) SetNameNil()`
 
  SetNameNil sets the value for Name to be an explicit nil
 
@@ -119,5 +120,3 @@ HasName returns a boolean if a field has been set.
 UnsetName ensures that no value is present for Name, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

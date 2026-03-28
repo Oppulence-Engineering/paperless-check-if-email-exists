@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { SuppressionListResponse } from '@oppulence/reacher-sdk';
 
 const instance: SuppressionListResponse = {
-    entries: {} as any,
+    entries: [],
     total: 0,
 };
 ```

@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { ListListResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListListResponse = {
-    lists: {} as any,
+    lists: [],
     total: 0,
 };
 ```

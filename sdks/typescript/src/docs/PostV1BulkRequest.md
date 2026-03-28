@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**input** | **Array&lt;string&gt;** | A list of emails to verify. | [optional]
+**input** | **Array&lt;string&gt;** | A list of emails to verify. | [required]
 **webhook** | [**TaskWebhook**](TaskWebhook.md) |  | [optional]
 
 ## Example

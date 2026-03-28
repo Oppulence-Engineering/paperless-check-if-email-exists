@@ -74,7 +74,7 @@ HasNextCursor returns a boolean if a field has been set.
 
 ### SetNextCursorNil
 
-`func (o *JobResultPageResponse) SetNextCursorNil(b bool)`
+`func (o *JobResultPageResponse) SetNextCursorNil()`
 
  SetNextCursorNil sets the value for NextCursor to be an explicit nil
 
@@ -82,6 +82,7 @@ HasNextCursor returns a boolean if a field has been set.
 `func (o *JobResultPageResponse) UnsetNextCursor()`
 
 UnsetNextCursor ensures that no value is present for NextCursor, not even an explicit nil
+
 ### GetResults
 
 `func (o *JobResultPageResponse) GetResults() []JobTaskResult`
@@ -104,5 +105,3 @@ SetResults sets Results field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

@@ -77,7 +77,7 @@ HasPathPattern returns a boolean if a field has been set.
 
 ### SetPathPatternNil
 
-`func (o *PipelineSourceOneOf3) SetPathPatternNil(b bool)`
+`func (o *PipelineSourceOneOf3) SetPathPatternNil()`
 
  SetPathPatternNil sets the value for PathPattern to be an explicit nil
 
@@ -85,6 +85,7 @@ HasPathPattern returns a boolean if a field has been set.
 `func (o *PipelineSourceOneOf3) UnsetPathPattern()`
 
 UnsetPathPattern ensures that no value is present for PathPattern, not even an explicit nil
+
 ### GetPrefix
 
 `func (o *PipelineSourceOneOf3) GetPrefix() string`
@@ -112,7 +113,7 @@ HasPrefix returns a boolean if a field has been set.
 
 ### SetPrefixNil
 
-`func (o *PipelineSourceOneOf3) SetPrefixNil(b bool)`
+`func (o *PipelineSourceOneOf3) SetPrefixNil()`
 
  SetPrefixNil sets the value for Prefix to be an explicit nil
 
@@ -120,6 +121,7 @@ HasPrefix returns a boolean if a field has been set.
 `func (o *PipelineSourceOneOf3) UnsetPrefix()`
 
 UnsetPrefix ensures that no value is present for Prefix, not even an explicit nil
+
 ### GetProvider
 
 `func (o *PipelineSourceOneOf3) GetProvider() string`
@@ -167,7 +169,7 @@ HasRegion returns a boolean if a field has been set.
 
 ### SetRegionNil
 
-`func (o *PipelineSourceOneOf3) SetRegionNil(b bool)`
+`func (o *PipelineSourceOneOf3) SetRegionNil()`
 
  SetRegionNil sets the value for Region to be an explicit nil
 
@@ -175,6 +177,7 @@ HasRegion returns a boolean if a field has been set.
 `func (o *PipelineSourceOneOf3) UnsetRegion()`
 
 UnsetRegion ensures that no value is present for Region, not even an explicit nil
+
 ### GetType
 
 `func (o *PipelineSourceOneOf3) GetType() string`
@@ -197,5 +200,3 @@ SetType sets Type field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

@@ -94,7 +94,7 @@ HasCompletedAt returns a boolean if a field has been set.
 
 ### SetCompletedAtNil
 
-`func (o *PipelineRunView) SetCompletedAtNil(b bool)`
+`func (o *PipelineRunView) SetCompletedAtNil()`
 
  SetCompletedAtNil sets the value for CompletedAt to be an explicit nil
 
@@ -102,6 +102,7 @@ HasCompletedAt returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetCompletedAt()`
 
 UnsetCompletedAt ensures that no value is present for CompletedAt, not even an explicit nil
+
 ### GetCreatedAt
 
 `func (o *PipelineRunView) GetCreatedAt() time.Time`
@@ -169,7 +170,7 @@ HasDeliveryError returns a boolean if a field has been set.
 
 ### SetDeliveryErrorNil
 
-`func (o *PipelineRunView) SetDeliveryErrorNil(b bool)`
+`func (o *PipelineRunView) SetDeliveryErrorNil()`
 
  SetDeliveryErrorNil sets the value for DeliveryError to be an explicit nil
 
@@ -177,6 +178,7 @@ HasDeliveryError returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetDeliveryError()`
 
 UnsetDeliveryError ensures that no value is present for DeliveryError, not even an explicit nil
+
 ### GetDeliveryStatus
 
 `func (o *PipelineRunView) GetDeliveryStatus() PipelineDeliveryStatus`
@@ -224,7 +226,7 @@ HasErrorCode returns a boolean if a field has been set.
 
 ### SetErrorCodeNil
 
-`func (o *PipelineRunView) SetErrorCodeNil(b bool)`
+`func (o *PipelineRunView) SetErrorCodeNil()`
 
  SetErrorCodeNil sets the value for ErrorCode to be an explicit nil
 
@@ -232,6 +234,7 @@ HasErrorCode returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetErrorCode()`
 
 UnsetErrorCode ensures that no value is present for ErrorCode, not even an explicit nil
+
 ### GetErrorMessage
 
 `func (o *PipelineRunView) GetErrorMessage() string`
@@ -259,7 +262,7 @@ HasErrorMessage returns a boolean if a field has been set.
 
 ### SetErrorMessageNil
 
-`func (o *PipelineRunView) SetErrorMessageNil(b bool)`
+`func (o *PipelineRunView) SetErrorMessageNil()`
 
  SetErrorMessageNil sets the value for ErrorMessage to be an explicit nil
 
@@ -267,6 +270,7 @@ HasErrorMessage returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetErrorMessage()`
 
 UnsetErrorMessage ensures that no value is present for ErrorMessage, not even an explicit nil
+
 ### GetId
 
 `func (o *PipelineRunView) GetId() int64`
@@ -314,7 +318,7 @@ HasJobId returns a boolean if a field has been set.
 
 ### SetJobIdNil
 
-`func (o *PipelineRunView) SetJobIdNil(b bool)`
+`func (o *PipelineRunView) SetJobIdNil()`
 
  SetJobIdNil sets the value for JobId to be an explicit nil
 
@@ -322,6 +326,7 @@ HasJobId returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetJobId()`
 
 UnsetJobId ensures that no value is present for JobId, not even an explicit nil
+
 ### GetLastDeliveryAttemptAt
 
 `func (o *PipelineRunView) GetLastDeliveryAttemptAt() time.Time`
@@ -349,7 +354,7 @@ HasLastDeliveryAttemptAt returns a boolean if a field has been set.
 
 ### SetLastDeliveryAttemptAtNil
 
-`func (o *PipelineRunView) SetLastDeliveryAttemptAtNil(b bool)`
+`func (o *PipelineRunView) SetLastDeliveryAttemptAtNil()`
 
  SetLastDeliveryAttemptAtNil sets the value for LastDeliveryAttemptAt to be an explicit nil
 
@@ -357,6 +362,7 @@ HasLastDeliveryAttemptAt returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetLastDeliveryAttemptAt()`
 
 UnsetLastDeliveryAttemptAt ensures that no value is present for LastDeliveryAttemptAt, not even an explicit nil
+
 ### GetListId
 
 `func (o *PipelineRunView) GetListId() int32`
@@ -384,7 +390,7 @@ HasListId returns a boolean if a field has been set.
 
 ### SetListIdNil
 
-`func (o *PipelineRunView) SetListIdNil(b bool)`
+`func (o *PipelineRunView) SetListIdNil()`
 
  SetListIdNil sets the value for ListId to be an explicit nil
 
@@ -392,6 +398,7 @@ HasListId returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetListId()`
 
 UnsetListId ensures that no value is present for ListId, not even an explicit nil
+
 ### GetNextDeliveryAttemptAt
 
 `func (o *PipelineRunView) GetNextDeliveryAttemptAt() time.Time`
@@ -419,7 +426,7 @@ HasNextDeliveryAttemptAt returns a boolean if a field has been set.
 
 ### SetNextDeliveryAttemptAtNil
 
-`func (o *PipelineRunView) SetNextDeliveryAttemptAtNil(b bool)`
+`func (o *PipelineRunView) SetNextDeliveryAttemptAtNil()`
 
  SetNextDeliveryAttemptAtNil sets the value for NextDeliveryAttemptAt to be an explicit nil
 
@@ -427,6 +434,7 @@ HasNextDeliveryAttemptAt returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetNextDeliveryAttemptAt()`
 
 UnsetNextDeliveryAttemptAt ensures that no value is present for NextDeliveryAttemptAt, not even an explicit nil
+
 ### GetPipelineId
 
 `func (o *PipelineRunView) GetPipelineId() int64`
@@ -472,16 +480,6 @@ SetResultLocation sets ResultLocation field to given value.
 
 HasResultLocation returns a boolean if a field has been set.
 
-### SetResultLocationNil
-
-`func (o *PipelineRunView) SetResultLocationNil(b bool)`
-
- SetResultLocationNil sets the value for ResultLocation to be an explicit nil
-
-### UnsetResultLocation
-`func (o *PipelineRunView) UnsetResultLocation()`
-
-UnsetResultLocation ensures that no value is present for ResultLocation, not even an explicit nil
 ### GetScheduledFor
 
 `func (o *PipelineRunView) GetScheduledFor() time.Time`
@@ -509,7 +507,7 @@ HasScheduledFor returns a boolean if a field has been set.
 
 ### SetScheduledForNil
 
-`func (o *PipelineRunView) SetScheduledForNil(b bool)`
+`func (o *PipelineRunView) SetScheduledForNil()`
 
  SetScheduledForNil sets the value for ScheduledFor to be an explicit nil
 
@@ -517,6 +515,7 @@ HasScheduledFor returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetScheduledFor()`
 
 UnsetScheduledFor ensures that no value is present for ScheduledFor, not even an explicit nil
+
 ### GetSourceSnapshot
 
 `func (o *PipelineRunView) GetSourceSnapshot() interface{}`
@@ -537,16 +536,6 @@ and a boolean to check if the value has been set.
 SetSourceSnapshot sets SourceSnapshot field to given value.
 
 
-### SetSourceSnapshotNil
-
-`func (o *PipelineRunView) SetSourceSnapshotNil(b bool)`
-
- SetSourceSnapshotNil sets the value for SourceSnapshot to be an explicit nil
-
-### UnsetSourceSnapshot
-`func (o *PipelineRunView) UnsetSourceSnapshot()`
-
-UnsetSourceSnapshot ensures that no value is present for SourceSnapshot, not even an explicit nil
 ### GetStartedAt
 
 `func (o *PipelineRunView) GetStartedAt() time.Time`
@@ -574,7 +563,7 @@ HasStartedAt returns a boolean if a field has been set.
 
 ### SetStartedAtNil
 
-`func (o *PipelineRunView) SetStartedAtNil(b bool)`
+`func (o *PipelineRunView) SetStartedAtNil()`
 
  SetStartedAtNil sets the value for StartedAt to be an explicit nil
 
@@ -582,6 +571,7 @@ HasStartedAt returns a boolean if a field has been set.
 `func (o *PipelineRunView) UnsetStartedAt()`
 
 UnsetStartedAt ensures that no value is present for StartedAt, not even an explicit nil
+
 ### GetStats
 
 `func (o *PipelineRunView) GetStats() interface{}`
@@ -602,16 +592,6 @@ and a boolean to check if the value has been set.
 SetStats sets Stats field to given value.
 
 
-### SetStatsNil
-
-`func (o *PipelineRunView) SetStatsNil(b bool)`
-
- SetStatsNil sets the value for Stats to be an explicit nil
-
-### UnsetStats
-`func (o *PipelineRunView) UnsetStats()`
-
-UnsetStats ensures that no value is present for Stats, not even an explicit nil
 ### GetStatus
 
 `func (o *PipelineRunView) GetStatus() PipelineRunStatus`
@@ -694,5 +674,3 @@ SetUpdatedAt sets UpdatedAt field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

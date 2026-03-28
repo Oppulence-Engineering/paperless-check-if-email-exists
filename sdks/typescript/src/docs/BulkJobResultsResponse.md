@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 import { BulkJobResultsResponse } from '@oppulence/reacher-sdk';
 
 const instance: BulkJobResultsResponse = {
-    results: {} as any,
+    results: [],
 };
 ```
 

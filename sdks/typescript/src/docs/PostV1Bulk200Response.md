@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**job_id** | **number** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | [optional]
+**job_id** | **number** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | [required]
 
 ## Example
 

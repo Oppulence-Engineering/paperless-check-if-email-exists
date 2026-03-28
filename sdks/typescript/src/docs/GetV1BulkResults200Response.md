@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [optional]
+**results** | [**CheckEmailOutput**](CheckEmailOutput.md) |  | [required]
 
 ## Example
 

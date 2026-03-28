@@ -42,6 +42,7 @@ deploy-and-test:
 test-services-up:
 	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) up -d postgres rabbitmq
 	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres sh -lc "until pg_isready -U postgres -d postgres >/dev/null 2>&1; do sleep 1; done"
+	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T rabbitmq sh -lc "until rabbitmq-diagnostics -q ping >/dev/null 2>&1; do sleep 1; done"
 	$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$(TEST_DATABASE_NAME)'" | grep -q 1 || \
 		$(DOCKER_COMPOSE) -f $(TEST_COMPOSE_FILE) exec -T postgres psql -U postgres -d postgres -c "CREATE DATABASE $(TEST_DATABASE_NAME)"
 

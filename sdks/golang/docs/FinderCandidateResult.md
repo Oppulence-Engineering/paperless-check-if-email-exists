@@ -79,7 +79,7 @@ HasConfidence returns a boolean if a field has been set.
 
 ### SetConfidenceNil
 
-`func (o *FinderCandidateResult) SetConfidenceNil(b bool)`
+`func (o *FinderCandidateResult) SetConfidenceNil()`
 
  SetConfidenceNil sets the value for Confidence to be an explicit nil
 
@@ -87,6 +87,7 @@ HasConfidence returns a boolean if a field has been set.
 `func (o *FinderCandidateResult) UnsetConfidence()`
 
 UnsetConfidence ensures that no value is present for Confidence, not even an explicit nil
+
 ### GetEmail
 
 `func (o *FinderCandidateResult) GetEmail() string`
@@ -174,7 +175,7 @@ HasResult returns a boolean if a field has been set.
 
 ### SetResultNil
 
-`func (o *FinderCandidateResult) SetResultNil(b bool)`
+`func (o *FinderCandidateResult) SetResultNil()`
 
  SetResultNil sets the value for Result to be an explicit nil
 
@@ -182,6 +183,7 @@ HasResult returns a boolean if a field has been set.
 `func (o *FinderCandidateResult) UnsetResult()`
 
 UnsetResult ensures that no value is present for Result, not even an explicit nil
+
 ### GetScore
 
 `func (o *FinderCandidateResult) GetScore() int32`
@@ -224,5 +226,3 @@ SetSubReason sets SubReason field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

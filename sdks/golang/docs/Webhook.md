@@ -34,7 +34,7 @@ GetExtra returns the Extra field if non-nil, zero value otherwise.
 
 ### GetExtraOk
 
-`func (o *Webhook) GetExtraOk() (*map[string]interface{}, bool)`
+`func (o *Webhook) GetExtraOk() (map[string]interface{}, bool)`
 
 GetExtraOk returns a tuple with the Extra field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -73,5 +73,3 @@ SetUrl sets Url field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

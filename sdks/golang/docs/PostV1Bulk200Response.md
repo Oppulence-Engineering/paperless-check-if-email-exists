@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**JobId** | **int32** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | [optional]
+**JobId** | **int32** | The unique ID generated for this bulk verification job. Use this &#x60;job_id&#x60; to query the progress or results of the bulk verification. | [required]
 
 ## Methods
 
@@ -47,5 +47,3 @@ SetJobId sets JobId field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

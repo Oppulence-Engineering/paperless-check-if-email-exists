@@ -3,9 +3,7 @@ use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::lists::canonicalize::canonicalize_email;
 use crate::http::CheckEmailRequest;
 use crate::tenant::auth::resolve_tenant_context_by_id;
-use crate::tenant::quota::{
-	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
-};
+use crate::tenant::quota::release_reserved_usage;
 use crate::tenant::webhook::{sign_payload, WEBHOOK_SIGNATURE_HEADER};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use anyhow::{bail, Context, Result};
@@ -473,7 +471,9 @@ async fn claim_due_pipeline_runs(
 	for row in rows {
 		let pipeline_id: i64 = row.get("id");
 		let next_run_at: DateTime<Utc> = row.get("next_run_at");
-		let pipeline = fetch_pipeline_row_for_update(&mut tx, pipeline_id).await?;
+		let Some(pipeline) = fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? else {
+			continue;
+		};
 		let policy: PipelinePolicyConfig =
 			serde_json::from_value(pipeline.policy_config.clone()).unwrap_or_default();
 		let effective_missed_run_window_hours = policy
@@ -869,6 +869,7 @@ pub async fn update_pipeline(
 		None => return Ok(None),
 	};
 
+	let schedule_changed = input.schedule.is_some();
 	let next_source = input.source.unwrap_or_else(|| current.source.clone());
 	let next_schedule = input.schedule.unwrap_or_else(|| current.schedule.clone());
 	let next_verification = input
@@ -891,6 +892,14 @@ pub async fn update_pipeline(
 	.await?;
 
 	let next_run_at = match next_status {
+		PipelineStatus::Active if current.status == PipelineStatus::Active && !schedule_changed => {
+			current.next_run_at.or(Some(compute_next_run_at(
+				&next_schedule.cron,
+				&next_schedule.timezone,
+				Utc::now(),
+				pipeline_config.min_interval_seconds,
+			)?))
+		}
 		PipelineStatus::Active => Some(compute_next_run_at(
 			&next_schedule.cron,
 			&next_schedule.timezone,
@@ -1006,7 +1015,7 @@ pub async fn create_manual_pipeline_run(
 ) -> Result<TriggerPipelineResponse> {
 	let mut tx = pg_pool.begin().await?;
 	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
-		row if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
+		Some(row) if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
 		_ => return Err(PipelineRequestError::not_found("Pipeline not found").into()),
 	};
 
@@ -1306,6 +1315,103 @@ pub async fn maybe_finalize_pipeline_run(
 	Ok(())
 }
 
+enum PipelineUsageReservation {
+	Reserved { usage_event_id: i64 },
+	ExceededMonthlyLimit,
+}
+
+async fn reserve_pipeline_usage_event(
+	pg_pool: &PgPool,
+	tenant_ctx: &crate::tenant::context::TenantContext,
+	tenant_id: Uuid,
+	pipeline_id: i64,
+	run_id: i64,
+	trigger_type: &str,
+	reserved_emails: i32,
+	verification: &PipelineVerificationSettings,
+	delivery: &PipelineDeliveryConfig,
+) -> Result<PipelineUsageReservation> {
+	let mut tx = pg_pool.begin().await?;
+
+	if let Some(limit) = tenant_ctx.monthly_email_limit.filter(|value| *value > 0) {
+		if Utc::now() >= tenant_ctx.period_reset_at {
+			sqlx::query(
+				r#"
+				UPDATE tenants
+				SET used_this_period = 0,
+				    period_reset_at = date_trunc('month', NOW()) + INTERVAL '1 month'
+				WHERE id = $1 AND period_reset_at <= NOW()
+				"#,
+			)
+			.bind(tenant_id)
+			.execute(&mut *tx)
+			.await?;
+		}
+
+		let request_count = reserved_emails.max(0);
+		if request_count > 0 {
+			let usage_updated = sqlx::query_scalar::<_, i32>(
+				r#"
+				UPDATE tenants
+				SET used_this_period = used_this_period + $2
+				WHERE id = $1
+				  AND (
+					monthly_email_limit IS NULL
+					OR monthly_email_limit <= 0
+					OR used_this_period + $2 <= monthly_email_limit
+				  )
+				RETURNING used_this_period
+				"#,
+			)
+			.bind(tenant_id)
+			.bind(request_count)
+			.fetch_optional(&mut *tx)
+			.await?;
+
+			if usage_updated.is_none() {
+				let current_usage = sqlx::query_scalar::<_, Option<i32>>(
+					"SELECT used_this_period FROM tenants WHERE id = $1",
+				)
+				.bind(tenant_id)
+				.fetch_one(&mut *tx)
+				.await?
+				.unwrap_or_default();
+
+				tx.rollback().await?;
+				if current_usage >= limit {
+					return Ok(PipelineUsageReservation::ExceededMonthlyLimit);
+				}
+
+				bail!("Tenant quota reservation failed for pipeline run");
+			}
+		}
+	}
+
+	let usage_event_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_usage_events (
+			tenant_id, pipeline_id, pipeline_run_id, source, reserved_emails, committed_emails, status, metadata
+		)
+		VALUES ($1, $2, $3, $4, $5, 0, 'reserved', $6)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(pipeline_id)
+	.bind(run_id)
+	.bind(format!("pipeline.{trigger_type}"))
+	.bind(reserved_emails.max(0))
+	.bind(json!({
+		"verification": verification,
+		"delivery": sanitized_delivery_metadata(delivery),
+	}))
+	.fetch_one(&mut *tx)
+	.await?;
+
+	tx.commit().await?;
+	Ok(PipelineUsageReservation::Reserved { usage_event_id })
+}
+
 async fn execute_pipeline_run(
 	config: Arc<BackendConfig>,
 	pg_pool: &PgPool,
@@ -1398,15 +1504,21 @@ async fn execute_pipeline_run_inner(
 	.execute(pg_pool)
 	.await?;
 
-	match check_and_increment_quota_for_count(
-		Some(pg_pool),
+	let usage_event_id = match reserve_pipeline_usage_event(
+		pg_pool,
 		&tenant_ctx,
+		tenant_id,
+		pipeline_id,
+		run_id,
+		&run.get::<String, _>("trigger_type"),
 		prepared_list.unique_email_count,
+		&verification,
+		&delivery,
 	)
-	.await
+	.await?
 	{
-		QuotaCheckResult::Allowed => {}
-		QuotaCheckResult::ExceededMonthlyLimit { .. } => {
+		PipelineUsageReservation::Reserved { usage_event_id } => usage_event_id,
+		PipelineUsageReservation::ExceededMonthlyLimit => {
 			fail_pipeline_run(
 				pg_pool,
 				run_id,
@@ -1417,28 +1529,7 @@ async fn execute_pipeline_run_inner(
 			.await?;
 			return Ok(());
 		}
-	}
-
-	let usage_event_id: i64 = sqlx::query_scalar(
-		r#"
-		INSERT INTO v1_usage_events (
-			tenant_id, pipeline_id, pipeline_run_id, source, reserved_emails, committed_emails, status, metadata
-		)
-		VALUES ($1, $2, $3, $4, $5, 0, 'reserved', $6)
-		RETURNING id
-		"#,
-	)
-	.bind(tenant_id)
-	.bind(pipeline_id)
-	.bind(run_id)
-	.bind(format!("pipeline.{}", run.get::<String, _>("trigger_type")))
-	.bind(prepared_list.unique_email_count)
-	.bind(json!({
-			"verification": verification,
-			"delivery": sanitized_delivery_metadata(&delivery),
-		}))
-	.fetch_one(pg_pool)
-	.await?;
+	};
 
 	let job_id: i32 = sqlx::query_scalar(
 		r#"
@@ -2886,7 +2977,7 @@ struct PipelineRowForUpdate {
 async fn fetch_pipeline_row_for_update<'a>(
 	tx: &mut sqlx::Transaction<'a, sqlx::Postgres>,
 	pipeline_id: i64,
-) -> Result<PipelineRowForUpdate> {
+) -> Result<Option<PipelineRowForUpdate>> {
 	let row = sqlx::query(
 		r#"
 		SELECT id, tenant_id, source_config, schedule_cron, schedule_timezone, policy_config, deleted_at
@@ -2897,10 +2988,13 @@ async fn fetch_pipeline_row_for_update<'a>(
 	)
 	.bind(pipeline_id)
 	.fetch_optional(&mut **tx)
-	.await?
-	.context("Pipeline not found")?;
+	.await?;
 
-	Ok(PipelineRowForUpdate {
+	let Some(row) = row else {
+		return Ok(None);
+	};
+
+	Ok(Some(PipelineRowForUpdate {
 		id: row.get("id"),
 		tenant_id: row.get("tenant_id"),
 		source_config: row.get("source_config"),
@@ -2908,7 +3002,7 @@ async fn fetch_pipeline_row_for_update<'a>(
 		schedule_timezone: row.get("schedule_timezone"),
 		policy_config: row.get("policy_config"),
 		deleted_at: row.get("deleted_at"),
-	})
+	}))
 }
 
 fn invalid_syntax_email_result(to_email: &str) -> Value {

@@ -60,7 +60,7 @@ HasDeduplicatedCount returns a boolean if a field has been set.
 
 ### SetDeduplicatedCountNil
 
-`func (o *ListDetailResponse) SetDeduplicatedCountNil(b bool)`
+`func (o *ListDetailResponse) SetDeduplicatedCountNil()`
 
  SetDeduplicatedCountNil sets the value for DeduplicatedCount to be an explicit nil
 
@@ -68,6 +68,7 @@ HasDeduplicatedCount returns a boolean if a field has been set.
 `func (o *ListDetailResponse) UnsetDeduplicatedCount()`
 
 UnsetDeduplicatedCount ensures that no value is present for DeduplicatedCount, not even an explicit nil
+
 ### GetEmailColumn
 
 `func (o *ListDetailResponse) GetEmailColumn() string`
@@ -235,7 +236,7 @@ HasUniqueEmails returns a boolean if a field has been set.
 
 ### SetUniqueEmailsNil
 
-`func (o *ListDetailResponse) SetUniqueEmailsNil(b bool)`
+`func (o *ListDetailResponse) SetUniqueEmailsNil()`
 
  SetUniqueEmailsNil sets the value for UniqueEmails to be an explicit nil
 
@@ -245,5 +246,3 @@ HasUniqueEmails returns a boolean if a field has been set.
 UnsetUniqueEmails ensures that no value is present for UniqueEmails, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

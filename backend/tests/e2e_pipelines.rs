@@ -142,6 +142,41 @@ async fn wait_for_run_details(
 	)
 }
 
+async fn wait_for_run_view(
+	config: &Arc<BackendConfig>,
+	api_key: &str,
+	pipeline_id: i64,
+	run_id: i64,
+) -> serde_json::Value {
+	for _ in 0..40 {
+		let response = request()
+			.method("GET")
+			.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
+			.header("Authorization", format!("Bearer {}", api_key))
+			.reply(&create_routes(Arc::clone(config)))
+			.await;
+		assert_eq!(response.status(), StatusCode::OK);
+
+		let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+		let has_job_id = body["job_id"].as_i64().is_some_and(|value| value > 0);
+		let has_list_id = body["list_id"].as_i64().is_some_and(|value| value > 0);
+		if has_job_id && has_list_id {
+			return body;
+		}
+
+		sleep(Duration::from_millis(50)).await;
+	}
+
+	let response = request()
+		.method("GET")
+		.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(config)))
+		.await;
+	assert_eq!(response.status(), StatusCode::OK);
+	serde_json::from_slice(response.body()).unwrap()
+}
+
 #[tokio::test]
 #[serial]
 async fn test_pipeline_api_create_get_list_and_trigger() {
@@ -203,14 +238,7 @@ async fn test_pipeline_api_create_get_list_and_trigger() {
 	let trigger_body: serde_json::Value = serde_json::from_slice(trigger_response.body()).unwrap();
 	let run_id = trigger_body["run_id"].as_i64().unwrap();
 
-	let run_response = request()
-		.method("GET")
-		.path(&format!("/v1/pipelines/{}/runs/{}", pipeline_id, run_id))
-		.header("Authorization", format!("Bearer {}", api_key))
-		.reply(&create_routes(Arc::clone(&config)))
-		.await;
-	assert_eq!(run_response.status(), StatusCode::OK);
-	let run_body: serde_json::Value = serde_json::from_slice(run_response.body()).unwrap();
+	let run_body = wait_for_run_view(&config, &api_key, pipeline_id, run_id).await;
 	assert_eq!(run_body["pipeline_id"], pipeline_id);
 	assert_eq!(run_body["job_id"].as_i64().unwrap() > 0, true);
 	assert_eq!(run_body["list_id"].as_i64().unwrap() > 0, true);
@@ -507,6 +535,87 @@ async fn test_pipeline_trigger_returns_conflict_for_active_run() {
 		error_body["error"].as_str(),
 		Some("Pipeline already has an active run")
 	);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_trigger_returns_not_found_for_missing_pipeline() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-trigger-missing", Some(1000), 0).await;
+	let (api_key, _) = insert_api_key_with_scopes(
+		db.pool(),
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let config = worker_pipeline_config(false).await;
+
+	let trigger_response = request()
+		.method("POST")
+		.path("/v1/pipelines/999999/trigger")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({ "force": false }))
+		.reply(&create_routes(config))
+		.await;
+	assert_eq!(trigger_response.status(), StatusCode::NOT_FOUND);
+	let error_body: serde_json::Value = serde_json::from_slice(trigger_response.body()).unwrap();
+	assert_eq!(error_body["error"].as_str(), Some("Pipeline not found"));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_pipeline_patch_preserves_due_next_run_at() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-preserve-due", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let (api_key, _) = insert_api_key_with_scopes(
+		db.pool(),
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let config = worker_pipeline_config(false).await;
+
+	let create_response = request()
+		.method("POST")
+		.path("/v1/pipelines")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({
+			"name": "Preserve Due Run",
+			"source": { "type": "list_snapshot", "list_id": list_id },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"status": "active"
+		}))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(create_response.status(), StatusCode::CREATED);
+	let created: serde_json::Value = serde_json::from_slice(create_response.body()).unwrap();
+	let pipeline_id = created["id"].as_i64().unwrap();
+
+	let due_at = chrono::Utc::now() - chrono::Duration::minutes(10);
+	sqlx::query("UPDATE v1_pipelines SET next_run_at = $2 WHERE id = $1")
+		.bind(pipeline_id)
+		.bind(due_at)
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+	let patch_response = request()
+		.method("PATCH")
+		.path(&format!("/v1/pipelines/{pipeline_id}"))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({ "name": "Renamed Pipeline" }))
+		.reply(&create_routes(config))
+		.await;
+	assert_eq!(patch_response.status(), StatusCode::OK);
+
+	let next_run_at: Option<chrono::DateTime<chrono::Utc>> =
+		sqlx::query_scalar("SELECT next_run_at FROM v1_pipelines WHERE id = $1")
+			.bind(pipeline_id)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	assert_eq!(next_run_at, Some(due_at));
 }
 
 #[tokio::test]

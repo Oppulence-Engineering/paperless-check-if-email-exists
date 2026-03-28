@@ -26,7 +26,7 @@ const instance: FindEmailStatusResponse = {
     domain_has_mx: true,
     domain_is_catch_all: true,
     job_id: 0,
-    results: {} as any,
+    results: [],
     status: 'example',
 };
 ```

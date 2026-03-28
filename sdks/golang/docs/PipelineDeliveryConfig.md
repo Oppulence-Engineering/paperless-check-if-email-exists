@@ -130,7 +130,7 @@ HasWebhook returns a boolean if a field has been set.
 
 ### SetWebhookNil
 
-`func (o *PipelineDeliveryConfig) SetWebhookNil(b bool)`
+`func (o *PipelineDeliveryConfig) SetWebhookNil()`
 
  SetWebhookNil sets the value for Webhook to be an explicit nil
 
@@ -140,5 +140,3 @@ HasWebhook returns a boolean if a field has been set.
 UnsetWebhook ensures that no value is present for Webhook, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

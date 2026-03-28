@@ -58,7 +58,7 @@ HasDelivery returns a boolean if a field has been set.
 
 ### SetDeliveryNil
 
-`func (o *UpdatePipelineInput) SetDeliveryNil(b bool)`
+`func (o *UpdatePipelineInput) SetDeliveryNil()`
 
  SetDeliveryNil sets the value for Delivery to be an explicit nil
 
@@ -66,6 +66,7 @@ HasDelivery returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetDelivery()`
 
 UnsetDelivery ensures that no value is present for Delivery, not even an explicit nil
+
 ### GetName
 
 `func (o *UpdatePipelineInput) GetName() string`
@@ -93,7 +94,7 @@ HasName returns a boolean if a field has been set.
 
 ### SetNameNil
 
-`func (o *UpdatePipelineInput) SetNameNil(b bool)`
+`func (o *UpdatePipelineInput) SetNameNil()`
 
  SetNameNil sets the value for Name to be an explicit nil
 
@@ -101,6 +102,7 @@ HasName returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetName()`
 
 UnsetName ensures that no value is present for Name, not even an explicit nil
+
 ### GetPolicy
 
 `func (o *UpdatePipelineInput) GetPolicy() PipelinePolicyConfig`
@@ -128,7 +130,7 @@ HasPolicy returns a boolean if a field has been set.
 
 ### SetPolicyNil
 
-`func (o *UpdatePipelineInput) SetPolicyNil(b bool)`
+`func (o *UpdatePipelineInput) SetPolicyNil()`
 
  SetPolicyNil sets the value for Policy to be an explicit nil
 
@@ -136,6 +138,7 @@ HasPolicy returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetPolicy()`
 
 UnsetPolicy ensures that no value is present for Policy, not even an explicit nil
+
 ### GetSchedule
 
 `func (o *UpdatePipelineInput) GetSchedule() PipelineSchedule`
@@ -163,7 +166,7 @@ HasSchedule returns a boolean if a field has been set.
 
 ### SetScheduleNil
 
-`func (o *UpdatePipelineInput) SetScheduleNil(b bool)`
+`func (o *UpdatePipelineInput) SetScheduleNil()`
 
  SetScheduleNil sets the value for Schedule to be an explicit nil
 
@@ -171,6 +174,7 @@ HasSchedule returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetSchedule()`
 
 UnsetSchedule ensures that no value is present for Schedule, not even an explicit nil
+
 ### GetSource
 
 `func (o *UpdatePipelineInput) GetSource() PipelineSource`
@@ -198,7 +202,7 @@ HasSource returns a boolean if a field has been set.
 
 ### SetSourceNil
 
-`func (o *UpdatePipelineInput) SetSourceNil(b bool)`
+`func (o *UpdatePipelineInput) SetSourceNil()`
 
  SetSourceNil sets the value for Source to be an explicit nil
 
@@ -206,6 +210,7 @@ HasSource returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetSource()`
 
 UnsetSource ensures that no value is present for Source, not even an explicit nil
+
 ### GetStatus
 
 `func (o *UpdatePipelineInput) GetStatus() PipelineStatus`
@@ -233,7 +238,7 @@ HasStatus returns a boolean if a field has been set.
 
 ### SetStatusNil
 
-`func (o *UpdatePipelineInput) SetStatusNil(b bool)`
+`func (o *UpdatePipelineInput) SetStatusNil()`
 
  SetStatusNil sets the value for Status to be an explicit nil
 
@@ -241,6 +246,7 @@ HasStatus returns a boolean if a field has been set.
 `func (o *UpdatePipelineInput) UnsetStatus()`
 
 UnsetStatus ensures that no value is present for Status, not even an explicit nil
+
 ### GetVerification
 
 `func (o *UpdatePipelineInput) GetVerification() PipelineVerificationSettings`
@@ -268,7 +274,7 @@ HasVerification returns a boolean if a field has been set.
 
 ### SetVerificationNil
 
-`func (o *UpdatePipelineInput) SetVerificationNil(b bool)`
+`func (o *UpdatePipelineInput) SetVerificationNil()`
 
  SetVerificationNil sets the value for Verification to be an explicit nil
 
@@ -278,5 +284,3 @@ HasVerification returns a boolean if a field has been set.
 UnsetVerification ensures that no value is present for Verification, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

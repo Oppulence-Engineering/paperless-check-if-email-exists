@@ -94,16 +94,6 @@ SetFieldMapping sets FieldMapping field to given value.
 
 HasFieldMapping returns a boolean if a field has been set.
 
-### SetFieldMappingNil
-
-`func (o *PipelineSourceOneOf1) SetFieldMappingNil(b bool)`
-
- SetFieldMappingNil sets the value for FieldMapping to be an explicit nil
-
-### UnsetFieldMapping
-`func (o *PipelineSourceOneOf1) UnsetFieldMapping()`
-
-UnsetFieldMapping ensures that no value is present for FieldMapping, not even an explicit nil
 ### GetProvider
 
 `func (o *PipelineSourceOneOf1) GetProvider() string`
@@ -146,5 +136,3 @@ SetType sets Type field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

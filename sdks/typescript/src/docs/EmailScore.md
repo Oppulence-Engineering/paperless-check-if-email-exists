@@ -30,7 +30,7 @@ const instance: EmailScore = {
     domain_suggestion: 'example',
     freshness: {} as any,
     normalized_email: 'example',
-    reason_codes: {} as any,
+    reason_codes: [],
     safe_to_send: true,
     score: 0,
     signals: {} as any,

@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Input** | **[]string** | A list of emails to verify. | [optional]
+**Input** | **[]string** | A list of emails to verify. | [required]
 **Webhook** | Pointer to [**TaskWebhook**](TaskWebhook.md) |  | [optional]
 
 ## Methods
@@ -73,5 +73,3 @@ HasWebhook returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

@@ -59,7 +59,7 @@ HasBestMatch returns a boolean if a field has been set.
 
 ### SetBestMatchNil
 
-`func (o *FindEmailStatusResponse) SetBestMatchNil(b bool)`
+`func (o *FindEmailStatusResponse) SetBestMatchNil()`
 
  SetBestMatchNil sets the value for BestMatch to be an explicit nil
 
@@ -67,6 +67,7 @@ HasBestMatch returns a boolean if a field has been set.
 `func (o *FindEmailStatusResponse) UnsetBestMatch()`
 
 UnsetBestMatch ensures that no value is present for BestMatch, not even an explicit nil
+
 ### GetBulkJobId
 
 `func (o *FindEmailStatusResponse) GetBulkJobId() int32`
@@ -209,5 +210,3 @@ SetStatus sets Status field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

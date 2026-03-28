@@ -19,7 +19,7 @@ Name | Type | Description | Notes
 import { ReputationCheckResponse } from '@oppulence/reacher-sdk';
 
 const instance: ReputationCheckResponse = {
-    blacklist_results: {} as any,
+    blacklist_results: [],
     cached: true,
     dns_records: {} as any,
     domain: 'example',

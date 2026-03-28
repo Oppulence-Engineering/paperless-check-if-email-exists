@@ -125,7 +125,7 @@ HasLastRunId returns a boolean if a field has been set.
 
 ### SetLastRunIdNil
 
-`func (o *PipelineView) SetLastRunIdNil(b bool)`
+`func (o *PipelineView) SetLastRunIdNil()`
 
  SetLastRunIdNil sets the value for LastRunId to be an explicit nil
 
@@ -133,6 +133,7 @@ HasLastRunId returns a boolean if a field has been set.
 `func (o *PipelineView) UnsetLastRunId()`
 
 UnsetLastRunId ensures that no value is present for LastRunId, not even an explicit nil
+
 ### GetLastScheduledAt
 
 `func (o *PipelineView) GetLastScheduledAt() time.Time`
@@ -160,7 +161,7 @@ HasLastScheduledAt returns a boolean if a field has been set.
 
 ### SetLastScheduledAtNil
 
-`func (o *PipelineView) SetLastScheduledAtNil(b bool)`
+`func (o *PipelineView) SetLastScheduledAtNil()`
 
  SetLastScheduledAtNil sets the value for LastScheduledAt to be an explicit nil
 
@@ -168,6 +169,7 @@ HasLastScheduledAt returns a boolean if a field has been set.
 `func (o *PipelineView) UnsetLastScheduledAt()`
 
 UnsetLastScheduledAt ensures that no value is present for LastScheduledAt, not even an explicit nil
+
 ### GetName
 
 `func (o *PipelineView) GetName() string`
@@ -215,7 +217,7 @@ HasNextRunAt returns a boolean if a field has been set.
 
 ### SetNextRunAtNil
 
-`func (o *PipelineView) SetNextRunAtNil(b bool)`
+`func (o *PipelineView) SetNextRunAtNil()`
 
  SetNextRunAtNil sets the value for NextRunAt to be an explicit nil
 
@@ -223,6 +225,7 @@ HasNextRunAt returns a boolean if a field has been set.
 `func (o *PipelineView) UnsetNextRunAt()`
 
 UnsetNextRunAt ensures that no value is present for NextRunAt, not even an explicit nil
+
 ### GetPolicy
 
 `func (o *PipelineView) GetPolicy() PipelinePolicyConfig`
@@ -365,5 +368,3 @@ SetVerification sets Verification field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

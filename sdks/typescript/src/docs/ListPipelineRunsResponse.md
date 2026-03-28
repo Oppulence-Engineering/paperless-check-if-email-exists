@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { ListPipelineRunsResponse } from '@oppulence/reacher-sdk';
 
 const instance: ListPipelineRunsResponse = {
-    runs: {} as any,
+    runs: [],
     total: 0,
 };
 ```

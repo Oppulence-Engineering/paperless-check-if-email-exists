@@ -6,10 +6,10 @@ A summary of the processed emails.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**total_safe** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [optional]
-**total_invalid** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [optional]
-**total_risky** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [optional]
-**total_unknown** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [optional]
+**total_safe** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;safe\&quot;. | [required]
+**total_invalid** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;invalid\&quot;. | [required]
+**total_risky** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;risky\&quot;. | [required]
+**total_unknown** | **number** | The number of emails where &#x60;is_reachable&#x60; is \&quot;unknown\&quot;. | [required]
 
 ## Example
 
