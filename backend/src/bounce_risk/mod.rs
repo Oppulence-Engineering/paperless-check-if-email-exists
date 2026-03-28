@@ -719,8 +719,12 @@ async fn load_domain_cache(
 		.map(|fetched_at| fetched_at + ChronoDuration::hours(INFRA_TTL_HOURS) < Utc::now())
 		.unwrap_or(true);
 
-	let domain_info =
-		rdap_payload.and_then(|value| serde_json::from_value::<DomainInfo>(value).ok());
+	let domain_info = rdap_payload
+		.and_then(|value| serde_json::from_value::<DomainInfo>(value).ok())
+		.map(|mut info| {
+			refresh_domain_info_age(&mut info);
+			info
+		});
 	let infra = infra_payload
 		.and_then(|value| serde_json::from_value::<DomainInfraCachePayload>(value).ok());
 
@@ -1170,15 +1174,32 @@ pub async fn probe_website_presence(client: &reqwest::Client, domain: &str) -> O
 	for url in [format!("https://{domain}"), format!("http://{domain}")] {
 		match client.get(&url).send().await {
 			Ok(response) => {
-				saw_response = true;
-				if response.status().is_success() || response.status().is_redirection() {
-					return Some(true);
+				if let Some(result) =
+					record_website_probe_response(&mut saw_response, response.status())
+				{
+					return Some(result);
 				}
 			}
 			Err(error) if error.is_timeout() => continue,
 			Err(_) => continue,
 		}
 	}
+	finalize_website_probe_result(saw_response)
+}
+
+fn record_website_probe_response(
+	saw_response: &mut bool,
+	status: reqwest::StatusCode,
+) -> Option<bool> {
+	*saw_response = true;
+	if status.is_success() || status.is_redirection() {
+		Some(true)
+	} else {
+		None
+	}
+}
+
+fn finalize_website_probe_result(saw_response: bool) -> Option<bool> {
 	saw_response.then_some(false)
 }
 
@@ -1219,17 +1240,25 @@ pub fn parse_domain_info_from_rdap_value(value: &serde_json::Value) -> DomainInf
 					})
 			})
 		});
-	let domain_age_days = created_at.as_deref().and_then(|created_at| {
-		chrono::DateTime::parse_from_rfc3339(created_at)
-			.ok()
-			.map(|created_at| (Utc::now() - created_at.with_timezone(&Utc)).num_days())
-	});
+	let domain_age_days = recompute_domain_age_days(created_at.as_deref());
 
 	DomainInfo {
 		domain_age_days,
 		registrar,
 		created_at,
 	}
+}
+
+fn recompute_domain_age_days(created_at: Option<&str>) -> Option<i64> {
+	created_at.and_then(|created_at| {
+		chrono::DateTime::parse_from_rfc3339(created_at)
+			.ok()
+			.map(|created_at| (Utc::now() - created_at.with_timezone(&Utc)).num_days())
+	})
+}
+
+fn refresh_domain_info_age(domain_info: &mut DomainInfo) {
+	domain_info.domain_age_days = recompute_domain_age_days(domain_info.created_at.as_deref());
 }
 
 #[cfg(test)]
@@ -1436,9 +1465,50 @@ mod tests {
 
 	#[test]
 	fn website_probe_fallback_prefers_any_success() {
-		let https_success = Some(true);
-		let http_success = Some(false);
-		assert_eq!(https_success.or(http_success), Some(true));
+		let mut saw_response = false;
+		assert_eq!(
+			record_website_probe_response(&mut saw_response, reqwest::StatusCode::BAD_GATEWAY),
+			None
+		);
+		assert!(saw_response);
+		assert_eq!(
+			record_website_probe_response(
+				&mut saw_response,
+				reqwest::StatusCode::MOVED_PERMANENTLY,
+			),
+			Some(true)
+		);
+	}
+
+	#[test]
+	fn website_probe_marks_absent_only_after_all_responses_fail() {
+		let mut saw_response = false;
+		assert_eq!(
+			record_website_probe_response(&mut saw_response, reqwest::StatusCode::BAD_REQUEST),
+			None
+		);
+		assert_eq!(
+			record_website_probe_response(
+				&mut saw_response,
+				reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+			),
+			None
+		);
+		assert_eq!(finalize_website_probe_result(saw_response), Some(false));
+	}
+
+	#[test]
+	fn refresh_domain_info_age_recomputes_cached_age_from_created_at() {
+		let created_at = (Utc::now() - ChronoDuration::days(45)).to_rfc3339();
+		let mut domain_info = DomainInfo {
+			domain_age_days: Some(1),
+			registrar: Some("Example Registrar".to_string()),
+			created_at: Some(created_at),
+		};
+
+		refresh_domain_info_age(&mut domain_info);
+
+		assert!(matches!(domain_info.domain_age_days, Some(days) if days >= 44));
 	}
 
 	#[test]
