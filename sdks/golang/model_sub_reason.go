@@ -24,6 +24,7 @@ const (
 	SUBREASON_DELIVERABLE SubReason = "deliverable"
 	SUBREASON_INVALID_SYNTAX SubReason = "invalid_syntax"
 	SUBREASON_INVALID_RECIPIENT SubReason = "invalid_recipient"
+	SUBREASON_PROVIDER_REJECTED SubReason = "provider_rejected"
 	SUBREASON_SMTP_UNDELIVERABLE SubReason = "smtp_undeliverable"
 	SUBREASON_DISABLED_MAILBOX SubReason = "disabled_mailbox"
 	SUBREASON_NO_MX SubReason = "no_mx"
@@ -43,6 +44,7 @@ var AllowedSubReasonEnumValues = []SubReason{
 	"deliverable",
 	"invalid_syntax",
 	"invalid_recipient",
+	"provider_rejected",
 	"smtp_undeliverable",
 	"disabled_mailbox",
 	"no_mx",

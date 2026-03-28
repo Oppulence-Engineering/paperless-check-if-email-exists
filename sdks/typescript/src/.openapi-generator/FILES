@@ -60,6 +60,9 @@ docs/ListSummary.md
 docs/ListUploadResponse.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/Provider.md
+docs/ProviderConfidence.md
+docs/ProviderRejectionReason.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/ReputationCheckRequest.md
@@ -127,6 +130,9 @@ models/list-summary.ts
 models/list-upload-response.ts
 models/misc-details.ts
 models/mx-details.ts
+models/provider-confidence.ts
+models/provider-rejection-reason.ts
+models/provider.ts
 models/reachable.ts
 models/reason-code.ts
 models/reputation-check-request.ts

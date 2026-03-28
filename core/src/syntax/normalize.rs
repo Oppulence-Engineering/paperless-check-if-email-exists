@@ -1,6 +1,8 @@
+use crate::provider::canonical_domain;
+
 pub fn normalize_email(username: &str, domain: &str) -> String {
-	match domain {
-		"gmail.com" | "googlemail.com" => normalize_gmail(username),
+	match canonical_domain(domain).as_str() {
+		"gmail.com" => normalize_gmail(username),
 		_ => format!("{username}@{domain}"),
 	}
 }

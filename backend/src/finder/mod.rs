@@ -3,6 +3,7 @@ pub mod patterns;
 use crate::config::BackendConfig;
 use crate::http::ReacherResponseError;
 use check_if_email_exists::check_email;
+use check_if_email_exists::provider::detect_provider;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
@@ -28,7 +29,7 @@ pub struct FinderBestMatch {
 	pub pattern: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DomainPrecheck {
 	pub has_mx_records: bool,
 	pub is_catch_all: bool,
@@ -143,6 +144,17 @@ pub async fn precheck_domain(
 	config: Arc<BackendConfig>,
 	domain: &str,
 ) -> Result<DomainPrecheck, ReacherResponseError> {
+	// Known consumer-provider domains are explicit aliases in the core provider
+	// catalog. They are stable enough to short-circuit without a live DNS probe,
+	// which keeps finder behavior deterministic in tests and avoids an extra
+	// network round-trip in production.
+	if detect_provider(domain, None).is_some() {
+		return Ok(DomainPrecheck {
+			has_mx_records: true,
+			is_catch_all: false,
+		});
+	}
+
 	let probe_local = format!("reacher_probe_{}", uuid::Uuid::new_v4().simple());
 	let probe_email = format!("{}@{}", probe_local, domain);
 	let input = crate::http::CheckEmailRequest {
@@ -347,4 +359,26 @@ pub async fn sync_finder_results(
 	}
 
 	Ok((completed_results, best_match, all_terminal))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::{precheck_domain, DomainPrecheck};
+	use crate::config::BackendConfig;
+	use std::sync::Arc;
+
+	#[tokio::test]
+	async fn precheck_short_circuits_known_provider_domains() {
+		let precheck = precheck_domain(Arc::new(BackendConfig::empty()), "gmail.com")
+			.await
+			.unwrap();
+
+		assert_eq!(
+			precheck,
+			DomainPrecheck {
+				has_mx_records: true,
+				is_catch_all: false,
+			}
+		);
+	}
 }

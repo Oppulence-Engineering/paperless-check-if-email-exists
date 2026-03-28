@@ -90,6 +90,12 @@ export interface CheckEmailRequest {
      */
     'smtp_port'?: number;
     /**
+     * When false, skips provider-specific syntax validation even if the provider is recognized.
+     * @type {boolean}
+     * @memberof CheckEmailRequest
+     */
+    'strict_provider_rules'?: boolean;
+    /**
      * The email address to check.
      * @type {string}
      * @memberof CheckEmailRequest

@@ -74,10 +74,11 @@ async fn create_handler(
 	body: CreateCommentRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	if body.body.trim().is_empty() {
-		return Err(
-			ReacherResponseError::new(StatusCode::BAD_REQUEST, "Comment body cannot be empty")
-				.into(),
-		);
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Comment body cannot be empty",
+		)
+		.into());
 	}
 	if body.job_id.is_none() && body.list_id.is_none() {
 		return Err(ReacherResponseError::new(
@@ -107,9 +108,7 @@ async fn create_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 		if !exists {
-			return Err(
-				ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into(),
-			);
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into());
 		}
 	}
 	if let Some(lid) = body.list_id {
@@ -122,9 +121,7 @@ async fn create_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 		if !exists {
-			return Err(
-				ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found").into(),
-			);
+			return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found").into());
 		}
 	}
 
@@ -253,7 +250,9 @@ async fn delete_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	Ok(warp::reply::json(&serde_json::json!({"deleted": true, "id": comment_id})))
+	Ok(warp::reply::json(
+		&serde_json::json!({"deleted": true, "id": comment_id}),
+	))
 }
 
 /// POST /v1/comments

@@ -16,9 +16,10 @@ mod admin_jobs_tests {
 	async fn worker_config() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = crate::test_helpers::test_db_url();
-		let rmq = crate::test_helpers::test_amqp_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db = crate::test_helpers::ensure_test_db_url().await;
+		let rmq = crate::test_helpers::ensure_test_amqp_url().await;
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));
@@ -256,8 +257,9 @@ mod admin_quota_tests {
 	async fn cfg() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = crate::test_helpers::test_db_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db = crate::test_helpers::ensure_test_db_url().await;
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));
@@ -351,8 +353,9 @@ mod tenant_self_tests {
 	async fn cfg() -> Arc<BackendConfig> {
 		let mut c = BackendConfig::empty();
 		c.header_secret = Some("s".into());
-		let db = crate::test_helpers::test_db_url();
-		c.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		let db = crate::test_helpers::ensure_test_db_url().await;
+		c.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db,
 			extra: None,
 		}));

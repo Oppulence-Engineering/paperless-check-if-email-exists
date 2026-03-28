@@ -24,6 +24,7 @@ export const SubReason = {
     Deliverable: 'deliverable',
     InvalidSyntax: 'invalid_syntax',
     InvalidRecipient: 'invalid_recipient',
+    ProviderRejected: 'provider_rejected',
     SmtpUndeliverable: 'smtp_undeliverable',
     DisabledMailbox: 'disabled_mailbox',
     NoMx: 'no_mx',

@@ -281,6 +281,31 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 		"score".to_string(),
 		json!({ "$ref": "#/components/schemas/EmailScore" }),
 	);
+	properties.insert(
+		"provider".to_string(),
+		json!({
+			"$ref": "#/components/schemas/Provider",
+			"nullable": true
+		}),
+	);
+	properties.insert(
+		"provider_rules_applied".to_string(),
+		json!({ "type": "boolean" }),
+	);
+	properties.insert(
+		"provider_rejection_reason".to_string(),
+		json!({
+			"$ref": "#/components/schemas/ProviderRejectionReason",
+			"nullable": true
+		}),
+	);
+	properties.insert(
+		"provider_confidence".to_string(),
+		json!({
+			"$ref": "#/components/schemas/ProviderConfidence",
+			"nullable": true
+		}),
+	);
 	let required = schema
 		.entry("required".to_string())
 		.or_insert_with(|| json!([]))
@@ -289,9 +314,80 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 	if !required.iter().any(|value| value.as_str() == Some("score")) {
 		required.push(Value::String("score".to_string()));
 	}
+	if !required
+		.iter()
+		.any(|value| value.as_str() == Some("provider_rules_applied"))
+	{
+		required.push(Value::String("provider_rules_applied".to_string()));
+	}
+}
+
+fn ensure_check_email_request_provider_flag(spec: &mut Value) {
+	let schemas = schemas_mut(spec);
+	let Some(schema) = schemas
+		.get_mut("CheckEmailRequest")
+		.and_then(Value::as_object_mut)
+	else {
+		return;
+	};
+	let properties = schema
+		.entry("properties".to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("CheckEmailRequest properties");
+	properties.insert(
+		"strict_provider_rules".to_string(),
+		json!({
+			"type": "boolean",
+			"description": "When false, skips provider-specific syntax validation even if the provider is recognized."
+		}),
+	);
 }
 
 fn add_phase_two_schemas(spec: &mut Value) {
+	insert_schema(
+		spec,
+		"Provider",
+		json!({
+			"type": "string",
+			"enum": [
+				"gmail",
+				"google_workspace",
+				"outlook_consumer",
+				"microsoft365",
+				"yahoo",
+				"apple_icloud",
+				"proton",
+				"zoho"
+			]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ProviderConfidence",
+		json!({
+			"type": "string",
+			"enum": ["high", "medium", "low"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ProviderRejectionReason",
+		json!({
+			"type": "string",
+			"enum": [
+				"provider_local_part_too_short",
+				"provider_local_part_too_long",
+				"provider_invalid_character",
+				"provider_consecutive_special_characters",
+				"provider_invalid_start_character",
+				"provider_invalid_end_character",
+				"provider_plus_addressing_not_supported",
+				"provider_reserved_word",
+				"provider_format_violation"
+			]
+		}),
+	);
 	insert_schema(
 		spec,
 		"EmailCategory",
@@ -309,6 +405,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"deliverable",
 				"invalid_syntax",
 				"invalid_recipient",
+				"provider_rejected",
 				"smtp_undeliverable",
 				"disabled_mailbox",
 				"no_mx",
@@ -333,6 +430,16 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"deliverable",
 				"invalid_syntax",
 				"invalid_recipient",
+				"provider_rejected",
+				"provider_local_part_too_short",
+				"provider_local_part_too_long",
+				"provider_invalid_character",
+				"provider_consecutive_special_characters",
+				"provider_invalid_start_character",
+				"provider_invalid_end_character",
+				"provider_plus_addressing_not_supported",
+				"provider_reserved_word",
+				"provider_format_violation",
 				"smtp_undeliverable",
 				"disabled_mailbox",
 				"no_mx",
@@ -1134,6 +1241,7 @@ fn patch_phase_two_paths(spec: &mut Value) {
 fn augment_phase_two_openapi(spec: &mut Value) {
 	add_phase_two_schemas(spec);
 	ensure_check_email_output_scored(spec);
+	ensure_check_email_request_provider_flag(spec);
 	patch_phase_two_paths(spec);
 }
 

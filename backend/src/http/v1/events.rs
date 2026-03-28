@@ -53,7 +53,12 @@ async fn http_handler(
 		Some(s) => Some(
 			DateTime::parse_from_rfc3339(s)
 				.map(|dt| dt.with_timezone(&Utc))
-				.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid 'since' date format. Expected RFC3339."))?,
+				.map_err(|_| {
+					ReacherResponseError::new(
+						StatusCode::BAD_REQUEST,
+						"Invalid 'since' date format. Expected RFC3339.",
+					)
+				})?,
 		),
 		None => None,
 	};
@@ -61,7 +66,12 @@ async fn http_handler(
 		Some(s) => Some(
 			DateTime::parse_from_rfc3339(s)
 				.map(|dt| dt.with_timezone(&Utc))
-				.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid 'until' date format. Expected RFC3339."))?,
+				.map_err(|_| {
+					ReacherResponseError::new(
+						StatusCode::BAD_REQUEST,
+						"Invalid 'until' date format. Expected RFC3339.",
+					)
+				})?,
 		),
 		None => None,
 	};

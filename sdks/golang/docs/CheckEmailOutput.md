@@ -9,6 +9,10 @@ Name | Type | Description | Notes
 **IsReachable** | [**Reachable**](Reachable.md) |  | 
 **Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | 
 **Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | 
+**Provider** | Pointer to [**Provider**](Provider.md) |  | [optional] 
+**ProviderConfidence** | Pointer to [**ProviderConfidence**](ProviderConfidence.md) |  | [optional] 
+**ProviderRejectionReason** | Pointer to [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional] 
+**ProviderRulesApplied** | **bool** |  | 
 **Score** | [**EmailScore**](EmailScore.md) |  | 
 **Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | 
 **Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | 
@@ -17,7 +21,7 @@ Name | Type | Description | Notes
 
 ### NewCheckEmailOutput
 
-`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
+`func NewCheckEmailOutput(input string, isReachable Reachable, misc CheckEmailOutputMisc, mx CheckEmailOutputMx, providerRulesApplied bool, score EmailScore, smtp CheckEmailOutputSmtp, syntax SyntaxDetails, ) *CheckEmailOutput`
 
 NewCheckEmailOutput instantiates a new CheckEmailOutput object
 This constructor will assign default values to properties that have it defined,
@@ -135,6 +139,101 @@ and a boolean to check if the value has been set.
 `func (o *CheckEmailOutput) SetMx(v CheckEmailOutputMx)`
 
 SetMx sets Mx field to given value.
+
+
+### GetProvider
+
+`func (o *CheckEmailOutput) GetProvider() Provider`
+
+GetProvider returns the Provider field if non-nil, zero value otherwise.
+
+### GetProviderOk
+
+`func (o *CheckEmailOutput) GetProviderOk() (*Provider, bool)`
+
+GetProviderOk returns a tuple with the Provider field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProvider
+
+`func (o *CheckEmailOutput) SetProvider(v Provider)`
+
+SetProvider sets Provider field to given value.
+
+### HasProvider
+
+`func (o *CheckEmailOutput) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
+
+### GetProviderConfidence
+
+`func (o *CheckEmailOutput) GetProviderConfidence() ProviderConfidence`
+
+GetProviderConfidence returns the ProviderConfidence field if non-nil, zero value otherwise.
+
+### GetProviderConfidenceOk
+
+`func (o *CheckEmailOutput) GetProviderConfidenceOk() (*ProviderConfidence, bool)`
+
+GetProviderConfidenceOk returns a tuple with the ProviderConfidence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProviderConfidence
+
+`func (o *CheckEmailOutput) SetProviderConfidence(v ProviderConfidence)`
+
+SetProviderConfidence sets ProviderConfidence field to given value.
+
+### HasProviderConfidence
+
+`func (o *CheckEmailOutput) HasProviderConfidence() bool`
+
+HasProviderConfidence returns a boolean if a field has been set.
+
+### GetProviderRejectionReason
+
+`func (o *CheckEmailOutput) GetProviderRejectionReason() ProviderRejectionReason`
+
+GetProviderRejectionReason returns the ProviderRejectionReason field if non-nil, zero value otherwise.
+
+### GetProviderRejectionReasonOk
+
+`func (o *CheckEmailOutput) GetProviderRejectionReasonOk() (*ProviderRejectionReason, bool)`
+
+GetProviderRejectionReasonOk returns a tuple with the ProviderRejectionReason field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProviderRejectionReason
+
+`func (o *CheckEmailOutput) SetProviderRejectionReason(v ProviderRejectionReason)`
+
+SetProviderRejectionReason sets ProviderRejectionReason field to given value.
+
+### HasProviderRejectionReason
+
+`func (o *CheckEmailOutput) HasProviderRejectionReason() bool`
+
+HasProviderRejectionReason returns a boolean if a field has been set.
+
+### GetProviderRulesApplied
+
+`func (o *CheckEmailOutput) GetProviderRulesApplied() bool`
+
+GetProviderRulesApplied returns the ProviderRulesApplied field if non-nil, zero value otherwise.
+
+### GetProviderRulesAppliedOk
+
+`func (o *CheckEmailOutput) GetProviderRulesAppliedOk() (*bool, bool)`
+
+GetProviderRulesAppliedOk returns a tuple with the ProviderRulesApplied field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProviderRulesApplied
+
+`func (o *CheckEmailOutput) SetProviderRulesApplied(v bool)`
+
+SetProviderRulesApplied sets ProviderRulesApplied field to given value.
 
 
 ### GetScore

@@ -22,7 +22,8 @@ mod tests {
 	async fn worker_config(db_url: &str, rmq_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));
@@ -45,7 +46,8 @@ mod tests {
 	async fn db_only_config(db_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));
@@ -58,7 +60,8 @@ mod tests {
 	async fn pseudo_worker_config(db_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
 		config.header_secret = Some("test".into());
-		config.storage = Some(StorageConfig::Postgres(PostgresConfig { read_replica_url: None,
+		config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+			read_replica_url: None,
 			db_url: db_url.to_string(),
 			extra: None,
 		}));
