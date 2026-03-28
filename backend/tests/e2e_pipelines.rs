@@ -675,6 +675,91 @@ async fn test_pipeline_scheduler_leaves_force_queued_run_blocked_behind_active_r
 
 #[tokio::test]
 #[serial]
+async fn test_pipeline_scheduler_recovers_oldest_force_queued_run_when_queue_is_only_blocker(
+) -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-force-queue-recovery", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let config = worker_pipeline_config(true).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Force Queue Recovery".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	let first_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at, created_at)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{"trigger_reason":"first force queue"}'::jsonb, NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	let second_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at, created_at)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{"trigger_reason":"second force queue"}'::jsonb, NOW() - INTERVAL '9 minutes', NOW() - INTERVAL '9 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let (_status, job_id, created_list_id, started_at) =
+		wait_for_run_details(db.pool(), first_run_id).await?;
+	assert!(job_id.is_some());
+	assert!(created_list_id.is_some());
+	assert!(started_at.is_some());
+
+	let second_row = sqlx::query(
+		"SELECT status::TEXT, started_at, job_id, list_id FROM v1_pipeline_runs WHERE id = $1",
+	)
+	.bind(second_run_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let second_status: String = second_row.get("status");
+	let second_started_at: Option<chrono::DateTime<chrono::Utc>> = second_row.get("started_at");
+	let second_job_id: Option<i32> = second_row.get("job_id");
+	let second_list_id: Option<i32> = second_row.get("list_id");
+	assert_eq!(second_status, "queued");
+	assert!(second_started_at.is_none());
+	assert!(second_job_id.is_none());
+	assert!(second_list_id.is_none());
+	Ok(())
+}
+
+#[tokio::test]
+#[serial]
 async fn test_pipeline_trigger_returns_conflict_for_active_run() {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-trigger-conflict", Some(1000), 0).await;

@@ -664,8 +664,8 @@ async fn recover_stranded_queued_pipeline_runs(
 ) -> Result<Vec<ClaimedRun>> {
 	let rows = sqlx::query(
 		r#"
-		WITH candidates AS (
-			SELECT pr.id, pr.pipeline_id
+		WITH next_per_pipeline AS (
+			SELECT DISTINCT ON (pr.pipeline_id) pr.id, pr.pipeline_id
 			FROM v1_pipeline_runs pr
 			INNER JOIN v1_pipelines p ON p.id = pr.pipeline_id
 			INNER JOIN tenants t ON t.id = pr.tenant_id
@@ -680,7 +680,6 @@ async fn recover_stranded_queued_pipeline_runs(
 				WHERE sibling.pipeline_id = pr.pipeline_id
 				  AND sibling.id <> pr.id
 				  AND sibling.status IN (
-					'queued'::pipeline_run_status,
 					'preparing'::pipeline_run_status,
 					'fetching_source'::pipeline_run_status,
 					'publishing'::pipeline_run_status,
@@ -688,9 +687,14 @@ async fn recover_stranded_queued_pipeline_runs(
 					'delivering'::pipeline_run_status
 				  )
 			  )
-			ORDER BY pr.created_at ASC
+			ORDER BY pr.pipeline_id, pr.created_at ASC
+			FOR UPDATE OF pr SKIP LOCKED
+		),
+		candidates AS (
+			SELECT id, pipeline_id
+			FROM next_per_pipeline
+			ORDER BY id ASC
 			LIMIT $1
-			FOR UPDATE SKIP LOCKED
 		)
 		UPDATE v1_pipeline_runs pr
 		SET updated_at = NOW()
