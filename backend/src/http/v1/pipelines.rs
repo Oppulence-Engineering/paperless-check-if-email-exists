@@ -91,8 +91,8 @@ async fn list_handler(
 		tenant_id,
 		crate::pipelines::PipelineListQuery {
 			status: parse_status(query.status)?,
-			limit: query.limit.unwrap_or(50).min(200),
-			offset: query.offset.unwrap_or(0),
+			limit: query.limit.unwrap_or(50).clamp(0, 200),
+			offset: query.offset.unwrap_or(0).max(0),
 		},
 	)
 	.await
@@ -218,8 +218,8 @@ async fn list_runs_handler(
 		&pg_pool,
 		tenant_id,
 		pipeline_id,
-		query.limit.unwrap_or(50).min(200),
-		query.offset.unwrap_or(0),
+		query.limit.unwrap_or(50).clamp(0, 200),
+		query.offset.unwrap_or(0).max(0),
 	)
 	.await
 	.map_err(ReacherResponseError::from)?

@@ -142,6 +142,61 @@ async fn test_pipeline_api_create_get_list_and_trigger() {
 
 #[tokio::test]
 #[serial]
+async fn test_pipeline_list_endpoints_clamp_negative_pagination() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-pagination", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let (api_key, _) = insert_api_key_with_scopes(
+		db.pool(),
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let config = worker_pipeline_config(false).await;
+
+	let create_response = request()
+		.method("POST")
+		.path("/v1/pipelines")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.json(&serde_json::json!({
+			"name": "Pagination Clamp",
+			"source": { "type": "list_snapshot", "list_id": list_id },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": false, "freshness_days": 30 },
+			"delivery": { "dashboard": true },
+			"status": "active"
+		}))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(create_response.status(), StatusCode::CREATED);
+	let created: serde_json::Value = serde_json::from_slice(create_response.body()).unwrap();
+	let pipeline_id = created["id"].as_i64().unwrap();
+
+	let list_response = request()
+		.method("GET")
+		.path("/v1/pipelines?limit=-5&offset=-10")
+		.header("Authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(list_response.status(), StatusCode::OK);
+	let list_body: serde_json::Value = serde_json::from_slice(list_response.body()).unwrap();
+	assert_eq!(list_body["total"], 1);
+
+	let runs_response = request()
+		.method("GET")
+		.path(&format!(
+			"/v1/pipelines/{pipeline_id}/runs?limit=-1&offset=-9"
+		))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(runs_response.status(), StatusCode::OK);
+	let runs_body: serde_json::Value = serde_json::from_slice(runs_response.body()).unwrap();
+	assert_eq!(runs_body["total"], 0);
+}
+
+#[tokio::test]
+#[serial]
 async fn test_pipeline_scheduler_cycle_creates_run_and_usage() {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-scheduler", Some(1000), 0).await;

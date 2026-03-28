@@ -570,9 +570,15 @@ async fn retry_due_pipeline_deliveries(pg_pool: &PgPool, limit: i32) -> Result<(
 		r#"
 		SELECT id
 		FROM v1_pipeline_runs
-		WHERE delivery_status = 'retry_scheduled'::pipeline_delivery_status
-		  AND next_delivery_attempt_at IS NOT NULL
-		  AND next_delivery_attempt_at <= NOW()
+		WHERE (
+			delivery_status = 'retry_scheduled'::pipeline_delivery_status
+			AND next_delivery_attempt_at IS NOT NULL
+			AND next_delivery_attempt_at <= NOW()
+		) OR (
+			delivery_status = 'pending'::pipeline_delivery_status
+			AND next_delivery_attempt_at IS NOT NULL
+			AND next_delivery_attempt_at <= NOW()
+		)
 		ORDER BY next_delivery_attempt_at ASC
 		LIMIT $1
 		FOR UPDATE SKIP LOCKED
@@ -917,12 +923,11 @@ pub async fn create_manual_pipeline_run(
 	tx.commit().await?;
 	execute_pipeline_run(config, pg_pool, run_id).await?;
 
-	let actual_status: String = sqlx::query_scalar(
-		"SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1",
-	)
-	.bind(run_id)
-	.fetch_one(pg_pool)
-	.await?;
+	let actual_status: String =
+		sqlx::query_scalar("SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1")
+			.bind(run_id)
+			.fetch_one(pg_pool)
+			.await?;
 
 	Ok(TriggerPipelineResponse {
 		run_id,
@@ -1103,12 +1108,12 @@ pub async fn maybe_finalize_pipeline_run(
 			.map(|list_id| format!("/v1/lists/{list_id}/download"))
 	});
 
-	if status.is_terminal() && row.get::<Option<Value>, _>("result_location").is_some() {
-		return Ok(());
-	}
-
-	let claim_sql = if status.is_terminal() {
-		r#"
+	let result_location: Option<Value> = row.get("result_location");
+	let claimed = if status.is_terminal() && result_location.is_some() {
+		Some(run_id)
+	} else {
+		let claim_sql = if status.is_terminal() {
+			r#"
 		UPDATE v1_pipeline_runs
 		SET stats = $2,
 		    billed_emails = $3,
@@ -1119,8 +1124,8 @@ pub async fn maybe_finalize_pipeline_run(
 		  AND result_location IS NULL
 		RETURNING id
 		"#
-	} else {
-		r#"
+		} else {
+			r#"
 		UPDATE v1_pipeline_runs
 		SET status = 'delivering'::pipeline_run_status,
 		    stats = $2,
@@ -1130,15 +1135,17 @@ pub async fn maybe_finalize_pipeline_run(
 		WHERE id = $1 AND status = $5::pipeline_run_status
 		RETURNING id
 		"#
+		};
+		sqlx::query(claim_sql)
+			.bind(run_id)
+			.bind(&stats)
+			.bind(stats["billed_emails"].as_i64().unwrap_or_default() as i32)
+			.bind(&download_url)
+			.bind(enum_str(&status))
+			.fetch_optional(pg_pool)
+			.await?
+			.map(|_| run_id)
 	};
-	let claimed = sqlx::query(claim_sql)
-		.bind(run_id)
-		.bind(&stats)
-		.bind(stats["billed_emails"].as_i64().unwrap_or_default() as i32)
-		.bind(&download_url)
-		.bind(enum_str(&status))
-		.fetch_optional(pg_pool)
-		.await?;
 	if claimed.is_none() {
 		return Ok(());
 	}
@@ -2098,6 +2105,45 @@ async fn attempt_pipeline_run_delivery(pg_pool: &PgPool, run_id: i64, force: boo
 	}
 
 	let attempt_number = row.get::<i32, _>("delivery_attempts") + 1;
+	let in_flight_retry_at =
+		Utc::now() + Duration::seconds(i64::from(delivery.retry_backoff_seconds.max(1)));
+	let claim_result = if force {
+		sqlx::query(
+			r#"
+			UPDATE v1_pipeline_runs
+			SET delivery_status = 'pending'::pipeline_delivery_status,
+			    next_delivery_attempt_at = $2,
+			    updated_at = NOW()
+			WHERE id = $1
+			RETURNING id
+			"#,
+		)
+		.bind(run_id)
+		.bind(in_flight_retry_at)
+		.fetch_optional(pg_pool)
+		.await?
+	} else {
+		sqlx::query(
+			r#"
+			UPDATE v1_pipeline_runs
+			SET delivery_status = 'pending'::pipeline_delivery_status,
+			    next_delivery_attempt_at = $2,
+			    updated_at = NOW()
+			WHERE id = $1
+			  AND delivery_status = $3::pipeline_delivery_status
+			RETURNING id
+			"#,
+		)
+		.bind(run_id)
+		.bind(in_flight_retry_at)
+		.bind(enum_str(&delivery_status))
+		.fetch_optional(pg_pool)
+		.await?
+	};
+	if claim_result.is_none() {
+		return Ok(());
+	}
+
 	let delivery_result = deliver_pipeline_run_summary(
 		&delivery,
 		default_webhook_url,
@@ -2448,9 +2494,7 @@ fn is_private_ip(ip: std::net::IpAddr) -> bool {
 				|| v4.octets()[0] == 169 && v4.octets()[1] == 254 // link-local
 				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64 // CGN 100.64/10
 		}
-		std::net::IpAddr::V6(v6) => {
-			v6.is_loopback() || v6.is_unspecified()
-		}
+		std::net::IpAddr::V6(v6) => v6.is_loopback() || v6.is_unspecified(),
 	}
 }
 
