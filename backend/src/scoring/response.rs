@@ -1,11 +1,12 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext};
 use crate::config::BackendConfig;
 use crate::scoring::{compute_freshness, compute_score, EmailScore};
-use check_if_email_exists::CheckEmailOutput;
+use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::{Map, Value};
 use std::ops::Deref;
+use tracing::warn;
 use uuid::Uuid;
 
 pub fn scored_json(output: &CheckEmailOutput) -> Result<Value, serde_json::Error> {
@@ -180,7 +181,7 @@ pub async fn prepare_verification_response(
 	let write_pool = config.get_pg_pool();
 	let bounce_risk_service = config.get_bounce_risk_service();
 
-	let bounce_risk_result = bounce_risk_service
+	let bounce_risk_result = match bounce_risk_service
 		.assess(
 			output,
 			&email_score,
@@ -192,7 +193,20 @@ pub async fn prepare_verification_response(
 				allow_external_enrichment,
 			},
 		)
-		.await?;
+		.await
+	{
+		Ok(result) => result,
+		Err(error) => {
+			warn!(
+				target: LOG_TARGET,
+				error = ?error,
+				email = %output.input,
+				tenant_id = ?tenant_id,
+				"Bounce-risk enrichment failed, continuing without enrichment"
+			);
+			None
+		}
+	};
 
 	let (bounce_risk, bounce_risk_signals) = if let Some(result) = bounce_risk_result {
 		if let Some(result_obj) = value.as_object_mut() {
@@ -312,5 +326,19 @@ mod tests {
 			.await
 			.unwrap();
 		assert!(response.json.get("bounce_risk").is_some());
+	}
+
+	#[tokio::test]
+	async fn prepared_response_ignores_bounce_risk_enrichment_failures() {
+		let mut config = BackendConfig::empty();
+		config.bounce_risk.enabled = true;
+		config.bounce_risk.config_path = std::env::temp_dir().to_string_lossy().to_string();
+		config.refresh_bounce_risk_service();
+
+		let output = CheckEmailOutput::default();
+		let response = prepare_verification_response(&config, &output, None, Utc::now(), false)
+			.await
+			.unwrap();
+		assert!(response.json.get("bounce_risk").is_none());
 	}
 }

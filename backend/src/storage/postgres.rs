@@ -164,7 +164,8 @@ impl PostgresStorage {
 				    bounce_risk_confidence = $13,
 				    bounce_risk_action = $14,
 				    bounce_risk_model_version = $15,
-				    bounce_risk_signals = $16
+				    bounce_risk_signals = $16,
+				    updated_at = NOW()
 				WHERE id = $17
 				"#,
 			)

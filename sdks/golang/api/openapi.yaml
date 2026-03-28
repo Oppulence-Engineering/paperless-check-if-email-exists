@@ -2195,7 +2195,7 @@ components:
             is_disabled: true
             is_deliverable: true
           is_reachable: invalid
-          bounce_risk: ""
+          bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -2257,7 +2257,7 @@ components:
             is_disabled: true
             is_deliverable: true
           is_reachable: invalid
-          bounce_risk: ""
+          bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -2360,7 +2360,7 @@ components:
           is_disabled: true
           is_deliverable: true
         is_reachable: invalid
-        bounce_risk: ""
+        bounce_risk: null
         syntax:
           domain: domain
           is_valid_syntax: true

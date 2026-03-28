@@ -104,8 +104,8 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 
 	let worker_output = check_email_and_send_result(task, None).await;
 	match worker_output.as_ref() {
-		Ok(output) => {
-			info!(email = ?output.input, is_reachable = ?output.is_reachable, "Task completed");
+		Ok(success) => {
+			info!(email = ?success.output.input, is_reachable = ?success.output.is_reachable, "Task completed");
 		}
 		Err(e) => {
 			info!(email = ?task.input.to_email, err = ?e, "Task failed");
@@ -119,15 +119,33 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 
 	// Store the result.
 	let storage = backend_config.get_storage_adapter();
-	storage
-		.store(task, &worker_output, storage.get_extra())
-		.await?;
+	match &worker_output {
+		Ok(success) => {
+			storage
+				.store_prepared(task, success, storage.get_extra())
+				.await?;
 
-	// If we're in the Commercial License Trial, we also store the
-	// result by sending it to back to Reacher.
-	send_to_reacher(backend_config, &task.input.to_email, &worker_output).await?;
+			// If we're in the Commercial License Trial, we also store the
+			// result by sending it to back to Reacher.
+			send_to_reacher(
+				backend_config.clone(),
+				&task.input.to_email,
+				Ok(&success.output),
+			)
+			.await?;
+		}
+		Err(error) => {
+			storage
+				.store_error(task, error, storage.get_extra())
+				.await?;
 
-	Ok(worker_output?)
+			send_to_reacher(backend_config.clone(), &task.input.to_email, Err(error)).await?;
+		}
+	}
+
+	worker_output
+		.map(|success| success.output)
+		.map_err(Error::from)
 }
 
 async fn run_and_wait_chromedriver() -> Result<(), Error> {

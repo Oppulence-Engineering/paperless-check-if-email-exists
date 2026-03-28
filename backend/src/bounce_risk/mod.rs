@@ -299,8 +299,8 @@ impl BounceRiskService {
 	}
 
 	fn current_model(&self) -> Result<Arc<BounceRiskModelConfig>, anyhow::Error> {
-		let max_reload = self.runtime.reload_interval_seconds.min(30);
-		let reload_interval = Duration::from_secs(max_reload);
+		let min_reload = self.runtime.reload_interval_seconds.max(30);
+		let reload_interval = Duration::from_secs(min_reload);
 		let path = resolve_model_path(&self.runtime.config_path);
 		let mut state = self.model_state.write().expect("bounce risk model lock");
 		if state
@@ -1166,16 +1166,20 @@ pub fn derive_provider_from_mx_host(mx_host: &str) -> String {
 }
 
 pub async fn probe_website_presence(client: &reqwest::Client, domain: &str) -> Option<bool> {
+	let mut saw_response = false;
 	for url in [format!("https://{domain}"), format!("http://{domain}")] {
 		match client.get(&url).send().await {
 			Ok(response) => {
-				return Some(response.status().is_success() || response.status().is_redirection())
+				saw_response = true;
+				if response.status().is_success() || response.status().is_redirection() {
+					return Some(true);
+				}
 			}
 			Err(error) if error.is_timeout() => continue,
 			Err(_) => continue,
 		}
 	}
-	None
+	saw_response.then_some(false)
 }
 
 pub fn parse_domain_info_from_rdap_value(value: &serde_json::Value) -> DomainInfo {
