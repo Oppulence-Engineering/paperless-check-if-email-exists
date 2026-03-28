@@ -231,7 +231,7 @@ async fn test_pipeline_api_create_get_list_and_trigger() {
 		.method("POST")
 		.path(&format!("/v1/pipelines/{}/trigger", pipeline_id))
 		.header("Authorization", format!("Bearer {}", api_key))
-		.json(&serde_json::json!({ "force": false }))
+		.json(&serde_json::json!({ "force": false, "reason": "manual smoke test" }))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
 	assert_eq!(trigger_response.status(), StatusCode::ACCEPTED);
@@ -242,6 +242,7 @@ async fn test_pipeline_api_create_get_list_and_trigger() {
 	assert_eq!(run_body["pipeline_id"], pipeline_id);
 	assert_eq!(run_body["job_id"].as_i64().unwrap() > 0, true);
 	assert_eq!(run_body["list_id"].as_i64().unwrap() > 0, true);
+	assert_eq!(run_body["stats"]["trigger_reason"], "manual smoke test");
 }
 
 #[tokio::test]

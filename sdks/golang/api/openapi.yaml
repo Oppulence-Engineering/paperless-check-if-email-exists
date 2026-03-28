@@ -1279,12 +1279,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: GET /v1/pipelines
       tags:
       - Pipelines
@@ -1309,12 +1321,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: POST /v1/pipelines
       tags:
       - Pipelines
@@ -1338,6 +1362,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/DeletePipelineResponse"
           description: Pipeline deleted
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1350,6 +1380,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "DELETE /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1372,6 +1408,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline detail
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1384,6 +1426,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "GET /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1418,6 +1466,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1430,6 +1484,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "PATCH /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1453,6 +1513,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline paused
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1465,6 +1531,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "POST /v1/pipelines/{pipeline_id}/pause"
       tags:
       - Pipelines
@@ -1488,6 +1560,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineView"
           description: Pipeline resumed
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1500,6 +1578,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "POST /v1/pipelines/{pipeline_id}/resume"
       tags:
       - Pipelines
@@ -1539,6 +1623,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListPipelineRunsResponse"
           description: Pipeline run history
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1551,6 +1641,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "GET /v1/pipelines/{pipeline_id}/runs"
       tags:
       - Pipelines
@@ -1583,6 +1679,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineRunView"
           description: Pipeline run detail
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1595,6 +1697,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "GET /v1/pipelines/{pipeline_id}/runs/{run_id}"
       tags:
       - Pipelines
@@ -1630,6 +1738,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -1648,6 +1762,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service unavailable
       summary: "POST /v1/pipelines/{pipeline_id}/trigger"
       tags:
       - Pipelines
@@ -2342,23 +2462,23 @@ components:
     CreatePipelineInput:
       example:
         delivery:
-          webhook: ""
-          max_attempts: 0
           dashboard: true
-          retry_backoff_seconds: 6
-        schedule:
-          cron: cron
-          timezone: timezone
-        name: name
-        source:
-          list_id: 2
-          type: list_snapshot
-        verification:
-          freshness_days: 7
-          delta_mode: true
+          max_attempts: 5
+          retry_backoff_seconds: 300
+          webhook: null
+        name: Weekly Cleanup
         policy:
-          missed_run_window_hours: 5
+          missed_run_window_hours: 24
+        schedule:
+          cron: 0 9 * * 1
+          timezone: UTC
+        source:
+          list_id: 123
+          type: list_snapshot
         status: active
+        verification:
+          delta_mode: true
+          freshness_days: 30
       properties:
         delivery:
           $ref: "#/components/schemas/PipelineDeliveryConfig"
@@ -2985,54 +3105,62 @@ components:
       type: object
     ListPipelineRunsResponse:
       example:
-        total: 7
+        total: 0
         runs:
-        - error_message: error_message
-          tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - billed_emails: 0
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          delivery_attempts: 0
+          delivery_error: delivery_error
+          delivery_status: not_requested
+          error_code: error_code
+          error_message: error_message
+          id: 1
+          job_id: 5
           last_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
           list_id: 5
-          delivery_attempts: 6
-          trigger_type: trigger_type
-          created_at: 2000-01-23T04:56:07.000+00:00
-          scheduled_for: 2000-01-23T04:56:07.000+00:00
-          source_snapshot: ""
           next_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
-          result_location: ""
-          completed_at: 2000-01-23T04:56:07.000+00:00
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          stats: ""
-          job_id: 5
-          billed_emails: 0
           pipeline_id: 2
+          result_location:
+            download_url: /v1/lists/5/download
+          scheduled_for: 2000-01-23T04:56:07.000+00:00
+          source_snapshot:
+            list_id: 123
+            type: list_snapshot
           started_at: 2000-01-23T04:56:07.000+00:00
-          error_code: error_code
-          delivery_error: delivery_error
-          id: 1
-          delivery_status: not_requested
+          stats:
+            trigger_reason: manual
           status: queued
-        - error_message: error_message
           tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          trigger_type: manual
+          updated_at: 2000-01-23T04:56:07.000+00:00
+        - billed_emails: 0
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          delivery_attempts: 0
+          delivery_error: delivery_error
+          delivery_status: not_requested
+          error_code: error_code
+          error_message: error_message
+          id: 1
+          job_id: 5
           last_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
           list_id: 5
-          delivery_attempts: 6
-          trigger_type: trigger_type
-          created_at: 2000-01-23T04:56:07.000+00:00
-          scheduled_for: 2000-01-23T04:56:07.000+00:00
-          source_snapshot: ""
           next_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
-          result_location: ""
-          completed_at: 2000-01-23T04:56:07.000+00:00
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          stats: ""
-          job_id: 5
-          billed_emails: 0
           pipeline_id: 2
+          result_location:
+            download_url: /v1/lists/5/download
+          scheduled_for: 2000-01-23T04:56:07.000+00:00
+          source_snapshot:
+            list_id: 123
+            type: list_snapshot
           started_at: 2000-01-23T04:56:07.000+00:00
-          error_code: error_code
-          delivery_error: delivery_error
-          id: 1
-          delivery_status: not_requested
+          stats:
+            trigger_reason: manual
           status: queued
+          tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          trigger_type: manual
+          updated_at: 2000-01-23T04:56:07.000+00:00
       properties:
         runs:
           items:
@@ -3047,58 +3175,58 @@ components:
       type: object
     ListPipelinesResponse:
       example:
-        total: 9
+        total: 0
         pipelines:
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - created_at: 2000-01-23T04:56:07.000+00:00
           delivery:
-            webhook: ""
-            max_attempts: 0
             dashboard: true
-            retry_backoff_seconds: 6
-          last_scheduled_at: 2000-01-23T04:56:07.000+00:00
-          next_run_at: 2000-01-23T04:56:07.000+00:00
-          created_at: 2000-01-23T04:56:07.000+00:00
-          last_run_id: 5
-          source:
-            list_id: 2
-            type: list_snapshot
-          schedule:
-            cron: cron
-            timezone: timezone
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          name: name
+            max_attempts: 5
+            retry_backoff_seconds: 300
+            webhook: null
           id: 1
-          verification:
-            freshness_days: 7
-            delta_mode: true
+          last_run_id: 5
+          last_scheduled_at: 2000-01-23T04:56:07.000+00:00
+          name: Weekly Cleanup
+          next_run_at: 2000-01-23T04:56:07.000+00:00
           policy:
-            missed_run_window_hours: 5
+            missed_run_window_hours: 24
+          schedule:
+            cron: 0 9 * * 1
+            timezone: UTC
+          source:
+            list_id: 123
+            type: list_snapshot
           status: active
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          verification:
+            delta_mode: true
+            freshness_days: 30
+        - created_at: 2000-01-23T04:56:07.000+00:00
           delivery:
-            webhook: ""
-            max_attempts: 0
             dashboard: true
-            retry_backoff_seconds: 6
-          last_scheduled_at: 2000-01-23T04:56:07.000+00:00
-          next_run_at: 2000-01-23T04:56:07.000+00:00
-          created_at: 2000-01-23T04:56:07.000+00:00
-          last_run_id: 5
-          source:
-            list_id: 2
-            type: list_snapshot
-          schedule:
-            cron: cron
-            timezone: timezone
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          name: name
+            max_attempts: 5
+            retry_backoff_seconds: 300
+            webhook: null
           id: 1
-          verification:
-            freshness_days: 7
-            delta_mode: true
+          last_run_id: 5
+          last_scheduled_at: 2000-01-23T04:56:07.000+00:00
+          name: Weekly Cleanup
+          next_run_at: 2000-01-23T04:56:07.000+00:00
           policy:
-            missed_run_window_hours: 5
+            missed_run_window_hours: 24
+          schedule:
+            cron: 0 9 * * 1
+            timezone: UTC
+          source:
+            list_id: 123
+            type: list_snapshot
           status: active
+          tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          verification:
+            delta_mode: true
+            freshness_days: 30
       properties:
         pipelines:
           items:
@@ -3232,10 +3360,10 @@ components:
       type: object
     PipelineDeliveryConfig:
       example:
-        webhook: ""
-        max_attempts: 0
         dashboard: true
-        retry_backoff_seconds: 6
+        max_attempts: 5
+        retry_backoff_seconds: 300
+        webhook: null
       properties:
         dashboard:
           type: boolean
@@ -3270,8 +3398,6 @@ components:
       - url
       type: object
     PipelinePolicyConfig:
-      example:
-        missed_run_window_hours: 5
       properties:
         missed_run_window_hours:
           format: int32
@@ -3292,29 +3418,33 @@ components:
       type: string
     PipelineRunView:
       example:
+        billed_emails: 0
+        completed_at: 2000-01-23T04:56:07.000+00:00
+        created_at: 2000-01-23T04:56:07.000+00:00
+        delivery_attempts: 0
+        delivery_error: delivery_error
+        delivery_status: not_requested
+        error_code: error_code
         error_message: error_message
-        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        id: 1
+        job_id: 5
         last_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
         list_id: 5
-        delivery_attempts: 6
-        trigger_type: trigger_type
-        created_at: 2000-01-23T04:56:07.000+00:00
-        scheduled_for: 2000-01-23T04:56:07.000+00:00
-        source_snapshot: ""
         next_delivery_attempt_at: 2000-01-23T04:56:07.000+00:00
-        result_location: ""
-        completed_at: 2000-01-23T04:56:07.000+00:00
-        updated_at: 2000-01-23T04:56:07.000+00:00
-        stats: ""
-        job_id: 5
-        billed_emails: 0
         pipeline_id: 2
+        result_location:
+          download_url: /v1/lists/5/download
+        scheduled_for: 2000-01-23T04:56:07.000+00:00
+        source_snapshot:
+          list_id: 123
+          type: list_snapshot
         started_at: 2000-01-23T04:56:07.000+00:00
-        error_code: error_code
-        delivery_error: delivery_error
-        id: 1
-        delivery_status: not_requested
+        stats:
+          trigger_reason: manual
         status: queued
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        trigger_type: manual
+        updated_at: 2000-01-23T04:56:07.000+00:00
       properties:
         billed_emails:
           format: int32
@@ -3398,9 +3528,6 @@ components:
       - updated_at
       type: object
     PipelineSchedule:
-      example:
-        cron: cron
-        timezone: timezone
       properties:
         cron:
           type: string
@@ -3411,6 +3538,13 @@ components:
       - timezone
       type: object
     PipelineSource:
+      discriminator:
+        mapping:
+          bucket: "#/components/schemas/PipelineSource_oneOf_3"
+          integration: "#/components/schemas/PipelineSource_oneOf_1"
+          list_snapshot: "#/components/schemas/PipelineSource_oneOf"
+          push: "#/components/schemas/PipelineSource_oneOf_2"
+        propertyName: type
       oneOf:
       - $ref: "#/components/schemas/PipelineSource_oneOf"
       - $ref: "#/components/schemas/PipelineSource_oneOf_1"
@@ -3423,9 +3557,6 @@ components:
       - deleted
       type: string
     PipelineVerificationSettings:
-      example:
-        freshness_days: 7
-        delta_mode: true
       properties:
         delta_mode:
           type: boolean
@@ -3436,31 +3567,31 @@ components:
       type: object
     PipelineView:
       example:
-        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        delivery:
-          webhook: ""
-          max_attempts: 0
-          dashboard: true
-          retry_backoff_seconds: 6
-        last_scheduled_at: 2000-01-23T04:56:07.000+00:00
-        next_run_at: 2000-01-23T04:56:07.000+00:00
         created_at: 2000-01-23T04:56:07.000+00:00
-        last_run_id: 5
-        source:
-          list_id: 2
-          type: list_snapshot
-        schedule:
-          cron: cron
-          timezone: timezone
-        updated_at: 2000-01-23T04:56:07.000+00:00
-        name: name
+        delivery:
+          dashboard: true
+          max_attempts: 5
+          retry_backoff_seconds: 300
+          webhook: null
         id: 1
-        verification:
-          freshness_days: 7
-          delta_mode: true
+        last_run_id: 5
+        last_scheduled_at: 2000-01-23T04:56:07.000+00:00
+        name: Weekly Cleanup
+        next_run_at: 2000-01-23T04:56:07.000+00:00
         policy:
-          missed_run_window_hours: 5
+          missed_run_window_hours: 24
+        schedule:
+          cron: 0 9 * * 1
+          timezone: UTC
+        source:
+          list_id: 123
+          type: list_snapshot
         status: active
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        verification:
+          delta_mode: true
+          freshness_days: 30
       properties:
         created_at:
           format: date-time
@@ -3936,13 +4067,24 @@ components:
       type: object
     UpdatePipelineInput:
       example:
-        delivery: ""
-        schedule: ""
-        name: name
-        source: ""
-        verification: ""
-        policy: ""
-        status: ""
+        delivery:
+          dashboard: true
+          max_attempts: 5
+          retry_backoff_seconds: 300
+          webhook: null
+        name: Weekly Cleanup
+        policy:
+          missed_run_window_hours: 24
+        schedule:
+          cron: 0 9 * * 1
+          timezone: UTC
+        source:
+          list_id: 123
+          type: list_snapshot
+        status: active
+        verification:
+          delta_mode: true
+          freshness_days: 30
       properties:
         delivery:
           allOf:
@@ -4037,9 +4179,6 @@ components:
       - $ref: "#/components/schemas/SmtpDetails"
       - $ref: "#/components/schemas/CoreError"
     PipelineSource_oneOf:
-      example:
-        list_id: 2
-        type: list_snapshot
       properties:
         list_id:
           format: int32

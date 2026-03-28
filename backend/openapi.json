@@ -424,6 +424,31 @@
         }
       },
       "CreatePipelineInput": {
+        "example": {
+          "delivery": {
+            "dashboard": true,
+            "max_attempts": 5,
+            "retry_backoff_seconds": 300,
+            "webhook": null
+          },
+          "name": "Weekly Cleanup",
+          "policy": {
+            "missed_run_window_hours": 24
+          },
+          "schedule": {
+            "cron": "0 9 * * 1",
+            "timezone": "UTC"
+          },
+          "source": {
+            "list_id": 123,
+            "type": "list_snapshot"
+          },
+          "status": "active",
+          "verification": {
+            "delta_mode": true,
+            "freshness_days": 30
+          }
+        },
         "properties": {
           "delivery": {
             "$ref": "#/components/schemas/PipelineDeliveryConfig"
@@ -1240,6 +1265,12 @@
         "type": "object"
       },
       "PipelineDeliveryConfig": {
+        "example": {
+          "dashboard": true,
+          "max_attempts": 5,
+          "retry_backoff_seconds": 300,
+          "webhook": null
+        },
         "properties": {
           "dashboard": {
             "type": "boolean"
@@ -1315,6 +1346,38 @@
         "type": "string"
       },
       "PipelineRunView": {
+        "example": {
+          "billed_emails": 0,
+          "completed_at": "2000-01-23T04:56:07.000+00:00",
+          "created_at": "2000-01-23T04:56:07.000+00:00",
+          "delivery_attempts": 0,
+          "delivery_error": "delivery_error",
+          "delivery_status": "not_requested",
+          "error_code": "error_code",
+          "error_message": "error_message",
+          "id": 1,
+          "job_id": 5,
+          "last_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+          "list_id": 5,
+          "next_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+          "pipeline_id": 2,
+          "result_location": {
+            "download_url": "/v1/lists/5/download"
+          },
+          "scheduled_for": "2000-01-23T04:56:07.000+00:00",
+          "source_snapshot": {
+            "list_id": 123,
+            "type": "list_snapshot"
+          },
+          "started_at": "2000-01-23T04:56:07.000+00:00",
+          "stats": {
+            "trigger_reason": "manual"
+          },
+          "status": "queued",
+          "tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+          "trigger_type": "manual",
+          "updated_at": "2000-01-23T04:56:07.000+00:00"
+        },
         "properties": {
           "billed_emails": {
             "format": "int32",
@@ -1436,6 +1499,15 @@
         "type": "object"
       },
       "PipelineSource": {
+        "discriminator": {
+          "mapping": {
+            "bucket": "#/components/schemas/PipelineSource_oneOf_3",
+            "integration": "#/components/schemas/PipelineSource_oneOf_1",
+            "list_snapshot": "#/components/schemas/PipelineSource_oneOf",
+            "push": "#/components/schemas/PipelineSource_oneOf_2"
+          },
+          "propertyName": "type"
+        },
         "oneOf": [
           {
             "properties": {
@@ -1563,6 +1635,38 @@
         "type": "object"
       },
       "PipelineView": {
+        "example": {
+          "created_at": "2000-01-23T04:56:07.000+00:00",
+          "delivery": {
+            "dashboard": true,
+            "max_attempts": 5,
+            "retry_backoff_seconds": 300,
+            "webhook": null
+          },
+          "id": 1,
+          "last_run_id": 5,
+          "last_scheduled_at": "2000-01-23T04:56:07.000+00:00",
+          "name": "Weekly Cleanup",
+          "next_run_at": "2000-01-23T04:56:07.000+00:00",
+          "policy": {
+            "missed_run_window_hours": 24
+          },
+          "schedule": {
+            "cron": "0 9 * * 1",
+            "timezone": "UTC"
+          },
+          "source": {
+            "list_id": 123,
+            "type": "list_snapshot"
+          },
+          "status": "active",
+          "tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+          "updated_at": "2000-01-23T04:56:07.000+00:00",
+          "verification": {
+            "delta_mode": true,
+            "freshness_days": 30
+          }
+        },
         "properties": {
           "created_at": {
             "format": "date-time",
@@ -2060,6 +2164,31 @@
         "type": "object"
       },
       "UpdatePipelineInput": {
+        "example": {
+          "delivery": {
+            "dashboard": true,
+            "max_attempts": 5,
+            "retry_backoff_seconds": 300,
+            "webhook": null
+          },
+          "name": "Weekly Cleanup",
+          "policy": {
+            "missed_run_window_hours": 24
+          },
+          "schedule": {
+            "cron": "0 9 * * 1",
+            "timezone": "UTC"
+          },
+          "source": {
+            "list_id": 123,
+            "type": "list_snapshot"
+          },
+          "status": "active",
+          "verification": {
+            "delta_mode": true,
+            "freshness_days": 30
+          }
+        },
         "properties": {
           "delivery": {
             "allOf": [
@@ -3917,6 +4046,16 @@
             },
             "description": "Bad request"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -3926,6 +4065,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "GET /v1/pipelines",
@@ -3966,6 +4115,16 @@
             },
             "description": "Bad request"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -3975,6 +4134,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "POST /v1/pipelines",
@@ -4009,6 +4178,16 @@
             },
             "description": "Pipeline deleted"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4028,6 +4207,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "DELETE /v1/pipelines/{pipeline_id}",
@@ -4060,6 +4249,16 @@
             },
             "description": "Pipeline detail"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4079,6 +4278,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}",
@@ -4131,6 +4340,16 @@
             },
             "description": "Bad request"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4150,6 +4369,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "PATCH /v1/pipelines/{pipeline_id}",
@@ -4184,6 +4413,16 @@
             },
             "description": "Pipeline paused"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4203,6 +4442,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/pause",
@@ -4237,6 +4486,16 @@
             },
             "description": "Pipeline resumed"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4256,6 +4515,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/resume",
@@ -4308,6 +4577,16 @@
             },
             "description": "Pipeline run history"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4327,6 +4606,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}/runs",
@@ -4371,6 +4660,16 @@
             },
             "description": "Pipeline run detail"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4390,6 +4689,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}/runs/{run_id}",
@@ -4444,6 +4753,16 @@
             },
             "description": "Bad request"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4473,6 +4792,16 @@
               }
             },
             "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service unavailable"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/trigger",

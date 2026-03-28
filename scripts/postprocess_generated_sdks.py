@@ -39,6 +39,13 @@ GO_UNION_DOCS = {
             ("MxDetails", "MxDetailsAsCheckEmailOutputMx"),
         ],
     },
+    "CheckEmailOutputSmtp": {
+        "description": "Results from connecting to the mail server via SMTP.",
+        "variants": [
+            ("CoreError", "CoreErrorAsCheckEmailOutputSmtp"),
+            ("SmtpDetails", "SmtpDetailsAsCheckEmailOutputSmtp"),
+        ],
+    },
 }
 
 
@@ -496,10 +503,45 @@ def normalize_typescript_docs() -> None:
         write_if_changed(path, text)
 
 
+def normalize_typescript_readme() -> None:
+    readme_path = ROOT / "sdks" / "typescript" / "src" / "README.md"
+    if not readme_path.exists():
+        return
+
+    text = readme_path.read_text()
+    pipeline_rows = {
+        "v1CreatePipeline",
+        "v1DeletePipeline",
+        "v1GetPipeline",
+        "v1GetPipelineRun",
+        "v1ListPipelineRuns",
+        "v1ListPipelines",
+        "v1PausePipeline",
+        "v1ResumePipeline",
+        "v1TriggerPipeline",
+        "v1UpdatePipeline",
+    }
+
+    normalized_lines: list[str] = []
+    for line in text.splitlines():
+        if not line.startswith("*PipelinesApi* |"):
+            normalized_lines.append(line)
+            continue
+
+        line = line.replace("*PipelinesApi*", "_PipelinesApi_")
+        for operation in pipeline_rows:
+            line = line.replace(f"[**{operation}**]", f"[__{operation}__]")
+        normalized_lines.append(line)
+
+    text = "\n".join(normalized_lines) + "\n"
+    write_if_changed(readme_path, text)
+
+
 def main() -> None:
     normalize_go_models()
     normalize_go_docs()
     normalize_typescript_docs()
+    normalize_typescript_readme()
 
 
 if __name__ == "__main__":

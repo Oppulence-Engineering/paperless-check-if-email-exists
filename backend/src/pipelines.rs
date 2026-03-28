@@ -1012,6 +1012,7 @@ pub async fn create_manual_pipeline_run(
 	tenant_id: Uuid,
 	pipeline_id: i64,
 	force: bool,
+	reason: Option<String>,
 ) -> Result<TriggerPipelineResponse> {
 	let mut tx = pg_pool.begin().await?;
 	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
@@ -1025,13 +1026,17 @@ pub async fn create_manual_pipeline_run(
 	let run_id: i64 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats)
-		VALUES ($1, $2, 'manual', 'queued', $3, '{}'::jsonb)
+		VALUES ($1, $2, 'manual', 'queued', $3, $4)
 		RETURNING id
 		"#,
 	)
 	.bind(pipeline.id)
 	.bind(pipeline.tenant_id)
 	.bind(&pipeline.source_config)
+	.bind(match reason {
+		Some(reason) => json!({ "trigger_reason": reason }),
+		None => json!({}),
+	})
 	.fetch_one(&mut *tx)
 	.await?;
 
@@ -1439,7 +1444,7 @@ async fn execute_pipeline_run_inner(
 	let run = sqlx::query(
 		r#"
 		SELECT pr.id, pr.pipeline_id, pr.tenant_id, pr.trigger_type, pr.status::TEXT,
-		       pr.scheduled_for, pr.source_snapshot,
+		       pr.scheduled_for, pr.source_snapshot, pr.stats,
 		       p.name, p.source_config, p.source_type::TEXT, p.schedule_cron, p.schedule_timezone,
 		       p.verification_settings, p.delivery_config
 		FROM v1_pipeline_runs pr
@@ -1489,18 +1494,22 @@ async fn execute_pipeline_run_inner(
 		"selected_unique_emails": delta_summary.selected_unique_emails,
 		"skipped_unchanged": delta_summary.skipped_unchanged
 	});
+	let updated_stats = merge_pipeline_run_stats(
+		run.get::<Value, _>("stats"),
+		json!({
+			"delta_mode": verification.delta_mode,
+			"freshness_days": verification.freshness_days,
+			"selected_unique_emails": delta_summary.selected_unique_emails,
+			"skipped_unchanged": delta_summary.skipped_unchanged,
+			"changed_only_export": verification.delta_mode,
+		}),
+	);
 	sqlx::query(
 		"UPDATE v1_pipeline_runs SET status = 'fetching_source'::pipeline_run_status, source_snapshot = $2, stats = $3, updated_at = NOW() WHERE id = $1",
 	)
 	.bind(run_id)
 	.bind(&source_snapshot)
-	.bind(json!({
-		"delta_mode": verification.delta_mode,
-		"freshness_days": verification.freshness_days,
-		"selected_unique_emails": delta_summary.selected_unique_emails,
-		"skipped_unchanged": delta_summary.skipped_unchanged,
-		"changed_only_export": verification.delta_mode,
-	}))
+	.bind(updated_stats)
 	.execute(pg_pool)
 	.await?;
 

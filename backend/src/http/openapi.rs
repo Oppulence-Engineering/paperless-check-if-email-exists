@@ -324,6 +324,29 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 	}
 }
 
+fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
+	if let Some(schema) = schemas_mut(spec).get_mut(schema_name).and_then(Value::as_object_mut) {
+		schema.insert("example".to_string(), example);
+	}
+}
+
+fn set_schema_discriminator(
+	spec: &mut Value,
+	schema_name: &str,
+	property_name: &str,
+	mapping: Value,
+) {
+	if let Some(schema) = schemas_mut(spec).get_mut(schema_name).and_then(Value::as_object_mut) {
+		schema.insert(
+			"discriminator".to_string(),
+			json!({
+				"propertyName": property_name,
+				"mapping": mapping,
+			}),
+		);
+	}
+}
+
 fn ensure_check_email_output_scored(spec: &mut Value) {
 	let schemas = schemas_mut(spec);
 	let Some(schema) = schemas
@@ -1195,6 +1218,117 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 	add_phase_two_schemas(spec);
 	ensure_check_email_output_scored(spec);
 	patch_phase_two_paths(spec);
+	set_schema_discriminator(
+		spec,
+		"PipelineSource",
+		"type",
+		json!({
+			"list_snapshot": "#/components/schemas/PipelineSource_oneOf",
+			"integration": "#/components/schemas/PipelineSource_oneOf_1",
+			"push": "#/components/schemas/PipelineSource_oneOf_2",
+			"bucket": "#/components/schemas/PipelineSource_oneOf_3",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineDeliveryConfig",
+		json!({
+			"dashboard": true,
+			"max_attempts": 5,
+			"retry_backoff_seconds": 300,
+			"webhook": Value::Null,
+		}),
+	);
+	set_schema_example(
+		spec,
+		"CreatePipelineInput",
+		json!({
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"UpdatePipelineInput",
+		json!({
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineView",
+		json!({
+			"id": 1,
+			"tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+			"name": "Weekly Cleanup",
+			"source": { "type": "list_snapshot", "list_id": 123 },
+			"schedule": { "cron": "0 9 * * 1", "timezone": "UTC" },
+			"verification": { "delta_mode": true, "freshness_days": 30 },
+			"policy": { "missed_run_window_hours": 24 },
+			"delivery": {
+				"dashboard": true,
+				"max_attempts": 5,
+				"retry_backoff_seconds": 300,
+				"webhook": Value::Null,
+			},
+			"status": "active",
+			"next_run_at": "2000-01-23T04:56:07.000+00:00",
+			"last_scheduled_at": "2000-01-23T04:56:07.000+00:00",
+			"last_run_id": 5,
+			"created_at": "2000-01-23T04:56:07.000+00:00",
+			"updated_at": "2000-01-23T04:56:07.000+00:00",
+		}),
+	);
+	set_schema_example(
+		spec,
+		"PipelineRunView",
+		json!({
+			"id": 1,
+			"pipeline_id": 2,
+			"tenant_id": "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+			"trigger_type": "manual",
+			"status": "queued",
+			"source_snapshot": { "type": "list_snapshot", "list_id": 123 },
+			"stats": { "trigger_reason": "manual" },
+			"billed_emails": 0,
+			"delivery_status": "not_requested",
+			"delivery_attempts": 0,
+			"created_at": "2000-01-23T04:56:07.000+00:00",
+			"updated_at": "2000-01-23T04:56:07.000+00:00",
+			"scheduled_for": "2000-01-23T04:56:07.000+00:00",
+			"started_at": "2000-01-23T04:56:07.000+00:00",
+			"completed_at": "2000-01-23T04:56:07.000+00:00",
+			"job_id": 5,
+			"list_id": 5,
+			"result_location": { "download_url": "/v1/lists/5/download" },
+			"last_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+			"next_delivery_attempt_at": "2000-01-23T04:56:07.000+00:00",
+			"delivery_error": "delivery_error",
+			"error_code": "error_code",
+			"error_message": "error_message",
+		}),
+	);
 }
 
 pub fn build_spec() -> Result<Value, ReacherResponseError> {

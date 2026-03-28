@@ -30,6 +30,6 @@ import type { PipelineSourceOneOf3 } from './pipeline-source-one-of3';
  * @type PipelineSource
  * @export
  */
-export type PipelineSource = PipelineSourceOneOf | PipelineSourceOneOf1 | PipelineSourceOneOf2 | PipelineSourceOneOf3;
+export type PipelineSource = { type: 'bucket' } & PipelineSourceOneOf3 | { type: 'integration' } & PipelineSourceOneOf1 | { type: 'list_snapshot' } & PipelineSourceOneOf | { type: 'push' } & PipelineSourceOneOf2;
 
 
