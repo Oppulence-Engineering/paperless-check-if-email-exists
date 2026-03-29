@@ -495,7 +495,7 @@ async fn delivery_finalize(
 	send_to_reacher(
 		config,
 		&task.input.to_email,
-		worker_output.as_ref().map(|success| &success.output),
+		worker_output.as_ref().map(|success| success),
 	)
 	.await?;
 

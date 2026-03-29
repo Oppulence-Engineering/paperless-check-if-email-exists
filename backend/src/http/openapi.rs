@@ -403,6 +403,7 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 	properties.insert(
 		"bounce_risk".to_string(),
 		json!({
+			"description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
 			"nullable": true,
 			"allOf": [{ "$ref": "#/components/schemas/BounceRiskAssessment" }]
 		}),

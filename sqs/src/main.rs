@@ -128,19 +128,19 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 
 			// If we're in the Commercial License Trial, we also store the
 			// result by sending it to back to Reacher.
-			send_to_reacher(
-				backend_config.clone(),
-				&task.input.to_email,
-				Ok(&success.output),
-			)
-			.await?;
+			send_to_reacher(backend_config.clone(), &task.input.to_email, Ok(success)).await?;
 		}
 		Err(error) => {
 			storage
 				.store_error(task, error, storage.get_extra())
 				.await?;
 
-			send_to_reacher(backend_config.clone(), &task.input.to_email, Err(error)).await?;
+			send_to_reacher::<reacher_backend::scoring::response::PreparedCheckEmailSuccess>(
+				backend_config.clone(),
+				&task.input.to_email,
+				Err(error),
+			)
+			.await?;
 		}
 	}
 

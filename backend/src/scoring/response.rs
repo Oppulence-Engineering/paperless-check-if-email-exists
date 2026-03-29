@@ -197,10 +197,15 @@ pub async fn prepare_verification_response(
 	{
 		Ok(result) => result,
 		Err(error) => {
+			let email_domain = output
+				.input
+				.rsplit_once('@')
+				.map(|(_, domain)| domain)
+				.unwrap_or("unknown");
 			warn!(
 				target: LOG_TARGET,
 				error = ?error,
-				email = %output.input,
+				email_domain = %email_domain,
 				tenant_id = ?tenant_id,
 				"Bounce-risk enrichment failed, continuing without enrichment"
 			);

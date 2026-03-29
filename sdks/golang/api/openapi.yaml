@@ -2148,7 +2148,31 @@ components:
     BulkJobResultsResponse:
       example:
         results:
-        - input: input
+        - provider_rejection_reason: provider_local_part_too_short
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          provider_confidence: high
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -2178,39 +2202,43 @@ components:
             normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
-          debug:
-            duration:
-              nanos: 0.8008281904610115
-              secs: 6.027456183070403
-            server_name: server_name
-            start_time: start_time
-            smtp:
-              verif_method:
-                type: Smtp
-            end_time: end_time
-          smtp:
-            is_catch_all: true
-            can_connect_smtp: true
-            has_full_inbox: true
-            is_disabled: true
-            is_deliverable: true
-          is_reachable: invalid
+          provider: gmail
           bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
             username: username
-          mx:
-            accepts_mail: true
-            records:
-            - records
-            - records
           misc:
             is_b2c: true
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
-        - input: input
+          provider_rules_applied: true
+        - provider_rejection_reason: provider_local_part_too_short
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          provider_confidence: high
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -2240,33 +2268,12 @@ components:
             normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
-          debug:
-            duration:
-              nanos: 0.8008281904610115
-              secs: 6.027456183070403
-            server_name: server_name
-            start_time: start_time
-            smtp:
-              verif_method:
-                type: Smtp
-            end_time: end_time
-          smtp:
-            is_catch_all: true
-            can_connect_smtp: true
-            has_full_inbox: true
-            is_disabled: true
-            is_deliverable: true
-          is_reachable: invalid
+          provider: gmail
           bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
             username: username
-          mx:
-            accepts_mail: true
-            records:
-            - records
-            - records
           misc:
             is_b2c: true
             gravatar_url: gravatar_url
@@ -2313,6 +2320,30 @@ components:
     CheckEmailOutput:
       description: The result of the email verification process.
       example:
+        provider_rejection_reason: provider_local_part_too_short
+        debug:
+          duration:
+            nanos: 0.8008281904610115
+            secs: 6.027456183070403
+          server_name: server_name
+          start_time: start_time
+          smtp:
+            verif_method:
+              type: Smtp
+          end_time: end_time
+        smtp:
+          is_catch_all: true
+          can_connect_smtp: true
+          has_full_inbox: true
+          is_disabled: true
+          is_deliverable: true
+        is_reachable: invalid
+        provider_confidence: high
+        mx:
+          accepts_mail: true
+          records:
+          - records
+          - records
         input: input
         score:
           reason_codes:
@@ -2343,33 +2374,12 @@ components:
           normalized_email: normalized_email
           safe_to_send: true
           sub_reason: deliverable
-        debug:
-          duration:
-            nanos: 0.8008281904610115
-            secs: 6.027456183070403
-          server_name: server_name
-          start_time: start_time
-          smtp:
-            verif_method:
-              type: Smtp
-          end_time: end_time
-        smtp:
-          is_catch_all: true
-          can_connect_smtp: true
-          has_full_inbox: true
-          is_disabled: true
-          is_deliverable: true
-        is_reachable: invalid
+        provider: gmail
         bounce_risk: null
         syntax:
           domain: domain
           is_valid_syntax: true
           username: username
-        mx:
-          accepts_mail: true
-          records:
-          - records
-          - records
         misc:
           is_b2c: true
           gravatar_url: gravatar_url

@@ -283,6 +283,7 @@
                 "$ref": "#/components/schemas/BounceRiskAssessment"
               }
             ],
+            "description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
             "nullable": true
           },
           "debug": {

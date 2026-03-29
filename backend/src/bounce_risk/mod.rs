@@ -423,6 +423,7 @@ async fn collect_signal_bundle(
 		&output.input,
 		&email_score.category,
 		runtime.history_limit,
+		context.completed_at,
 	)
 	.await?;
 
@@ -601,6 +602,7 @@ async fn collect_history_signals(
 	email: &str,
 	current_category: &impl Serialize,
 	history_limit: u32,
+	baseline_completed_at: DateTime<Utc>,
 ) -> Result<HistorySignals, anyhow::Error> {
 	let Some(pool) = read_pool else {
 		return Ok(HistorySignals {
@@ -660,10 +662,18 @@ async fn collect_history_signals(
 		})
 		.collect();
 
-	Ok(summarize_history(&history_rows, &current_category))
+	Ok(summarize_history(
+		&history_rows,
+		&current_category,
+		baseline_completed_at,
+	))
 }
 
-fn summarize_history(rows: &[HistoryRow], current_category: &str) -> HistorySignals {
+fn summarize_history(
+	rows: &[HistoryRow],
+	current_category: &str,
+	baseline_completed_at: DateTime<Utc>,
+) -> HistorySignals {
 	if rows.is_empty() {
 		return HistorySignals {
 			count: Some(0),
@@ -683,7 +693,7 @@ fn summarize_history(rows: &[HistoryRow], current_category: &str) -> HistorySign
 
 	let most_recent = rows.iter().map(|row| row.completed_at).max();
 	let days_since_last_verification =
-		most_recent.map(|completed_at| (Utc::now() - completed_at).num_days().max(0));
+		most_recent.map(|completed_at| (baseline_completed_at - completed_at).num_days().max(0));
 
 	HistorySignals {
 		count: Some(rows.len() as u32),
@@ -1456,6 +1466,7 @@ mod tests {
 				},
 			],
 			"valid",
+			now,
 		);
 		assert_eq!(consistent.consistency, Some(HistoryConsistency::Consistent));
 
@@ -1471,11 +1482,28 @@ mod tests {
 				},
 			],
 			"valid",
+			now,
 		);
 		assert_eq!(
 			inconsistent.consistency,
 			Some(HistoryConsistency::Inconsistent)
 		);
+	}
+
+	#[test]
+	fn history_summary_uses_request_completed_at_as_baseline() {
+		let completed_at = Utc::now() - ChronoDuration::days(3);
+		let baseline = completed_at + ChronoDuration::days(10);
+		let summary = summarize_history(
+			&[HistoryRow {
+				category: Some("valid".to_string()),
+				completed_at,
+			}],
+			"valid",
+			baseline,
+		);
+
+		assert_eq!(summary.days_since_last_verification, Some(10));
 	}
 
 	#[test]

@@ -17,18 +17,22 @@
 use crate::config::{BackendConfig, CommercialLicenseTrialConfig};
 use crate::http::ReacherResponseError;
 use crate::worker::do_work::TaskError;
-use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
+use check_if_email_exists::LOG_TARGET;
+use serde::Serialize;
 use std::sync::Arc;
 use tracing::debug;
 use warp::http::StatusCode;
 
 /// If we're in the Commercial License Trial, we also store the
 /// result by sending it to back to Reacher.
-pub async fn send_to_reacher(
+pub async fn send_to_reacher<T>(
 	config: Arc<BackendConfig>,
 	email: &str,
-	worker_output: Result<&CheckEmailOutput, &TaskError>,
-) -> Result<(), ReacherResponseError> {
+	worker_output: Result<&T, &TaskError>,
+) -> Result<(), ReacherResponseError>
+where
+	T: Serialize + ?Sized,
+{
 	if let Some(CommercialLicenseTrialConfig { api_token, url }) = &config.commercial_license_trial
 	{
 		let res = reqwest::Client::new()
@@ -60,7 +64,10 @@ pub async fn send_to_reacher(
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::scoring::compute_score;
+	use crate::scoring::response::{PreparedCheckEmailSuccess, PreparedVerificationResponse};
 	use check_if_email_exists::{CheckEmailOutput, Reachable};
+	use serde_json::json;
 
 	#[tokio::test]
 	async fn test_send_to_reacher_no_config_is_noop() {
@@ -78,7 +85,42 @@ mod tests {
 	async fn test_send_to_reacher_with_error_result() {
 		let config = Arc::new(BackendConfig::empty());
 		let output = TaskError::Lapin(lapin::Error::InvalidChannel(0));
-		let result = send_to_reacher(config, "test@example.com", Err(&output)).await;
+		let result =
+			send_to_reacher::<CheckEmailOutput>(config, "test@example.com", Err(&output)).await;
 		assert!(result.is_ok());
+	}
+
+	#[test]
+	fn prepared_success_serializes_with_api_shape() {
+		let input = "test@example.com".to_string();
+		let output = CheckEmailOutput {
+			input: input.clone(),
+			is_reachable: Reachable::Safe,
+			..Default::default()
+		};
+		let score = compute_score(&output);
+		let prepared = PreparedCheckEmailSuccess {
+			output,
+			response: PreparedVerificationResponse {
+				json: json!({
+					"input": input,
+					"score": { "score": 42 },
+					"prepared_marker": true
+				}),
+				body: Vec::new(),
+				score,
+				canonical_email: None,
+				bounce_risk: None,
+				bounce_risk_signals: None,
+			},
+		};
+
+		let serialized = serde_json::to_value(Ok::<_, TaskError>(&prepared)).unwrap();
+		assert_eq!(
+			serialized
+				.get("Ok")
+				.and_then(|value| value.get("prepared_marker")),
+			Some(&json!(true))
+		);
 	}
 }

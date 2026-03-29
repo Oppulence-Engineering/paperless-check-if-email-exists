@@ -276,7 +276,7 @@ async fn handle_without_worker(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared.output))
+	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared))
 		.await
 		.map_err(ReacherResponseError::from)?;
 
