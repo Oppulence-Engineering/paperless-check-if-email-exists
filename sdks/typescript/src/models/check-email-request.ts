@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+ * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
  *
  * The version of the OpenAPI document: 0.11.0
  * Contact: amaury@reacher.email
@@ -89,6 +89,12 @@ export interface CheckEmailRequest {
      * @memberof CheckEmailRequest
      */
     'smtp_port'?: number;
+    /**
+     * When false, skips provider-specific syntax validation even if the provider is recognized.
+     * @type {boolean}
+     * @memberof CheckEmailRequest
+     */
+    'strict_provider_rules'?: boolean;
     /**
      * The email address to check.
      * @type {string}

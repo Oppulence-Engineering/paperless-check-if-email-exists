@@ -27,6 +27,9 @@ use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::single_shot::SingleShotReply;
 use chrono::{TimeZone, Utc};
+use std::time::Duration;
+
+const WORKER_RPC_TIMEOUT_SECONDS: u64 = 20;
 
 #[derive(Debug)]
 pub struct CheckEmailResponse {
@@ -318,6 +321,7 @@ async fn handle_with_worker(
 		.channel;
 
 	let correlation_id = uuid::Uuid::new_v4();
+	let correlation_id_str = correlation_id.to_string();
 	let reply_queue = channel
 		.queue_declare(
 			"",
@@ -335,7 +339,7 @@ async fn handle_with_worker(
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
 		.with_priority(MAX_QUEUE_PRIORITY)
-		.with_correlation_id(correlation_id.to_string().into())
+		.with_correlation_id(correlation_id_str.clone().into())
 		.with_reply_to(reply_queue.name().to_owned());
 
 	publish_task(
@@ -368,47 +372,79 @@ async fn handle_with_worker(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	if let Some(delivery) = consumer.next().await {
-		let delivery = delivery.map_err(ReacherResponseError::from)?;
+	let delivery = tokio::time::timeout(
+		Duration::from_secs(WORKER_RPC_TIMEOUT_SECONDS),
+		consumer.next(),
+	)
+	.await;
 
-		if delivery
-			.properties
-			.correlation_id()
-			.as_ref()
-			.map(|s| s.as_str())
-			== Some(correlation_id.to_string().as_str())
-		{
-			delivery
-				.ack(BasicAckOptions::default())
-				.await
-				.map_err(ReacherResponseError::from)?;
-
-			let single_shot_response = serde_json::from_slice::<SingleShotReply>(&delivery.data)
-				.map_err(ReacherResponseError::from)?;
-
-			match single_shot_response {
-				SingleShotReply::Ok(body) => {
-					return Ok(body);
-				}
-				SingleShotReply::Err((e, code)) => {
-					let status_code =
-						StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
-					return Err(ReacherResponseError::new(status_code, e).into());
-				}
-			}
-		} else {
-			delivery
-				.reject(BasicRejectOptions { requeue: false })
-				.await
-				.map_err(ReacherResponseError::from)?;
+	let Some(delivery) = (match delivery {
+		Ok(delivery) => delivery,
+		Err(_) => {
+			warn!(
+				target: LOG_TARGET,
+				correlation_id = %correlation_id_str,
+				reply_queue = %reply_queue.name().as_str(),
+				timeout_seconds = WORKER_RPC_TIMEOUT_SECONDS,
+				"Timed out waiting for worker RPC reply"
+			);
 			return Err(ReacherResponseError::new(
-				StatusCode::INTERNAL_SERVER_ERROR,
-				"Failed to get a reply from the worker.",
+				StatusCode::GATEWAY_TIMEOUT,
+				"Timed out waiting for worker reply.",
 			)
 			.into());
 		}
+	}) else {
+		warn!(
+			target: LOG_TARGET,
+			correlation_id = %correlation_id_str,
+			reply_queue = %reply_queue.name().as_str(),
+			"Worker RPC consumer closed before reply"
+		);
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"Worker reply channel closed before a response arrived.",
+		)
+		.into());
+	};
+	let delivery = delivery.map_err(ReacherResponseError::from)?;
+
+	if delivery
+		.properties
+		.correlation_id()
+		.as_ref()
+		.map(|s| s.as_str())
+		== Some(correlation_id_str.as_str())
+	{
+		delivery
+			.ack(BasicAckOptions::default())
+			.await
+			.map_err(ReacherResponseError::from)?;
+
+		let single_shot_response = serde_json::from_slice::<SingleShotReply>(&delivery.data)
+			.map_err(ReacherResponseError::from)?;
+
+		match single_shot_response {
+			SingleShotReply::Ok(body) => {
+				return Ok(body);
+			}
+			SingleShotReply::Err((e, code)) => {
+				let status_code = StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
+				return Err(ReacherResponseError::new(status_code, e).into());
+			}
+		}
 	}
 
+	warn!(
+		target: LOG_TARGET,
+		expected_correlation_id = %correlation_id_str,
+		actual_correlation_id = ?delivery.properties.correlation_id().as_ref().map(|value| value.as_str().to_string()),
+		"Worker RPC reply carried an unexpected correlation id"
+	);
+	delivery
+		.reject(BasicRejectOptions { requeue: false })
+		.await
+		.map_err(ReacherResponseError::from)?;
 	Err(ReacherResponseError::new(
 		StatusCode::INTERNAL_SERVER_ERROR,
 		"Failed to get a reply from the worker.",

@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
 
 API version: 0.11.0
 Contact: amaury@reacher.email
@@ -36,6 +36,8 @@ type CheckEmailRequest struct {
 	Sandbox *bool `json:"sandbox,omitempty"`
 	// SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used.
 	SmtpPort *float32 `json:"smtp_port,omitempty"`
+	// When false, skips provider-specific syntax validation even if the provider is recognized.
+	StrictProviderRules *bool `json:"strict_provider_rules,omitempty"`
 	// The email address to check.
 	ToEmail string `json:"to_email"`
 	YahooVerifMethod *YahooVerifMethod `json:"yahoo_verif_method,omitempty"`
@@ -353,6 +355,38 @@ func (o *CheckEmailRequest) SetSmtpPort(v float32) {
 	o.SmtpPort = &v
 }
 
+// GetStrictProviderRules returns the StrictProviderRules field value if set, zero value otherwise.
+func (o *CheckEmailRequest) GetStrictProviderRules() bool {
+	if o == nil || IsNil(o.StrictProviderRules) {
+		var ret bool
+		return ret
+	}
+	return *o.StrictProviderRules
+}
+
+// GetStrictProviderRulesOk returns a tuple with the StrictProviderRules field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailRequest) GetStrictProviderRulesOk() (*bool, bool) {
+	if o == nil || IsNil(o.StrictProviderRules) {
+		return nil, false
+	}
+	return o.StrictProviderRules, true
+}
+
+// HasStrictProviderRules returns a boolean if a field has been set.
+func (o *CheckEmailRequest) HasStrictProviderRules() bool {
+	if o != nil && !IsNil(o.StrictProviderRules) {
+		return true
+	}
+
+	return false
+}
+
+// SetStrictProviderRules gets a reference to the given bool and assigns it to the StrictProviderRules field.
+func (o *CheckEmailRequest) SetStrictProviderRules(v bool) {
+	o.StrictProviderRules = &v
+}
+
 // GetToEmail returns the ToEmail field value
 func (o *CheckEmailRequest) GetToEmail() string {
 	if o == nil {
@@ -445,6 +479,9 @@ func (o CheckEmailRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.SmtpPort) {
 		toSerialize["smtp_port"] = o.SmtpPort
+	}
+	if !IsNil(o.StrictProviderRules) {
+		toSerialize["strict_provider_rules"] = o.StrictProviderRules
 	}
 	toSerialize["to_email"] = o.ToEmail
 	if !IsNil(o.YahooVerifMethod) {

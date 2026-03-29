@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+ * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
  *
  * The version of the OpenAPI document: 0.11.0
  * Contact: amaury@reacher.email
@@ -24,6 +24,16 @@ export const ReasonCode = {
     Deliverable: 'deliverable',
     InvalidSyntax: 'invalid_syntax',
     InvalidRecipient: 'invalid_recipient',
+    ProviderRejected: 'provider_rejected',
+    ProviderLocalPartTooShort: 'provider_local_part_too_short',
+    ProviderLocalPartTooLong: 'provider_local_part_too_long',
+    ProviderInvalidCharacter: 'provider_invalid_character',
+    ProviderConsecutiveSpecialCharacters: 'provider_consecutive_special_characters',
+    ProviderInvalidStartCharacter: 'provider_invalid_start_character',
+    ProviderInvalidEndCharacter: 'provider_invalid_end_character',
+    ProviderPlusAddressingNotSupported: 'provider_plus_addressing_not_supported',
+    ProviderReservedWord: 'provider_reserved_word',
+    ProviderFormatViolation: 'provider_format_violation',
     SmtpUndeliverable: 'smtp_undeliverable',
     DisabledMailbox: 'disabled_mailbox',
     NoMx: 'no_mx',

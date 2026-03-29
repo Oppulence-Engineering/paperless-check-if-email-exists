@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**action** | [**RecommendedAction**](RecommendedAction.md) |  | [default to undefined]
-**category** | [**BounceRiskCategory**](BounceRiskCategory.md) |  | [default to undefined]
-**confidence** | **number** |  | [default to undefined]
-**model_version** | **string** |  | [default to undefined]
-**risk_factors** | [**Array&lt;RiskFactor&gt;**](RiskFactor.md) |  | [default to undefined]
-**score** | **number** |  | [default to undefined]
-**scored_at** | **string** |  | [default to undefined]
+**action** | [**RecommendedAction**](RecommendedAction.md) |  | [required]
+**category** | [**BounceRiskCategory**](BounceRiskCategory.md) |  | [required]
+**confidence** | **number** |  | [required]
+**model_version** | **string** |  | [required]
+**risk_factors** | [**Array&lt;RiskFactor&gt;**](RiskFactor.md) |  | [required]
+**score** | **number** |  | [required]
+**scored_at** | **string** |  | [required]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { BounceRiskAssessment } from '@oppulence/reacher-sdk';
 
 const instance: BounceRiskAssessment = {
-    action,
-    category,
-    confidence,
-    model_version,
-    risk_factors,
-    score,
-    scored_at,
+    action: {} as any,
+    category: {} as any,
+    confidence: 0,
+    model_version: 'example',
+    risk_factors: [],
+    score: 0,
+    scored_at: 'example',
 };
 ```
 

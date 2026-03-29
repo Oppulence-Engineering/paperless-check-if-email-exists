@@ -6,19 +6,19 @@ The result of the email verification process.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**bounce_risk** | [**BounceRiskAssessment**](BounceRiskAssessment.md) | May be `null` when enrichment is disabled or unavailable. | [optional, nullable] [default to undefined]
-**debug** | [**DebugDetails**](DebugDetails.md) |  | [optional] [default to undefined]
-**input** | **string** | The email address that was verified. | [default to undefined]
-**is_reachable** | [**Reachable**](Reachable.md) |  | [default to undefined]
-**misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [default to undefined]
-**mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [default to undefined]
-**provider** | [**Provider**](Provider.md) |  | [optional] [default to undefined]
-**provider_confidence** | [**ProviderConfidence**](ProviderConfidence.md) |  | [optional] [default to undefined]
-**provider_rejection_reason** | [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional] [default to undefined]
-**provider_rules_applied** | **boolean** |  | [default to undefined]
-**score** | [**EmailScore**](EmailScore.md) |  | [default to undefined]
-**smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [default to undefined]
-**syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [default to undefined]
+**bounce_risk** | [**BounceRiskAssessment**](BounceRiskAssessment.md) | Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable. | [optional]
+**debug** | [**DebugDetails**](DebugDetails.md) |  | [optional]
+**input** | **string** | The email address that was verified. | [required]
+**is_reachable** | [**Reachable**](Reachable.md) |  | [required]
+**misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
+**mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [required]
+**provider** | [**Provider**](Provider.md) |  | [optional]
+**provider_confidence** | [**ProviderConfidence**](ProviderConfidence.md) |  | [optional]
+**provider_rejection_reason** | [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional]
+**provider_rules_applied** | **boolean** |  | [required]
+**score** | [**EmailScore**](EmailScore.md) |  | [required]
+**smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [required]
+**syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [required]
 
 ## Example
 
@@ -26,19 +26,19 @@ Name | Type | Description | Notes
 import { CheckEmailOutput } from '@oppulence/reacher-sdk';
 
 const instance: CheckEmailOutput = {
-    bounce_risk,
-    debug,
-    input,
-    is_reachable,
-    misc,
-    mx,
-    provider,
-    provider_confidence,
-    provider_rejection_reason,
-    provider_rules_applied,
-    score,
-    smtp,
-    syntax,
+    bounce_risk: {} as any,
+    debug: {} as any,
+    input: 'example',
+    is_reachable: {} as any,
+    misc: {} as any,
+    mx: {} as any,
+    provider: {} as any,
+    provider_confidence: {} as any,
+    provider_rejection_reason: {} as any,
+    provider_rules_applied: true,
+    score: {} as any,
+    smtp: {} as any,
+    syntax: {} as any,
 };
 ```
 

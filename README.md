@@ -7,17 +7,25 @@
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">check-if-email-exists</h1>
-<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ HTTP backend</a>.</h4>
+<h4 align="center">Check if an email address exists without sending any email.<br/>Comes with a <a href="./backend">⚙️ backend/API engine</a>.</h4>
 
 <br /><br /><br />
 
+## Repository Scope
+
+This repository is strongest as a backend/API engine for email verification and list hygiene workflows. The supported core in this codebase is:
+
+- single email verification
+- bulk jobs and CSV list cleaning
+- suppression management
+- scheduled re-verification and pipelines
+- tenant auth, quotas, job approval, and email history
+
+The hosted Reacher dashboard is a separate product surface and is not part of this repository.
+
 ## 👉 Live Demo: https://reacher.email
 
-<img src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="68" align="left" />
-
-This is open-source, but I also offer a **SaaS** solution that has `check-if-email-exists` packaged in a nice friendly web interface. If you are interested, find out more at [Reacher](https://reacher.email/?ref=github). If you have any questions, you can contact me at amaury@reacher.email.
-
-<br />
+The open-source backend can also be used through the hosted Reacher SaaS. That hosted dashboard experience is separate from this repo's backend and worker implementation.
 
 ## Get Started
 
@@ -762,4 +770,3 @@ docker sandbox run claude
 ```
 
 See [Getting Started with Ralph](https://www.aihero.dev/getting-started-with-ralph) for the full walkthrough.
-

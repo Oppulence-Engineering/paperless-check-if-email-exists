@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **Proxy** | Pointer to [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional]
 **Sandbox** | Pointer to **bool** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional]
 **SmtpPort** | Pointer to **float32** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional]
+**StrictProviderRules** | Pointer to **bool** | When false, skips provider-specific syntax validation even if the provider is recognized. | [optional]
 **ToEmail** | **string** | The email address to check. | [required]
 **YahooVerifMethod** | Pointer to [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional]
 
@@ -259,6 +260,31 @@ SetSmtpPort sets SmtpPort field to given value.
 `func (o *CheckEmailRequest) HasSmtpPort() bool`
 
 HasSmtpPort returns a boolean if a field has been set.
+
+### GetStrictProviderRules
+
+`func (o *CheckEmailRequest) GetStrictProviderRules() bool`
+
+GetStrictProviderRules returns the StrictProviderRules field if non-nil, zero value otherwise.
+
+### GetStrictProviderRulesOk
+
+`func (o *CheckEmailRequest) GetStrictProviderRulesOk() (*bool, bool)`
+
+GetStrictProviderRulesOk returns a tuple with the StrictProviderRules field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStrictProviderRules
+
+`func (o *CheckEmailRequest) SetStrictProviderRules(v bool)`
+
+SetStrictProviderRules sets StrictProviderRules field to given value.
+
+### HasStrictProviderRules
+
+`func (o *CheckEmailRequest) HasStrictProviderRules() bool`
+
+HasStrictProviderRules returns a boolean if a field has been set.
 
 ### GetToEmail
 

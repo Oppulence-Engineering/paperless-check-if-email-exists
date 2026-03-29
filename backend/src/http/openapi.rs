@@ -107,6 +107,11 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "Admin", description = "Administrative endpoints"),
 		(name = "Admin Jobs", description = "Administrative job endpoints"),
 		(name = "Tenant", description = "Tenant-scoped account settings and domain endpoints"),
+		(name = "Lists", description = "List upload, cleaning, and quality endpoints"),
+		(name = "Verification", description = "Historical verification lookup endpoints"),
+		(name = "Events", description = "Advanced audit log endpoints"),
+		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
+		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
 	)
 )]
 struct BackendApiDoc;

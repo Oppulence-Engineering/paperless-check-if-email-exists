@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
 
 API version: 0.11.0
 Contact: amaury@reacher.email
@@ -277,7 +277,6 @@ func (o *BounceRiskAssessment) UnmarshalJSON(data []byte) (err error) {
 	varBounceRiskAssessment := _BounceRiskAssessment{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varBounceRiskAssessment)
 
 	if err != nil {

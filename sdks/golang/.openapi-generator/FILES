@@ -86,6 +86,9 @@ docs/PipelineStatus.md
 docs/PipelineVerificationSettings.md
 docs/PipelineView.md
 docs/PipelinesAPI.md
+docs/Provider.md
+docs/ProviderConfidence.md
+docs/ProviderRejectionReason.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
@@ -183,6 +186,9 @@ model_pipeline_source_one_of_3.go
 model_pipeline_status.go
 model_pipeline_verification_settings.go
 model_pipeline_view.go
+model_provider.go
+model_provider_confidence.go
+model_provider_rejection_reason.go
 model_reachable.go
 model_reason_code.go
 model_recommended_action.go

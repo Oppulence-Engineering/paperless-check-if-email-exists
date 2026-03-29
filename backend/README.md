@@ -5,11 +5,24 @@
 
 <p align="center"><img align="center" src="https://storage.googleapis.com/saasify-uploads-prod/696e287ad79f0e0352bc201b36d701849f7d55e7.svg" height="96" alt="reacher" /></p>
 <h1 align="center">⚙️ Reacher Backend</h1>
-<h4 align="center">REST Server for Reacher Email Verification API: https://reacher.email.</h4>
+<h4 align="center">Backend/API engine for Reacher email verification workflows.</h4>
 
 <br /><br />
 
-This crate holds the backend for [Reacher](https://reacher.email). The backend is both a HTTP server and a email verification worker. It has with the following components:
+This crate holds the backend for [Reacher](https://reacher.email). It is the HTTP API and worker engine behind the product, and it is designed to be useful on its own as a self-hosted backend for Sales/RevOps-style list hygiene workflows.
+
+The supported core workflows in this crate are:
+
+- single verification
+- bulk verification jobs and list cleaning
+- suppressions
+- job approval and email history
+- tenant auth and quotas
+- scheduled re-verification and pipelines
+
+The hosted dashboard is out of repo. This crate provides the backend/API surface that the dashboard and external integrations talk to.
+
+The backend has the following main components:
 
 -   [`check-if-email-exists`](https://github.com/reacherhq/check-if-email-exists), which performs the core email verification logic,
 -   [`warp`](https://github.com/seanmonstar/warp) web framework,
