@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **proxy** | [**CheckEmailInputProxy**](CheckEmailInputProxy.md) |  | [optional]
 **sandbox** | **boolean** | When true, returns deterministic mock results without consuming credits or making real SMTP connections. | [optional]
 **smtp_port** | **number** | SMTP port to use for email validation. Defaults to 25, but 465, 587, and 2525 are sometimes also used. | [optional]
+**strict_provider_rules** | **boolean** | When false, skips provider-specific syntax validation even if the provider is recognized. | [optional]
 **to_email** | **string** | The email address to check. | [required]
 **yahoo_verif_method** | [**YahooVerifMethod**](YahooVerifMethod.md) |  | [optional]
 
@@ -33,6 +34,7 @@ const instance: CheckEmailRequest = {
     proxy: {} as any,
     sandbox: true,
     smtp_port: 0,
+    strict_provider_rules: true,
     to_email: 'example',
     yahoo_verif_method: {} as any,
 };

@@ -9,7 +9,7 @@
 
 * `OutlookConsumer` (value: `'outlook_consumer'`)
 
-* `Microsoft365` (value: `'microsoft365'`) - Microsoft 365
+* `Microsoft365` (value: `'microsoft365'`)
 
 * `Yahoo` (value: `'yahoo'`)
 

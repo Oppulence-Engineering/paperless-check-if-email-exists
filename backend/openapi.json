@@ -2622,7 +2622,7 @@
       "name": "Reacher",
       "url": "https://reacher.email"
     },
-    "description": "### What is Reacher?\n\nReacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.",
+    "description": "### What is Reacher?\n\nReacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.",
     "license": {
       "name": "AGPL-3.0 OR Commercial",
       "url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
@@ -5371,6 +5371,26 @@
     {
       "description": "Tenant-scoped account settings and domain endpoints",
       "name": "Tenant"
+    },
+    {
+      "description": "List upload, cleaning, and quality endpoints",
+      "name": "Lists"
+    },
+    {
+      "description": "Historical verification lookup endpoints",
+      "name": "Verification"
+    },
+    {
+      "description": "Advanced audit log endpoints",
+      "name": "Events"
+    },
+    {
+      "description": "Advanced historical query endpoints; experimental for large reporting workloads",
+      "name": "Query"
+    },
+    {
+      "description": "Collaboration annotation endpoints; experimental",
+      "name": "Comments"
     }
   ]
 }

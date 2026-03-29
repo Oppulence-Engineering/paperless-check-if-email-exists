@@ -7,7 +7,7 @@ info:
   description: |-
     ### What is Reacher?
 
-    Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+    Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
   license:
     name: AGPL-3.0 OR Commercial
     url: https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md
@@ -2203,7 +2203,7 @@ components:
             safe_to_send: true
             sub_reason: deliverable
           provider: gmail
-          bounce_risk: null
+          bounce_risk: ""
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -2269,7 +2269,7 @@ components:
             safe_to_send: true
             sub_reason: deliverable
           provider: gmail
-          bounce_risk: null
+          bounce_risk: ""
           syntax:
             domain: domain
             is_valid_syntax: true
@@ -2279,6 +2279,7 @@ components:
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
+          provider_rules_applied: true
       properties:
         results:
           items:
@@ -2375,7 +2376,7 @@ components:
           safe_to_send: true
           sub_reason: deliverable
         provider: gmail
-        bounce_risk: null
+        bounce_risk: ""
         syntax:
           domain: domain
           is_valid_syntax: true
@@ -2385,10 +2386,13 @@ components:
           gravatar_url: gravatar_url
           is_role_account: true
           is_disposable: true
+        provider_rules_applied: true
       properties:
         bounce_risk:
           allOf:
           - $ref: "#/components/schemas/BounceRiskAssessment"
+          description: Additive bounce-risk assessment. May be null when enrichment
+            is disabled or unavailable.
           nullable: true
         debug:
           $ref: "#/components/schemas/DebugDetails"
@@ -2402,6 +2406,14 @@ components:
           $ref: "#/components/schemas/CheckEmailOutput_misc"
         mx:
           $ref: "#/components/schemas/CheckEmailOutput_mx"
+        provider:
+          $ref: "#/components/schemas/Provider"
+        provider_confidence:
+          $ref: "#/components/schemas/ProviderConfidence"
+        provider_rejection_reason:
+          $ref: "#/components/schemas/ProviderRejectionReason"
+        provider_rules_applied:
+          type: boolean
         score:
           $ref: "#/components/schemas/EmailScore"
         smtp:
@@ -2413,6 +2425,7 @@ components:
       - is_reachable
       - misc
       - mx
+      - provider_rules_applied
       - score
       - smtp
       - syntax
@@ -2457,6 +2470,7 @@ components:
         from_email: from_email
         smtp_port: 6.027456183070403
         hello_name: hello_name
+        strict_provider_rules: true
         gmail_verif_method: Smtp
         sandbox: false
         check_gravatar: true
@@ -2489,6 +2503,10 @@ components:
           description: "SMTP port to use for email validation. Defaults to 25, but\
             \ 465, 587, and 2525 are sometimes also used."
           type: number
+        strict_provider_rules:
+          description: "When false, skips provider-specific syntax validation even\
+            \ if the provider is recognized."
+          type: boolean
         to_email:
           description: The email address to check.
           type: string
@@ -3832,6 +3850,35 @@ components:
       - updated_at
       - verification
       type: object
+    Provider:
+      enum:
+      - gmail
+      - google_workspace
+      - outlook_consumer
+      - microsoft365
+      - yahoo
+      - apple_icloud
+      - proton
+      - zoho
+      type: string
+    ProviderConfidence:
+      enum:
+      - high
+      - medium
+      - low
+      type: string
+    ProviderRejectionReason:
+      enum:
+      - provider_local_part_too_short
+      - provider_local_part_too_long
+      - provider_invalid_character
+      - provider_consecutive_special_characters
+      - provider_invalid_start_character
+      - provider_invalid_end_character
+      - provider_plus_addressing_not_supported
+      - provider_reserved_word
+      - provider_format_violation
+      type: string
     Reachable:
       description: "An enumeration describing the confidence level that the recipient\
         \ address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our\
@@ -3848,6 +3895,16 @@ components:
       - deliverable
       - invalid_syntax
       - invalid_recipient
+      - provider_rejected
+      - provider_local_part_too_short
+      - provider_local_part_too_long
+      - provider_invalid_character
+      - provider_consecutive_special_characters
+      - provider_invalid_start_character
+      - provider_invalid_end_character
+      - provider_plus_addressing_not_supported
+      - provider_reserved_word
+      - provider_format_violation
       - smtp_undeliverable
       - disabled_mailbox
       - no_mx
@@ -4113,6 +4170,7 @@ components:
       - deliverable
       - invalid_syntax
       - invalid_recipient
+      - provider_rejected
       - smtp_undeliverable
       - disabled_mailbox
       - no_mx

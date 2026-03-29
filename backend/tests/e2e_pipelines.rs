@@ -1,7 +1,7 @@
 mod test_helpers;
 
 use crate::test_helpers::{
-	insert_api_key_with_scopes, insert_tenant, test_amqp_url, test_db_url, TestDb,
+	ensure_test_amqp_url, insert_api_key_with_scopes, insert_tenant, test_db_url, TestDb,
 };
 use anyhow::{anyhow, bail, Result};
 use reacher_backend::config::{
@@ -23,6 +23,7 @@ const WAIT_TIMEOUT: Duration = Duration::from_secs(10);
 const POLL_INTERVAL: Duration = Duration::from_millis(100);
 
 async fn worker_pipeline_config(enable_scheduler: bool) -> Arc<BackendConfig> {
+	let amqp_url = ensure_test_amqp_url().await;
 	let mut c = BackendConfig::empty();
 	c.storage = Some(StorageConfig::Postgres(PostgresConfig {
 		db_url: test_db_url(),
@@ -32,7 +33,7 @@ async fn worker_pipeline_config(enable_scheduler: bool) -> Arc<BackendConfig> {
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
-			url: test_amqp_url(),
+			url: amqp_url,
 			concurrency: 4,
 		}),
 		webhook: None,

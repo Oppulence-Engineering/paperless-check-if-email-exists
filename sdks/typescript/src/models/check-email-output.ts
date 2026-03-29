@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a robust, open-source email verification API service available as both a SaaS and self-hosted solution.
+ * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
  *
  * The version of the OpenAPI document: 0.11.0
  * Contact: amaury@reacher.email
@@ -33,6 +33,15 @@ import type { DebugDetails } from './debug-details';
 import type { EmailScore } from './email-score';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { Provider } from './provider';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { ProviderConfidence } from './provider-confidence';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { ProviderRejectionReason } from './provider-rejection-reason';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { Reachable } from './reachable';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -45,7 +54,7 @@ import type { SyntaxDetails } from './syntax-details';
  */
 export interface CheckEmailOutput {
     /**
-     * 
+     * Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.
      * @type {BounceRiskAssessment}
      * @memberof CheckEmailOutput
      */
@@ -80,6 +89,30 @@ export interface CheckEmailOutput {
      * @memberof CheckEmailOutput
      */
     'mx': CheckEmailOutputMx;
+    /**
+     * 
+     * @type {Provider}
+     * @memberof CheckEmailOutput
+     */
+    'provider'?: Provider;
+    /**
+     * 
+     * @type {ProviderConfidence}
+     * @memberof CheckEmailOutput
+     */
+    'provider_confidence'?: ProviderConfidence;
+    /**
+     * 
+     * @type {ProviderRejectionReason}
+     * @memberof CheckEmailOutput
+     */
+    'provider_rejection_reason'?: ProviderRejectionReason;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CheckEmailOutput
+     */
+    'provider_rules_applied': boolean;
     /**
      * 
      * @type {EmailScore}

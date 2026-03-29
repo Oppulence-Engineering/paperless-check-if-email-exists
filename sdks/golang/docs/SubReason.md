@@ -9,6 +9,8 @@
 
 * `INVALID_RECIPIENT` (value: `"invalid_recipient"`)
 
+* `PROVIDER_REJECTED` (value: `"provider_rejected"`)
+
 * `SMTP_UNDELIVERABLE` (value: `"smtp_undeliverable"`)
 
 * `DISABLED_MAILBOX` (value: `"disabled_mailbox"`)

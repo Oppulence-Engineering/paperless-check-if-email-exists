@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Action** | [**RecommendedAction**](RecommendedAction.md) |  | 
-**Category** | [**BounceRiskCategory**](BounceRiskCategory.md) |  | 
-**Confidence** | **float64** |  | 
-**ModelVersion** | **string** |  | 
-**RiskFactors** | [**[]RiskFactor**](RiskFactor.md) |  | 
-**Score** | **int32** |  | 
-**ScoredAt** | **time.Time** |  | 
+**Action** | [**RecommendedAction**](RecommendedAction.md) |  | [required]
+**Category** | [**BounceRiskCategory**](BounceRiskCategory.md) |  | [required]
+**Confidence** | **float64** |  | [required]
+**ModelVersion** | **string** |  | [required]
+**RiskFactors** | [**[]RiskFactor**](RiskFactor.md) |  | [required]
+**Score** | **int32** |  | [required]
+**ScoredAt** | **time.Time** |  | [required]
 
 ## Methods
 
 ### NewBounceRiskAssessment
 
-`func NewBounceRiskAssessment(action RecommendedAction, category BounceRiskCategory, confidence float64, modelVersion string, riskFactors []RiskFactor, score int32, scoredAt time.Time, ) *BounceRiskAssessment`
+`func NewBounceRiskAssessment(action RecommendedAction, category BounceRiskCategory, confidence float64, modelVersion string, riskFactors []RiskFactor, score int32, scoredAt time.Time) *BounceRiskAssessment`
 
 NewBounceRiskAssessment instantiates a new BounceRiskAssessment object
 This constructor will assign default values to properties that have it defined,
@@ -119,7 +119,7 @@ GetRiskFactors returns the RiskFactors field if non-nil, zero value otherwise.
 
 ### GetRiskFactorsOk
 
-`func (o *BounceRiskAssessment) GetRiskFactorsOk() (*[]RiskFactor, bool)`
+`func (o *BounceRiskAssessment) GetRiskFactorsOk() ([]RiskFactor, bool)`
 
 GetRiskFactorsOk returns a tuple with the RiskFactors field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
@@ -173,5 +173,3 @@ SetScoredAt sets ScoredAt field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

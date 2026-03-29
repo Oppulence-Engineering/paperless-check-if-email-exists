@@ -18,6 +18,13 @@ mod tests {
 	use warp::http::StatusCode;
 	use warp::test::request;
 
+	fn sandbox_reply_body(email: &str) -> Vec<u8> {
+		reacher_backend::scoring::response::scored_response_fresh(
+			&reacher_backend::sandbox::sandbox_check(email),
+		)
+		.expect("sandbox reply body")
+	}
+
 	/// BackendConfig with worker mode enabled and a live RabbitMQ connection.
 	async fn worker_config(db_url: &str, rmq_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
@@ -481,6 +488,7 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_v1_check_email_full_worker_rpc() {
+		let target_email = "foo@bar";
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
@@ -492,7 +500,6 @@ mod tests {
 		let ch2 = Arc::clone(&ch);
 		tokio::spawn(async move {
 			use futures::StreamExt;
-			use std::convert::TryFrom;
 			let mut consumer = ch
 				.basic_consume(
 					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
@@ -508,18 +515,13 @@ mod tests {
 					reacher_backend::worker::do_work::CheckEmailTask,
 				>(&delivery.data)
 				{
-					let output =
-						reacher_backend::worker::do_work::check_email_and_send_result(&task, None)
-							.await;
 					if let (Some(reply_to), Some(corr_id)) = (
 						delivery.properties.reply_to(),
 						delivery.properties.correlation_id(),
 					) {
-						let reply =
-							reacher_backend::worker::single_shot::SingleShotReply::try_from(
-								&output,
-							)
-							.unwrap();
+						let reply = reacher_backend::worker::single_shot::SingleShotReply::Ok(
+							sandbox_reply_body(&task.input.to_email),
+						);
 						let payload = serde_json::to_vec(&reply).unwrap();
 						let _ = ch2
 							.basic_publish(
@@ -535,6 +537,10 @@ mod tests {
 					let _ = delivery
 						.ack(lapin::options::BasicAckOptions::default())
 						.await;
+
+					if task.input.to_email == target_email {
+						break;
+					}
 				}
 			}
 		});
@@ -577,6 +583,7 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_v1_check_email_worker_rpc_preserves_tenant_metadata() {
+		let target_email = "tenant-worker@test.com";
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
 		let tenant_id = insert_tenant(db.pool(), "worker-rpc-meta", Some(100), 0).await;
@@ -592,7 +599,6 @@ mod tests {
 
 		tokio::spawn(async move {
 			use futures::StreamExt;
-			use std::convert::TryFrom;
 
 			let mut consumer = ch
 				.basic_consume(
@@ -610,22 +616,19 @@ mod tests {
 					reacher_backend::worker::do_work::CheckEmailTask,
 				>(&delivery.data)
 				{
-					if let Some(task_tx) = task_tx.take() {
-						let _ = task_tx.send(task.metadata.clone());
+					if task.input.to_email == target_email {
+						if let Some(task_tx) = task_tx.take() {
+							let _ = task_tx.send(task.metadata.clone());
+						}
 					}
 
-					let output =
-						reacher_backend::worker::do_work::check_email_and_send_result(&task, None)
-							.await;
 					if let (Some(reply_to), Some(corr_id)) = (
 						delivery.properties.reply_to(),
 						delivery.properties.correlation_id(),
 					) {
-						let reply =
-							reacher_backend::worker::single_shot::SingleShotReply::try_from(
-								&output,
-							)
-							.unwrap();
+						let reply = reacher_backend::worker::single_shot::SingleShotReply::Ok(
+							sandbox_reply_body(&task.input.to_email),
+						);
 						let payload = serde_json::to_vec(&reply).unwrap();
 						let _ = ch2
 							.basic_publish(
@@ -638,10 +641,14 @@ mod tests {
 							)
 							.await;
 					}
+
 					let _ = delivery
 						.ack(lapin::options::BasicAckOptions::default())
 						.await;
-					break;
+
+					if task.input.to_email == target_email {
+						break;
+					}
 				}
 			}
 		});

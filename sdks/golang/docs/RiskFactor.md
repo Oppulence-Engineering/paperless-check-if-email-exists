@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Contribution** | **int32** |  | 
-**Description** | **string** |  | 
-**Direction** | [**RiskDirection**](RiskDirection.md) |  | 
-**Signal** | **string** |  | 
+**Contribution** | **int32** |  | [required]
+**Description** | **string** |  | [required]
+**Direction** | [**RiskDirection**](RiskDirection.md) |  | [required]
+**Signal** | **string** |  | [required]
 
 ## Methods
 
 ### NewRiskFactor
 
-`func NewRiskFactor(contribution int32, description string, direction RiskDirection, signal string, ) *RiskFactor`
+`func NewRiskFactor(contribution int32, description string, direction RiskDirection, signal string) *RiskFactor`
 
 NewRiskFactor instantiates a new RiskFactor object
 This constructor will assign default values to properties that have it defined,
@@ -110,5 +110,3 @@ SetSignal sets Signal field to given value.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-
