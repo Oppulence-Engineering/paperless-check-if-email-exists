@@ -941,7 +941,11 @@ async fn test_pipeline_patch_preserves_due_next_run_at() {
 	let created: serde_json::Value = serde_json::from_slice(create_response.body()).unwrap();
 	let pipeline_id = created["id"].as_i64().unwrap();
 
-	let due_at = chrono::Utc::now() - chrono::Duration::minutes(10);
+	// Postgres stores timestamptz values at microsecond precision.
+	let due_at = chrono::DateTime::<chrono::Utc>::from_timestamp_micros(
+		(chrono::Utc::now() - chrono::Duration::minutes(10)).timestamp_micros(),
+	)
+	.unwrap();
 	sqlx::query("UPDATE v1_pipelines SET next_run_at = $2 WHERE id = $1")
 		.bind(pipeline_id)
 		.bind(due_at)
