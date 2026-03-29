@@ -44,12 +44,12 @@ async fn http_handler(
 		r#"
 		SELECT
 			COUNT(*) AS total_completed,
-			COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS avg_ms,
-			COALESCE(MIN(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS min_ms,
-			COALESCE(MAX(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS max_ms,
-			COALESCE(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS p50_ms,
-			COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS p95_ms,
-			COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0) AS p99_ms
+			COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS avg_ms,
+			COALESCE(MIN(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS min_ms,
+			COALESCE(MAX(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS max_ms,
+			COALESCE(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS p50_ms,
+			COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS p95_ms,
+			COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000), 0)::double precision AS p99_ms
 		FROM v1_task_result
 		WHERE job_id = $1
 		  AND started_at IS NOT NULL
