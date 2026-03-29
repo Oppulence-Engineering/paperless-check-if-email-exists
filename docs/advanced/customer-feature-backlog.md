@@ -10,7 +10,7 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
-## Completed (18 features)
+## Completed (20 features)
 
 | # | Area | Feature | PR | Shipped |
 |---|---|---|---|---|
@@ -24,6 +24,8 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 9 | Finder / Enrichment | Finder confidence explanation | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 14 | Automation | Scheduled list-cleaning pipelines | [#28](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/28) | Yes |
 | 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 16 | Verification | Provider-specific syntax validation | [#29](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/29) | Yes |
+| 17 | Verification | Bounce-risk prediction model | [#30](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/30) | Yes |
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 | 27 | Verification | Result freshness / confidence decay | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
@@ -37,8 +39,6 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 
 | # | Area | Feature | Why customers would care | Priority |
 |---|---|---|---|---|
-| 16 | Verification | Provider-specific syntax validation | Prevents false positives by applying Gmail, Outlook, Yahoo, and other provider rules more precisely | Critical |
-| 17 | Verification | Bounce-risk prediction model | Gives customers a forward-looking risk estimate beyond raw SMTP checks | Critical |
 | 18 | Analytics / Reporting | Campaign outcome feedback loop | Lets customers feed bounce and engagement outcomes back into verification decisions | Critical |
 | 19 | Analytics / Reporting | Deliverability trends dashboard | Helps customers monitor quality changes over time instead of treating each job in isolation | Critical |
 | 20 | Finder / Enrichment | Account-based bulk people finder | Lets teams discover multiple likely contacts for a target company in one workflow | Critical |
@@ -136,8 +136,9 @@ If the goal is maximum customer value, the strongest next sequence would be:
 3. ~~finder confidence, sandbox mode, conditional actions~~ — **Done** (PR #22)
 4. ~~domain typo suggestions, catch-all tiers, alias normalization~~ — **Done** (PR #23)
 5. ~~waterfall search, approval checklist~~ — **Done** (PR #24)
-6. HubSpot, Salesforce, Zapier, and Google Sheets integrations
-7. RBAC, SSO, retention controls, and audit log search
+6. ~~scheduled pipelines, provider-specific validation, bounce-risk prediction~~ — **Done** (PRs #28-#30)
+7. HubSpot, Salesforce, Zapier, and Google Sheets integrations
+8. RBAC, SSO, retention controls, and audit log search
 
 ## Notes
 
