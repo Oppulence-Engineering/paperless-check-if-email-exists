@@ -134,7 +134,6 @@ impl BackendConfig {
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
 			pipelines: PipelinesConfig::default(),
-			pipelines: PipelinesConfig::default(),
 			bounce_risk: BounceRiskConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
