@@ -16,6 +16,7 @@
 
 #![recursion_limit = "256"]
 
+pub mod bounce_risk;
 pub mod config;
 pub mod finder;
 pub mod http;

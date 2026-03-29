@@ -4,6 +4,7 @@ use super::models::{DomainInfo, ReputationCheckResponse};
 use super::scorer::compute_score;
 use crate::http::ReacherResponseError;
 use sqlx::{PgPool, Row};
+use std::net::IpAddr;
 use warp::http::StatusCode;
 
 pub async fn check_domain(
@@ -81,59 +82,78 @@ pub async fn check_domain(
 	Ok(response)
 }
 
-async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
+pub async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
+	let client = reqwest::Client::builder()
+		.redirect(reqwest::redirect::Policy::none())
+		.build()
+		.map_err(ReacherResponseError::from)?;
+	fetch_domain_info_with_client(&client, domain).await
+}
+
+pub async fn fetch_domain_info_with_client(
+	client: &reqwest::Client,
+	domain: &str,
+) -> Result<DomainInfo, ReacherResponseError> {
 	let url = format!("https://rdap.org/domain/{}", domain);
-	let response = reqwest::Client::new()
+	let response = client
 		.get(url)
 		.send()
 		.await
 		.map_err(ReacherResponseError::from)?;
 	let value: serde_json::Value = response.json().await.map_err(ReacherResponseError::from)?;
-	let events = value.get("events").and_then(|value| value.as_array());
-	let created = events.and_then(|events| {
-		events.iter().find_map(|event| {
-			let action = event.get("eventAction").and_then(|value| value.as_str())?;
-			if matches!(action, "registration" | "creation") {
-				event
-					.get("eventDate")
-					.and_then(|value| value.as_str())
-					.map(ToOwned::to_owned)
-			} else {
-				None
-			}
-		})
-	});
-	let registrar = value
-		.get("entities")
-		.and_then(|value| value.as_array())
-		.and_then(|entities| {
-			entities.iter().find_map(|entity| {
-				entity
-					.get("vcardArray")
-					.and_then(|value| value.as_array())
-					.and_then(|items| items.get(1))
-					.and_then(|value| value.as_array())
-					.and_then(|items| {
-						items.iter().find_map(|item| {
-							let item = item.as_array()?;
-							if item.first()?.as_str()? == "fn" {
-								item.get(3)?.as_str().map(ToOwned::to_owned)
-							} else {
-								None
-							}
-						})
-					})
-			})
-		});
-	let domain_age_days = created.as_deref().and_then(|created_at| {
-		chrono::DateTime::parse_from_rfc3339(created_at)
-			.ok()
-			.map(|date| (chrono::Utc::now() - date.with_timezone(&chrono::Utc)).num_days())
-	});
+	Ok(crate::bounce_risk::parse_domain_info_from_rdap_value(
+		&value,
+	))
+}
 
-	Ok(DomainInfo {
-		domain_age_days,
-		registrar,
-		created_at: created,
-	})
+pub async fn validate_public_domain_target(domain: &str) -> Result<(), ReacherResponseError> {
+	let mut addresses = tokio::net::lookup_host((domain, 80))
+		.await
+		.map_err(|error| {
+			ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("failed to resolve domain {domain}: {error}"),
+			)
+		})?;
+
+	let mut saw_address = false;
+	for address in addresses.by_ref() {
+		saw_address = true;
+		if is_disallowed_probe_ip(address.ip()) {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("domain {domain} resolved to a private or local address"),
+			));
+		}
+	}
+
+	if !saw_address {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			format!("domain {domain} did not resolve to any addresses"),
+		));
+	}
+
+	Ok(())
+}
+
+pub(crate) fn is_disallowed_probe_ip(ip: IpAddr) -> bool {
+	match ip {
+		IpAddr::V4(ip) => {
+			ip.is_private()
+				|| ip.is_loopback()
+				|| ip.is_link_local()
+				|| ip.is_broadcast()
+				|| ip.is_documentation()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+		IpAddr::V6(ip) => {
+			ip.is_loopback()
+				|| ip.is_unique_local()
+				|| ip.is_unicast_link_local()
+				|| ip.is_multicast()
+				|| ip.is_unspecified()
+		}
+	}
 }

@@ -401,6 +401,14 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 		json!({ "$ref": "#/components/schemas/EmailScore" }),
 	);
 	properties.insert(
+		"bounce_risk".to_string(),
+		json!({
+			"description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
+			"nullable": true,
+			"allOf": [{ "$ref": "#/components/schemas/BounceRiskAssessment" }]
+		}),
+	);
+	properties.insert(
 		"provider".to_string(),
 		json!({
 			"$ref": "#/components/schemas/Provider",
@@ -620,6 +628,64 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": ["fresh", "recent", "aging", "stale", "expired"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"BounceRiskCategory",
+		json!({
+			"type": "string",
+			"enum": ["safe", "low", "medium", "high", "dangerous"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"RiskDirection",
+		json!({
+			"type": "string",
+			"enum": ["increases_risk", "decreases_risk"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"RecommendedAction",
+		json!({
+			"type": "string",
+			"enum": ["send", "send_with_caution", "verify_manually", "do_not_send"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"RiskFactor",
+		json!({
+			"type": "object",
+			"properties": {
+				"signal": { "type": "string" },
+				"contribution": { "type": "integer", "format": "int32" },
+				"description": { "type": "string" },
+				"direction": { "$ref": "#/components/schemas/RiskDirection" }
+			},
+			"required": ["signal", "contribution", "description", "direction"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"BounceRiskAssessment",
+		json!({
+			"type": "object",
+			"properties": {
+				"score": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"category": { "$ref": "#/components/schemas/BounceRiskCategory" },
+				"confidence": { "type": "number", "format": "double", "minimum": 0.35, "maximum": 1.0 },
+				"action": { "$ref": "#/components/schemas/RecommendedAction" },
+				"model_version": { "type": "string" },
+				"scored_at": { "type": "string", "format": "date-time" },
+				"risk_factors": {
+					"type": "array",
+					"items": { "$ref": "#/components/schemas/RiskFactor" }
+				}
+			},
+			"required": ["score", "category", "confidence", "action", "model_version", "scored_at", "risk_factors"]
 		}),
 	);
 	insert_schema(

@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::config::BackendConfig;
+use crate::scoring::response::{prepare_check_email_success, PreparedCheckEmailSuccess};
 use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
-use check_if_email_exists::{
-	check_email, CheckEmailInput, CheckEmailOutput, Reachable, LOG_TARGET,
-};
+use check_if_email_exists::{check_email, CheckEmailInput, Reachable, LOG_TARGET};
+use chrono::Utc;
 use http::HeaderMap;
 use lapin::message::Delivery;
 use lapin::{options::*, Channel};
@@ -113,6 +113,8 @@ pub enum TaskError {
 	Reqwest(reqwest::Error),
 	#[error("Error converting headers: {0}")]
 	Headers(#[from] http::Error),
+	#[error("Failed to prepare verification response: {0}")]
+	Prepare(String),
 }
 
 impl TaskError {
@@ -123,6 +125,7 @@ impl TaskError {
 			Self::Lapin(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Headers(_) => StatusCode::INTERNAL_SERVER_ERROR,
+			Self::Prepare(_) => StatusCode::INTERNAL_SERVER_ERROR,
 		}
 	}
 }
@@ -162,7 +165,7 @@ pub struct Webhook {
 
 #[derive(Debug, Serialize)]
 struct WebhookOutput<'a> {
-	result: &'a CheckEmailOutput,
+	result: &'a serde_json::Value,
 	extra: &'a Option<serde_json::Value>,
 }
 
@@ -279,7 +282,12 @@ pub async fn do_check_email_work(
 			None
 		};
 
-	let worker_output = check_email_and_send_result(task, webhook_signing_secret.as_deref()).await;
+	let worker_output = check_email_and_send_result_with_config(
+		task,
+		Some(Arc::clone(&config)),
+		webhook_signing_secret.as_deref(),
+	)
+	.await;
 
 	// Determine current retry count from the database
 	let current_retry_count = if let Some(id) = task_db_id {
@@ -298,7 +306,7 @@ pub async fn do_check_email_work(
 	};
 
 	let should_retry = match &worker_output {
-		Ok(output) if output.is_reachable == Reachable::Unknown => true,
+		Ok(output) if output.output.is_reachable == Reachable::Unknown => true,
 		Err(_) => true,
 		_ => false,
 	};
@@ -428,14 +436,13 @@ pub async fn do_check_email_work(
 		if let (Some(pool), Ok(output)) = (config.get_pg_pool(), &worker_output) {
 			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
 				if let Ok(tenant_uuid) = tenant_id_str.parse::<uuid::Uuid>() {
-					let email_score = crate::scoring::compute_score(output);
 					crate::worker::actions::evaluate_post_completion_actions(
 						&pool,
 						tenant_uuid,
 						&task.input.to_email,
-						Some(email_score.score),
+						Some(output.response.score.score),
 						Some(
-							&serde_json::to_value(&email_score.category)
+							&serde_json::to_value(&output.response.score.category)
 								.ok()
 								.and_then(|v| v.as_str().map(ToOwned::to_owned))
 								.unwrap_or_else(|| "unknown".to_string()),
@@ -448,7 +455,7 @@ pub async fn do_check_email_work(
 
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,
-			worker_output=?worker_output.as_ref().map(|o| &o.is_reachable),
+			worker_output=?worker_output.as_ref().map(|o| &o.output.is_reachable),
 			job_id=?task.job_id,
 			"Done check",
 		);
@@ -463,20 +470,34 @@ async fn delivery_finalize(
 	delivery: &Delivery,
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
-	worker_output: &Result<CheckEmailOutput, TaskError>,
+	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
 ) -> Result<(), anyhow::Error> {
 	if let CheckEmailJobId::SingleShot = task.job_id {
 		send_single_shot_reply(channel, delivery, worker_output).await?;
 	}
 
 	let storage = config.get_storage_adapter();
-	storage
-		.store(task, worker_output, storage.get_extra())
-		.await?;
+	match worker_output {
+		Ok(success) => {
+			storage
+				.store_prepared(task, success, storage.get_extra())
+				.await?;
+		}
+		Err(error) => {
+			storage
+				.store_error(task, error, storage.get_extra())
+				.await?;
+		}
+	}
 
 	sync_related_entities(&config, task).await;
 
-	send_to_reacher(config, &task.input.to_email, worker_output).await?;
+	send_to_reacher(
+		config,
+		&task.input.to_email,
+		worker_output.as_ref().map(|success| success),
+	)
+	.await?;
 
 	Ok(())
 }
@@ -512,7 +533,15 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 				result = pri.result, error = pri.error,
 				score = pri.score, score_category = pri.score_category,
 				sub_reason = pri.sub_reason, safe_to_send = pri.safe_to_send,
-				reason_codes = pri.reason_codes, completed_at = NOW(), updated_at = NOW()
+				reason_codes = pri.reason_codes,
+				bounce_risk_score = pri.bounce_risk_score,
+				bounce_risk_category = pri.bounce_risk_category,
+				bounce_risk_confidence = pri.bounce_risk_confidence,
+				bounce_risk_action = pri.bounce_risk_action,
+				bounce_risk_model_version = pri.bounce_risk_model_version,
+				bounce_risk_signals = pri.bounce_risk_signals,
+				canonical_email = COALESCE(dup.canonical_email, pri.canonical_email),
+				completed_at = NOW(), updated_at = NOW()
 			FROM v1_task_result AS pri
 			WHERE dup.canonical_task_id = $1 AND pri.id = $1 AND dup.is_duplicate = true
 			"#,
@@ -617,8 +646,25 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 pub async fn check_email_and_send_result(
 	task: &CheckEmailTask,
 	webhook_signing_secret: Option<&str>,
-) -> Result<CheckEmailOutput, TaskError> {
+) -> Result<PreparedCheckEmailSuccess, TaskError> {
+	check_email_and_send_result_with_config(task, None, webhook_signing_secret).await
+}
+
+pub async fn check_email_and_send_result_with_config(
+	task: &CheckEmailTask,
+	config: Option<Arc<BackendConfig>>,
+	webhook_signing_secret: Option<&str>,
+) -> Result<PreparedCheckEmailSuccess, TaskError> {
+	let config = config.unwrap_or_else(|| Arc::new(BackendConfig::empty()));
 	let output = check_email(&task.input).await;
+	let tenant_id = task
+		.metadata
+		.as_ref()
+		.and_then(|metadata| metadata.tenant_id.as_ref())
+		.and_then(|tenant_id| tenant_id.parse::<uuid::Uuid>().ok());
+	let success = prepare_check_email_success(config.as_ref(), output, tenant_id, Utc::now(), true)
+		.await
+		.map_err(|error| TaskError::Prepare(error.to_string()))?;
 
 	// Check if we have a webhook to send the output to.
 	if let Some(TaskWebhook {
@@ -626,7 +672,7 @@ pub async fn check_email_and_send_result(
 	}) = &task.webhook
 	{
 		let webhook_output = WebhookOutput {
-			result: &output,
+			result: &success.response.json,
 			extra: &webhook.extra,
 		};
 
@@ -651,10 +697,10 @@ pub async fn check_email_and_send_result(
 			.await?
 			.text()
 			.await?;
-		debug!(target: LOG_TARGET, email=?webhook_output.result.input,res=?res, "Received webhook response");
+		debug!(target: LOG_TARGET, email=?success.output.input,res=?res, "Received webhook response");
 	}
 
-	Ok(output)
+	Ok(success)
 }
 
 #[cfg(test)]

@@ -2103,10 +2103,76 @@ components:
       - lookup_time_ms
       - provider
       type: object
+    BounceRiskAssessment:
+      properties:
+        action:
+          $ref: "#/components/schemas/RecommendedAction"
+        category:
+          $ref: "#/components/schemas/BounceRiskCategory"
+        confidence:
+          format: double
+          maximum: 1.0
+          minimum: 0.35
+          type: number
+        model_version:
+          type: string
+        risk_factors:
+          items:
+            $ref: "#/components/schemas/RiskFactor"
+          type: array
+        score:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        scored_at:
+          format: date-time
+          type: string
+      required:
+      - action
+      - category
+      - confidence
+      - model_version
+      - risk_factors
+      - score
+      - scored_at
+      type: object
+    BounceRiskCategory:
+      enum:
+      - safe
+      - low
+      - medium
+      - high
+      - dangerous
+      type: string
     BulkJobResultsResponse:
       example:
         results:
-        - input: input
+        - provider_rejection_reason: provider_local_part_too_short
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          provider_confidence: high
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -2136,38 +2202,43 @@ components:
             normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
-          debug:
-            duration:
-              nanos: 0.8008281904610115
-              secs: 6.027456183070403
-            server_name: server_name
-            start_time: start_time
-            smtp:
-              verif_method:
-                type: Smtp
-            end_time: end_time
-          smtp:
-            is_catch_all: true
-            can_connect_smtp: true
-            has_full_inbox: true
-            is_disabled: true
-            is_deliverable: true
-          is_reachable: invalid
+          provider: gmail
+          bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
             username: username
-          mx:
-            accepts_mail: true
-            records:
-            - records
-            - records
           misc:
             is_b2c: true
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
-        - input: input
+          provider_rules_applied: true
+        - provider_rejection_reason: provider_local_part_too_short
+          debug:
+            duration:
+              nanos: 0.8008281904610115
+              secs: 6.027456183070403
+            server_name: server_name
+            start_time: start_time
+            smtp:
+              verif_method:
+                type: Smtp
+            end_time: end_time
+          smtp:
+            is_catch_all: true
+            can_connect_smtp: true
+            has_full_inbox: true
+            is_disabled: true
+            is_deliverable: true
+          is_reachable: invalid
+          provider_confidence: high
+          mx:
+            accepts_mail: true
+            records:
+            - records
+            - records
+          input: input
           score:
             reason_codes:
             - deliverable
@@ -2197,32 +2268,12 @@ components:
             normalized_email: normalized_email
             safe_to_send: true
             sub_reason: deliverable
-          debug:
-            duration:
-              nanos: 0.8008281904610115
-              secs: 6.027456183070403
-            server_name: server_name
-            start_time: start_time
-            smtp:
-              verif_method:
-                type: Smtp
-            end_time: end_time
-          smtp:
-            is_catch_all: true
-            can_connect_smtp: true
-            has_full_inbox: true
-            is_disabled: true
-            is_deliverable: true
-          is_reachable: invalid
+          provider: gmail
+          bounce_risk: null
           syntax:
             domain: domain
             is_valid_syntax: true
             username: username
-          mx:
-            accepts_mail: true
-            records:
-            - records
-            - records
           misc:
             is_b2c: true
             gravatar_url: gravatar_url
@@ -2269,6 +2320,30 @@ components:
     CheckEmailOutput:
       description: The result of the email verification process.
       example:
+        provider_rejection_reason: provider_local_part_too_short
+        debug:
+          duration:
+            nanos: 0.8008281904610115
+            secs: 6.027456183070403
+          server_name: server_name
+          start_time: start_time
+          smtp:
+            verif_method:
+              type: Smtp
+          end_time: end_time
+        smtp:
+          is_catch_all: true
+          can_connect_smtp: true
+          has_full_inbox: true
+          is_disabled: true
+          is_deliverable: true
+        is_reachable: invalid
+        provider_confidence: high
+        mx:
+          accepts_mail: true
+          records:
+          - records
+          - records
         input: input
         score:
           reason_codes:
@@ -2299,38 +2374,22 @@ components:
           normalized_email: normalized_email
           safe_to_send: true
           sub_reason: deliverable
-        debug:
-          duration:
-            nanos: 0.8008281904610115
-            secs: 6.027456183070403
-          server_name: server_name
-          start_time: start_time
-          smtp:
-            verif_method:
-              type: Smtp
-          end_time: end_time
-        smtp:
-          is_catch_all: true
-          can_connect_smtp: true
-          has_full_inbox: true
-          is_disabled: true
-          is_deliverable: true
-        is_reachable: invalid
+        provider: gmail
+        bounce_risk: null
         syntax:
           domain: domain
           is_valid_syntax: true
           username: username
-        mx:
-          accepts_mail: true
-          records:
-          - records
-          - records
         misc:
           is_b2c: true
           gravatar_url: gravatar_url
           is_role_account: true
           is_disposable: true
       properties:
+        bounce_risk:
+          allOf:
+          - $ref: "#/components/schemas/BounceRiskAssessment"
+          nullable: true
         debug:
           $ref: "#/components/schemas/DebugDetails"
         input:
@@ -3803,6 +3862,13 @@ components:
       - free_provider
       - possible_typo
       type: string
+    RecommendedAction:
+      enum:
+      - send
+      - send_with_caution
+      - verify_manually
+      - do_not_send
+      type: string
     ReputationCheckRequest:
       example:
         domain: domain
@@ -3926,6 +3992,28 @@ components:
           type: integer
       required:
       - enabled
+      type: object
+    RiskDirection:
+      enum:
+      - increases_risk
+      - decreases_risk
+      type: string
+    RiskFactor:
+      properties:
+        contribution:
+          format: int32
+          type: integer
+        description:
+          type: string
+        direction:
+          $ref: "#/components/schemas/RiskDirection"
+        signal:
+          type: string
+      required:
+      - contribution
+      - description
+      - direction
+      - signal
       type: object
     ScoringSignals:
       example:

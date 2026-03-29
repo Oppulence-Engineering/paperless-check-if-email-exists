@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::bounce_risk::BounceRiskService;
 use crate::storage::{postgres::PostgresStorage, StorageAdapter};
 use crate::throttle::ThrottleManager;
 use crate::worker::do_work::TaskWebhook;
@@ -88,6 +89,9 @@ pub struct BackendConfig {
 	/// Scheduled pipeline configuration
 	#[serde(default)]
 	pub pipelines: PipelinesConfig,
+	/// Bounce-risk enrichment configuration.
+	#[serde(default)]
+	pub bounce_risk: BounceRiskConfig,
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
@@ -103,6 +107,9 @@ pub struct BackendConfig {
 	/// Legacy/open-mode callers use the global `throttle_manager` above.
 	#[serde(skip)]
 	tenant_throttle_managers: Arc<DashMap<Uuid, Arc<ThrottleManager>>>,
+
+	#[serde(skip)]
+	bounce_risk_service: Arc<BounceRiskService>,
 }
 
 impl BackendConfig {
@@ -127,12 +134,14 @@ impl BackendConfig {
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
 			pipelines: PipelinesConfig::default(),
+			bounce_risk: BounceRiskConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
 			throttle_manager: Arc::new(
 				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
 			),
 			tenant_throttle_managers: Arc::new(DashMap::new()),
+			bounce_risk_service: Arc::new(BounceRiskService::default()),
 		}
 	}
 
@@ -237,6 +246,7 @@ impl BackendConfig {
 
 		// Initialize throttle manager
 		self.throttle_manager = Arc::new(ThrottleManager::new(self.throttle.clone()));
+		self.refresh_bounce_risk_service();
 
 		Ok(())
 	}
@@ -264,6 +274,14 @@ impl BackendConfig {
 
 	pub fn get_throttle_manager(&self) -> Arc<ThrottleManager> {
 		self.throttle_manager.clone()
+	}
+
+	pub fn get_bounce_risk_service(&self) -> Arc<BounceRiskService> {
+		self.bounce_risk_service.clone()
+	}
+
+	pub fn refresh_bounce_risk_service(&mut self) {
+		self.bounce_risk_service = Arc::new(BounceRiskService::new(self.bounce_risk.clone()));
 	}
 
 	/// Get or create a per-tenant ThrottleManager. If the tenant_id is None
@@ -411,6 +429,59 @@ impl Default for ReverificationConfig {
 	}
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BounceRiskConfig {
+	#[serde(default = "default_bounce_risk_enabled")]
+	pub enabled: bool,
+	#[serde(default = "default_bounce_risk_config_path")]
+	pub config_path: String,
+	#[serde(default = "default_bounce_risk_reload_interval_seconds")]
+	pub reload_interval_seconds: u64,
+	#[serde(default = "default_bounce_risk_history_limit")]
+	pub history_limit: u32,
+	#[serde(default = "default_bounce_risk_network_timeout_ms")]
+	pub network_timeout_ms: u64,
+	#[serde(default = "default_bounce_risk_website_probe_timeout_ms")]
+	pub website_probe_timeout_ms: u64,
+}
+
+fn default_bounce_risk_enabled() -> bool {
+	false
+}
+
+fn default_bounce_risk_config_path() -> String {
+	"bounce_risk.toml".to_string()
+}
+
+fn default_bounce_risk_reload_interval_seconds() -> u64 {
+	30
+}
+
+fn default_bounce_risk_history_limit() -> u32 {
+	10
+}
+
+fn default_bounce_risk_network_timeout_ms() -> u64 {
+	5_000
+}
+
+fn default_bounce_risk_website_probe_timeout_ms() -> u64 {
+	3_000
+}
+
+impl Default for BounceRiskConfig {
+	fn default() -> Self {
+		Self {
+			enabled: default_bounce_risk_enabled(),
+			config_path: default_bounce_risk_config_path(),
+			reload_interval_seconds: default_bounce_risk_reload_interval_seconds(),
+			history_limit: default_bounce_risk_history_limit(),
+			network_timeout_ms: default_bounce_risk_network_timeout_ms(),
+			website_probe_timeout_ms: default_bounce_risk_website_probe_timeout_ms(),
+		}
+	}
+}
+
 #[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StorageConfig {
@@ -442,7 +513,8 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 		.add_source(config::File::with_name("backend_config"))
 		.add_source(config::Environment::with_prefix("RCH").separator("__"));
 
-	let cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
+	let mut cfg = cfg.build()?.try_deserialize::<BackendConfig>()?;
+	cfg.refresh_bounce_risk_service();
 
 	// Perform additional checks
 
@@ -652,6 +724,24 @@ type = "smtp"
 				extra: None,
 			}))
 		);
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_bounce_risk_env_vars() {
+		env::set_var("RCH__BOUNCE_RISK__ENABLED", "true");
+		env::set_var(
+			"RCH__BOUNCE_RISK__CONFIG_PATH",
+			"/tmp/reacher-bounce-risk.toml",
+		);
+		let cfg = load_config().await.unwrap();
+		assert!(cfg.bounce_risk.enabled);
+		assert_eq!(
+			cfg.bounce_risk.config_path,
+			"/tmp/reacher-bounce-risk.toml".to_string()
+		);
+		env::remove_var("RCH__BOUNCE_RISK__ENABLED");
+		env::remove_var("RCH__BOUNCE_RISK__CONFIG_PATH");
 	}
 
 	#[tokio::test]

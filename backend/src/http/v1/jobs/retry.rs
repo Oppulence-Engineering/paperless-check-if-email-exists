@@ -181,6 +181,12 @@ async fn http_handler(
 		    sub_reason = NULL,
 		    safe_to_send = NULL,
 		    reason_codes = NULL,
+		    bounce_risk_score = NULL,
+		    bounce_risk_category = NULL,
+		    bounce_risk_confidence = NULL,
+		    bounce_risk_action = NULL,
+		    bounce_risk_model_version = NULL,
+		    bounce_risk_signals = NULL,
 		    retry_count = 0,
 		    completed_at = NULL,
 		    updated_at = NOW()

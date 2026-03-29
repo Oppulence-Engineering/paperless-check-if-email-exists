@@ -22,6 +22,8 @@ docs/ApprovalCategoryBreakdown.md
 docs/ApprovalChecklistResponse.md
 docs/ApprovalRiskFlags.md
 docs/BlacklistResult.md
+docs/BounceRiskAssessment.md
+docs/BounceRiskCategory.md
 docs/BulkJobResultsResponse.md
 docs/CheckEmailInputProxy.md
 docs/CheckEmailOutput.md
@@ -86,10 +88,13 @@ docs/PipelineView.md
 docs/PipelinesAPI.md
 docs/Reachable.md
 docs/ReasonCode.md
+docs/RecommendedAction.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/RetryJobResponse.md
 docs/ReverificationStatusResponse.md
+docs/RiskDirection.md
+docs/RiskFactor.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
 docs/SubReason.md
@@ -117,6 +122,8 @@ model_approval_category_breakdown.go
 model_approval_checklist_response.go
 model_approval_risk_flags.go
 model_blacklist_result.go
+model_bounce_risk_assessment.go
+model_bounce_risk_category.go
 model_bulk_job_results_response.go
 model_check_email_input_proxy.go
 model_check_email_output.go
@@ -178,10 +185,13 @@ model_pipeline_verification_settings.go
 model_pipeline_view.go
 model_reachable.go
 model_reason_code.go
+model_recommended_action.go
 model_reputation_check_request.go
 model_reputation_check_response.go
 model_retry_job_response.go
 model_reverification_status_response.go
+model_risk_direction.go
+model_risk_factor.go
 model_scoring_signals.go
 model_smtp_details.go
 model_sub_reason.go

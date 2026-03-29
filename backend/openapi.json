@@ -170,6 +170,61 @@
         ],
         "type": "object"
       },
+      "BounceRiskAssessment": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/RecommendedAction"
+          },
+          "category": {
+            "$ref": "#/components/schemas/BounceRiskCategory"
+          },
+          "confidence": {
+            "format": "double",
+            "maximum": 1.0,
+            "minimum": 0.35,
+            "type": "number"
+          },
+          "model_version": {
+            "type": "string"
+          },
+          "risk_factors": {
+            "items": {
+              "$ref": "#/components/schemas/RiskFactor"
+            },
+            "type": "array"
+          },
+          "score": {
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "scored_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "category",
+          "confidence",
+          "action",
+          "model_version",
+          "scored_at",
+          "risk_factors"
+        ],
+        "type": "object"
+      },
+      "BounceRiskCategory": {
+        "enum": [
+          "safe",
+          "low",
+          "medium",
+          "high",
+          "dangerous"
+        ],
+        "type": "string"
+      },
       "BulkJobResultsResponse": {
         "properties": {
           "results": {
@@ -222,6 +277,15 @@
       "CheckEmailOutput": {
         "description": "The result of the email verification process.",
         "properties": {
+          "bounce_risk": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BounceRiskAssessment"
+              }
+            ],
+            "description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
+            "nullable": true
+          },
           "debug": {
             "$ref": "#/components/schemas/DebugDetails"
           },
@@ -1963,6 +2027,15 @@
         ],
         "type": "string"
       },
+      "RecommendedAction": {
+        "enum": [
+          "send",
+          "send_with_caution",
+          "verify_manually",
+          "do_not_send"
+        ],
+        "type": "string"
+      },
       "ReputationCheckRequest": {
         "properties": {
           "domain": {
@@ -2075,6 +2148,37 @@
         },
         "required": [
           "enabled"
+        ],
+        "type": "object"
+      },
+      "RiskDirection": {
+        "enum": [
+          "increases_risk",
+          "decreases_risk"
+        ],
+        "type": "string"
+      },
+      "RiskFactor": {
+        "properties": {
+          "contribution": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/RiskDirection"
+          },
+          "signal": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "signal",
+          "contribution",
+          "description",
+          "direction"
         ],
         "type": "object"
       },

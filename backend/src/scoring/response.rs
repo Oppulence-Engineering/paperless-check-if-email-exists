@@ -1,11 +1,25 @@
-use crate::scoring::{compute_freshness, compute_score};
-use check_if_email_exists::CheckEmailOutput;
+use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext};
+use crate::config::BackendConfig;
+use crate::scoring::{compute_freshness_at, compute_score, EmailScore};
+use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use serde_json::{Map, Value};
+use std::ops::Deref;
+use tracing::warn;
+use uuid::Uuid;
 
 pub fn scored_json(output: &CheckEmailOutput) -> Result<Value, serde_json::Error> {
+	let score = compute_score(output);
+	scored_json_with_score(output, &score)
+}
+
+pub fn scored_json_with_score(
+	output: &CheckEmailOutput,
+	email_score: &EmailScore,
+) -> Result<Value, serde_json::Error> {
 	let mut scored = serde_json::to_value(output)?;
-	let mut score = serde_json::to_value(compute_score(output))?;
+	let mut score = serde_json::to_value(email_score)?;
 
 	// Surface domain typo suggestion in score object (#31)
 	if let Some(suggestion) = &output.syntax.suggestion {
@@ -79,8 +93,16 @@ pub fn scored_response_fresh(output: &CheckEmailOutput) -> Result<Vec<u8>, serde
 }
 
 pub fn inject_freshness_into_result(result: &mut Value, completed_at: DateTime<Utc>) {
+	inject_freshness_into_result_at(result, completed_at, Utc::now());
+}
+
+pub fn inject_freshness_into_result_at(
+	result: &mut Value,
+	completed_at: DateTime<Utc>,
+	now: DateTime<Utc>,
+) {
 	if let Some(score_obj) = result.get_mut("score").and_then(Value::as_object_mut) {
-		let info = compute_freshness(completed_at);
+		let info = compute_freshness_at(completed_at, now);
 		score_obj.insert("verified_at".into(), Value::String(info.verified_at));
 		score_obj.insert("age_days".into(), Value::from(info.age_days));
 		score_obj.insert(
@@ -88,6 +110,142 @@ pub fn inject_freshness_into_result(result: &mut Value, completed_at: DateTime<U
 			serde_json::to_value(&info.freshness).unwrap_or(Value::Null),
 		);
 	}
+}
+
+#[derive(Debug)]
+pub struct PreparedVerificationResponse {
+	pub json: Value,
+	pub body: Vec<u8>,
+	pub score: EmailScore,
+	pub canonical_email: Option<String>,
+	pub bounce_risk: Option<BounceRiskAssessment>,
+	pub bounce_risk_signals: Option<Value>,
+}
+
+impl Serialize for PreparedVerificationResponse {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: serde::Serializer,
+	{
+		self.json.serialize(serializer)
+	}
+}
+
+#[derive(Debug)]
+pub struct PreparedCheckEmailSuccess {
+	pub output: CheckEmailOutput,
+	pub response: PreparedVerificationResponse,
+}
+
+impl Deref for PreparedCheckEmailSuccess {
+	type Target = CheckEmailOutput;
+
+	fn deref(&self) -> &Self::Target {
+		&self.output
+	}
+}
+
+impl Serialize for PreparedCheckEmailSuccess {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: serde::Serializer,
+	{
+		self.response.serialize(serializer)
+	}
+}
+
+pub async fn prepare_check_email_success(
+	config: &BackendConfig,
+	output: CheckEmailOutput,
+	tenant_id: Option<Uuid>,
+	completed_at: DateTime<Utc>,
+	allow_external_enrichment: bool,
+) -> Result<PreparedCheckEmailSuccess, anyhow::Error> {
+	let response = prepare_verification_response(
+		config,
+		&output,
+		tenant_id,
+		completed_at,
+		allow_external_enrichment,
+	)
+	.await?;
+
+	Ok(PreparedCheckEmailSuccess { output, response })
+}
+
+pub async fn prepare_verification_response(
+	config: &BackendConfig,
+	output: &CheckEmailOutput,
+	tenant_id: Option<Uuid>,
+	completed_at: DateTime<Utc>,
+	allow_external_enrichment: bool,
+) -> Result<PreparedVerificationResponse, anyhow::Error> {
+	let email_score = compute_score(output);
+	let mut value = scored_json_with_score(output, &email_score)?;
+	inject_freshness_into_result(&mut value, completed_at);
+
+	let canonical_email = crate::http::v1::lists::canonicalize::canonicalize_email(&output.input);
+	let read_pool = config.get_read_pg_pool();
+	let write_pool = config.get_pg_pool();
+	let bounce_risk_service = config.get_bounce_risk_service();
+
+	let bounce_risk_result = match bounce_risk_service
+		.assess(
+			output,
+			&email_score,
+			read_pool.as_ref(),
+			write_pool.as_ref(),
+			&BounceRiskRequestContext {
+				tenant_id,
+				completed_at,
+				allow_external_enrichment,
+			},
+		)
+		.await
+	{
+		Ok(result) => result,
+		Err(error) => {
+			let email_domain = output
+				.input
+				.rsplit_once('@')
+				.map(|(_, domain)| domain)
+				.unwrap_or("unknown");
+			warn!(
+				target: LOG_TARGET,
+				error = ?error,
+				email_domain = %email_domain,
+				tenant_id = ?tenant_id,
+				"Bounce-risk enrichment failed, continuing without enrichment"
+			);
+			None
+		}
+	};
+
+	let (bounce_risk, bounce_risk_signals) = if let Some(result) = bounce_risk_result {
+		if let Some(result_obj) = value.as_object_mut() {
+			result_obj.insert(
+				"bounce_risk".into(),
+				serde_json::to_value(&result.assessment)?,
+			);
+		}
+		(
+			Some(result.assessment),
+			Some(serde_json::to_value(&result.signals)?),
+		)
+	} else {
+		(None, None)
+	};
+
+	let body = serde_json::to_vec(&value)?;
+
+	Ok(PreparedVerificationResponse {
+		json: value,
+		body,
+		score: email_score,
+		canonical_email,
+		bounce_risk,
+		bounce_risk_signals,
+	})
 }
 
 #[cfg(test)]
@@ -169,5 +327,31 @@ mod tests {
 		let value = scored_json(&output).unwrap();
 		let score = value.get("score").unwrap();
 		assert!(score.get("catch_all_severity").is_none());
+	}
+
+	#[tokio::test]
+	async fn prepared_response_includes_bounce_risk_when_enabled() {
+		let mut config = BackendConfig::empty();
+		config.bounce_risk.enabled = true;
+		config.refresh_bounce_risk_service();
+		let output = CheckEmailOutput::default();
+		let response = prepare_verification_response(&config, &output, None, Utc::now(), false)
+			.await
+			.unwrap();
+		assert!(response.json.get("bounce_risk").is_some());
+	}
+
+	#[tokio::test]
+	async fn prepared_response_ignores_bounce_risk_enrichment_failures() {
+		let mut config = BackendConfig::empty();
+		config.bounce_risk.enabled = true;
+		config.bounce_risk.config_path = std::env::temp_dir().to_string_lossy().to_string();
+		config.refresh_bounce_risk_service();
+
+		let output = CheckEmailOutput::default();
+		let response = prepare_verification_response(&config, &output, None, Utc::now(), false)
+			.await
+			.unwrap();
+		assert!(response.json.get("bounce_risk").is_none());
 	}
 }
