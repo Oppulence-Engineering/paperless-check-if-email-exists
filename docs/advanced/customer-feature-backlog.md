@@ -10,7 +10,7 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
-## Completed (17 features)
+## Completed (18 features)
 
 | # | Area | Feature | PR | Shipped |
 |---|---|---|---|---|
@@ -22,6 +22,7 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 6 | List Cleaning | Smart deduplication and canonicalization | [#20](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/20) | Yes |
 | 8 | Finder / Enrichment | Contact waterfall search strategy | [#24](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/24) | Yes |
 | 9 | Finder / Enrichment | Finder confidence explanation | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
+| 14 | Automation | Scheduled list-cleaning pipelines | [#28](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/28) | Yes |
 | 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
@@ -36,7 +37,6 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 
 | # | Area | Feature | Why customers would care | Priority |
 |---|---|---|---|---|
-| 14 | Automation | Scheduled list-cleaning pipelines | Lets customers keep recurring imports clean without manual uploads every time | Critical |
 | 16 | Verification | Provider-specific syntax validation | Prevents false positives by applying Gmail, Outlook, Yahoo, and other provider rules more precisely | Critical |
 | 17 | Verification | Bounce-risk prediction model | Gives customers a forward-looking risk estimate beyond raw SMTP checks | Critical |
 | 18 | Analytics / Reporting | Campaign outcome feedback loop | Lets customers feed bounce and engagement outcomes back into verification decisions | Critical |
@@ -142,6 +142,6 @@ If the goal is maximum customer value, the strongest next sequence would be:
 ## Notes
 
 - This is a backlog, not a promised delivery sequence.
-- Several features can share infrastructure. For example, scheduled re-verification, change alerts, and freshness scoring all benefit from the same historical result model.
+- Several features can share infrastructure. For example, scheduled re-verification, scheduled list-cleaning pipelines, change alerts, and freshness scoring all benefit from the same historical result model.
 - Integrations are especially high leverage because they reduce manual handling and make the platform "stickier" inside customer workflows.
 - Integration features are separated into their own section because they require third-party partnership and OAuth infrastructure that is fundamentally different from core platform development.
