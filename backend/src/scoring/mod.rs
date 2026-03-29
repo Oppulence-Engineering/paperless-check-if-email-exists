@@ -78,7 +78,14 @@ pub struct FreshnessInfo {
 }
 
 pub fn compute_freshness(completed_at: chrono::DateTime<chrono::Utc>) -> FreshnessInfo {
-	let age = chrono::Utc::now() - completed_at;
+	compute_freshness_at(completed_at, chrono::Utc::now())
+}
+
+pub fn compute_freshness_at(
+	completed_at: chrono::DateTime<chrono::Utc>,
+	now: chrono::DateTime<chrono::Utc>,
+) -> FreshnessInfo {
+	let age = now - completed_at;
 	let age_days = age.num_days().max(0);
 	let freshness = match age_days {
 		0..=7 => Freshness::Fresh,
@@ -680,5 +687,15 @@ mod tests {
 		let now = chrono::Utc::now();
 		let ninety_one = now - chrono::Duration::days(91);
 		assert_eq!(compute_freshness(ninety_one).freshness, Freshness::Expired);
+	}
+
+	#[test]
+	fn freshness_can_use_fixed_reference_time() {
+		let completed_at = chrono::Utc::now() - chrono::Duration::days(30);
+		let reference_now = completed_at + chrono::Duration::days(2);
+		let freshness = compute_freshness_at(completed_at, reference_now);
+
+		assert_eq!(freshness.age_days, 2);
+		assert_eq!(freshness.freshness, Freshness::Fresh);
 	}
 }

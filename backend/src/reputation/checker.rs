@@ -83,7 +83,10 @@ pub async fn check_domain(
 }
 
 pub async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
-	let client = reqwest::Client::new();
+	let client = reqwest::Client::builder()
+		.redirect(reqwest::redirect::Policy::none())
+		.build()
+		.map_err(ReacherResponseError::from)?;
 	fetch_domain_info_with_client(&client, domain).await
 }
 
@@ -91,7 +94,6 @@ pub async fn fetch_domain_info_with_client(
 	client: &reqwest::Client,
 	domain: &str,
 ) -> Result<DomainInfo, ReacherResponseError> {
-	validate_public_domain_target(domain).await?;
 	let url = format!("https://rdap.org/domain/{}", domain);
 	let response = client
 		.get(url)

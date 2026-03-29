@@ -502,6 +502,7 @@ async fn collect_domain_signals(
 
 	let rdap_client = reqwest::Client::builder()
 		.timeout(Duration::from_millis(runtime.network_timeout_ms))
+		.redirect(reqwest::redirect::Policy::none())
 		.build()?;
 
 	if domain_info.is_none() {

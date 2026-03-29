@@ -1,6 +1,6 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext};
 use crate::config::BackendConfig;
-use crate::scoring::{compute_freshness, compute_score, EmailScore};
+use crate::scoring::{compute_freshness_at, compute_score, EmailScore};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -93,8 +93,16 @@ pub fn scored_response_fresh(output: &CheckEmailOutput) -> Result<Vec<u8>, serde
 }
 
 pub fn inject_freshness_into_result(result: &mut Value, completed_at: DateTime<Utc>) {
+	inject_freshness_into_result_at(result, completed_at, Utc::now());
+}
+
+pub fn inject_freshness_into_result_at(
+	result: &mut Value,
+	completed_at: DateTime<Utc>,
+	now: DateTime<Utc>,
+) {
 	if let Some(score_obj) = result.get_mut("score").and_then(Value::as_object_mut) {
-		let info = compute_freshness(completed_at);
+		let info = compute_freshness_at(completed_at, now);
 		score_obj.insert("verified_at".into(), Value::String(info.verified_at));
 		score_obj.insert("age_days".into(), Value::from(info.age_days));
 		score_obj.insert(

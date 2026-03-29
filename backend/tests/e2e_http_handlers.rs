@@ -762,6 +762,8 @@ mod tests {
 			body_with_history["score"]["verified_at"],
 			"2025-01-01T00:00:00+00:00"
 		);
+		assert_eq!(body_with_history["score"]["age_days"], 0);
+		assert_eq!(body_with_history["score"]["freshness"], "fresh");
 	}
 
 	// ── v0/bulk endpoints ──────────────────────────────

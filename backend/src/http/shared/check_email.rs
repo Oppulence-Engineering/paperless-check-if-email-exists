@@ -17,7 +17,9 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
-use crate::scoring::response::{prepare_check_email_success, prepare_verification_response};
+use crate::scoring::response::{
+	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
+};
 use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, QuotaCheckResult};
@@ -77,10 +79,12 @@ pub async fn handle_check_email(
 			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
 			.single()
 			.expect("static sandbox timestamp");
-		let prepared =
+		let mut prepared =
 			prepare_verification_response(config.as_ref(), &mock_result, None, completed_at, false)
 				.await
 				.map_err(ReacherResponseError::from)?;
+		inject_freshness_into_result_at(&mut prepared.json, completed_at, completed_at);
+		prepared.body = serde_json::to_vec(&prepared.json).map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
 			status_code: StatusCode::OK,
 			body: prepared.body,
