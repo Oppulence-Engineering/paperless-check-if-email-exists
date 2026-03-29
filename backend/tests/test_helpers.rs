@@ -1,6 +1,7 @@
 /// Shared test infrastructure for E2E tests.
 /// Uses per-process testcontainers by default to avoid cross-binary collisions.
-/// Set USE_LOCAL_TEST_INFRA=1 to opt into TEST_DATABASE_URL / TEST_AMQP_URL or
+/// Explicit TEST_DATABASE_URL / TEST_AMQP_URL always win so CI can route tests
+/// to job-level service containers. Set USE_LOCAL_TEST_INFRA=1 to also opt into
 /// the default local ports instead.
 use lapin::{Connection, ConnectionProperties};
 use sqlx::postgres::PgPoolOptions;
@@ -76,15 +77,15 @@ pub async fn ensure_test_db_url() -> String {
 		return url;
 	}
 
-	if use_local_test_infra() {
-		if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
-			ensure_test_db_schema(&url)
-				.await
-				.expect("TEST_DATABASE_URL schema should be ready");
-			set_current_test_db_url(&url);
-			return url;
-		}
+	if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
+		ensure_test_db_schema(&url)
+			.await
+			.expect("TEST_DATABASE_URL schema should be ready");
+		set_current_test_db_url(&url);
+		return url;
+	}
 
+	if use_local_test_infra() {
 		if PgPoolOptions::new()
 			.max_connections(1)
 			.acquire_timeout(Duration::from_secs(2))
@@ -196,15 +197,15 @@ impl TestRabbitMq {
 			};
 		}
 
-		if use_local_test_infra() {
-			if let Ok(url) = std::env::var("TEST_AMQP_URL") {
-				set_current_test_amqp_url(&url);
-				return Self {
-					amqp_url: url,
-					_container: None,
-				};
-			}
+		if let Ok(url) = std::env::var("TEST_AMQP_URL") {
+			set_current_test_amqp_url(&url);
+			return Self {
+				amqp_url: url,
+				_container: None,
+			};
+		}
 
+		if use_local_test_infra() {
 			if Connection::connect(DEFAULT_TEST_AMQP_URL, ConnectionProperties::default())
 				.await
 				.is_ok()
