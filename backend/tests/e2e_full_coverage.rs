@@ -2,8 +2,6 @@
 /// Set TEST_DATABASE_URL and TEST_AMQP_URL to use existing services.
 mod test_helpers;
 
-use serial_test::serial;
-
 // ═══════════════════════════════════════════════════════════════
 // Worker consume.rs coverage: setup_rabbit_mq, queue declare, QoS
 // ═══════════════════════════════════════════════════════════════
@@ -85,10 +83,9 @@ mod do_work_coverage {
 	use reacher_backend::worker::consume::{setup_rabbit_mq, CHECK_EMAIL_QUEUE};
 	use reacher_backend::worker::do_work::{
 		check_email_and_send_result, CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata,
-		TaskWebhook, Webhook,
+		TaskWebhook,
 	};
 	use serial_test::serial;
-	use std::collections::HashMap;
 
 	async fn rmq_url() -> String {
 		crate::test_helpers::ensure_test_amqp_url().await
@@ -1073,7 +1070,7 @@ mod do_check_email_work_retry_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_do_check_email_work_single_shot() {
-		let db = TestDb::start().await;
+		let _db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
 			url: rmq_url().await,

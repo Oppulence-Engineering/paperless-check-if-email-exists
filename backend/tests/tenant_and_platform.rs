@@ -300,7 +300,7 @@ mod idempotency_tests {
 #[cfg(test)]
 mod task_metadata_tests {
 	use reacher_backend::worker::do_work::{
-		CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata,
+		CheckEmailTask, RetryPolicy, TaskMetadata,
 	};
 
 	#[test]

@@ -317,7 +317,6 @@ mod tests {
 	#[serial]
 	async fn test_concurrent_inserts() {
 		let db = TestDb::start().await;
-		let pool = db.pool();
 		let body_hash = hash_request_body(b"concurrent-body");
 
 		let mut handles = Vec::new();

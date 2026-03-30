@@ -4,7 +4,6 @@ mod test_helpers;
 #[cfg(test)]
 mod tests {
 	use crate::test_helpers::{insert_tenant, TestDb};
-	use chrono::Utc;
 	use reacher_backend::config::ThrottleConfig;
 	use reacher_backend::tenant::context::TenantContext;
 	use reacher_backend::tenant::models::{PlanTier, TenantStatus};

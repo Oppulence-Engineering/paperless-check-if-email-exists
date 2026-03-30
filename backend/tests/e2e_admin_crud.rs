@@ -1,8 +1,5 @@
 mod test_helpers;
 
-use crate::test_helpers::{
-	insert_event, insert_job, insert_task, insert_tenant, safe_result, TestDb,
-};
 use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig};
 use std::sync::Arc;
 
@@ -26,7 +23,6 @@ mod tenant_crud {
 	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 	use serial_test::serial;
-	use sqlx::Row;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
 	use warp::test::request;
@@ -661,14 +657,9 @@ mod api_key_crud {
 	use reacher_backend::config::BackendConfig;
 	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
 	use serial_test::serial;
-	use sqlx::Row;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
 	use warp::test::request;
-
-	async fn create_tenant(routes: &(impl warp::Reply + Clone + Send + Sync), _unused: ()) {
-		// Can't call create_routes twice easily, so we use a helper
-	}
 
 	#[tokio::test]
 	#[serial]

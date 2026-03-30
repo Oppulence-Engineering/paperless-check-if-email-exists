@@ -59,7 +59,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("revoked"),
-			"error should mention 'revoked', got: {msg}"
+			"error should mention 'revoked', got: {}",
+			msg
 		);
 	}
 
@@ -80,7 +81,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("expired"),
-			"error should mention 'expired', got: {msg}"
+			"error should mention 'expired', got: {}",
+			msg
 		);
 	}
 
@@ -108,7 +110,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("expired"),
-			"error should mention 'expired', got: {msg}"
+			"error should mention 'expired', got: {}",
+			msg
 		);
 	}
 
@@ -129,7 +132,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("suspended"),
-			"error should mention 'suspended', got: {msg}"
+			"error should mention 'suspended', got: {}",
+			msg
 		);
 	}
 
@@ -150,7 +154,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("deactivated"),
-			"error should mention 'deactivated', got: {msg}"
+			"error should mention 'deactivated', got: {}",
+			msg
 		);
 	}
 
@@ -168,7 +173,8 @@ mod tests {
 		let msg = err.to_string();
 		assert!(
 			msg.contains("Invalid API key"),
-			"error should mention 'Invalid API key', got: {msg}"
+			"error should mention 'Invalid API key', got: {}",
+			msg
 		);
 	}
 
@@ -248,7 +254,8 @@ mod tests {
 		// Full key starts with "rch_live_"
 		assert!(
 			full_key.starts_with("rch_live_"),
-			"key should start with rch_live_, got: {full_key}"
+			"key should start with rch_live_, got: {}",
+			full_key
 		);
 
 		// Prefix is first 24 chars of the full key

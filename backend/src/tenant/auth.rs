@@ -1,6 +1,6 @@
 use crate::config::ThrottleConfig;
 use crate::tenant::context::TenantContext;
-use crate::tenant::models::{ApiKeyStatus, PlanTier, TenantStatus};
+use crate::tenant::models::{PlanTier, TenantStatus};
 use anyhow::{bail, Result};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
