@@ -1,7 +1,9 @@
 mod api_harness_support;
 mod test_helpers;
 
-use api_harness_support::{build_runtime, execute_cases, seed_upgrade_fixtures, upgrade_safe_cases};
+use api_harness_support::{
+	build_runtime, execute_cases, seed_upgrade_fixtures, upgrade_safe_cases,
+};
 use serial_test::serial;
 use test_helpers::{ensure_test_amqp_url, restore_migration_fixture_to_head, MigrationFixture};
 

@@ -452,13 +452,20 @@ fn materialize_release_migrations(fixture: MigrationFixture) -> Result<PathBuf, 
 		"reacher-release-migrations-{}",
 		Uuid::new_v4().simple()
 	));
-	fs::create_dir_all(&temp_dir)
-		.map_err(|err| format!("failed to create migration tempdir {}: {err}", temp_dir.display()))?;
+	fs::create_dir_all(&temp_dir).map_err(|err| {
+		format!(
+			"failed to create migration tempdir {}: {err}",
+			temp_dir.display()
+		)
+	})?;
 	let max_prefix = fixture_max_migration(fixture);
 
-	for entry in fs::read_dir(&migrations_dir)
-		.map_err(|err| format!("failed to read migrations dir {}: {err}", migrations_dir.display()))?
-	{
+	for entry in fs::read_dir(&migrations_dir).map_err(|err| {
+		format!(
+			"failed to read migrations dir {}: {err}",
+			migrations_dir.display()
+		)
+	})? {
 		let entry = entry.map_err(|err| format!("failed to read migration entry: {err}"))?;
 		let file_name = entry.file_name();
 		let file_name = file_name.to_string_lossy();
@@ -529,10 +536,12 @@ async fn apply_sql_fixture(pool: &PgPool, path: &Path) -> Result<(), String> {
 	let sql = fs::read_to_string(path)
 		.map_err(|err| format!("failed to read fixture {}: {err}", path.display()))?;
 	for statement in split_sql_statements(&sql) {
-		sqlx::query(&statement)
-			.execute(pool)
-			.await
-			.map_err(|err| format!("failed to execute fixture statement from {}: {err}", path.display()))?;
+		sqlx::query(&statement).execute(pool).await.map_err(|err| {
+			format!(
+				"failed to execute fixture statement from {}: {err}",
+				path.display()
+			)
+		})?;
 	}
 	Ok(())
 }

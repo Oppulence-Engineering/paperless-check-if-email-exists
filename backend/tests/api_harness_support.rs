@@ -4,8 +4,8 @@ use crate::test_helpers::{
 	build_test_config, insert_api_key, insert_api_key_with_status, insert_comment, insert_domain,
 	insert_event, insert_finder_job, insert_finder_result, insert_job,
 	insert_keys_for_existing_tenant, insert_legacy_bulk_job, insert_legacy_email_result,
-	insert_list, insert_pipeline, insert_pipeline_run, insert_reputation_cache,
-	insert_scored_task, insert_suppression, insert_tenant, insert_tenant_with_keys, ConfigProfile,
+	insert_list, insert_pipeline, insert_pipeline_run, insert_reputation_cache, insert_scored_task,
+	insert_suppression, insert_tenant, insert_tenant_with_keys, ConfigProfile,
 	TenantApiKeysFixture, ADMIN_SECRET,
 };
 use reacher_backend::http::openapi::build_spec;
@@ -930,8 +930,14 @@ pub async fn build_runtime(db_url: &str, amqp_url: &str) -> HarnessRuntime {
 pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 	let tenant_id = Uuid::parse_str(UPGRADE_TENANT_ID).expect("valid upgrade tenant id");
 	let tenant = insert_keys_for_existing_tenant(pool, tenant_id).await;
-	let comment_delete_id =
-		insert_comment(pool, tenant_id, Some(UPGRADE_JOB_ID), None, "Upgrade fixture comment").await;
+	let comment_delete_id = insert_comment(
+		pool,
+		tenant_id,
+		Some(UPGRADE_JOB_ID),
+		None,
+		"Upgrade fixture comment",
+	)
+	.await;
 	let pipeline_main = insert_pipeline(
 		pool,
 		tenant_id,
