@@ -339,7 +339,9 @@ async fn connect_existing_db(url: String) -> TestDb {
 	let _ = sqlx::query("DELETE FROM reputation_cache")
 		.execute(&pool)
 		.await;
-	let _ = sqlx::query("DELETE FROM tenant_domains").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM tenant_domains")
+		.execute(&pool)
+		.await;
 	let _ = sqlx::query("DELETE FROM v1_finder_result")
 		.execute(&pool)
 		.await;
@@ -364,7 +366,9 @@ async fn connect_existing_db(url: String) -> TestDb {
 		.execute(&pool)
 		.await;
 	let _ = sqlx::query("DELETE FROM v1_bulk_job").execute(&pool).await;
-	let _ = sqlx::query("DELETE FROM email_results").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM email_results")
+		.execute(&pool)
+		.await;
 	let _ = sqlx::query("DELETE FROM bulk_jobs").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM api_keys").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM tenants").execute(&pool).await;
@@ -457,7 +461,8 @@ pub async fn insert_tenant_with_keys(pool: &PgPool, slug: &str) -> TenantApiKeys
 		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
 	)
 	.await;
-	let (revoked_key, revoked_key_id) = insert_api_key_with_status(pool, tenant_id, "revoked").await;
+	let (revoked_key, revoked_key_id) =
+		insert_api_key_with_status(pool, tenant_id, "revoked").await;
 
 	TenantApiKeysFixture {
 		tenant_id,
@@ -620,11 +625,11 @@ pub async fn insert_list(
 	.bind(name)
 	.bind(total_rows)
 	.bind(
-			original_headers
-				.iter()
-				.map(|value| value.to_string())
-				.collect::<Vec<_>>(),
-		)
+		original_headers
+			.iter()
+			.map(|value| value.to_string())
+			.collect::<Vec<_>>(),
+	)
 	.bind(original_rows)
 	.bind(status)
 	.bind(total_rows)
@@ -725,12 +730,7 @@ pub async fn insert_comment(
 	row.get("id")
 }
 
-pub async fn insert_suppression(
-	pool: &PgPool,
-	tenant_id: Uuid,
-	email: &str,
-	reason: &str,
-) -> i32 {
+pub async fn insert_suppression(pool: &PgPool, tenant_id: Uuid, email: &str, reason: &str) -> i32 {
 	let row = sqlx::query(
 		"INSERT INTO v1_suppression_entries (tenant_id, email, reason) VALUES ($1, $2, $3::suppression_reason) RETURNING id",
 	)
@@ -896,12 +896,13 @@ pub async fn insert_legacy_email_result(
 	job_id: i32,
 	result: serde_json::Value,
 ) -> i32 {
-	let row = sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2) RETURNING id")
-		.bind(job_id)
-		.bind(result)
-		.fetch_one(pool)
-		.await
-		.expect("insert_legacy_email_result failed");
+	let row =
+		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2) RETURNING id")
+			.bind(job_id)
+			.bind(result)
+			.fetch_one(pool)
+			.await
+			.expect("insert_legacy_email_result failed");
 	row.get("id")
 }
 

@@ -27,9 +27,7 @@ mod postgres_storage_tests {
 	use crate::test_helpers::TestDb;
 	use check_if_email_exists::{CheckEmailOutput, Reachable};
 	use reacher_backend::storage::postgres::PostgresStorage;
-	use reacher_backend::worker::do_work::{
-		CheckEmailJobId, CheckEmailTask, TaskMetadata,
-	};
+	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 	use serial_test::serial;
 	use sqlx::Row;
 

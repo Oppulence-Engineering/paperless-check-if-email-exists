@@ -2,8 +2,8 @@ mod test_helpers;
 
 use crate::test_helpers::{
 	build_test_config, ensure_test_amqp_url, insert_api_key, insert_api_key_with_status,
-	insert_comment, insert_domain, insert_event, insert_finder_job, insert_finder_result, insert_job,
-	insert_legacy_bulk_job, insert_legacy_email_result, insert_list, insert_pipeline,
+	insert_comment, insert_domain, insert_event, insert_finder_job, insert_finder_result,
+	insert_job, insert_legacy_bulk_job, insert_legacy_email_result, insert_list, insert_pipeline,
 	insert_pipeline_run, insert_reputation_cache, insert_scored_task, insert_suppression,
 	insert_tenant, insert_tenant_with_keys, ConfigProfile, TenantApiKeysFixture, TestDb,
 	ADMIN_SECRET,
@@ -264,7 +264,14 @@ async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	insert_legacy_email_result(
 		pool,
 		legacy_status_job,
-		verification_result("legacy-safe@example.com", "safe", false, false, false, false),
+		verification_result(
+			"legacy-safe@example.com",
+			"safe",
+			false,
+			false,
+			false,
+			false,
+		),
 	)
 	.await;
 
@@ -278,7 +285,14 @@ async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	insert_legacy_email_result(
 		pool,
 		legacy_results_job,
-		verification_result("legacy-two@example.com", "invalid", false, false, false, false),
+		verification_result(
+			"legacy-two@example.com",
+			"invalid",
+			false,
+			false,
+			false,
+			false,
+		),
 	)
 	.await;
 
@@ -611,18 +625,39 @@ async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	.await;
 
 	let source = serde_json::json!({"type": "list_snapshot", "list_id": list_main});
-	let pipeline_main = insert_pipeline(pool, tenant.tenant_id, "Harness Pipeline Main", source.clone()).await;
-	let pipeline_pause =
-		insert_pipeline(pool, tenant.tenant_id, "Harness Pipeline Pause", source.clone()).await;
-	let pipeline_resume =
-		insert_pipeline(pool, tenant.tenant_id, "Harness Pipeline Resume", source.clone()).await;
+	let pipeline_main = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Main",
+		source.clone(),
+	)
+	.await;
+	let pipeline_pause = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Pause",
+		source.clone(),
+	)
+	.await;
+	let pipeline_resume = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Resume",
+		source.clone(),
+	)
+	.await;
 	sqlx::query("UPDATE v1_pipelines SET status = 'paused'::pipeline_status WHERE id = $1")
 		.bind(pipeline_resume)
 		.execute(pool)
 		.await
 		.expect("pause seed");
-	let pipeline_trigger =
-		insert_pipeline(pool, tenant.tenant_id, "Harness Pipeline Trigger", source.clone()).await;
+	let pipeline_trigger = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Trigger",
+		source.clone(),
+	)
+	.await;
 	let pipeline_active_conflict = insert_pipeline(
 		pool,
 		tenant.tenant_id,
@@ -630,8 +665,13 @@ async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		source.clone(),
 	)
 	.await;
-	let pipeline_delete =
-		insert_pipeline(pool, tenant.tenant_id, "Harness Pipeline Delete", source.clone()).await;
+	let pipeline_delete = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Delete",
+		source.clone(),
+	)
+	.await;
 	let pipeline_run = insert_pipeline_run(
 		pool,
 		pipeline_main,
@@ -685,7 +725,14 @@ async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 
 	let suppression_id =
 		insert_suppression(pool, tenant.tenant_id, "suppressed@example.com", "manual").await;
-	insert_comment(pool, tenant.tenant_id, Some(job_main), None, "Existing comment").await;
+	insert_comment(
+		pool,
+		tenant.tenant_id,
+		Some(job_main),
+		None,
+		"Existing comment",
+	)
+	.await;
 	let comment_delete_id =
 		insert_comment(pool, tenant.tenant_id, Some(job_main), None, "Delete me").await;
 
@@ -846,12 +893,8 @@ async fn build_runtime(db_url: &str, amqp_url: &str) -> HarnessRuntime {
 		bearer: build_test_config(ConfigProfile::BearerTenant, Some(db_url), None).await,
 		admin: build_test_config(ConfigProfile::AdminSecret, Some(db_url), None).await,
 		pseudo_worker: build_test_config(ConfigProfile::PseudoWorker, Some(db_url), None).await,
-		worker_rabbit: build_test_config(
-			ConfigProfile::WorkerRabbit,
-			Some(db_url),
-			Some(amqp_url),
-		)
-		.await,
+		worker_rabbit: build_test_config(ConfigProfile::WorkerRabbit, Some(db_url), Some(amqp_url))
+			.await,
 		pipeline_enabled: build_test_config(
 			ConfigProfile::PipelineEnabled,
 			Some(db_url),
@@ -863,94 +906,886 @@ async fn build_runtime(db_url: &str, amqp_url: &str) -> HarnessRuntime {
 
 fn canonical_cases() -> Vec<HarnessCase> {
 	vec![
-		case!("GET", "/healthz", ConfigProfile::Public, AuthProfile::None, PathProfile::Literal("/healthz"), BodyProfile::None, 200, Expectation::Json(&["status"])),
-		case!("GET", "/readyz", ConfigProfile::Public, AuthProfile::None, PathProfile::Literal("/readyz"), BodyProfile::None, 200, Expectation::Json(&["status", "checks"])),
-		case!("GET", "/version", ConfigProfile::Public, AuthProfile::None, PathProfile::Literal("/version"), BodyProfile::None, 200, Expectation::Json(&["version"])),
-		case!("GET", "/openapi.json", ConfigProfile::Public, AuthProfile::None, PathProfile::Literal("/openapi.json"), BodyProfile::None, 200, Expectation::OpenApi),
-		case!("POST", "/v0/check_email", ConfigProfile::DbOnly, AuthProfile::Secret, PathProfile::Literal("/v0/check_email"), BodyProfile::JsonV0CheckEmail, 200, Expectation::Json(&["is_reachable", "score"])),
-		case!("POST", "/v0/bulk", ConfigProfile::DbOnly, AuthProfile::Secret, PathProfile::Literal("/v0/bulk"), BodyProfile::JsonV0BulkCreate, 200, Expectation::Json(&["job_id"])),
-		case!("GET", "/v0/bulk/{job_id}", ConfigProfile::DbOnly, AuthProfile::Secret, PathProfile::LegacyBulkStatus, BodyProfile::None, 200, Expectation::Json(&["job_id", "summary", "job_status"])),
-		case!("GET", "/v0/bulk/{job_id}/results", ConfigProfile::DbOnly, AuthProfile::Secret, PathProfile::LegacyBulkResults, BodyProfile::None, 200, Expectation::Json(&["results"])),
-		case!("POST", "/v1/check-email-with-onboard", ConfigProfile::DbOnly, AuthProfile::None, PathProfile::Literal("/v1/check-email-with-onboard"), BodyProfile::JsonOnboard, 201, Expectation::Json(&["tenant", "api_key", "verification_result"])),
-		case!("POST", "/v1/check_email", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/check_email"), BodyProfile::JsonV1CheckEmail, 200, Expectation::Json(&["is_reachable", "score"])),
-		case!("POST", "/v1/find_email", ConfigProfile::WorkerRabbit, AuthProfile::BearerFull, PathProfile::Literal("/v1/find_email"), BodyProfile::JsonFindEmailCreate, 202, Expectation::Json(&["job_id", "bulk_job_id", "status"])),
-		case!("GET", "/v1/find_email/{job_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::FinderGet, BodyProfile::None, 200, Expectation::Json(&["job_id", "results", "best_match"])),
-		case!("POST", "/v1/lists", ConfigProfile::WorkerRabbit, AuthProfile::BearerFull, PathProfile::Literal("/v1/lists"), BodyProfile::MultipartListUpload, 202, Expectation::Json(&["list_id", "job_id", "total_rows"])),
-		case!("GET", "/v1/lists", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/lists"), BodyProfile::None, 200, Expectation::Json(&["lists", "total"])),
-		case!("GET", "/v1/lists/{list_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::ListGet, BodyProfile::None, 200, Expectation::Json(&["id", "summary"])),
-		case!("GET", "/v1/lists/{list_id}/quality", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::ListQuality, BodyProfile::None, 200, Expectation::Json(&["list_id", "quality_grade", "categories"])),
-		case!("GET", "/v1/lists/{list_id}/download", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::ListDownload, BodyProfile::None, 200, Expectation::Csv),
-		case!("DELETE", "/v1/lists/{list_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::ListDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("POST", "/v1/pipelines", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::Literal("/v1/pipelines"), BodyProfile::JsonPipelineCreate, 201, Expectation::Json(&["id", "name", "source"])),
-		case!("GET", "/v1/pipelines", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::Literal("/v1/pipelines"), BodyProfile::None, 200, Expectation::Json(&["pipelines", "total"])),
-		case!("GET", "/v1/pipelines/{pipeline_id}", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineGet, BodyProfile::None, 200, Expectation::Json(&["id", "status", "source"])),
-		case!("PATCH", "/v1/pipelines/{pipeline_id}", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelinePatch, BodyProfile::JsonPipelinePatch, 200, Expectation::Json(&["id", "name", "status"])),
-		case!("DELETE", "/v1/pipelines/{pipeline_id}", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("POST", "/v1/pipelines/{pipeline_id}/pause", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelinePause, BodyProfile::None, 200, Expectation::Json(&["id", "status"])),
-		case!("POST", "/v1/pipelines/{pipeline_id}/resume", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineResume, BodyProfile::None, 200, Expectation::Json(&["id", "status"])),
-		case!("POST", "/v1/pipelines/{pipeline_id}/trigger", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineTrigger, BodyProfile::JsonPipelineTrigger, 202, Expectation::Json(&["run_id", "status"])),
-		case!("GET", "/v1/pipelines/{pipeline_id}/runs", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineRuns, BodyProfile::None, 200, Expectation::Json(&["runs", "total"])),
-		case!("GET", "/v1/pipelines/{pipeline_id}/runs/{run_id}", ConfigProfile::PipelineEnabled, AuthProfile::BearerFull, PathProfile::PipelineRunGet, BodyProfile::None, 200, Expectation::Json(&["id", "pipeline_id", "status"])),
-		case!("POST", "/v1/reputation/check", ConfigProfile::DbOnly, AuthProfile::BearerFull, PathProfile::Literal("/v1/reputation/check"), BodyProfile::JsonReputationCheck, 200, Expectation::Json(&["domain", "score", "cached"])),
-		case!("POST", "/v1/suppressions", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/suppressions"), BodyProfile::JsonSuppressionsAdd, 200, Expectation::Json(&["added", "duplicates"])),
-		case!("GET", "/v1/suppressions/check", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/suppressions/check?email=suppressed%40example.com"), BodyProfile::None, 200, Expectation::Json(&["suppressed"])),
-		case!("GET", "/v1/suppressions", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/suppressions"), BodyProfile::None, 200, Expectation::Json(&["entries", "total"])),
-		case!("DELETE", "/v1/suppressions/{id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::SuppressionDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("POST", "/v1/bulk", ConfigProfile::WorkerRabbit, AuthProfile::BearerFull, PathProfile::Literal("/v1/bulk"), BodyProfile::JsonV1BulkCreate, 200, Expectation::Json(&["job_id"])),
-		case!("GET", "/v1/bulk/{job_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobGet, BodyProfile::None, 200, Expectation::Json(&["job_id", "task_summary"])),
-		case!("GET", "/v1/bulk/{job_id}/results", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobResults, BodyProfile::None, 200, Expectation::Json(&["results"])),
-		case!("GET", "/v1/reverification/status", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/reverification/status"), BodyProfile::None, 200, Expectation::Json(&["enabled"])),
-		case!("GET", "/v1/events", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/events"), BodyProfile::None, 200, Expectation::Json(&["events", "total"])),
-		case!("GET", "/v1/emails/{email}/history", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::EmailHistory, BodyProfile::None, 200, Expectation::Json(&["email", "history", "total"])),
-		case!("GET", "/v1/query", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/query?job_id=1"), BodyProfile::None, 200, Expectation::Json(&["results", "total"])),
-		case!("POST", "/v1/comments", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/comments"), BodyProfile::JsonCommentsCreate, 201, Expectation::Json(&["id", "body"])),
-		case!("GET", "/v1/comments", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::Literal("/v1/comments?job_id=1"), BodyProfile::None, 200, Expectation::Json(&["comments", "total"])),
-		case!("DELETE", "/v1/comments/{comment_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::CommentDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("GET", "/v1/jobs/{job_id}", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobGet, BodyProfile::None, 200, Expectation::Json(&["job_id", "task_summary"])),
-		case!("POST", "/v1/jobs/{job_id}/cancel", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobCancel, BodyProfile::None, 200, Expectation::Json(&["job_id", "tasks_cancelled", "status"])),
-		case!("GET", "/v1/jobs/{job_id}/events", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobEvents, BodyProfile::None, 200, Expectation::Json(&["events", "total"])),
-		case!("GET", "/v1/jobs/{job_id}/results", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobResults, BodyProfile::None, 200, Expectation::Json(&["results"])),
-		case!("GET", "/v1/jobs/{job_id}/download", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobDownload, BodyProfile::None, 200, Expectation::Csv),
-		case!("POST", "/v1/jobs/{job_id}/retry", ConfigProfile::WorkerRabbit, AuthProfile::BearerFull, PathProfile::JobRetry, BodyProfile::None, 200, Expectation::Json(&["job_id", "tasks_retried", "status"])),
-		case!("GET", "/v1/jobs/{job_id}/approval", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobApproval, BodyProfile::None, 200, Expectation::Json(&["job_id", "recommendation", "ready_to_send"])),
-		case!("GET", "/v1/jobs/{job_id}/latency", ConfigProfile::PseudoWorker, AuthProfile::BearerFull, PathProfile::JobLatency, BodyProfile::None, 200, Expectation::Json(&["job_id", "avg_duration_ms", "p95_duration_ms"])),
-		case!("GET", "/v1/me", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me"), BodyProfile::None, 200, Expectation::Json(&["tenant_id", "tenant_name"])),
-		case!("GET", "/v1/me/settings", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/settings"), BodyProfile::None, 200, Expectation::Json(&["tenant_id", "slug"])),
-		case!("PATCH", "/v1/me/settings", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/settings"), BodyProfile::JsonMeSettingsPatch, 200, Expectation::Json(&["tenant_id", "result_retention_days"])),
-		case!("GET", "/v1/me/webhook", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/webhook"), BodyProfile::None, 200, Expectation::Json(&["tenant_id", "webhook_signing_secret_configured"])),
-		case!("PATCH", "/v1/me/webhook", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/webhook"), BodyProfile::JsonMeWebhookPatch, 200, Expectation::Json(&["tenant_id", "default_webhook_url"])),
-		case!("DELETE", "/v1/me/webhook", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/webhook"), BodyProfile::None, 200, Expectation::Json(&["tenant_id", "webhook_cleared"])),
-		case!("GET", "/v1/me/usage", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/usage"), BodyProfile::None, 200, Expectation::Json(&["tenant_id", "quota_unlimited"])),
-		case!("GET", "/v1/me/domains", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/domains"), BodyProfile::None, 200, Expectation::Json(&["domains"])),
-		case!("POST", "/v1/me/domains", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/domains"), BodyProfile::JsonMeDomainCreate, 201, Expectation::Json(&["id", "domain"])),
-		case!("GET", "/v1/me/domains/{domain}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::DomainGet, BodyProfile::None, 200, Expectation::Json(&["id", "domain"])),
-		case!("PATCH", "/v1/me/domains/{domain}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::DomainPatch, BodyProfile::JsonMeDomainPatch, 200, Expectation::Json(&["id", "domain"])),
-		case!("DELETE", "/v1/me/domains/{domain}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::DomainDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("GET", "/v1/me/api-keys", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/api-keys"), BodyProfile::None, 200, Expectation::Json(&["api_keys"])),
-		case!("GET", "/v1/me/api-keys/{key_id}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::SelfApiKeyGet, BodyProfile::None, 200, Expectation::Json(&["id", "key_prefix"])),
-		case!("POST", "/v1/me/api-keys", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::Literal("/v1/me/api-keys"), BodyProfile::JsonMeApiKeyCreate, 201, Expectation::Json(&["id", "key", "key_prefix"])),
-		case!("PATCH", "/v1/me/api-keys/{key_id}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::SelfApiKeyPatch, BodyProfile::JsonMeApiKeyPatch, 200, Expectation::Json(&["id", "name"])),
-		case!("DELETE", "/v1/me/api-keys/{key_id}", ConfigProfile::BearerTenant, AuthProfile::BearerFull, PathProfile::SelfApiKeyDelete, BodyProfile::None, 200, Expectation::Json(&["revoked", "key_id"])),
-		case!("POST", "/v1/admin/tenants", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::Literal("/v1/admin/tenants"), BodyProfile::JsonAdminTenantCreate, 201, Expectation::Json(&["id", "slug"])),
-		case!("GET", "/v1/admin/tenants", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::Literal("/v1/admin/tenants"), BodyProfile::None, 200, Expectation::Json(&["tenants", "total"])),
-		case!("GET", "/v1/admin/tenants/{tenant_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantGet, BodyProfile::None, 200, Expectation::Json(&["id", "slug"])),
-		case!("PUT", "/v1/admin/tenants/{tenant_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantPut, BodyProfile::JsonAdminTenantUpdate, 200, Expectation::Json(&["id", "name"])),
-		case!("DELETE", "/v1/admin/tenants/{tenant_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantDelete, BodyProfile::None, 200, Expectation::Json(&["deleted"])),
-		case!("GET", "/v1/admin/tenants/{tenant_id}/quota", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminQuotaGet, BodyProfile::None, 200, Expectation::Json(&["tenant_id", "remaining_quota"])),
-		case!("PATCH", "/v1/admin/tenants/{tenant_id}/quota", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminQuotaPatch, BodyProfile::JsonAdminQuotaPatch, 200, Expectation::Json(&["tenant_id", "monthly_email_limit"])),
-		case!("POST", "/v1/admin/tenants/{tenant_id}/quota/reset", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminQuotaReset, BodyProfile::None, 200, Expectation::Json(&["tenant_id", "used_this_period"])),
-		case!("GET", "/v1/admin/jobs", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::Literal("/v1/admin/jobs"), BodyProfile::None, 200, Expectation::Json(&["jobs", "total"])),
-		case!("GET", "/v1/admin/jobs/{job_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminJobGet, BodyProfile::None, 200, Expectation::Json(&["job_id", "status"])),
-		case!("GET", "/v1/admin/jobs/{job_id}/events", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminJobEvents, BodyProfile::None, 200, Expectation::Json(&["events", "total"])),
-		case!("GET", "/v1/admin/jobs/{job_id}/results", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminJobResults, BodyProfile::None, 200, Expectation::Json(&["results"])),
-		case!("GET", "/v1/admin/tenants/{tenant_id}/jobs", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantJobs, BodyProfile::None, 200, Expectation::Json(&["jobs", "total"])),
-		case!("GET", "/v1/admin/api-keys", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::Literal("/v1/admin/api-keys"), BodyProfile::None, 200, Expectation::Json(&["api_keys", "total"])),
-		case!("POST", "/v1/admin/tenants/{tenant_id}/api-keys", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeysCreate, BodyProfile::JsonAdminApiKeyCreate, 201, Expectation::Json(&["id", "key", "key_prefix"])),
-		case!("GET", "/v1/admin/tenants/{tenant_id}/api-keys", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeysList, BodyProfile::None, 200, Expectation::Json(&["api_keys"])),
-		case!("GET", "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeyGet, BodyProfile::None, 200, Expectation::Json(&["id", "key_prefix"])),
-		case!("PATCH", "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeyPatch, BodyProfile::JsonAdminApiKeyPatch, 200, Expectation::Json(&["id", "name"])),
-		case!("DELETE", "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeyDelete, BodyProfile::None, 200, Expectation::Json(&["revoked", "key_id"])),
-		case!("POST", "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate", ConfigProfile::AdminSecret, AuthProfile::AdminSecret, PathProfile::AdminTenantApiKeyReactivate, BodyProfile::None, 200, Expectation::Json(&["key_id", "reactivated"])),
+		case!(
+			"GET",
+			"/healthz",
+			ConfigProfile::Public,
+			AuthProfile::None,
+			PathProfile::Literal("/healthz"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["status"])
+		),
+		case!(
+			"GET",
+			"/readyz",
+			ConfigProfile::Public,
+			AuthProfile::None,
+			PathProfile::Literal("/readyz"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["status", "checks"])
+		),
+		case!(
+			"GET",
+			"/version",
+			ConfigProfile::Public,
+			AuthProfile::None,
+			PathProfile::Literal("/version"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["version"])
+		),
+		case!(
+			"GET",
+			"/openapi.json",
+			ConfigProfile::Public,
+			AuthProfile::None,
+			PathProfile::Literal("/openapi.json"),
+			BodyProfile::None,
+			200,
+			Expectation::OpenApi
+		),
+		case!(
+			"POST",
+			"/v0/check_email",
+			ConfigProfile::DbOnly,
+			AuthProfile::Secret,
+			PathProfile::Literal("/v0/check_email"),
+			BodyProfile::JsonV0CheckEmail,
+			200,
+			Expectation::Json(&["is_reachable", "score"])
+		),
+		case!(
+			"POST",
+			"/v0/bulk",
+			ConfigProfile::DbOnly,
+			AuthProfile::Secret,
+			PathProfile::Literal("/v0/bulk"),
+			BodyProfile::JsonV0BulkCreate,
+			200,
+			Expectation::Json(&["job_id"])
+		),
+		case!(
+			"GET",
+			"/v0/bulk/{job_id}",
+			ConfigProfile::DbOnly,
+			AuthProfile::Secret,
+			PathProfile::LegacyBulkStatus,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "summary", "job_status"])
+		),
+		case!(
+			"GET",
+			"/v0/bulk/{job_id}/results",
+			ConfigProfile::DbOnly,
+			AuthProfile::Secret,
+			PathProfile::LegacyBulkResults,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["results"])
+		),
+		case!(
+			"POST",
+			"/v1/check-email-with-onboard",
+			ConfigProfile::DbOnly,
+			AuthProfile::None,
+			PathProfile::Literal("/v1/check-email-with-onboard"),
+			BodyProfile::JsonOnboard,
+			201,
+			Expectation::Json(&["tenant", "api_key", "verification_result"])
+		),
+		case!(
+			"POST",
+			"/v1/check_email",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/check_email"),
+			BodyProfile::JsonV1CheckEmail,
+			200,
+			Expectation::Json(&["is_reachable", "score"])
+		),
+		case!(
+			"POST",
+			"/v1/find_email",
+			ConfigProfile::WorkerRabbit,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/find_email"),
+			BodyProfile::JsonFindEmailCreate,
+			202,
+			Expectation::Json(&["job_id", "bulk_job_id", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/find_email/{job_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::FinderGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "results", "best_match"])
+		),
+		case!(
+			"POST",
+			"/v1/lists",
+			ConfigProfile::WorkerRabbit,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/lists"),
+			BodyProfile::MultipartListUpload,
+			202,
+			Expectation::Json(&["list_id", "job_id", "total_rows"])
+		),
+		case!(
+			"GET",
+			"/v1/lists",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/lists"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["lists", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "summary"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/quality",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListQuality,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["list_id", "quality_grade", "categories"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListDownload,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"DELETE",
+			"/v1/lists/{list_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/pipelines",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/pipelines"),
+			BodyProfile::JsonPipelineCreate,
+			201,
+			Expectation::Json(&["id", "name", "source"])
+		),
+		case!(
+			"GET",
+			"/v1/pipelines",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/pipelines"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["pipelines", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/pipelines/{pipeline_id}",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "status", "source"])
+		),
+		case!(
+			"PATCH",
+			"/v1/pipelines/{pipeline_id}",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelinePatch,
+			BodyProfile::JsonPipelinePatch,
+			200,
+			Expectation::Json(&["id", "name", "status"])
+		),
+		case!(
+			"DELETE",
+			"/v1/pipelines/{pipeline_id}",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/pipelines/{pipeline_id}/pause",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelinePause,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "status"])
+		),
+		case!(
+			"POST",
+			"/v1/pipelines/{pipeline_id}/resume",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineResume,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "status"])
+		),
+		case!(
+			"POST",
+			"/v1/pipelines/{pipeline_id}/trigger",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineTrigger,
+			BodyProfile::JsonPipelineTrigger,
+			202,
+			Expectation::Json(&["run_id", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/pipelines/{pipeline_id}/runs",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineRuns,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["runs", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/pipelines/{pipeline_id}/runs/{run_id}",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelineRunGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "pipeline_id", "status"])
+		),
+		case!(
+			"POST",
+			"/v1/reputation/check",
+			ConfigProfile::DbOnly,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/reputation/check"),
+			BodyProfile::JsonReputationCheck,
+			200,
+			Expectation::Json(&["domain", "score", "cached"])
+		),
+		case!(
+			"POST",
+			"/v1/suppressions",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions"),
+			BodyProfile::JsonSuppressionsAdd,
+			200,
+			Expectation::Json(&["added", "duplicates"])
+		),
+		case!(
+			"GET",
+			"/v1/suppressions/check",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/check?email=suppressed%40example.com"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["suppressed"])
+		),
+		case!(
+			"GET",
+			"/v1/suppressions",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["entries", "total"])
+		),
+		case!(
+			"DELETE",
+			"/v1/suppressions/{id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SuppressionDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/bulk",
+			ConfigProfile::WorkerRabbit,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/bulk"),
+			BodyProfile::JsonV1BulkCreate,
+			200,
+			Expectation::Json(&["job_id"])
+		),
+		case!(
+			"GET",
+			"/v1/bulk/{job_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "task_summary"])
+		),
+		case!(
+			"GET",
+			"/v1/bulk/{job_id}/results",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobResults,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["results"])
+		),
+		case!(
+			"GET",
+			"/v1/reverification/status",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/reverification/status"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["enabled"])
+		),
+		case!(
+			"GET",
+			"/v1/events",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/events"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["events", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/emails/{email}/history",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::EmailHistory,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["email", "history", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/query",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/query?job_id=1"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["results", "total"])
+		),
+		case!(
+			"POST",
+			"/v1/comments",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/comments"),
+			BodyProfile::JsonCommentsCreate,
+			201,
+			Expectation::Json(&["id", "body"])
+		),
+		case!(
+			"GET",
+			"/v1/comments",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/comments?job_id=1"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["comments", "total"])
+		),
+		case!(
+			"DELETE",
+			"/v1/comments/{comment_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::CommentDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "task_summary"])
+		),
+		case!(
+			"POST",
+			"/v1/jobs/{job_id}/cancel",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobCancel,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "tasks_cancelled", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/events",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobEvents,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["events", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/results",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobResults,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["results"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobDownload,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"POST",
+			"/v1/jobs/{job_id}/retry",
+			ConfigProfile::WorkerRabbit,
+			AuthProfile::BearerFull,
+			PathProfile::JobRetry,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "tasks_retried", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/approval",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobApproval,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "recommendation", "ready_to_send"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/latency",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobLatency,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "avg_duration_ms", "p95_duration_ms"])
+		),
+		case!(
+			"GET",
+			"/v1/me",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "tenant_name"])
+		),
+		case!(
+			"GET",
+			"/v1/me/settings",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/settings"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "slug"])
+		),
+		case!(
+			"PATCH",
+			"/v1/me/settings",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/settings"),
+			BodyProfile::JsonMeSettingsPatch,
+			200,
+			Expectation::Json(&["tenant_id", "result_retention_days"])
+		),
+		case!(
+			"GET",
+			"/v1/me/webhook",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/webhook"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "webhook_signing_secret_configured"])
+		),
+		case!(
+			"PATCH",
+			"/v1/me/webhook",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/webhook"),
+			BodyProfile::JsonMeWebhookPatch,
+			200,
+			Expectation::Json(&["tenant_id", "default_webhook_url"])
+		),
+		case!(
+			"DELETE",
+			"/v1/me/webhook",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/webhook"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "webhook_cleared"])
+		),
+		case!(
+			"GET",
+			"/v1/me/usage",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/usage"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "quota_unlimited"])
+		),
+		case!(
+			"GET",
+			"/v1/me/domains",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/domains"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["domains"])
+		),
+		case!(
+			"POST",
+			"/v1/me/domains",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/domains"),
+			BodyProfile::JsonMeDomainCreate,
+			201,
+			Expectation::Json(&["id", "domain"])
+		),
+		case!(
+			"GET",
+			"/v1/me/domains/{domain}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::DomainGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "domain"])
+		),
+		case!(
+			"PATCH",
+			"/v1/me/domains/{domain}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::DomainPatch,
+			BodyProfile::JsonMeDomainPatch,
+			200,
+			Expectation::Json(&["id", "domain"])
+		),
+		case!(
+			"DELETE",
+			"/v1/me/domains/{domain}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::DomainDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"GET",
+			"/v1/me/api-keys",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/api-keys"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["api_keys"])
+		),
+		case!(
+			"GET",
+			"/v1/me/api-keys/{key_id}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::SelfApiKeyGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "key_prefix"])
+		),
+		case!(
+			"POST",
+			"/v1/me/api-keys",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/api-keys"),
+			BodyProfile::JsonMeApiKeyCreate,
+			201,
+			Expectation::Json(&["id", "key", "key_prefix"])
+		),
+		case!(
+			"PATCH",
+			"/v1/me/api-keys/{key_id}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::SelfApiKeyPatch,
+			BodyProfile::JsonMeApiKeyPatch,
+			200,
+			Expectation::Json(&["id", "name"])
+		),
+		case!(
+			"DELETE",
+			"/v1/me/api-keys/{key_id}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::SelfApiKeyDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["revoked", "key_id"])
+		),
+		case!(
+			"POST",
+			"/v1/admin/tenants",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::Literal("/v1/admin/tenants"),
+			BodyProfile::JsonAdminTenantCreate,
+			201,
+			Expectation::Json(&["id", "slug"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::Literal("/v1/admin/tenants"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenants", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants/{tenant_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "slug"])
+		),
+		case!(
+			"PUT",
+			"/v1/admin/tenants/{tenant_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantPut,
+			BodyProfile::JsonAdminTenantUpdate,
+			200,
+			Expectation::Json(&["id", "name"])
+		),
+		case!(
+			"DELETE",
+			"/v1/admin/tenants/{tenant_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants/{tenant_id}/quota",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminQuotaGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "remaining_quota"])
+		),
+		case!(
+			"PATCH",
+			"/v1/admin/tenants/{tenant_id}/quota",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminQuotaPatch,
+			BodyProfile::JsonAdminQuotaPatch,
+			200,
+			Expectation::Json(&["tenant_id", "monthly_email_limit"])
+		),
+		case!(
+			"POST",
+			"/v1/admin/tenants/{tenant_id}/quota/reset",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminQuotaReset,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["tenant_id", "used_this_period"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/jobs",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::Literal("/v1/admin/jobs"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["jobs", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/jobs/{job_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminJobGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/jobs/{job_id}/events",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminJobEvents,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["events", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/jobs/{job_id}/results",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminJobResults,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["results"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants/{tenant_id}/jobs",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantJobs,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["jobs", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/api-keys",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::Literal("/v1/admin/api-keys"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["api_keys", "total"])
+		),
+		case!(
+			"POST",
+			"/v1/admin/tenants/{tenant_id}/api-keys",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeysCreate,
+			BodyProfile::JsonAdminApiKeyCreate,
+			201,
+			Expectation::Json(&["id", "key", "key_prefix"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants/{tenant_id}/api-keys",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeysList,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["api_keys"])
+		),
+		case!(
+			"GET",
+			"/v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeyGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "key_prefix"])
+		),
+		case!(
+			"PATCH",
+			"/v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeyPatch,
+			BodyProfile::JsonAdminApiKeyPatch,
+			200,
+			Expectation::Json(&["id", "name"])
+		),
+		case!(
+			"DELETE",
+			"/v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeyDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["revoked", "key_id"])
+		),
+		case!(
+			"POST",
+			"/v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate",
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
+			PathProfile::AdminTenantApiKeyReactivate,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["key_id", "reactivated"])
+		),
 	]
 }
 
@@ -967,7 +1802,10 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		}
 		PathProfile::LegacyBulkStatus => format!("/v0/bulk/{}", fixtures.legacy_status_job),
 		PathProfile::LegacyBulkResults => {
-			format!("/v0/bulk/{}/results?format=json", fixtures.legacy_results_job)
+			format!(
+				"/v0/bulk/{}/results?format=json",
+				fixtures.legacy_results_job
+			)
 		}
 		PathProfile::FinderGet => format!("/v1/find_email/{}", fixtures.finder_job),
 		PathProfile::ListGet => format!("/v1/lists/{}", fixtures.list_main),
@@ -1034,7 +1872,10 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 			format!("/v1/admin/tenants/{}/quota", fixtures.admin_tenant_quota)
 		}
 		PathProfile::AdminQuotaReset => {
-			format!("/v1/admin/tenants/{}/quota/reset", fixtures.admin_tenant_quota)
+			format!(
+				"/v1/admin/tenants/{}/quota/reset",
+				fixtures.admin_tenant_quota
+			)
 		}
 		PathProfile::AdminJobGet => format!("/v1/admin/jobs/{}", fixtures.job_main),
 		PathProfile::AdminJobEvents => format!("/v1/admin/jobs/{}/events", fixtures.job_main),
@@ -1073,25 +1914,34 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 	}
 }
 
-fn apply_auth(builder: RequestBuilder, auth: AuthProfile, fixtures: &HarnessFixtures) -> RequestBuilder {
+fn apply_auth(
+	builder: RequestBuilder,
+	auth: AuthProfile,
+	fixtures: &HarnessFixtures,
+) -> RequestBuilder {
 	match auth {
 		AuthProfile::None => builder,
-		AuthProfile::Secret => builder.header(REACHER_SECRET_HEADER, crate::test_helpers::TEST_SECRET),
+		AuthProfile::Secret => {
+			builder.header(REACHER_SECRET_HEADER, crate::test_helpers::TEST_SECRET)
+		}
 		AuthProfile::AdminSecret => builder.header(REACHER_SECRET_HEADER, ADMIN_SECRET),
 		AuthProfile::AdminSecretInvalid => builder.header(REACHER_SECRET_HEADER, "wrong-secret"),
 		AuthProfile::BearerFull => builder.header(
 			"Authorization",
 			format!("Bearer {}", fixtures.tenant.full_access_key),
 		),
-		AuthProfile::BearerBulk => {
-			builder.header("Authorization", format!("Bearer {}", fixtures.tenant.bulk_key))
-		}
-		AuthProfile::BearerLists => {
-			builder.header("Authorization", format!("Bearer {}", fixtures.tenant.lists_key))
-		}
-		AuthProfile::BearerVerify => {
-			builder.header("Authorization", format!("Bearer {}", fixtures.tenant.verify_key))
-		}
+		AuthProfile::BearerBulk => builder.header(
+			"Authorization",
+			format!("Bearer {}", fixtures.tenant.bulk_key),
+		),
+		AuthProfile::BearerLists => builder.header(
+			"Authorization",
+			format!("Bearer {}", fixtures.tenant.lists_key),
+		),
+		AuthProfile::BearerVerify => builder.header(
+			"Authorization",
+			format!("Bearer {}", fixtures.tenant.verify_key),
+		),
 		AuthProfile::BearerPipelines => builder.header(
 			"Authorization",
 			format!("Bearer {}", fixtures.tenant.pipelines_key),
@@ -1222,9 +2072,7 @@ fn apply_body(
 			"name": "Updated Harness Key"
 		})),
 		BodyProfile::JsonEmptyObject => builder.json(&serde_json::json!({})),
-		BodyProfile::MalformedJson => builder
-			.header("content-type", "application/json")
-			.body("{"),
+		BodyProfile::MalformedJson => builder.header("content-type", "application/json").body("{"),
 		BodyProfile::JsonAdminTenantCreate => builder.json(&serde_json::json!({
 			"name": "Harness Admin Tenant",
 			"slug": "harness-admin-created",
@@ -1305,9 +2153,7 @@ fn harness_keys(cases: &[HarnessCase]) -> BTreeSet<(String, String)> {
 
 fn openapi_keys() -> BTreeSet<(String, String)> {
 	let spec = build_spec().expect("runtime openapi build");
-	let paths = spec["paths"]
-		.as_object()
-		.expect("openapi paths object");
+	let paths = spec["paths"].as_object().expect("openapi paths object");
 	let mut keys = BTreeSet::new();
 	for (path, value) in paths {
 		let methods = value.as_object().expect("path item object");
@@ -1644,7 +2490,11 @@ async fn canonical_route_harness_invokes_every_live_route() {
 	let runtime = build_runtime(db.db_url(), &amqp).await;
 	let cases = canonical_cases();
 
-	assert_eq!(cases.len(), all_route_specs().len(), "canonical case count must equal live route count");
+	assert_eq!(
+		cases.len(),
+		all_route_specs().len(),
+		"canonical case count must equal live route count"
+	);
 	execute_cases(&cases, &fixtures, &runtime).await;
 }
 
