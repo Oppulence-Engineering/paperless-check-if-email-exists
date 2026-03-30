@@ -1,5 +1,4 @@
 mod test_helpers;
-use serial_test::serial;
 
 /// Helper: publish a task directly via lapin basic_publish (avoids needing
 /// the private publish_task function).
@@ -28,9 +27,7 @@ mod postgres_storage_tests {
 	use crate::test_helpers::TestDb;
 	use check_if_email_exists::{CheckEmailOutput, Reachable};
 	use reacher_backend::storage::postgres::PostgresStorage;
-	use reacher_backend::worker::do_work::{
-		CheckEmailJobId, CheckEmailTask, TaskError, TaskMetadata,
-	};
+	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 	use serial_test::serial;
 	use sqlx::Row;
 
@@ -70,7 +67,7 @@ mod postgres_storage_tests {
 	#[serial]
 	async fn test_store_ok_result_single_shot() {
 		let db = TestDb::start().await;
-		let storage = PostgresStorage::new(
+		let _ = PostgresStorage::new(
 			&format!(
 				"postgres://postgres:postgres@127.0.0.1:{}/postgres",
 				db.pool().connect_options().get_port()

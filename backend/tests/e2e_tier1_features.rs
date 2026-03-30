@@ -154,7 +154,7 @@ mod events_tests {
 	async fn test_list_events() {
 		let db = TestDb::start().await;
 		let (tid, key) = setup_tenant_with_key(db.pool()).await;
-		let jid = setup_job_with_tasks(db.pool(), tid).await;
+		setup_job_with_tasks(db.pool(), tid).await;
 		let c = worker_config().await;
 		let r = request()
 			.path("/v1/events")

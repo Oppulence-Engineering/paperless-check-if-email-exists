@@ -72,7 +72,7 @@ async fn run_reverification_cycle(
 }
 
 async fn process_schedule(
-	reverification_config: &ReverificationConfig,
+	_reverification_config: &ReverificationConfig,
 	config: &BackendConfig,
 	pg_pool: &PgPool,
 	schedule: &ScheduleRow,

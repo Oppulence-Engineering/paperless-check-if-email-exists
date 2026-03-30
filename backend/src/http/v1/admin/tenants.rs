@@ -315,7 +315,6 @@ async fn update_handler(
 	}
 	if body.result_retention_days.is_some() {
 		sets.push(format!("result_retention_days = ${}", param_idx));
-		param_idx += 1;
 	}
 
 	if sets.is_empty() {

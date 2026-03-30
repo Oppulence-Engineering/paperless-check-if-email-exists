@@ -20,6 +20,7 @@ mod error;
 mod health;
 pub mod idempotency;
 pub mod openapi;
+pub mod routes;
 pub mod shared;
 mod v0;
 pub mod v1;
@@ -43,129 +44,7 @@ use warp::Filter;
 pub fn create_routes(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-	let pg_pool = config.get_pg_pool();
-
-	let health_routes = health::liveness::healthz()
-		.boxed()
-		.or(health::readiness::readyz(Arc::clone(&config)).boxed());
-	let health_routes = health_routes
-		.or(version::get::get_version().boxed())
-		.boxed();
-	let openapi_route = openapi::openapi_spec().boxed();
-
-	let v0_routes = v0::check_email::post::post_check_email(Arc::clone(&config))
-		.boxed()
-		.or(v0::bulk::post::create_bulk_job(Arc::clone(&config), pg_pool.clone()).boxed())
-		.or(v0::bulk::get::get_bulk_job_status(Arc::clone(&config), pg_pool.clone()).boxed())
-		.or(v0::bulk::results::get_bulk_job_result(Arc::clone(&config), pg_pool).boxed())
-		.boxed();
-
-	let v1_routes = v1::onboard::v1_check_email_with_onboard(Arc::clone(&config))
-		.boxed()
-		.or(v1::check_email::post::v1_check_email(Arc::clone(&config)).boxed())
-		.or(v1::find_email::post::v1_find_email(Arc::clone(&config)).boxed())
-		.or(v1::find_email::get::v1_get_find_email(Arc::clone(&config)).boxed())
-		.or(v1::lists::post::v1_create_list(Arc::clone(&config)).boxed())
-		.or(v1::lists::get_list::v1_list_lists(Arc::clone(&config)).boxed())
-		.or(v1::lists::get_detail::v1_get_list(Arc::clone(&config)).boxed())
-		.or(v1::lists::quality::v1_list_quality(Arc::clone(&config)).boxed())
-		.or(v1::lists::download::v1_download_list(Arc::clone(&config)).boxed())
-		.or(v1::lists::delete::v1_delete_list(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_create_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_list_pipelines(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_get_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_update_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_delete_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_pause_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_resume_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_trigger_pipeline(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_list_pipeline_runs(Arc::clone(&config)).boxed())
-		.or(v1::pipelines::v1_get_pipeline_run(Arc::clone(&config)).boxed())
-		.or(v1::reputation::check::v1_check_reputation(Arc::clone(&config)).boxed())
-		.or(v1::suppressions::add::v1_add_suppressions(Arc::clone(&config)).boxed())
-		.or(v1::suppressions::check::v1_check_suppression(Arc::clone(&config)).boxed())
-		.or(v1::suppressions::list::v1_list_suppressions(Arc::clone(&config)).boxed())
-		.or(v1::suppressions::delete::v1_delete_suppression(Arc::clone(&config)).boxed())
-		.or(v1::bulk::post::v1_create_bulk_job(Arc::clone(&config)).boxed())
-		.or(v1::bulk::get_progress::v1_get_bulk_job_progress(Arc::clone(&config)).boxed())
-		.or(v1::bulk::get_results::v1_get_bulk_job_results(Arc::clone(&config)).boxed())
-		.or(v1::reverification::status::v1_reverification_status(Arc::clone(&config)).boxed())
-		.or(v1::events::v1_list_events(Arc::clone(&config)).boxed())
-		.or(v1::email_history::v1_email_history(Arc::clone(&config)).boxed())
-		.or(v1::query::v1_query_results(Arc::clone(&config)).boxed())
-		.or(v1::comments::v1_create_comment(Arc::clone(&config)).boxed())
-		.or(v1::comments::v1_list_comments(Arc::clone(&config)).boxed())
-		.or(v1::comments::v1_delete_comment(Arc::clone(&config)).boxed())
-		.boxed();
-
-	let v1_job_routes = v1::jobs::get_status::v1_get_job_status(Arc::clone(&config))
-		.boxed()
-		.or(v1::jobs::cancel::v1_cancel_job(Arc::clone(&config)).boxed())
-		.or(v1::jobs::get_events::v1_get_job_events(Arc::clone(&config)).boxed())
-		.or(v1::jobs::get_results::v1_get_job_results(Arc::clone(&config)).boxed())
-		.or(v1::jobs::download::v1_download_job_results(Arc::clone(&config)).boxed())
-		.or(v1::jobs::retry::v1_retry_job(Arc::clone(&config)).boxed())
-		.or(v1::jobs::approval_checklist::v1_job_approval_checklist(Arc::clone(&config)).boxed())
-		.or(v1::jobs::latency::v1_job_latency(Arc::clone(&config)).boxed())
-		.boxed();
-
-	let v1_me_routes = v1::me::v1_me(Arc::clone(&config)).boxed();
-
-	let v1_tenant_routes = v1::tenant_settings::v1_get_tenant_settings(Arc::clone(&config))
-		.boxed()
-		.or(v1::tenant_settings::v1_update_tenant_settings(Arc::clone(&config)).boxed())
-		.or(v1::tenant_settings::v1_get_tenant_webhook(Arc::clone(&config)).boxed())
-		.or(v1::tenant_settings::v1_update_tenant_webhook(Arc::clone(&config)).boxed())
-		.or(v1::tenant_settings::v1_clear_tenant_webhook(Arc::clone(&config)).boxed())
-		.or(v1::tenant_settings::v1_get_tenant_usage(Arc::clone(&config)).boxed())
-		.or(v1::tenant_domains::v1_list_tenant_domains(Arc::clone(&config)).boxed())
-		.or(v1::tenant_domains::v1_create_tenant_domain(Arc::clone(&config)).boxed())
-		.or(v1::tenant_domains::v1_get_tenant_domain(Arc::clone(&config)).boxed())
-		.or(v1::tenant_domains::v1_update_tenant_domain(Arc::clone(&config)).boxed())
-		.or(v1::tenant_domains::v1_delete_tenant_domain(Arc::clone(&config)).boxed())
-		.boxed();
-
-	let v1_account_routes = v1::account_api_keys::list_api_keys(Arc::clone(&config))
-		.boxed()
-		.or(v1::account_api_keys::get_api_key(Arc::clone(&config)).boxed())
-		.or(v1::account_api_keys::create_api_key(Arc::clone(&config)).boxed())
-		.or(v1::account_api_keys::update_api_key(Arc::clone(&config)).boxed())
-		.or(v1::account_api_keys::revoke_api_key(Arc::clone(&config)).boxed())
-		.boxed();
-
-	let v1_admin_routes = v1::admin::tenants::create_tenant(Arc::clone(&config))
-		.boxed()
-		.or(v1::admin::tenants::list_tenants(Arc::clone(&config)).boxed())
-		.or(v1::admin::tenants::get_tenant(Arc::clone(&config)).boxed())
-		.or(v1::admin::tenants::update_tenant(Arc::clone(&config)).boxed())
-		.or(v1::admin::tenants::delete_tenant(Arc::clone(&config)).boxed())
-		.or(v1::admin::quota::get_tenant_quota(Arc::clone(&config)).boxed())
-		.or(v1::admin::quota::update_tenant_quota(Arc::clone(&config)).boxed())
-		.or(v1::admin::quota::reset_tenant_quota(Arc::clone(&config)).boxed())
-		.or(v1::admin::jobs::list_jobs(Arc::clone(&config)).boxed())
-		.or(v1::admin::jobs::get_job(Arc::clone(&config)).boxed())
-		.or(v1::admin::jobs::get_job_events(Arc::clone(&config)).boxed())
-		.or(v1::admin::jobs::get_job_results(Arc::clone(&config)).boxed())
-		.or(v1::admin::jobs::list_tenant_jobs(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::list_all_api_keys(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::create_api_key(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::list_api_keys(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::get_api_key(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::update_api_key(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::revoke_api_key(Arc::clone(&config)).boxed())
-		.or(v1::admin::api_keys::reactivate_api_key(config).boxed())
-		.boxed();
-
-	health_routes
-		.or(openapi_route)
-		.or(v0_routes)
-		.or(v1_routes)
-		.or(v1_job_routes)
-		.or(v1_me_routes)
-		.or(v1_tenant_routes)
-		.or(v1_account_routes)
-		.or(v1_admin_routes)
-		.recover(handle_rejection)
+	routes::build_all_routes(config).recover(handle_rejection)
 }
 
 /// Runs the Warp server.

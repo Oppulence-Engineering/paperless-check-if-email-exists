@@ -205,6 +205,12 @@ async fn onboard_handler(
 /// POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
 /// No authentication required. Creates a tenant, generates an API key,
 /// verifies the email, and returns all three.
+#[utoipa::path(
+	post,
+	path = "/v1/check-email-with-onboard",
+	tag = "v1",
+	responses((status = 201, description = "Tenant onboarded and email verified"))
+)]
 pub fn v1_check_email_with_onboard(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {

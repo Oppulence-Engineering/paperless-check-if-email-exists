@@ -4,9 +4,8 @@ mod test_helpers;
 mod tests {
 	use crate::test_helpers::TestDb;
 	use reacher_backend::config::{BackendConfig, PostgresConfig, StorageConfig};
-	use reacher_backend::http::{create_routes, REACHER_SECRET_HEADER};
+	use reacher_backend::http::create_routes;
 	use serial_test::serial;
-	use sqlx::Row;
 	use std::sync::Arc;
 	use warp::http::StatusCode;
 	use warp::test::request;

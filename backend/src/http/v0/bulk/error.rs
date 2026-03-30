@@ -33,6 +33,32 @@ pub enum BulkError {
 	Json(serde_json::Error),
 }
 
+impl std::fmt::Display for CsvError {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::CsvLib(err) => write!(f, "csv error: {err}"),
+			Self::CsvLibWriter(err) => write!(f, "csv writer error: {err}"),
+			Self::Parse(message) => write!(f, "csv parse error: {message}"),
+		}
+	}
+}
+
+impl std::error::Error for CsvError {}
+
+impl std::fmt::Display for BulkError {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::EmptyInput => write!(f, "bulk input is empty"),
+			Self::JobInProgress => write!(f, "bulk job is still in progress"),
+			Self::Db(err) => write!(f, "database error: {err}"),
+			Self::Csv(err) => write!(f, "{err}"),
+			Self::Json(err) => write!(f, "json error: {err}"),
+		}
+	}
+}
+
+impl std::error::Error for BulkError {}
+
 // Defaults to Internal server error
 impl reject::Reject for BulkError {}
 

@@ -1,11 +1,17 @@
+#![allow(dead_code)]
+
 /// Shared test infrastructure for E2E tests.
 /// Uses per-process testcontainers by default to avoid cross-binary collisions.
 /// Explicit TEST_DATABASE_URL / TEST_AMQP_URL always win so CI can route tests
 /// to job-level service containers. Set USE_LOCAL_TEST_INFRA=1 to also opt into
 /// the default local ports instead.
 use lapin::{Connection, ConnectionProperties};
+use reacher_backend::config::{
+	BackendConfig, PipelinesConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
+};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
+use std::sync::Arc;
 use std::sync::{LazyLock, Mutex};
 use testcontainers::runners::AsyncRunner;
 use testcontainers::ContainerAsync;
@@ -14,6 +20,7 @@ use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::rabbitmq::RabbitMq;
 use tokio::sync::OnceCell;
 use tokio::time::{sleep, Duration};
+use uuid::Uuid;
 
 static SHARED_AMQP_URL: OnceCell<String> = OnceCell::const_new();
 static SHARED_DB_URL: OnceCell<String> = OnceCell::const_new();
@@ -24,6 +31,31 @@ static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(||
 const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
 const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
 const USE_LOCAL_TEST_INFRA_ENV: &str = "USE_LOCAL_TEST_INFRA";
+pub const TEST_SECRET: &str = "test-secret";
+pub const ADMIN_SECRET: &str = "admin-secret";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConfigProfile {
+	Public,
+	DbOnly,
+	BearerTenant,
+	AdminSecret,
+	PseudoWorker,
+	WorkerRabbit,
+	PipelineEnabled,
+}
+
+#[derive(Debug, Clone)]
+pub struct TenantApiKeysFixture {
+	pub tenant_id: Uuid,
+	pub full_access_key: String,
+	pub bulk_key: String,
+	pub lists_key: String,
+	pub verify_key: String,
+	pub pipelines_key: String,
+	pub revoked_key_id: Uuid,
+	pub revoked_key: String,
+}
 
 fn use_local_test_infra() -> bool {
 	std::env::var(USE_LOCAL_TEST_INFRA_ENV)
@@ -298,10 +330,19 @@ async fn connect_existing_db(url: String) -> TestDb {
 	// Clean up data from previous runs (keep schema)
 	let _ = sqlx::query("DELETE FROM job_comments").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM job_events").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM v1_suppression_entries")
+		.execute(&pool)
+		.await;
 	let _ = sqlx::query("DELETE FROM idempotency_keys")
 		.execute(&pool)
 		.await;
 	let _ = sqlx::query("DELETE FROM reputation_cache")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM tenant_domains")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM v1_finder_result")
 		.execute(&pool)
 		.await;
 	let _ = sqlx::query("DELETE FROM v1_finder_result")
@@ -325,6 +366,10 @@ async fn connect_existing_db(url: String) -> TestDb {
 		.execute(&pool)
 		.await;
 	let _ = sqlx::query("DELETE FROM v1_bulk_job").execute(&pool).await;
+	let _ = sqlx::query("DELETE FROM email_results")
+		.execute(&pool)
+		.await;
+	let _ = sqlx::query("DELETE FROM bulk_jobs").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM api_keys").execute(&pool).await;
 	let _ = sqlx::query("DELETE FROM tenants").execute(&pool).await;
 
@@ -340,7 +385,7 @@ pub async fn insert_tenant(
 	slug: &str,
 	monthly_limit: Option<i32>,
 	used: i32,
-) -> uuid::Uuid {
+) -> Uuid {
 	let row = sqlx::query(
 		"INSERT INTO tenants (name, slug, contact_email, plan_tier, status, monthly_email_limit, used_this_period) VALUES ($1, $2, $3, 'starter', 'active', $4, $5) RETURNING id",
 	)
@@ -353,7 +398,7 @@ pub async fn insert_tenant(
 	row.get("id")
 }
 
-pub async fn insert_tenant_with_status(pool: &PgPool, slug: &str, status: &str) -> uuid::Uuid {
+pub async fn insert_tenant_with_status(pool: &PgPool, slug: &str, status: &str) -> Uuid {
 	let row = sqlx::query(
 		"INSERT INTO tenants (name, slug, contact_email, plan_tier, status) VALUES ($1, $2, $3, 'free', $4::tenant_status) RETURNING id",
 	)
@@ -365,7 +410,7 @@ pub async fn insert_tenant_with_status(pool: &PgPool, slug: &str, status: &str) 
 	row.get("id")
 }
 
-pub async fn insert_api_key(pool: &PgPool, tenant_id: uuid::Uuid) -> (String, uuid::Uuid) {
+pub async fn insert_api_key(pool: &PgPool, tenant_id: Uuid) -> (String, Uuid) {
 	let (full_key, prefix, hash) = reacher_backend::tenant::auth::generate_api_key();
 	let row = sqlx::query(
 		"INSERT INTO api_keys (tenant_id, key_prefix, key_hash, name, status) VALUES ($1, $2, $3, 'test-key', 'active') RETURNING id",
@@ -377,9 +422,9 @@ pub async fn insert_api_key(pool: &PgPool, tenant_id: uuid::Uuid) -> (String, uu
 
 pub async fn insert_api_key_with_scopes(
 	pool: &PgPool,
-	tenant_id: uuid::Uuid,
+	tenant_id: Uuid,
 	scopes: &[&str],
-) -> (String, uuid::Uuid) {
+) -> (String, Uuid) {
 	let (full_key, prefix, hash) = reacher_backend::tenant::auth::generate_api_key();
 	let scope_vec: Vec<String> = scopes.iter().map(|s| s.to_string()).collect();
 	let row = sqlx::query(
@@ -392,9 +437,9 @@ pub async fn insert_api_key_with_scopes(
 
 pub async fn insert_api_key_with_status(
 	pool: &PgPool,
-	tenant_id: uuid::Uuid,
+	tenant_id: Uuid,
 	status: &str,
-) -> (String, uuid::Uuid) {
+) -> (String, Uuid) {
 	let (full_key, prefix, hash) = reacher_backend::tenant::auth::generate_api_key();
 	let row = sqlx::query(
 		"INSERT INTO api_keys (tenant_id, key_prefix, key_hash, name, status) VALUES ($1, $2, $3, 'test-key', $4::api_key_status) RETURNING id",
@@ -404,9 +449,36 @@ pub async fn insert_api_key_with_status(
 	(full_key, row.get("id"))
 }
 
+pub async fn insert_tenant_with_keys(pool: &PgPool, slug: &str) -> TenantApiKeysFixture {
+	let tenant_id = insert_tenant(pool, slug, Some(10_000), 0).await;
+	let (full_access_key, _) = insert_api_key(pool, tenant_id).await;
+	let (bulk_key, _) = insert_api_key_with_scopes(pool, tenant_id, &["bulk"]).await;
+	let (lists_key, _) = insert_api_key_with_scopes(pool, tenant_id, &["lists"]).await;
+	let (verify_key, _) = insert_api_key_with_scopes(pool, tenant_id, &["verify"]).await;
+	let (pipelines_key, _) = insert_api_key_with_scopes(
+		pool,
+		tenant_id,
+		&["pipelines.read", "pipelines.write", "pipelines.trigger"],
+	)
+	.await;
+	let (revoked_key, revoked_key_id) =
+		insert_api_key_with_status(pool, tenant_id, "revoked").await;
+
+	TenantApiKeysFixture {
+		tenant_id,
+		full_access_key,
+		bulk_key,
+		lists_key,
+		verify_key,
+		pipelines_key,
+		revoked_key_id,
+		revoked_key,
+	}
+}
+
 pub async fn insert_job(
 	pool: &PgPool,
-	tenant_id: Option<uuid::Uuid>,
+	tenant_id: Option<Uuid>,
 	total_records: i32,
 	status: &str,
 ) -> i32 {
@@ -422,7 +494,7 @@ pub async fn insert_task(
 	pool: &PgPool,
 	job_id: i32,
 	state: &str,
-	tenant_id: Option<uuid::Uuid>,
+	tenant_id: Option<Uuid>,
 	result_json: Option<serde_json::Value>,
 	error_text: Option<&str>,
 ) -> i32 {
@@ -432,6 +504,75 @@ pub async fn insert_task(
 	)
 	.bind(job_id).bind(&payload).bind(state).bind(tenant_id).bind(&result_json).bind(error_text)
 	.fetch_one(pool).await.expect("insert_task failed");
+	row.get("id")
+}
+
+pub async fn insert_scored_task(
+	pool: &PgPool,
+	job_id: i32,
+	tenant_id: Option<Uuid>,
+	payload_email: &str,
+	extra: Option<serde_json::Value>,
+	result_json: Option<serde_json::Value>,
+	task_state: &str,
+	score: Option<i16>,
+	score_category: Option<&str>,
+	sub_reason: Option<&str>,
+	safe_to_send: Option<bool>,
+	reason_codes: Option<Vec<String>>,
+	canonical_email: Option<&str>,
+	is_duplicate: bool,
+) -> i32 {
+	let payload = serde_json::json!({
+		"input": {"to_email": payload_email},
+		"job_id": {"bulk": job_id},
+		"webhook": null
+	});
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_task_result (
+			job_id,
+			payload,
+			extra,
+			result,
+			error,
+			task_state,
+			tenant_id,
+			score,
+			score_category,
+			sub_reason,
+			safe_to_send,
+			reason_codes,
+			canonical_email,
+			is_duplicate,
+			completed_at
+		)
+		VALUES (
+			$1, $2, $3, $4, NULL, $5::task_state, $6, $7, $8, $9, $10, $11, $12, $13,
+			CASE
+				WHEN $5::task_state IN ('completed', 'failed', 'cancelled', 'dead_lettered') THEN NOW()
+				ELSE NULL
+			END
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(job_id)
+	.bind(&payload)
+	.bind(extra)
+	.bind(result_json)
+	.bind(task_state)
+	.bind(tenant_id)
+	.bind(score)
+	.bind(score_category)
+	.bind(sub_reason)
+	.bind(safe_to_send)
+	.bind(reason_codes)
+	.bind(canonical_email)
+	.bind(is_duplicate)
+	.fetch_one(pool)
+	.await
+	.expect("insert_scored_task failed");
 	row.get("id")
 }
 
@@ -447,6 +588,386 @@ pub async fn insert_event(
 	.bind(job_id).bind(task_id).bind(event_type)
 	.fetch_one(pool).await.expect("insert_event failed");
 	row.get("id")
+}
+
+pub async fn insert_list(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	job_id: i32,
+	name: &str,
+	status: &str,
+	total_rows: i32,
+	original_headers: &[&str],
+	original_rows: serde_json::Value,
+) -> i32 {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_lists (
+			tenant_id,
+			job_id,
+			name,
+			original_filename,
+			file_size_bytes,
+			total_rows,
+			email_column,
+			original_headers,
+			original_data,
+			status,
+			unique_emails,
+			deduplicated_count
+		)
+		VALUES ($1, $2, $3, 'fixture.csv', 128, $4, 'email', $5, $6, $7::list_status, $8, 0)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(job_id)
+	.bind(name)
+	.bind(total_rows)
+	.bind(
+		original_headers
+			.iter()
+			.map(|value| value.to_string())
+			.collect::<Vec<_>>(),
+	)
+	.bind(original_rows)
+	.bind(status)
+	.bind(total_rows)
+	.fetch_one(pool)
+	.await
+	.expect("insert_list failed");
+	row.get("id")
+}
+
+pub async fn insert_pipeline(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	name: &str,
+	source_config: serde_json::Value,
+) -> i64 {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_pipelines (
+			tenant_id,
+			name,
+			status,
+			source_type,
+			source_config,
+			schedule_cron,
+			schedule_timezone,
+			verification_settings,
+			delivery_config,
+			next_run_at
+		)
+		VALUES (
+			$1, $2, 'active'::pipeline_status, 'list_snapshot'::pipeline_source_type, $3,
+			'0 * * * *', 'UTC', '{}'::jsonb, '{}'::jsonb, NOW() + INTERVAL '1 hour'
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(name)
+	.bind(source_config)
+	.fetch_one(pool)
+	.await
+	.expect("insert_pipeline failed");
+	row.get("id")
+}
+
+pub async fn insert_pipeline_run(
+	pool: &PgPool,
+	pipeline_id: i64,
+	tenant_id: Uuid,
+	status: &str,
+	job_id: Option<i32>,
+	list_id: Option<i32>,
+) -> i64 {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_runs (
+			pipeline_id,
+			tenant_id,
+			trigger_type,
+			status,
+			job_id,
+			list_id,
+			source_snapshot,
+			stats
+		)
+		VALUES ($1, $2, 'manual', $3::pipeline_run_status, $4, $5, '{}'::jsonb, '{}'::jsonb)
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.bind(status)
+	.bind(job_id)
+	.bind(list_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert_pipeline_run failed");
+	row.get("id")
+}
+
+pub async fn insert_comment(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	job_id: Option<i32>,
+	list_id: Option<i32>,
+	body: &str,
+) -> i64 {
+	let row = sqlx::query(
+		"INSERT INTO job_comments (tenant_id, job_id, list_id, body, author) VALUES ($1, $2, $3, $4, 'Harness') RETURNING id",
+	)
+	.bind(tenant_id)
+	.bind(job_id)
+	.bind(list_id)
+	.bind(body)
+	.fetch_one(pool)
+	.await
+	.expect("insert_comment failed");
+	row.get("id")
+}
+
+pub async fn insert_suppression(pool: &PgPool, tenant_id: Uuid, email: &str, reason: &str) -> i32 {
+	let row = sqlx::query(
+		"INSERT INTO v1_suppression_entries (tenant_id, email, reason) VALUES ($1, $2, $3::suppression_reason) RETURNING id",
+	)
+	.bind(tenant_id)
+	.bind(email)
+	.bind(reason)
+	.fetch_one(pool)
+	.await
+	.expect("insert_suppression failed");
+	row.get("id")
+}
+
+pub async fn insert_reputation_cache(
+	pool: &PgPool,
+	domain: &str,
+	response: serde_json::Value,
+	score: i16,
+	risk_level: &str,
+) {
+	sqlx::query(
+		r#"
+		INSERT INTO reputation_cache (domain, response, score, risk_level, expires_at)
+		VALUES ($1, $2, $3, $4, NOW() + INTERVAL '30 days')
+		ON CONFLICT (domain) DO UPDATE
+		SET response = EXCLUDED.response,
+		    score = EXCLUDED.score,
+		    risk_level = EXCLUDED.risk_level,
+		    expires_at = EXCLUDED.expires_at,
+		    updated_at = NOW()
+		"#,
+	)
+	.bind(domain)
+	.bind(response)
+	.bind(score)
+	.bind(risk_level)
+	.execute(pool)
+	.await
+	.expect("insert_reputation_cache failed");
+}
+
+pub async fn insert_domain(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	domain: &str,
+	is_active: bool,
+	is_verified: bool,
+) -> Uuid {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO tenant_domains (tenant_id, domain, is_active, is_verified, notes)
+		VALUES ($1, $2, $3, $4, 'fixture')
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(domain)
+	.bind(is_active)
+	.bind(is_verified)
+	.fetch_one(pool)
+	.await
+	.expect("insert_domain failed");
+	row.get("id")
+}
+
+pub async fn insert_finder_job(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	bulk_job_id: i32,
+	status: &str,
+	domain: &str,
+	candidates_checked: i32,
+	best_match_email: Option<&str>,
+) -> i32 {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_finder_job (
+			tenant_id,
+			bulk_job_id,
+			first_name,
+			last_name,
+			domain,
+			normalized_first_name,
+			normalized_last_name,
+			status,
+			domain_has_mx,
+			domain_is_catch_all,
+			candidates_checked,
+			best_match_email,
+			best_match_score,
+			best_match_confidence,
+			completed_at
+		)
+		VALUES (
+			$1, $2, 'Jane', 'Doe', $3, 'jane', 'doe', $4::job_state, true, false, $5, $6, 95, 'high',
+			CASE WHEN $4::job_state = 'completed' THEN NOW() ELSE NULL END
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(bulk_job_id)
+	.bind(domain)
+	.bind(status)
+	.bind(candidates_checked)
+	.bind(best_match_email)
+	.fetch_one(pool)
+	.await
+	.expect("insert_finder_job failed");
+	row.get("id")
+}
+
+pub async fn insert_finder_result(
+	pool: &PgPool,
+	finder_job_id: i32,
+	task_result_id: Option<i32>,
+	candidate_email: &str,
+	pattern: &str,
+	score: i16,
+	score_category: &str,
+	result: Option<serde_json::Value>,
+) -> i32 {
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_finder_result (
+			finder_job_id,
+			task_result_id,
+			candidate_email,
+			pattern,
+			rank_position,
+			score,
+			score_category,
+			sub_reason,
+			result
+		)
+		VALUES ($1, $2, $3, $4, 1, $5, $6, 'deliverable', $7)
+		RETURNING id
+		"#,
+	)
+	.bind(finder_job_id)
+	.bind(task_result_id)
+	.bind(candidate_email)
+	.bind(pattern)
+	.bind(score)
+	.bind(score_category)
+	.bind(result)
+	.fetch_one(pool)
+	.await
+	.expect("insert_finder_result failed");
+	row.get("id")
+}
+
+pub async fn insert_legacy_bulk_job(pool: &PgPool, total_records: i32) -> i32 {
+	let row = sqlx::query("INSERT INTO bulk_jobs (total_records) VALUES ($1) RETURNING id")
+		.bind(total_records)
+		.fetch_one(pool)
+		.await
+		.expect("insert_legacy_bulk_job failed");
+	row.get("id")
+}
+
+pub async fn insert_legacy_email_result(
+	pool: &PgPool,
+	job_id: i32,
+	result: serde_json::Value,
+) -> i32 {
+	let row =
+		sqlx::query("INSERT INTO email_results (job_id, result) VALUES ($1, $2) RETURNING id")
+			.bind(job_id)
+			.bind(result)
+			.fetch_one(pool)
+			.await
+			.expect("insert_legacy_email_result failed");
+	row.get("id")
+}
+
+pub async fn build_test_config(
+	profile: ConfigProfile,
+	db_url: Option<&str>,
+	amqp_url: Option<&str>,
+) -> Arc<BackendConfig> {
+	let mut config = BackendConfig::empty();
+	match profile {
+		ConfigProfile::Public => return Arc::new(config),
+		ConfigProfile::DbOnly | ConfigProfile::BearerTenant => {
+			config.header_secret = Some(TEST_SECRET.to_string());
+			config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+				db_url: db_url.expect("db_url required").to_string(),
+				read_replica_url: None,
+				extra: None,
+			}));
+			config.connect().await.expect("db config connect");
+		}
+		ConfigProfile::AdminSecret => {
+			config.header_secret = Some(ADMIN_SECRET.to_string());
+			config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+				db_url: db_url.expect("db_url required").to_string(),
+				read_replica_url: None,
+				extra: None,
+			}));
+			config.connect().await.expect("admin config connect");
+		}
+		ConfigProfile::PseudoWorker => {
+			config.header_secret = Some(TEST_SECRET.to_string());
+			config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+				db_url: db_url.expect("db_url required").to_string(),
+				read_replica_url: None,
+				extra: None,
+			}));
+			config.connect().await.expect("pseudo worker connect");
+			config.worker.enable = true;
+		}
+		ConfigProfile::WorkerRabbit | ConfigProfile::PipelineEnabled => {
+			config.header_secret = Some(TEST_SECRET.to_string());
+			config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+				db_url: db_url.expect("db_url required").to_string(),
+				read_replica_url: None,
+				extra: None,
+			}));
+			config.worker = WorkerConfig {
+				enable: true,
+				rabbitmq: Some(RabbitMQConfig {
+					url: amqp_url.expect("amqp_url required").to_string(),
+					concurrency: 4,
+				}),
+				webhook: None,
+			};
+			if matches!(profile, ConfigProfile::PipelineEnabled) {
+				config.pipelines = PipelinesConfig {
+					enable: true,
+					..PipelinesConfig::default()
+				};
+			}
+			config.connect().await.expect("worker config connect");
+		}
+	}
+
+	Arc::new(config)
 }
 
 pub fn safe_result() -> serde_json::Value {

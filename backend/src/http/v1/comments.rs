@@ -44,7 +44,7 @@ struct ListResponse {
 }
 
 /// Pick the required scope from the referenced resource type.
-fn required_scope(job_id: Option<i32>, list_id: Option<i32>) -> &'static str {
+fn required_scope(_job_id: Option<i32>, list_id: Option<i32>) -> &'static str {
 	if list_id.is_some() {
 		scope::LISTS
 	} else {

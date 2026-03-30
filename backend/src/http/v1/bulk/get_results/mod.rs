@@ -18,7 +18,7 @@
 
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, PgPool, Row};
+use sqlx::{PgPool, Row};
 use std::iter::Iterator;
 use std::sync::Arc;
 use warp::http::StatusCode;
