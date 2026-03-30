@@ -44,8 +44,12 @@ async fn same_idempotency_key_same_body_creates_one_record_and_no_duplicate_side
 	let keys = insert_keys_for_existing_tenant(&pool, tenant_id).await;
 	pool.close().await;
 
-	let config =
-		build_test_config(ConfigProfile::BearerTenant, Some(env.postgres.db_url()), None).await;
+	let config = build_test_config(
+		ConfigProfile::BearerTenant,
+		Some(env.postgres.db_url()),
+		None,
+	)
+	.await;
 	let barrier = Arc::new(Barrier::new(10));
 	let requests = (0..10).map(|_| {
 		let barrier = Arc::clone(&barrier);
@@ -101,8 +105,12 @@ async fn same_idempotency_key_different_bodies_pick_one_winner_without_extra_row
 	let keys = insert_keys_for_existing_tenant(&pool, tenant_id).await;
 	pool.close().await;
 
-	let config =
-		build_test_config(ConfigProfile::BearerTenant, Some(env.postgres.db_url()), None).await;
+	let config = build_test_config(
+		ConfigProfile::BearerTenant,
+		Some(env.postgres.db_url()),
+		None,
+	)
+	.await;
 	let barrier = Arc::new(Barrier::new(6));
 	let requests = (0..6).map(|index| {
 		let barrier = Arc::clone(&barrier);
@@ -128,7 +136,9 @@ async fn same_idempotency_key_different_bodies_pick_one_winner_without_extra_row
 		}
 	});
 	let responses = join_all(requests).await;
-	assert!(responses.iter().any(|response| response.status() == StatusCode::OK));
+	assert!(responses
+		.iter()
+		.any(|response| response.status() == StatusCode::OK));
 	assert!(responses.iter().all(|response| {
 		matches!(
 			response.status(),
@@ -241,21 +251,19 @@ async fn parallel_bulk_job_creation_creates_exact_job_and_task_counts() {
 		.all(|response| response.status() == StatusCode::OK));
 
 	let pool = env.postgres.pool().await;
-	let job_count: i64 = sqlx::query_scalar(
-		"SELECT COUNT(*) FROM v1_bulk_job WHERE tenant_id = $1",
-	)
-	.bind(tenant_id)
-	.fetch_one(&pool)
-	.await
-	.expect("count bulk jobs");
+	let job_count: i64 =
+		sqlx::query_scalar("SELECT COUNT(*) FROM v1_bulk_job WHERE tenant_id = $1")
+			.bind(tenant_id)
+			.fetch_one(&pool)
+			.await
+			.expect("count bulk jobs");
 	assert_eq!(job_count, 6);
-	let task_count: i64 = sqlx::query_scalar(
-		"SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1",
-	)
-	.bind(tenant_id)
-	.fetch_one(&pool)
-	.await
-	.expect("count bulk tasks");
+	let task_count: i64 =
+		sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1")
+			.bind(tenant_id)
+			.fetch_one(&pool)
+			.await
+			.expect("count bulk tasks");
 	assert_eq!(task_count, 12);
 	pool.close().await;
 }
@@ -314,9 +322,14 @@ async fn parallel_pipeline_trigger_force_false_creates_one_open_run() {
 		}
 	});
 	let responses = join_all(requests).await;
-	assert!(responses.iter().any(|response| response.status() == StatusCode::ACCEPTED));
+	assert!(responses
+		.iter()
+		.any(|response| response.status() == StatusCode::ACCEPTED));
 	assert!(responses.iter().all(|response| {
-		matches!(response.status(), StatusCode::ACCEPTED | StatusCode::CONFLICT)
+		matches!(
+			response.status(),
+			StatusCode::ACCEPTED | StatusCode::CONFLICT
+		)
 	}));
 
 	let pool = env.postgres.pool().await;
@@ -429,13 +442,12 @@ async fn parallel_pause_and_resume_calls_leave_pipeline_in_valid_terminal_state(
 		.all(|response| response.status() == StatusCode::OK));
 
 	let pool = env.postgres.pool().await;
-	let resumed_status: String =
-		sqlx::query("SELECT status::TEXT FROM v1_pipelines WHERE id = $1")
-			.bind(pipeline_id)
-			.fetch_one(&pool)
-			.await
-			.expect("fetch resumed pipeline status")
-			.get(0);
+	let resumed_status: String = sqlx::query("SELECT status::TEXT FROM v1_pipelines WHERE id = $1")
+		.bind(pipeline_id)
+		.fetch_one(&pool)
+		.await
+		.expect("fetch resumed pipeline status")
+		.get(0);
 	assert_eq!(resumed_status, "active");
 	pool.close().await;
 }
@@ -515,9 +527,9 @@ async fn parallel_comment_creation_and_delete_preserve_row_integrity() {
 		.filter(|response| response.status() == StatusCode::OK)
 		.count();
 	assert_eq!(success_count, 1);
-	assert!(delete_responses.iter().all(|response| {
-		matches!(response.status(), StatusCode::OK | StatusCode::NOT_FOUND)
-	}));
+	assert!(delete_responses
+		.iter()
+		.all(|response| { matches!(response.status(), StatusCode::OK | StatusCode::NOT_FOUND) }));
 
 	let pool = env.postgres.pool().await;
 	let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM job_comments WHERE id = $1")
@@ -563,13 +575,12 @@ async fn parallel_quota_resets_leave_usage_at_zero() {
 		.all(|response| response.status() == StatusCode::OK));
 
 	let pool = env.postgres.pool().await;
-	let row = sqlx::query(
-		"SELECT used_this_period, monthly_email_limit FROM tenants WHERE id = $1",
-	)
-	.bind(tenant_id)
-	.fetch_one(&pool)
-	.await
-	.expect("fetch tenant quota");
+	let row =
+		sqlx::query("SELECT used_this_period, monthly_email_limit FROM tenants WHERE id = $1")
+			.bind(tenant_id)
+			.fetch_one(&pool)
+			.await
+			.expect("fetch tenant quota");
 	let used: i32 = row.get("used_this_period");
 	let limit: Option<i32> = row.get("monthly_email_limit");
 	assert_eq!(used, 0);

@@ -421,9 +421,7 @@ pub async fn do_check_email_work(
 			delivery
 				.reject(BasicRejectOptions { requeue: true })
 				.await?;
-			return Err(anyhow::anyhow!(
-				"test failpoint forced requeue before ack"
-			));
+			return Err(anyhow::anyhow!("test failpoint forced requeue before ack"));
 		}
 		delivery.ack(BasicAckOptions::default()).await?;
 

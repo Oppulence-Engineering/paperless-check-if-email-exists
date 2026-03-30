@@ -2,13 +2,9 @@ mod resilience_helpers;
 mod test_helpers;
 
 use crate::resilience_helpers::OwnedResilienceEnv;
-use crate::test_helpers::{
-	build_test_config, insert_job, insert_task, ConfigProfile, TEST_SECRET,
-};
+use crate::test_helpers::{build_test_config, insert_job, insert_task, ConfigProfile, TEST_SECRET};
 use futures::StreamExt;
-use lapin::options::{
-	BasicConsumeOptions, BasicPublishOptions, QueuePurgeOptions,
-};
+use lapin::options::{BasicConsumeOptions, BasicPublishOptions, QueuePurgeOptions};
 use lapin::types::FieldTable;
 use lapin::BasicProperties;
 use reacher_backend::config::RabbitMQConfig;
@@ -32,8 +28,7 @@ fn parse_json(body: &[u8]) -> serde_json::Value {
 #[serial]
 async fn readiness_reports_postgres_unavailable_after_outage() {
 	let env = OwnedResilienceEnv::start().await;
-	let config =
-		build_test_config(ConfigProfile::DbOnly, Some(env.postgres.db_url()), None).await;
+	let config = build_test_config(ConfigProfile::DbOnly, Some(env.postgres.db_url()), None).await;
 
 	env.postgres.kill().await;
 
@@ -58,8 +53,12 @@ async fn comment_write_failure_returns_structured_error_without_partial_comment_
 	let job_id = insert_job(&pool, None, 1, "completed").await;
 	pool.close().await;
 
-	let config =
-		build_test_config(ConfigProfile::PseudoWorker, Some(env.postgres.db_url()), None).await;
+	let config = build_test_config(
+		ConfigProfile::PseudoWorker,
+		Some(env.postgres.db_url()),
+		None,
+	)
+	.await;
 
 	std::env::set_var("RCH_TEST_FORCE_COMMENT_DB_ERROR", "1");
 
@@ -83,7 +82,9 @@ async fn comment_write_failure_returns_structured_error_without_partial_comment_
 	assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
 	let body = parse_json(response.body());
 	assert!(
-		body["error"].as_str().is_some_and(|message| !message.is_empty()),
+		body["error"]
+			.as_str()
+			.is_some_and(|message| !message.is_empty()),
 		"expected structured error body: {body}",
 		body = body
 	);
@@ -153,7 +154,9 @@ async fn worker_backed_check_email_fails_fast_when_rabbitmq_is_down() {
 	assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
 	let body = parse_json(response.body());
 	assert!(
-		body["error"].as_str().is_some_and(|message| !message.is_empty()),
+		body["error"]
+			.as_str()
+			.is_some_and(|message| !message.is_empty()),
 		"expected worker error body: {body}",
 		body = body
 	);
@@ -242,10 +245,7 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 
 	std::env::set_var("RCH_TEST_FORCE_REQUEUE_BEFORE_ACK", "1");
 	let first_attempt = tokio::spawn({
-		let channel = config
-			.must_worker_config()
-			.expect("worker config")
-			.channel;
+		let channel = config.must_worker_config().expect("worker config").channel;
 		let config = Arc::clone(&config);
 		async move { do_check_email_work(&task_for_first_attempt, delivery, channel, config).await }
 	});
@@ -260,12 +260,11 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		"first attempt should fail before ack and requeue the delivery"
 	);
 
-	let recovery_delivery =
-		tokio::time::timeout(Duration::from_secs(10), deliveries.next())
-			.await
-			.expect("receive requeued delivery")
-			.expect("requeued delivery stream item")
-			.expect("lapin requeued delivery");
+	let recovery_delivery = tokio::time::timeout(Duration::from_secs(10), deliveries.next())
+		.await
+		.expect("receive requeued delivery")
+		.expect("requeued delivery stream item")
+		.expect("lapin requeued delivery");
 
 	let recovery_config = build_test_config(
 		ConfigProfile::WorkerRabbit,
@@ -277,9 +276,14 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		.must_worker_config()
 		.expect("worker config after restart")
 		.channel;
-	do_check_email_work(&task, recovery_delivery, recovery_channel, Arc::clone(&recovery_config))
-		.await
-		.expect("requeued task should complete");
+	do_check_email_work(
+		&task,
+		recovery_delivery,
+		recovery_channel,
+		Arc::clone(&recovery_config),
+	)
+	.await
+	.expect("requeued task should complete");
 
 	let pool = env.postgres.pool().await;
 	let task_state: String =
@@ -304,12 +308,13 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		"task completion should be recorded exactly once after requeue recovery"
 	);
 
-	let running_events: i64 =
-		sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE id = $1 AND task_state = 'running'")
-			.bind(task_db_id)
-			.fetch_one(&pool)
-			.await
-			.expect("count running state");
+	let running_events: i64 = sqlx::query_scalar(
+		"SELECT COUNT(*) FROM v1_task_result WHERE id = $1 AND task_state = 'running'",
+	)
+	.bind(task_db_id)
+	.fetch_one(&pool)
+	.await
+	.expect("count running state");
 	assert_eq!(running_events, 0, "task should not remain stuck in running");
 
 	pool.close().await;

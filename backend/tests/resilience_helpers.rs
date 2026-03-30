@@ -125,9 +125,7 @@ impl OwnedRabbitMq {
 			.await
 			.expect("rabbitmq mapped port");
 		let amqp_url = format!("amqp://guest:guest@127.0.0.1:{host_port}");
-		wait_for_rabbitmq(&amqp_url)
-			.await
-			.expect("rabbitmq ready");
+		wait_for_rabbitmq(&amqp_url).await.expect("rabbitmq ready");
 		Self { name, amqp_url }
 	}
 
