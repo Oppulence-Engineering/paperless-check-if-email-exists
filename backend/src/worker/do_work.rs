@@ -29,6 +29,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
 use std::sync::Arc;
+use std::time::Duration;
 use thiserror::Error;
 use tracing::{debug, info, warn};
 use warp::http::StatusCode;
@@ -199,6 +200,26 @@ async fn update_task_state(
 		if let Err(e) = result {
 			warn!(target: LOG_TARGET, task_id=task_db_id, state=state, error=?e, "Failed to update task state");
 		}
+	}
+}
+
+async fn maybe_pause_before_delivery_settle() {
+	if let Ok(raw_delay) = std::env::var("RCH_TEST_PRE_ACK_DELAY_MS") {
+		if let Ok(delay_ms) = raw_delay.parse::<u64>() {
+			if delay_ms > 0 {
+				tokio::time::sleep(Duration::from_millis(delay_ms)).await;
+			}
+		}
+	}
+}
+
+fn take_test_failpoint(name: &str) -> bool {
+	match std::env::var(name) {
+		Ok(raw) if raw == "1" => {
+			std::env::remove_var(name);
+			true
+		}
+		_ => false,
 	}
 }
 
@@ -395,6 +416,13 @@ pub async fn do_check_email_work(
 		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered after exhausting retries");
 	} else {
 		// Success path
+		maybe_pause_before_delivery_settle().await;
+		if take_test_failpoint("RCH_TEST_FORCE_REQUEUE_BEFORE_ACK") {
+			delivery
+				.reject(BasicRejectOptions { requeue: true })
+				.await?;
+			return Err(anyhow::anyhow!("test failpoint forced requeue before ack"));
+		}
 		delivery.ack(BasicAckOptions::default()).await?;
 
 		if let Some(id) = task_db_id {
