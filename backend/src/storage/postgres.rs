@@ -24,6 +24,7 @@ use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::time::Duration;
 use tracing::{debug, info};
 use uuid::Uuid;
 
@@ -58,7 +59,7 @@ impl PostgresStorage {
 		extra: Option<serde_json::Value>,
 	) -> Result<Self, StorageError> {
 		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
-		let pg_pool = PgPoolOptions::new().connect(db_url).await?;
+		let pg_pool = Self::configured_pool_options().connect(db_url).await?;
 
 		sqlx::migrate!("./migrations").run(&pg_pool).await?;
 
@@ -67,7 +68,7 @@ impl PostgresStorage {
 		let read_pool = match read_replica_url {
 			Some(url) if !url.is_empty() => {
 				info!(target: LOG_TARGET, "Connecting to read replica");
-				PgPoolOptions::new().connect(url).await?
+				Self::configured_pool_options().connect(url).await?
 			}
 			_ => pg_pool.clone(),
 		};
@@ -77,6 +78,12 @@ impl PostgresStorage {
 			read_pool,
 			extra,
 		})
+	}
+
+	fn configured_pool_options() -> PgPoolOptions {
+		PgPoolOptions::new()
+			.acquire_timeout(Duration::from_secs(3))
+			.test_before_acquire(true)
 	}
 
 	pub async fn store(

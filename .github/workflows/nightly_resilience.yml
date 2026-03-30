@@ -1,0 +1,35 @@
+name: nightly_resilience
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+env:
+  SQLX_OFFLINE: true
+
+jobs:
+  resilience:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run failure-injection suite
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -p reacher_backend --test e2e_failure_injection -- --nocapture
+
+      - name: Run concurrency suite
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -p reacher_backend --test e2e_concurrency -- --nocapture

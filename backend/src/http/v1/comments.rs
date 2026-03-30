@@ -73,6 +73,10 @@ async fn create_handler(
 	pg_pool: PgPool,
 	body: CreateCommentRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	if std::env::var("RCH_TEST_FORCE_COMMENT_DB_ERROR").as_deref() == Ok("1") {
+		return Err(ReacherResponseError::from(sqlx::Error::PoolClosed).into());
+	}
+
 	if body.body.trim().is_empty() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -244,11 +248,14 @@ async fn delete_handler(
 	let clid: Option<i32> = comment_row.get("list_id");
 	check_scope(&tenant_ctx, required_scope(cjid, clid))?;
 
-	sqlx::query("DELETE FROM job_comments WHERE id = $1")
+	let delete_result = sqlx::query("DELETE FROM job_comments WHERE id = $1")
 		.bind(comment_id)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
+	if delete_result.rows_affected() == 0 {
+		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Comment not found").into());
+	}
 
 	Ok(warp::reply::json(
 		&serde_json::json!({"deleted": true, "id": comment_id}),
