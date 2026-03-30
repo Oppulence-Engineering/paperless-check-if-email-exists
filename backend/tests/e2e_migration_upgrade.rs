@@ -1,3 +1,4 @@
+#[path = "support/api_harness_support.rs"]
 mod api_harness_support;
 mod test_helpers;
 
