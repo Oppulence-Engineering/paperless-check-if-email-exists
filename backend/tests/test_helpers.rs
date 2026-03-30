@@ -9,8 +9,11 @@ use lapin::{Connection, ConnectionProperties};
 use reacher_backend::config::{
 	BackendConfig, PipelinesConfig, PostgresConfig, RabbitMQConfig, StorageConfig, WorkerConfig,
 };
+use sqlx::migrate::Migrator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::{LazyLock, Mutex};
 use testcontainers::runners::AsyncRunner;
@@ -31,6 +34,7 @@ static CURRENT_TEST_AMQP_URL: LazyLock<Mutex<Option<String>>> = LazyLock::new(||
 const DEFAULT_TEST_DB_URL: &str = "postgres://postgres:postgres@127.0.0.1:25432/reacher_test";
 const DEFAULT_TEST_AMQP_URL: &str = "amqp://guest:guest@127.0.0.1:35672";
 const USE_LOCAL_TEST_INFRA_ENV: &str = "USE_LOCAL_TEST_INFRA";
+const V410_FIXTURE_MAX_MIGRATION: &str = "20260320000003_list_deduplication";
 pub const TEST_SECRET: &str = "test-secret";
 pub const ADMIN_SECRET: &str = "admin-secret";
 
@@ -55,6 +59,11 @@ pub struct TenantApiKeysFixture {
 	pub pipelines_key: String,
 	pub revoked_key_id: Uuid,
 	pub revoked_key: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MigrationFixture {
+	V410,
 }
 
 fn use_local_test_infra() -> bool {
@@ -216,6 +225,13 @@ pub struct TestRabbitMq {
 	_container: Option<ContainerAsync<RabbitMq>>,
 }
 
+pub struct UpgradedScratchDb {
+	pool: PgPool,
+	db_url: String,
+	admin_db_url: String,
+	db_name: String,
+}
+
 impl TestRabbitMq {
 	pub async fn start() -> Self {
 		if let Some(url) = CURRENT_TEST_AMQP_URL
@@ -311,6 +327,30 @@ impl TestDb {
 	}
 }
 
+impl UpgradedScratchDb {
+	pub fn pool(&self) -> &PgPool {
+		&self.pool
+	}
+
+	pub fn db_url(&self) -> &str {
+		&self.db_url
+	}
+}
+
+impl Drop for UpgradedScratchDb {
+	fn drop(&mut self) {
+		let admin_db_url = self.admin_db_url.clone();
+		let db_name = self.db_name.clone();
+		let pool = self.pool.clone();
+		if let Ok(handle) = tokio::runtime::Handle::try_current() {
+			handle.spawn(async move {
+				pool.close().await;
+				let _ = drop_scratch_database(&admin_db_url, &db_name).await;
+			});
+		}
+	}
+}
+
 async fn connect_existing_db(url: String) -> TestDb {
 	ensure_test_db_schema(&url)
 		.await
@@ -377,6 +417,196 @@ async fn connect_existing_db(url: String) -> TestDb {
 		pool,
 		db_url: url,
 		_container: None,
+	}
+}
+
+fn fixture_seed_path(fixture: MigrationFixture) -> PathBuf {
+	match fixture {
+		MigrationFixture::V410 => Path::new(env!("CARGO_MANIFEST_DIR"))
+			.join("tests")
+			.join("fixtures")
+			.join("migration_upgrade")
+			.join("v4.1.0_seed.sql"),
+	}
+}
+
+fn fixture_max_migration(fixture: MigrationFixture) -> &'static str {
+	match fixture {
+		MigrationFixture::V410 => V410_FIXTURE_MAX_MIGRATION,
+	}
+}
+
+fn rewrite_database_name(url: &str, database_name: &str) -> String {
+	let (prefix, suffix) = url
+		.rsplit_once('/')
+		.expect("database url should include a database name");
+	match suffix.split_once('?') {
+		Some((_db, query)) => format!("{prefix}/{database_name}?{query}"),
+		None => format!("{prefix}/{database_name}"),
+	}
+}
+
+fn materialize_release_migrations(fixture: MigrationFixture) -> Result<PathBuf, String> {
+	let migrations_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("migrations");
+	let temp_dir = std::env::temp_dir().join(format!(
+		"reacher-release-migrations-{}",
+		Uuid::new_v4().simple()
+	));
+	fs::create_dir_all(&temp_dir)
+		.map_err(|err| format!("failed to create migration tempdir {}: {err}", temp_dir.display()))?;
+	let max_prefix = fixture_max_migration(fixture);
+
+	for entry in fs::read_dir(&migrations_dir)
+		.map_err(|err| format!("failed to read migrations dir {}: {err}", migrations_dir.display()))?
+	{
+		let entry = entry.map_err(|err| format!("failed to read migration entry: {err}"))?;
+		let file_name = entry.file_name();
+		let file_name = file_name.to_string_lossy();
+		let keep = file_name == "README.md"
+			|| file_name
+				.strip_suffix(".up.sql")
+				.or_else(|| file_name.strip_suffix(".down.sql"))
+				.map(|prefix| prefix <= max_prefix)
+				.unwrap_or(false);
+		if keep {
+			fs::copy(entry.path(), temp_dir.join(file_name.as_ref())).map_err(|err| {
+				format!(
+					"failed to copy migration {} into {}: {err}",
+					entry.path().display(),
+					temp_dir.display()
+				)
+			})?;
+		}
+	}
+
+	Ok(temp_dir)
+}
+
+fn split_sql_statements(sql: &str) -> Vec<String> {
+	let mut statements = Vec::new();
+	let mut current = String::new();
+	let mut in_single_quote = false;
+	let mut in_double_quote = false;
+	let mut chars = sql.chars().peekable();
+
+	while let Some(ch) = chars.next() {
+		match ch {
+			'\'' if !in_double_quote => {
+				current.push(ch);
+				if in_single_quote {
+					if chars.peek() == Some(&'\'') {
+						current.push(chars.next().expect("escaped single quote"));
+					} else {
+						in_single_quote = false;
+					}
+				} else {
+					in_single_quote = true;
+				}
+			}
+			'"' if !in_single_quote => {
+				in_double_quote = !in_double_quote;
+				current.push(ch);
+			}
+			';' if !in_single_quote && !in_double_quote => {
+				let trimmed = current.trim();
+				if !trimmed.is_empty() {
+					statements.push(trimmed.to_string());
+				}
+				current.clear();
+			}
+			_ => current.push(ch),
+		}
+	}
+
+	let trimmed = current.trim();
+	if !trimmed.is_empty() {
+		statements.push(trimmed.to_string());
+	}
+	statements
+}
+
+async fn apply_sql_fixture(pool: &PgPool, path: &Path) -> Result<(), String> {
+	let sql = fs::read_to_string(path)
+		.map_err(|err| format!("failed to read fixture {}: {err}", path.display()))?;
+	for statement in split_sql_statements(&sql) {
+		sqlx::query(&statement)
+			.execute(pool)
+			.await
+			.map_err(|err| format!("failed to execute fixture statement from {}: {err}", path.display()))?;
+	}
+	Ok(())
+}
+
+async fn drop_scratch_database(admin_db_url: &str, db_name: &str) -> Result<(), String> {
+	let pool = PgPoolOptions::new()
+		.max_connections(1)
+		.connect(admin_db_url)
+		.await
+		.map_err(|err| format!("failed to connect admin db for cleanup: {err}"))?;
+	sqlx::query(
+		r#"
+		SELECT pg_terminate_backend(pid)
+		FROM pg_stat_activity
+		WHERE datname = $1 AND pid <> pg_backend_pid()
+		"#,
+	)
+	.bind(db_name)
+	.execute(&pool)
+	.await
+	.map_err(|err| format!("failed to terminate scratch db connections: {err}"))?;
+	sqlx::query(&format!(r#"DROP DATABASE IF EXISTS "{db_name}""#))
+		.execute(&pool)
+		.await
+		.map_err(|err| format!("failed to drop scratch db {db_name}: {err}"))?;
+	pool.close().await;
+	Ok(())
+}
+
+pub async fn restore_migration_fixture_to_head(fixture: MigrationFixture) -> UpgradedScratchDb {
+	let base_db_url = ensure_test_db_url().await;
+	let admin_db_url = rewrite_database_name(&base_db_url, "postgres");
+	let db_name = format!("reacher_upgrade_{}", Uuid::new_v4().simple());
+	let scratch_db_url = rewrite_database_name(&base_db_url, &db_name);
+	let admin_pool = PgPoolOptions::new()
+		.max_connections(1)
+		.connect(&admin_db_url)
+		.await
+		.expect("connect admin db for scratch restore");
+	sqlx::query(&format!(r#"CREATE DATABASE "{db_name}""#))
+		.execute(&admin_pool)
+		.await
+		.expect("create scratch database");
+	admin_pool.close().await;
+
+	let pool = PgPoolOptions::new()
+		.max_connections(10)
+		.connect(&scratch_db_url)
+		.await
+		.expect("connect scratch database");
+	let release_migrations_dir =
+		materialize_release_migrations(fixture).expect("materialize release migrations");
+	let release_migrator = Migrator::new(release_migrations_dir.as_path())
+		.await
+		.expect("load release migrator");
+	release_migrator
+		.run(&pool)
+		.await
+		.expect("run release migrations");
+	let _ = fs::remove_dir_all(&release_migrations_dir);
+
+	apply_sql_fixture(&pool, &fixture_seed_path(fixture))
+		.await
+		.expect("apply upgrade fixture seed");
+	sqlx::migrate!("./migrations")
+		.run(&pool)
+		.await
+		.expect("run head migrations after fixture restore");
+
+	UpgradedScratchDb {
+		pool,
+		db_url: scratch_db_url,
+		admin_db_url,
+		db_name,
 	}
 }
 
@@ -451,6 +681,13 @@ pub async fn insert_api_key_with_status(
 
 pub async fn insert_tenant_with_keys(pool: &PgPool, slug: &str) -> TenantApiKeysFixture {
 	let tenant_id = insert_tenant(pool, slug, Some(10_000), 0).await;
+	insert_keys_for_existing_tenant(pool, tenant_id).await
+}
+
+pub async fn insert_keys_for_existing_tenant(
+	pool: &PgPool,
+	tenant_id: Uuid,
+) -> TenantApiKeysFixture {
 	let (full_access_key, _) = insert_api_key(pool, tenant_id).await;
 	let (bulk_key, _) = insert_api_key_with_scopes(pool, tenant_id, &["bulk"]).await;
 	let (lists_key, _) = insert_api_key_with_scopes(pool, tenant_id, &["lists"]).await;
