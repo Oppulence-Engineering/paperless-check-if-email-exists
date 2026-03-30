@@ -25,6 +25,17 @@
 ## Advanced
 
 * [Customer Feature Backlog](advanced/customer-feature-backlog.md)
+* [RFCs](rfcs/README.md)
+  * [RFC 0001: Native Provider Webhooks and Outcome Adapters](rfcs/0001-native-provider-webhooks-and-outcome-adapters.md)
+  * [RFC 0002: Deliverability Feedback and Recommendations](rfcs/0002-deliverability-feedback-and-recommendations.md)
+  * [RFC 0003: Reverification Policies by Segment](rfcs/0003-reverification-policies-by-segment.md)
+  * [RFC 0004: Suppression Intelligence](rfcs/0004-suppression-intelligence.md)
+  * [RFC 0005: List Quality Scoring](rfcs/0005-list-quality-scoring.md)
+  * [RFC 0006: Source-Level Quality Comparison](rfcs/0006-source-level-quality-comparison.md)
+  * [RFC 0007: Verification Policy Modes](rfcs/0007-verification-policy-modes.md)
+  * [RFC 0008: Bulk Remediation Workflows](rfcs/0008-bulk-remediation-workflows.md)
+  * [RFC 0009: Tenant-Facing Job Observability](rfcs/0009-tenant-facing-job-observability.md)
+  * [RFC 0010: Idempotent Integration UX](rfcs/0010-idempotent-integration-ux.md)
 * [OpenAPI](advanced/openapi/README.md)
   * [/v0/check\_email](advanced/openapi/v0-check_email.md)
   * [/v1/check\_email](advanced/openapi/v1-check_email.md)
