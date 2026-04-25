@@ -7,7 +7,9 @@ metadata:
     {{- include "check-if-email-exists.labels" . | nindent 4 }}
 data:
 {{- range $key, $value := .Values.config.env }}
+{{- if ne $key "RCH__WORKER__ENABLE" }}
   {{ $key }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
-
+  RCH__WORKER__ENABLE: "true"
+{{- end }}
