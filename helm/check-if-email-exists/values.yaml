@@ -4,6 +4,7 @@ image:
   repository: ghcr.io/oppulence-engineering/check-if-email-exists-backend
   pullPolicy: Always
   tag: "latest"
+  digest: ""
 
 imagePullSecrets: []
 nameOverride: ""
