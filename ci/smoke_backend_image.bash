@@ -5,6 +5,7 @@ set -euo pipefail
 IMAGE_TAG="${1:?usage: smoke_backend_image.bash <image-tag>}"
 CONTAINER_NAME="reacher-backend-smoke-${RANDOM}-${RANDOM}"
 RABBITMQ_NAME="reacher-backend-smoke-rabbitmq-${RANDOM}-${RANDOM}"
+POSTGRES_NAME="reacher-backend-smoke-postgres-${RANDOM}-${RANDOM}"
 NETWORK_NAME="reacher-backend-smoke-${RANDOM}-${RANDOM}"
 HOST_PORT="${SMOKE_BACKEND_PORT:-18080}"
 BASE_URL="http://127.0.0.1:${HOST_PORT}"
@@ -12,6 +13,7 @@ BASE_URL="http://127.0.0.1:${HOST_PORT}"
 cleanup() {
   docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
   docker rm -f "${RABBITMQ_NAME}" >/dev/null 2>&1 || true
+  docker rm -f "${POSTGRES_NAME}" >/dev/null 2>&1 || true
   docker network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -24,6 +26,15 @@ docker run -d \
   --network-alias rabbitmq \
   rabbitmq:3.8.22-management >/dev/null
 
+docker run -d \
+  --name "${POSTGRES_NAME}" \
+  --network "${NETWORK_NAME}" \
+  --network-alias postgres \
+  -e POSTGRES_USER=reacher \
+  -e POSTGRES_PASSWORD=reacher \
+  -e POSTGRES_DB=reacher \
+  postgres:16-alpine >/dev/null
+
 for _ in $(seq 1 60); do
   if docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null 2>&1; then
     break
@@ -33,12 +44,22 @@ done
 
 docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null
 
+for _ in $(seq 1 60); do
+  if docker exec "${POSTGRES_NAME}" pg_isready -U reacher -d reacher >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+docker exec "${POSTGRES_NAME}" pg_isready -U reacher -d reacher >/dev/null
+
 docker run -d \
   --name "${CONTAINER_NAME}" \
   --network "${NETWORK_NAME}" \
   -p "${HOST_PORT}:8080" \
   -e RCH__WORKER__ENABLE=true \
   -e RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@rabbitmq:5672 \
+  -e RCH__STORAGE__POSTGRES__DB_URL=postgres://reacher:reacher@postgres:5432/reacher \
   "${IMAGE_TAG}" >/dev/null
 
 for _ in $(seq 1 60); do
@@ -70,7 +91,7 @@ assert healthz["status"] == "ok", healthz
 
 readyz = json.loads(Path("/tmp/reacher-readyz.json").read_text())
 assert readyz["status"] == "ok", readyz
-assert readyz["checks"]["postgres"]["status"] == "not_configured", readyz
+assert readyz["checks"]["postgres"]["status"] == "ok", readyz
 assert readyz["checks"]["rabbitmq"]["status"] == "ok", readyz
 
 openapi = json.loads(Path("/tmp/reacher-openapi.json").read_text())
