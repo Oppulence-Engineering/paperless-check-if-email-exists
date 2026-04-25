@@ -49,10 +49,14 @@ spec:
                 name: {{ include "check-if-email-exists.secretName" . }}
             {{- end }}
           {{- end }}
-          {{- with .Values.extraEnv }}
           env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - name: RCH__WORKER__ENABLE
+              value: "true"
+            {{- range .Values.extraEnv }}
+            {{- if ne .name "RCH__WORKER__ENABLE" }}
+            {{- toYaml (list .) | nindent 12 }}
+            {{- end }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
