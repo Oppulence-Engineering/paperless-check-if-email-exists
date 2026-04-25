@@ -4,17 +4,41 @@ set -euo pipefail
 
 IMAGE_TAG="${1:?usage: smoke_backend_image.bash <image-tag>}"
 CONTAINER_NAME="reacher-backend-smoke-${RANDOM}-${RANDOM}"
+RABBITMQ_NAME="reacher-backend-smoke-rabbitmq-${RANDOM}-${RANDOM}"
+NETWORK_NAME="reacher-backend-smoke-${RANDOM}-${RANDOM}"
 HOST_PORT="${SMOKE_BACKEND_PORT:-18080}"
 BASE_URL="http://127.0.0.1:${HOST_PORT}"
 
 cleanup() {
   docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+  docker rm -f "${RABBITMQ_NAME}" >/dev/null 2>&1 || true
+  docker network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
+docker network create "${NETWORK_NAME}" >/dev/null
+
+docker run -d \
+  --name "${RABBITMQ_NAME}" \
+  --network "${NETWORK_NAME}" \
+  --network-alias rabbitmq \
+  rabbitmq:3.8.22-management >/dev/null
+
+for _ in $(seq 1 60); do
+  if docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null
+
 docker run -d \
   --name "${CONTAINER_NAME}" \
+  --network "${NETWORK_NAME}" \
   -p "${HOST_PORT}:8080" \
+  -e RCH__WORKER__ENABLE=true \
+  -e RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@rabbitmq:5672 \
   "${IMAGE_TAG}" >/dev/null
 
 for _ in $(seq 1 60); do
@@ -24,9 +48,18 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
-curl --silent --fail "${BASE_URL}/healthz" >/tmp/reacher-healthz.json
-curl --silent --fail "${BASE_URL}/readyz" >/tmp/reacher-readyz.json
-curl --silent --fail "${BASE_URL}/openapi.json" >/tmp/reacher-openapi.json
+curl --silent --fail "${BASE_URL}/healthz" >/tmp/reacher-healthz.json || {
+  docker logs "${CONTAINER_NAME}"
+  exit 1
+}
+curl --silent --fail "${BASE_URL}/readyz" >/tmp/reacher-readyz.json || {
+  docker logs "${CONTAINER_NAME}"
+  exit 1
+}
+curl --silent --fail "${BASE_URL}/openapi.json" >/tmp/reacher-openapi.json || {
+  docker logs "${CONTAINER_NAME}"
+  exit 1
+}
 
 python3 - <<'PY'
 import json
@@ -38,7 +71,7 @@ assert healthz["status"] == "ok", healthz
 readyz = json.loads(Path("/tmp/reacher-readyz.json").read_text())
 assert readyz["status"] == "ok", readyz
 assert readyz["checks"]["postgres"]["status"] == "not_configured", readyz
-assert readyz["checks"]["rabbitmq"]["status"] == "not_configured", readyz
+assert readyz["checks"]["rabbitmq"]["status"] == "ok", readyz
 
 openapi = json.loads(Path("/tmp/reacher-openapi.json").read_text())
 paths = openapi["paths"]
