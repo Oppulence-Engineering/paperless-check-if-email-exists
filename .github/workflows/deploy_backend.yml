@@ -2,9 +2,21 @@ name: deploy_backend
 
 on:
   push:
+    branches:
+      - develop
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+          - all
+        default: staging
 
 # Publish backend image to GHCR so releases share a single source of truth.
 permissions:
@@ -69,6 +81,7 @@ jobs:
         run: echo "value=${{ steps.meta.outputs.version }}" >> "$GITHUB_OUTPUT"
 
   deploy-production:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all')) }}
     name: "Production – ${{ matrix.cluster }}"
     needs: docker
     strategy:
@@ -85,7 +98,7 @@ jobs:
       service_name: check-if-email-exists
       service_path: backend
       chart_repository: ./helm/check-if-email-exists
-      namespace: paperless
+      namespace: paperless-production
       create_namespace: true
       image_repository: ghcr.io/oppulence-engineering/check-if-email-exists-backend
       image_tag: ${{ needs.docker.outputs.image_tag }}
@@ -102,6 +115,7 @@ jobs:
     secrets: inherit
 
   deploy-staging:
+    if: ${{ github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all')) }}
     name: "Staging – ${{ matrix.cluster }}"
     needs: docker
     strategy:
