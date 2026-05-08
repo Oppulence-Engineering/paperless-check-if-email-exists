@@ -173,6 +173,8 @@ impl PostgresStorage {
 				    bounce_risk_action = $14,
 				    bounce_risk_model_version = $15,
 				    bounce_risk_signals = $16,
+				    task_state = 'completed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
 				WHERE id = $17
 				"#,
@@ -223,14 +225,16 @@ impl PostgresStorage {
 				score, score_category, sub_reason, safe_to_send, reason_codes,
 				canonical_email,
 				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
-				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals
+				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
+				task_state, completed_at
 			)
 			VALUES (
 				$1, $2, $3, $4, $5,
 				$6, $7, $8, $9, $10,
 				$11,
 				$12, $13, $14,
-				$15, $16, $17
+				$15, $16, $17,
+				'completed'::task_state, NOW()
 			)
 			RETURNING id
 			"#,
@@ -281,6 +285,7 @@ impl PostgresStorage {
 				    error = $3,
 				    tenant_id = $4,
 				    canonical_email = COALESCE($5, canonical_email),
+				    result = NULL,
 				    score = NULL,
 				    score_category = NULL,
 				    sub_reason = NULL,
@@ -291,7 +296,10 @@ impl PostgresStorage {
 				    bounce_risk_confidence = NULL,
 				    bounce_risk_action = NULL,
 				    bounce_risk_model_version = NULL,
-				    bounce_risk_signals = NULL
+				    bounce_risk_signals = NULL,
+				    task_state = 'failed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
+				    updated_at = NOW()
 				WHERE id = $6
 				"#,
 			)
@@ -326,8 +334,11 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		sqlx::query(
 			r#"
-			INSERT INTO v1_task_result (payload, job_id, extra, error, tenant_id, canonical_email)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO v1_task_result (
+				payload, job_id, extra, error, tenant_id, canonical_email,
+				task_state, completed_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, 'failed'::task_state, NOW())
 			RETURNING id
 			"#,
 		)

@@ -3,14 +3,15 @@
 use lapin::{Connection, ConnectionProperties};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-use std::process::Stdio;
+use std::process::{Command as StdCommand, Stdio};
 use tokio::process::Command;
 use tokio::time::{sleep, Duration, Instant};
 use uuid::Uuid;
 
 const POSTGRES_IMAGE: &str = "postgres:16";
 const RABBITMQ_IMAGE: &str = "rabbitmq:3.8.22-management";
-const WAIT_TIMEOUT: Duration = Duration::from_secs(60);
+const POSTGRES_WAIT_TIMEOUT: Duration = Duration::from_secs(60);
+const RABBITMQ_WAIT_TIMEOUT: Duration = Duration::from_secs(180);
 const POLL_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct OwnedPostgres {
@@ -33,27 +34,13 @@ impl OwnedPostgres {
 	pub async fn start() -> Self {
 		let name = format!("reacher-pg-{}", Uuid::new_v4().simple());
 		let db_name = "reacher_owned".to_string();
-		docker(&[
-			"run",
-			"-d",
-			"--name",
-			&name,
-			"-e",
-			"POSTGRES_USER=postgres",
-			"-e",
-			"POSTGRES_PASSWORD=postgres",
-			"-e",
-			&format!("POSTGRES_DB={db_name}"),
-			"-P",
-			POSTGRES_IMAGE,
-		])
-		.await
-		.expect("start owned postgres");
-		let host_port = docker_mapped_port(&name, "5432/tcp")
-			.await
-			.expect("postgres mapped port");
-		let db_url = format!("postgres://postgres:postgres@127.0.0.1:{host_port}/{db_name}");
-		wait_for_postgres(&db_url).await.expect("postgres ready");
+		let db_url = match start_postgres_container(&name, &db_name).await {
+			Ok(db_url) => db_url,
+			Err(err) => {
+				docker_rm_force(&name);
+				panic!("start owned postgres: {}", err);
+			}
+		};
 		Self {
 			name,
 			db_name,
@@ -106,26 +93,20 @@ impl OwnedPostgres {
 
 impl Drop for OwnedPostgres {
 	fn drop(&mut self) {
-		let name = self.name.clone();
-		if let Ok(handle) = tokio::runtime::Handle::try_current() {
-			handle.spawn(async move {
-				let _ = docker(&["rm", "-f", &name]).await;
-			});
-		}
+		docker_rm_force(&self.name);
 	}
 }
 
 impl OwnedRabbitMq {
 	pub async fn start() -> Self {
 		let name = format!("reacher-rabbit-{}", Uuid::new_v4().simple());
-		docker(&["run", "-d", "--name", &name, "-P", RABBITMQ_IMAGE])
-			.await
-			.expect("start owned rabbitmq");
-		let host_port = docker_mapped_port(&name, "5672/tcp")
-			.await
-			.expect("rabbitmq mapped port");
-		let amqp_url = format!("amqp://guest:guest@127.0.0.1:{host_port}");
-		wait_for_rabbitmq(&amqp_url).await.expect("rabbitmq ready");
+		let amqp_url = match start_rabbitmq_container(&name).await {
+			Ok(amqp_url) => amqp_url,
+			Err(err) => {
+				docker_rm_force(&name);
+				panic!("start owned rabbitmq: {}", err);
+			}
+		};
 		Self { name, amqp_url }
 	}
 
@@ -157,12 +138,7 @@ impl OwnedRabbitMq {
 
 impl Drop for OwnedRabbitMq {
 	fn drop(&mut self) {
-		let name = self.name.clone();
-		if let Ok(handle) = tokio::runtime::Handle::try_current() {
-			handle.spawn(async move {
-				let _ = docker(&["rm", "-f", &name]).await;
-			});
-		}
+		docker_rm_force(&self.name);
 	}
 }
 
@@ -173,6 +149,46 @@ impl OwnedResilienceEnv {
 		let rabbitmq = OwnedRabbitMq::start().await;
 		Self { postgres, rabbitmq }
 	}
+}
+
+async fn start_postgres_container(name: &str, db_name: &str) -> Result<String, String> {
+	docker(&[
+		"run",
+		"-d",
+		"--name",
+		name,
+		"-e",
+		"POSTGRES_USER=postgres",
+		"-e",
+		"POSTGRES_PASSWORD=postgres",
+		"-e",
+		&format!("POSTGRES_DB={db_name}"),
+		"-p",
+		"127.0.0.1::5432",
+		POSTGRES_IMAGE,
+	])
+	.await?;
+	let host_port = docker_mapped_port(name, "5432/tcp").await?;
+	let db_url = format!("postgres://postgres:postgres@127.0.0.1:{host_port}/{db_name}");
+	wait_for_postgres(&db_url).await?;
+	Ok(db_url)
+}
+
+async fn start_rabbitmq_container(name: &str) -> Result<String, String> {
+	docker(&[
+		"run",
+		"-d",
+		"--name",
+		name,
+		"-p",
+		"127.0.0.1::5672",
+		RABBITMQ_IMAGE,
+	])
+	.await?;
+	let host_port = docker_mapped_port(name, "5672/tcp").await?;
+	let amqp_url = format!("amqp://guest:guest@127.0.0.1:{host_port}");
+	wait_for_rabbitmq(&amqp_url).await?;
+	Ok(amqp_url)
 }
 
 async fn docker(args: &[&str]) -> Result<String, String> {
@@ -193,6 +209,14 @@ async fn docker(args: &[&str]) -> Result<String, String> {
 	Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
+fn docker_rm_force(container_name: &str) {
+	let _ = StdCommand::new("docker")
+		.args(["rm", "-f", container_name])
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
+		.status();
+}
+
 async fn docker_mapped_port(container_name: &str, port: &str) -> Result<u16, String> {
 	let output = docker(&["port", container_name, port]).await?;
 	let first_line = output
@@ -208,7 +232,7 @@ async fn docker_mapped_port(container_name: &str, port: &str) -> Result<u16, Str
 }
 
 async fn wait_for_postgres(db_url: &str) -> Result<(), String> {
-	let deadline = Instant::now() + WAIT_TIMEOUT;
+	let deadline = Instant::now() + POSTGRES_WAIT_TIMEOUT;
 	loop {
 		match PgPoolOptions::new()
 			.max_connections(1)
@@ -230,7 +254,7 @@ async fn wait_for_postgres(db_url: &str) -> Result<(), String> {
 }
 
 async fn wait_for_rabbitmq(amqp_url: &str) -> Result<(), String> {
-	let deadline = Instant::now() + WAIT_TIMEOUT;
+	let deadline = Instant::now() + RABBITMQ_WAIT_TIMEOUT;
 	loop {
 		match Connection::connect(amqp_url, ConnectionProperties::default()).await {
 			Ok(connection) => {

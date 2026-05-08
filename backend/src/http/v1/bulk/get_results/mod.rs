@@ -27,9 +27,9 @@ use warp::Filter;
 use super::with_worker_read_db;
 use crate::config::BackendConfig;
 use crate::http::csv_shared::{csv_rows, TaskResultRecord};
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
 
 /// Defines the download format, passed in as a query param.
@@ -61,6 +61,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	req: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	// Tenant-scoped job lookup
 	let total_records = sqlx::query!(
 		r#"SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL);"#,

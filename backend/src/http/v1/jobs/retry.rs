@@ -2,9 +2,11 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
-use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
+use crate::tenant::quota::{
+	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
+};
 use crate::worker::do_work::CheckEmailTask;
 use check_if_email_exists::LOG_TARGET;
 use lapin::BasicProperties;
@@ -28,6 +30,8 @@ async fn http_handler(
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
 	// Lock the job row (tenant-scoped)
@@ -92,6 +96,7 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let retryable_count = retryable_tasks.len() as i64;
+	let reserved_count = retryable_count as i32;
 
 	if retryable_count == 0 {
 		tx.commit().await.map_err(ReacherResponseError::from)?;
@@ -103,10 +108,8 @@ async fn http_handler(
 	}
 
 	// Check quota before publishing (reject early if over limit).
-	// Quota is charged atomically here — same pattern as bulk/post.rs.
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, retryable_count as i32)
-		.await
-	{
+	// Quota is charged atomically here, using the same pattern as bulk/post.rs.
+	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, reserved_count).await {
 		QuotaCheckResult::Allowed => {}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
@@ -135,11 +138,21 @@ async fn http_handler(
 
 	// Publish tasks to RabbitMQ BEFORE committing DB changes.
 	// If publish fails, the transaction rolls back and tasks stay in
-	// failed/dead_lettered — safe to retry again.
-	let channel = config
-		.must_worker_config()
-		.map_err(ReacherResponseError::from)?
-		.channel;
+	// failed/dead_lettered, which is safe to retry again.
+	let mut published_count = 0_i32;
+	let channel = match config.must_worker_config() {
+		Ok(worker_config) => worker_config.channel,
+		Err(err) => {
+			release_unpublished_retry_quota(
+				&pg_pool,
+				tenant_ctx.tenant_id,
+				reserved_count,
+				published_count,
+			)
+			.await;
+			return Err(ReacherResponseError::from(err).into());
+		}
+	};
 
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
@@ -149,8 +162,19 @@ async fn http_handler(
 		let payload: serde_json::Value = row.get("payload");
 		let task_db_id: i32 = row.get("id");
 
-		let mut task: CheckEmailTask =
-			serde_json::from_value(payload).map_err(ReacherResponseError::from)?;
+		let mut task: CheckEmailTask = match serde_json::from_value(payload) {
+			Ok(task) => task,
+			Err(err) => {
+				release_unpublished_retry_quota(
+					&pg_pool,
+					tenant_ctx.tenant_id,
+					reserved_count,
+					published_count,
+				)
+				.await;
+				return Err(ReacherResponseError::from(err).into());
+			}
+		};
 
 		if let Some(ref mut metadata) = task.metadata {
 			metadata.task_db_id = Some(task_db_id);
@@ -166,10 +190,20 @@ async fn http_handler(
 			});
 		}
 
-		publish_task(channel.clone(), task, properties.clone()).await?;
+		if let Err(err) = publish_task(channel.clone(), task, properties.clone()).await {
+			release_unpublished_retry_quota(
+				&pg_pool,
+				tenant_ctx.tenant_id,
+				reserved_count,
+				published_count,
+			)
+			.await;
+			return Err(err.into());
+		}
+		published_count += 1;
 	}
 
-	// All tasks published — reset only the exact rows we locked and published
+	// All tasks published: reset only the exact rows we locked and published.
 	sqlx::query(
 		r#"
 		UPDATE v1_task_result
@@ -236,6 +270,18 @@ async fn http_handler(
 		status: new_status.to_string(),
 		tasks_retried: retryable_count,
 	}))
+}
+
+async fn release_unpublished_retry_quota(
+	pg_pool: &PgPool,
+	tenant_id: Option<uuid::Uuid>,
+	reserved_count: i32,
+	published_count: i32,
+) {
+	let refund_count = reserved_count.saturating_sub(published_count);
+	if refund_count > 0 {
+		let _ = release_reserved_usage(Some(pg_pool), tenant_id, refund_count).await;
+	}
 }
 
 /// POST /v1/jobs/{job_id}/retry

@@ -12,6 +12,7 @@ Method | HTTP request | Description
 [**V1GetJobResults**](JobsAPI.md#V1GetJobResults) | **Get** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 [**V1GetJobStatus**](JobsAPI.md#V1GetJobStatus) | **Get** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 [**V1JobApprovalChecklist**](JobsAPI.md#V1JobApprovalChecklist) | **Get** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
+[**V1JobLatency**](JobsAPI.md#V1JobLatency) | **Get** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
 [**V1RetryJob**](JobsAPI.md#V1RetryJob) | **Post** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 
 
@@ -580,6 +581,74 @@ Name | Type | Description  | Notes
 
 - **Content-Type**: Not defined
 - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1JobLatency
+
+> V1JobLatency(ctx, jobId).Execute()
+
+GET /v1/jobs/{job_id}/latency
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	jobId := int32(56) // int32 | Bulk job identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.JobsAPI.V1JobLatency(context.Background(), jobId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1JobLatency``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**jobId** | **int32** | Bulk job identifier | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1JobLatencyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

@@ -77,6 +77,10 @@ Class | Method | HTTP request | Description
 *AdminJobsApi* | [**getJobResults**](docs/AdminJobsApi.md#getjobresults) | **GET** /v1/admin/jobs/{job_id}/results | GET /v1/admin/jobs/{job_id}/results
 *AdminJobsApi* | [**listJobs**](docs/AdminJobsApi.md#listjobs) | **GET** /v1/admin/jobs | GET /v1/admin/jobs
 *AdminJobsApi* | [**listTenantJobs**](docs/AdminJobsApi.md#listtenantjobs) | **GET** /v1/admin/tenants/{tenant_id}/jobs | GET /v1/admin/tenants/{tenant_id}/jobs
+*CommentsApi* | [**v1CreateComment**](docs/CommentsApi.md#v1createcomment) | **POST** /v1/comments | POST /v1/comments
+*CommentsApi* | [**v1DeleteComment**](docs/CommentsApi.md#v1deletecomment) | **DELETE** /v1/comments/{comment_id} | DELETE /v1/comments/{comment_id}
+*CommentsApi* | [**v1ListComments**](docs/CommentsApi.md#v1listcomments) | **GET** /v1/comments | GET /v1/comments
+*EventsApi* | [**v1ListEvents**](docs/EventsApi.md#v1listevents) | **GET** /v1/events | GET /v1/events
 *HealthApi* | [**healthz**](docs/HealthApi.md#healthz) | **GET** /healthz | GET /healthz
 *HealthApi* | [**readyz**](docs/HealthApi.md#readyz) | **GET** /readyz | GET /readyz
 *JobsApi* | [**v1CancelJob**](docs/JobsApi.md#v1canceljob) | **POST** /v1/jobs/{job_id}/cancel | POST /v1/jobs/{job_id}/cancel
@@ -87,7 +91,9 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetJobResults**](docs/JobsApi.md#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
+*JobsApi* | [**v1JobLatency**](docs/JobsApi.md#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
+*ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
 _PipelinesApi_ | [__v1CreatePipeline__](docs/PipelinesApi.md#v1createpipeline) | **POST** /v1/pipelines | POST /v1/pipelines
 _PipelinesApi_ | [__v1DeletePipeline__](docs/PipelinesApi.md#v1deletepipeline) | **DELETE** /v1/pipelines/{pipeline_id} | DELETE /v1/pipelines/{pipeline_id}
 _PipelinesApi_ | [__v1GetPipeline__](docs/PipelinesApi.md#v1getpipeline) | **GET** /v1/pipelines/{pipeline_id} | GET /v1/pipelines/{pipeline_id}
@@ -98,6 +104,7 @@ _PipelinesApi_ | [__v1PausePipeline__](docs/PipelinesApi.md#v1pausepipeline) | *
 _PipelinesApi_ | [__v1ResumePipeline__](docs/PipelinesApi.md#v1resumepipeline) | **POST** /v1/pipelines/{pipeline_id}/resume | POST /v1/pipelines/{pipeline_id}/resume
 _PipelinesApi_ | [__v1TriggerPipeline__](docs/PipelinesApi.md#v1triggerpipeline) | **POST** /v1/pipelines/{pipeline_id}/trigger | POST /v1/pipelines/{pipeline_id}/trigger
 _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) | **PATCH** /v1/pipelines/{pipeline_id} | PATCH /v1/pipelines/{pipeline_id}
+*QueryApi* | [**v1QueryResults**](docs/QueryApi.md#v1queryresults) | **GET** /v1/query | GET /v1/query
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
 *TenantApi* | [**v1ClearTenantWebhook**](docs/TenantApi.md#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook
@@ -117,6 +124,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V0Api* | [**postCheckEmail**](docs/V0Api.md#postcheckemail) | **POST** /v0/check_email | POST /v0/check_email
 *V1Api* | [**v1AddSuppressions**](docs/V1Api.md#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions
 *V1Api* | [**v1CheckEmail**](docs/V1Api.md#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email
+*V1Api* | [**v1CheckEmailWithOnboard**](docs/V1Api.md#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
 *V1Api* | [**v1CheckReputation**](docs/V1Api.md#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check
 *V1Api* | [**v1CheckSuppression**](docs/V1Api.md#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check
 *V1Api* | [**v1CreateBulkJob**](docs/V1Api.md#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.
@@ -130,6 +138,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
+*VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
 
 
 ### Documentation For Models

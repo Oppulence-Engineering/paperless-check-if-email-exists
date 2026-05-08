@@ -5,11 +5,13 @@ use crate::finder::require_tenant_id;
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, CheckEmailRequest, ReacherResponseError};
+use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::scoring::response::{prepare_verification_response, PreparedVerificationResponse};
-use crate::tenant::context::TenantContext;
+use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::models::PlanTier;
-use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
+use crate::tenant::quota::{
+	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
+};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use bytes::Buf;
 use check_if_email_exists::{CheckEmailOutput, Reachable, LOG_TARGET};
@@ -21,6 +23,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tracing::warn;
 use warp::http::StatusCode;
 use warp::multipart::FormData;
 use warp::Filter;
@@ -39,6 +42,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	form: FormData,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::LISTS)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
 	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
@@ -149,6 +154,7 @@ async fn http_handler(
 
 	// Phase 4: Process rows with deduplication
 	let mut published_any = false;
+	let mut published_task_ids = Vec::new();
 
 	// Handle blank emails
 	for &index in &blank_indices {
@@ -279,16 +285,35 @@ async fn http_handler(
 				task_db_id: Some(primary_task_id),
 			}),
 		};
-		publish_task(
-			config
-				.must_worker_config()
-				.map_err(ReacherResponseError::from)?
-				.channel,
-			task,
-			properties.clone(),
-		)
-		.await?;
+		let channel = match config.must_worker_config() {
+			Ok(worker_config) => worker_config.channel,
+			Err(err) => {
+				cleanup_list_publish_failure(
+					&pg_pool,
+					tenant_id,
+					job_id,
+					list_id,
+					unique_email_count,
+					&published_task_ids,
+				)
+				.await;
+				return Err(ReacherResponseError::from(err).into());
+			}
+		};
+		if let Err(err) = publish_task(channel, task, properties.clone()).await {
+			cleanup_list_publish_failure(
+				&pg_pool,
+				tenant_id,
+				job_id,
+				list_id,
+				unique_email_count,
+				&published_task_ids,
+			)
+			.await;
+			return Err(err.into());
+		}
 		published_any = true;
+		published_task_ids.push(primary_task_id);
 
 		// Create duplicate rows (completed immediately, no RabbitMQ publish, no result yet)
 		for &dup_index in &indices[1..] {
@@ -362,6 +387,61 @@ async fn http_handler(
 		}),
 		StatusCode::ACCEPTED,
 	))
+}
+
+async fn cleanup_list_publish_failure(
+	pg_pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	job_id: i32,
+	list_id: i32,
+	reserved_count: i32,
+	published_task_ids: &[i32],
+) {
+	let refund_count = reserved_count.saturating_sub(published_task_ids.len() as i32);
+	if refund_count > 0 {
+		let _ = release_reserved_usage(Some(pg_pool), Some(tenant_id), refund_count).await;
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(job_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list job failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_lists SET status = 'failed'::list_status, error_message = COALESCE(error_message, 'publish_failed'), completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(list_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to mark list failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		r#"
+		UPDATE v1_task_result
+		SET task_state = 'failed'::task_state,
+		    error = COALESCE(error, 'publish_failed'),
+		    completed_at = COALESCE(completed_at, NOW()),
+		    updated_at = NOW()
+		WHERE job_id = $1
+		  AND task_state = 'queued'::task_state
+		  AND is_duplicate = false
+		  AND NOT (id = ANY($2::INTEGER[]))
+		"#,
+	)
+	.bind(job_id)
+	.bind(published_task_ids)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list tasks failed after publish failure");
+	}
 }
 
 struct UploadData {

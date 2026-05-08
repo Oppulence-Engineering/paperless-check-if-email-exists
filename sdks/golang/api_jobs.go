@@ -141,6 +141,20 @@ type JobsAPI interface {
 	V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChecklistRequest) (*ApprovalChecklistResponse, *http.Response, error)
 
 	/*
+	V1JobLatency GET /v1/jobs/{job_id}/latency
+
+	Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param jobId Bulk job identifier
+	@return JobsAPIV1JobLatencyRequest
+	*/
+	V1JobLatency(ctx context.Context, jobId int32) JobsAPIV1JobLatencyRequest
+
+	// V1JobLatencyExecute executes the request
+	V1JobLatencyExecute(r JobsAPIV1JobLatencyRequest) (*http.Response, error)
+
+	/*
 	V1RetryJob POST /v1/jobs/{job_id}/retry
 
 	Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
@@ -1132,6 +1146,112 @@ func (a *JobsAPIService) V1JobApprovalChecklistExecute(r JobsAPIV1JobApprovalChe
 	}
 
 	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type JobsAPIV1JobLatencyRequest struct {
+	ctx context.Context
+	ApiService JobsAPI
+	jobId int32
+}
+
+func (r JobsAPIV1JobLatencyRequest) Execute() (*http.Response, error) {
+	return r.ApiService.V1JobLatencyExecute(r)
+}
+
+/*
+V1JobLatency GET /v1/jobs/{job_id}/latency
+
+Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param jobId Bulk job identifier
+ @return JobsAPIV1JobLatencyRequest
+*/
+func (a *JobsAPIService) V1JobLatency(ctx context.Context, jobId int32) JobsAPIV1JobLatencyRequest {
+	return JobsAPIV1JobLatencyRequest{
+		ApiService: a,
+		ctx: ctx,
+		jobId: jobId,
+	}
+}
+
+// Execute executes the request
+func (a *JobsAPIService) V1JobLatencyExecute(r JobsAPIV1JobLatencyRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "JobsAPIService.V1JobLatency")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/jobs/{job_id}/latency"
+	localVarPath = strings.Replace(localVarPath, "{"+"job_id"+"}", url.PathEscape(parameterValueToString(r.jobId, "jobId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
 }
 
 type JobsAPIV1RetryJobRequest struct {

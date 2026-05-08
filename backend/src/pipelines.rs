@@ -1264,7 +1264,7 @@ pub async fn maybe_finalize_pipeline_run_for_job(
 	pg_pool: &PgPool,
 	job_id: i32,
 ) -> Result<()> {
-	let run_id = sqlx::query_scalar::<_, Option<i64>>(
+	let run_id = sqlx::query_scalar::<_, i64>(
 		r#"
 		SELECT id
 		FROM v1_pipeline_runs
@@ -1274,7 +1274,7 @@ pub async fn maybe_finalize_pipeline_run_for_job(
 		"#,
 	)
 	.bind(job_id)
-	.fetch_one(pg_pool)
+	.fetch_optional(pg_pool)
 	.await?;
 	if let Some(run_id) = run_id {
 		maybe_finalize_pipeline_run(config, pg_pool, run_id).await?;

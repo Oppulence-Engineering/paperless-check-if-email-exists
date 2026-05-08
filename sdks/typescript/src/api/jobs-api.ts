@@ -377,6 +377,43 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {number} jobId Bulk job identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobLatency: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1JobLatency', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/latency`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {number} jobId Bulk job identifier
@@ -537,6 +574,19 @@ export const JobsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {number} jobId Bulk job identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1JobLatency(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobLatency(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobLatency']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {number} jobId Bulk job identifier
@@ -640,6 +690,16 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.v1JobApprovalChecklist(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1JobLatency(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {JobsApiV1RetryJobRequest} requestParameters Request parameters.
@@ -737,6 +797,16 @@ export interface JobsApiInterface {
      * @memberof JobsApiInterface
      */
     v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<ApprovalChecklistResponse>;
+
+    /**
+     * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+     * @summary GET /v1/jobs/{job_id}/latency
+     * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
@@ -926,6 +996,20 @@ export interface JobsApiV1JobApprovalChecklistRequest {
 }
 
 /**
+ * Request parameters for v1JobLatency operation in JobsApi.
+ * @export
+ * @interface JobsApiV1JobLatencyRequest
+ */
+export interface JobsApiV1JobLatencyRequest {
+    /**
+     * Bulk job identifier
+     * @type {number}
+     * @memberof JobsApiV1JobLatency
+     */
+    readonly jobId: number
+}
+
+/**
  * Request parameters for v1RetryJob operation in JobsApi.
  * @export
  * @interface JobsApiV1RetryJobRequest
@@ -1040,6 +1124,18 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
      */
     public v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig) {
         return JobsApiFp(this.configuration).v1JobApprovalChecklist(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+     * @summary GET /v1/jobs/{job_id}/latency
+     * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1JobLatency(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

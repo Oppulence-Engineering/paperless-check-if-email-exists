@@ -56,11 +56,19 @@ type APIClient struct {
 
 	AdminJobsAPI AdminJobsAPI
 
+	CommentsAPI CommentsAPI
+
+	EventsAPI EventsAPI
+
 	HealthAPI HealthAPI
 
 	JobsAPI JobsAPI
 
+	ListsAPI ListsAPI
+
 	PipelinesAPI PipelinesAPI
+
+	QueryAPI QueryAPI
 
 	SystemAPI SystemAPI
 
@@ -69,6 +77,8 @@ type APIClient struct {
 	V0API V0API
 
 	V1API V1API
+
+	VerificationAPI VerificationAPI
 }
 
 type service struct {
@@ -90,13 +100,18 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.AccountAPI = (*AccountAPIService)(&c.common)
 	c.AdminAPI = (*AdminAPIService)(&c.common)
 	c.AdminJobsAPI = (*AdminJobsAPIService)(&c.common)
+	c.CommentsAPI = (*CommentsAPIService)(&c.common)
+	c.EventsAPI = (*EventsAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.JobsAPI = (*JobsAPIService)(&c.common)
+	c.ListsAPI = (*ListsAPIService)(&c.common)
 	c.PipelinesAPI = (*PipelinesAPIService)(&c.common)
+	c.QueryAPI = (*QueryAPIService)(&c.common)
 	c.SystemAPI = (*SystemAPIService)(&c.common)
 	c.TenantAPI = (*TenantAPIService)(&c.common)
 	c.V0API = (*V0APIService)(&c.common)
 	c.V1API = (*V1APIService)(&c.common)
+	c.VerificationAPI = (*VerificationAPIService)(&c.common)
 
 	return c
 }

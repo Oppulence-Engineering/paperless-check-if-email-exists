@@ -12,6 +12,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1GetJobResults**](#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results|
 |[**v1GetJobStatus**](#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}|
 |[**v1JobApprovalChecklist**](#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval|
+|[**v1JobLatency**](#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency|
 |[**v1RetryJob**](#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry|
 
 # **v1CancelJob**
@@ -446,6 +447,57 @@ const { status, data } = await apiInstance.v1JobApprovalChecklist(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Pre-send approval checklist |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1JobLatency**
+> v1JobLatency()
+
+Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; //Bulk job identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1JobLatency(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] | Bulk job identifier | defaults to undefined|
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Latency analytics |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

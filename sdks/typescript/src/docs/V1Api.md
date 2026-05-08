@@ -6,6 +6,7 @@ All URIs are relative to *https://api.reacher.email*
 |------------- | ------------- | -------------|
 |[**v1AddSuppressions**](#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions|
 |[**v1CheckEmail**](#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email|
+|[**v1CheckEmailWithOnboard**](#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.|
 |[**v1CheckReputation**](#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check|
 |[**v1CheckSuppression**](#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check|
 |[**v1CreateBulkJob**](#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.|
@@ -123,6 +124,49 @@ const { status, data } = await apiInstance.v1CheckEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Email verification result |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CheckEmailWithOnboard**
+> v1CheckEmailWithOnboard()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+const { status, data } = await apiInstance.v1CheckEmailWithOnboard();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** | Tenant onboarded and email verified |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

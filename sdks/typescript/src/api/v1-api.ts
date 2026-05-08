@@ -145,6 +145,39 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CheckEmailWithOnboard: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/check-email-with-onboard`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary POST /v1/reputation/check
          * @param {ReputationCheckRequest} reputationCheckRequest 
          * @param {*} [options] Override http request option.
@@ -710,6 +743,18 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CheckEmailWithOnboard(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CheckEmailWithOnboard(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1CheckEmailWithOnboard']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary POST /v1/reputation/check
          * @param {ReputationCheckRequest} reputationCheckRequest 
          * @param {*} [options] Override http request option.
@@ -915,6 +960,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         },
         /**
          * 
+         * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CheckEmailWithOnboard(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1CheckEmailWithOnboard(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary POST /v1/reputation/check
          * @param {V1ApiV1CheckReputationRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1070,6 +1124,15 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1CheckEmail(requestParameters: V1ApiV1CheckEmailRequest, options?: RawAxiosRequestConfig): AxiosPromise<CheckEmailOutput>;
+
+    /**
+     * 
+     * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1CheckEmailWithOnboard(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * 
@@ -1483,6 +1546,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1CheckEmail(requestParameters: V1ApiV1CheckEmailRequest, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1CheckEmail(requestParameters.checkEmailRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1CheckEmailWithOnboard(options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1CheckEmailWithOnboard(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

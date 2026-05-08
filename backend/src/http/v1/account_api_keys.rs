@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
+use crate::http::{check_scope, resolve_tenant};
 use crate::tenant::auth::generate_api_key;
-use crate::tenant::context::TenantContext;
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -73,6 +73,8 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,

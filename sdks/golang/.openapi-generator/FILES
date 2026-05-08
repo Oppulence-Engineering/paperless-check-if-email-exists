@@ -4,13 +4,18 @@ api/openapi.yaml
 api_account.go
 api_admin.go
 api_admin_jobs.go
+api_comments.go
+api_events.go
 api_health.go
 api_jobs.go
+api_lists.go
 api_pipelines.go
+api_query.go
 api_system.go
 api_tenant.go
 api_v0.go
 api_v1.go
+api_verification.go
 client.go
 configuration.go
 docs/AccountAPI.md
@@ -31,6 +36,7 @@ docs/CheckEmailOutputMisc.md
 docs/CheckEmailOutputMx.md
 docs/CheckEmailOutputSmtp.md
 docs/CheckEmailRequest.md
+docs/CommentsAPI.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
@@ -43,6 +49,7 @@ docs/Duration.md
 docs/EmailCategory.md
 docs/EmailScore.md
 docs/ErrorResponse.md
+docs/EventsAPI.md
 docs/FindEmailAcceptedResponse.md
 docs/FindEmailRequest.md
 docs/FindEmailStatusResponse.md
@@ -65,6 +72,7 @@ docs/ListPipelinesResponse.md
 docs/ListSummary.md
 docs/ListUploadRequest.md
 docs/ListUploadResponse.md
+docs/ListsAPI.md
 docs/MiscDetails.md
 docs/MxDetails.md
 docs/PipelineDeliveryConfig.md
@@ -89,6 +97,7 @@ docs/PipelinesAPI.md
 docs/Provider.md
 docs/ProviderConfidence.md
 docs/ProviderRejectionReason.md
+docs/QueryAPI.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
@@ -116,6 +125,7 @@ docs/UpdatePipelineInput.md
 docs/V0API.md
 docs/V1API.md
 docs/VerifMethod.md
+docs/VerificationAPI.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
 git_push.sh

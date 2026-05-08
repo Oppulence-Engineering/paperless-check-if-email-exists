@@ -40,6 +40,17 @@ tags:
   name: Admin Jobs
 - description: Tenant-scoped account settings and domain endpoints
   name: Tenant
+- description: "List upload, cleaning, and quality endpoints"
+  name: Lists
+- description: Historical verification lookup endpoints
+  name: Verification
+- description: Advanced audit log endpoints
+  name: Events
+- description: Advanced historical query endpoints; experimental for large reporting
+    workloads
+  name: Query
+- description: Collaboration annotation endpoints; experimental
+  name: Comments
 paths:
   /healthz:
     get:
@@ -626,6 +637,18 @@ paths:
       summary: "GET /v1/bulk/{job_id}/results"
       tags:
       - Jobs
+  /v1/check-email-with-onboard:
+    post:
+      operationId: v1_check_email_with_onboard
+      responses:
+        "201":
+          description: Tenant onboarded and email verified
+      summary: |-
+        POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
+        No authentication required. Creates a tenant, generates an API key,
+        verifies the email, and returns all three.
+      tags:
+      - v1
   /v1/check_email:
     post:
       description: Verifies an email address and returns a result.
@@ -656,6 +679,167 @@ paths:
       summary: POST /v1/check_email
       tags:
       - v1
+  /v1/comments:
+    get:
+      operationId: v1_list_comments
+      parameters:
+      - explode: true
+        in: query
+        name: job_id
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: list_id
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          description: Comments list
+      summary: GET /v1/comments
+      tags:
+      - Comments
+    post:
+      operationId: v1_create_comment
+      responses:
+        "201":
+          description: Comment created
+      summary: POST /v1/comments
+      tags:
+      - Comments
+  /v1/comments/{comment_id}:
+    delete:
+      operationId: v1_delete_comment
+      parameters:
+      - description: Comment identifier
+        explode: false
+        in: path
+        name: comment_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Comment deleted
+      summary: "DELETE /v1/comments/{comment_id}"
+      tags:
+      - Comments
+  /v1/emails/{email}/history:
+    get:
+      description: Returns the verification history timeline for a specific email
+        address.
+      operationId: v1_email_history
+      parameters:
+      - description: Email address to look up
+        explode: false
+        in: path
+        name: email
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          description: Verification history for the email
+      summary: "GET /v1/emails/{email}/history"
+      tags:
+      - Verification
+  /v1/events:
+    get:
+      description: "Returns a paginated, filterable audit log of all job events for\
+        \ the tenant."
+      operationId: v1_list_events
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: event_type
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: actor
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: job_id
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: since
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: until
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          description: Audit log events
+      summary: GET /v1/events
+      tags:
+      - Events
   /v1/find_email:
     post:
       operationId: v1_find_email
@@ -833,6 +1017,27 @@ paths:
         "200":
           description: Job events
       summary: "GET /v1/jobs/{job_id}/events"
+      tags:
+      - Jobs
+  /v1/jobs/{job_id}/latency:
+    get:
+      description: "Returns verification latency analytics for a job (p50, p95, p99,\
+        \ avg, min, max)."
+      operationId: v1_job_latency
+      parameters:
+      - description: Bulk job identifier
+        explode: false
+        in: path
+        name: job_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Latency analytics
+      summary: "GET /v1/jobs/{job_id}/latency"
       tags:
       - Jobs
   /v1/jobs/{job_id}/results:
@@ -1039,6 +1244,26 @@ paths:
       summary: "GET /v1/lists/{list_id}/download"
       tags:
       - v1
+  /v1/lists/{list_id}/quality:
+    get:
+      description: Returns a quality benchmark report for a list.
+      operationId: v1_list_quality
+      parameters:
+      - description: List identifier
+        explode: false
+        in: path
+        name: list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: List quality benchmark report
+      summary: "GET /v1/lists/{list_id}/quality"
+      tags:
+      - Lists
   /v1/me:
     get:
       description: Returns the authenticated tenant context and quota metadata.
@@ -1792,6 +2017,85 @@ paths:
       summary: "POST /v1/pipelines/{pipeline_id}/trigger"
       tags:
       - Pipelines
+  /v1/query:
+    get:
+      description: Flexible historical query API for verification results across jobs.
+      operationId: v1_query_results
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: category
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: min_score
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: max_score
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: safe_to_send
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: job_id
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: since
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: until
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          description: Filtered verification results
+      summary: GET /v1/query
+      tags:
+      - Query
   /v1/reputation/check:
     post:
       operationId: v1_check_reputation

@@ -28,6 +28,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
+use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
@@ -116,6 +117,10 @@ pub enum TaskError {
 	Headers(#[from] http::Error),
 	#[error("Failed to prepare verification response: {0}")]
 	Prepare(String),
+	#[error("Invalid webhook URL: {0}")]
+	WebhookValidation(String),
+	#[error("Webhook returned HTTP status {0}")]
+	WebhookStatus(u16),
 }
 
 impl TaskError {
@@ -127,6 +132,16 @@ impl TaskError {
 			Self::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Headers(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Prepare(_) => StatusCode::INTERNAL_SERVER_ERROR,
+			Self::WebhookValidation(_) => StatusCode::BAD_REQUEST,
+			Self::WebhookStatus(_) => StatusCode::BAD_GATEWAY,
+		}
+	}
+
+	pub fn is_retryable(&self) -> bool {
+		match self {
+			Self::WebhookValidation(_) | Self::Headers(_) => false,
+			Self::WebhookStatus(status) => (500..=599).contains(status),
+			_ => true,
 		}
 	}
 }
@@ -328,7 +343,7 @@ pub async fn do_check_email_work(
 
 	let should_retry = match &worker_output {
 		Ok(output) if output.output.is_reachable == Reachable::Unknown => true,
-		Err(_) => true,
+		Err(error) => error.is_retryable(),
 		_ => false,
 	};
 
@@ -369,11 +384,21 @@ pub async fn do_check_email_work(
 			.reject(BasicRejectOptions { requeue: true })
 			.await?;
 		info!(target: LOG_TARGET, email=?&task.input.to_email, retry=new_count, max=retry_policy.max_retries, "Requeued message for retry");
-	} else if should_retry {
-		// Exhausted retries — dead letter
+	} else if should_retry || worker_output.is_err() {
+		// Exhausted retries or a deterministic non-retryable error: dead letter.
+		maybe_pause_before_delivery_settle().await;
 		delivery
 			.reject(BasicRejectOptions { requeue: false })
 			.await?;
+
+		delivery_finalize(
+			task,
+			&delivery,
+			channel,
+			Arc::clone(&config),
+			&worker_output,
+		)
+		.await?;
 
 		if let Some(id) = task_db_id {
 			update_task_state(&config, id, "dead_lettered", None).await;
@@ -404,16 +429,15 @@ pub async fn do_check_email_work(
 			}
 		}
 
-		// Still store the result and handle single-shot reply
-		delivery_finalize(
-			task,
-			&delivery,
-			channel,
+		sync_related_entities(&config, task).await;
+		send_to_reacher(
 			Arc::clone(&config),
-			&worker_output,
+			&task.input.to_email,
+			worker_output.as_ref(),
 		)
 		.await?;
-		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered after exhausting retries");
+
+		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered terminal task result");
 	} else {
 		// Success path
 		maybe_pause_before_delivery_settle().await;
@@ -423,7 +447,17 @@ pub async fn do_check_email_work(
 				.await?;
 			return Err(anyhow::anyhow!("test failpoint forced requeue before ack"));
 		}
+
 		delivery.ack(BasicAckOptions::default()).await?;
+
+		delivery_finalize(
+			task,
+			&delivery,
+			channel,
+			Arc::clone(&config),
+			&worker_output,
+		)
+		.await?;
 
 		if let Some(id) = task_db_id {
 			update_task_state(&config, id, "completed", None).await;
@@ -451,15 +485,6 @@ pub async fn do_check_email_work(
 			}
 		}
 
-		delivery_finalize(
-			task,
-			&delivery,
-			channel,
-			Arc::clone(&config),
-			&worker_output,
-		)
-		.await?;
-
 		// Evaluate conditional actions (auto-suppression) after successful completion
 		if let (Some(pool), Ok(output)) = (config.get_pg_pool(), &worker_output) {
 			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
@@ -481,6 +506,14 @@ pub async fn do_check_email_work(
 			}
 		}
 
+		sync_related_entities(&config, task).await;
+		send_to_reacher(
+			Arc::clone(&config),
+			&task.input.to_email,
+			worker_output.as_ref(),
+		)
+		.await?;
+
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,
 			worker_output=?worker_output.as_ref().map(|o| &o.output.is_reachable),
@@ -492,7 +525,7 @@ pub async fn do_check_email_work(
 	Ok(())
 }
 
-/// Finalize delivery: send single-shot reply, store result, send to reacher.
+/// Finalize delivery: send single-shot reply and store result.
 async fn delivery_finalize(
 	task: &CheckEmailTask,
 	delivery: &Delivery,
@@ -500,11 +533,12 @@ async fn delivery_finalize(
 	config: Arc<BackendConfig>,
 	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
 ) -> Result<(), anyhow::Error> {
+	let storage = config.get_storage_adapter();
+
 	if let CheckEmailJobId::SingleShot = task.job_id {
 		send_single_shot_reply(channel, delivery, worker_output).await?;
 	}
 
-	let storage = config.get_storage_adapter();
 	match worker_output {
 		Ok(success) => {
 			storage
@@ -517,15 +551,6 @@ async fn delivery_finalize(
 				.await?;
 		}
 	}
-
-	sync_related_entities(&config, task).await;
-
-	send_to_reacher(
-		config,
-		&task.input.to_email,
-		worker_output.as_ref().map(|success| success),
-	)
-	.await?;
 
 	Ok(())
 }
@@ -603,10 +628,19 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 				.await
 				.unwrap_or(0);
 				if processed >= i64::from(total_rows) {
-					let _ = sqlx::query(
-						"UPDATE v1_lists SET status = 'completed'::list_status, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+					let failed = sqlx::query_scalar::<_, i64>(
+						"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
 					)
 					.bind(list_id)
+					.fetch_one(&pool)
+					.await
+					.unwrap_or(0);
+					let final_status = if failed > 0 { "failed" } else { "completed" };
+					let _ = sqlx::query(
+						"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+					)
+					.bind(list_id)
+					.bind(final_status)
 					.execute(&pool)
 					.await;
 				}
@@ -670,6 +704,114 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 	}
 }
 
+fn validate_webhook_url(url: &str) -> Result<reqwest::Url, TaskError> {
+	let parsed = reqwest::Url::parse(url)
+		.map_err(|err| TaskError::WebhookValidation(format!("invalid URL: {}", err)))?;
+	match parsed.scheme() {
+		"https" => {}
+		"http" => {
+			return Err(TaskError::WebhookValidation(
+				"HTTP is not allowed; use HTTPS".to_string(),
+			))
+		}
+		other => {
+			return Err(TaskError::WebhookValidation(format!(
+				"scheme '{}' is not allowed; use HTTPS",
+				other
+			)))
+		}
+	}
+
+	let host = parsed
+		.host_str()
+		.ok_or_else(|| TaskError::WebhookValidation("missing host".to_string()))?;
+	if host == "localhost"
+		|| host == "127.0.0.1"
+		|| host == "::1"
+		|| host == "[::1]"
+		|| host == "0.0.0.0"
+		|| host.ends_with(".local")
+	{
+		return Err(TaskError::WebhookValidation(
+			"localhost and loopback targets are not allowed".to_string(),
+		));
+	}
+	let ip_host = host.trim_start_matches('[').trim_end_matches(']');
+	if let Ok(ip) = ip_host.parse::<IpAddr>() {
+		if is_private_ip(ip) {
+			return Err(TaskError::WebhookValidation(
+				"private or reserved IP targets are not allowed".to_string(),
+			));
+		}
+	}
+
+	Ok(parsed)
+}
+
+async fn validate_resolved_webhook_target(url: &reqwest::Url) -> Result<(), TaskError> {
+	let host = url
+		.host_str()
+		.ok_or_else(|| TaskError::WebhookValidation("missing host".to_string()))?;
+	let port = url
+		.port_or_known_default()
+		.ok_or_else(|| TaskError::WebhookValidation("missing port".to_string()))?;
+	let lookup_host = host.trim_start_matches('[').trim_end_matches(']');
+	let addrs = tokio::net::lookup_host((lookup_host, port))
+		.await
+		.map_err(|err| {
+			TaskError::WebhookValidation(format!("failed to resolve webhook host: {}", err))
+		})?
+		.collect::<Vec<_>>();
+	if addrs.is_empty() {
+		return Err(TaskError::WebhookValidation(
+			"host did not resolve to any addresses".to_string(),
+		));
+	}
+	if addrs.iter().any(|addr| is_private_ip(addr.ip())) {
+		return Err(TaskError::WebhookValidation(
+			"host resolves to a private or reserved IP address".to_string(),
+		));
+	}
+
+	Ok(())
+}
+
+fn is_private_ip(ip: IpAddr) -> bool {
+	match ip {
+		IpAddr::V4(v4) => {
+			v4.is_loopback()
+				|| v4.is_private()
+				|| v4.is_link_local()
+				|| v4.is_broadcast()
+				|| v4.is_multicast()
+				|| v4.is_unspecified()
+				|| v4.octets()[0] == 169 && v4.octets()[1] == 254
+				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64
+				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 0
+				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 2
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 18
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 19
+				|| v4.octets()[0] == 198 && v4.octets()[1] == 51 && v4.octets()[2] == 100
+				|| v4.octets()[0] == 203 && v4.octets()[1] == 0 && v4.octets()[2] == 113
+				|| v4.octets()[0] >= 240
+		}
+		IpAddr::V6(v6) => {
+			let first_segment = v6.segments()[0];
+			let mapped_private = v6
+				.to_ipv4_mapped()
+				.is_some_and(|mapped| is_private_ip(IpAddr::V4(mapped)));
+			v6.is_loopback()
+				|| v6.is_unspecified()
+				|| v6.is_multicast()
+				|| (first_segment & 0xffc0) == 0xfe80
+				|| (first_segment & 0xfe00) == 0xfc00
+				|| (first_segment & 0xffc0) == 0xfec0
+				|| (first_segment == 0x2001 && v6.segments()[1] == 0x0db8)
+				|| mapped_private
+		}
+	}
+}
+
 /// Checks the email and sends the result to the webhook.
 pub async fn check_email_and_send_result(
 	task: &CheckEmailTask,
@@ -684,6 +826,18 @@ pub async fn check_email_and_send_result_with_config(
 	webhook_signing_secret: Option<&str>,
 ) -> Result<PreparedCheckEmailSuccess, TaskError> {
 	let config = config.unwrap_or_else(|| Arc::new(BackendConfig::empty()));
+	let success = check_email_and_prepare_result_with_config(task, Some(config)).await?;
+	send_task_webhook(task, &success, webhook_signing_secret).await?;
+	Ok(success)
+}
+
+pub async fn check_email_and_prepare_result_with_config(
+	task: &CheckEmailTask,
+	config: Option<Arc<BackendConfig>>,
+) -> Result<PreparedCheckEmailSuccess, TaskError> {
+	let config = config.unwrap_or_else(|| Arc::new(BackendConfig::empty()));
+	validate_task_webhook_targets(task).await?;
+
 	let output = check_email(&task.input).await;
 	let tenant_id = task
 		.metadata
@@ -694,7 +848,27 @@ pub async fn check_email_and_send_result_with_config(
 		.await
 		.map_err(|error| TaskError::Prepare(error.to_string()))?;
 
-	// Check if we have a webhook to send the output to.
+	Ok(success)
+}
+
+async fn validate_task_webhook_targets(task: &CheckEmailTask) -> Result<(), TaskError> {
+	if let Some(TaskWebhook {
+		on_each_email: Some(webhook),
+	}) = &task.webhook
+	{
+		let _: HeaderMap = (&webhook.headers).try_into()?;
+		let webhook_url = validate_webhook_url(&webhook.url)?;
+		validate_resolved_webhook_target(&webhook_url).await?;
+	}
+
+	Ok(())
+}
+
+async fn send_task_webhook(
+	task: &CheckEmailTask,
+	success: &PreparedCheckEmailSuccess,
+	webhook_signing_secret: Option<&str>,
+) -> Result<(), TaskError> {
 	if let Some(TaskWebhook {
 		on_each_email: Some(webhook),
 	}) = &task.webhook
@@ -716,19 +890,42 @@ pub async fn check_email_and_send_result_with_config(
 			}
 		}
 
-		let client = reqwest::Client::new();
+		let webhook_url = validate_webhook_url(&webhook.url)?;
+		validate_resolved_webhook_target(&webhook_url).await?;
+		let client = reqwest::Client::builder()
+			.timeout(Duration::from_secs(10))
+			.redirect(reqwest::redirect::Policy::none())
+			.build()?;
 		let res = client
-			.post(&webhook.url)
+			.post(webhook_url)
 			.json(&webhook_output)
 			.headers(headers)
 			.send()
-			.await?
-			.text()
 			.await?;
-		debug!(target: LOG_TARGET, email=?success.output.input,res=?res, "Received webhook response");
+		let status = res.status();
+		let body = res.text().await?;
+		if let Some(error) = webhook_status_error(status) {
+			return Err(error);
+		}
+		debug!(target: LOG_TARGET, email=?success.output.input,res=?body, "Received webhook response");
 	}
 
-	Ok(success)
+	Ok(())
+}
+
+fn webhook_status_error(status: reqwest::StatusCode) -> Option<TaskError> {
+	if status.is_success() {
+		return None;
+	}
+
+	if status.is_redirection() {
+		return Some(TaskError::WebhookValidation(format!(
+			"webhook redirects are not followed (HTTP {})",
+			status.as_u16()
+		)));
+	}
+
+	Some(TaskError::WebhookStatus(status.as_u16()))
 }
 
 #[cfg(test)]
@@ -823,6 +1020,32 @@ mod tests {
 
 		let lapin_err = TaskError::Lapin(lapin::Error::InvalidChannel(0));
 		assert_eq!(lapin_err.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+
+		let webhook_err = TaskError::WebhookValidation("bad target".to_string());
+		assert_eq!(webhook_err.status_code(), StatusCode::BAD_REQUEST);
+
+		let webhook_status_err = TaskError::WebhookStatus(502);
+		assert_eq!(webhook_status_err.status_code(), StatusCode::BAD_GATEWAY);
+	}
+
+	#[test]
+	fn test_task_error_retryability() {
+		assert!(!TaskError::WebhookValidation("bad target".to_string()).is_retryable());
+		assert!(!TaskError::WebhookStatus(302).is_retryable());
+		assert!(!TaskError::WebhookStatus(404).is_retryable());
+		assert!(TaskError::WebhookStatus(503).is_retryable());
+		assert!(TaskError::Lapin(lapin::Error::InvalidChannel(0)).is_retryable());
+	}
+
+	#[test]
+	fn test_webhook_status_error_rejects_redirects() {
+		let err = webhook_status_error(reqwest::StatusCode::FOUND).unwrap();
+		assert!(matches!(err, TaskError::WebhookValidation(_)));
+		assert!(webhook_status_error(reqwest::StatusCode::NO_CONTENT).is_none());
+		assert!(matches!(
+			webhook_status_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR),
+			Some(TaskError::WebhookStatus(500))
+		));
 	}
 
 	#[test]
@@ -843,6 +1066,27 @@ mod tests {
 		});
 		let json = serde_json::to_string(&err).unwrap();
 		assert!(json.contains("full capacity"));
+	}
+
+	#[test]
+	fn test_webhook_validation_rejects_unsafe_targets() {
+		assert!(validate_webhook_url("http://example.com/hook").is_err());
+		assert!(validate_webhook_url("https://localhost/hook").is_err());
+		assert!(validate_webhook_url("https://127.0.0.1/hook").is_err());
+		assert!(validate_webhook_url("https://10.0.0.1/hook").is_err());
+		assert!(validate_webhook_url("https://[::1]/hook").is_err());
+		assert!(validate_webhook_url("https://[fd00::1]/hook").is_err());
+		assert!(validate_webhook_url("https://example.com/hook").is_ok());
+	}
+
+	#[test]
+	fn test_is_private_ip_covers_reserved_ranges() {
+		assert!(is_private_ip("169.254.1.1".parse().unwrap()));
+		assert!(is_private_ip("100.64.0.1".parse().unwrap()));
+		assert!(is_private_ip("192.0.2.1".parse().unwrap()));
+		assert!(is_private_ip("2001:db8::1".parse().unwrap()));
+		assert!(is_private_ip("::ffff:127.0.0.1".parse().unwrap()));
+		assert!(!is_private_ip("8.8.8.8".parse().unwrap()));
 	}
 
 	#[test]
@@ -871,7 +1115,7 @@ mod tests {
 
 	#[test]
 	fn test_check_email_task_without_metadata_backward_compat() {
-		// Deserialize a task that has no metadata field — should default to None
+		// Deserialize a task that has no metadata field; it should default to None.
 		let json = r#"{"input":{"to_email":"a@b.com"},"job_id":"single_shot","webhook":null}"#;
 		let task: Result<CheckEmailTask, _> = serde_json::from_str(json);
 		// This may fail if CheckEmailInput requires more fields, but metadata should be None

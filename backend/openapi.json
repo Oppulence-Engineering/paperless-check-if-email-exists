@@ -3419,6 +3419,20 @@
         ]
       }
     },
+    "/v1/check-email-with-onboard": {
+      "post": {
+        "operationId": "v1_check_email_with_onboard",
+        "responses": {
+          "201": {
+            "description": "Tenant onboarded and email verified"
+          }
+        },
+        "summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/v1/check_email": {
       "post": {
         "description": "Verifies an email address and returns a result.",
@@ -3460,6 +3474,207 @@
         "summary": "POST /v1/check_email",
         "tags": [
           "v1"
+        ]
+      }
+    },
+    "/v1/comments": {
+      "get": {
+        "operationId": "v1_list_comments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "list_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comments list"
+          }
+        },
+        "summary": "GET /v1/comments",
+        "tags": [
+          "Comments"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_comment",
+        "responses": {
+          "201": {
+            "description": "Comment created"
+          }
+        },
+        "summary": "POST /v1/comments",
+        "tags": [
+          "Comments"
+        ]
+      }
+    },
+    "/v1/comments/{comment_id}": {
+      "delete": {
+        "operationId": "v1_delete_comment",
+        "parameters": [
+          {
+            "description": "Comment identifier",
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted"
+          }
+        },
+        "summary": "DELETE /v1/comments/{comment_id}",
+        "tags": [
+          "Comments"
+        ]
+      }
+    },
+    "/v1/emails/{email}/history": {
+      "get": {
+        "description": "Returns the verification history timeline for a specific email address.",
+        "operationId": "v1_email_history",
+        "parameters": [
+          {
+            "description": "Email address to look up",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification history for the email"
+          }
+        },
+        "summary": "GET /v1/emails/{email}/history",
+        "tags": [
+          "Verification"
+        ]
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "description": "Returns a paginated, filterable audit log of all job events for the tenant.",
+        "operationId": "v1_list_events",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log events"
+          }
+        },
+        "summary": "GET /v1/events",
+        "tags": [
+          "Events"
         ]
       }
     },
@@ -3705,6 +3920,33 @@
           }
         },
         "summary": "GET /v1/jobs/{job_id}/events",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/v1/jobs/{job_id}/latency": {
+      "get": {
+        "description": "Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).",
+        "operationId": "v1_job_latency",
+        "parameters": [
+          {
+            "description": "Bulk job identifier",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latency analytics"
+          }
+        },
+        "summary": "GET /v1/jobs/{job_id}/latency",
         "tags": [
           "Jobs"
         ]
@@ -3985,6 +4227,33 @@
         "summary": "GET /v1/lists/{list_id}/download",
         "tags": [
           "v1"
+        ]
+      }
+    },
+    "/v1/lists/{list_id}/quality": {
+      "get": {
+        "description": "Returns a quality benchmark report for a list.",
+        "operationId": "v1_list_quality",
+        "parameters": [
+          {
+            "description": "List identifier",
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List quality benchmark report"
+          }
+        },
+        "summary": "GET /v1/lists/{list_id}/quality",
+        "tags": [
+          "Lists"
         ]
       }
     },
@@ -5107,6 +5376,100 @@
         "summary": "POST /v1/pipelines/{pipeline_id}/trigger",
         "tags": [
           "Pipelines"
+        ]
+      }
+    },
+    "/v1/query": {
+      "get": {
+        "description": "Flexible historical query API for verification results across jobs.",
+        "operationId": "v1_query_results",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_score",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_score",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "safe_to_send",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filtered verification results"
+          }
+        },
+        "summary": "GET /v1/query",
+        "tags": [
+          "Query"
         ]
       }
     },

@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -38,6 +38,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let limit = query.limit.unwrap_or(50).min(200);
 	let offset = query.offset.unwrap_or(0);

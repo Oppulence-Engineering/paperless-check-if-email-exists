@@ -1,7 +1,7 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -72,6 +72,8 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
@@ -150,6 +152,8 @@ async fn webhook_handler(
 }
 
 async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	let limit = tenant_ctx.monthly_email_limit;
 	let quota_unlimited = limit.is_none() || limit.unwrap_or(0) <= 0;
 	let quota_remaining = match limit {

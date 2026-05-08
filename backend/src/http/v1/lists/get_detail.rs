@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
@@ -39,6 +39,8 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::LISTS)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let row = sqlx::query(
 		r#"
@@ -64,13 +66,32 @@ async fn http_handler(
 		.await
 		.map_err(warp::reject::custom)?;
 
-	if summary.total_processed >= i64::from(row.get::<i32, _>("total_rows"))
-		&& row.get::<String, _>("status") != "completed"
-	{
+	let total_rows = row.get::<i32, _>("total_rows");
+	let current_status = row.get::<String, _>("status");
+	let fully_processed = summary.total_processed >= i64::from(total_rows);
+	let failed_count = if fully_processed {
+		list_failed_count(&pg_pool, list_id)
+			.await
+			.map_err(warp::reject::custom)?
+	} else {
+		0
+	};
+	let response_status = if current_status == "deleted" {
+		current_status.clone()
+	} else if fully_processed && failed_count > 0 {
+		"failed".to_string()
+	} else if fully_processed {
+		"completed".to_string()
+	} else {
+		current_status.clone()
+	};
+
+	if fully_processed && current_status != response_status && current_status != "deleted" {
 		sqlx::query(
-			"UPDATE v1_lists SET status = 'completed'::list_status, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+			"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
 		)
 		.bind(list_id)
+		.bind(&response_status)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)
@@ -81,17 +102,23 @@ async fn http_handler(
 		id: row.get("id"),
 		job_id: row.get("job_id"),
 		name: row.get("name"),
-		status: if summary.total_processed >= i64::from(row.get::<i32, _>("total_rows")) {
-			"completed".to_string()
-		} else {
-			row.get("status")
-		},
-		total_rows: row.get("total_rows"),
+		status: response_status,
+		total_rows,
 		email_column: row.get("email_column"),
 		summary,
 		unique_emails: row.get("unique_emails"),
 		deduplicated_count: row.get::<Option<i32>, _>("deduplicated_count"),
 	}))
+}
+
+async fn list_failed_count(pg_pool: &PgPool, list_id: i32) -> Result<i64, ReacherResponseError> {
+	sqlx::query_scalar(
+		"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
+	)
+	.bind(list_id)
+	.fetch_one(pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)
 }
 
 pub async fn list_summary(pg_pool: &PgPool, list_id: i32) -> Result<Summary, ReacherResponseError> {
