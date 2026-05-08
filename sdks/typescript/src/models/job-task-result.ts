@@ -18,40 +18,39 @@
 import type { CheckEmailOutput } from './check-email-output';
 
 /**
- * 
+ *
  * @export
  * @interface JobTaskResult
  */
 export interface JobTaskResult {
     /**
-     * 
+     *
      * @type {string}
      * @memberof JobTaskResult
      */
     'error'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobTaskResult
      */
     'id': number;
     /**
-     * 
+     *
      * @type {CheckEmailOutput}
      * @memberof JobTaskResult
      */
     'result'?: CheckEmailOutput | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobTaskResult
      */
     'retry_count': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof JobTaskResult
      */
     'task_state': string;
 }
-

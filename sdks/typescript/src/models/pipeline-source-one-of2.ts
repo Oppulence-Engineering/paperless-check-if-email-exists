@@ -15,25 +15,25 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineSourceOneOf2
  */
 export interface PipelineSourceOneOf2 {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf2
      */
     'accepted_format': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf2
      */
     'token_id': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf2
      */
@@ -45,5 +45,3 @@ export const PipelineSourceOneOf2TypeEnum = {
 } as const;
 
 export type PipelineSourceOneOf2TypeEnum = typeof PipelineSourceOneOf2TypeEnum[keyof typeof PipelineSourceOneOf2TypeEnum];
-
-

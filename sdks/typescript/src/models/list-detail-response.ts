@@ -18,64 +18,63 @@
 import type { ListSummary } from './list-summary';
 
 /**
- * 
+ *
  * @export
  * @interface ListDetailResponse
  */
 export interface ListDetailResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'deduplicated_count'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListDetailResponse
      */
     'email_column': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListDetailResponse
      */
     'name': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListDetailResponse
      */
     'status': string;
     /**
-     * 
+     *
      * @type {ListSummary}
      * @memberof ListDetailResponse
      */
     'summary': ListSummary;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'total_rows': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'unique_emails'?: number | null;
 }
-

@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -27,6 +27,3 @@ export const PipelineStatus = {
 } as const;
 
 export type PipelineStatus = typeof PipelineStatus[keyof typeof PipelineStatus];
-
-
-

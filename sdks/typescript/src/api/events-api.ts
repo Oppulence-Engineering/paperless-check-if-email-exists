@@ -30,13 +30,13 @@ export const EventsApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Returns a paginated, filterable audit log of all job events for the tenant.
          * @summary GET /v1/events
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [eventType] 
-         * @param {string} [actor] 
-         * @param {number} [jobId] 
-         * @param {string} [since] 
-         * @param {string} [until] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [eventType]
+         * @param {string} [actor]
+         * @param {number} [jobId]
+         * @param {string} [since]
+         * @param {string} [until]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -85,7 +85,7 @@ export const EventsApiAxiosParamCreator = function (configuration?: Configuratio
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -108,13 +108,13 @@ export const EventsApiFp = function(configuration?: Configuration) {
         /**
          * Returns a paginated, filterable audit log of all job events for the tenant.
          * @summary GET /v1/events
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [eventType] 
-         * @param {string} [actor] 
-         * @param {number} [jobId] 
-         * @param {string} [since] 
-         * @param {string} [until] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [eventType]
+         * @param {string} [actor]
+         * @param {number} [jobId]
+         * @param {string} [since]
+         * @param {string} [until]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -172,49 +172,49 @@ export interface EventsApiInterface {
  */
 export interface EventsApiV1ListEventsRequest {
     /**
-     * 
+     *
      * @type {number}
      * @memberof EventsApiV1ListEvents
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof EventsApiV1ListEvents
      */
     readonly offset?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof EventsApiV1ListEvents
      */
     readonly eventType?: string
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof EventsApiV1ListEvents
      */
     readonly actor?: string
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof EventsApiV1ListEvents
      */
     readonly jobId?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof EventsApiV1ListEvents
      */
     readonly since?: string
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof EventsApiV1ListEvents
      */
@@ -240,4 +240,3 @@ export class EventsApi extends BaseAPI implements EventsApiInterface {
         return EventsApiFp(this.configuration).v1ListEvents(requestParameters.limit, requestParameters.offset, requestParameters.eventType, requestParameters.actor, requestParameters.jobId, requestParameters.since, requestParameters.until, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

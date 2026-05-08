@@ -26,5 +26,3 @@ import type { SmtpDetails } from './smtp-details';
  * @export
  */
 export type CheckEmailOutputSmtp = CoreError | SmtpDetails;
-
-

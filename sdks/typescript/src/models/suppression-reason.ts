@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -31,6 +31,3 @@ export const SuppressionReason = {
 } as const;
 
 export type SuppressionReason = typeof SuppressionReason[keyof typeof SuppressionReason];
-
-
-

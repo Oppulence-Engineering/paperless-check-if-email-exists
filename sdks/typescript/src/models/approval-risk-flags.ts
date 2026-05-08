@@ -15,40 +15,39 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ApprovalRiskFlags
  */
 export interface ApprovalRiskFlags {
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalRiskFlags
      */
     'catch_all_count': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalRiskFlags
      */
     'disposable_count': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalRiskFlags
      */
     'role_account_count': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalRiskFlags
      */
     'spam_trap_count': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalRiskFlags
      */
     'suppressed_count': number;
 }
-

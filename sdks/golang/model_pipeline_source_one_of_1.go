@@ -239,6 +239,10 @@ func (o *PipelineSourceOneOf1) UnmarshalJSON(data []byte) (err error) {
 		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf1: expected \"integration\", got %q", varPipelineSourceOneOf1.Type)
 	}
 
+	if varPipelineSourceOneOf1.Type != "integration" {
+		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf1: expected \"integration\", got %q", varPipelineSourceOneOf1.Type)
+	}
+
 	*o = PipelineSourceOneOf1(varPipelineSourceOneOf1)
 
 	return err
@@ -279,5 +283,3 @@ func (v *NullablePipelineSourceOneOf1) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

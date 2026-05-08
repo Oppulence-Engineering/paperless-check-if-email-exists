@@ -24,10 +24,9 @@ import type { Webhook } from './webhook';
  */
 export interface TaskWebhook {
     /**
-     * 
+     *
      * @type {Webhook}
      * @memberof TaskWebhook
      */
     'on_each_email'?: Webhook;
 }
-

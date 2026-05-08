@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -27,6 +27,3 @@ export const ProviderConfidence = {
 } as const;
 
 export type ProviderConfidence = typeof ProviderConfidence[keyof typeof ProviderConfidence];
-
-
-

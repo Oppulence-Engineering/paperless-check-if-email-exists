@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineRunStats
  */
@@ -23,112 +23,111 @@ export interface PipelineRunStats {
     [key: string]: any;
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'billed_emails'?: number | null;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof PipelineRunStats
      */
     'changed_only_export'?: boolean | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'completed_tasks'?: number | null;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof PipelineRunStats
      */
     'delta_mode'?: boolean | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'freshness_days'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'invalid'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'published_tasks'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'queued_emails'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'risky'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'selected_unique_emails'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'skipped_unchanged'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunStats
      */
     'source_filename'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunStats
      */
     'source_name'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'source_row_count'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'source_unique_emails'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunStats
      */
     'trigger_reason'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'unknown'?: number | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunStats
      */
     'valid'?: number | null;
 }
-

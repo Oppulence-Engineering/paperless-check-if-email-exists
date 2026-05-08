@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface TriggerPipelineInput
  */
 export interface TriggerPipelineInput {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof TriggerPipelineInput
      */
     'force'?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof TriggerPipelineInput
      */
     'reason'?: string | null;
 }
-

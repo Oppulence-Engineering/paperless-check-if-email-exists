@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelinePolicyConfig
  */
 export interface PipelinePolicyConfig {
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelinePolicyConfig
      */
     'missed_run_window_hours'?: number;
 }
-

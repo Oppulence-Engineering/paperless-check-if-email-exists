@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -29,6 +29,3 @@ export const BounceRiskCategory = {
 } as const;
 
 export type BounceRiskCategory = typeof BounceRiskCategory[keyof typeof BounceRiskCategory];
-
-
-

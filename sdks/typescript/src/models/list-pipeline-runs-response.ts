@@ -18,22 +18,21 @@
 import type { PipelineRunView } from './pipeline-run-view';
 
 /**
- * 
+ *
  * @export
  * @interface ListPipelineRunsResponse
  */
 export interface ListPipelineRunsResponse {
     /**
-     * 
+     *
      * @type {Array<PipelineRunView>}
      * @memberof ListPipelineRunsResponse
      */
     'runs': Array<PipelineRunView>;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListPipelineRunsResponse
      */
     'total': number;
 }
-

@@ -56,7 +56,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -127,7 +127,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -137,7 +137,7 @@ Other parameters are passed through a pointer to a apiV1DownloadJobResultsReques
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **format** | **string** | Supported values: &#x60;csv&#x60;, &#x60;json&#x60; | 
+ **format** | **string** | Supported values: &#x60;csv&#x60;, &#x60;json&#x60; |
 
 ### Return type
 
@@ -196,7 +196,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | V1 bulk job identifier | 
+**jobId** | **int32** | V1 bulk job identifier |
 
 ### Other Parameters
 
@@ -269,7 +269,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | V1 bulk job identifier | 
+**jobId** | **int32** | V1 bulk job identifier |
 
 ### Other Parameters
 
@@ -279,9 +279,9 @@ Other parameters are passed through a pointer to a apiV1GetBulkJobResultsRequest
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **format** | **string** | Supported values: &#x60;json&#x60;, &#x60;csv&#x60; | 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **format** | **string** | Supported values: &#x60;json&#x60;, &#x60;csv&#x60; |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -342,7 +342,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -352,8 +352,8 @@ Other parameters are passed through a pointer to a apiV1GetJobEventsRequest stru
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -417,7 +417,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -427,9 +427,9 @@ Other parameters are passed through a pointer to a apiV1GetJobResultsRequest str
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **cursor** | **int64** |  | 
- **limit** | **int64** |  | 
- **state** | **string** |  | 
+ **cursor** | **int64** |  |
+ **limit** | **int64** |  |
+ **state** | **string** |  |
 
 ### Return type
 
@@ -488,7 +488,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -558,7 +558,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -626,7 +626,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -696,7 +696,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -723,4 +723,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

@@ -45,4 +45,3 @@ export interface MiscDetails {
      */
     'is_role_account': boolean;
 }
-

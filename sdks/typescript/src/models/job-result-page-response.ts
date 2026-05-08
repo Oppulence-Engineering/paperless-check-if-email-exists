@@ -18,28 +18,27 @@
 import type { JobTaskResult } from './job-task-result';
 
 /**
- * 
+ *
  * @export
  * @interface JobResultPageResponse
  */
 export interface JobResultPageResponse {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof JobResultPageResponse
      */
     'has_more': boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobResultPageResponse
      */
     'next_cursor'?: number | null;
     /**
-     * 
+     *
      * @type {Array<JobTaskResult>}
      * @memberof JobResultPageResponse
      */
     'results': Array<JobTaskResult>;
 }
-

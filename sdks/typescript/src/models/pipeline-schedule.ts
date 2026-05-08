@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineSchedule
  */
 export interface PipelineSchedule {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSchedule
      */
     'cron': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSchedule
      */
     'timezone': string;
 }
-

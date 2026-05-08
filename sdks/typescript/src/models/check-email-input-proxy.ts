@@ -45,4 +45,3 @@ export interface CheckEmailInputProxy {
      */
     'username'?: string;
 }
-

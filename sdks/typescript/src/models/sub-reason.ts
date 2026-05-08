@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -40,6 +40,3 @@ export const SubReason = {
 } as const;
 
 export type SubReason = typeof SubReason[keyof typeof SubReason];
-
-
-

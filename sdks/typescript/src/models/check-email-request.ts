@@ -48,7 +48,7 @@ export interface CheckEmailRequest {
      */
     'from_email'?: string;
     /**
-     * 
+     *
      * @type {GmailVerifMethod}
      * @memberof CheckEmailRequest
      */
@@ -60,19 +60,19 @@ export interface CheckEmailRequest {
      */
     'hello_name'?: string;
     /**
-     * 
+     *
      * @type {HotmailB2BVerifMethod}
      * @memberof CheckEmailRequest
      */
     'hotmailb2b_verif_method'?: HotmailB2BVerifMethod;
     /**
-     * 
+     *
      * @type {HotmailB2CVerifMethod}
      * @memberof CheckEmailRequest
      */
     'hotmailb2c_verif_method'?: HotmailB2CVerifMethod;
     /**
-     * 
+     *
      * @type {CheckEmailInputProxy}
      * @memberof CheckEmailRequest
      */
@@ -102,12 +102,9 @@ export interface CheckEmailRequest {
      */
     'to_email': string;
     /**
-     * 
+     *
      * @type {YahooVerifMethod}
      * @memberof CheckEmailRequest
      */
     'yahoo_verif_method'?: YahooVerifMethod;
 }
-
-
-

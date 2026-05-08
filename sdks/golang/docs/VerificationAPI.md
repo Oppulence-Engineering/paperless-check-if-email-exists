@@ -48,7 +48,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**email** | **string** | Email address to look up | 
+**email** | **string** | Email address to look up |
 
 ### Other Parameters
 
@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiV1EmailHistoryRequest stru
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int64** |  | 
+ **limit** | **int64** |  |
 
 ### Return type
 
@@ -76,4 +76,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

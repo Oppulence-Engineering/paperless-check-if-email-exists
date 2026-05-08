@@ -18,48 +18,45 @@
 import type { SuppressionReason } from './suppression-reason';
 
 /**
- * 
+ *
  * @export
  * @interface SuppressionEntry
  */
 export interface SuppressionEntry {
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionEntry
      */
     'created_at': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionEntry
      */
     'email': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof SuppressionEntry
      */
     'id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionEntry
      */
     'notes'?: string | null;
     /**
-     * 
+     *
      * @type {SuppressionReason}
      * @memberof SuppressionEntry
      */
     'reason': SuppressionReason;
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionEntry
      */
     'source'?: string | null;
 }
-
-
-

@@ -30,150 +30,147 @@ import type { PipelineRunStatus } from './pipeline-run-status';
 import type { PipelineSource } from './pipeline-source';
 
 /**
- * 
+ *
  * @export
  * @interface PipelineRunView
  */
 export interface PipelineRunView {
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'billed_emails': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'completed_at'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'created_at': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'delivery_attempts': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'delivery_error'?: string | null;
     /**
-     * 
+     *
      * @type {PipelineDeliveryStatus}
      * @memberof PipelineRunView
      */
     'delivery_status': PipelineDeliveryStatus;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'error_code'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'error_message'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'job_id'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'last_delivery_attempt_at'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'list_id'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'next_delivery_attempt_at'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineRunView
      */
     'pipeline_id': number;
     /**
-     * 
+     *
      * @type {PipelineRunResultLocation}
      * @memberof PipelineRunView
      */
     'result_location'?: PipelineRunResultLocation | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'scheduled_for'?: string | null;
     /**
-     * 
+     *
      * @type {PipelineSource}
      * @memberof PipelineRunView
      */
     'source_snapshot': PipelineSource;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'started_at'?: string | null;
     /**
-     * 
+     *
      * @type {PipelineRunStats}
      * @memberof PipelineRunView
      */
     'stats': PipelineRunStats;
     /**
-     * 
+     *
      * @type {PipelineRunStatus}
      * @memberof PipelineRunView
      */
     'status': PipelineRunStatus;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'tenant_id': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'trigger_type': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunView
      */
     'updated_at': string;
 }
-
-
-

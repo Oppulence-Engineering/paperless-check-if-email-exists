@@ -25,6 +25,3 @@ export const GmailVerifMethod = {
 } as const;
 
 export type GmailVerifMethod = typeof GmailVerifMethod[keyof typeof GmailVerifMethod];
-
-
-

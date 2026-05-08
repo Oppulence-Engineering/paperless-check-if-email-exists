@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface DeletePipelineResponse
  */
 export interface DeletePipelineResponse {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DeletePipelineResponse
      */
     'deleted': boolean;
 }
-

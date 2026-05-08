@@ -25,6 +25,3 @@ export const HotmailB2BVerifMethod = {
 } as const;
 
 export type HotmailB2BVerifMethod = typeof HotmailB2BVerifMethod[keyof typeof HotmailB2BVerifMethod];
-
-
-

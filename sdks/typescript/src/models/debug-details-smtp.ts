@@ -24,10 +24,9 @@ import type { VerifMethod } from './verif-method';
  */
 export interface DebugDetailsSmtp {
     /**
-     * 
+     *
      * @type {VerifMethod}
      * @memberof DebugDetailsSmtp
      */
     'verif_method'?: VerifMethod;
 }
-

@@ -15,37 +15,37 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineSourceOneOf1
  */
 export interface PipelineSourceOneOf1 {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf1
      */
     'audience_id': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf1
      */
     'connection_id': string;
     /**
-     * 
+     *
      * @type {any}
      * @memberof PipelineSourceOneOf1
      */
     'field_mapping'?: any;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf1
      */
     'provider': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf1
      */
@@ -57,5 +57,3 @@ export const PipelineSourceOneOf1TypeEnum = {
 } as const;
 
 export type PipelineSourceOneOf1TypeEnum = typeof PipelineSourceOneOf1TypeEnum[keyof typeof PipelineSourceOneOf1TypeEnum];
-
-

@@ -18,36 +18,33 @@
 import type { SuppressionReason } from './suppression-reason';
 
 /**
- * 
+ *
  * @export
  * @interface AddSuppressionsRequest
  */
 export interface AddSuppressionsRequest {
     /**
-     * 
+     *
      * @type {Array<string>}
      * @memberof AddSuppressionsRequest
      */
     'emails': Array<string>;
     /**
-     * 
+     *
      * @type {string}
      * @memberof AddSuppressionsRequest
      */
     'notes'?: string | null;
     /**
-     * 
+     *
      * @type {SuppressionReason}
      * @memberof AddSuppressionsRequest
      */
     'reason'?: SuppressionReason;
     /**
-     * 
+     *
      * @type {string}
      * @memberof AddSuppressionsRequest
      */
     'source'?: string | null;
 }
-
-
-

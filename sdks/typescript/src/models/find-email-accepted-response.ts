@@ -15,34 +15,33 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface FindEmailAcceptedResponse
  */
 export interface FindEmailAcceptedResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailAcceptedResponse
      */
     'bulk_job_id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailAcceptedResponse
      */
     'candidates_checked': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailAcceptedResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FindEmailAcceptedResponse
      */
     'status': string;
 }
-

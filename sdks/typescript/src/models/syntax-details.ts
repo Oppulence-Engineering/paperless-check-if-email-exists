@@ -39,4 +39,3 @@ export interface SyntaxDetails {
      */
     'username': string;
 }
-

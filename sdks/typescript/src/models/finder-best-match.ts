@@ -15,34 +15,33 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface FinderBestMatch
  */
 export interface FinderBestMatch {
     /**
-     * 
+     *
      * @type {string}
      * @memberof FinderBestMatch
      */
     'confidence': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FinderBestMatch
      */
     'email': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FinderBestMatch
      */
     'pattern': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FinderBestMatch
      */
     'score': number;
 }
-

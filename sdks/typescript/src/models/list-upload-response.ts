@@ -15,34 +15,33 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ListUploadResponse
  */
 export interface ListUploadResponse {
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListUploadResponse
      */
     'email_column': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListUploadResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListUploadResponse
      */
     'list_id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListUploadResponse
      */
     'total_rows': number;
 }
-

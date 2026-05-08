@@ -33,54 +33,51 @@ import type { PipelineStatus } from './pipeline-status';
 import type { PipelineVerificationSettings } from './pipeline-verification-settings';
 
 /**
- * 
+ *
  * @export
  * @interface CreatePipelineInput
  */
 export interface CreatePipelineInput {
     /**
-     * 
+     *
      * @type {PipelineDeliveryConfig}
      * @memberof CreatePipelineInput
      */
     'delivery'?: PipelineDeliveryConfig;
     /**
-     * 
+     *
      * @type {string}
      * @memberof CreatePipelineInput
      */
     'name': string;
     /**
-     * 
+     *
      * @type {PipelinePolicyConfig}
      * @memberof CreatePipelineInput
      */
     'policy'?: PipelinePolicyConfig;
     /**
-     * 
+     *
      * @type {PipelineSchedule}
      * @memberof CreatePipelineInput
      */
     'schedule': PipelineSchedule;
     /**
-     * 
+     *
      * @type {PipelineSource}
      * @memberof CreatePipelineInput
      */
     'source': PipelineSource;
     /**
-     * 
+     *
      * @type {PipelineStatus}
      * @memberof CreatePipelineInput
      */
     'status'?: PipelineStatus;
     /**
-     * 
+     *
      * @type {PipelineVerificationSettings}
      * @memberof CreatePipelineInput
      */
     'verification'?: PipelineVerificationSettings;
 }
-
-
-

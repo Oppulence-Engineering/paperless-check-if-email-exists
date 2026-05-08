@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -26,6 +26,3 @@ export const RiskDirection = {
 } as const;
 
 export type RiskDirection = typeof RiskDirection[keyof typeof RiskDirection];
-
-
-

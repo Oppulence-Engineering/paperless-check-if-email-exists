@@ -21,7 +21,7 @@
  */
 export interface Webhook {
     /**
-     * 
+     *
      * @type {object}
      * @memberof Webhook
      */
@@ -33,4 +33,3 @@ export interface Webhook {
      */
     'url': string;
 }
-

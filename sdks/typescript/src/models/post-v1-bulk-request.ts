@@ -18,7 +18,7 @@
 import type { TaskWebhook } from './task-webhook';
 
 /**
- * 
+ *
  * @export
  * @interface PostV1BulkRequest
  */
@@ -30,10 +30,9 @@ export interface PostV1BulkRequest {
      */
     'input': Array<string>;
     /**
-     * 
+     *
      * @type {TaskWebhook}
      * @memberof PostV1BulkRequest
      */
     'webhook'?: TaskWebhook;
 }
-

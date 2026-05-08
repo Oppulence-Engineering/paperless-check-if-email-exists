@@ -18,36 +18,33 @@
 import type { RiskDirection } from './risk-direction';
 
 /**
- * 
+ *
  * @export
  * @interface RiskFactor
  */
 export interface RiskFactor {
     /**
-     * 
+     *
      * @type {number}
      * @memberof RiskFactor
      */
     'contribution': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof RiskFactor
      */
     'description': string;
     /**
-     * 
+     *
      * @type {RiskDirection}
      * @memberof RiskFactor
      */
     'direction': RiskDirection;
     /**
-     * 
+     *
      * @type {string}
      * @memberof RiskFactor
      */
     'signal': string;
 }
-
-
-

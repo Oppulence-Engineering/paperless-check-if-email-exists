@@ -21,58 +21,57 @@ import type { ApprovalCategoryBreakdown } from './approval-category-breakdown';
 import type { ApprovalRiskFlags } from './approval-risk-flags';
 
 /**
- * 
+ *
  * @export
  * @interface ApprovalChecklistResponse
  */
 export interface ApprovalChecklistResponse {
     /**
-     * 
+     *
      * @type {ApprovalCategoryBreakdown}
      * @memberof ApprovalChecklistResponse
      */
     'categories': ApprovalCategoryBreakdown;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalChecklistResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ApprovalChecklistResponse
      */
     'ready_to_send': boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ApprovalChecklistResponse
      */
     'recommendation': string;
     /**
-     * 
+     *
      * @type {ApprovalRiskFlags}
      * @memberof ApprovalChecklistResponse
      */
     'risk_flags': ApprovalRiskFlags;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalChecklistResponse
      */
     'safe_to_send_count': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalChecklistResponse
      */
     'safe_to_send_pct': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalChecklistResponse
      */
     'total_records': number;
 }
-

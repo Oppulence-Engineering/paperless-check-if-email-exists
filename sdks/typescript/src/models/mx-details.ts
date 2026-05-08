@@ -33,4 +33,3 @@ export interface MxDetails {
      */
     'records': Array<string>;
 }
-

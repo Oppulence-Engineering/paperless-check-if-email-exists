@@ -18,16 +18,15 @@
 import type { CheckEmailOutput } from './check-email-output';
 
 /**
- * 
+ *
  * @export
  * @interface BulkJobResultsResponse
  */
 export interface BulkJobResultsResponse {
     /**
-     * 
+     *
      * @type {Array<CheckEmailOutput>}
      * @memberof BulkJobResultsResponse
      */
     'results': Array<CheckEmailOutput>;
 }
-

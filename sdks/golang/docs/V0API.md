@@ -109,7 +109,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Legacy bulk job identifier | 
+**jobId** | **int32** | Legacy bulk job identifier |
 
 ### Other Parameters
 
@@ -177,7 +177,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Legacy bulk job identifier | 
+**jobId** | **int32** | Legacy bulk job identifier |
 
 ### Other Parameters
 
@@ -227,7 +227,7 @@ import (
 )
 
 func main() {
-	checkEmailRequest := *openapiclient.NewCheckEmailRequest("ToEmail_example") // CheckEmailRequest | 
+	checkEmailRequest := *openapiclient.NewCheckEmailRequest("ToEmail_example") // CheckEmailRequest |
 	idempotencyKey := "idempotencyKey_example" // string | Optional idempotency key (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -253,8 +253,8 @@ Other parameters are passed through a pointer to a apiPostCheckEmailRequest stru
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) |  | 
- **idempotencyKey** | **string** | Optional idempotency key | 
+ **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) |  |
+ **idempotencyKey** | **string** | Optional idempotency key |
 
 ### Return type
 
@@ -272,4 +272,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

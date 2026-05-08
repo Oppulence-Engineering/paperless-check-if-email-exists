@@ -15,28 +15,27 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface RetryJobResponse
  */
 export interface RetryJobResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof RetryJobResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof RetryJobResponse
      */
     'status': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof RetryJobResponse
      */
     'tasks_retried': number;
 }
-

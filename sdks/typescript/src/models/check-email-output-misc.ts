@@ -26,5 +26,3 @@ import type { MiscDetails } from './misc-details';
  * @export
  */
 export type CheckEmailOutputMisc = CoreError | MiscDetails;
-
-

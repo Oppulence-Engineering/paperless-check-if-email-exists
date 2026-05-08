@@ -54,7 +54,7 @@ export const V0ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -91,7 +91,7 @@ export const V0ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -128,7 +128,7 @@ export const V0ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -141,7 +141,7 @@ export const V0ApiAxiosParamCreator = function (configuration?: Configuration) {
         /**
          * Legacy email verification endpoint (deprecated, retained for compatibility).
          * @summary POST /v0/check_email
-         * @param {CheckEmailRequest} checkEmailRequest 
+         * @param {CheckEmailRequest} checkEmailRequest
          * @param {string | null} [idempotencyKey] Optional idempotency key
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -165,7 +165,7 @@ export const V0ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             if (idempotencyKey != null) {
@@ -232,7 +232,7 @@ export const V0ApiFp = function(configuration?: Configuration) {
         /**
          * Legacy email verification endpoint (deprecated, retained for compatibility).
          * @summary POST /v0/check_email
-         * @param {CheckEmailRequest} checkEmailRequest 
+         * @param {CheckEmailRequest} checkEmailRequest
          * @param {string | null} [idempotencyKey] Optional idempotency key
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -377,7 +377,7 @@ export interface V0ApiGetBulkJobStatusRequest {
  */
 export interface V0ApiPostCheckEmailRequest {
     /**
-     * 
+     *
      * @type {CheckEmailRequest}
      * @memberof V0ApiPostCheckEmail
      */
@@ -445,4 +445,3 @@ export class V0Api extends BaseAPI implements V0ApiInterface {
         return V0ApiFp(this.configuration).postCheckEmail(requestParameters.checkEmailRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

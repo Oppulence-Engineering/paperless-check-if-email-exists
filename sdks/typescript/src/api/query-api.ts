@@ -30,15 +30,15 @@ export const QueryApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Flexible historical query API for verification results across jobs.
          * @summary GET /v1/query
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [category] 
-         * @param {number} [minScore] 
-         * @param {number} [maxScore] 
-         * @param {boolean} [safeToSend] 
-         * @param {number} [jobId] 
-         * @param {string} [since] 
-         * @param {string} [until] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [category]
+         * @param {number} [minScore]
+         * @param {number} [maxScore]
+         * @param {boolean} [safeToSend]
+         * @param {number} [jobId]
+         * @param {string} [since]
+         * @param {string} [until]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -95,7 +95,7 @@ export const QueryApiAxiosParamCreator = function (configuration?: Configuration
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -118,15 +118,15 @@ export const QueryApiFp = function(configuration?: Configuration) {
         /**
          * Flexible historical query API for verification results across jobs.
          * @summary GET /v1/query
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [category] 
-         * @param {number} [minScore] 
-         * @param {number} [maxScore] 
-         * @param {boolean} [safeToSend] 
-         * @param {number} [jobId] 
-         * @param {string} [since] 
-         * @param {string} [until] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [category]
+         * @param {number} [minScore]
+         * @param {number} [maxScore]
+         * @param {boolean} [safeToSend]
+         * @param {number} [jobId]
+         * @param {string} [since]
+         * @param {string} [until]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -184,63 +184,63 @@ export interface QueryApiInterface {
  */
 export interface QueryApiV1QueryResultsRequest {
     /**
-     * 
+     *
      * @type {number}
      * @memberof QueryApiV1QueryResults
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof QueryApiV1QueryResults
      */
     readonly offset?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof QueryApiV1QueryResults
      */
     readonly category?: string
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof QueryApiV1QueryResults
      */
     readonly minScore?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof QueryApiV1QueryResults
      */
     readonly maxScore?: number
 
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof QueryApiV1QueryResults
      */
     readonly safeToSend?: boolean
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof QueryApiV1QueryResults
      */
     readonly jobId?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof QueryApiV1QueryResults
      */
     readonly since?: string
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof QueryApiV1QueryResults
      */
@@ -266,4 +266,3 @@ export class QueryApi extends BaseAPI implements QueryApiInterface {
         return QueryApiFp(this.configuration).v1QueryResults(requestParameters.limit, requestParameters.offset, requestParameters.category, requestParameters.minScore, requestParameters.maxScore, requestParameters.safeToSend, requestParameters.jobId, requestParameters.since, requestParameters.until, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

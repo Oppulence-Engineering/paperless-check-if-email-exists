@@ -18,34 +18,33 @@
 import type { PipelineDeliveryWebhook } from './pipeline-delivery-webhook';
 
 /**
- * 
+ *
  * @export
  * @interface PipelineDeliveryConfig
  */
 export interface PipelineDeliveryConfig {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof PipelineDeliveryConfig
      */
     'dashboard'?: boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineDeliveryConfig
      */
     'max_attempts'?: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineDeliveryConfig
      */
     'retry_backoff_seconds'?: number;
     /**
-     * 
+     *
      * @type {PipelineDeliveryWebhook}
      * @memberof PipelineDeliveryConfig
      */
     'webhook'?: PipelineDeliveryWebhook | null;
 }
-

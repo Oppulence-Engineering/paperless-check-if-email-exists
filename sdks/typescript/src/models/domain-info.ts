@@ -15,28 +15,27 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface DomainInfo
  */
 export interface DomainInfo {
     /**
-     * 
+     *
      * @type {string}
      * @memberof DomainInfo
      */
     'created_at'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof DomainInfo
      */
     'domain_age_days'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof DomainInfo
      */
     'registrar'?: string | null;
 }
-

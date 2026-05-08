@@ -24,54 +24,51 @@ import type { RecommendedAction } from './recommended-action';
 import type { RiskFactor } from './risk-factor';
 
 /**
- * 
+ *
  * @export
  * @interface BounceRiskAssessment
  */
 export interface BounceRiskAssessment {
     /**
-     * 
+     *
      * @type {RecommendedAction}
      * @memberof BounceRiskAssessment
      */
     'action': RecommendedAction;
     /**
-     * 
+     *
      * @type {BounceRiskCategory}
      * @memberof BounceRiskAssessment
      */
     'category': BounceRiskCategory;
     /**
-     * 
+     *
      * @type {number}
      * @memberof BounceRiskAssessment
      */
     'confidence': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof BounceRiskAssessment
      */
     'model_version': string;
     /**
-     * 
+     *
      * @type {Array<RiskFactor>}
      * @memberof BounceRiskAssessment
      */
     'risk_factors': Array<RiskFactor>;
     /**
-     * 
+     *
      * @type {number}
      * @memberof BounceRiskAssessment
      */
     'score': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof BounceRiskAssessment
      */
     'scored_at': string;
 }
-
-
-

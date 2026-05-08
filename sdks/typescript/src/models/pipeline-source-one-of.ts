@@ -15,19 +15,19 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineSourceOneOf
  */
 export interface PipelineSourceOneOf {
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineSourceOneOf
      */
     'list_id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf
      */
@@ -39,5 +39,3 @@ export const PipelineSourceOneOfTypeEnum = {
 } as const;
 
 export type PipelineSourceOneOfTypeEnum = typeof PipelineSourceOneOfTypeEnum[keyof typeof PipelineSourceOneOfTypeEnum];
-
-

@@ -36,5 +36,3 @@ export const VerifMethodTypeEnum = {
 } as const;
 
 export type VerifMethodTypeEnum = typeof VerifMethodTypeEnum[keyof typeof VerifMethodTypeEnum];
-
-

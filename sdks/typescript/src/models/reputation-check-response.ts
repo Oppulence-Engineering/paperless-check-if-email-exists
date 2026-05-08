@@ -24,52 +24,51 @@ import type { DnsRecordResults } from './dns-record-results';
 import type { DomainInfo } from './domain-info';
 
 /**
- * 
+ *
  * @export
  * @interface ReputationCheckResponse
  */
 export interface ReputationCheckResponse {
     /**
-     * 
+     *
      * @type {Array<BlacklistResult>}
      * @memberof ReputationCheckResponse
      */
     'blacklist_results': Array<BlacklistResult>;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ReputationCheckResponse
      */
     'cached': boolean;
     /**
-     * 
+     *
      * @type {DnsRecordResults}
      * @memberof ReputationCheckResponse
      */
     'dns_records': DnsRecordResults;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ReputationCheckResponse
      */
     'domain': string;
     /**
-     * 
+     *
      * @type {DomainInfo}
      * @memberof ReputationCheckResponse
      */
     'domain_info': DomainInfo;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ReputationCheckResponse
      */
     'risk_level': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ReputationCheckResponse
      */
     'score': number;
 }
-

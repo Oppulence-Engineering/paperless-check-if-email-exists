@@ -62,9 +62,9 @@ import type { SuppressionListResponse } from '../models';
 export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         *
          * @summary POST /v1/suppressions
-         * @param {AddSuppressionsRequest} addSuppressionsRequest 
+         * @param {AddSuppressionsRequest} addSuppressionsRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -87,7 +87,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -103,7 +103,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         /**
          * Verifies an email address and returns a result.
          * @summary POST /v1/check_email
-         * @param {CheckEmailRequest} checkEmailRequest 
+         * @param {CheckEmailRequest} checkEmailRequest
          * @param {string | null} [idempotencyKey] Optional idempotency key
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -127,7 +127,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             if (idempotencyKey != null) {
@@ -144,7 +144,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -166,7 +166,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -177,9 +177,9 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/reputation/check
-         * @param {ReputationCheckRequest} reputationCheckRequest 
+         * @param {ReputationCheckRequest} reputationCheckRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -202,7 +202,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -216,9 +216,9 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions/check
-         * @param {string} email 
+         * @param {string} email
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -245,7 +245,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -279,7 +279,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             if (idempotencyKey != null) {
                 localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
             }
@@ -293,11 +293,11 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/lists
-         * @param {File} file 
-         * @param {string | null} [emailColumn] 
-         * @param {string | null} [name] 
+         * @param {File} file
+         * @param {string | null} [emailColumn]
+         * @param {string | null} [name]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -321,21 +321,21 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-            if (emailColumn !== undefined) { 
+            if (emailColumn !== undefined) {
                 localVarFormParams.append('email_column', emailColumn as any);
             }
-    
-            if (file !== undefined) { 
+
+            if (file !== undefined) {
                 localVarFormParams.append('file', file as any);
             }
-    
-            if (name !== undefined) { 
+
+            if (name !== undefined) {
                 localVarFormParams.append('name', name as any);
             }
-    
-    
+
+
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -347,7 +347,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -373,7 +373,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -384,7 +384,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/suppressions/{id}
          * @param {number} id Suppression entry identifier
          * @param {*} [options] Override http request option.
@@ -410,7 +410,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -421,11 +421,11 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}/download
          * @param {number} listId List identifier
-         * @param {string} [filter] 
-         * @param {string} [format] 
+         * @param {string} [filter]
+         * @param {string} [format]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -457,7 +457,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -468,9 +468,9 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/find_email
-         * @param {FindEmailRequest} findEmailRequest 
+         * @param {FindEmailRequest} findEmailRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -493,7 +493,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -507,7 +507,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/find_email/{job_id}
          * @param {number} jobId Finder job identifier
          * @param {*} [options] Override http request option.
@@ -533,7 +533,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -544,7 +544,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -570,7 +570,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -581,10 +581,10 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -613,7 +613,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -624,11 +624,11 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [reason] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [reason]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -661,7 +661,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -672,7 +672,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/reverification/status
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -694,7 +694,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -715,9 +715,9 @@ export const V1ApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = V1ApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/suppressions
-         * @param {AddSuppressionsRequest} addSuppressionsRequest 
+         * @param {AddSuppressionsRequest} addSuppressionsRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -730,7 +730,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
         /**
          * Verifies an email address and returns a result.
          * @summary POST /v1/check_email
-         * @param {CheckEmailRequest} checkEmailRequest 
+         * @param {CheckEmailRequest} checkEmailRequest
          * @param {string | null} [idempotencyKey] Optional idempotency key
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -742,7 +742,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -754,9 +754,9 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/reputation/check
-         * @param {ReputationCheckRequest} reputationCheckRequest 
+         * @param {ReputationCheckRequest} reputationCheckRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -767,9 +767,9 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions/check
-         * @param {string} email 
+         * @param {string} email
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -793,11 +793,11 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/lists
-         * @param {File} file 
-         * @param {string | null} [emailColumn] 
-         * @param {string | null} [name] 
+         * @param {File} file
+         * @param {string | null} [emailColumn]
+         * @param {string | null} [name]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -808,7 +808,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -821,7 +821,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/suppressions/{id}
          * @param {number} id Suppression entry identifier
          * @param {*} [options] Override http request option.
@@ -834,11 +834,11 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}/download
          * @param {number} listId List identifier
-         * @param {string} [filter] 
-         * @param {string} [format] 
+         * @param {string} [filter]
+         * @param {string} [format]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -849,9 +849,9 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/find_email
-         * @param {FindEmailRequest} findEmailRequest 
+         * @param {FindEmailRequest} findEmailRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -862,7 +862,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/find_email/{job_id}
          * @param {number} jobId Finder job identifier
          * @param {*} [options] Override http request option.
@@ -875,7 +875,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -888,10 +888,10 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -902,11 +902,11 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions
-         * @param {number} [limit] 
-         * @param {number} [offset] 
-         * @param {string} [reason] 
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [reason]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -917,7 +917,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/reverification/status
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -939,7 +939,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
     const localVarFp = V1ApiFp(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/suppressions
          * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -959,7 +959,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1CheckEmail(requestParameters.checkEmailRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -968,7 +968,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1CheckEmailWithOnboard(options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/reputation/check
          * @param {V1ApiV1CheckReputationRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -978,7 +978,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1CheckReputation(requestParameters.reputationCheckRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions/check
          * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -998,7 +998,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1CreateBulkJob(requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/lists
          * @param {V1ApiV1CreateListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1008,7 +1008,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1018,7 +1018,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1DeleteList(requestParameters.listId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/suppressions/{id}
          * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1028,7 +1028,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1DeleteSuppression(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}/download
          * @param {V1ApiV1DownloadListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1038,7 +1038,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/find_email
          * @param {V1ApiV1FindEmailRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1048,7 +1048,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1FindEmail(requestParameters.findEmailRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/find_email/{job_id}
          * @param {V1ApiV1GetFindEmailRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1058,7 +1058,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1GetFindEmail(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists/{list_id}
          * @param {V1ApiV1GetListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1068,7 +1068,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1GetList(requestParameters.listId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/lists
          * @param {V1ApiV1ListListsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1078,7 +1078,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1ListLists(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/suppressions
          * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1088,7 +1088,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
             return localVarFp.v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/reverification/status
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1106,7 +1106,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
  */
 export interface V1ApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/suppressions
      * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1126,7 +1126,7 @@ export interface V1ApiInterface {
     v1CheckEmail(requestParameters: V1ApiV1CheckEmailRequest, options?: RawAxiosRequestConfig): AxiosPromise<CheckEmailOutput>;
 
     /**
-     * 
+     *
      * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1135,7 +1135,7 @@ export interface V1ApiInterface {
     v1CheckEmailWithOnboard(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * 
+     *
      * @summary POST /v1/reputation/check
      * @param {V1ApiV1CheckReputationRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1145,7 +1145,7 @@ export interface V1ApiInterface {
     v1CheckReputation(requestParameters: V1ApiV1CheckReputationRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReputationCheckResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/suppressions/check
      * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1165,7 +1165,7 @@ export interface V1ApiInterface {
     v1CreateBulkJob(requestParameters?: V1ApiV1CreateBulkJobRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * 
+     *
      * @summary POST /v1/lists
      * @param {V1ApiV1CreateListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1175,7 +1175,7 @@ export interface V1ApiInterface {
     v1CreateList(requestParameters: V1ApiV1CreateListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListUploadResponse>;
 
     /**
-     * 
+     *
      * @summary DELETE /v1/lists/{list_id}
      * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1185,7 +1185,7 @@ export interface V1ApiInterface {
     v1DeleteList(requestParameters: V1ApiV1DeleteListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDeleteResponse>;
 
     /**
-     * 
+     *
      * @summary DELETE /v1/suppressions/{id}
      * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1195,7 +1195,7 @@ export interface V1ApiInterface {
     v1DeleteSuppression(requestParameters: V1ApiV1DeleteSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionDeleteResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/lists/{list_id}/download
      * @param {V1ApiV1DownloadListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1205,7 +1205,7 @@ export interface V1ApiInterface {
     v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
 
     /**
-     * 
+     *
      * @summary POST /v1/find_email
      * @param {V1ApiV1FindEmailRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1215,7 +1215,7 @@ export interface V1ApiInterface {
     v1FindEmail(requestParameters: V1ApiV1FindEmailRequest, options?: RawAxiosRequestConfig): AxiosPromise<FindEmailAcceptedResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/find_email/{job_id}
      * @param {V1ApiV1GetFindEmailRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1225,7 +1225,7 @@ export interface V1ApiInterface {
     v1GetFindEmail(requestParameters: V1ApiV1GetFindEmailRequest, options?: RawAxiosRequestConfig): AxiosPromise<FindEmailStatusResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/lists/{list_id}
      * @param {V1ApiV1GetListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1235,7 +1235,7 @@ export interface V1ApiInterface {
     v1GetList(requestParameters: V1ApiV1GetListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDetailResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/lists
      * @param {V1ApiV1ListListsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1245,7 +1245,7 @@ export interface V1ApiInterface {
     v1ListLists(requestParameters?: V1ApiV1ListListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListListResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/suppressions
      * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1255,7 +1255,7 @@ export interface V1ApiInterface {
     v1ListSuppressions(requestParameters?: V1ApiV1ListSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/reverification/status
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1272,7 +1272,7 @@ export interface V1ApiInterface {
  */
 export interface V1ApiV1AddSuppressionsRequest {
     /**
-     * 
+     *
      * @type {AddSuppressionsRequest}
      * @memberof V1ApiV1AddSuppressions
      */
@@ -1286,7 +1286,7 @@ export interface V1ApiV1AddSuppressionsRequest {
  */
 export interface V1ApiV1CheckEmailRequest {
     /**
-     * 
+     *
      * @type {CheckEmailRequest}
      * @memberof V1ApiV1CheckEmail
      */
@@ -1307,7 +1307,7 @@ export interface V1ApiV1CheckEmailRequest {
  */
 export interface V1ApiV1CheckReputationRequest {
     /**
-     * 
+     *
      * @type {ReputationCheckRequest}
      * @memberof V1ApiV1CheckReputation
      */
@@ -1321,7 +1321,7 @@ export interface V1ApiV1CheckReputationRequest {
  */
 export interface V1ApiV1CheckSuppressionRequest {
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1CheckSuppression
      */
@@ -1349,21 +1349,21 @@ export interface V1ApiV1CreateBulkJobRequest {
  */
 export interface V1ApiV1CreateListRequest {
     /**
-     * 
+     *
      * @type {File}
      * @memberof V1ApiV1CreateList
      */
     readonly file: File
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1CreateList
      */
     readonly emailColumn?: string | null
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1CreateList
      */
@@ -1412,14 +1412,14 @@ export interface V1ApiV1DownloadListRequest {
     readonly listId: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1DownloadList
      */
     readonly filter?: string
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1DownloadList
      */
@@ -1433,7 +1433,7 @@ export interface V1ApiV1DownloadListRequest {
  */
 export interface V1ApiV1FindEmailRequest {
     /**
-     * 
+     *
      * @type {FindEmailRequest}
      * @memberof V1ApiV1FindEmail
      */
@@ -1475,14 +1475,14 @@ export interface V1ApiV1GetListRequest {
  */
 export interface V1ApiV1ListListsRequest {
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1ApiV1ListLists
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1ApiV1ListLists
      */
@@ -1496,21 +1496,21 @@ export interface V1ApiV1ListListsRequest {
  */
 export interface V1ApiV1ListSuppressionsRequest {
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1ApiV1ListSuppressions
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1ApiV1ListSuppressions
      */
     readonly offset?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1ApiV1ListSuppressions
      */
@@ -1525,7 +1525,7 @@ export interface V1ApiV1ListSuppressionsRequest {
  */
 export class V1Api extends BaseAPI implements V1ApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/suppressions
      * @param {V1ApiV1AddSuppressionsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1549,7 +1549,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1560,7 +1560,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/reputation/check
      * @param {V1ApiV1CheckReputationRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1572,7 +1572,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/suppressions/check
      * @param {V1ApiV1CheckSuppressionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1596,7 +1596,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/lists
      * @param {V1ApiV1CreateListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1608,7 +1608,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary DELETE /v1/lists/{list_id}
      * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1620,7 +1620,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary DELETE /v1/suppressions/{id}
      * @param {V1ApiV1DeleteSuppressionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1632,7 +1632,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/lists/{list_id}/download
      * @param {V1ApiV1DownloadListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1644,7 +1644,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/find_email
      * @param {V1ApiV1FindEmailRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1656,7 +1656,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/find_email/{job_id}
      * @param {V1ApiV1GetFindEmailRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1668,7 +1668,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/lists/{list_id}
      * @param {V1ApiV1GetListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1680,7 +1680,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/lists
      * @param {V1ApiV1ListListsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1692,7 +1692,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/suppressions
      * @param {V1ApiV1ListSuppressionsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1704,7 +1704,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/reverification/status
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1714,4 +1714,3 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
         return V1ApiFp(this.configuration).v1ReverificationStatus(options).then((request) => request(this.axios, this.basePath));
     }
 }
-

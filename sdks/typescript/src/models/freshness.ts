@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -29,6 +29,3 @@ export const Freshness = {
 } as const;
 
 export type Freshness = typeof Freshness[keyof typeof Freshness];
-
-
-

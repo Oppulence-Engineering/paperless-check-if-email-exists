@@ -33,4 +33,3 @@ export interface CoreError {
      */
     'type': string;
 }
-

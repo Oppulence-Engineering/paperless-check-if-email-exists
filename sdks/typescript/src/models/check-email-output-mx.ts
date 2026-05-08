@@ -26,5 +26,3 @@ import type { MxDetails } from './mx-details';
  * @export
  */
 export type CheckEmailOutputMx = CoreError | MxDetails;
-
-

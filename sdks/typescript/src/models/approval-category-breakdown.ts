@@ -15,40 +15,39 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ApprovalCategoryBreakdown
  */
 export interface ApprovalCategoryBreakdown {
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalCategoryBreakdown
      */
     'invalid': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalCategoryBreakdown
      */
     'risky': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalCategoryBreakdown
      */
     'unknown': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalCategoryBreakdown
      */
     'unprocessed': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ApprovalCategoryBreakdown
      */
     'valid': number;
 }
-

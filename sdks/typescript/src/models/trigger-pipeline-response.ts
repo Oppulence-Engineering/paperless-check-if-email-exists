@@ -18,24 +18,21 @@
 import type { PipelineRunStatus } from './pipeline-run-status';
 
 /**
- * 
+ *
  * @export
  * @interface TriggerPipelineResponse
  */
 export interface TriggerPipelineResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof TriggerPipelineResponse
      */
     'run_id': number;
     /**
-     * 
+     *
      * @type {PipelineRunStatus}
      * @memberof TriggerPipelineResponse
      */
     'status': PipelineRunStatus;
 }
-
-
-

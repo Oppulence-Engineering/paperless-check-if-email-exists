@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface SuppressionDeleteResponse
  */
 export interface SuppressionDeleteResponse {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof SuppressionDeleteResponse
      */
     'deleted': boolean;
 }
-

@@ -62,7 +62,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -104,7 +104,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -141,7 +141,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -156,8 +156,8 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * @summary GET /v1/bulk/{job_id}/results
          * @param {number} jobId V1 bulk job identifier
          * @param {string} [format] Supported values: &#x60;json&#x60;, &#x60;csv&#x60;
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -193,7 +193,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -207,8 +207,8 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * Returns paginated event history for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/events
          * @param {number} jobId Bulk job identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -240,7 +240,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -254,9 +254,9 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
-         * @param {number} [cursor] 
-         * @param {number} [limit] 
-         * @param {string} [state] 
+         * @param {number} [cursor]
+         * @param {number} [limit]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -292,7 +292,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -329,7 +329,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -366,7 +366,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -403,7 +403,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -440,7 +440,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -505,8 +505,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @summary GET /v1/bulk/{job_id}/results
          * @param {number} jobId V1 bulk job identifier
          * @param {string} [format] Supported values: &#x60;json&#x60;, &#x60;csv&#x60;
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -520,8 +520,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * Returns paginated event history for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/events
          * @param {number} jobId Bulk job identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -535,9 +535,9 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
-         * @param {number} [cursor] 
-         * @param {number} [limit] 
-         * @param {string} [state] 
+         * @param {number} [cursor]
+         * @param {number} [limit]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -890,14 +890,14 @@ export interface JobsApiV1GetBulkJobResultsRequest {
     readonly format?: string
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetBulkJobResults
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetBulkJobResults
      */
@@ -918,14 +918,14 @@ export interface JobsApiV1GetJobEventsRequest {
     readonly jobId: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobEvents
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobEvents
      */
@@ -946,21 +946,21 @@ export interface JobsApiV1GetJobResultsRequest {
     readonly jobId: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobResults
      */
     readonly cursor?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobResults
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof JobsApiV1GetJobResults
      */
@@ -1150,4 +1150,3 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
         return JobsApiFp(this.configuration).v1RetryJob(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

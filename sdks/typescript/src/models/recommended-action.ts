@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -28,6 +28,3 @@ export const RecommendedAction = {
 } as const;
 
 export type RecommendedAction = typeof RecommendedAction[keyof typeof RecommendedAction];
-
-
-

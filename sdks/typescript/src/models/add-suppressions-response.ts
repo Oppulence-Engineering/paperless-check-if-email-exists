@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface AddSuppressionsResponse
  */
 export interface AddSuppressionsResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof AddSuppressionsResponse
      */
     'added': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof AddSuppressionsResponse
      */
     'duplicates': number;
 }
-

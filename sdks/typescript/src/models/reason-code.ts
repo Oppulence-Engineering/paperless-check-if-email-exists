@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -50,6 +50,3 @@ export const ReasonCode = {
 } as const;
 
 export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];
-
-
-

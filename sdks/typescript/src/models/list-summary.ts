@@ -15,40 +15,39 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ListSummary
  */
 export interface ListSummary {
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListSummary
      */
     'total_invalid': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListSummary
      */
     'total_processed': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListSummary
      */
     'total_risky': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListSummary
      */
     'total_unknown': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListSummary
      */
     'total_valid': number;
 }
-

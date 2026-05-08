@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineErrorResponse
  */
 export interface PipelineErrorResponse {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineErrorResponse
      */
     'error': string;
 }
-

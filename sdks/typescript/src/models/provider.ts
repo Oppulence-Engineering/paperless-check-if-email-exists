@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -32,6 +32,3 @@ export const Provider = {
 } as const;
 
 export type Provider = typeof Provider[keyof typeof Provider];
-
-
-

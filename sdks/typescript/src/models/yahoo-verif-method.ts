@@ -27,6 +27,3 @@ export const YahooVerifMethod = {
 } as const;
 
 export type YahooVerifMethod = typeof YahooVerifMethod[keyof typeof YahooVerifMethod];
-
-
-

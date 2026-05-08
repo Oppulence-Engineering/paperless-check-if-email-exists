@@ -15,52 +15,51 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface DnsRecordResults
  */
 export interface DnsRecordResults {
     /**
-     * 
+     *
      * @type {string}
      * @memberof DnsRecordResults
      */
     'dmarc_policy'?: string | null;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DnsRecordResults
      */
     'has_dkim': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DnsRecordResults
      */
     'has_dmarc': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DnsRecordResults
      */
     'has_mx': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DnsRecordResults
      */
     'has_spf': boolean;
     /**
-     * 
+     *
      * @type {Array<string>}
      * @memberof DnsRecordResults
      */
     'mx_records': Array<string>;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof DnsRecordResults
      */
     'spf_valid': boolean;
 }
-

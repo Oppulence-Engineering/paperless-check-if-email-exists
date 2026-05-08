@@ -18,22 +18,21 @@
 import type { PipelineView } from './pipeline-view';
 
 /**
- * 
+ *
  * @export
  * @interface ListPipelinesResponse
  */
 export interface ListPipelinesResponse {
     /**
-     * 
+     *
      * @type {Array<PipelineView>}
      * @memberof ListPipelinesResponse
      */
     'pipelines': Array<PipelineView>;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListPipelinesResponse
      */
     'total': number;
 }
-

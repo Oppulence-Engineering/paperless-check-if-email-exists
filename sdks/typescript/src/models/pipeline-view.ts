@@ -33,96 +33,93 @@ import type { PipelineStatus } from './pipeline-status';
 import type { PipelineVerificationSettings } from './pipeline-verification-settings';
 
 /**
- * 
+ *
  * @export
  * @interface PipelineView
  */
 export interface PipelineView {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'created_at': string;
     /**
-     * 
+     *
      * @type {PipelineDeliveryConfig}
      * @memberof PipelineView
      */
     'delivery': PipelineDeliveryConfig;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineView
      */
     'id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineView
      */
     'last_run_id'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'last_scheduled_at'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'name': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'next_run_at'?: string | null;
     /**
-     * 
+     *
      * @type {PipelinePolicyConfig}
      * @memberof PipelineView
      */
     'policy': PipelinePolicyConfig;
     /**
-     * 
+     *
      * @type {PipelineSchedule}
      * @memberof PipelineView
      */
     'schedule': PipelineSchedule;
     /**
-     * 
+     *
      * @type {PipelineSource}
      * @memberof PipelineView
      */
     'source': PipelineSource;
     /**
-     * 
+     *
      * @type {PipelineStatus}
      * @memberof PipelineView
      */
     'status': PipelineStatus;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'tenant_id': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineView
      */
     'updated_at': string;
     /**
-     * 
+     *
      * @type {PipelineVerificationSettings}
      * @memberof PipelineView
      */
     'verification': PipelineVerificationSettings;
 }
-
-
-

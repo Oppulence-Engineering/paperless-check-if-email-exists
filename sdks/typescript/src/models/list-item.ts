@@ -15,46 +15,45 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ListItem
  */
 export interface ListItem {
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListItem
      */
     'email_column': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListItem
      */
     'id': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListItem
      */
     'name': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListItem
      */
     'original_filename': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ListItem
      */
     'status': string;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListItem
      */
     'total_rows': number;
 }
-

@@ -15,28 +15,27 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface BlacklistResult
  */
 export interface BlacklistResult {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof BlacklistResult
      */
     'listed': boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof BlacklistResult
      */
     'lookup_time_ms': number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof BlacklistResult
      */
     'provider': string;
 }
-

@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineVerificationSettings
  */
 export interface PipelineVerificationSettings {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof PipelineVerificationSettings
      */
     'delta_mode'?: boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelineVerificationSettings
      */
     'freshness_days'?: number | null;
 }
-

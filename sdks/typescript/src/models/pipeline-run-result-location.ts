@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineRunResultLocation
  */
 export interface PipelineRunResultLocation {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineRunResultLocation
      */
     'download_url': string;
 }
-

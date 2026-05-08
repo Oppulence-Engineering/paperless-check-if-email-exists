@@ -15,43 +15,43 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineSourceOneOf3
  */
 export interface PipelineSourceOneOf3 {
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
     'bucket': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
     'path_pattern'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
     'prefix'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
     'provider': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
     'region'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineSourceOneOf3
      */
@@ -63,5 +63,3 @@ export const PipelineSourceOneOf3TypeEnum = {
 } as const;
 
 export type PipelineSourceOneOf3TypeEnum = typeof PipelineSourceOneOf3TypeEnum[keyof typeof PipelineSourceOneOf3TypeEnum];
-
-

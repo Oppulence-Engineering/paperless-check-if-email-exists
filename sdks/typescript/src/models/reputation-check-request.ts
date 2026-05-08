@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ReputationCheckRequest
  */
 export interface ReputationCheckRequest {
     /**
-     * 
+     *
      * @type {string}
      * @memberof ReputationCheckRequest
      */
     'domain': string;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ReputationCheckRequest
      */
     'force_refresh'?: boolean;
 }
-

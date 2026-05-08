@@ -18,22 +18,21 @@
 import type { ListItem } from './list-item';
 
 /**
- * 
+ *
  * @export
  * @interface ListListResponse
  */
 export interface ListListResponse {
     /**
-     * 
+     *
      * @type {Array<ListItem>}
      * @memberof ListListResponse
      */
     'lists': Array<ListItem>;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ListListResponse
      */
     'total': number;
 }
-

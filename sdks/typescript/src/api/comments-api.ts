@@ -28,7 +28,7 @@ import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError
 export const CommentsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         *
          * @summary POST /v1/comments
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -50,7 +50,7 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -61,7 +61,7 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/comments/{comment_id}
          * @param {number} commentId Comment identifier
          * @param {*} [options] Override http request option.
@@ -87,7 +87,7 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -98,12 +98,12 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/comments
-         * @param {number} [jobId] 
-         * @param {number} [listId] 
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [jobId]
+         * @param {number} [listId]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -140,7 +140,7 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -161,7 +161,7 @@ export const CommentsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = CommentsApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/comments
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -173,7 +173,7 @@ export const CommentsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/comments/{comment_id}
          * @param {number} commentId Comment identifier
          * @param {*} [options] Override http request option.
@@ -186,12 +186,12 @@ export const CommentsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/comments
-         * @param {number} [jobId] 
-         * @param {number} [listId] 
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [jobId]
+         * @param {number} [listId]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -212,7 +212,7 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
     const localVarFp = CommentsApiFp(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/comments
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -221,7 +221,7 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.v1CreateComment(options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/comments/{comment_id}
          * @param {CommentsApiV1DeleteCommentRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -231,7 +231,7 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.v1DeleteComment(requestParameters.commentId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/comments
          * @param {CommentsApiV1ListCommentsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -250,7 +250,7 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
  */
 export interface CommentsApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/comments
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -259,7 +259,7 @@ export interface CommentsApiInterface {
     v1CreateComment(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * 
+     *
      * @summary DELETE /v1/comments/{comment_id}
      * @param {CommentsApiV1DeleteCommentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -269,7 +269,7 @@ export interface CommentsApiInterface {
     v1DeleteComment(requestParameters: CommentsApiV1DeleteCommentRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * 
+     *
      * @summary GET /v1/comments
      * @param {CommentsApiV1ListCommentsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -301,28 +301,28 @@ export interface CommentsApiV1DeleteCommentRequest {
  */
 export interface CommentsApiV1ListCommentsRequest {
     /**
-     * 
+     *
      * @type {number}
      * @memberof CommentsApiV1ListComments
      */
     readonly jobId?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof CommentsApiV1ListComments
      */
     readonly listId?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof CommentsApiV1ListComments
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof CommentsApiV1ListComments
      */
@@ -337,7 +337,7 @@ export interface CommentsApiV1ListCommentsRequest {
  */
 export class CommentsApi extends BaseAPI implements CommentsApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/comments
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -348,7 +348,7 @@ export class CommentsApi extends BaseAPI implements CommentsApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary DELETE /v1/comments/{comment_id}
      * @param {CommentsApiV1DeleteCommentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -360,7 +360,7 @@ export class CommentsApi extends BaseAPI implements CommentsApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/comments
      * @param {CommentsApiV1ListCommentsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -371,4 +371,3 @@ export class CommentsApi extends BaseAPI implements CommentsApiInterface {
         return CommentsApiFp(this.configuration).v1ListComments(requestParameters.jobId, requestParameters.listId, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

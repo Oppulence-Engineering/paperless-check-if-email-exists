@@ -51,4 +51,3 @@ export interface SmtpDetails {
      */
     'is_disabled': boolean;
 }
-

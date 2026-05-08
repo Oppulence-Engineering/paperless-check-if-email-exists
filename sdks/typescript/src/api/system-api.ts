@@ -50,7 +50,7 @@ export const SystemApiAxiosParamCreator = function (configuration?: Configuratio
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -61,7 +61,7 @@ export const SystemApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         * 
+         *
          * @summary Serve the merged OpenAPI document for all documented REST endpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -83,7 +83,7 @@ export const SystemApiAxiosParamCreator = function (configuration?: Configuratio
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -116,7 +116,7 @@ export const SystemApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary Serve the merged OpenAPI document for all documented REST endpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -147,7 +147,7 @@ export const SystemApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.getVersion(options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary Serve the merged OpenAPI document for all documented REST endpoints.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -174,7 +174,7 @@ export interface SystemApiInterface {
     getVersion(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * 
+     *
      * @summary Serve the merged OpenAPI document for all documented REST endpoints.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -203,7 +203,7 @@ export class SystemApi extends BaseAPI implements SystemApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary Serve the merged OpenAPI document for all documented REST endpoints.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -213,4 +213,3 @@ export class SystemApi extends BaseAPI implements SystemApiInterface {
         return SystemApiFp(this.configuration).openapiSpec(options).then((request) => request(this.axios, this.basePath));
     }
 }
-

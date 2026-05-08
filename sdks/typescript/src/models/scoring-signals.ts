@@ -18,96 +18,93 @@
 import type { Reachable } from './reachable';
 
 /**
- * 
+ *
  * @export
  * @interface ScoringSignals
  */
 export interface ScoringSignals {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'has_domain_suggestion': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'has_mx_records': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'is_disposable': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'is_free_provider': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'is_role_account': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'is_spam_trap_domain': boolean;
     /**
-     * 
+     *
      * @type {Reachable}
      * @memberof ScoringSignals
      */
     'reachable': Reachable;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_can_connect': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_error': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_has_full_inbox': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_is_catch_all': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_is_deliverable': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'smtp_is_disabled': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ScoringSignals
      */
     'valid_syntax': boolean;
 }
-
-
-

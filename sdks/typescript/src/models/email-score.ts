@@ -30,13 +30,13 @@ import type { ScoringSignals } from './scoring-signals';
 import type { SubReason } from './sub-reason';
 
 /**
- * 
+ *
  * @export
  * @interface EmailScore
  */
 export interface EmailScore {
     /**
-     * 
+     *
      * @type {number}
      * @memberof EmailScore
      */
@@ -48,7 +48,7 @@ export interface EmailScore {
      */
     'catch_all_severity'?: EmailScoreCatchAllSeverityEnum;
     /**
-     * 
+     *
      * @type {EmailCategory}
      * @memberof EmailScore
      */
@@ -60,7 +60,7 @@ export interface EmailScore {
      */
     'domain_suggestion'?: string;
     /**
-     * 
+     *
      * @type {Freshness}
      * @memberof EmailScore
      */
@@ -72,37 +72,37 @@ export interface EmailScore {
      */
     'normalized_email'?: string;
     /**
-     * 
+     *
      * @type {Array<ReasonCode>}
      * @memberof EmailScore
      */
     'reason_codes': Array<ReasonCode>;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof EmailScore
      */
     'safe_to_send': boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof EmailScore
      */
     'score': number;
     /**
-     * 
+     *
      * @type {ScoringSignals}
      * @memberof EmailScore
      */
     'signals': ScoringSignals;
     /**
-     * 
+     *
      * @type {SubReason}
      * @memberof EmailScore
      */
     'sub_reason': SubReason;
     /**
-     * 
+     *
      * @type {string}
      * @memberof EmailScore
      */
@@ -115,5 +115,3 @@ export const EmailScoreCatchAllSeverityEnum = {
 } as const;
 
 export type EmailScoreCatchAllSeverityEnum = typeof EmailScoreCatchAllSeverityEnum[keyof typeof EmailScoreCatchAllSeverityEnum];
-
-

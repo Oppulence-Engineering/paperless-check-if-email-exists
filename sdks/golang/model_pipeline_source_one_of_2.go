@@ -174,6 +174,10 @@ func (o *PipelineSourceOneOf2) UnmarshalJSON(data []byte) (err error) {
 		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf2: expected \"push\", got %q", varPipelineSourceOneOf2.Type)
 	}
 
+	if varPipelineSourceOneOf2.Type != "push" {
+		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf2: expected \"push\", got %q", varPipelineSourceOneOf2.Type)
+	}
+
 	*o = PipelineSourceOneOf2(varPipelineSourceOneOf2)
 
 	return err
@@ -214,5 +218,3 @@ func (v *NullablePipelineSourceOneOf2) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

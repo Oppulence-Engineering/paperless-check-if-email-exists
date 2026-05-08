@@ -104,7 +104,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**commentId** | **int64** | Comment identifier | 
+**commentId** | **int64** | Comment identifier |
 
 ### Other Parameters
 
@@ -178,10 +178,10 @@ Other parameters are passed through a pointer to a apiV1ListCommentsRequest stru
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **jobId** | **int32** |  | 
- **listId** | **int32** |  | 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **jobId** | **int32** |  |
+ **listId** | **int32** |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -199,4 +199,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

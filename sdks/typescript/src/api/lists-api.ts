@@ -54,7 +54,7 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -161,4 +161,3 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
         return ListsApiFp(this.configuration).v1ListQuality(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

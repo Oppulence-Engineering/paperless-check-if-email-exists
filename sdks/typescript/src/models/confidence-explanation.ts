@@ -15,25 +15,25 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ConfidenceExplanation
  */
 export interface ConfidenceExplanation {
     /**
-     * 
+     *
      * @type {Array<string>}
      * @memberof ConfidenceExplanation
      */
     'factors': Array<string>;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ConfidenceExplanation
      */
     'level': ConfidenceExplanationLevelEnum;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ConfidenceExplanation
      */
@@ -48,5 +48,3 @@ export const ConfidenceExplanationLevelEnum = {
 } as const;
 
 export type ConfidenceExplanationLevelEnum = typeof ConfidenceExplanationLevelEnum[keyof typeof ConfidenceExplanationLevelEnum];
-
-

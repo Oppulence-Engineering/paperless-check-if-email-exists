@@ -30,60 +30,57 @@ import type { Reachable } from './reachable';
 import type { SubReason } from './sub-reason';
 
 /**
- * 
+ *
  * @export
  * @interface FinderCandidateResult
  */
 export interface FinderCandidateResult {
     /**
-     * 
+     *
      * @type {EmailCategory}
      * @memberof FinderCandidateResult
      */
     'category': EmailCategory;
     /**
-     * 
+     *
      * @type {ConfidenceExplanation}
      * @memberof FinderCandidateResult
      */
     'confidence'?: ConfidenceExplanation | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FinderCandidateResult
      */
     'email': string;
     /**
-     * 
+     *
      * @type {Reachable}
      * @memberof FinderCandidateResult
      */
     'is_reachable': Reachable;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FinderCandidateResult
      */
     'pattern': string;
     /**
-     * 
+     *
      * @type {CheckEmailOutput}
      * @memberof FinderCandidateResult
      */
     'result'?: CheckEmailOutput | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FinderCandidateResult
      */
     'score': number;
     /**
-     * 
+     *
      * @type {SubReason}
      * @memberof FinderCandidateResult
      */
     'sub_reason': SubReason;
 }
-
-
-

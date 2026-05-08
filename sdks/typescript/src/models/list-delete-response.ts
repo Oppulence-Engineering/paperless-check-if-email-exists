@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ListDeleteResponse
  */
 export interface ListDeleteResponse {
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ListDeleteResponse
      */
     'deleted': boolean;
 }
-

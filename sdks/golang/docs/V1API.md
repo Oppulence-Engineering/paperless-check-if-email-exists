@@ -42,7 +42,7 @@ import (
 )
 
 func main() {
-	addSuppressionsRequest := *openapiclient.NewAddSuppressionsRequest([]string{"Emails_example"}) // AddSuppressionsRequest | 
+	addSuppressionsRequest := *openapiclient.NewAddSuppressionsRequest([]string{"Emails_example"}) // AddSuppressionsRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -67,7 +67,7 @@ Other parameters are passed through a pointer to a apiV1AddSuppressionsRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **addSuppressionsRequest** | [**AddSuppressionsRequest**](AddSuppressionsRequest.md) |  | 
+ **addSuppressionsRequest** | [**AddSuppressionsRequest**](AddSuppressionsRequest.md) |  |
 
 ### Return type
 
@@ -108,7 +108,7 @@ import (
 )
 
 func main() {
-	checkEmailRequest := *openapiclient.NewCheckEmailRequest("ToEmail_example") // CheckEmailRequest | 
+	checkEmailRequest := *openapiclient.NewCheckEmailRequest("ToEmail_example") // CheckEmailRequest |
 	idempotencyKey := "idempotencyKey_example" // string | Optional idempotency key (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -134,8 +134,8 @@ Other parameters are passed through a pointer to a apiV1CheckEmailRequest struct
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) |  | 
- **idempotencyKey** | **string** | Optional idempotency key | 
+ **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) |  |
+ **idempotencyKey** | **string** | Optional idempotency key |
 
 ### Return type
 
@@ -231,7 +231,7 @@ import (
 )
 
 func main() {
-	reputationCheckRequest := *openapiclient.NewReputationCheckRequest("Domain_example") // ReputationCheckRequest | 
+	reputationCheckRequest := *openapiclient.NewReputationCheckRequest("Domain_example") // ReputationCheckRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -256,7 +256,7 @@ Other parameters are passed through a pointer to a apiV1CheckReputationRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **reputationCheckRequest** | [**ReputationCheckRequest**](ReputationCheckRequest.md) |  | 
+ **reputationCheckRequest** | [**ReputationCheckRequest**](ReputationCheckRequest.md) |  |
 
 ### Return type
 
@@ -295,7 +295,7 @@ import (
 )
 
 func main() {
-	email := "email_example" // string | 
+	email := "email_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -320,7 +320,7 @@ Other parameters are passed through a pointer to a apiV1CheckSuppressionRequest 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **email** | **string** |  | 
+ **email** | **string** |  |
 
 ### Return type
 
@@ -384,7 +384,7 @@ Other parameters are passed through a pointer to a apiV1CreateBulkJobRequest str
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **idempotencyKey** | **string** | Optional idempotency key | 
+ **idempotencyKey** | **string** | Optional idempotency key |
 
 ### Return type
 
@@ -423,7 +423,7 @@ import (
 )
 
 func main() {
-	file := os.NewFile(1234, "some_file") // *os.File | 
+	file := os.NewFile(1234, "some_file") // *os.File |
 	emailColumn := "emailColumn_example" // string |  (optional)
 	name := "name_example" // string |  (optional)
 
@@ -450,9 +450,9 @@ Other parameters are passed through a pointer to a apiV1CreateListRequest struct
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **file** | ***os.File** |  | 
- **emailColumn** | **string** |  | 
- **name** | **string** |  | 
+ **file** | ***os.File** |  |
+ **emailColumn** | **string** |  |
+ **name** | **string** |  |
 
 ### Return type
 
@@ -511,7 +511,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**listId** | **int32** | List identifier | 
+**listId** | **int32** | List identifier |
 
 ### Other Parameters
 
@@ -579,7 +579,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**id** | **int32** | Suppression entry identifier | 
+**id** | **int32** | Suppression entry identifier |
 
 ### Other Parameters
 
@@ -649,7 +649,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**listId** | **int32** | List identifier | 
+**listId** | **int32** | List identifier |
 
 ### Other Parameters
 
@@ -659,8 +659,8 @@ Other parameters are passed through a pointer to a apiV1DownloadListRequest stru
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **filter** | **string** |  | 
- **format** | **string** |  | 
+ **filter** | **string** |  |
+ **format** | **string** |  |
 
 ### Return type
 
@@ -699,7 +699,7 @@ import (
 )
 
 func main() {
-	findEmailRequest := *openapiclient.NewFindEmailRequest("Domain_example", "FirstName_example", "LastName_example") // FindEmailRequest | 
+	findEmailRequest := *openapiclient.NewFindEmailRequest("Domain_example", "FirstName_example", "LastName_example") // FindEmailRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -724,7 +724,7 @@ Other parameters are passed through a pointer to a apiV1FindEmailRequest struct 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **findEmailRequest** | [**FindEmailRequest**](FindEmailRequest.md) |  | 
+ **findEmailRequest** | [**FindEmailRequest**](FindEmailRequest.md) |  |
 
 ### Return type
 
@@ -783,7 +783,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Finder job identifier | 
+**jobId** | **int32** | Finder job identifier |
 
 ### Other Parameters
 
@@ -851,7 +851,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**listId** | **int32** | List identifier | 
+**listId** | **int32** | List identifier |
 
 ### Other Parameters
 
@@ -925,8 +925,8 @@ Other parameters are passed through a pointer to a apiV1ListListsRequest struct 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -992,9 +992,9 @@ Other parameters are passed through a pointer to a apiV1ListSuppressionsRequest 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
- **reason** | **string** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
+ **reason** | **string** |  |
 
 ### Return type
 
@@ -1071,4 +1071,3 @@ Other parameters are passed through a pointer to a apiV1ReverificationStatusRequ
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

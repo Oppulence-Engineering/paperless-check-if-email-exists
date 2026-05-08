@@ -15,52 +15,51 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ReverificationStatusResponse
  */
 export interface ReverificationStatusResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof ReverificationStatusResponse
      */
     'batch_size'?: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ReverificationStatusResponse
      */
     'emails_requeued'?: number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof ReverificationStatusResponse
      */
     'enabled': boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ReverificationStatusResponse
      */
     'last_job_id'?: number | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ReverificationStatusResponse
      */
     'last_run_at'?: string | null;
     /**
-     * 
+     *
      * @type {string}
      * @memberof ReverificationStatusResponse
      */
     'next_run_at'?: string | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof ReverificationStatusResponse
      */
     'staleness_days'?: number;
 }
-

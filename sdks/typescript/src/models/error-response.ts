@@ -15,16 +15,15 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface ErrorResponse
  */
 export interface ErrorResponse {
     /**
-     * 
+     *
      * @type {string}
      * @memberof ErrorResponse
      */
     'error': string;
 }
-

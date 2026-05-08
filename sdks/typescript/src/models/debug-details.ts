@@ -21,13 +21,13 @@ import type { DebugDetailsSmtp } from './debug-details-smtp';
 import type { Duration } from './duration';
 
 /**
- * 
+ *
  * @export
  * @interface DebugDetails
  */
 export interface DebugDetails {
     /**
-     * 
+     *
      * @type {Duration}
      * @memberof DebugDetails
      */
@@ -45,7 +45,7 @@ export interface DebugDetails {
      */
     'server_name': string;
     /**
-     * 
+     *
      * @type {DebugDetailsSmtp}
      * @memberof DebugDetails
      */
@@ -57,4 +57,3 @@ export interface DebugDetails {
      */
     'start_time': string;
 }
-

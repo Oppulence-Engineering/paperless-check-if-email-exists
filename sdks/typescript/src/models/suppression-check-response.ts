@@ -18,36 +18,33 @@
 import type { SuppressionReason } from './suppression-reason';
 
 /**
- * 
+ *
  * @export
  * @interface SuppressionCheckResponse
  */
 export interface SuppressionCheckResponse {
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionCheckResponse
      */
     'created_at'?: string | null;
     /**
-     * 
+     *
      * @type {SuppressionReason}
      * @memberof SuppressionCheckResponse
      */
     'reason'?: SuppressionReason;
     /**
-     * 
+     *
      * @type {string}
      * @memberof SuppressionCheckResponse
      */
     'source'?: string | null;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof SuppressionCheckResponse
      */
     'suppressed': boolean;
 }
-
-
-

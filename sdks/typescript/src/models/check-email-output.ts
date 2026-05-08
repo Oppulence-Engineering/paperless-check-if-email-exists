@@ -60,7 +60,7 @@ export interface CheckEmailOutput {
      */
     'bounce_risk'?: BounceRiskAssessment | null;
     /**
-     * 
+     *
      * @type {DebugDetails}
      * @memberof CheckEmailOutput
      */
@@ -72,66 +72,63 @@ export interface CheckEmailOutput {
      */
     'input': string;
     /**
-     * 
+     *
      * @type {Reachable}
      * @memberof CheckEmailOutput
      */
     'is_reachable': Reachable;
     /**
-     * 
+     *
      * @type {CheckEmailOutputMisc}
      * @memberof CheckEmailOutput
      */
     'misc': CheckEmailOutputMisc;
     /**
-     * 
+     *
      * @type {CheckEmailOutputMx}
      * @memberof CheckEmailOutput
      */
     'mx': CheckEmailOutputMx;
     /**
-     * 
+     *
      * @type {Provider}
      * @memberof CheckEmailOutput
      */
     'provider'?: Provider;
     /**
-     * 
+     *
      * @type {ProviderConfidence}
      * @memberof CheckEmailOutput
      */
     'provider_confidence'?: ProviderConfidence;
     /**
-     * 
+     *
      * @type {ProviderRejectionReason}
      * @memberof CheckEmailOutput
      */
     'provider_rejection_reason'?: ProviderRejectionReason;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof CheckEmailOutput
      */
     'provider_rules_applied': boolean;
     /**
-     * 
+     *
      * @type {EmailScore}
      * @memberof CheckEmailOutput
      */
     'score': EmailScore;
     /**
-     * 
+     *
      * @type {CheckEmailOutputSmtp}
      * @memberof CheckEmailOutput
      */
     'smtp': CheckEmailOutputSmtp;
     /**
-     * 
+     *
      * @type {SyntaxDetails}
      * @memberof CheckEmailOutput
      */
     'syntax': SyntaxDetails;
 }
-
-
-

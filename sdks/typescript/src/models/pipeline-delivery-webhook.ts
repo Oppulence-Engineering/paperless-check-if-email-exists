@@ -15,22 +15,21 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PipelineDeliveryWebhook
  */
 export interface PipelineDeliveryWebhook {
     /**
-     * 
+     *
      * @type {{ [key: string]: string; }}
      * @memberof PipelineDeliveryWebhook
      */
     'headers'?: { [key: string]: string; };
     /**
-     * 
+     *
      * @type {string}
      * @memberof PipelineDeliveryWebhook
      */
     'url': string;
 }
-

@@ -31,7 +31,7 @@ export const VerificationApiAxiosParamCreator = function (configuration?: Config
          * Returns the verification history timeline for a specific email address.
          * @summary GET /v1/emails/{email}/history
          * @param {string} email Email address to look up
-         * @param {number} [limit] 
+         * @param {number} [limit]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -59,7 +59,7 @@ export const VerificationApiAxiosParamCreator = function (configuration?: Config
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -83,7 +83,7 @@ export const VerificationApiFp = function(configuration?: Configuration) {
          * Returns the verification history timeline for a specific email address.
          * @summary GET /v1/emails/{email}/history
          * @param {string} email Email address to look up
-         * @param {number} [limit] 
+         * @param {number} [limit]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -148,7 +148,7 @@ export interface VerificationApiV1EmailHistoryRequest {
     readonly email: string
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof VerificationApiV1EmailHistory
      */
@@ -174,4 +174,3 @@ export class VerificationApi extends BaseAPI implements VerificationApiInterface
         return VerificationApiFp(this.configuration).v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

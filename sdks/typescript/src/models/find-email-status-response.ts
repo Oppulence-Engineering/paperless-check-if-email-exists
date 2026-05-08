@@ -21,58 +21,57 @@ import type { FinderBestMatch } from './finder-best-match';
 import type { FinderCandidateResult } from './finder-candidate-result';
 
 /**
- * 
+ *
  * @export
  * @interface FindEmailStatusResponse
  */
 export interface FindEmailStatusResponse {
     /**
-     * 
+     *
      * @type {FinderBestMatch}
      * @memberof FindEmailStatusResponse
      */
     'best_match'?: FinderBestMatch | null;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailStatusResponse
      */
     'bulk_job_id': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailStatusResponse
      */
     'candidates_checked': number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof FindEmailStatusResponse
      */
     'domain_has_mx': boolean;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof FindEmailStatusResponse
      */
     'domain_is_catch_all': boolean;
     /**
-     * 
+     *
      * @type {number}
      * @memberof FindEmailStatusResponse
      */
     'job_id': number;
     /**
-     * 
+     *
      * @type {Array<FinderCandidateResult>}
      * @memberof FindEmailStatusResponse
      */
     'results': Array<FinderCandidateResult>;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FindEmailStatusResponse
      */
     'status': string;
 }
-

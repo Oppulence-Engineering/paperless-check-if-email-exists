@@ -58,13 +58,13 @@ Other parameters are passed through a pointer to a apiV1ListEventsRequest struct
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
- **eventType** | **string** |  | 
- **actor** | **string** |  | 
- **jobId** | **int32** |  | 
- **since** | **string** |  | 
- **until** | **string** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
+ **eventType** | **string** |  |
+ **actor** | **string** |  |
+ **jobId** | **int32** |  |
+ **since** | **string** |  |
+ **until** | **string** |  |
 
 ### Return type
 
@@ -82,4 +82,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

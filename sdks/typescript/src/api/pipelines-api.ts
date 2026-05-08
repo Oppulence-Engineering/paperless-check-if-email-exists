@@ -50,9 +50,9 @@ import type { UpdatePipelineInput } from '../models';
 export const PipelinesApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         *
          * @summary POST /v1/pipelines
-         * @param {CreatePipelineInput} createPipelineInput 
+         * @param {CreatePipelineInput} createPipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -75,7 +75,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -89,7 +89,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -115,7 +115,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -126,7 +126,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -152,7 +152,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -163,7 +163,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs/{run_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {number} runId Pipeline run identifier
@@ -193,7 +193,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -204,11 +204,11 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs
          * @param {number} pipelineId Pipeline identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -240,7 +240,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -251,11 +251,11 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines
-         * @param {PipelineStatus} [status] 
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {PipelineStatus} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -288,7 +288,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -299,7 +299,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/pause
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -325,7 +325,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -336,7 +336,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/resume
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -362,7 +362,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -373,10 +373,10 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/trigger
          * @param {number} pipelineId Pipeline identifier
-         * @param {TriggerPipelineInput} triggerPipelineInput 
+         * @param {TriggerPipelineInput} triggerPipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -402,7 +402,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -416,10 +416,10 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
+         *
          * @summary PATCH /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
-         * @param {UpdatePipelineInput} updatePipelineInput 
+         * @param {UpdatePipelineInput} updatePipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -445,7 +445,7 @@ export const PipelinesApiAxiosParamCreator = function (configuration?: Configura
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -469,9 +469,9 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = PipelinesApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/pipelines
-         * @param {CreatePipelineInput} createPipelineInput 
+         * @param {CreatePipelineInput} createPipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -482,7 +482,7 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -495,7 +495,7 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -508,7 +508,7 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs/{run_id}
          * @param {number} pipelineId Pipeline identifier
          * @param {number} runId Pipeline run identifier
@@ -522,11 +522,11 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs
          * @param {number} pipelineId Pipeline identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -537,11 +537,11 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines
-         * @param {PipelineStatus} [status] 
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {PipelineStatus} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -552,7 +552,7 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/pause
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -565,7 +565,7 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/resume
          * @param {number} pipelineId Pipeline identifier
          * @param {*} [options] Override http request option.
@@ -578,10 +578,10 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/trigger
          * @param {number} pipelineId Pipeline identifier
-         * @param {TriggerPipelineInput} triggerPipelineInput 
+         * @param {TriggerPipelineInput} triggerPipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -592,10 +592,10 @@ export const PipelinesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         *
          * @summary PATCH /v1/pipelines/{pipeline_id}
          * @param {number} pipelineId Pipeline identifier
-         * @param {UpdatePipelineInput} updatePipelineInput 
+         * @param {UpdatePipelineInput} updatePipelineInput
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -616,7 +616,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
     const localVarFp = PipelinesApiFp(configuration)
     return {
         /**
-         * 
+         *
          * @summary POST /v1/pipelines
          * @param {PipelinesApiV1CreatePipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -626,7 +626,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1CreatePipeline(requestParameters.createPipelineInput, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary DELETE /v1/pipelines/{pipeline_id}
          * @param {PipelinesApiV1DeletePipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -636,7 +636,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1DeletePipeline(requestParameters.pipelineId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}
          * @param {PipelinesApiV1GetPipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -646,7 +646,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1GetPipeline(requestParameters.pipelineId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs/{run_id}
          * @param {PipelinesApiV1GetPipelineRunRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -656,7 +656,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1GetPipelineRun(requestParameters.pipelineId, requestParameters.runId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines/{pipeline_id}/runs
          * @param {PipelinesApiV1ListPipelineRunsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -666,7 +666,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1ListPipelineRuns(requestParameters.pipelineId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary GET /v1/pipelines
          * @param {PipelinesApiV1ListPipelinesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -676,7 +676,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1ListPipelines(requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/pause
          * @param {PipelinesApiV1PausePipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -686,7 +686,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1PausePipeline(requestParameters.pipelineId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/resume
          * @param {PipelinesApiV1ResumePipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -696,7 +696,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1ResumePipeline(requestParameters.pipelineId, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary POST /v1/pipelines/{pipeline_id}/trigger
          * @param {PipelinesApiV1TriggerPipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -706,7 +706,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
             return localVarFp.v1TriggerPipeline(requestParameters.pipelineId, requestParameters.triggerPipelineInput, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         *
          * @summary PATCH /v1/pipelines/{pipeline_id}
          * @param {PipelinesApiV1UpdatePipelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -725,7 +725,7 @@ export const PipelinesApiFactory = function (configuration?: Configuration, base
  */
 export interface PipelinesApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/pipelines
      * @param {PipelinesApiV1CreatePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -735,7 +735,7 @@ export interface PipelinesApiInterface {
     v1CreatePipeline(requestParameters: PipelinesApiV1CreatePipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<PipelineView>;
 
     /**
-     * 
+     *
      * @summary DELETE /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1DeletePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -745,7 +745,7 @@ export interface PipelinesApiInterface {
     v1DeletePipeline(requestParameters: PipelinesApiV1DeletePipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeletePipelineResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1GetPipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -755,7 +755,7 @@ export interface PipelinesApiInterface {
     v1GetPipeline(requestParameters: PipelinesApiV1GetPipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<PipelineView>;
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}/runs/{run_id}
      * @param {PipelinesApiV1GetPipelineRunRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -765,7 +765,7 @@ export interface PipelinesApiInterface {
     v1GetPipelineRun(requestParameters: PipelinesApiV1GetPipelineRunRequest, options?: RawAxiosRequestConfig): AxiosPromise<PipelineRunView>;
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}/runs
      * @param {PipelinesApiV1ListPipelineRunsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -775,7 +775,7 @@ export interface PipelinesApiInterface {
     v1ListPipelineRuns(requestParameters: PipelinesApiV1ListPipelineRunsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListPipelineRunsResponse>;
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines
      * @param {PipelinesApiV1ListPipelinesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -785,7 +785,7 @@ export interface PipelinesApiInterface {
     v1ListPipelines(requestParameters?: PipelinesApiV1ListPipelinesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListPipelinesResponse>;
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/pause
      * @param {PipelinesApiV1PausePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -795,7 +795,7 @@ export interface PipelinesApiInterface {
     v1PausePipeline(requestParameters: PipelinesApiV1PausePipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<PipelineView>;
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/resume
      * @param {PipelinesApiV1ResumePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -805,7 +805,7 @@ export interface PipelinesApiInterface {
     v1ResumePipeline(requestParameters: PipelinesApiV1ResumePipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<PipelineView>;
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/trigger
      * @param {PipelinesApiV1TriggerPipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -815,7 +815,7 @@ export interface PipelinesApiInterface {
     v1TriggerPipeline(requestParameters: PipelinesApiV1TriggerPipelineRequest, options?: RawAxiosRequestConfig): AxiosPromise<TriggerPipelineResponse>;
 
     /**
-     * 
+     *
      * @summary PATCH /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1UpdatePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -833,7 +833,7 @@ export interface PipelinesApiInterface {
  */
 export interface PipelinesApiV1CreatePipelineRequest {
     /**
-     * 
+     *
      * @type {CreatePipelineInput}
      * @memberof PipelinesApiV1CreatePipeline
      */
@@ -903,14 +903,14 @@ export interface PipelinesApiV1ListPipelineRunsRequest {
     readonly pipelineId: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelinesApiV1ListPipelineRuns
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelinesApiV1ListPipelineRuns
      */
@@ -924,21 +924,21 @@ export interface PipelinesApiV1ListPipelineRunsRequest {
  */
 export interface PipelinesApiV1ListPipelinesRequest {
     /**
-     * 
+     *
      * @type {PipelineStatus}
      * @memberof PipelinesApiV1ListPipelines
      */
     readonly status?: PipelineStatus
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelinesApiV1ListPipelines
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof PipelinesApiV1ListPipelines
      */
@@ -987,7 +987,7 @@ export interface PipelinesApiV1TriggerPipelineRequest {
     readonly pipelineId: number
 
     /**
-     * 
+     *
      * @type {TriggerPipelineInput}
      * @memberof PipelinesApiV1TriggerPipeline
      */
@@ -1008,7 +1008,7 @@ export interface PipelinesApiV1UpdatePipelineRequest {
     readonly pipelineId: number
 
     /**
-     * 
+     *
      * @type {UpdatePipelineInput}
      * @memberof PipelinesApiV1UpdatePipeline
      */
@@ -1023,7 +1023,7 @@ export interface PipelinesApiV1UpdatePipelineRequest {
  */
 export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     /**
-     * 
+     *
      * @summary POST /v1/pipelines
      * @param {PipelinesApiV1CreatePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1035,7 +1035,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary DELETE /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1DeletePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1047,7 +1047,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1GetPipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1059,7 +1059,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}/runs/{run_id}
      * @param {PipelinesApiV1GetPipelineRunRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1071,7 +1071,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines/{pipeline_id}/runs
      * @param {PipelinesApiV1ListPipelineRunsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1083,7 +1083,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary GET /v1/pipelines
      * @param {PipelinesApiV1ListPipelinesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1095,7 +1095,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/pause
      * @param {PipelinesApiV1PausePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1107,7 +1107,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/resume
      * @param {PipelinesApiV1ResumePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1119,7 +1119,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary POST /v1/pipelines/{pipeline_id}/trigger
      * @param {PipelinesApiV1TriggerPipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1131,7 +1131,7 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
     }
 
     /**
-     * 
+     *
      * @summary PATCH /v1/pipelines/{pipeline_id}
      * @param {PipelinesApiV1UpdatePipelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1142,4 +1142,3 @@ export class PipelinesApi extends BaseAPI implements PipelinesApiInterface {
         return PipelinesApiFp(this.configuration).v1UpdatePipeline(requestParameters.pipelineId, requestParameters.updatePipelineInput, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

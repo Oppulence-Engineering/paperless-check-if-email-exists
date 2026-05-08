@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -33,6 +33,3 @@ export const ProviderRejectionReason = {
 } as const;
 
 export type ProviderRejectionReason = typeof ProviderRejectionReason[keyof typeof ProviderRejectionReason];
-
-
-

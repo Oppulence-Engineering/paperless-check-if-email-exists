@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @enum {string}
  */
@@ -28,6 +28,3 @@ export const EmailCategory = {
 } as const;
 
 export type EmailCategory = typeof EmailCategory[keyof typeof EmailCategory];
-
-
-

@@ -15,25 +15,25 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface FindEmailRequest
  */
 export interface FindEmailRequest {
     /**
-     * 
+     *
      * @type {string}
      * @memberof FindEmailRequest
      */
     'domain': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FindEmailRequest
      */
     'first_name': string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof FindEmailRequest
      */
@@ -52,5 +52,3 @@ export const FindEmailRequestStrategyEnum = {
 } as const;
 
 export type FindEmailRequestStrategyEnum = typeof FindEmailRequestStrategyEnum[keyof typeof FindEmailRequestStrategyEnum];
-
-

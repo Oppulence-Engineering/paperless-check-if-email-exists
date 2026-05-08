@@ -18,22 +18,21 @@
 import type { SuppressionEntry } from './suppression-entry';
 
 /**
- * 
+ *
  * @export
  * @interface SuppressionListResponse
  */
 export interface SuppressionListResponse {
     /**
-     * 
+     *
      * @type {Array<SuppressionEntry>}
      * @memberof SuppressionListResponse
      */
     'entries': Array<SuppressionEntry>;
     /**
-     * 
+     *
      * @type {number}
      * @memberof SuppressionListResponse
      */
     'total': number;
 }
-
