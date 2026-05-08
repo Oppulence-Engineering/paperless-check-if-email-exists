@@ -20,6 +20,7 @@ pub mod bounce_risk;
 pub mod config;
 pub mod finder;
 pub mod http;
+pub mod list_intelligence;
 pub mod pipelines;
 pub mod reputation;
 pub mod reverification;

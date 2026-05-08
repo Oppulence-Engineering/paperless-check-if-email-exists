@@ -146,10 +146,6 @@ func (o *PipelineSourceOneOf) UnmarshalJSON(data []byte) (err error) {
 		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf: expected \"list_snapshot\", got %q", varPipelineSourceOneOf.Type)
 	}
 
-	if varPipelineSourceOneOf.Type != "list_snapshot" {
-		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf: expected \"list_snapshot\", got %q", varPipelineSourceOneOf.Type)
-	}
-
 	*o = PipelineSourceOneOf(varPipelineSourceOneOf)
 
 	return err

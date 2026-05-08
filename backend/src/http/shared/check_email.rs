@@ -24,7 +24,7 @@ use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
-use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
+use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use crate::worker::single_shot::SingleShotReply;
 use chrono::{TimeZone, Utc};
 use std::time::Duration;
@@ -275,7 +275,15 @@ async fn handle_without_worker(
 				input: body.to_check_email_input(Arc::clone(&config)),
 				job_id: CheckEmailJobId::SingleShot,
 				webhook: None,
-				metadata: None,
+				metadata: Some(TaskMetadata {
+					tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+					request_id: None,
+					correlation_id: None,
+					created_by: Some("check_email".to_string()),
+					retry_policy: None,
+					dedupe_key: None,
+					task_db_id: None,
+				}),
 			},
 			&prepared,
 			storage.get_extra(),

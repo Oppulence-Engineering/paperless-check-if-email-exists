@@ -10,7 +10,7 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
-## Completed (20 features)
+## Completed (26 features)
 
 | # | Area | Feature | PR | Shipped |
 |---|---|---|---|---|
@@ -29,10 +29,16 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 | 27 | Verification | Result freshness / confidence decay | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
+| 28 | Verification | Historical verification timeline | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
+| 29 | Verification | Mailbox status change alerts | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
 | 30 | Verification | Accept-all severity tiers | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 | 31 | Verification | Domain typo correction suggestions | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 | 32 | Verification | Alias and plus-address normalization | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 | 33 | Verification | Pre-send audience approval checklist | [#24](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/24) | Yes |
+| 34 | Analytics / Reporting | Custom score-threshold policies | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
+| 35 | List Cleaning | Saved segmentation rules | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
+| 38 | List Cleaning | Export only changed or newly invalid rows | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
+| 44 | List Cleaning | List-to-list diffing | [#41](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/41) | Yes |
 | 84 | Reliability / Insight | Self-serve replay for failed jobs | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 
 ## Remaining — Core Platform (no external integrations needed)
@@ -46,18 +52,12 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 24 | Team / Admin | Role-based access control | Prevents accidental access to lists, exports, and admin actions | Critical |
 | 25 | Team / Admin | Retention policy controls | Lets customers define how long contact and verification data should be stored | Critical |
 | 26 | Security / Compliance | Consent and provenance tracking | Lets customers retain where contact data came from and whether it can be used | Critical |
-| 28 | Verification | Historical verification timeline | Lets customers see how an address changed across checks over time | High |
-| 29 | Verification | Mailbox status change alerts | Notifies teams when previously valid contacts become risky or invalid | High |
-| 34 | Analytics / Reporting | Custom score-threshold policies | Lets teams define their own send, review, or suppress rules by workflow | High |
-| 35 | List Cleaning | Saved segmentation rules | Makes it easy to repeatedly pull only valid, only risky, or only role-based subsets | High |
 | 36 | List Cleaning | Data repair suggestions for bad rows | Helps customers fix malformed emails and broken CSV inputs quickly | High |
-| 38 | List Cleaning | Export only changed or newly invalid rows | Reduces downstream churn for customers who only need incremental updates | High |
 | 39 | List Cleaning | Custom export templates | Lets customers tailor output columns for ESPs, CRMs, and internal systems | High |
 | 40 | List Cleaning | Multi-file upload jobs | Lets customers clean many CSVs in one run instead of one file at a time | High |
 | 41 | List Cleaning | Resume interrupted uploads | Saves time on large imports and poor connections | High |
 | 42 | List Cleaning | Automatic remediation workflows for bad rows | Fixes common formatting and parsing issues without manual cleanup | High |
 | 43 | List Cleaning | Side-by-side original and cleaned data views | Helps teams review what changed and build trust in the cleaning process | High |
-| 44 | List Cleaning | List-to-list diffing | Shows what improved, worsened, or changed between two cleanings | High |
 | 48 | Finder / Enrichment | Department-based finder presets | Supports searches for sales, support, finance, legal, and recruiting addresses | High |
 | 50 | Finder / Enrichment | Team / role mailbox finder | Helps users locate functional inboxes like billing@ or partnerships@ | High |
 | 51 | Finder / Enrichment | Alternative contact suggestions | Gives users fallback options when a primary contact is invalid or unavailable | High |
@@ -137,8 +137,9 @@ If the goal is maximum customer value, the strongest next sequence would be:
 4. ~~domain typo suggestions, catch-all tiers, alias normalization~~ — **Done** (PR #23)
 5. ~~waterfall search, approval checklist~~ — **Done** (PR #24)
 6. ~~scheduled pipelines, provider-specific validation, bounce-risk prediction~~ — **Done** (PRs #28-#30)
-7. HubSpot, Salesforce, Zapier, and Google Sheets integrations
-8. RBAC, SSO, retention controls, and audit log search
+7. ~~historical timeline, status-change alert inbox, score policies, saved segments, changed-row exports, and list diffing~~ — **Done** (PR #41)
+8. HubSpot, Salesforce, Zapier, and Google Sheets integrations
+9. RBAC, SSO, retention controls, and audit log search
 
 ## Notes
 

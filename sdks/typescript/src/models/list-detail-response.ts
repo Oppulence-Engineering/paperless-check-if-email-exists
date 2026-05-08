@@ -55,6 +55,12 @@ export interface ListDetailResponse {
     'name': string;
     /**
      *
+     * @type {number}
+     * @memberof ListDetailResponse
+     */
+    'policy_id'?: number | null;
+    /**
+     *
      * @type {string}
      * @memberof ListDetailResponse
      */

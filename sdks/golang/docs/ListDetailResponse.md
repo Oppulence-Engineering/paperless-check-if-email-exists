@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **Id** | **int32** |  | [required]
 **JobId** | **int32** |  | [required]
 **Name** | **string** |  | [required]
+**PolicyId** | Pointer to **NullableInt64** |  | [optional]
 **Status** | **string** |  | [required]
 **Summary** | [**ListSummary**](ListSummary.md) |  | [required]
 **TotalRows** | **int32** |  | [required]
@@ -148,6 +149,42 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
+
+### GetPolicyId
+
+`func (o *ListDetailResponse) GetPolicyId() int64`
+
+GetPolicyId returns the PolicyId field if non-nil, zero value otherwise.
+
+### GetPolicyIdOk
+
+`func (o *ListDetailResponse) GetPolicyIdOk() (*int64, bool)`
+
+GetPolicyIdOk returns a tuple with the PolicyId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPolicyId
+
+`func (o *ListDetailResponse) SetPolicyId(v int64)`
+
+SetPolicyId sets PolicyId field to given value.
+
+### HasPolicyId
+
+`func (o *ListDetailResponse) HasPolicyId() bool`
+
+HasPolicyId returns a boolean if a field has been set.
+
+### SetPolicyIdNil
+
+`func (o *ListDetailResponse) SetPolicyIdNil()`
+
+ SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+
+### UnsetPolicyId
+`func (o *ListDetailResponse) UnsetPolicyId()`
+
+UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
 
 ### GetStatus
 

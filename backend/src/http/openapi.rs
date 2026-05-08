@@ -44,7 +44,13 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::quality::v1_list_quality,
 		crate::http::v1::lists::download::v1_download_list,
+		crate::http::v1::lists::diff::v1_diff_lists,
 		crate::http::v1::lists::delete::v1_delete_list,
+		crate::http::v1::saved_segments::v1_create_saved_segment,
+		crate::http::v1::saved_segments::v1_list_saved_segments,
+		crate::http::v1::saved_segments::v1_get_saved_segment,
+		crate::http::v1::saved_segments::v1_update_saved_segment,
+		crate::http::v1::saved_segments::v1_delete_saved_segment,
 		crate::http::v1::pipelines::v1_create_pipeline,
 		crate::http::v1::pipelines::v1_list_pipelines,
 		crate::http::v1::pipelines::v1_get_pipeline,
@@ -62,6 +68,8 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::reverification::status::v1_reverification_status,
 		crate::http::v1::events::v1_list_events,
+		crate::http::v1::alerts::v1_list_alerts,
+		crate::http::v1::alerts::v1_update_alert,
 		crate::http::v1::email_history::v1_email_history,
 		crate::http::v1::query::v1_query_results,
 		crate::http::v1::comments::v1_create_comment,
@@ -94,6 +102,11 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		tenant_settings::v1_update_tenant_webhook,
 		tenant_settings::v1_clear_tenant_webhook,
 		tenant_settings::v1_get_tenant_usage,
+		crate::http::v1::score_policies::v1_create_score_policy,
+		crate::http::v1::score_policies::v1_list_score_policies,
+		crate::http::v1::score_policies::v1_get_score_policy,
+		crate::http::v1::score_policies::v1_update_score_policy,
+		crate::http::v1::score_policies::v1_delete_score_policy,
 		tenant_domains::v1_list_tenant_domains,
 		tenant_domains::v1_create_tenant_domain,
 		tenant_domains::v1_get_tenant_domain,
@@ -846,7 +859,8 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"file": { "type": "string", "format": "binary" },
 				"name": { "type": "string", "nullable": true },
-				"email_column": { "type": "string", "nullable": true }
+				"email_column": { "type": "string", "nullable": true },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true }
 			},
 			"required": ["file"]
 		}),
@@ -921,6 +935,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"total_rows": { "type": "integer", "format": "int32" },
 				"email_column": { "type": "string" },
 				"summary": { "$ref": "#/components/schemas/ListSummary" },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true },
 				"unique_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"deduplicated_count": { "type": "integer", "format": "int32", "nullable": true }
 			},

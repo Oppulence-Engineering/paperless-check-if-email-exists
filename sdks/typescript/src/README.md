@@ -93,7 +93,13 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1JobLatency**](docs/JobsApi.md#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
+*ListsApi* | [**v1CreateSavedSegment**](docs/ListsApi.md#v1createsavedsegment) | **POST** /v1/segments | POST /v1/segments
+*ListsApi* | [**v1DeleteSavedSegment**](docs/ListsApi.md#v1deletesavedsegment) | **DELETE** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}
+*ListsApi* | [**v1DiffLists**](docs/ListsApi.md#v1difflists) | **GET** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+*ListsApi* | [**v1GetSavedSegment**](docs/ListsApi.md#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 *ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
+*ListsApi* | [**v1ListSavedSegments**](docs/ListsApi.md#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments
+*ListsApi* | [**v1UpdateSavedSegment**](docs/ListsApi.md#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}
 _PipelinesApi_ | [__v1CreatePipeline__](docs/PipelinesApi.md#v1createpipeline) | **POST** /v1/pipelines | POST /v1/pipelines
 _PipelinesApi_ | [__v1DeletePipeline__](docs/PipelinesApi.md#v1deletepipeline) | **DELETE** /v1/pipelines/{pipeline_id} | DELETE /v1/pipelines/{pipeline_id}
 _PipelinesApi_ | [__v1GetPipeline__](docs/PipelinesApi.md#v1getpipeline) | **GET** /v1/pipelines/{pipeline_id} | GET /v1/pipelines/{pipeline_id}
@@ -108,13 +114,18 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
 *TenantApi* | [**v1ClearTenantWebhook**](docs/TenantApi.md#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook
+*TenantApi* | [**v1CreateScorePolicy**](docs/TenantApi.md#v1createscorepolicy) | **POST** /v1/score-policies | POST /v1/score-policies
 *TenantApi* | [**v1CreateTenantDomain**](docs/TenantApi.md#v1createtenantdomain) | **POST** /v1/me/domains | POST /v1/me/domains
+*TenantApi* | [**v1DeleteScorePolicy**](docs/TenantApi.md#v1deletescorepolicy) | **DELETE** /v1/score-policies/{policy_id} | DELETE /v1/score-policies/{policy_id}
 *TenantApi* | [**v1DeleteTenantDomain**](docs/TenantApi.md#v1deletetenantdomain) | **DELETE** /v1/me/domains/{domain} | DELETE /v1/me/domains/{domain}
+*TenantApi* | [**v1GetScorePolicy**](docs/TenantApi.md#v1getscorepolicy) | **GET** /v1/score-policies/{policy_id} | GET /v1/score-policies/{policy_id}
 *TenantApi* | [**v1GetTenantDomain**](docs/TenantApi.md#v1gettenantdomain) | **GET** /v1/me/domains/{domain} | GET /v1/me/domains/{domain}
 *TenantApi* | [**v1GetTenantSettings**](docs/TenantApi.md#v1gettenantsettings) | **GET** /v1/me/settings | GET /v1/me/settings
 *TenantApi* | [**v1GetTenantUsage**](docs/TenantApi.md#v1gettenantusage) | **GET** /v1/me/usage | GET /v1/me/usage
 *TenantApi* | [**v1GetTenantWebhook**](docs/TenantApi.md#v1gettenantwebhook) | **GET** /v1/me/webhook | GET /v1/me/webhook
+*TenantApi* | [**v1ListScorePolicies**](docs/TenantApi.md#v1listscorepolicies) | **GET** /v1/score-policies | GET /v1/score-policies
 *TenantApi* | [**v1ListTenantDomains**](docs/TenantApi.md#v1listtenantdomains) | **GET** /v1/me/domains | GET /v1/me/domains
+*TenantApi* | [**v1UpdateScorePolicy**](docs/TenantApi.md#v1updatescorepolicy) | **PATCH** /v1/score-policies/{policy_id} | PATCH /v1/score-policies/{policy_id}
 *TenantApi* | [**v1UpdateTenantDomain**](docs/TenantApi.md#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}
 *TenantApi* | [**v1UpdateTenantSettings**](docs/TenantApi.md#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings
 *TenantApi* | [**v1UpdateTenantWebhook**](docs/TenantApi.md#v1updatetenantwebhook) | **PATCH** /v1/me/webhook | PATCH /v1/me/webhook
@@ -139,12 +150,16 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
 *VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
+*VerificationApi* | [**v1ListAlerts**](docs/VerificationApi.md#v1listalerts) | **GET** /v1/alerts | GET /v1/alerts
+*VerificationApi* | [**v1UpdateAlert**](docs/VerificationApi.md#v1updatealert) | **PATCH** /v1/alerts/{alert_id} | PATCH /v1/alerts/{alert_id}
 
 
 ### Documentation For Models
 
  - [AddSuppressionsRequest](docs/AddSuppressionsRequest.md)
  - [AddSuppressionsResponse](docs/AddSuppressionsResponse.md)
+ - [AlertListResponse](docs/AlertListResponse.md)
+ - [AlertView](docs/AlertView.md)
  - [ApprovalCategoryBreakdown](docs/ApprovalCategoryBreakdown.md)
  - [ApprovalChecklistResponse](docs/ApprovalChecklistResponse.md)
  - [ApprovalRiskFlags](docs/ApprovalRiskFlags.md)
@@ -161,9 +176,13 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [CoreError](docs/CoreError.md)
  - [CreatePipelineInput](docs/CreatePipelineInput.md)
+ - [CreateSavedSegmentRequest](docs/CreateSavedSegmentRequest.md)
+ - [CreateScorePolicyRequest](docs/CreateScorePolicyRequest.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)
  - [DeletePipelineResponse](docs/DeletePipelineResponse.md)
+ - [DiffGroup](docs/DiffGroup.md)
+ - [DiffRow](docs/DiffRow.md)
  - [DnsRecordResults](docs/DnsRecordResults.md)
  - [DomainInfo](docs/DomainInfo.md)
  - [Duration](docs/Duration.md)
@@ -183,6 +202,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [JobTaskResult](docs/JobTaskResult.md)
  - [ListDeleteResponse](docs/ListDeleteResponse.md)
  - [ListDetailResponse](docs/ListDetailResponse.md)
+ - [ListDiffResponse](docs/ListDiffResponse.md)
  - [ListItem](docs/ListItem.md)
  - [ListListResponse](docs/ListListResponse.md)
  - [ListPipelineRunsResponse](docs/ListPipelineRunsResponse.md)
@@ -221,6 +241,10 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ReverificationStatusResponse](docs/ReverificationStatusResponse.md)
  - [RiskDirection](docs/RiskDirection.md)
  - [RiskFactor](docs/RiskFactor.md)
+ - [SavedSegmentListResponse](docs/SavedSegmentListResponse.md)
+ - [SavedSegmentView](docs/SavedSegmentView.md)
+ - [ScorePolicyListResponse](docs/ScorePolicyListResponse.md)
+ - [ScorePolicyView](docs/ScorePolicyView.md)
  - [ScoringSignals](docs/ScoringSignals.md)
  - [SmtpDetails](docs/SmtpDetails.md)
  - [SubReason](docs/SubReason.md)
@@ -233,7 +257,10 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [TaskWebhook](docs/TaskWebhook.md)
  - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
  - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
+ - [UpdateAlertRequest](docs/UpdateAlertRequest.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
+ - [UpdateSavedSegmentRequest](docs/UpdateSavedSegmentRequest.md)
+ - [UpdateScorePolicyRequest](docs/UpdateScorePolicyRequest.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)

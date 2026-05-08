@@ -173,12 +173,15 @@ fn default_missed_run_window_hours() -> i32 {
 pub struct PipelinePolicyConfig {
 	#[serde(default = "default_missed_run_window_hours")]
 	pub missed_run_window_hours: i32,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub policy_id: Option<i64>,
 }
 
 impl Default for PipelinePolicyConfig {
 	fn default() -> Self {
 		Self {
 			missed_run_window_hours: default_missed_run_window_hours(),
+			policy_id: None,
 		}
 	}
 }
@@ -2796,6 +2799,20 @@ async fn validate_pipeline_input(
 		return Err(PipelineRequestError::validation(
 			"Pipeline missed_run_window_hours must be at least 1",
 		));
+	}
+	if let Some(policy_id) = policy.policy_id {
+		let exists: bool = sqlx::query_scalar(
+			"SELECT EXISTS(SELECT 1 FROM v1_score_policies WHERE id = $1 AND tenant_id = $2)",
+		)
+		.bind(policy_id)
+		.bind(tenant_id)
+		.fetch_one(pg_pool)
+		.await?;
+		if !exists {
+			return Err(PipelineRequestError::validation(
+				"Referenced score policy does not exist for this tenant",
+			));
+		}
 	}
 	if delivery.max_attempts < 1 {
 		return Err(PipelineRequestError::validation(

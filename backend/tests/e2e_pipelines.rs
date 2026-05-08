@@ -412,6 +412,7 @@ async fn test_pipeline_scheduler_respects_global_missed_run_cap() {
 			verification: PipelineVerificationSettings::default(),
 			policy: reacher_backend::pipelines::PipelinePolicyConfig {
 				missed_run_window_hours: 48,
+				policy_id: None,
 			},
 			delivery: PipelineDeliveryConfig::default(),
 			status: PipelineStatus::Active,

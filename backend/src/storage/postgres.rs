@@ -25,7 +25,7 @@ use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -152,8 +152,8 @@ impl PostgresStorage {
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError> {
-		if let Some(db_id) = task_db_id {
-			let upd = sqlx::query(
+		let task_result_id = if let Some(db_id) = task_db_id {
+			let updated_id = sqlx::query_scalar(
 				r#"
 				UPDATE v1_task_result
 				SET payload = $1,
@@ -177,6 +177,7 @@ impl PostgresStorage {
 				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
 				WHERE id = $17
+				RETURNING id
 				"#,
 			)
 			.bind(payload_json)
@@ -196,15 +197,31 @@ impl PostgresStorage {
 			.bind(&columns.bounce_risk_model_version)
 			.bind(&columns.bounce_risk_signals)
 			.bind(db_id)
-			.execute(&self.pg_pool)
+			.fetch_optional(&self.pg_pool)
 			.await?;
-			if upd.rows_affected() == 0 {
+			if let Some(updated_id) = updated_id {
+				updated_id
+			} else {
 				self.insert_success(task, payload_json, tenant_id, columns, extra)
-					.await?;
+					.await?
 			}
 		} else {
 			self.insert_success(task, payload_json, tenant_id, columns, extra)
-				.await?;
+				.await?
+		};
+
+		if let Err(err) = crate::list_intelligence::record_verification_change_event(
+			&self.pg_pool,
+			task_result_id,
+		)
+		.await
+		{
+			warn!(
+				target: LOG_TARGET,
+				task_result_id = task_result_id,
+				error = ?err,
+				"Failed to record verification change event"
+			);
 		}
 
 		Ok(())
@@ -217,8 +234,8 @@ impl PostgresStorage {
 		tenant_id: Option<Uuid>,
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
-	) -> Result<(), StorageError> {
-		sqlx::query(
+	) -> Result<i32, StorageError> {
+		let id = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (
 				payload, job_id, extra, result, tenant_id,
@@ -262,7 +279,7 @@ impl PostgresStorage {
 		.fetch_one(&self.pg_pool)
 		.await?;
 
-		Ok(())
+		Ok(id)
 	}
 
 	async fn store_error(

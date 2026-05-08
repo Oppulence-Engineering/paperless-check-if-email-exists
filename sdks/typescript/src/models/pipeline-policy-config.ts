@@ -26,4 +26,10 @@ export interface PipelinePolicyConfig {
      * @memberof PipelinePolicyConfig
      */
     'missed_run_window_hours'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelinePolicyConfig
+     */
+    'policy_id'?: number | null;
 }

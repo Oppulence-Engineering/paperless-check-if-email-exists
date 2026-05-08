@@ -48,6 +48,23 @@ async fn http_handler(
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
 	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
 		.map_err(warp::reject::custom)?;
+	if let Some(policy_id) = upload.policy_id {
+		let exists: bool = sqlx::query_scalar(
+			"SELECT EXISTS(SELECT 1 FROM v1_score_policies WHERE id = $1 AND tenant_id = $2)",
+		)
+		.bind(policy_id)
+		.bind(tenant_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if !exists {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"Referenced score policy does not exist for this tenant",
+			)
+			.into());
+		}
+	}
 
 	enforce_row_limit(&tenant_ctx, parsed.rows.len())?;
 
@@ -127,9 +144,9 @@ async fn http_handler(
 		INSERT INTO v1_lists (
 			tenant_id, job_id, name, original_filename, file_size_bytes, total_rows,
 			email_column, original_headers, original_data, status,
-			unique_emails, deduplicated_count
+			unique_emails, deduplicated_count, policy_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11, $12)
 		RETURNING id
 		"#,
 	)
@@ -144,6 +161,7 @@ async fn http_handler(
 	.bind(&original_data)
 	.bind(unique_email_count)
 	.bind(deduplicated_count)
+	.bind(upload.policy_id)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -449,6 +467,7 @@ struct UploadData {
 	filename: String,
 	name: Option<String>,
 	email_column: Option<String>,
+	policy_id: Option<i64>,
 }
 
 async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseError> {
@@ -456,6 +475,7 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 	let mut filename = None;
 	let mut name = None;
 	let mut email_column = None;
+	let mut policy_id = None;
 
 	while let Some(part) = form
 		.try_next()
@@ -482,6 +502,17 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
 			}
+			"policy_id" => {
+				let raw = String::from_utf8_lossy(&collected).trim().to_string();
+				if !raw.is_empty() {
+					policy_id = Some(raw.parse::<i64>().map_err(|_| {
+						ReacherResponseError::new(
+							StatusCode::BAD_REQUEST,
+							"policy_id must be an integer",
+						)
+					})?);
+				}
+			}
 			_ => {}
 		}
 	}
@@ -496,6 +527,7 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 		filename: filename.unwrap_or_else(|| "upload.csv".to_string()),
 		name,
 		email_column,
+		policy_id,
 	})
 }
 

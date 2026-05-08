@@ -127,10 +127,40 @@ api_routes!(
 		|config| crate::http::v1::lists::download::v1_download_list(config)
 	),
 	(
+		route_v1_lists_diff,
+		"GET",
+		"/v1/lists/{base_list_id}/diff/{compare_list_id}",
+		|config| crate::http::v1::lists::diff::v1_diff_lists(config)
+	),
+	(
 		route_v1_lists_delete,
 		"DELETE",
 		"/v1/lists/{list_id}",
 		|config| crate::http::v1::lists::delete::v1_delete_list(config)
+	),
+	(route_v1_segments_create, "POST", "/v1/segments", |config| {
+		crate::http::v1::saved_segments::v1_create_saved_segment(config)
+	}),
+	(route_v1_segments_list, "GET", "/v1/segments", |config| {
+		crate::http::v1::saved_segments::v1_list_saved_segments(config)
+	}),
+	(
+		route_v1_segments_get,
+		"GET",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_get_saved_segment(config)
+	),
+	(
+		route_v1_segments_update,
+		"PATCH",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_update_saved_segment(config)
+	),
+	(
+		route_v1_segments_delete,
+		"DELETE",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_delete_saved_segment(config)
 	),
 	(
 		route_v1_pipelines_create,
@@ -243,6 +273,15 @@ api_routes!(
 	(route_v1_events, "GET", "/v1/events", |config| {
 		crate::http::v1::events::v1_list_events(config)
 	}),
+	(route_v1_alerts_list, "GET", "/v1/alerts", |config| {
+		crate::http::v1::alerts::v1_list_alerts(config)
+	}),
+	(
+		route_v1_alerts_update,
+		"PATCH",
+		"/v1/alerts/{alert_id}",
+		|config| crate::http::v1::alerts::v1_update_alert(config)
+	),
 	(
 		route_v1_email_history,
 		"GET",
@@ -342,6 +381,36 @@ api_routes!(
 	(route_v1_me_usage, "GET", "/v1/me/usage", |config| {
 		crate::http::v1::tenant_settings::v1_get_tenant_usage(config)
 	}),
+	(
+		route_v1_score_policies_create,
+		"POST",
+		"/v1/score-policies",
+		|config| crate::http::v1::score_policies::v1_create_score_policy(config)
+	),
+	(
+		route_v1_score_policies_list,
+		"GET",
+		"/v1/score-policies",
+		|config| crate::http::v1::score_policies::v1_list_score_policies(config)
+	),
+	(
+		route_v1_score_policies_get,
+		"GET",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_get_score_policy(config)
+	),
+	(
+		route_v1_score_policies_update,
+		"PATCH",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_update_score_policy(config)
+	),
+	(
+		route_v1_score_policies_delete,
+		"DELETE",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_delete_score_policy(config)
+	),
 	(
 		route_v1_me_domains_list,
 		"GET",

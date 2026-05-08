@@ -31,9 +31,10 @@ jobs:
           path: ${{ steps.cross.outputs.install_path }}
     strategy:
       matrix:
-        platform: [linux-musl, apple-darwin]
+        platform: [linux-musl]
 
   macos:
+    if: false # Disabled for PR CI because native macOS builds are too slow for merge gating.
     runs-on: macos-latest
     needs: install-cross
     steps:

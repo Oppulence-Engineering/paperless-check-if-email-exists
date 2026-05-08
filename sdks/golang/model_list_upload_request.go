@@ -26,6 +26,7 @@ type ListUploadRequest struct {
 	EmailColumn NullableString `json:"email_column,omitempty"`
 	File *os.File `json:"file"`
 	Name NullableString `json:"name,omitempty"`
+	PolicyId NullableInt64 `json:"policy_id,omitempty"`
 }
 
 type _ListUploadRequest ListUploadRequest
@@ -156,6 +157,48 @@ func (o *ListUploadRequest) UnsetName() {
 	o.Name.Unset()
 }
 
+// GetPolicyId returns the PolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListUploadRequest) GetPolicyId() int64 {
+	if o == nil || IsNil(o.PolicyId.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.PolicyId.Get()
+}
+
+// GetPolicyIdOk returns a tuple with the PolicyId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListUploadRequest) GetPolicyIdOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PolicyId.Get(), o.PolicyId.IsSet()
+}
+
+// HasPolicyId returns a boolean if a field has been set.
+func (o *ListUploadRequest) HasPolicyId() bool {
+	if o != nil && o.PolicyId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPolicyId gets a reference to the given NullableInt64 and assigns it to the PolicyId field.
+func (o *ListUploadRequest) SetPolicyId(v int64) {
+	o.PolicyId.Set(&v)
+}
+// SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+func (o *ListUploadRequest) SetPolicyIdNil() {
+	o.PolicyId.Set(nil)
+}
+
+// UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
+func (o *ListUploadRequest) UnsetPolicyId() {
+	o.PolicyId.Unset()
+}
+
 func (o ListUploadRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -172,6 +215,9 @@ func (o ListUploadRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["file"] = o.File
 	if o.Name.IsSet() {
 		toSerialize["name"] = o.Name.Get()
+	}
+	if o.PolicyId.IsSet() {
+		toSerialize["policy_id"] = o.PolicyId.Get()
 	}
 	return toSerialize, nil
 }
