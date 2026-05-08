@@ -340,11 +340,13 @@ const apiInstance = new V1Api(configuration);
 let file: File; // (default to undefined)
 let emailColumn: string; // (optional) (default to undefined)
 let name: string; // (optional) (default to undefined)
+let policyId: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1CreateList(
     file,
     emailColumn,
-    name
+    name,
+    policyId
 );
 ```
 
@@ -355,6 +357,7 @@ const { status, data } = await apiInstance.v1CreateList(
 | **file** | [**File**] |  | defaults to undefined|
 | **emailColumn** | [**string**] |  | (optional) defaults to undefined|
 | **name** | [**string**] |  | (optional) defaults to undefined|
+| **policyId** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -496,11 +499,15 @@ const apiInstance = new V1Api(configuration);
 let listId: number; //List identifier (default to undefined)
 let filter: string; // (optional) (default to undefined)
 let format: string; // (optional) (default to undefined)
+let segmentId: number; // (optional) (default to undefined)
+let changedSinceListId: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1DownloadList(
     listId,
     filter,
-    format
+    format,
+    segmentId,
+    changedSinceListId
 );
 ```
 
@@ -511,6 +518,8 @@ const { status, data } = await apiInstance.v1DownloadList(
 | **listId** | [**number**] | List identifier | defaults to undefined|
 | **filter** | [**string**] |  | (optional) defaults to undefined|
 | **format** | [**string**] |  | (optional) defaults to undefined|
+| **segmentId** | [**number**] |  | (optional) defaults to undefined|
+| **changedSinceListId** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type

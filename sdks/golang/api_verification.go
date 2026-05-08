@@ -36,6 +36,31 @@ type VerificationAPI interface {
 
 	// V1EmailHistoryExecute executes the request
 	V1EmailHistoryExecute(r VerificationAPIV1EmailHistoryRequest) (*http.Response, error)
+
+	/*
+	V1ListAlerts GET /v1/alerts
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return VerificationAPIV1ListAlertsRequest
+	*/
+	V1ListAlerts(ctx context.Context) VerificationAPIV1ListAlertsRequest
+
+	// V1ListAlertsExecute executes the request
+	//  @return AlertListResponse
+	V1ListAlertsExecute(r VerificationAPIV1ListAlertsRequest) (*AlertListResponse, *http.Response, error)
+
+	/*
+	V1UpdateAlert PATCH /v1/alerts/{alert_id}
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param alertId Alert identifier
+	@return VerificationAPIV1UpdateAlertRequest
+	*/
+	V1UpdateAlert(ctx context.Context, alertId int64) VerificationAPIV1UpdateAlertRequest
+
+	// V1UpdateAlertExecute executes the request
+	//  @return AlertView
+	V1UpdateAlertExecute(r VerificationAPIV1UpdateAlertRequest) (*AlertView, *http.Response, error)
 }
 
 // VerificationAPIService VerificationAPI service
@@ -154,4 +179,277 @@ func (a *VerificationAPIService) V1EmailHistoryExecute(r VerificationAPIV1EmailH
 	}
 
 	return localVarHTTPResponse, nil
+}
+
+type VerificationAPIV1ListAlertsRequest struct {
+	ctx context.Context
+	ApiService VerificationAPI
+	status *string
+	type_ *string
+	limit *int64
+	offset *int64
+}
+
+func (r VerificationAPIV1ListAlertsRequest) Status(status string) VerificationAPIV1ListAlertsRequest {
+	r.status = &status
+	return r
+}
+
+func (r VerificationAPIV1ListAlertsRequest) Type_(type_ string) VerificationAPIV1ListAlertsRequest {
+	r.type_ = &type_
+	return r
+}
+
+func (r VerificationAPIV1ListAlertsRequest) Limit(limit int64) VerificationAPIV1ListAlertsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r VerificationAPIV1ListAlertsRequest) Offset(offset int64) VerificationAPIV1ListAlertsRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r VerificationAPIV1ListAlertsRequest) Execute() (*AlertListResponse, *http.Response, error) {
+	return r.ApiService.V1ListAlertsExecute(r)
+}
+
+/*
+V1ListAlerts GET /v1/alerts
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return VerificationAPIV1ListAlertsRequest
+*/
+func (a *VerificationAPIService) V1ListAlerts(ctx context.Context) VerificationAPIV1ListAlertsRequest {
+	return VerificationAPIV1ListAlertsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return AlertListResponse
+func (a *VerificationAPIService) V1ListAlertsExecute(r VerificationAPIV1ListAlertsRequest) (*AlertListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *AlertListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "VerificationAPIService.V1ListAlerts")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/alerts"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.type_ != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type VerificationAPIV1UpdateAlertRequest struct {
+	ctx context.Context
+	ApiService VerificationAPI
+	alertId int64
+	updateAlertRequest *UpdateAlertRequest
+}
+
+func (r VerificationAPIV1UpdateAlertRequest) UpdateAlertRequest(updateAlertRequest UpdateAlertRequest) VerificationAPIV1UpdateAlertRequest {
+	r.updateAlertRequest = &updateAlertRequest
+	return r
+}
+
+func (r VerificationAPIV1UpdateAlertRequest) Execute() (*AlertView, *http.Response, error) {
+	return r.ApiService.V1UpdateAlertExecute(r)
+}
+
+/*
+V1UpdateAlert PATCH /v1/alerts/{alert_id}
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param alertId Alert identifier
+ @return VerificationAPIV1UpdateAlertRequest
+*/
+func (a *VerificationAPIService) V1UpdateAlert(ctx context.Context, alertId int64) VerificationAPIV1UpdateAlertRequest {
+	return VerificationAPIV1UpdateAlertRequest{
+		ApiService: a,
+		ctx: ctx,
+		alertId: alertId,
+	}
+}
+
+// Execute executes the request
+//  @return AlertView
+func (a *VerificationAPIService) V1UpdateAlertExecute(r VerificationAPIV1UpdateAlertRequest) (*AlertView, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPatch
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *AlertView
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "VerificationAPIService.V1UpdateAlert")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/alerts/{alert_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"alert_id"+"}", url.PathEscape(parameterValueToString(r.alertId, "alertId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateAlertRequest == nil {
+		return localVarReturnValue, nil, reportError("updateAlertRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateAlertRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }

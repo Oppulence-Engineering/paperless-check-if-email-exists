@@ -411,6 +411,15 @@ pub async fn do_check_email_work(
 				)
 				.execute(&pool)
 				.await;
+				let _ = sqlx::query(
+					r#"
+					DELETE FROM verification_change_events
+					WHERE current_task_result_id = $1
+					"#,
+				)
+				.bind(id)
+				.execute(&pool)
+				.await;
 			}
 
 			if let CheckEmailJobId::Bulk(job_id) = task.job_id {

@@ -21,6 +21,14 @@ import globalAxios from 'axios';
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
+// @ts-ignore
+import type { CreateScorePolicyRequest } from '../models';
+// @ts-ignore
+import type { ScorePolicyListResponse } from '../models';
+// @ts-ignore
+import type { ScorePolicyView } from '../models';
+// @ts-ignore
+import type { UpdateScorePolicyRequest } from '../models';
 /**
  * TenantApi - axios parameter creator
  * @export
@@ -61,6 +69,45 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
+         *
+         * @summary POST /v1/score-policies
+         * @param {CreateScorePolicyRequest} createScorePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateScorePolicy: async (createScorePolicyRequest: CreateScorePolicyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createScorePolicyRequest' is not null or undefined
+            assertParamExists('v1CreateScorePolicy', 'createScorePolicyRequest', createScorePolicyRequest)
+            const localVarPath = `/v1/score-policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createScorePolicyRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -76,6 +123,43 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             }
 
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary DELETE /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteScorePolicy: async (policyId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1DeleteScorePolicy', 'policyId', policyId)
+            const localVarPath = `/v1/score-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -113,6 +197,43 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             }
 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary GET /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetScorePolicy: async (policyId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1GetScorePolicy', 'policyId', policyId)
+            const localVarPath = `/v1/score-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -267,6 +388,49 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
+         *
+         * @summary GET /v1/score-policies
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListScorePolicies: async (limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/score-policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * List all active and inactive domain entries for the authenticated tenant.
          * @summary GET /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -293,6 +457,49 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary PATCH /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {UpdateScorePolicyRequest} updateScorePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateScorePolicy: async (policyId: number, updateScorePolicyRequest: UpdateScorePolicyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1UpdateScorePolicy', 'policyId', policyId)
+            // verify required parameter 'updateScorePolicyRequest' is not null or undefined
+            assertParamExists('v1UpdateScorePolicy', 'updateScorePolicyRequest', updateScorePolicyRequest)
+            const localVarPath = `/v1/score-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateScorePolicyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -425,6 +632,19 @@ export const TenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         *
+         * @summary POST /v1/score-policies
+         * @param {CreateScorePolicyRequest} createScorePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateScorePolicy(createScorePolicyRequest: CreateScorePolicyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScorePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateScorePolicy(createScorePolicyRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateScorePolicy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -434,6 +654,19 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateTenantDomain(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateTenantDomain']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary DELETE /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DeleteScorePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteScorePolicy(policyId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteScorePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -447,6 +680,19 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteTenantDomain(domain, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteTenantDomain']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary GET /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetScorePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScorePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetScorePolicy(policyId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetScorePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -499,6 +745,20 @@ export const TenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         *
+         * @summary GET /v1/score-policies
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListScorePolicies(limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScorePolicyListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListScorePolicies(limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1ListScorePolicies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * List all active and inactive domain entries for the authenticated tenant.
          * @summary GET /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -508,6 +768,20 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListTenantDomains(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1ListTenantDomains']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary PATCH /v1/score-policies/{policy_id}
+         * @param {number} policyId Score policy identifier
+         * @param {UpdateScorePolicyRequest} updateScorePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UpdateScorePolicy(policyId: number, updateScorePolicyRequest: UpdateScorePolicyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScorePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateScorePolicy(policyId, updateScorePolicyRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateScorePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -567,6 +841,16 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.v1ClearTenantWebhook(options).then((request) => request(axios, basePath));
         },
         /**
+         *
+         * @summary POST /v1/score-policies
+         * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateScorePolicy(requestParameters: TenantApiV1CreateScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView> {
+            return localVarFp.v1CreateScorePolicy(requestParameters.createScorePolicyRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -574,6 +858,16 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1CreateTenantDomain(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary DELETE /v1/score-policies/{policy_id}
+         * @param {TenantApiV1DeleteScorePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1DeleteScorePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
          * Remove a domain from the authenticated tenant.
@@ -584,6 +878,16 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1DeleteTenantDomain(requestParameters.domain, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary GET /v1/score-policies/{policy_id}
+         * @param {TenantApiV1GetScorePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetScorePolicy(requestParameters: TenantApiV1GetScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView> {
+            return localVarFp.v1GetScorePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
          * Get one domain entry for the authenticated tenant.
@@ -623,6 +927,16 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.v1GetTenantWebhook(options).then((request) => request(axios, basePath));
         },
         /**
+         *
+         * @summary GET /v1/score-policies
+         * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListScorePolicies(requestParameters: TenantApiV1ListScorePoliciesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyListResponse> {
+            return localVarFp.v1ListScorePolicies(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
          * List all active and inactive domain entries for the authenticated tenant.
          * @summary GET /v1/me/domains
          * @param {*} [options] Override http request option.
@@ -630,6 +944,16 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1ListTenantDomains(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary PATCH /v1/score-policies/{policy_id}
+         * @param {TenantApiV1UpdateScorePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateScorePolicy(requestParameters: TenantApiV1UpdateScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView> {
+            return localVarFp.v1UpdateScorePolicy(requestParameters.policyId, requestParameters.updateScorePolicyRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update the domain value, status, verification state, or metadata notes.
@@ -678,6 +1002,16 @@ export interface TenantApiInterface {
     v1ClearTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     *
+     * @summary POST /v1/score-policies
+     * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1CreateScorePolicy(requestParameters: TenantApiV1CreateScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView>;
+
+    /**
      * Add a domain for the authenticated tenant.
      * @summary POST /v1/me/domains
      * @param {*} [options] Override http request option.
@@ -685,6 +1019,16 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @summary DELETE /v1/score-policies/{policy_id}
+     * @param {TenantApiV1DeleteScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Remove a domain from the authenticated tenant.
@@ -695,6 +1039,16 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @summary GET /v1/score-policies/{policy_id}
+     * @param {TenantApiV1GetScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1GetScorePolicy(requestParameters: TenantApiV1GetScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView>;
 
     /**
      * Get one domain entry for the authenticated tenant.
@@ -734,6 +1088,16 @@ export interface TenantApiInterface {
     v1GetTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     *
+     * @summary GET /v1/score-policies
+     * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1ListScorePolicies(requestParameters?: TenantApiV1ListScorePoliciesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyListResponse>;
+
+    /**
      * List all active and inactive domain entries for the authenticated tenant.
      * @summary GET /v1/me/domains
      * @param {*} [options] Override http request option.
@@ -741,6 +1105,16 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @summary PATCH /v1/score-policies/{policy_id}
+     * @param {TenantApiV1UpdateScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1UpdateScorePolicy(requestParameters: TenantApiV1UpdateScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView>;
 
     /**
      * Update the domain value, status, verification state, or metadata notes.
@@ -773,6 +1147,34 @@ export interface TenantApiInterface {
 }
 
 /**
+ * Request parameters for v1CreateScorePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1CreateScorePolicyRequest
+ */
+export interface TenantApiV1CreateScorePolicyRequest {
+    /**
+     *
+     * @type {CreateScorePolicyRequest}
+     * @memberof TenantApiV1CreateScorePolicy
+     */
+    readonly createScorePolicyRequest: CreateScorePolicyRequest
+}
+
+/**
+ * Request parameters for v1DeleteScorePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1DeleteScorePolicyRequest
+ */
+export interface TenantApiV1DeleteScorePolicyRequest {
+    /**
+     * Score policy identifier
+     * @type {number}
+     * @memberof TenantApiV1DeleteScorePolicy
+     */
+    readonly policyId: number
+}
+
+/**
  * Request parameters for v1DeleteTenantDomain operation in TenantApi.
  * @export
  * @interface TenantApiV1DeleteTenantDomainRequest
@@ -787,6 +1189,20 @@ export interface TenantApiV1DeleteTenantDomainRequest {
 }
 
 /**
+ * Request parameters for v1GetScorePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1GetScorePolicyRequest
+ */
+export interface TenantApiV1GetScorePolicyRequest {
+    /**
+     * Score policy identifier
+     * @type {number}
+     * @memberof TenantApiV1GetScorePolicy
+     */
+    readonly policyId: number
+}
+
+/**
  * Request parameters for v1GetTenantDomain operation in TenantApi.
  * @export
  * @interface TenantApiV1GetTenantDomainRequest
@@ -798,6 +1214,48 @@ export interface TenantApiV1GetTenantDomainRequest {
      * @memberof TenantApiV1GetTenantDomain
      */
     readonly domain: string
+}
+
+/**
+ * Request parameters for v1ListScorePolicies operation in TenantApi.
+ * @export
+ * @interface TenantApiV1ListScorePoliciesRequest
+ */
+export interface TenantApiV1ListScorePoliciesRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof TenantApiV1ListScorePolicies
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof TenantApiV1ListScorePolicies
+     */
+    readonly offset?: number
+}
+
+/**
+ * Request parameters for v1UpdateScorePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1UpdateScorePolicyRequest
+ */
+export interface TenantApiV1UpdateScorePolicyRequest {
+    /**
+     * Score policy identifier
+     * @type {number}
+     * @memberof TenantApiV1UpdateScorePolicy
+     */
+    readonly policyId: number
+
+    /**
+     *
+     * @type {UpdateScorePolicyRequest}
+     * @memberof TenantApiV1UpdateScorePolicy
+     */
+    readonly updateScorePolicyRequest: UpdateScorePolicyRequest
 }
 
 /**
@@ -833,6 +1291,18 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
     }
 
     /**
+     *
+     * @summary POST /v1/score-policies
+     * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1CreateScorePolicy(requestParameters: TenantApiV1CreateScorePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1CreateScorePolicy(requestParameters.createScorePolicyRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Add a domain for the authenticated tenant.
      * @summary POST /v1/me/domains
      * @param {*} [options] Override http request option.
@@ -841,6 +1311,18 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1CreateTenantDomain(options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1CreateTenantDomain(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary DELETE /v1/score-policies/{policy_id}
+     * @param {TenantApiV1DeleteScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1DeleteScorePolicy(requestParameters.policyId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -853,6 +1335,18 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1DeleteTenantDomain(requestParameters.domain, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/score-policies/{policy_id}
+     * @param {TenantApiV1GetScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1GetScorePolicy(requestParameters: TenantApiV1GetScorePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1GetScorePolicy(requestParameters.policyId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -901,6 +1395,18 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
     }
 
     /**
+     *
+     * @summary GET /v1/score-policies
+     * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1ListScorePolicies(requestParameters: TenantApiV1ListScorePoliciesRequest = {}, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1ListScorePolicies(requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * List all active and inactive domain entries for the authenticated tenant.
      * @summary GET /v1/me/domains
      * @param {*} [options] Override http request option.
@@ -909,6 +1415,18 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1ListTenantDomains(options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1ListTenantDomains(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary PATCH /v1/score-policies/{policy_id}
+     * @param {TenantApiV1UpdateScorePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1UpdateScorePolicy(requestParameters: TenantApiV1UpdateScorePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1UpdateScorePolicy(requestParameters.policyId, requestParameters.updateScorePolicyRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

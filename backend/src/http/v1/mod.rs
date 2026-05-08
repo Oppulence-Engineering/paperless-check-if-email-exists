@@ -16,6 +16,7 @@
 
 pub mod account_api_keys;
 pub mod admin;
+pub mod alerts;
 pub mod bulk;
 pub mod check_email;
 pub mod comments;
@@ -30,6 +31,8 @@ pub mod pipelines;
 pub mod query;
 pub mod reputation;
 pub mod reverification;
+pub mod saved_segments;
+pub mod score_policies;
 pub mod suppressions;
 pub mod tenant_domains;
 pub mod tenant_settings;

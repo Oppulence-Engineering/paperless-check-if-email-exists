@@ -25,6 +25,8 @@ docs/AddSuppressionsRequest.md
 docs/AddSuppressionsResponse.md
 docs/AdminApi.md
 docs/AdminJobsApi.md
+docs/AlertListResponse.md
+docs/AlertView.md
 docs/ApprovalCategoryBreakdown.md
 docs/ApprovalChecklistResponse.md
 docs/ApprovalRiskFlags.md
@@ -42,9 +44,13 @@ docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
+docs/CreateSavedSegmentRequest.md
+docs/CreateScorePolicyRequest.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
 docs/DeletePipelineResponse.md
+docs/DiffGroup.md
+docs/DiffRow.md
 docs/DnsRecordResults.md
 docs/DomainInfo.md
 docs/Duration.md
@@ -67,6 +73,7 @@ docs/JobTaskResult.md
 docs/JobsApi.md
 docs/ListDeleteResponse.md
 docs/ListDetailResponse.md
+docs/ListDiffResponse.md
 docs/ListItem.md
 docs/ListListResponse.md
 docs/ListPipelineRunsResponse.md
@@ -108,6 +115,10 @@ docs/RetryJobResponse.md
 docs/ReverificationStatusResponse.md
 docs/RiskDirection.md
 docs/RiskFactor.md
+docs/SavedSegmentListResponse.md
+docs/SavedSegmentView.md
+docs/ScorePolicyListResponse.md
+docs/ScorePolicyView.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
 docs/SubReason.md
@@ -122,7 +133,10 @@ docs/TaskWebhook.md
 docs/TenantApi.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
+docs/UpdateAlertRequest.md
 docs/UpdatePipelineInput.md
+docs/UpdateSavedSegmentRequest.md
+docs/UpdateScorePolicyRequest.md
 docs/V0Api.md
 docs/V1Api.md
 docs/VerifMethod.md
@@ -133,6 +147,8 @@ git_push.sh
 index.ts
 models/add-suppressions-request.ts
 models/add-suppressions-response.ts
+models/alert-list-response.ts
+models/alert-view.ts
 models/approval-category-breakdown.ts
 models/approval-checklist-response.ts
 models/approval-risk-flags.ts
@@ -149,9 +165,13 @@ models/check-email-request.ts
 models/confidence-explanation.ts
 models/core-error.ts
 models/create-pipeline-input.ts
+models/create-saved-segment-request.ts
+models/create-score-policy-request.ts
 models/debug-details-smtp.ts
 models/debug-details.ts
 models/delete-pipeline-response.ts
+models/diff-group.ts
+models/diff-row.ts
 models/dns-record-results.ts
 models/domain-info.ts
 models/duration.ts
@@ -172,6 +192,7 @@ models/job-result-page-response.ts
 models/job-task-result.ts
 models/list-delete-response.ts
 models/list-detail-response.ts
+models/list-diff-response.ts
 models/list-item.ts
 models/list-list-response.ts
 models/list-pipeline-runs-response.ts
@@ -210,6 +231,10 @@ models/retry-job-response.ts
 models/reverification-status-response.ts
 models/risk-direction.ts
 models/risk-factor.ts
+models/saved-segment-list-response.ts
+models/saved-segment-view.ts
+models/score-policy-list-response.ts
+models/score-policy-view.ts
 models/scoring-signals.ts
 models/smtp-details.ts
 models/sub-reason.ts
@@ -222,7 +247,10 @@ models/syntax-details.ts
 models/task-webhook.ts
 models/trigger-pipeline-input.ts
 models/trigger-pipeline-response.ts
+models/update-alert-request.ts
 models/update-pipeline-input.ts
+models/update-saved-segment-request.ts
+models/update-score-policy-request.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts
