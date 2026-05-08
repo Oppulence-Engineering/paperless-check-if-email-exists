@@ -44,6 +44,8 @@ enum PathProfile {
 	ListGet,
 	ListQuality,
 	ListDownload,
+	ListRemediationPlan,
+	ListRemediationDownload,
 	ListDelete,
 	ListDiff,
 	PipelineGet,
@@ -172,6 +174,7 @@ pub struct HarnessFixtures {
 	job_cancelled: i32,
 	finder_job: i32,
 	list_main: i32,
+	remediation_plan: i64,
 	list_delete: i32,
 	pipeline_main: i64,
 	pipeline_pause: i64,
@@ -680,6 +683,95 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	)
 	.await;
 
+	let remediation_plan: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_remediation_plans (
+			tenant_id,
+			list_id,
+			effective_job_id,
+			rule_version,
+			options,
+			options_hash,
+			result_state_digest,
+			status,
+			summary_counts,
+			completed_at
+		)
+		VALUES (
+			$1,
+			$2,
+			$3,
+			'harness_seed',
+			'{}'::jsonb,
+			'harness_options',
+			'harness_digest',
+			'completed',
+			'{"fixed":0,"safe":1,"review":1,"drop":1}'::jsonb,
+			NOW()
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(list_main)
+	.bind(list_job)
+	.fetch_one(pool)
+	.await
+	.expect("insert remediation plan failed");
+	for (row_number, classification, rule_id, confidence, before, after) in [
+		(
+			0,
+			"safe",
+			"safe_to_send",
+			"high",
+			serde_json::json!({"email": "good@example.com", "name": "Good"}),
+			serde_json::json!({"email": "good@example.com", "name": "Good"}),
+		),
+		(
+			1,
+			"review",
+			"catch_all",
+			"medium",
+			serde_json::json!({"email": "risky@example.com", "name": "Risky"}),
+			serde_json::json!({"email": "risky@example.com", "name": "Risky"}),
+		),
+		(
+			2,
+			"drop",
+			"invalid_recipient",
+			"high",
+			serde_json::json!({"email": "bad@example.com", "name": "Bad"}),
+			serde_json::json!({"email": "bad@example.com", "name": "Bad"}),
+		),
+	] {
+		sqlx::query(
+			r#"
+			INSERT INTO v1_remediation_rows (
+				tenant_id,
+				plan_id,
+				row_number,
+				classification,
+				rule_id,
+				confidence,
+				before,
+				after
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			"#,
+		)
+		.bind(tenant.tenant_id)
+		.bind(remediation_plan)
+		.bind(row_number)
+		.bind(classification)
+		.bind(rule_id)
+		.bind(confidence)
+		.bind(before)
+		.bind(after)
+		.execute(pool)
+		.await
+		.expect("insert remediation row failed");
+	}
+
 	let list_delete_job = insert_job(pool, Some(tenant.tenant_id), 1, "completed").await;
 	let list_delete = insert_list(
 		pool,
@@ -993,6 +1085,7 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		job_cancelled,
 		finder_job,
 		list_main,
+		remediation_plan,
 		list_delete,
 		pipeline_main,
 		pipeline_pause,
@@ -1107,6 +1200,7 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 		job_cancelled: 0,
 		finder_job: 0,
 		list_main: UPGRADE_LIST_ID,
+		remediation_plan: 0,
 		list_delete: 0,
 		pipeline_main,
 		pipeline_pause: 0,
@@ -1310,6 +1404,36 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,
 			PathProfile::ListDownload,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"POST",
+			"/v1/lists/{list_id}/remediation-plan",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationPlan,
+			BodyProfile::JsonEmptyObject,
+			201,
+			Expectation::Json(&["plan_id", "summary_counts", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/remediation-plan",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationPlan,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["plan_id", "summary_counts", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/remediation-plan/{plan_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationDownload,
 			BodyProfile::None,
 			200,
 			Expectation::Csv
@@ -2186,6 +2310,15 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::ListGet => format!("/v1/lists/{}", fixtures.list_main),
 		PathProfile::ListQuality => format!("/v1/lists/{}/quality", fixtures.list_main),
 		PathProfile::ListDownload => format!("/v1/lists/{}/download", fixtures.list_main),
+		PathProfile::ListRemediationPlan => {
+			format!("/v1/lists/{}/remediation-plan", fixtures.list_main)
+		}
+		PathProfile::ListRemediationDownload => {
+			format!(
+				"/v1/lists/{}/remediation-plan/{}/download",
+				fixtures.list_main, fixtures.remediation_plan
+			)
+		}
 		PathProfile::ListDelete => format!("/v1/lists/{}", fixtures.list_delete),
 		PathProfile::ListDiff => {
 			format!(

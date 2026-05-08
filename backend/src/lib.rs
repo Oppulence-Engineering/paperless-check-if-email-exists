@@ -22,6 +22,7 @@ pub mod finder;
 pub mod http;
 pub mod list_intelligence;
 pub mod pipelines;
+pub mod remediation;
 pub mod reputation;
 pub mod reverification;
 pub mod sandbox;

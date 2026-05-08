@@ -93,9 +93,12 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1JobLatency**](docs/JobsApi.md#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
+*ListsApi* | [**v1CreateRemediationPlan**](docs/ListsApi.md#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | POST /v1/lists/{list_id}/remediation-plan
 *ListsApi* | [**v1CreateSavedSegment**](docs/ListsApi.md#v1createsavedsegment) | **POST** /v1/segments | POST /v1/segments
 *ListsApi* | [**v1DeleteSavedSegment**](docs/ListsApi.md#v1deletesavedsegment) | **DELETE** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}
 *ListsApi* | [**v1DiffLists**](docs/ListsApi.md#v1difflists) | **GET** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+*ListsApi* | [**v1DownloadRemediationPlan**](docs/ListsApi.md#v1downloadremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan/{plan_id}/download | GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+*ListsApi* | [**v1GetRemediationPlan**](docs/ListsApi.md#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | GET /v1/lists/{list_id}/remediation-plan
 *ListsApi* | [**v1GetSavedSegment**](docs/ListsApi.md#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 *ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
 *ListsApi* | [**v1ListSavedSegments**](docs/ListsApi.md#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments
@@ -235,6 +238,9 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [Reachable](docs/Reachable.md)
  - [ReasonCode](docs/ReasonCode.md)
  - [RecommendedAction](docs/RecommendedAction.md)
+ - [RemediationOptions](docs/RemediationOptions.md)
+ - [RemediationPlanResponse](docs/RemediationPlanResponse.md)
+ - [RemediationSummaryCounts](docs/RemediationSummaryCounts.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
  - [RetryJobResponse](docs/RetryJobResponse.md)

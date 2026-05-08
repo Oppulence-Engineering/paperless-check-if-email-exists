@@ -4,14 +4,87 @@ All URIs are relative to *https://api.reacher.email*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**V1CreateRemediationPlan**](ListsAPI.md#V1CreateRemediationPlan) | **Post** /v1/lists/{list_id}/remediation-plan | POST /v1/lists/{list_id}/remediation-plan
 [**V1CreateSavedSegment**](ListsAPI.md#V1CreateSavedSegment) | **Post** /v1/segments | POST /v1/segments
 [**V1DeleteSavedSegment**](ListsAPI.md#V1DeleteSavedSegment) | **Delete** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}
 [**V1DiffLists**](ListsAPI.md#V1DiffLists) | **Get** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+[**V1DownloadRemediationPlan**](ListsAPI.md#V1DownloadRemediationPlan) | **Get** /v1/lists/{list_id}/remediation-plan/{plan_id}/download | GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+[**V1GetRemediationPlan**](ListsAPI.md#V1GetRemediationPlan) | **Get** /v1/lists/{list_id}/remediation-plan | GET /v1/lists/{list_id}/remediation-plan
 [**V1GetSavedSegment**](ListsAPI.md#V1GetSavedSegment) | **Get** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 [**V1ListQuality**](ListsAPI.md#V1ListQuality) | **Get** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
 [**V1ListSavedSegments**](ListsAPI.md#V1ListSavedSegments) | **Get** /v1/segments | GET /v1/segments
 [**V1UpdateSavedSegment**](ListsAPI.md#V1UpdateSavedSegment) | **Patch** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}
 
+
+
+## V1CreateRemediationPlan
+
+> RemediationPlanResponse V1CreateRemediationPlan(ctx, listId).RemediationOptions(remediationOptions).Execute()
+
+POST /v1/lists/{list_id}/remediation-plan
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	listId := int32(56) // int32 | List identifier
+	remediationOptions := *openapiclient.NewRemediationOptions() // RemediationOptions |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.ListsAPI.V1CreateRemediationPlan(context.Background(), listId).RemediationOptions(remediationOptions).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ListsAPI.V1CreateRemediationPlan``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1CreateRemediationPlan`: RemediationPlanResponse
+	fmt.Fprintf(os.Stdout, "Response from `ListsAPI.V1CreateRemediationPlan`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**listId** | **int32** | List identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1CreateRemediationPlanRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **remediationOptions** | [**RemediationOptions**](RemediationOptions.md) |  |
+
+### Return type
+
+[**RemediationPlanResponse**](RemediationPlanResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## V1CreateSavedSegment
@@ -204,6 +277,149 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListDiffResponse**](ListDiffResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1DownloadRemediationPlan
+
+> *os.File V1DownloadRemediationPlan(ctx, listId, planId).Partition(partition).Execute()
+
+GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	listId := int32(56) // int32 | List identifier
+	planId := int64(789) // int64 | Remediation plan identifier
+	partition := "partition_example" // string |  (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.ListsAPI.V1DownloadRemediationPlan(context.Background(), listId, planId).Partition(partition).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ListsAPI.V1DownloadRemediationPlan``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1DownloadRemediationPlan`: *os.File
+	fmt.Fprintf(os.Stdout, "Response from `ListsAPI.V1DownloadRemediationPlan`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**listId** | **int32** | List identifier |
+**planId** | **int64** | Remediation plan identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1DownloadRemediationPlanRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **partition** | **string** |  |
+
+### Return type
+
+[***os.File**](*os.File.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: text/csv
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1GetRemediationPlan
+
+> RemediationPlanResponse V1GetRemediationPlan(ctx, listId).PlanId(planId).Execute()
+
+GET /v1/lists/{list_id}/remediation-plan
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	listId := int32(56) // int32 | List identifier
+	planId := int64(789) // int64 |  (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.ListsAPI.V1GetRemediationPlan(context.Background(), listId).PlanId(planId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ListsAPI.V1GetRemediationPlan``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetRemediationPlan`: RemediationPlanResponse
+	fmt.Fprintf(os.Stdout, "Response from `ListsAPI.V1GetRemediationPlan`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**listId** | **int32** | List identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetRemediationPlanRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **planId** | **int64** |  |
+
+### Return type
+
+[**RemediationPlanResponse**](RemediationPlanResponse.md)
 
 ### Authorization
 

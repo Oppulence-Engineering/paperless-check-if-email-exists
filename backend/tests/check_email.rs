@@ -431,6 +431,30 @@ mod tests {
 	}
 
 	#[tokio::test]
+	async fn test_scalar_docs_no_auth_required() {
+		for path in ["/docs", "/scalar"] {
+			let resp = request()
+				.path(path)
+				.method("GET")
+				.reply(&create_routes(create_backend_config("foobar")))
+				.await;
+
+			assert_eq!(resp.status(), StatusCode::OK);
+			let content_type = resp
+				.headers()
+				.get("content-type")
+				.and_then(|value| value.to_str().ok())
+				.unwrap_or("");
+			assert!(content_type.starts_with("text/html"));
+
+			let body = String::from_utf8_lossy(resp.body());
+			assert!(body.contains("Scalar.createApiReference"));
+			assert!(body.contains("@scalar/api-reference"));
+			assert!(body.contains("url: '/openapi.json'"));
+		}
+	}
+
+	#[tokio::test]
 	async fn test_readyz_no_postgres() {
 		// Without Postgres, readyz should still return (with not_configured)
 		let resp = request()

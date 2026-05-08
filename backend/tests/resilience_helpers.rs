@@ -4,15 +4,20 @@ use lapin::{Connection, ConnectionProperties};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::process::{Command as StdCommand, Stdio};
+use std::sync::LazyLock;
 use tokio::process::Command;
-use tokio::time::{sleep, Duration, Instant};
+use tokio::sync::Mutex;
+use tokio::time::{sleep, timeout, Duration, Instant};
 use uuid::Uuid;
 
 const POSTGRES_IMAGE: &str = "postgres:16";
 const RABBITMQ_IMAGE: &str = "rabbitmq:3.8.22-management";
 const POSTGRES_WAIT_TIMEOUT: Duration = Duration::from_secs(60);
-const RABBITMQ_WAIT_TIMEOUT: Duration = Duration::from_secs(180);
+const RABBITMQ_WAIT_TIMEOUT: Duration = Duration::from_secs(300);
+const RABBITMQ_CONNECT_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(5);
 const POLL_INTERVAL: Duration = Duration::from_millis(500);
+
+static RABBITMQ_START_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
 pub struct OwnedPostgres {
 	name: String,
@@ -100,6 +105,7 @@ impl Drop for OwnedPostgres {
 impl OwnedRabbitMq {
 	pub async fn start() -> Self {
 		let name = format!("reacher-rabbit-{}", Uuid::new_v4().simple());
+		let _startup_guard = RABBITMQ_START_LOCK.lock().await;
 		let amqp_url = match start_rabbitmq_container(&name).await {
 			Ok(amqp_url) => amqp_url,
 			Err(err) => {
@@ -130,6 +136,9 @@ impl OwnedRabbitMq {
 		docker(&["start", &self.name])
 			.await
 			.expect("restart owned rabbitmq");
+		wait_for_rabbitmq_container(&self.name)
+			.await
+			.expect("rabbitmq container healthy after restart");
 		wait_for_rabbitmq(&self.amqp_url)
 			.await
 			.expect("rabbitmq ready after restart");
@@ -182,11 +191,22 @@ async fn start_rabbitmq_container(name: &str) -> Result<String, String> {
 		name,
 		"-p",
 		"127.0.0.1::5672",
+		"--health-cmd",
+		"rabbitmq-diagnostics -q ping",
+		"--health-start-period",
+		"30s",
+		"--health-interval",
+		"10s",
+		"--health-timeout",
+		"15s",
+		"--health-retries",
+		"30",
 		RABBITMQ_IMAGE,
 	])
 	.await?;
 	let host_port = docker_mapped_port(name, "5672/tcp").await?;
 	let amqp_url = format!("amqp://guest:guest@127.0.0.1:{host_port}");
+	wait_for_rabbitmq_container(name).await?;
 	wait_for_rabbitmq(&amqp_url).await?;
 	Ok(amqp_url)
 }
@@ -231,6 +251,51 @@ async fn docker_mapped_port(container_name: &str, port: &str) -> Result<u16, Str
 		.map_err(|err| format!("invalid mapped port '{port}': {err}"))
 }
 
+async fn docker_logs_tail(container_name: &str) -> String {
+	Command::new("docker")
+		.args(["logs", "--tail", "80", container_name])
+		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
+		.output()
+		.await
+		.map(|output| {
+			let stdout = String::from_utf8_lossy(&output.stdout);
+			let stderr = String::from_utf8_lossy(&output.stderr);
+			format!("{stdout}{stderr}").trim().to_string()
+		})
+		.unwrap_or_else(|err| format!("failed to read docker logs: {err}"))
+}
+
+async fn wait_for_rabbitmq_container(container_name: &str) -> Result<(), String> {
+	let deadline = Instant::now() + RABBITMQ_WAIT_TIMEOUT;
+	loop {
+		let status = docker(&[
+			"inspect",
+			"-f",
+			"{{.State.Running}} {{if .State.Health}}{{.State.Health.Status}}{{else}}no-health{{end}}",
+			container_name,
+		])
+		.await?;
+		if status == "true healthy" || status == "true no-health" {
+			return Ok(());
+		}
+		if status.starts_with("false") {
+			let logs = docker_logs_tail(container_name).await;
+			return Err(format!(
+				"rabbitmq container {container_name} exited before readiness; status: {status}; logs:\n{logs}"
+			));
+		}
+		if Instant::now() >= deadline {
+			let logs = docker_logs_tail(container_name).await;
+			return Err(format!(
+				"rabbitmq container {container_name} was not healthy within {:?}; last status: {status}; logs:\n{logs}",
+				RABBITMQ_WAIT_TIMEOUT
+			));
+		}
+		sleep(POLL_INTERVAL).await;
+	}
+}
+
 async fn wait_for_postgres(db_url: &str) -> Result<(), String> {
 	let deadline = Instant::now() + POSTGRES_WAIT_TIMEOUT;
 	loop {
@@ -256,16 +321,35 @@ async fn wait_for_postgres(db_url: &str) -> Result<(), String> {
 async fn wait_for_rabbitmq(amqp_url: &str) -> Result<(), String> {
 	let deadline = Instant::now() + RABBITMQ_WAIT_TIMEOUT;
 	loop {
-		match Connection::connect(amqp_url, ConnectionProperties::default()).await {
-			Ok(connection) => {
+		match timeout(
+			RABBITMQ_CONNECT_ATTEMPT_TIMEOUT,
+			Connection::connect(amqp_url, ConnectionProperties::default()),
+		)
+		.await
+		{
+			Ok(Ok(connection)) => {
 				let _ = connection.close(0, "test cleanup").await;
 				return Ok(());
 			}
-			Err(err) if Instant::now() < deadline => {
+			Ok(Err(err)) if Instant::now() < deadline => {
 				let _ = err;
 				sleep(POLL_INTERVAL).await;
 			}
-			Err(err) => return Err(format!("rabbitmq not ready at {amqp_url}: {err}")),
+			Err(_) if Instant::now() < deadline => {
+				sleep(POLL_INTERVAL).await;
+			}
+			Ok(Err(err)) => {
+				return Err(format!(
+					"rabbitmq not ready at {amqp_url} within {:?}: {err}",
+					RABBITMQ_WAIT_TIMEOUT
+				));
+			}
+			Err(_) => {
+				return Err(format!(
+					"rabbitmq connection attempts to {amqp_url} timed out within {:?}",
+					RABBITMQ_WAIT_TIMEOUT
+				));
+			}
 		}
 	}
 }

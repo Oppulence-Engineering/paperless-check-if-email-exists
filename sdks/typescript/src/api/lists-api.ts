@@ -26,6 +26,10 @@ import type { CreateSavedSegmentRequest } from '../models';
 // @ts-ignore
 import type { ListDiffResponse } from '../models';
 // @ts-ignore
+import type { RemediationOptions } from '../models';
+// @ts-ignore
+import type { RemediationPlanResponse } from '../models';
+// @ts-ignore
 import type { SavedSegmentListResponse } from '../models';
 // @ts-ignore
 import type { SavedSegmentView } from '../models';
@@ -37,6 +41,49 @@ import type { UpdateSavedSegmentRequest } from '../models';
  */
 export const ListsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         *
+         * @summary POST /v1/lists/{list_id}/remediation-plan
+         * @param {number} listId List identifier
+         * @param {RemediationOptions} remediationOptions
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationPlan: async (listId: number, remediationOptions: RemediationOptions, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1CreateRemediationPlan', 'listId', listId)
+            // verify required parameter 'remediationOptions' is not null or undefined
+            assertParamExists('v1CreateRemediationPlan', 'remediationOptions', remediationOptions)
+            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(remediationOptions, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          *
          * @summary POST /v1/segments
@@ -151,6 +198,94 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
 
             if (offset !== undefined) {
                 localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+         * @param {number} listId List identifier
+         * @param {number} planId Remediation plan identifier
+         * @param {string} [partition]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DownloadRemediationPlan: async (listId: number, planId: number, partition?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1DownloadRemediationPlan', 'listId', listId)
+            // verify required parameter 'planId' is not null or undefined
+            assertParamExists('v1DownloadRemediationPlan', 'planId', planId)
+            const localVarPath = `/v1/lists/{list_id}/remediation-plan/{plan_id}/download`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)))
+                .replace(`{${"plan_id"}}`, encodeURIComponent(String(planId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (partition !== undefined) {
+                localVarQueryParameter['partition'] = partition;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan
+         * @param {number} listId List identifier
+         * @param {number} [planId]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetRemediationPlan: async (listId: number, planId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1GetRemediationPlan', 'listId', listId)
+            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (planId !== undefined) {
+                localVarQueryParameter['plan_id'] = planId;
             }
 
 
@@ -341,6 +476,20 @@ export const ListsApiFp = function(configuration?: Configuration) {
     return {
         /**
          *
+         * @summary POST /v1/lists/{list_id}/remediation-plan
+         * @param {number} listId List identifier
+         * @param {RemediationOptions} remediationOptions
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateRemediationPlan(listId: number, remediationOptions: RemediationOptions, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RemediationPlanResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateRemediationPlan(listId, remediationOptions, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1CreateRemediationPlan']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary POST /v1/segments
          * @param {CreateSavedSegmentRequest} createSavedSegmentRequest
          * @param {*} [options] Override http request option.
@@ -379,6 +528,35 @@ export const ListsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DiffLists(baseListId, compareListId, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DiffLists']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+         * @param {number} listId List identifier
+         * @param {number} planId Remediation plan identifier
+         * @param {string} [partition]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DownloadRemediationPlan(listId: number, planId: number, partition?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DownloadRemediationPlan(listId, planId, partition, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DownloadRemediationPlan']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan
+         * @param {number} listId List identifier
+         * @param {number} [planId]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetRemediationPlan(listId: number, planId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RemediationPlanResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetRemediationPlan(listId, planId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1GetRemediationPlan']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -448,6 +626,16 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
     return {
         /**
          *
+         * @summary POST /v1/lists/{list_id}/remediation-plan
+         * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<RemediationPlanResponse> {
+            return localVarFp.v1CreateRemediationPlan(requestParameters.listId, requestParameters.remediationOptions, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary POST /v1/segments
          * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -475,6 +663,26 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
          */
         v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDiffResponse> {
             return localVarFp.v1DiffLists(requestParameters.baseListId, requestParameters.compareListId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+         * @param {ListsApiV1DownloadRemediationPlanRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DownloadRemediationPlan(requestParameters: ListsApiV1DownloadRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.v1DownloadRemediationPlan(requestParameters.listId, requestParameters.planId, requestParameters.partition, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{list_id}/remediation-plan
+         * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<RemediationPlanResponse> {
+            return localVarFp.v1GetRemediationPlan(requestParameters.listId, requestParameters.planId, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -527,6 +735,16 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
 export interface ListsApiInterface {
     /**
      *
+     * @summary POST /v1/lists/{list_id}/remediation-plan
+     * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<RemediationPlanResponse>;
+
+    /**
+     *
      * @summary POST /v1/segments
      * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -554,6 +772,26 @@ export interface ListsApiInterface {
      * @memberof ListsApiInterface
      */
     v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDiffResponse>;
+
+    /**
+     *
+     * @summary GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+     * @param {ListsApiV1DownloadRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1DownloadRemediationPlan(requestParameters: ListsApiV1DownloadRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+
+    /**
+     *
+     * @summary GET /v1/lists/{list_id}/remediation-plan
+     * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<RemediationPlanResponse>;
 
     /**
      *
@@ -595,6 +833,27 @@ export interface ListsApiInterface {
      */
     v1UpdateSavedSegment(requestParameters: ListsApiV1UpdateSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView>;
 
+}
+
+/**
+ * Request parameters for v1CreateRemediationPlan operation in ListsApi.
+ * @export
+ * @interface ListsApiV1CreateRemediationPlanRequest
+ */
+export interface ListsApiV1CreateRemediationPlanRequest {
+    /**
+     * List identifier
+     * @type {number}
+     * @memberof ListsApiV1CreateRemediationPlan
+     */
+    readonly listId: number
+
+    /**
+     *
+     * @type {RemediationOptions}
+     * @memberof ListsApiV1CreateRemediationPlan
+     */
+    readonly remediationOptions: RemediationOptions
 }
 
 /**
@@ -658,6 +917,55 @@ export interface ListsApiV1DiffListsRequest {
      * @memberof ListsApiV1DiffLists
      */
     readonly offset?: number
+}
+
+/**
+ * Request parameters for v1DownloadRemediationPlan operation in ListsApi.
+ * @export
+ * @interface ListsApiV1DownloadRemediationPlanRequest
+ */
+export interface ListsApiV1DownloadRemediationPlanRequest {
+    /**
+     * List identifier
+     * @type {number}
+     * @memberof ListsApiV1DownloadRemediationPlan
+     */
+    readonly listId: number
+
+    /**
+     * Remediation plan identifier
+     * @type {number}
+     * @memberof ListsApiV1DownloadRemediationPlan
+     */
+    readonly planId: number
+
+    /**
+     *
+     * @type {string}
+     * @memberof ListsApiV1DownloadRemediationPlan
+     */
+    readonly partition?: string
+}
+
+/**
+ * Request parameters for v1GetRemediationPlan operation in ListsApi.
+ * @export
+ * @interface ListsApiV1GetRemediationPlanRequest
+ */
+export interface ListsApiV1GetRemediationPlanRequest {
+    /**
+     * List identifier
+     * @type {number}
+     * @memberof ListsApiV1GetRemediationPlan
+     */
+    readonly listId: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1GetRemediationPlan
+     */
+    readonly planId?: number
 }
 
 /**
@@ -746,6 +1054,18 @@ export interface ListsApiV1UpdateSavedSegmentRequest {
 export class ListsApi extends BaseAPI implements ListsApiInterface {
     /**
      *
+     * @summary POST /v1/lists/{list_id}/remediation-plan
+     * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1CreateRemediationPlan(requestParameters.listId, requestParameters.remediationOptions, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary POST /v1/segments
      * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -778,6 +1098,30 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
      */
     public v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig) {
         return ListsApiFp(this.configuration).v1DiffLists(requestParameters.baseListId, requestParameters.compareListId, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+     * @param {ListsApiV1DownloadRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1DownloadRemediationPlan(requestParameters: ListsApiV1DownloadRemediationPlanRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1DownloadRemediationPlan(requestParameters.listId, requestParameters.planId, requestParameters.partition, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/lists/{list_id}/remediation-plan
+     * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1GetRemediationPlan(requestParameters.listId, requestParameters.planId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

@@ -18,10 +18,24 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"os"
 )
 
 
 type ListsAPI interface {
+
+	/*
+	V1CreateRemediationPlan POST /v1/lists/{list_id}/remediation-plan
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param listId List identifier
+	@return ListsAPIV1CreateRemediationPlanRequest
+	*/
+	V1CreateRemediationPlan(ctx context.Context, listId int32) ListsAPIV1CreateRemediationPlanRequest
+
+	// V1CreateRemediationPlanExecute executes the request
+	//  @return RemediationPlanResponse
+	V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error)
 
 	/*
 	V1CreateSavedSegment POST /v1/segments
@@ -60,6 +74,33 @@ type ListsAPI interface {
 	// V1DiffListsExecute executes the request
 	//  @return ListDiffResponse
 	V1DiffListsExecute(r ListsAPIV1DiffListsRequest) (*ListDiffResponse, *http.Response, error)
+
+	/*
+	V1DownloadRemediationPlan GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param listId List identifier
+	@param planId Remediation plan identifier
+	@return ListsAPIV1DownloadRemediationPlanRequest
+	*/
+	V1DownloadRemediationPlan(ctx context.Context, listId int32, planId int64) ListsAPIV1DownloadRemediationPlanRequest
+
+	// V1DownloadRemediationPlanExecute executes the request
+	//  @return *os.File
+	V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadRemediationPlanRequest) (*os.File, *http.Response, error)
+
+	/*
+	V1GetRemediationPlan GET /v1/lists/{list_id}/remediation-plan
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param listId List identifier
+	@return ListsAPIV1GetRemediationPlanRequest
+	*/
+	V1GetRemediationPlan(ctx context.Context, listId int32) ListsAPIV1GetRemediationPlanRequest
+
+	// V1GetRemediationPlanExecute executes the request
+	//  @return RemediationPlanResponse
+	V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error)
 
 	/*
 	V1GetSavedSegment GET /v1/segments/{segment_id}
@@ -116,6 +157,132 @@ type ListsAPI interface {
 
 // ListsAPIService ListsAPI service
 type ListsAPIService service
+
+type ListsAPIV1CreateRemediationPlanRequest struct {
+	ctx context.Context
+	ApiService ListsAPI
+	listId int32
+	remediationOptions *RemediationOptions
+}
+
+func (r ListsAPIV1CreateRemediationPlanRequest) RemediationOptions(remediationOptions RemediationOptions) ListsAPIV1CreateRemediationPlanRequest {
+	r.remediationOptions = &remediationOptions
+	return r
+}
+
+func (r ListsAPIV1CreateRemediationPlanRequest) Execute() (*RemediationPlanResponse, *http.Response, error) {
+	return r.ApiService.V1CreateRemediationPlanExecute(r)
+}
+
+/*
+V1CreateRemediationPlan POST /v1/lists/{list_id}/remediation-plan
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param listId List identifier
+ @return ListsAPIV1CreateRemediationPlanRequest
+*/
+func (a *ListsAPIService) V1CreateRemediationPlan(ctx context.Context, listId int32) ListsAPIV1CreateRemediationPlanRequest {
+	return ListsAPIV1CreateRemediationPlanRequest{
+		ApiService: a,
+		ctx: ctx,
+		listId: listId,
+	}
+}
+
+// Execute executes the request
+//  @return RemediationPlanResponse
+func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *RemediationPlanResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1CreateRemediationPlan")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-plan"
+	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.remediationOptions == nil {
+		return localVarReturnValue, nil, reportError("remediationOptions is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.remediationOptions
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
 
 type ListsAPIV1CreateSavedSegmentRequest struct {
 	ctx context.Context
@@ -411,6 +578,258 @@ func (a *ListsAPIService) V1DiffListsExecute(r ListsAPIV1DiffListsRequest) (*Lis
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ListsAPIV1DownloadRemediationPlanRequest struct {
+	ctx context.Context
+	ApiService ListsAPI
+	listId int32
+	planId int64
+	partition *string
+}
+
+func (r ListsAPIV1DownloadRemediationPlanRequest) Partition(partition string) ListsAPIV1DownloadRemediationPlanRequest {
+	r.partition = &partition
+	return r
+}
+
+func (r ListsAPIV1DownloadRemediationPlanRequest) Execute() (*os.File, *http.Response, error) {
+	return r.ApiService.V1DownloadRemediationPlanExecute(r)
+}
+
+/*
+V1DownloadRemediationPlan GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param listId List identifier
+ @param planId Remediation plan identifier
+ @return ListsAPIV1DownloadRemediationPlanRequest
+*/
+func (a *ListsAPIService) V1DownloadRemediationPlan(ctx context.Context, listId int32, planId int64) ListsAPIV1DownloadRemediationPlanRequest {
+	return ListsAPIV1DownloadRemediationPlanRequest{
+		ApiService: a,
+		ctx: ctx,
+		listId: listId,
+		planId: planId,
+	}
+}
+
+// Execute executes the request
+//  @return *os.File
+func (a *ListsAPIService) V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadRemediationPlanRequest) (*os.File, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *os.File
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DownloadRemediationPlan")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-plan/{plan_id}/download"
+	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"plan_id"+"}", url.PathEscape(parameterValueToString(r.planId, "planId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.partition != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "partition", r.partition, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"text/csv"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ListsAPIV1GetRemediationPlanRequest struct {
+	ctx context.Context
+	ApiService ListsAPI
+	listId int32
+	planId *int64
+}
+
+func (r ListsAPIV1GetRemediationPlanRequest) PlanId(planId int64) ListsAPIV1GetRemediationPlanRequest {
+	r.planId = &planId
+	return r
+}
+
+func (r ListsAPIV1GetRemediationPlanRequest) Execute() (*RemediationPlanResponse, *http.Response, error) {
+	return r.ApiService.V1GetRemediationPlanExecute(r)
+}
+
+/*
+V1GetRemediationPlan GET /v1/lists/{list_id}/remediation-plan
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param listId List identifier
+ @return ListsAPIV1GetRemediationPlanRequest
+*/
+func (a *ListsAPIService) V1GetRemediationPlan(ctx context.Context, listId int32) ListsAPIV1GetRemediationPlanRequest {
+	return ListsAPIV1GetRemediationPlanRequest{
+		ApiService: a,
+		ctx: ctx,
+		listId: listId,
+	}
+}
+
+// Execute executes the request
+//  @return RemediationPlanResponse
+func (a *ListsAPIService) V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *RemediationPlanResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1GetRemediationPlan")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-plan"
+	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.planId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "plan_id", r.planId, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
