@@ -4,13 +4,72 @@ All URIs are relative to *https://api.reacher.email*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
+|[**v1CreateRemediationPlan**](#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | POST /v1/lists/{list_id}/remediation-plan|
 |[**v1CreateSavedSegment**](#v1createsavedsegment) | **POST** /v1/segments | POST /v1/segments|
 |[**v1DeleteSavedSegment**](#v1deletesavedsegment) | **DELETE** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}|
 |[**v1DiffLists**](#v1difflists) | **GET** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}|
+|[**v1DownloadRemediationPlan**](#v1downloadremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan/{plan_id}/download | GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download|
+|[**v1GetRemediationPlan**](#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | GET /v1/lists/{list_id}/remediation-plan|
 |[**v1GetSavedSegment**](#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}|
 |[**v1ListQuality**](#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality|
 |[**v1ListSavedSegments**](#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments|
 |[**v1UpdateSavedSegment**](#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}|
+
+# **v1CreateRemediationPlan**
+> RemediationPlanResponse v1CreateRemediationPlan(remediationOptions)
+
+
+### Example
+
+```typescript
+import {
+    ListsApi,
+    Configuration,
+    RemediationOptions
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new ListsApi(configuration);
+
+let listId: number; //List identifier (default to undefined)
+let remediationOptions: RemediationOptions; //
+
+const { status, data } = await apiInstance.v1CreateRemediationPlan(
+    listId,
+    remediationOptions
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **remediationOptions** | **RemediationOptions**|  | |
+| **listId** | [**number**] | List identifier | defaults to undefined|
+
+
+### Return type
+
+**RemediationPlanResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Existing remediation plan returned |  -  |
+|**201** | Remediation plan created |  -  |
+|**409** | List is still processing |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CreateSavedSegment**
 > SavedSegmentView v1CreateSavedSegment(createSavedSegmentRequest)
@@ -169,6 +228,115 @@ const { status, data } = await apiInstance.v1DiffLists(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List diff |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1DownloadRemediationPlan**
+> File v1DownloadRemediationPlan()
+
+
+### Example
+
+```typescript
+import {
+    ListsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new ListsApi(configuration);
+
+let listId: number; //List identifier (default to undefined)
+let planId: number; //Remediation plan identifier (default to undefined)
+let partition: string; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1DownloadRemediationPlan(
+    listId,
+    planId,
+    partition
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **listId** | [**number**] | List identifier | defaults to undefined|
+| **planId** | [**number**] | Remediation plan identifier | defaults to undefined|
+| **partition** | [**string**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**File**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: text/csv
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Remediation CSV download |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetRemediationPlan**
+> RemediationPlanResponse v1GetRemediationPlan()
+
+
+### Example
+
+```typescript
+import {
+    ListsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new ListsApi(configuration);
+
+let listId: number; //List identifier (default to undefined)
+let planId: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1GetRemediationPlan(
+    listId,
+    planId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **listId** | [**number**] | List identifier | defaults to undefined|
+| **planId** | [**number**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**RemediationPlanResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Remediation plan |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

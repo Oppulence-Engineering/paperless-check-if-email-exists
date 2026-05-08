@@ -108,6 +108,9 @@ docs/QueryAPI.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
+docs/RemediationOptions.md
+docs/RemediationPlanResponse.md
+docs/RemediationSummaryCounts.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/RetryJobResponse.md
@@ -223,6 +226,9 @@ model_provider_rejection_reason.go
 model_reachable.go
 model_reason_code.go
 model_recommended_action.go
+model_remediation_options.go
+model_remediation_plan_response.go
+model_remediation_summary_counts.go
 model_reputation_check_request.go
 model_reputation_check_response.go
 model_retry_job_response.go

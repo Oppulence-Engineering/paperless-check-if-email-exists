@@ -12,6 +12,29 @@ use crate::http::v1::tenant_domains;
 use crate::http::v1::tenant_settings;
 
 const BASE_OPENAPI: &str = include_str!("../../openapi.json");
+const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
+<html>
+	<head>
+		<title>Reacher API Reference</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			body {
+				margin: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+		<script>
+			Scalar.createApiReference('#app', {
+				url: '/openapi.json',
+			})
+		</script>
+	</body>
+</html>
+"#;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -44,6 +67,9 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::quality::v1_list_quality,
 		crate::http::v1::lists::download::v1_download_list,
+		crate::http::v1::lists::remediation::v1_create_remediation_plan,
+		crate::http::v1::lists::remediation::v1_get_remediation_plan,
+		crate::http::v1::lists::remediation::v1_download_remediation_plan,
 		crate::http::v1::lists::diff::v1_diff_lists,
 		crate::http::v1::lists::delete::v1_delete_list,
 		crate::http::v1::saved_segments::v1_create_saved_segment,
@@ -1364,6 +1390,13 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		binary_response("Cleaned list CSV download", "text/csv"),
 	);
+	set_response(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan/{plan_id}/download",
+		"get",
+		"200",
+		binary_response("Remediation CSV download", "text/csv"),
+	);
 
 	set_request_body(
 		spec,
@@ -1673,5 +1706,18 @@ pub fn openapi_spec() -> impl Filter<Extract = (impl warp::Reply,), Error = warp
 			build_spec()
 				.map(|v| warp::reply::json(&v))
 				.map_err(|e| warp::reject::custom(e))
+		})
+}
+
+/// Serve Scalar API documentation backed by the runtime OpenAPI document.
+pub fn scalar_docs() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone
+{
+	warp::path("docs")
+		.or(warp::path("scalar"))
+		.unify()
+		.and(warp::path::end())
+		.and(warp::get())
+		.map(|| {
+			warp::reply::with_header(SCALAR_DOCS_HTML, "Content-Type", "text/html; charset=utf-8")
 		})
 }

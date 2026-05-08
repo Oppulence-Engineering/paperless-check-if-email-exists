@@ -127,6 +127,24 @@ api_routes!(
 		|config| crate::http::v1::lists::download::v1_download_list(config)
 	),
 	(
+		route_v1_lists_remediation_create,
+		"POST",
+		"/v1/lists/{list_id}/remediation-plan",
+		|config| crate::http::v1::lists::remediation::v1_create_remediation_plan(config)
+	),
+	(
+		route_v1_lists_remediation_get,
+		"GET",
+		"/v1/lists/{list_id}/remediation-plan",
+		|config| crate::http::v1::lists::remediation::v1_get_remediation_plan(config)
+	),
+	(
+		route_v1_lists_remediation_download,
+		"GET",
+		"/v1/lists/{list_id}/remediation-plan/{plan_id}/download",
+		|config| crate::http::v1::lists::remediation::v1_download_remediation_plan(config)
+	),
+	(
 		route_v1_lists_diff,
 		"GET",
 		"/v1/lists/{base_list_id}/diff/{compare_list_id}",
@@ -602,5 +620,9 @@ pub fn build_all_routes(config: Arc<BackendConfig>) -> ResponseFilter {
 		.iter()
 		.map(|spec| (spec.build)(Arc::clone(&config)));
 	let first = routes.next().expect("http route inventory cannot be empty");
-	routes.fold(first, |acc, next| acc.or(next).unify().boxed())
+	let api_routes = routes.fold(first, |acc, next| acc.or(next).unify().boxed());
+	api_routes
+		.or(box_route(crate::http::openapi::scalar_docs()))
+		.unify()
+		.boxed()
 }

@@ -24,11 +24,13 @@ use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
+use tokio::time::{timeout, Duration};
 use tracing::{debug, error, info, trace};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
+const RABBITMQ_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Set up the RabbitMQ connection and declare the "check_email" queue.
 ///
@@ -46,9 +48,18 @@ pub async fn setup_rabbit_mq(
 		.with_reactor(tokio_reactor_trait::Tokio)
 		.with_connection_name(backend_name.into());
 
-	let conn = Connection::connect(&config.url, options)
-		.await
-		.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
+	let conn = timeout(
+		RABBITMQ_CONNECT_TIMEOUT,
+		Connection::connect(&config.url, options),
+	)
+	.await
+	.with_context(|| {
+		format!(
+			"Timed out connecting to rabbitmq {} within {:?}",
+			&config.url, RABBITMQ_CONNECT_TIMEOUT
+		)
+	})?
+	.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
 	let channel = conn.create_channel().await?;
 
 	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");

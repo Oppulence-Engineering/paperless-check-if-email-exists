@@ -109,6 +109,9 @@ docs/QueryApi.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
+docs/RemediationOptions.md
+docs/RemediationPlanResponse.md
+docs/RemediationSummaryCounts.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/RetryJobResponse.md
@@ -225,6 +228,9 @@ models/provider.ts
 models/reachable.ts
 models/reason-code.ts
 models/recommended-action.ts
+models/remediation-options.ts
+models/remediation-plan-response.ts
+models/remediation-summary-counts.ts
 models/reputation-check-request.ts
 models/reputation-check-response.ts
 models/retry-job-response.ts
