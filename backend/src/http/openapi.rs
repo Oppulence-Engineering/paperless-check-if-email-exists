@@ -133,6 +133,14 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::score_policies::v1_get_score_policy,
 		crate::http::v1::score_policies::v1_update_score_policy,
 		crate::http::v1::score_policies::v1_delete_score_policy,
+		crate::http::v1::outcome_policies::v1_create_outcome_policy,
+		crate::http::v1::outcome_policies::v1_list_outcome_policies,
+		crate::http::v1::outcome_policies::v1_get_outcome_policy,
+		crate::http::v1::outcome_policies::v1_update_outcome_policy,
+		crate::http::v1::outcome_policies::v1_delete_outcome_policy,
+		crate::http::v1::outcomes::v1_post_outcomes,
+		crate::http::v1::outcomes::v1_upload_outcomes,
+		crate::http::v1::outcomes::v1_list_outcomes,
 		tenant_domains::v1_list_tenant_domains,
 		tenant_domains::v1_create_tenant_domain,
 		tenant_domains::v1_get_tenant_domain,
@@ -160,6 +168,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		(name = "Events", description = "Advanced audit log endpoints"),
 		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
 		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
+		(name = "Outcomes", description = "Campaign outcome ingestion (delivered, bounce, complaint, engagement) for the feedback loop"),
 	)
 )]
 struct BackendApiDoc;
@@ -644,7 +653,10 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"smtp_policy_block",
 				"smtp_timeout",
 				"smtp_network",
-				"smtp_ambiguous"
+				"smtp_ambiguous",
+				"outcome_hard_bounce",
+				"outcome_complaint",
+				"outcome_engagement"
 			]
 		}),
 	);

@@ -27,6 +27,8 @@ pub mod jobs;
 pub mod lists;
 pub mod me;
 pub mod onboard;
+pub mod outcome_policies;
+pub mod outcomes;
 pub mod pipelines;
 pub mod query;
 pub mod reputation;

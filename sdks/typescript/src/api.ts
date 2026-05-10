@@ -22,6 +22,7 @@ export * from './api/events-api';
 export * from './api/health-api';
 export * from './api/jobs-api';
 export * from './api/lists-api';
+export * from './api/outcomes-api';
 export * from './api/pipelines-api';
 export * from './api/query-api';
 export * from './api/system-api';

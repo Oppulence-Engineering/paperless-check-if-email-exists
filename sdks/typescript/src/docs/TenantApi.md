@@ -5,17 +5,22 @@ All URIs are relative to *https://api.reacher.email*
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**v1ClearTenantWebhook**](#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook|
+|[**v1CreateOutcomePolicy**](#v1createoutcomepolicy) | **POST** /v1/outcome-policies | |
 |[**v1CreateScorePolicy**](#v1createscorepolicy) | **POST** /v1/score-policies | POST /v1/score-policies|
 |[**v1CreateTenantDomain**](#v1createtenantdomain) | **POST** /v1/me/domains | POST /v1/me/domains|
+|[**v1DeleteOutcomePolicy**](#v1deleteoutcomepolicy) | **DELETE** /v1/outcome-policies/{policy_id} | |
 |[**v1DeleteScorePolicy**](#v1deletescorepolicy) | **DELETE** /v1/score-policies/{policy_id} | DELETE /v1/score-policies/{policy_id}|
 |[**v1DeleteTenantDomain**](#v1deletetenantdomain) | **DELETE** /v1/me/domains/{domain} | DELETE /v1/me/domains/{domain}|
+|[**v1GetOutcomePolicy**](#v1getoutcomepolicy) | **GET** /v1/outcome-policies/{policy_id} | |
 |[**v1GetScorePolicy**](#v1getscorepolicy) | **GET** /v1/score-policies/{policy_id} | GET /v1/score-policies/{policy_id}|
 |[**v1GetTenantDomain**](#v1gettenantdomain) | **GET** /v1/me/domains/{domain} | GET /v1/me/domains/{domain}|
 |[**v1GetTenantSettings**](#v1gettenantsettings) | **GET** /v1/me/settings | GET /v1/me/settings|
 |[**v1GetTenantUsage**](#v1gettenantusage) | **GET** /v1/me/usage | GET /v1/me/usage|
 |[**v1GetTenantWebhook**](#v1gettenantwebhook) | **GET** /v1/me/webhook | GET /v1/me/webhook|
+|[**v1ListOutcomePolicies**](#v1listoutcomepolicies) | **GET** /v1/outcome-policies | |
 |[**v1ListScorePolicies**](#v1listscorepolicies) | **GET** /v1/score-policies | GET /v1/score-policies|
 |[**v1ListTenantDomains**](#v1listtenantdomains) | **GET** /v1/me/domains | GET /v1/me/domains|
+|[**v1UpdateOutcomePolicy**](#v1updateoutcomepolicy) | **PATCH** /v1/outcome-policies/{policy_id} | |
 |[**v1UpdateScorePolicy**](#v1updatescorepolicy) | **PATCH** /v1/score-policies/{policy_id} | PATCH /v1/score-policies/{policy_id}|
 |[**v1UpdateTenantDomain**](#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}|
 |[**v1UpdateTenantSettings**](#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings|
@@ -62,6 +67,57 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook cleared |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CreateOutcomePolicy**
+> OutcomePolicyView v1CreateOutcomePolicy(createOutcomePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    CreateOutcomePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let createOutcomePolicyRequest: CreateOutcomePolicyRequest; //
+
+const { status, data } = await apiInstance.v1CreateOutcomePolicy(
+    createOutcomePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createOutcomePolicyRequest** | **CreateOutcomePolicyRequest**|  | |
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** | Outcome policy created |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -157,6 +213,56 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Tenant domain created |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1DeleteOutcomePolicy**
+> v1DeleteOutcomePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1DeleteOutcomePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy deleted |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -258,6 +364,56 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain deleted |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetOutcomePolicy**
+> OutcomePolicyView v1GetOutcomePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1GetOutcomePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -494,6 +650,59 @@ void (empty response body)
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1ListOutcomePolicies**
+> OutcomePolicyListResponse v1ListOutcomePolicies()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ListOutcomePolicies(
+    limit,
+    offset
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyListResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policies |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1ListScorePolicies**
 > ScorePolicyListResponse v1ListScorePolicies()
 
@@ -588,6 +797,60 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domains list |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1UpdateOutcomePolicy**
+> OutcomePolicyView v1UpdateOutcomePolicy(updateOutcomePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    UpdateOutcomePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+let updateOutcomePolicyRequest: UpdateOutcomePolicyRequest; //
+
+const { status, data } = await apiInstance.v1UpdateOutcomePolicy(
+    policyId,
+    updateOutcomePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateOutcomePolicyRequest** | **UpdateOutcomePolicyRequest**|  | |
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy updated |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

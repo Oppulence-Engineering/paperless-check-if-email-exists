@@ -147,12 +147,13 @@ pub struct ProviderReputationContext {
 	pub reputation_score: i16,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default)]
 pub struct ScoringContext {
 	pub tenant_history: TenantHistoryContext,
 	pub pattern: PatternContext,
 	pub domain: DomainSignalContext,
 	pub provider_reputation: Option<ProviderReputationContext>,
+	pub outcomes: crate::outcomes::OutcomeContext,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -365,6 +366,34 @@ pub fn compute_score_with_context(
 	let mut confidence_factors = Vec::new();
 	let mut contextual_codes = Vec::new();
 
+	// Outcome ground truth wins over every other signal, including the
+	// hard-invalid syntactic check below: a real hard bounce or complaint
+	// reported by the customer's ESP is the strongest possible signal.
+	if context.outcomes.forces_invalid() {
+		let reason_code = if context.outcomes.has_hard_bounce {
+			"outcome_hard_bounce"
+		} else {
+			"outcome_complaint"
+		};
+		let factor = if context.outcomes.has_hard_bounce {
+			"outcome_feedback:hard_bounce"
+		} else {
+			"outcome_feedback:complaint"
+		};
+		score.score = 5;
+		score.category = EmailCategory::Invalid;
+		score.safe_to_send = false;
+		append_unique_codes(&mut score.reason_codes, vec![reason_code.to_string()]);
+		let insights = ScoreInsights {
+			confidence: 95,
+			confidence_level: ConfidenceLevel::High,
+			confidence_factors: vec![factor.to_string()],
+			catch_all: None,
+			partial_confidence: None,
+		};
+		return ScoreComputation { score, insights };
+	}
+
 	if is_hard_invalid(&score) {
 		let insights = ScoreInsights {
 			confidence: 95,
@@ -377,6 +406,20 @@ pub fn compute_score_with_context(
 	}
 
 	let mut adjustment = 0i16;
+
+	let engagement_boost = context.outcomes.engagement_boost();
+	if engagement_boost > 0 {
+		adjustment += engagement_boost;
+		contextual_codes.push("outcome_engagement".to_string());
+		if context.outcomes.delivered_count > 0 {
+			confidence_factors.push("outcome_feedback:delivered".to_string());
+		}
+		if context.outcomes.click_count > 0 {
+			confidence_factors.push("outcome_feedback:click".to_string());
+		} else if context.outcomes.open_count > 0 {
+			confidence_factors.push("outcome_feedback:open".to_string());
+		}
+	}
 
 	if let Some(provider) = &context.provider_reputation {
 		if score.signals.smtp_is_deliverable && provider.reputation_score >= 80 {

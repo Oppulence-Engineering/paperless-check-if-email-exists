@@ -9,6 +9,7 @@ api_events.go
 api_health.go
 api_jobs.go
 api_lists.go
+api_outcomes.go
 api_pipelines.go
 api_query.go
 api_system.go
@@ -44,6 +45,7 @@ docs/CommentsAPI.md
 docs/ConfidenceExplanation.md
 docs/ConfidenceLevel.md
 docs/CoreError.md
+docs/CreateOutcomePolicyRequest.md
 docs/CreatePipelineInput.md
 docs/CreateSavedSegmentRequest.md
 docs/CreateScorePolicyRequest.md
@@ -69,6 +71,10 @@ docs/GmailVerifMethod.md
 docs/HealthAPI.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
+docs/IngestOutcome.md
+docs/IngestOutcomesRequest.md
+docs/IngestOutcomesResponse.md
+docs/IngestRowError.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsAPI.md
@@ -85,6 +91,12 @@ docs/ListUploadResponse.md
 docs/ListsAPI.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OutcomeListResponse.md
+docs/OutcomePolicyListResponse.md
+docs/OutcomePolicyView.md
+docs/OutcomeType.md
+docs/OutcomeView.md
+docs/OutcomesAPI.md
 docs/PartialConfidence.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
@@ -141,6 +153,7 @@ docs/TenantAPI.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
 docs/UpdateAlertRequest.md
+docs/UpdateOutcomePolicyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateSavedSegmentRequest.md
 docs/UpdateScorePolicyRequest.md
@@ -173,6 +186,7 @@ model_check_email_request.go
 model_confidence_explanation.go
 model_confidence_level.go
 model_core_error.go
+model_create_outcome_policy_request.go
 model_create_pipeline_input.go
 model_create_saved_segment_request.go
 model_create_score_policy_request.go
@@ -196,6 +210,10 @@ model_freshness.go
 model_gmail_verif_method.go
 model_hotmail_b2_b_verif_method.go
 model_hotmail_b2_c_verif_method.go
+model_ingest_outcome.go
+model_ingest_outcomes_request.go
+model_ingest_outcomes_response.go
+model_ingest_row_error.go
 model_job_result_page_response.go
 model_job_task_result.go
 model_list_delete_response.go
@@ -210,6 +228,11 @@ model_list_upload_request.go
 model_list_upload_response.go
 model_misc_details.go
 model_mx_details.go
+model_outcome_list_response.go
+model_outcome_policy_list_response.go
+model_outcome_policy_view.go
+model_outcome_type.go
+model_outcome_view.go
 model_partial_confidence.go
 model_pipeline_delivery_config.go
 model_pipeline_delivery_status.go
@@ -262,6 +285,7 @@ model_task_webhook.go
 model_trigger_pipeline_input.go
 model_trigger_pipeline_response.go
 model_update_alert_request.go
+model_update_outcome_policy_request.go
 model_update_pipeline_input.go
 model_update_saved_segment_request.go
 model_update_score_policy_request.go

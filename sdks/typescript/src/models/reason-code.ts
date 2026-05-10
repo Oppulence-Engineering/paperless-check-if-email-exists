@@ -58,7 +58,10 @@ export const ReasonCode = {
     SmtpPolicyBlock: 'smtp_policy_block',
     SmtpTimeout: 'smtp_timeout',
     SmtpNetwork: 'smtp_network',
-    SmtpAmbiguous: 'smtp_ambiguous'
+    SmtpAmbiguous: 'smtp_ambiguous',
+    OutcomeHardBounce: 'outcome_hard_bounce',
+    OutcomeComplaint: 'outcome_complaint',
+    OutcomeEngagement: 'outcome_engagement'
 } as const;
 
 export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];

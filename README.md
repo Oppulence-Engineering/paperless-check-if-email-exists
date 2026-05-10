@@ -608,6 +608,81 @@ or `smtp_unreachable`. Knobs live in the `[delayed_recheck]` config block — `e
 `batch_size`, `stale_publishing_seconds`, `publish_retry_seconds`, `max_publish_attempts`, `retention_days`,
 and `cleanup_interval_seconds`. Set `enable = false` to fall back to plain ACK-and-store on Unknown.
 
+### Campaign Outcome Feedback Loop
+
+Customers send us outcome events from their ESPs (delivered, hard_bounce, soft_bounce, complaint, open, click,
+unsubscribe) and the platform uses those signals to (1) automatically maintain the suppression list and (2) feed
+ground truth into future verifications via `OutcomeContext` on the scoring path. A real hard bounce reported by
+the ESP **overrides** SMTP heuristics: the next verification of that address will return `category=invalid` with
+a 95-confidence score regardless of what the SMTP probe says. Engagement signals (delivered/open/click) provide
+positive pressure on the score.
+
+Three customer touchpoints — everything else is automatic:
+
+**1. Provision an API key with the new scope** (reuses existing `PATCH /v1/me/api-keys/{id}`):
+
+```json
+{ "scopes": ["bulk", "lists", "outcomes.write"] }
+```
+
+**2. (Optional) Create an outcome policy.** A sensible default is created lazily on first ingest if the tenant
+hasn't defined one. Full CRUD lives at `/v1/outcome-policies`:
+
+```json
+POST /v1/outcome-policies
+{
+  "name": "production",
+  "is_default": true,
+  "rules": {
+    "hard_bounce":  { "action": "suppress", "score_override": "invalid" },
+    "complaint":    { "action": "suppress_and_unsubscribe", "score_override": "invalid" },
+    "soft_bounce":  { "action": "suppress_after", "threshold_count": 3, "threshold_window_days": 30 },
+    "unsubscribe":  { "action": "suppress" },
+    "delivered":    { "action": "score_boost", "boost": 5 },
+    "open":         { "action": "score_boost", "boost": 3 },
+    "click":        { "action": "score_boost", "boost": 8 },
+    "outcome_ttl_days": 90
+  }
+}
+```
+
+**3. Send outcomes — pick whichever fits the customer's stack.**
+
+Direct push (recommended for live integrations):
+
+```json
+POST /v1/outcomes
+{
+  "outcomes": [
+    {"email":"a@x.com","type":"hard_bounce","occurred_at":"2026-05-10T12:00:00Z","source":"sendgrid","campaign_id":"camp_42"},
+    {"email":"b@y.com","type":"complaint","occurred_at":"2026-05-10T12:01:00Z","source":"sendgrid"},
+    {"email":"c@z.com","type":"open","occurred_at":"2026-05-10T12:02:00Z","source":"sendgrid"}
+  ]
+}
+→ 202 { "accepted": 3, "rejected": 0, "suppressed": 2, "policy_id": 17, "errors": [] }
+```
+
+Idempotent on `(tenant_id, canonical_email, outcome_type, occurred_at, source)` so re-sends are safe.
+
+CSV backfill (for one-time imports from ESP exports):
+
+```
+POST /v1/outcomes/upload    (multipart/form-data; field name: file)
+```
+
+CSV columns: `email,outcome_type,occurred_at,source,campaign_id` (last two optional).
+
+Inspect ingested data:
+
+```
+GET /v1/outcomes?email=a@x.com&since=2026-04-01
+GET /v1/outcomes?source=sendgrid&type=hard_bounce&limit=100
+```
+
+The verification response now exposes the signal back to clients via two new `score.reason_codes`:
+`outcome_hard_bounce` / `outcome_complaint` (when an outcome forced the category) and `outcome_engagement`
+(when delivered/open/click boosted the score).
+
 ### Component Interaction Diagram
 
 ```mermaid

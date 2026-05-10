@@ -73,6 +73,9 @@ enum PathProfile {
 	ScorePolicyGet,
 	ScorePolicyPatch,
 	ScorePolicyDelete,
+	OutcomePolicyGet,
+	OutcomePolicyPatch,
+	OutcomePolicyDelete,
 	SavedSegmentGet,
 	SavedSegmentPatch,
 	SavedSegmentDelete,
@@ -138,6 +141,10 @@ enum BodyProfile {
 	JsonAlertPatch,
 	JsonScorePolicyCreate,
 	JsonScorePolicyPatch,
+	JsonOutcomePolicyCreate,
+	JsonOutcomePolicyPatch,
+	JsonOutcomesIngest,
+	MultipartOutcomesUpload,
 	JsonSavedSegmentCreate,
 	JsonSavedSegmentPatch,
 }
@@ -189,6 +196,9 @@ pub struct HarnessFixtures {
 	score_policy_get: i64,
 	score_policy_update: i64,
 	score_policy_delete: i64,
+	outcome_policy_get: i64,
+	outcome_policy_update: i64,
+	outcome_policy_delete: i64,
 	saved_segment_get: i64,
 	saved_segment_update: i64,
 	saved_segment_delete: i64,
@@ -931,6 +941,27 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	.fetch_one(pool)
 	.await
 	.expect("insert score policy delete failed");
+	let outcome_policy_get: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Get Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy get failed");
+	let outcome_policy_update: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Patch Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy patch failed");
+	let outcome_policy_delete: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Delete Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy delete failed");
 	let saved_segment_get: i64 = sqlx::query_scalar(
 		"INSERT INTO v1_saved_segments (tenant_id, name, scope, filter) VALUES ($1, 'Harness Get Segment', 'lists', '{}'::jsonb) RETURNING id",
 	)
@@ -1100,6 +1131,9 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		score_policy_get,
 		score_policy_update,
 		score_policy_delete,
+		outcome_policy_get,
+		outcome_policy_update,
+		outcome_policy_delete,
 		saved_segment_get,
 		saved_segment_update,
 		saved_segment_delete,
@@ -1215,6 +1249,9 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 		score_policy_get: 0,
 		score_policy_update: 0,
 		score_policy_delete: 0,
+		outcome_policy_get: 0,
+		outcome_policy_update: 0,
+		outcome_policy_delete: 0,
 		saved_segment_get: 0,
 		saved_segment_update: 0,
 		saved_segment_delete: 0,
@@ -1747,6 +1784,86 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/outcome-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcome-policies"),
+			BodyProfile::JsonOutcomePolicyCreate,
+			201,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"GET",
+			"/v1/outcome-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcome-policies"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["policies", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"PATCH",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyPatch,
+			BodyProfile::JsonOutcomePolicyPatch,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"DELETE",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::JsonOutcomesIngest,
+			202,
+			Expectation::Json(&["accepted", "rejected", "policy_id"])
+		),
+		case!(
+			"POST",
+			"/v1/outcomes/upload",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes/upload"),
+			BodyProfile::MultipartOutcomesUpload,
+			202,
+			Expectation::Json(&["accepted", "rejected", "policy_id"])
+		),
+		case!(
+			"GET",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["outcomes", "total"])
 		),
 		case!(
 			"POST",
@@ -2370,6 +2487,15 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::ScorePolicyDelete => {
 			format!("/v1/score-policies/{}", fixtures.score_policy_delete)
 		}
+		PathProfile::OutcomePolicyGet => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_get)
+		}
+		PathProfile::OutcomePolicyPatch => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_update)
+		}
+		PathProfile::OutcomePolicyDelete => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_delete)
+		}
 		PathProfile::SavedSegmentGet => format!("/v1/segments/{}", fixtures.saved_segment_get),
 		PathProfile::SavedSegmentPatch => {
 			format!("/v1/segments/{}", fixtures.saved_segment_update)
@@ -2486,6 +2612,19 @@ fn multipart_body() -> (String, Vec<u8>) {
 		"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"contacts.csv\"\r\nContent-Type: text/csv\r\n\r\nemail,name\r\nupload@example.com,Upload User\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\nHarness Upload\r\n--{boundary}--\r\n"
 	);
 	(boundary.to_string(), body.into_bytes())
+}
+
+fn outcomes_multipart_body(csv: &[u8]) -> (String, Vec<u8>) {
+	let boundary = "----reacher-outcomes-boundary";
+	let mut body = Vec::new();
+	body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
+	body.extend_from_slice(
+		b"Content-Disposition: form-data; name=\"file\"; filename=\"outcomes.csv\"\r\n",
+	);
+	body.extend_from_slice(b"Content-Type: text/csv\r\n\r\n");
+	body.extend_from_slice(csv);
+	body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
+	(boundary.to_string(), body)
 }
 
 fn apply_body(
@@ -2639,6 +2778,31 @@ fn apply_body(
 				"review": {"category": ["risky", "unknown"]}
 			}
 		})),
+		BodyProfile::JsonOutcomePolicyCreate => builder.json(&serde_json::json!({
+			"name": "Harness Created Outcome Policy",
+			"rules": serde_json::to_value(reacher_backend::outcomes::default_outcome_policy_rules()).unwrap()
+		})),
+		BodyProfile::JsonOutcomePolicyPatch => builder.json(&serde_json::json!({
+			"name": "Harness Updated Outcome Policy"
+		})),
+		BodyProfile::JsonOutcomesIngest => builder.json(&serde_json::json!({
+			"outcomes": [{
+				"email": "harness@example.com",
+				"type": "delivered",
+				"occurred_at": "2026-05-10T12:00:00Z",
+				"source": "harness"
+			}]
+		})),
+		BodyProfile::MultipartOutcomesUpload => {
+			let csv = b"email,outcome_type,occurred_at,source\nharness-csv@example.com,delivered,2026-05-10T12:00:00Z,harness\n";
+			let (boundary, body) = outcomes_multipart_body(csv);
+			builder
+				.header(
+					"content-type",
+					format!("multipart/form-data; boundary={boundary}"),
+				)
+				.body(body)
+		}
 		BodyProfile::JsonSavedSegmentCreate => builder.json(&serde_json::json!({
 			"name": "Harness Created Segment",
 			"filter": {

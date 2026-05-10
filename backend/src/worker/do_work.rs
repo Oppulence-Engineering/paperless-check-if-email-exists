@@ -530,6 +530,16 @@ pub async fn do_check_email_work(
 						),
 					)
 					.await;
+
+					// If outcomes were ingested before this verification ran, ensure
+					// suppression still fires (the scorer already saw them via
+					// build_scoring_context, but suppression list writes happen here).
+					crate::outcomes::apply_post_verification_outcome_check(
+						&pool,
+						tenant_uuid,
+						&task.input.to_email,
+					)
+					.await;
 				}
 			}
 		}
