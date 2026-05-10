@@ -204,7 +204,14 @@ async fn test_schedule_delayed_recheck_creates_scheduled_row() -> Result<()> {
 	let config = worker_config(true).await;
 
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
-	schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 1, &RetryPolicy::default()).await;
+	schedule_delayed_recheck(
+		&task,
+		Arc::clone(&config),
+		task_id,
+		1,
+		&RetryPolicy::default(),
+	)
+	.await;
 
 	let row = sqlx::query(
 		"SELECT status::TEXT as s, retry_count, publish_attempts, EXTRACT(EPOCH FROM (run_at - NOW()))::BIGINT as delta FROM verification_delayed_rechecks WHERE task_result_id = $1",
@@ -247,7 +254,14 @@ async fn test_schedule_delayed_recheck_skips_singleshot_jobs() -> Result<()> {
 
 	let mut task = make_task(job_id, "x@example.com", Some(tenant_id), task_id);
 	task.job_id = CheckEmailJobId::SingleShot;
-	schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 1, &RetryPolicy::default()).await;
+	schedule_delayed_recheck(
+		&task,
+		Arc::clone(&config),
+		task_id,
+		1,
+		&RetryPolicy::default(),
+	)
+	.await;
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 0);
 	Ok(())
@@ -263,8 +277,22 @@ async fn test_schedule_delayed_recheck_upsert_replaces_existing_scheduled_row() 
 	let config = worker_config(true).await;
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
 
-	schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 1, &RetryPolicy::default()).await;
-	schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 2, &RetryPolicy::default()).await;
+	schedule_delayed_recheck(
+		&task,
+		Arc::clone(&config),
+		task_id,
+		1,
+		&RetryPolicy::default(),
+	)
+	.await;
+	schedule_delayed_recheck(
+		&task,
+		Arc::clone(&config),
+		task_id,
+		2,
+		&RetryPolicy::default(),
+	)
+	.await;
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 1);
 	let retry_count: i32 = sqlx::query_scalar(
@@ -287,13 +315,21 @@ async fn test_schedule_delayed_recheck_marks_metadata_actor_and_db_id() -> Resul
 	let config = worker_config(true).await;
 
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
-	schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 1, &RetryPolicy::default()).await;
+	schedule_delayed_recheck(
+		&task,
+		Arc::clone(&config),
+		task_id,
+		1,
+		&RetryPolicy::default(),
+	)
+	.await;
 
-	let task_json: serde_json::Value =
-		sqlx::query_scalar("SELECT task FROM verification_delayed_rechecks WHERE task_result_id = $1")
-			.bind(task_id)
-			.fetch_one(db.pool())
-			.await?;
+	let task_json: serde_json::Value = sqlx::query_scalar(
+		"SELECT task FROM verification_delayed_rechecks WHERE task_result_id = $1",
+	)
+	.bind(task_id)
+	.fetch_one(db.pool())
+	.await?;
 	assert_eq!(
 		task_json["metadata"]["created_by"].as_str(),
 		Some("delayed_recheck")
@@ -339,11 +375,23 @@ async fn test_scheduler_claims_due_rechecks_and_publishes() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let config = worker_config(true).await;
-	let recheck_id = insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", -10, 0).await;
+	let recheck_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		-10,
+		0,
+	)
+	.await;
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
-	assert_eq!(fetch_recheck_status(db.pool(), recheck_id).await, "published");
+	assert_eq!(
+		fetch_recheck_status(db.pool(), recheck_id).await,
+		"published"
+	);
 	assert_eq!(
 		count_events(db.pool(), job_id, "task.delayed_recheck_published").await,
 		1
@@ -361,13 +409,27 @@ async fn test_scheduler_skips_rechecks_not_yet_due() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let config = worker_config(true).await;
-	let recheck_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", 600, 0).await;
+	let recheck_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
-	assert_eq!(fetch_recheck_status(db.pool(), recheck_id).await, "scheduled");
-	assert_eq!(fetch_recheck_publish_attempts(db.pool(), recheck_id).await, 0);
+	assert_eq!(
+		fetch_recheck_status(db.pool(), recheck_id).await,
+		"scheduled"
+	);
+	assert_eq!(
+		fetch_recheck_publish_attempts(db.pool(), recheck_id).await,
+		0
+	);
 	Ok(())
 }
 
@@ -381,7 +443,16 @@ async fn test_scheduler_respects_batch_size() -> Result<()> {
 	for _ in 0..5 {
 		let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 		recheck_ids.push(
-			insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", -10, 0).await,
+			insert_recheck_row(
+				db.pool(),
+				task_id,
+				job_id,
+				Some(tenant_id),
+				"scheduled",
+				-10,
+				0,
+			)
+			.await,
 		);
 	}
 	let config = worker_config_with(true, |dr| dr.batch_size = 2).await;
@@ -443,7 +514,16 @@ async fn test_scheduler_concurrent_cycles_do_not_double_claim() -> Result<()> {
 	for _ in 0..4 {
 		let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 		recheck_ids.push(
-			insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", -5, 0).await,
+			insert_recheck_row(
+				db.pool(),
+				task_id,
+				job_id,
+				Some(tenant_id),
+				"scheduled",
+				-5,
+				0,
+			)
+			.await,
 		);
 	}
 	let config = worker_config(true).await;
@@ -481,10 +561,9 @@ async fn test_scheduler_no_op_when_table_empty() -> Result<()> {
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
-	let total: i64 =
-		sqlx::query_scalar("SELECT COUNT(*) FROM verification_delayed_rechecks")
-			.fetch_one(db.pool())
-			.await?;
+	let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM verification_delayed_rechecks")
+		.fetch_one(db.pool())
+		.await?;
 	assert_eq!(total, 0);
 	Ok(())
 }
@@ -501,8 +580,16 @@ async fn test_stale_publishing_claim_is_reset_to_scheduled() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let config = worker_config(true).await;
-	let recheck_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "publishing", -3600, 1).await;
+	let recheck_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"publishing",
+		-3600,
+		1,
+	)
+	.await;
 	sqlx::query(
 		"UPDATE verification_delayed_rechecks SET updated_at = NOW() - INTERVAL '600 seconds' WHERE id = $1",
 	)
@@ -512,10 +599,12 @@ async fn test_stale_publishing_claim_is_reset_to_scheduled() -> Result<()> {
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
-	let row = sqlx::query("SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1")
-		.bind(recheck_id)
-		.fetch_one(db.pool())
-		.await?;
+	let row = sqlx::query(
+		"SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1",
+	)
+	.bind(recheck_id)
+	.fetch_one(db.pool())
+	.await?;
 	let status: String = row.get("s");
 	let last_error: Option<String> = row.get("last_error");
 	assert!(
@@ -538,24 +627,41 @@ async fn test_stale_publishing_marked_failed_when_newer_scheduled_exists() -> Re
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let config = worker_config(true).await;
 
-	let stale_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "publishing", -3600, 1).await;
+	let stale_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"publishing",
+		-3600,
+		1,
+	)
+	.await;
 	sqlx::query(
 		"UPDATE verification_delayed_rechecks SET updated_at = NOW() - INTERVAL '600 seconds' WHERE id = $1",
 	)
 	.bind(stale_id)
 	.execute(db.pool())
 	.await?;
-	let _newer_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", 600, 0).await;
+	let _newer_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
-	let row =
-		sqlx::query("SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1")
-			.bind(stale_id)
-			.fetch_one(db.pool())
-			.await?;
+	let row = sqlx::query(
+		"SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1",
+	)
+	.bind(stale_id)
+	.fetch_one(db.pool())
+	.await?;
 	let status: String = row.get("s");
 	let last_error: Option<String> = row.get("last_error");
 	assert_eq!(status, "failed");
@@ -574,8 +680,16 @@ async fn test_stale_recovery_respects_configured_timeout() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 
-	let recheck_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "publishing", -3600, 1).await;
+	let recheck_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"publishing",
+		-3600,
+		1,
+	)
+	.await;
 	sqlx::query(
 		"UPDATE verification_delayed_rechecks SET updated_at = NOW() - INTERVAL '120 seconds' WHERE id = $1",
 	)
@@ -614,16 +728,56 @@ async fn test_cleanup_removes_old_terminal_rows() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 
-	let old_published =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "published", -10, 0).await;
-	let old_failed =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "failed", -10, 0).await;
-	let old_cancelled =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "cancelled", -10, 0).await;
-	let recent_published =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "published", -10, 0).await;
-	let scheduled =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", 600, 0).await;
+	let old_published = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"published",
+		-10,
+		0,
+	)
+	.await;
+	let old_failed = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"failed",
+		-10,
+		0,
+	)
+	.await;
+	let old_cancelled = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"cancelled",
+		-10,
+		0,
+	)
+	.await;
+	let recent_published = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"published",
+		-10,
+		0,
+	)
+	.await;
+	let scheduled = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
 
 	sqlx::query("UPDATE verification_delayed_rechecks SET updated_at = NOW() - INTERVAL '10 days' WHERE id = ANY($1)")
 		.bind(&[old_published, old_failed, old_cancelled])
@@ -634,12 +788,11 @@ async fn test_cleanup_removes_old_terminal_rows() -> Result<()> {
 	assert_eq!(deleted, 3);
 
 	for surviving in [recent_published, scheduled] {
-		let cnt: i64 = sqlx::query_scalar(
-			"SELECT COUNT(*) FROM verification_delayed_rechecks WHERE id = $1",
-		)
-		.bind(surviving)
-		.fetch_one(db.pool())
-		.await?;
+		let cnt: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM verification_delayed_rechecks WHERE id = $1")
+				.bind(surviving)
+				.fetch_one(db.pool())
+				.await?;
 		assert_eq!(cnt, 1, "row {surviving} should still exist after cleanup");
 	}
 	Ok(())
@@ -652,7 +805,16 @@ async fn test_cleanup_no_op_when_nothing_old() -> Result<()> {
 	let tenant_id = insert_tenant(db.pool(), "cleanup-noop", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
-	insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "published", -10, 0).await;
+	insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"published",
+		-10,
+		0,
+	)
+	.await;
 
 	let deleted = cleanup_terminal_rechecks(db.pool(), 7).await?;
 	assert_eq!(deleted, 0);
@@ -673,10 +835,26 @@ async fn test_cancel_job_cancels_scheduled_rechecks() -> Result<()> {
 	let task_a = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let task_b = insert_task(db.pool(), job_id, "running", Some(tenant_id), None, None).await;
 
-	let scheduled_id =
-		insert_recheck_row(db.pool(), task_a, job_id, Some(tenant_id), "scheduled", 600, 0).await;
-	let publishing_id =
-		insert_recheck_row(db.pool(), task_b, job_id, Some(tenant_id), "publishing", -10, 1).await;
+	let scheduled_id = insert_recheck_row(
+		db.pool(),
+		task_a,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
+	let publishing_id = insert_recheck_row(
+		db.pool(),
+		task_b,
+		job_id,
+		Some(tenant_id),
+		"publishing",
+		-10,
+		1,
+	)
+	.await;
 
 	let config = worker_config(true).await;
 	let response = request()
@@ -688,10 +866,12 @@ async fn test_cancel_job_cancels_scheduled_rechecks() -> Result<()> {
 	assert_eq!(response.status(), StatusCode::OK);
 
 	for id in [scheduled_id, publishing_id] {
-		let row = sqlx::query("SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1")
-			.bind(id)
-			.fetch_one(db.pool())
-			.await?;
+		let row = sqlx::query(
+			"SELECT status::TEXT as s, last_error FROM verification_delayed_rechecks WHERE id = $1",
+		)
+		.bind(id)
+		.fetch_one(db.pool())
+		.await?;
 		let status: String = row.get("s");
 		let last_error: Option<String> = row.get("last_error");
 		assert_eq!(status, "cancelled", "row {id} should be cancelled");
@@ -708,10 +888,26 @@ async fn test_cancel_job_leaves_terminal_rechecks_alone() -> Result<()> {
 	let (api_key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["bulk"]).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
-	let published_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "published", -10, 1).await;
-	let failed_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "failed", -10, 1).await;
+	let published_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"published",
+		-10,
+		1,
+	)
+	.await;
+	let failed_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"failed",
+		-10,
+		1,
+	)
+	.await;
 
 	let config = worker_config(true).await;
 	let response = request()
@@ -722,7 +918,10 @@ async fn test_cancel_job_leaves_terminal_rechecks_alone() -> Result<()> {
 		.await;
 	assert_eq!(response.status(), StatusCode::OK);
 
-	assert_eq!(fetch_recheck_status(db.pool(), published_id).await, "published");
+	assert_eq!(
+		fetch_recheck_status(db.pool(), published_id).await,
+		"published"
+	);
 	assert_eq!(fetch_recheck_status(db.pool(), failed_id).await, "failed");
 	Ok(())
 }
@@ -739,10 +938,26 @@ async fn test_cancel_other_tenant_does_not_touch_our_rechecks() -> Result<()> {
 	let task_a = insert_task(db.pool(), job_a, "queued", Some(tenant_a), None, None).await;
 	let task_b = insert_task(db.pool(), job_b, "queued", Some(tenant_b), None, None).await;
 
-	let scheduled_a =
-		insert_recheck_row(db.pool(), task_a, job_a, Some(tenant_a), "scheduled", 600, 0).await;
-	let scheduled_b =
-		insert_recheck_row(db.pool(), task_b, job_b, Some(tenant_b), "scheduled", 600, 0).await;
+	let scheduled_a = insert_recheck_row(
+		db.pool(),
+		task_a,
+		job_a,
+		Some(tenant_a),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
+	let scheduled_b = insert_recheck_row(
+		db.pool(),
+		task_b,
+		job_b,
+		Some(tenant_b),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
 
 	let config = worker_config(true).await;
 	let response = request()
@@ -753,8 +968,14 @@ async fn test_cancel_other_tenant_does_not_touch_our_rechecks() -> Result<()> {
 		.await;
 	assert_eq!(response.status(), StatusCode::OK);
 
-	assert_eq!(fetch_recheck_status(db.pool(), scheduled_a).await, "scheduled");
-	assert_eq!(fetch_recheck_status(db.pool(), scheduled_b).await, "cancelled");
+	assert_eq!(
+		fetch_recheck_status(db.pool(), scheduled_a).await,
+		"scheduled"
+	);
+	assert_eq!(
+		fetch_recheck_status(db.pool(), scheduled_b).await,
+		"cancelled"
+	);
 	Ok(())
 }
 
@@ -776,8 +997,14 @@ async fn test_disabled_config_skips_scheduling() -> Result<()> {
 	// in do_work.rs before invoking it. So we simulate the worker gate here by checking
 	// the config value before calling.
 	if config.delayed_recheck.enable {
-		schedule_delayed_recheck(&task, Arc::clone(&config), task_id, 1, &RetryPolicy::default())
-			.await;
+		schedule_delayed_recheck(
+			&task,
+			Arc::clone(&config),
+			task_id,
+			1,
+			&RetryPolicy::default(),
+		)
+		.await;
 	}
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 0);
@@ -792,8 +1019,16 @@ async fn test_disabled_config_still_runs_cycle_safely() -> Result<()> {
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 	let config = worker_config(false).await;
-	let recheck_id =
-		insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", -10, 0).await;
+	let recheck_id = insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		-10,
+		0,
+	)
+	.await;
 
 	// Even though enable=false, if a row is in the table the cycle runs (the gate is
 	// only at spawn time + worker schedule time). Verify it doesn't panic and either
@@ -801,7 +1036,10 @@ async fn test_disabled_config_still_runs_cycle_safely() -> Result<()> {
 	let _ = run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await;
 	let status = fetch_recheck_status(db.pool(), recheck_id).await;
 	assert!(
-		matches!(status.as_str(), "scheduled" | "publishing" | "published" | "failed"),
+		matches!(
+			status.as_str(),
+			"scheduled" | "publishing" | "published" | "failed"
+		),
 		"unexpected status {}",
 		status
 	);
@@ -821,7 +1059,10 @@ async fn test_table_and_indexes_present() -> Result<()> {
 	)
 	.fetch_one(db.pool())
 	.await?;
-	assert!(table_exists, "verification_delayed_rechecks table should exist");
+	assert!(
+		table_exists,
+		"verification_delayed_rechecks table should exist"
+	);
 
 	let indexes = vec![
 		"idx_verification_delayed_rechecks_due",
@@ -829,12 +1070,11 @@ async fn test_table_and_indexes_present() -> Result<()> {
 		"idx_verification_delayed_rechecks_one_scheduled",
 	];
 	for ix in indexes {
-		let exists: bool = sqlx::query_scalar(
-			"SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = $1)",
-		)
-		.bind(ix)
-		.fetch_one(db.pool())
-		.await?;
+		let exists: bool =
+			sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = $1)")
+				.bind(ix)
+				.fetch_one(db.pool())
+				.await?;
 		assert!(exists, "expected index {} to exist", ix);
 	}
 
@@ -854,7 +1094,16 @@ async fn test_unique_scheduled_index_prevents_duplicate_inserts() -> Result<()> 
 	let tenant_id = insert_tenant(db.pool(), "unique-scheduled", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
-	insert_recheck_row(db.pool(), task_id, job_id, Some(tenant_id), "scheduled", 600, 0).await;
+	insert_recheck_row(
+		db.pool(),
+		task_id,
+		job_id,
+		Some(tenant_id),
+		"scheduled",
+		600,
+		0,
+	)
+	.await;
 
 	let result = sqlx::query(
 		r#"
