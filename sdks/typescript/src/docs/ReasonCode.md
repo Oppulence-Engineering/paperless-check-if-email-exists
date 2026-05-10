@@ -55,4 +55,28 @@
 
 * `PossibleTypo` (value: `'possible_typo'`)
 
+* `ProviderReputation` (value: `'provider_reputation'`)
+
+* `TenantHistoryPositive` (value: `'tenant_history_positive'`)
+
+* `TenantHistoryInconsistent` (value: `'tenant_history_inconsistent'`)
+
+* `CatchAllLowConfidence` (value: `'catch_all_low_confidence'`)
+
+* `CatchAllMediumConfidence` (value: `'catch_all_medium_confidence'`)
+
+* `CatchAllHighRisk` (value: `'catch_all_high_risk'`)
+
+* `PartialConfidence` (value: `'partial_confidence'`)
+
+* `TransientSmtp` (value: `'transient_smtp'`)
+
+* `SmtpPolicyBlock` (value: `'smtp_policy_block'`)
+
+* `SmtpTimeout` (value: `'smtp_timeout'`)
+
+* `SmtpNetwork` (value: `'smtp_network'`)
+
+* `SmtpAmbiguous` (value: `'smtp_ambiguous'`)
+
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

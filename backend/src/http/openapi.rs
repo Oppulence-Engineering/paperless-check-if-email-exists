@@ -632,7 +632,19 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"spam_trap",
 				"unknown_deliverability",
 				"free_provider",
-				"possible_typo"
+				"possible_typo",
+				"provider_reputation",
+				"tenant_history_positive",
+				"tenant_history_inconsistent",
+				"catch_all_low_confidence",
+				"catch_all_medium_confidence",
+				"catch_all_high_risk",
+				"partial_confidence",
+				"transient_smtp",
+				"smtp_policy_block",
+				"smtp_timeout",
+				"smtp_network",
+				"smtp_ambiguous"
 			]
 		}),
 	);
@@ -681,6 +693,69 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": ["fresh", "recent", "aging", "stale", "expired"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ConfidenceLevel",
+		json!({
+			"type": "string",
+			"enum": ["high", "medium", "low", "very_low"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllSeverity",
+		json!({
+			"type": "string",
+			"enum": ["low", "medium", "high"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SmtpUncertaintyClass",
+		json!({
+			"type": "string",
+			"enum": [
+				"transient",
+				"policy_block",
+				"timeout",
+				"network",
+				"ambiguous_response",
+				"smtp_unreachable"
+			]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllScore",
+		json!({
+			"type": "object",
+			"properties": {
+				"severity": { "$ref": "#/components/schemas/CatchAllSeverity" },
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["severity", "confidence", "factors"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"PartialConfidence",
+		json!({
+			"type": "object",
+			"properties": {
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"classification": { "$ref": "#/components/schemas/SmtpUncertaintyClass" },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["confidence", "classification", "factors"]
 		}),
 	);
 	insert_schema(
@@ -761,7 +836,15 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"freshness": { "$ref": "#/components/schemas/Freshness" },
 				"domain_suggestion": { "type": "string", "description": "Suggested corrected email when a likely domain typo is detected" },
 				"normalized_email": { "type": "string", "description": "Canonical form of the email after alias/plus-address normalization" },
-				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains (low=free provider, high=corporate)" }
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"confidence_level": { "$ref": "#/components/schemas/ConfidenceLevel" },
+				"confidence_factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"catch_all_severity": { "$ref": "#/components/schemas/CatchAllSeverity" },
+				"catch_all": { "$ref": "#/components/schemas/CatchAllScore" },
+				"partial_confidence": { "$ref": "#/components/schemas/PartialConfidence" }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),

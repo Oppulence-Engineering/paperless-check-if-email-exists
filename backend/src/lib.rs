@@ -18,6 +18,7 @@
 
 pub mod bounce_risk;
 pub mod config;
+pub mod delayed_recheck;
 pub mod finder;
 pub mod http;
 pub mod list_intelligence;

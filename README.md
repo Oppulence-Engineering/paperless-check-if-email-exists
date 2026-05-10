@@ -409,16 +409,12 @@ sequenceDiagram
                 Core_Lib->>Core_Lib: Misc Checks
                 Core_Lib-->>Worker_Process: CheckEmailOutput
 
-                alt Result is Unknown
-                    Worker_Process->>RabbitMQ: Reject (requeue=true)
-                else Success or Error
-                    Worker_Process->>RabbitMQ: ACK
-                    Worker_Process->>Storage: store()
-                    Storage->>Postgres: INSERT result
-                    Worker_Process->>RabbitMQ: Send reply
-                    RabbitMQ-->>HTTP_Server: Success reply
-                    HTTP_Server-->>Client: 200 OK + JSON
-                end
+                Worker_Process->>RabbitMQ: ACK
+                Worker_Process->>Storage: store()
+                Storage->>Postgres: INSERT result
+                Worker_Process->>RabbitMQ: Send reply
+                RabbitMQ-->>HTTP_Server: Success reply
+                HTTP_Server-->>Client: 200 OK + JSON
             end
         end
         ThrottleManager->>ThrottleManager: increment_counters()
@@ -481,9 +477,9 @@ graph TB
     TASK_PROCESSOR --> EMAIL_CHECKER
     EMAIL_CHECKER --> RESULT_HANDLER
 
-    RESULT_HANDLER -->|Unknown Result| UNKNOWN_REJECT{First Attempt?}
-    UNKNOWN_REJECT -->|Yes| QUEUE
-    UNKNOWN_REJECT -->|No| ACK
+    RESULT_HANDLER -->|Unknown Result| PARTIAL_CONFIDENCE[Store Partial Confidence]
+    PARTIAL_CONFIDENCE --> DELAYED_RECHECK[Schedule Delayed Recheck]
+    DELAYED_RECHECK --> ACK
 
     RESULT_HANDLER -->|Success/Error| ACK[ACK Message]
     ACK --> STORAGE
@@ -538,9 +534,13 @@ sequenceDiagram
         Worker->>Core: check_email()
         Core-->>Worker: CheckEmailOutput
 
-        alt Result is Unknown (first attempt)
-            Worker->>RabbitMQ: Reject (requeue=true)
-            RabbitMQ->>Worker: Redeliver
+        alt Result is Unknown and retry budget remains
+            Worker->>RabbitMQ: ACK
+            Worker->>Storage: store(task, partial confidence result)
+            Storage->>Postgres: INSERT/UPDATE v1_task_result
+            Worker->>Webhook: POST webhook URL (if configured)
+            Webhook-->>Worker: Response
+            Worker->>Postgres: schedule delayed recheck
         else Success/Error
             Worker->>RabbitMQ: ACK
             Worker->>Storage: store(task, result)
@@ -571,6 +571,42 @@ sequenceDiagram
     Postgres->>Postgres: INSERT INTO email_results<br/>{job_id, result}
     Postgres->>Postgres: Job complete
 ```
+
+### Delayed Recheck for Unknown Results
+
+When a bulk-job verification returns `Reachable::Unknown` (greylisting, transient SMTP failure,
+ambiguous response, etc.) the worker no longer rejects the RabbitMQ message with `requeue=true`.
+Instead it ACKs the message, persists a partial result with a confidence score and reason classification,
+and writes a row into `verification_delayed_rechecks` scheduled to be republished after a greylist window.
+A background scheduler polls every `poll_interval_seconds` (30s by default), atomically claims due
+rechecks with `FOR UPDATE SKIP LOCKED`, and republishes them onto the bulk queue. A separate cleanup
+task purges terminal (`published`/`failed`/`cancelled`) rows after `retention_days`.
+
+For the default `RetryPolicy` the windows are **5 minutes** for the first recheck and **15 minutes**
+for the second; a custom policy uses exponential backoff (`backoff_seconds * backoff_multiplier^(n-1)`).
+Bounded by `RetryPolicy.max_retries`. Cancelling a job (`POST /v1/jobs/{id}/cancel`) flips any
+scheduled or in-flight rechecks for that job to `cancelled` in the same transaction.
+
+The verification response now exposes `score.partial_confidence` for these cases:
+
+```json
+"score": {
+  "score": 55,
+  "category": "risky",
+  "confidence": 62,
+  "confidence_level": "medium",
+  "partial_confidence": {
+    "confidence": 62,
+    "classification": "timeout",
+    "factors": ["mx_records_present", "tenant_history_safe", "domain_age_old"]
+  }
+}
+```
+
+`classification` is one of `transient`, `policy_block`, `timeout`, `network`, `ambiguous_response`,
+or `smtp_unreachable`. Knobs live in the `[delayed_recheck]` config block — `enable`, `poll_interval_seconds`,
+`batch_size`, `stale_publishing_seconds`, `publish_retry_seconds`, `max_publish_attempts`, `retention_days`,
+and `cleanup_interval_seconds`. Set `enable = false` to fall back to plain ACK-and-store on Unknown.
 
 ### Component Interaction Diagram
 

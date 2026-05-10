@@ -69,6 +69,22 @@ pub async fn run_warp_server(
 		idempotency::spawn_idempotency_cleanup(pool.clone());
 		crate::reputation::spawn_cache_cleanup(pool.clone());
 
+		if config.delayed_recheck.enable && config.worker.enable {
+			crate::delayed_recheck::spawn_delayed_recheck_scheduler(
+				Arc::clone(&config),
+				pool.clone(),
+			);
+			crate::delayed_recheck::spawn_delayed_recheck_cleanup(
+				Arc::clone(&config),
+				pool.clone(),
+			);
+		} else if config.delayed_recheck.enable {
+			tracing::warn!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Delayed recheck is enabled but worker mode is disabled. Scheduler will not start."
+			);
+		}
+
 		if config.reverification.enable && config.worker.enable {
 			crate::reverification::spawn_reverification_scheduler(Arc::clone(&config), pool);
 		} else if config.reverification.enable {

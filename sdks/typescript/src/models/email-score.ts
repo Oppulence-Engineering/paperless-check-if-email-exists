@@ -15,10 +15,22 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { CatchAllScore } from './catch-all-score';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { CatchAllSeverity } from './catch-all-severity';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { ConfidenceLevel } from './confidence-level';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { EmailCategory } from './email-category';
 // May contain unused imports in some cases
 // @ts-ignore
 import type { Freshness } from './freshness';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { PartialConfidence } from './partial-confidence';
 // May contain unused imports in some cases
 // @ts-ignore
 import type { ReasonCode } from './reason-code';
@@ -42,17 +54,41 @@ export interface EmailScore {
      */
     'age_days'?: number;
     /**
-     * Severity tier for catch-all domains (low=free provider, high=corporate)
-     * @type {string}
+     *
+     * @type {CatchAllScore}
      * @memberof EmailScore
      */
-    'catch_all_severity'?: EmailScoreCatchAllSeverityEnum;
+    'catch_all'?: CatchAllScore;
+    /**
+     *
+     * @type {CatchAllSeverity}
+     * @memberof EmailScore
+     */
+    'catch_all_severity'?: CatchAllSeverity;
     /**
      *
      * @type {EmailCategory}
      * @memberof EmailScore
      */
     'category': EmailCategory;
+    /**
+     *
+     * @type {number}
+     * @memberof EmailScore
+     */
+    'confidence'?: number;
+    /**
+     *
+     * @type {Array<string>}
+     * @memberof EmailScore
+     */
+    'confidence_factors'?: Array<string>;
+    /**
+     *
+     * @type {ConfidenceLevel}
+     * @memberof EmailScore
+     */
+    'confidence_level'?: ConfidenceLevel;
     /**
      * Suggested corrected email when a likely domain typo is detected
      * @type {string}
@@ -71,6 +107,12 @@ export interface EmailScore {
      * @memberof EmailScore
      */
     'normalized_email'?: string;
+    /**
+     *
+     * @type {PartialConfidence}
+     * @memberof EmailScore
+     */
+    'partial_confidence'?: PartialConfidence;
     /**
      *
      * @type {Array<ReasonCode>}
@@ -108,10 +150,3 @@ export interface EmailScore {
      */
     'verified_at'?: string;
 }
-
-export const EmailScoreCatchAllSeverityEnum = {
-    Low: 'low',
-    High: 'high'
-} as const;
-
-export type EmailScoreCatchAllSeverityEnum = typeof EmailScoreCatchAllSeverityEnum[keyof typeof EmailScoreCatchAllSeverityEnum];

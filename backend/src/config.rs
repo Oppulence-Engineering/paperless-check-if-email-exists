@@ -89,6 +89,10 @@ pub struct BackendConfig {
 	/// Scheduled pipeline configuration
 	#[serde(default)]
 	pub pipelines: PipelinesConfig,
+
+	/// Delayed-recheck scheduler configuration (handles bulk Unknown retries).
+	#[serde(default)]
+	pub delayed_recheck: DelayedRecheckConfig,
 	/// Bounce-risk enrichment configuration.
 	#[serde(default)]
 	pub bounce_risk: BounceRiskConfig,
@@ -134,6 +138,7 @@ impl BackendConfig {
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
 			pipelines: PipelinesConfig::default(),
+			delayed_recheck: DelayedRecheckConfig::default(),
 			bounce_risk: BounceRiskConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
@@ -425,6 +430,66 @@ impl Default for ReverificationConfig {
 			interval_seconds: default_reverification_interval(),
 			default_staleness_days: default_staleness_days(),
 			default_batch_size: default_reverification_batch_size(),
+		}
+	}
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct DelayedRecheckConfig {
+	#[serde(default = "default_delayed_recheck_enable")]
+	pub enable: bool,
+	#[serde(default = "default_delayed_recheck_poll_interval_seconds")]
+	pub poll_interval_seconds: u64,
+	#[serde(default = "default_delayed_recheck_batch_size")]
+	pub batch_size: i64,
+	#[serde(default = "default_delayed_recheck_stale_publishing_seconds")]
+	pub stale_publishing_seconds: i64,
+	#[serde(default = "default_delayed_recheck_publish_retry_seconds")]
+	pub publish_retry_seconds: i64,
+	#[serde(default = "default_delayed_recheck_max_publish_attempts")]
+	pub max_publish_attempts: i32,
+	#[serde(default = "default_delayed_recheck_retention_days")]
+	pub retention_days: i32,
+	#[serde(default = "default_delayed_recheck_cleanup_interval_seconds")]
+	pub cleanup_interval_seconds: u64,
+}
+
+fn default_delayed_recheck_enable() -> bool {
+	true
+}
+fn default_delayed_recheck_poll_interval_seconds() -> u64 {
+	30
+}
+fn default_delayed_recheck_batch_size() -> i64 {
+	100
+}
+fn default_delayed_recheck_stale_publishing_seconds() -> i64 {
+	300
+}
+fn default_delayed_recheck_publish_retry_seconds() -> i64 {
+	60
+}
+fn default_delayed_recheck_max_publish_attempts() -> i32 {
+	5
+}
+fn default_delayed_recheck_retention_days() -> i32 {
+	7
+}
+fn default_delayed_recheck_cleanup_interval_seconds() -> u64 {
+	3600
+}
+
+impl Default for DelayedRecheckConfig {
+	fn default() -> Self {
+		Self {
+			enable: default_delayed_recheck_enable(),
+			poll_interval_seconds: default_delayed_recheck_poll_interval_seconds(),
+			batch_size: default_delayed_recheck_batch_size(),
+			stale_publishing_seconds: default_delayed_recheck_stale_publishing_seconds(),
+			publish_retry_seconds: default_delayed_recheck_publish_retry_seconds(),
+			max_publish_attempts: default_delayed_recheck_max_publish_attempts(),
+			retention_days: default_delayed_recheck_retention_days(),
+			cleanup_interval_seconds: default_delayed_recheck_cleanup_interval_seconds(),
 		}
 	}
 }
