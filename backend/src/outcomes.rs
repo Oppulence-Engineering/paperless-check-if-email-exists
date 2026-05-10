@@ -141,8 +141,7 @@ pub fn default_outcome_policy_rules() -> OutcomePolicyRules {
 }
 
 pub fn default_outcome_policy_rules_json() -> serde_json::Value {
-	serde_json::to_value(default_outcome_policy_rules())
-		.unwrap_or_else(|_| serde_json::json!({}))
+	serde_json::to_value(default_outcome_policy_rules()).unwrap_or_else(|_| serde_json::json!({}))
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -495,10 +494,7 @@ async fn fetch_default_policy(
 	Some((id, rules))
 }
 
-async fn create_default_policy(
-	pg_pool: &PgPool,
-	tenant_id: Uuid,
-) -> (i64, OutcomePolicyRules) {
+async fn create_default_policy(pg_pool: &PgPool, tenant_id: Uuid) -> (i64, OutcomePolicyRules) {
 	let rules = default_outcome_policy_rules();
 	let rules_json = default_outcome_policy_rules_json();
 	let id = sqlx::query_scalar::<_, i64>(
@@ -577,8 +573,7 @@ pub async fn enrich_outcome_context(
 		open_count: row.try_get("open_count").unwrap_or(0),
 		click_count: row.try_get("click_count").unwrap_or(0),
 		soft_bounce_count: row.try_get("soft_bounce_count").unwrap_or(0),
-		latest_engagement_days_ago: latest_engagement
-			.map(|t| (completed_at - t).num_days().max(0)),
+		latest_engagement_days_ago: latest_engagement.map(|t| (completed_at - t).num_days().max(0)),
 	}
 }
 
@@ -591,11 +586,7 @@ pub async fn enrich_outcome_context(
 /// suppression should be applied even though scoring already ran. (The reverse
 /// case — outcome arrives FIRST then verification runs — is handled by
 /// `enrich_outcome_context` feeding into `ScoringContext`.)
-pub async fn apply_post_verification_outcome_check(
-	pg_pool: &PgPool,
-	tenant_id: Uuid,
-	email: &str,
-) {
+pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: Uuid, email: &str) {
 	let Some(canonical) = canonicalize_email(email) else {
 		return;
 	};
@@ -650,7 +641,10 @@ mod tests {
 			back.complaint,
 			RuleAction::SuppressAndUnsubscribe { .. }
 		));
-		assert!(matches!(back.delivered, RuleAction::ScoreBoost { boost: 5 }));
+		assert!(matches!(
+			back.delivered,
+			RuleAction::ScoreBoost { boost: 5 }
+		));
 	}
 
 	#[test]
@@ -682,7 +676,9 @@ mod tests {
 		));
 		assert!(matches!(
 			decide_action(&policy, OutcomeType::Complaint),
-			Action::SuppressAndUnsubscribe { reason: "complaint" }
+			Action::SuppressAndUnsubscribe {
+				reason: "complaint"
+			}
 		));
 		assert!(matches!(
 			decide_action(&policy, OutcomeType::SoftBounce),

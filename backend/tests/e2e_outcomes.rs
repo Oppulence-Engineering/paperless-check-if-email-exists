@@ -118,7 +118,10 @@ async fn test_post_single_outcome_creates_row() -> Result<()> {
 		.await;
 	assert_eq!(response.status(), StatusCode::ACCEPTED);
 
-	assert_eq!(count_outcomes(db.pool(), tenant_id, "user@example.com").await, 1);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_id, "user@example.com").await,
+		1
+	);
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["accepted"], 1);
 	assert_eq!(body["rejected"], 0);
@@ -224,7 +227,10 @@ async fn test_post_outcomes_idempotent_duplicate_suppressed() -> Result<()> {
 	let s2 = ingest_outcomes(db.pool(), tenant_id, &policy, &outcomes).await;
 	assert_eq!(s1.accepted, 1);
 	assert_eq!(s2.accepted, 1, "second call still 'accepts' the request");
-	assert_eq!(count_outcomes(db.pool(), tenant_id, "dup@example.com").await, 1);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_id, "dup@example.com").await,
+		1
+	);
 	Ok(())
 }
 
@@ -244,8 +250,14 @@ async fn test_post_outcomes_cross_tenant_isolation() -> Result<()> {
 	)
 	.await;
 
-	assert_eq!(count_outcomes(db.pool(), tenant_a, "shared@example.com").await, 1);
-	assert_eq!(count_outcomes(db.pool(), tenant_b, "shared@example.com").await, 0);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_a, "shared@example.com").await,
+		1
+	);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_b, "shared@example.com").await,
+		0
+	);
 	Ok(())
 }
 
@@ -273,7 +285,12 @@ async fn test_csv_upload_happy_path() -> Result<()> {
 		.body(body)
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
-	assert_eq!(response.status(), StatusCode::ACCEPTED, "body: {:?}", response.body());
+	assert_eq!(
+		response.status(),
+		StatusCode::ACCEPTED,
+		"body: {:?}",
+		response.body()
+	);
 
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["accepted"], 2);
@@ -400,7 +417,10 @@ async fn test_outcome_policy_unique_default_per_tenant() -> Result<()> {
 	.bind(&rules)
 	.execute(db.pool())
 	.await;
-	assert!(dup.is_err(), "second is_default=true should violate unique partial index");
+	assert!(
+		dup.is_err(),
+		"second is_default=true should violate unique partial index"
+	);
 	Ok(())
 }
 
@@ -421,11 +441,12 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 	assert!(id > 0);
 	assert_eq!(rules.outcome_ttl_days, 90);
 
-	let after: i64 =
-		sqlx::query_scalar("SELECT COUNT(*) FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true")
-			.bind(tenant_id)
-			.fetch_one(db.pool())
-			.await?;
+	let after: i64 = sqlx::query_scalar(
+		"SELECT COUNT(*) FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
+	)
+	.bind(tenant_id)
+	.fetch_one(db.pool())
+	.await?;
 	assert_eq!(after, 1);
 	Ok(())
 }
@@ -515,7 +536,10 @@ async fn test_hard_bounce_creates_suppression() -> Result<()> {
 		&[ingest("hb@example.com", OutcomeType::HardBounce)],
 	)
 	.await;
-	assert_eq!(count_suppressions(db.pool(), tenant_id, "hb@example.com").await, 1);
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "hb@example.com").await,
+		1
+	);
 	assert_eq!(
 		fetch_suppression_reason(db.pool(), tenant_id, "hb@example.com").await,
 		"bounce"
@@ -559,13 +583,19 @@ async fn test_soft_bounce_threshold_required_for_suppression() -> Result<()> {
 		o.source = Some(format!("src-{}", i));
 		ingest_outcomes(db.pool(), tenant_id, &policy, &[o]).await;
 	}
-	assert_eq!(count_suppressions(db.pool(), tenant_id, "sb@example.com").await, 0);
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "sb@example.com").await,
+		0
+	);
 
 	let mut third = ingest("sb@example.com", OutcomeType::SoftBounce);
 	third.occurred_at = Utc::now() - ChronoDuration::days(2);
 	third.source = Some("src-2".to_string());
 	ingest_outcomes(db.pool(), tenant_id, &policy, &[third]).await;
-	assert_eq!(count_suppressions(db.pool(), tenant_id, "sb@example.com").await, 1);
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "sb@example.com").await,
+		1
+	);
 	Ok(())
 }
 
@@ -587,10 +617,16 @@ async fn test_apply_post_verification_hook_suppresses_when_outcome_exists() -> R
 		.bind("posthook@example.com")
 		.execute(db.pool())
 		.await?;
-	assert_eq!(count_suppressions(db.pool(), tenant_id, "posthook@example.com").await, 0);
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "posthook@example.com").await,
+		0
+	);
 
 	apply_post_verification_outcome_check(db.pool(), tenant_id, "posthook@example.com").await;
-	assert_eq!(count_suppressions(db.pool(), tenant_id, "posthook@example.com").await, 1);
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "posthook@example.com").await,
+		1
+	);
 	Ok(())
 }
 
@@ -913,12 +949,11 @@ async fn test_outcomes_table_and_indexes_present() -> Result<()> {
 		"idx_verification_outcomes_campaign",
 		"idx_outcome_policies_one_default",
 	] {
-		let exists: bool = sqlx::query_scalar(
-			"SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = $1)",
-		)
-		.bind(ix)
-		.fetch_one(db.pool())
-		.await?;
+		let exists: bool =
+			sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = $1)")
+				.bind(ix)
+				.fetch_one(db.pool())
+				.await?;
 		assert!(exists, "index {} should exist", ix);
 	}
 	Ok(())

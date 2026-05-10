@@ -9,6 +9,7 @@ use crate::outcomes::{
 	IngestOutcomesResponse, IngestRowError, OutcomeType,
 };
 use crate::tenant::context::{scope, TenantContext};
+use bytes::Buf;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
@@ -18,7 +19,6 @@ use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::multipart::FormData;
 use warp::Filter;
-use bytes::Buf;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 #[into_params(parameter_in = Query)]
@@ -227,7 +227,10 @@ fn parse_csv_row(
 		.map_err(|_| IngestRowError {
 			index,
 			email: email.clone(),
-			message: format!("invalid occurred_at '{}' (expected RFC3339)", occurred_at_str),
+			message: format!(
+				"invalid occurred_at '{}' (expected RFC3339)",
+				occurred_at_str
+			),
 		})?;
 	let source = row
 		.get("source")

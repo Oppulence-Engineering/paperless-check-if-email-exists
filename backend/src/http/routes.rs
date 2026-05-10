@@ -459,24 +459,18 @@ api_routes!(
 		"/v1/outcome-policies/{policy_id}",
 		|config| crate::http::v1::outcome_policies::v1_delete_outcome_policy(config)
 	),
-	(
-		route_v1_outcomes_post,
-		"POST",
-		"/v1/outcomes",
-		|config| crate::http::v1::outcomes::v1_post_outcomes(config)
-	),
+	(route_v1_outcomes_post, "POST", "/v1/outcomes", |config| {
+		crate::http::v1::outcomes::v1_post_outcomes(config)
+	}),
 	(
 		route_v1_outcomes_upload,
 		"POST",
 		"/v1/outcomes/upload",
 		|config| crate::http::v1::outcomes::v1_upload_outcomes(config)
 	),
-	(
-		route_v1_outcomes_list,
-		"GET",
-		"/v1/outcomes",
-		|config| crate::http::v1::outcomes::v1_list_outcomes(config)
-	),
+	(route_v1_outcomes_list, "GET", "/v1/outcomes", |config| {
+		crate::http::v1::outcomes::v1_list_outcomes(config)
+	}),
 	(
 		route_v1_me_domains_list,
 		"GET",
