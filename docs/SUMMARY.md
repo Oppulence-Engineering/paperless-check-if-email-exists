@@ -22,6 +22,10 @@
 * [Reacher Configuration](self-hosting/reacher-configuration-v0.10.md)
 * [Debugging Reacher](self-hosting/debugging-reacher.md)
 
+## Integrations
+
+* [Connecting your ESP to the outcome feedback loop](integrations/outcome-feedback-loop.md)
+
 ## Advanced
 
 * [Customer Feature Backlog](advanced/customer-feature-backlog.md)
