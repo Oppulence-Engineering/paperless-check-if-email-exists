@@ -3047,12 +3047,32 @@ components:
             - records
           input: input
           score:
+            age_days: 1
+            confidence_factors:
+            - confidence_factors
+            - confidence_factors
+            catch_all_severity: null
+            partial_confidence:
+              confidence: 23
+              classification: transient
+              factors:
+              - factors
+              - factors
+            confidence: 56
+            confidence_level: high
+            catch_all:
+              severity: low
+              confidence: 59
+              factors:
+              - factors
+              - factors
+            freshness: fresh
+            safe_to_send: true
+            sub_reason: deliverable
             reason_codes:
             - deliverable
             - deliverable
-            age_days: 1
-            score: 59
-            catch_all_severity: low
+            score: 70
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -3071,10 +3091,7 @@ components:
             verified_at: 2000-01-23T04:56:07.000+00:00
             domain_suggestion: domain_suggestion
             category: valid
-            freshness: fresh
             normalized_email: normalized_email
-            safe_to_send: true
-            sub_reason: deliverable
           provider: gmail
           bounce_risk: ""
           syntax:
@@ -3113,12 +3130,32 @@ components:
             - records
           input: input
           score:
+            age_days: 1
+            confidence_factors:
+            - confidence_factors
+            - confidence_factors
+            catch_all_severity: null
+            partial_confidence:
+              confidence: 23
+              classification: transient
+              factors:
+              - factors
+              - factors
+            confidence: 56
+            confidence_level: high
+            catch_all:
+              severity: low
+              confidence: 59
+              factors:
+              - factors
+              - factors
+            freshness: fresh
+            safe_to_send: true
+            sub_reason: deliverable
             reason_codes:
             - deliverable
             - deliverable
-            age_days: 1
-            score: 59
-            catch_all_severity: low
+            score: 70
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -3137,10 +3174,7 @@ components:
             verified_at: 2000-01-23T04:56:07.000+00:00
             domain_suggestion: domain_suggestion
             category: valid
-            freshness: fresh
             normalized_email: normalized_email
-            safe_to_send: true
-            sub_reason: deliverable
           provider: gmail
           bounce_risk: ""
           syntax:
@@ -3161,6 +3195,36 @@ components:
       required:
       - results
       type: object
+    CatchAllScore:
+      example:
+        severity: low
+        confidence: 59
+        factors:
+        - factors
+        - factors
+      properties:
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        factors:
+          items:
+            type: string
+          type: array
+        severity:
+          $ref: "#/components/schemas/CatchAllSeverity"
+      required:
+      - confidence
+      - factors
+      - severity
+      type: object
+    CatchAllSeverity:
+      enum:
+      - low
+      - medium
+      - high
+      type: string
     CheckEmailInputProxy:
       description: Proxy configuration for email verification.
       example:
@@ -3220,12 +3284,32 @@ components:
           - records
         input: input
         score:
+          age_days: 1
+          confidence_factors:
+          - confidence_factors
+          - confidence_factors
+          catch_all_severity: null
+          partial_confidence:
+            confidence: 23
+            classification: transient
+            factors:
+            - factors
+            - factors
+          confidence: 56
+          confidence_level: high
+          catch_all:
+            severity: low
+            confidence: 59
+            factors:
+            - factors
+            - factors
+          freshness: fresh
+          safe_to_send: true
+          sub_reason: deliverable
           reason_codes:
           - deliverable
           - deliverable
-          age_days: 1
-          score: 59
-          catch_all_severity: low
+          score: 70
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -3244,10 +3328,7 @@ components:
           verified_at: 2000-01-23T04:56:07.000+00:00
           domain_suggestion: domain_suggestion
           category: valid
-          freshness: fresh
           normalized_email: normalized_email
-          safe_to_send: true
-          sub_reason: deliverable
         provider: gmail
         bounce_risk: ""
         syntax:
@@ -3414,6 +3495,13 @@ components:
       - level
       - score
       type: object
+    ConfidenceLevel:
+      enum:
+      - high
+      - medium
+      - low
+      - very_low
+      type: string
     CoreError:
       description: Details of an error encountered during the verification process.
       properties:
@@ -3729,12 +3817,32 @@ components:
       type: string
     EmailScore:
       example:
+        age_days: 1
+        confidence_factors:
+        - confidence_factors
+        - confidence_factors
+        catch_all_severity: null
+        partial_confidence:
+          confidence: 23
+          classification: transient
+          factors:
+          - factors
+          - factors
+        confidence: 56
+        confidence_level: high
+        catch_all:
+          severity: low
+          confidence: 59
+          factors:
+          - factors
+          - factors
+        freshness: fresh
+        safe_to_send: true
+        sub_reason: deliverable
         reason_codes:
         - deliverable
         - deliverable
-        age_days: 1
-        score: 59
-        catch_all_severity: low
+        score: 70
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -3753,22 +3861,28 @@ components:
         verified_at: 2000-01-23T04:56:07.000+00:00
         domain_suggestion: domain_suggestion
         category: valid
-        freshness: fresh
         normalized_email: normalized_email
-        safe_to_send: true
-        sub_reason: deliverable
       properties:
         age_days:
           format: int64
           type: integer
+        catch_all:
+          $ref: "#/components/schemas/CatchAllScore"
         catch_all_severity:
-          description: "Severity tier for catch-all domains (low=free provider, high=corporate)"
-          enum:
-          - low
-          - high
-          type: string
+          $ref: "#/components/schemas/CatchAllSeverity"
         category:
           $ref: "#/components/schemas/EmailCategory"
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        confidence_factors:
+          items:
+            type: string
+          type: array
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevel"
         domain_suggestion:
           description: Suggested corrected email when a likely domain typo is detected
           type: string
@@ -3777,6 +3891,8 @@ components:
         normalized_email:
           description: Canonical form of the email after alias/plus-address normalization
           type: string
+        partial_confidence:
+          $ref: "#/components/schemas/PartialConfidence"
         reason_codes:
           items:
             $ref: "#/components/schemas/ReasonCode"
@@ -4686,6 +4802,30 @@ components:
       - records
       title: MxDetails
       type: object
+    PartialConfidence:
+      example:
+        confidence: 23
+        classification: transient
+        factors:
+        - factors
+        - factors
+      properties:
+        classification:
+          $ref: "#/components/schemas/SmtpUncertaintyClass"
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        factors:
+          items:
+            type: string
+          type: array
+      required:
+      - classification
+      - confidence
+      - factors
+      type: object
     PipelineDeliveryConfig:
       example:
         dashboard: true
@@ -5142,6 +5282,18 @@ components:
       - unknown_deliverability
       - free_provider
       - possible_typo
+      - provider_reputation
+      - tenant_history_positive
+      - tenant_history_inconsistent
+      - catch_all_low_confidence
+      - catch_all_medium_confidence
+      - catch_all_high_risk
+      - partial_confidence
+      - transient_smtp
+      - smtp_policy_block
+      - smtp_timeout
+      - smtp_network
+      - smtp_ambiguous
       type: string
     RecommendedAction:
       enum:
@@ -5604,6 +5756,15 @@ components:
       - is_disabled
       title: SmtpDetails
       type: object
+    SmtpUncertaintyClass:
+      enum:
+      - transient
+      - policy_block
+      - timeout
+      - network
+      - ambiguous_response
+      - smtp_unreachable
+      type: string
     SubReason:
       enum:
       - deliverable

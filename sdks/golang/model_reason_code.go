@@ -47,6 +47,18 @@ const (
 	REASONCODE_UNKNOWN_DELIVERABILITY ReasonCode = "unknown_deliverability"
 	REASONCODE_FREE_PROVIDER ReasonCode = "free_provider"
 	REASONCODE_POSSIBLE_TYPO ReasonCode = "possible_typo"
+	REASONCODE_PROVIDER_REPUTATION ReasonCode = "provider_reputation"
+	REASONCODE_TENANT_HISTORY_POSITIVE ReasonCode = "tenant_history_positive"
+	REASONCODE_TENANT_HISTORY_INCONSISTENT ReasonCode = "tenant_history_inconsistent"
+	REASONCODE_CATCH_ALL_LOW_CONFIDENCE ReasonCode = "catch_all_low_confidence"
+	REASONCODE_CATCH_ALL_MEDIUM_CONFIDENCE ReasonCode = "catch_all_medium_confidence"
+	REASONCODE_CATCH_ALL_HIGH_RISK ReasonCode = "catch_all_high_risk"
+	REASONCODE_PARTIAL_CONFIDENCE ReasonCode = "partial_confidence"
+	REASONCODE_TRANSIENT_SMTP ReasonCode = "transient_smtp"
+	REASONCODE_SMTP_POLICY_BLOCK ReasonCode = "smtp_policy_block"
+	REASONCODE_SMTP_TIMEOUT ReasonCode = "smtp_timeout"
+	REASONCODE_SMTP_NETWORK ReasonCode = "smtp_network"
+	REASONCODE_SMTP_AMBIGUOUS ReasonCode = "smtp_ambiguous"
 )
 
 // All allowed values of ReasonCode enum
@@ -77,6 +89,18 @@ var AllowedReasonCodeEnumValues = []ReasonCode{
 	"unknown_deliverability",
 	"free_provider",
 	"possible_typo",
+	"provider_reputation",
+	"tenant_history_positive",
+	"tenant_history_inconsistent",
+	"catch_all_low_confidence",
+	"catch_all_medium_confidence",
+	"catch_all_high_risk",
+	"partial_confidence",
+	"transient_smtp",
+	"smtp_policy_block",
+	"smtp_timeout",
+	"smtp_network",
+	"smtp_ambiguous",
 }
 
 func (v *ReasonCode) UnmarshalJSON(src []byte) error {

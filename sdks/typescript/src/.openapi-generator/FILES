@@ -34,6 +34,8 @@ docs/BlacklistResult.md
 docs/BounceRiskAssessment.md
 docs/BounceRiskCategory.md
 docs/BulkJobResultsResponse.md
+docs/CatchAllScore.md
+docs/CatchAllSeverity.md
 docs/CheckEmailInputProxy.md
 docs/CheckEmailOutput.md
 docs/CheckEmailOutputMisc.md
@@ -42,6 +44,7 @@ docs/CheckEmailOutputSmtp.md
 docs/CheckEmailRequest.md
 docs/CommentsApi.md
 docs/ConfidenceExplanation.md
+docs/ConfidenceLevel.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
 docs/CreateSavedSegmentRequest.md
@@ -83,6 +86,7 @@ docs/ListUploadResponse.md
 docs/ListsApi.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/PartialConfidence.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
@@ -124,6 +128,7 @@ docs/ScorePolicyListResponse.md
 docs/ScorePolicyView.md
 docs/ScoringSignals.md
 docs/SmtpDetails.md
+docs/SmtpUncertaintyClass.md
 docs/SubReason.md
 docs/SuppressionCheckResponse.md
 docs/SuppressionDeleteResponse.md
@@ -159,6 +164,8 @@ models/blacklist-result.ts
 models/bounce-risk-assessment.ts
 models/bounce-risk-category.ts
 models/bulk-job-results-response.ts
+models/catch-all-score.ts
+models/catch-all-severity.ts
 models/check-email-input-proxy.ts
 models/check-email-output-misc.ts
 models/check-email-output-mx.ts
@@ -166,6 +173,7 @@ models/check-email-output-smtp.ts
 models/check-email-output.ts
 models/check-email-request.ts
 models/confidence-explanation.ts
+models/confidence-level.ts
 models/core-error.ts
 models/create-pipeline-input.ts
 models/create-saved-segment-request.ts
@@ -204,6 +212,7 @@ models/list-summary.ts
 models/list-upload-response.ts
 models/misc-details.ts
 models/mx-details.ts
+models/partial-confidence.ts
 models/pipeline-delivery-config.ts
 models/pipeline-delivery-status.ts
 models/pipeline-delivery-webhook.ts
@@ -243,6 +252,7 @@ models/score-policy-list-response.ts
 models/score-policy-view.ts
 models/scoring-signals.ts
 models/smtp-details.ts
+models/smtp-uncertainty-class.ts
 models/sub-reason.ts
 models/suppression-check-response.ts
 models/suppression-delete-response.ts

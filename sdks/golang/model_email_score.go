@@ -24,14 +24,18 @@ var _ MappedNullable = &EmailScore{}
 // EmailScore struct for EmailScore
 type EmailScore struct {
 	AgeDays *int64 `json:"age_days,omitempty"`
-	// Severity tier for catch-all domains (low=free provider, high=corporate)
-	CatchAllSeverity *string `json:"catch_all_severity,omitempty"`
+	CatchAll *CatchAllScore `json:"catch_all,omitempty"`
+	CatchAllSeverity *CatchAllSeverity `json:"catch_all_severity,omitempty"`
 	Category EmailCategory `json:"category"`
+	Confidence *int32 `json:"confidence,omitempty"`
+	ConfidenceFactors []string `json:"confidence_factors,omitempty"`
+	ConfidenceLevel *ConfidenceLevel `json:"confidence_level,omitempty"`
 	// Suggested corrected email when a likely domain typo is detected
 	DomainSuggestion *string `json:"domain_suggestion,omitempty"`
 	Freshness *Freshness `json:"freshness,omitempty"`
 	// Canonical form of the email after alias/plus-address normalization
 	NormalizedEmail *string `json:"normalized_email,omitempty"`
+	PartialConfidence *PartialConfidence `json:"partial_confidence,omitempty"`
 	ReasonCodes []ReasonCode `json:"reason_codes"`
 	SafeToSend bool `json:"safe_to_send"`
 	Score int32 `json:"score"`
@@ -97,10 +101,42 @@ func (o *EmailScore) SetAgeDays(v int64) {
 	o.AgeDays = &v
 }
 
+// GetCatchAll returns the CatchAll field value if set, zero value otherwise.
+func (o *EmailScore) GetCatchAll() CatchAllScore {
+	if o == nil || IsNil(o.CatchAll) {
+		var ret CatchAllScore
+		return ret
+	}
+	return *o.CatchAll
+}
+
+// GetCatchAllOk returns a tuple with the CatchAll field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetCatchAllOk() (*CatchAllScore, bool) {
+	if o == nil || IsNil(o.CatchAll) {
+		return nil, false
+	}
+	return o.CatchAll, true
+}
+
+// HasCatchAll returns a boolean if a field has been set.
+func (o *EmailScore) HasCatchAll() bool {
+	if o != nil && !IsNil(o.CatchAll) {
+		return true
+	}
+
+	return false
+}
+
+// SetCatchAll gets a reference to the given CatchAllScore and assigns it to the CatchAll field.
+func (o *EmailScore) SetCatchAll(v CatchAllScore) {
+	o.CatchAll = &v
+}
+
 // GetCatchAllSeverity returns the CatchAllSeverity field value if set, zero value otherwise.
-func (o *EmailScore) GetCatchAllSeverity() string {
+func (o *EmailScore) GetCatchAllSeverity() CatchAllSeverity {
 	if o == nil || IsNil(o.CatchAllSeverity) {
-		var ret string
+		var ret CatchAllSeverity
 		return ret
 	}
 	return *o.CatchAllSeverity
@@ -108,7 +144,7 @@ func (o *EmailScore) GetCatchAllSeverity() string {
 
 // GetCatchAllSeverityOk returns a tuple with the CatchAllSeverity field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *EmailScore) GetCatchAllSeverityOk() (*string, bool) {
+func (o *EmailScore) GetCatchAllSeverityOk() (*CatchAllSeverity, bool) {
 	if o == nil || IsNil(o.CatchAllSeverity) {
 		return nil, false
 	}
@@ -124,8 +160,8 @@ func (o *EmailScore) HasCatchAllSeverity() bool {
 	return false
 }
 
-// SetCatchAllSeverity gets a reference to the given string and assigns it to the CatchAllSeverity field.
-func (o *EmailScore) SetCatchAllSeverity(v string) {
+// SetCatchAllSeverity gets a reference to the given CatchAllSeverity and assigns it to the CatchAllSeverity field.
+func (o *EmailScore) SetCatchAllSeverity(v CatchAllSeverity) {
 	o.CatchAllSeverity = &v
 }
 
@@ -151,6 +187,102 @@ func (o *EmailScore) GetCategoryOk() (*EmailCategory, bool) {
 // SetCategory sets field value
 func (o *EmailScore) SetCategory(v EmailCategory) {
 	o.Category = v
+}
+
+// GetConfidence returns the Confidence field value if set, zero value otherwise.
+func (o *EmailScore) GetConfidence() int32 {
+	if o == nil || IsNil(o.Confidence) {
+		var ret int32
+		return ret
+	}
+	return *o.Confidence
+}
+
+// GetConfidenceOk returns a tuple with the Confidence field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetConfidenceOk() (*int32, bool) {
+	if o == nil || IsNil(o.Confidence) {
+		return nil, false
+	}
+	return o.Confidence, true
+}
+
+// HasConfidence returns a boolean if a field has been set.
+func (o *EmailScore) HasConfidence() bool {
+	if o != nil && !IsNil(o.Confidence) {
+		return true
+	}
+
+	return false
+}
+
+// SetConfidence gets a reference to the given int32 and assigns it to the Confidence field.
+func (o *EmailScore) SetConfidence(v int32) {
+	o.Confidence = &v
+}
+
+// GetConfidenceFactors returns the ConfidenceFactors field value if set, zero value otherwise.
+func (o *EmailScore) GetConfidenceFactors() []string {
+	if o == nil || IsNil(o.ConfidenceFactors) {
+		var ret []string
+		return ret
+	}
+	return o.ConfidenceFactors
+}
+
+// GetConfidenceFactorsOk returns a tuple with the ConfidenceFactors field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetConfidenceFactorsOk() ([]string, bool) {
+	if o == nil || IsNil(o.ConfidenceFactors) {
+		return nil, false
+	}
+	return o.ConfidenceFactors, true
+}
+
+// HasConfidenceFactors returns a boolean if a field has been set.
+func (o *EmailScore) HasConfidenceFactors() bool {
+	if o != nil && !IsNil(o.ConfidenceFactors) {
+		return true
+	}
+
+	return false
+}
+
+// SetConfidenceFactors gets a reference to the given []string and assigns it to the ConfidenceFactors field.
+func (o *EmailScore) SetConfidenceFactors(v []string) {
+	o.ConfidenceFactors = v
+}
+
+// GetConfidenceLevel returns the ConfidenceLevel field value if set, zero value otherwise.
+func (o *EmailScore) GetConfidenceLevel() ConfidenceLevel {
+	if o == nil || IsNil(o.ConfidenceLevel) {
+		var ret ConfidenceLevel
+		return ret
+	}
+	return *o.ConfidenceLevel
+}
+
+// GetConfidenceLevelOk returns a tuple with the ConfidenceLevel field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetConfidenceLevelOk() (*ConfidenceLevel, bool) {
+	if o == nil || IsNil(o.ConfidenceLevel) {
+		return nil, false
+	}
+	return o.ConfidenceLevel, true
+}
+
+// HasConfidenceLevel returns a boolean if a field has been set.
+func (o *EmailScore) HasConfidenceLevel() bool {
+	if o != nil && !IsNil(o.ConfidenceLevel) {
+		return true
+	}
+
+	return false
+}
+
+// SetConfidenceLevel gets a reference to the given ConfidenceLevel and assigns it to the ConfidenceLevel field.
+func (o *EmailScore) SetConfidenceLevel(v ConfidenceLevel) {
+	o.ConfidenceLevel = &v
 }
 
 // GetDomainSuggestion returns the DomainSuggestion field value if set, zero value otherwise.
@@ -247,6 +379,38 @@ func (o *EmailScore) HasNormalizedEmail() bool {
 // SetNormalizedEmail gets a reference to the given string and assigns it to the NormalizedEmail field.
 func (o *EmailScore) SetNormalizedEmail(v string) {
 	o.NormalizedEmail = &v
+}
+
+// GetPartialConfidence returns the PartialConfidence field value if set, zero value otherwise.
+func (o *EmailScore) GetPartialConfidence() PartialConfidence {
+	if o == nil || IsNil(o.PartialConfidence) {
+		var ret PartialConfidence
+		return ret
+	}
+	return *o.PartialConfidence
+}
+
+// GetPartialConfidenceOk returns a tuple with the PartialConfidence field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *EmailScore) GetPartialConfidenceOk() (*PartialConfidence, bool) {
+	if o == nil || IsNil(o.PartialConfidence) {
+		return nil, false
+	}
+	return o.PartialConfidence, true
+}
+
+// HasPartialConfidence returns a boolean if a field has been set.
+func (o *EmailScore) HasPartialConfidence() bool {
+	if o != nil && !IsNil(o.PartialConfidence) {
+		return true
+	}
+
+	return false
+}
+
+// SetPartialConfidence gets a reference to the given PartialConfidence and assigns it to the PartialConfidence field.
+func (o *EmailScore) SetPartialConfidence(v PartialConfidence) {
+	o.PartialConfidence = &v
 }
 
 // GetReasonCodes returns the ReasonCodes field value
@@ -414,10 +578,22 @@ func (o EmailScore) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.AgeDays) {
 		toSerialize["age_days"] = o.AgeDays
 	}
+	if !IsNil(o.CatchAll) {
+		toSerialize["catch_all"] = o.CatchAll
+	}
 	if !IsNil(o.CatchAllSeverity) {
 		toSerialize["catch_all_severity"] = o.CatchAllSeverity
 	}
 	toSerialize["category"] = o.Category
+	if !IsNil(o.Confidence) {
+		toSerialize["confidence"] = o.Confidence
+	}
+	if !IsNil(o.ConfidenceFactors) {
+		toSerialize["confidence_factors"] = o.ConfidenceFactors
+	}
+	if !IsNil(o.ConfidenceLevel) {
+		toSerialize["confidence_level"] = o.ConfidenceLevel
+	}
 	if !IsNil(o.DomainSuggestion) {
 		toSerialize["domain_suggestion"] = o.DomainSuggestion
 	}
@@ -426,6 +602,9 @@ func (o EmailScore) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.NormalizedEmail) {
 		toSerialize["normalized_email"] = o.NormalizedEmail
+	}
+	if !IsNil(o.PartialConfidence) {
+		toSerialize["partial_confidence"] = o.PartialConfidence
 	}
 	toSerialize["reason_codes"] = o.ReasonCodes
 	toSerialize["safe_to_send"] = o.SafeToSend

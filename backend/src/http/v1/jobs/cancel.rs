@@ -84,6 +84,16 @@ async fn http_handler(
 
 	let tasks_cancelled = result.rows_affected() as i64;
 
+	// Cancel any in-flight delayed rechecks for this job so the scheduler
+	// won't republish them after cancellation.
+	sqlx::query(
+		"UPDATE verification_delayed_rechecks SET status = 'cancelled', last_error = 'job cancelled', updated_at = NOW() WHERE job_id = $1 AND status IN ('scheduled', 'publishing')"
+	)
+	.bind(job_id)
+	.execute(&mut *tx)
+	.await
+	.map_err(ReacherResponseError::from)?;
+
 	// Check if all tasks are now terminal. If so, finalize to cancelled.
 	let non_terminal: i64 = sqlx::query_scalar(
 		"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state::TEXT IN ('queued', 'running', 'retrying')"

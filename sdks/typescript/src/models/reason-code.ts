@@ -46,7 +46,19 @@ export const ReasonCode = {
     SpamTrap: 'spam_trap',
     UnknownDeliverability: 'unknown_deliverability',
     FreeProvider: 'free_provider',
-    PossibleTypo: 'possible_typo'
+    PossibleTypo: 'possible_typo',
+    ProviderReputation: 'provider_reputation',
+    TenantHistoryPositive: 'tenant_history_positive',
+    TenantHistoryInconsistent: 'tenant_history_inconsistent',
+    CatchAllLowConfidence: 'catch_all_low_confidence',
+    CatchAllMediumConfidence: 'catch_all_medium_confidence',
+    CatchAllHighRisk: 'catch_all_high_risk',
+    PartialConfidence: 'partial_confidence',
+    TransientSmtp: 'transient_smtp',
+    SmtpPolicyBlock: 'smtp_policy_block',
+    SmtpTimeout: 'smtp_timeout',
+    SmtpNetwork: 'smtp_network',
+    SmtpAmbiguous: 'smtp_ambiguous'
 } as const;
 
 export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];

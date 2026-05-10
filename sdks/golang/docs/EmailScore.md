@@ -5,11 +5,16 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AgeDays** | Pointer to **int64** |  | [optional]
-**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional]
+**CatchAll** | Pointer to [**CatchAllScore**](CatchAllScore.md) |  | [optional]
+**CatchAllSeverity** | Pointer to [**CatchAllSeverity**](CatchAllSeverity.md) |  | [optional]
 **Category** | [**EmailCategory**](EmailCategory.md) |  | [required]
+**Confidence** | Pointer to **int32** |  | [optional]
+**ConfidenceFactors** | Pointer to **[]string** |  | [optional]
+**ConfidenceLevel** | Pointer to [**ConfidenceLevel**](ConfidenceLevel.md) |  | [optional]
 **DomainSuggestion** | Pointer to **string** | Suggested corrected email when a likely domain typo is detected | [optional]
 **Freshness** | Pointer to [**Freshness**](Freshness.md) |  | [optional]
 **NormalizedEmail** | Pointer to **string** | Canonical form of the email after alias/plus-address normalization | [optional]
+**PartialConfidence** | Pointer to [**PartialConfidence**](PartialConfidence.md) |  | [optional]
 **ReasonCodes** | [**[]ReasonCode**](ReasonCode.md) |  | [required]
 **SafeToSend** | **bool** |  | [required]
 **Score** | **int32** |  | [required]
@@ -61,22 +66,47 @@ SetAgeDays sets AgeDays field to given value.
 
 HasAgeDays returns a boolean if a field has been set.
 
+### GetCatchAll
+
+`func (o *EmailScore) GetCatchAll() CatchAllScore`
+
+GetCatchAll returns the CatchAll field if non-nil, zero value otherwise.
+
+### GetCatchAllOk
+
+`func (o *EmailScore) GetCatchAllOk() (*CatchAllScore, bool)`
+
+GetCatchAllOk returns a tuple with the CatchAll field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCatchAll
+
+`func (o *EmailScore) SetCatchAll(v CatchAllScore)`
+
+SetCatchAll sets CatchAll field to given value.
+
+### HasCatchAll
+
+`func (o *EmailScore) HasCatchAll() bool`
+
+HasCatchAll returns a boolean if a field has been set.
+
 ### GetCatchAllSeverity
 
-`func (o *EmailScore) GetCatchAllSeverity() string`
+`func (o *EmailScore) GetCatchAllSeverity() CatchAllSeverity`
 
 GetCatchAllSeverity returns the CatchAllSeverity field if non-nil, zero value otherwise.
 
 ### GetCatchAllSeverityOk
 
-`func (o *EmailScore) GetCatchAllSeverityOk() (*string, bool)`
+`func (o *EmailScore) GetCatchAllSeverityOk() (*CatchAllSeverity, bool)`
 
 GetCatchAllSeverityOk returns a tuple with the CatchAllSeverity field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetCatchAllSeverity
 
-`func (o *EmailScore) SetCatchAllSeverity(v string)`
+`func (o *EmailScore) SetCatchAllSeverity(v CatchAllSeverity)`
 
 SetCatchAllSeverity sets CatchAllSeverity field to given value.
 
@@ -105,6 +135,81 @@ and a boolean to check if the value has been set.
 
 SetCategory sets Category field to given value.
 
+
+### GetConfidence
+
+`func (o *EmailScore) GetConfidence() int32`
+
+GetConfidence returns the Confidence field if non-nil, zero value otherwise.
+
+### GetConfidenceOk
+
+`func (o *EmailScore) GetConfidenceOk() (*int32, bool)`
+
+GetConfidenceOk returns a tuple with the Confidence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetConfidence
+
+`func (o *EmailScore) SetConfidence(v int32)`
+
+SetConfidence sets Confidence field to given value.
+
+### HasConfidence
+
+`func (o *EmailScore) HasConfidence() bool`
+
+HasConfidence returns a boolean if a field has been set.
+
+### GetConfidenceFactors
+
+`func (o *EmailScore) GetConfidenceFactors() []string`
+
+GetConfidenceFactors returns the ConfidenceFactors field if non-nil, zero value otherwise.
+
+### GetConfidenceFactorsOk
+
+`func (o *EmailScore) GetConfidenceFactorsOk() ([]string, bool)`
+
+GetConfidenceFactorsOk returns a tuple with the ConfidenceFactors field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetConfidenceFactors
+
+`func (o *EmailScore) SetConfidenceFactors(v []string)`
+
+SetConfidenceFactors sets ConfidenceFactors field to given value.
+
+### HasConfidenceFactors
+
+`func (o *EmailScore) HasConfidenceFactors() bool`
+
+HasConfidenceFactors returns a boolean if a field has been set.
+
+### GetConfidenceLevel
+
+`func (o *EmailScore) GetConfidenceLevel() ConfidenceLevel`
+
+GetConfidenceLevel returns the ConfidenceLevel field if non-nil, zero value otherwise.
+
+### GetConfidenceLevelOk
+
+`func (o *EmailScore) GetConfidenceLevelOk() (*ConfidenceLevel, bool)`
+
+GetConfidenceLevelOk returns a tuple with the ConfidenceLevel field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetConfidenceLevel
+
+`func (o *EmailScore) SetConfidenceLevel(v ConfidenceLevel)`
+
+SetConfidenceLevel sets ConfidenceLevel field to given value.
+
+### HasConfidenceLevel
+
+`func (o *EmailScore) HasConfidenceLevel() bool`
+
+HasConfidenceLevel returns a boolean if a field has been set.
 
 ### GetDomainSuggestion
 
@@ -180,6 +285,31 @@ SetNormalizedEmail sets NormalizedEmail field to given value.
 `func (o *EmailScore) HasNormalizedEmail() bool`
 
 HasNormalizedEmail returns a boolean if a field has been set.
+
+### GetPartialConfidence
+
+`func (o *EmailScore) GetPartialConfidence() PartialConfidence`
+
+GetPartialConfidence returns the PartialConfidence field if non-nil, zero value otherwise.
+
+### GetPartialConfidenceOk
+
+`func (o *EmailScore) GetPartialConfidenceOk() (*PartialConfidence, bool)`
+
+GetPartialConfidenceOk returns a tuple with the PartialConfidence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPartialConfidence
+
+`func (o *EmailScore) SetPartialConfidence(v PartialConfidence)`
+
+SetPartialConfidence sets PartialConfidence field to given value.
+
+### HasPartialConfidence
+
+`func (o *EmailScore) HasPartialConfidence() bool`
+
+HasPartialConfidence returns a boolean if a field has been set.
 
 ### GetReasonCodes
 

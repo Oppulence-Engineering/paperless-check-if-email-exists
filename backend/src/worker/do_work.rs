@@ -35,7 +35,7 @@ use thiserror::Error;
 use tracing::{debug, info, warn};
 use warp::http::StatusCode;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailTask {
 	pub input: CheckEmailInput,
 	pub job_id: CheckEmailJobId,
@@ -44,7 +44,7 @@ pub struct CheckEmailTask {
 	pub metadata: Option<TaskMetadata>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CheckEmailJobId {
 	/// Single-shot email verification, they won't have an actual job id.
@@ -341,8 +341,16 @@ pub async fn do_check_email_work(
 		0
 	};
 
+	let unknown_success =
+		matches!(&worker_output, Ok(output) if output.output.is_reachable == Reachable::Unknown);
+	let should_schedule_delayed_recheck = unknown_success
+		&& config.delayed_recheck.enable
+		&& matches!(task.job_id, CheckEmailJobId::Bulk(_))
+		&& task_db_id.is_some()
+		&& (current_retry_count as u32) < retry_policy.max_retries;
+	let delayed_recheck_count = current_retry_count + 1;
+
 	let should_retry = match &worker_output {
-		Ok(output) if output.output.is_reachable == Reachable::Unknown => true,
 		Err(error) => error.is_retryable(),
 		_ => false,
 	};
@@ -394,7 +402,7 @@ pub async fn do_check_email_work(
 		delivery_finalize(
 			task,
 			&delivery,
-			channel,
+			Arc::clone(&channel),
 			Arc::clone(&config),
 			&worker_output,
 		)
@@ -462,7 +470,7 @@ pub async fn do_check_email_work(
 		delivery_finalize(
 			task,
 			&delivery,
-			channel,
+			Arc::clone(&channel),
 			Arc::clone(&config),
 			&worker_output,
 		)
@@ -491,6 +499,17 @@ pub async fn do_check_email_work(
 					Some(&config.backend_name),
 				)
 				.await;
+				if is_delayed_recheck_task(task) {
+					record_event(
+						&config,
+						job_id,
+						Some(id),
+						"task.delayed_recheck_completed",
+						None,
+						Some(&config.backend_name),
+					)
+					.await;
+				}
 			}
 		}
 
@@ -529,9 +548,29 @@ pub async fn do_check_email_work(
 			job_id=?task.job_id,
 			"Done check",
 		);
+
+		if should_schedule_delayed_recheck {
+			if let Some(id) = task_db_id {
+				crate::delayed_recheck::schedule_delayed_recheck(
+					task,
+					Arc::clone(&config),
+					id,
+					delayed_recheck_count,
+					&retry_policy,
+				)
+				.await;
+			}
+		}
 	}
 
 	Ok(())
+}
+
+fn is_delayed_recheck_task(task: &CheckEmailTask) -> bool {
+	task.metadata
+		.as_ref()
+		.and_then(|metadata| metadata.created_by.as_deref())
+		== Some("delayed_recheck")
 }
 
 /// Finalize delivery: send single-shot reply and store result.
