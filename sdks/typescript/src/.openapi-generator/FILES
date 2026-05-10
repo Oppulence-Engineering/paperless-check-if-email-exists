@@ -10,6 +10,7 @@ api/events-api.ts
 api/health-api.ts
 api/jobs-api.ts
 api/lists-api.ts
+api/outcomes-api.ts
 api/pipelines-api.ts
 api/query-api.ts
 api/system-api.ts
@@ -46,6 +47,7 @@ docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/ConfidenceLevel.md
 docs/CoreError.md
+docs/CreateOutcomePolicyRequest.md
 docs/CreatePipelineInput.md
 docs/CreateSavedSegmentRequest.md
 docs/CreateScorePolicyRequest.md
@@ -71,6 +73,10 @@ docs/GmailVerifMethod.md
 docs/HealthApi.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
+docs/IngestOutcome.md
+docs/IngestOutcomesRequest.md
+docs/IngestOutcomesResponse.md
+docs/IngestRowError.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsApi.md
@@ -86,6 +92,12 @@ docs/ListUploadResponse.md
 docs/ListsApi.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OutcomeListResponse.md
+docs/OutcomePolicyListResponse.md
+docs/OutcomePolicyView.md
+docs/OutcomeType.md
+docs/OutcomeView.md
+docs/OutcomesApi.md
 docs/PartialConfidence.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
@@ -142,6 +154,7 @@ docs/TenantApi.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
 docs/UpdateAlertRequest.md
+docs/UpdateOutcomePolicyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateSavedSegmentRequest.md
 docs/UpdateScorePolicyRequest.md
@@ -175,6 +188,7 @@ models/check-email-request.ts
 models/confidence-explanation.ts
 models/confidence-level.ts
 models/core-error.ts
+models/create-outcome-policy-request.ts
 models/create-pipeline-input.ts
 models/create-saved-segment-request.ts
 models/create-score-policy-request.ts
@@ -199,6 +213,10 @@ models/gmail-verif-method.ts
 models/hotmail-b2-bverif-method.ts
 models/hotmail-b2-cverif-method.ts
 models/index.ts
+models/ingest-outcome.ts
+models/ingest-outcomes-request.ts
+models/ingest-outcomes-response.ts
+models/ingest-row-error.ts
 models/job-result-page-response.ts
 models/job-task-result.ts
 models/list-delete-response.ts
@@ -212,6 +230,11 @@ models/list-summary.ts
 models/list-upload-response.ts
 models/misc-details.ts
 models/mx-details.ts
+models/outcome-list-response.ts
+models/outcome-policy-list-response.ts
+models/outcome-policy-view.ts
+models/outcome-type.ts
+models/outcome-view.ts
 models/partial-confidence.ts
 models/pipeline-delivery-config.ts
 models/pipeline-delivery-status.ts
@@ -264,6 +287,7 @@ models/task-webhook.ts
 models/trigger-pipeline-input.ts
 models/trigger-pipeline-response.ts
 models/update-alert-request.ts
+models/update-outcome-policy-request.ts
 models/update-pipeline-input.ts
 models/update-saved-segment-request.ts
 models/update-score-policy-request.ts

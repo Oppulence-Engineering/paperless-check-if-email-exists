@@ -22,6 +22,7 @@ pub mod delayed_recheck;
 pub mod finder;
 pub mod http;
 pub mod list_intelligence;
+pub mod outcomes;
 pub mod pipelines;
 pub mod remediation;
 pub mod reputation;

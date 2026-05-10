@@ -351,6 +351,16 @@ async fn build_scoring_context(
 				"Tenant scoring context failed, continuing without history"
 			);
 		}
+
+		let canonical = crate::http::v1::lists::canonicalize::canonicalize_email(&output.input)
+			.unwrap_or_else(|| output.input.trim().to_lowercase());
+		context.outcomes = crate::outcomes::enrich_outcome_context(
+			Some(pool),
+			Some(tenant_id),
+			&canonical,
+			completed_at,
+		)
+		.await;
 	}
 
 	context

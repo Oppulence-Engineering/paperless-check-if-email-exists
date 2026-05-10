@@ -59,6 +59,9 @@ const (
 	REASONCODE_SMTP_TIMEOUT ReasonCode = "smtp_timeout"
 	REASONCODE_SMTP_NETWORK ReasonCode = "smtp_network"
 	REASONCODE_SMTP_AMBIGUOUS ReasonCode = "smtp_ambiguous"
+	REASONCODE_OUTCOME_HARD_BOUNCE ReasonCode = "outcome_hard_bounce"
+	REASONCODE_OUTCOME_COMPLAINT ReasonCode = "outcome_complaint"
+	REASONCODE_OUTCOME_ENGAGEMENT ReasonCode = "outcome_engagement"
 )
 
 // All allowed values of ReasonCode enum
@@ -101,6 +104,9 @@ var AllowedReasonCodeEnumValues = []ReasonCode{
 	"smtp_timeout",
 	"smtp_network",
 	"smtp_ambiguous",
+	"outcome_hard_bounce",
+	"outcome_complaint",
+	"outcome_engagement",
 }
 
 func (v *ReasonCode) UnmarshalJSON(src []byte) error {

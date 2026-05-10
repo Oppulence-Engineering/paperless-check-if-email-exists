@@ -79,4 +79,10 @@
 
 * `SmtpAmbiguous` (value: `'smtp_ambiguous'`)
 
+* `OutcomeHardBounce` (value: `'outcome_hard_bounce'`)
+
+* `OutcomeComplaint` (value: `'outcome_complaint'`)
+
+* `OutcomeEngagement` (value: `'outcome_engagement'`)
+
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

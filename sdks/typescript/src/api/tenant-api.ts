@@ -22,11 +22,19 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateOutcomePolicyRequest } from '../models';
+// @ts-ignore
 import type { CreateScorePolicyRequest } from '../models';
+// @ts-ignore
+import type { OutcomePolicyListResponse } from '../models';
+// @ts-ignore
+import type { OutcomePolicyView } from '../models';
 // @ts-ignore
 import type { ScorePolicyListResponse } from '../models';
 // @ts-ignore
 import type { ScorePolicyView } from '../models';
+// @ts-ignore
+import type { UpdateOutcomePolicyRequest } from '../models';
 // @ts-ignore
 import type { UpdateScorePolicyRequest } from '../models';
 /**
@@ -62,6 +70,44 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {CreateOutcomePolicyRequest} createOutcomePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateOutcomePolicy: async (createOutcomePolicyRequest: CreateOutcomePolicyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createOutcomePolicyRequest' is not null or undefined
+            assertParamExists('v1CreateOutcomePolicy', 'createOutcomePolicyRequest', createOutcomePolicyRequest)
+            const localVarPath = `/v1/outcome-policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createOutcomePolicyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -142,6 +188,42 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
         },
         /**
          *
+         * @param {number} policyId Outcome policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteOutcomePolicy: async (policyId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1DeleteOutcomePolicy', 'policyId', policyId)
+            const localVarPath = `/v1/outcome-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary DELETE /v1/score-policies/{policy_id}
          * @param {number} policyId Score policy identifier
          * @param {*} [options] Override http request option.
@@ -197,6 +279,42 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             }
 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {number} policyId Outcome policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetOutcomePolicy: async (policyId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1GetOutcomePolicy', 'policyId', policyId)
+            const localVarPath = `/v1/outcome-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -389,6 +507,48 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
         },
         /**
          *
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListOutcomePolicies: async (limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/outcome-policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary GET /v1/score-policies
          * @param {number} [limit]
          * @param {number} [offset]
@@ -457,6 +617,48 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {number} policyId Outcome policy identifier
+         * @param {UpdateOutcomePolicyRequest} updateOutcomePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateOutcomePolicy: async (policyId: number, updateOutcomePolicyRequest: UpdateOutcomePolicyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'policyId' is not null or undefined
+            assertParamExists('v1UpdateOutcomePolicy', 'policyId', policyId)
+            // verify required parameter 'updateOutcomePolicyRequest' is not null or undefined
+            assertParamExists('v1UpdateOutcomePolicy', 'updateOutcomePolicyRequest', updateOutcomePolicyRequest)
+            const localVarPath = `/v1/outcome-policies/{policy_id}`
+                .replace(`{${"policy_id"}}`, encodeURIComponent(String(policyId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateOutcomePolicyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -633,6 +835,18 @@ export const TenantApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {CreateOutcomePolicyRequest} createOutcomePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateOutcomePolicy(createOutcomePolicyRequest: CreateOutcomePolicyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateOutcomePolicy(createOutcomePolicyRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateOutcomePolicy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary POST /v1/score-policies
          * @param {CreateScorePolicyRequest} createScorePolicyRequest
          * @param {*} [options] Override http request option.
@@ -654,6 +868,18 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateTenantDomain(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateTenantDomain']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {number} policyId Outcome policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DeleteOutcomePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteOutcomePolicy(policyId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteOutcomePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -680,6 +906,18 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteTenantDomain(domain, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteTenantDomain']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {number} policyId Outcome policy identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetOutcomePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetOutcomePolicy(policyId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetOutcomePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -746,6 +984,19 @@ export const TenantApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListOutcomePolicies(limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomePolicyListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListOutcomePolicies(limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1ListOutcomePolicies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary GET /v1/score-policies
          * @param {number} [limit]
          * @param {number} [offset]
@@ -768,6 +1019,19 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListTenantDomains(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1ListTenantDomains']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {number} policyId Outcome policy identifier
+         * @param {UpdateOutcomePolicyRequest} updateOutcomePolicyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UpdateOutcomePolicy(policyId: number, updateOutcomePolicyRequest: UpdateOutcomePolicyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomePolicyView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateOutcomePolicy(policyId, updateOutcomePolicyRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateOutcomePolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -842,6 +1106,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          *
+         * @param {TenantApiV1CreateOutcomePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateOutcomePolicy(requestParameters: TenantApiV1CreateOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView> {
+            return localVarFp.v1CreateOutcomePolicy(requestParameters.createOutcomePolicyRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary POST /v1/score-policies
          * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -858,6 +1131,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1CreateTenantDomain(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {TenantApiV1DeleteOutcomePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1DeleteOutcomePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -878,6 +1160,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1DeleteTenantDomain(requestParameters.domain, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {TenantApiV1GetOutcomePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetOutcomePolicy(requestParameters: TenantApiV1GetOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView> {
+            return localVarFp.v1GetOutcomePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -928,6 +1219,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          *
+         * @param {TenantApiV1ListOutcomePoliciesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListOutcomePolicies(requestParameters: TenantApiV1ListOutcomePoliciesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyListResponse> {
+            return localVarFp.v1ListOutcomePolicies(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary GET /v1/score-policies
          * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -944,6 +1244,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1ListTenantDomains(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {TenantApiV1UpdateOutcomePolicyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateOutcomePolicy(requestParameters: TenantApiV1UpdateOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView> {
+            return localVarFp.v1UpdateOutcomePolicy(requestParameters.policyId, requestParameters.updateOutcomePolicyRequest, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1003,6 +1312,15 @@ export interface TenantApiInterface {
 
     /**
      *
+     * @param {TenantApiV1CreateOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1CreateOutcomePolicy(requestParameters: TenantApiV1CreateOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView>;
+
+    /**
+     *
      * @summary POST /v1/score-policies
      * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1019,6 +1337,15 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @param {TenantApiV1DeleteOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      *
@@ -1039,6 +1366,15 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @param {TenantApiV1GetOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1GetOutcomePolicy(requestParameters: TenantApiV1GetOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView>;
 
     /**
      *
@@ -1089,6 +1425,15 @@ export interface TenantApiInterface {
 
     /**
      *
+     * @param {TenantApiV1ListOutcomePoliciesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1ListOutcomePolicies(requestParameters?: TenantApiV1ListOutcomePoliciesRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyListResponse>;
+
+    /**
+     *
      * @summary GET /v1/score-policies
      * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1105,6 +1450,15 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @param {TenantApiV1UpdateOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1UpdateOutcomePolicy(requestParameters: TenantApiV1UpdateOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyView>;
 
     /**
      *
@@ -1147,6 +1501,20 @@ export interface TenantApiInterface {
 }
 
 /**
+ * Request parameters for v1CreateOutcomePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1CreateOutcomePolicyRequest
+ */
+export interface TenantApiV1CreateOutcomePolicyRequest {
+    /**
+     *
+     * @type {CreateOutcomePolicyRequest}
+     * @memberof TenantApiV1CreateOutcomePolicy
+     */
+    readonly createOutcomePolicyRequest: CreateOutcomePolicyRequest
+}
+
+/**
  * Request parameters for v1CreateScorePolicy operation in TenantApi.
  * @export
  * @interface TenantApiV1CreateScorePolicyRequest
@@ -1158,6 +1526,20 @@ export interface TenantApiV1CreateScorePolicyRequest {
      * @memberof TenantApiV1CreateScorePolicy
      */
     readonly createScorePolicyRequest: CreateScorePolicyRequest
+}
+
+/**
+ * Request parameters for v1DeleteOutcomePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1DeleteOutcomePolicyRequest
+ */
+export interface TenantApiV1DeleteOutcomePolicyRequest {
+    /**
+     * Outcome policy identifier
+     * @type {number}
+     * @memberof TenantApiV1DeleteOutcomePolicy
+     */
+    readonly policyId: number
 }
 
 /**
@@ -1189,6 +1571,20 @@ export interface TenantApiV1DeleteTenantDomainRequest {
 }
 
 /**
+ * Request parameters for v1GetOutcomePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1GetOutcomePolicyRequest
+ */
+export interface TenantApiV1GetOutcomePolicyRequest {
+    /**
+     * Outcome policy identifier
+     * @type {number}
+     * @memberof TenantApiV1GetOutcomePolicy
+     */
+    readonly policyId: number
+}
+
+/**
  * Request parameters for v1GetScorePolicy operation in TenantApi.
  * @export
  * @interface TenantApiV1GetScorePolicyRequest
@@ -1217,6 +1613,27 @@ export interface TenantApiV1GetTenantDomainRequest {
 }
 
 /**
+ * Request parameters for v1ListOutcomePolicies operation in TenantApi.
+ * @export
+ * @interface TenantApiV1ListOutcomePoliciesRequest
+ */
+export interface TenantApiV1ListOutcomePoliciesRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof TenantApiV1ListOutcomePolicies
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof TenantApiV1ListOutcomePolicies
+     */
+    readonly offset?: number
+}
+
+/**
  * Request parameters for v1ListScorePolicies operation in TenantApi.
  * @export
  * @interface TenantApiV1ListScorePoliciesRequest
@@ -1235,6 +1652,27 @@ export interface TenantApiV1ListScorePoliciesRequest {
      * @memberof TenantApiV1ListScorePolicies
      */
     readonly offset?: number
+}
+
+/**
+ * Request parameters for v1UpdateOutcomePolicy operation in TenantApi.
+ * @export
+ * @interface TenantApiV1UpdateOutcomePolicyRequest
+ */
+export interface TenantApiV1UpdateOutcomePolicyRequest {
+    /**
+     * Outcome policy identifier
+     * @type {number}
+     * @memberof TenantApiV1UpdateOutcomePolicy
+     */
+    readonly policyId: number
+
+    /**
+     *
+     * @type {UpdateOutcomePolicyRequest}
+     * @memberof TenantApiV1UpdateOutcomePolicy
+     */
+    readonly updateOutcomePolicyRequest: UpdateOutcomePolicyRequest
 }
 
 /**
@@ -1292,6 +1730,17 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
 
     /**
      *
+     * @param {TenantApiV1CreateOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1CreateOutcomePolicy(requestParameters: TenantApiV1CreateOutcomePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1CreateOutcomePolicy(requestParameters.createOutcomePolicyRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary POST /v1/score-policies
      * @param {TenantApiV1CreateScorePolicyRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1311,6 +1760,17 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1CreateTenantDomain(options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1CreateTenantDomain(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {TenantApiV1DeleteOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1DeleteOutcomePolicy(requestParameters.policyId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1335,6 +1795,17 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1DeleteTenantDomain(requestParameters: TenantApiV1DeleteTenantDomainRequest, options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1DeleteTenantDomain(requestParameters.domain, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {TenantApiV1GetOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1GetOutcomePolicy(requestParameters: TenantApiV1GetOutcomePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1GetOutcomePolicy(requestParameters.policyId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1396,6 +1867,17 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
 
     /**
      *
+     * @param {TenantApiV1ListOutcomePoliciesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1ListOutcomePolicies(requestParameters: TenantApiV1ListOutcomePoliciesRequest = {}, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1ListOutcomePolicies(requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary GET /v1/score-policies
      * @param {TenantApiV1ListScorePoliciesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1415,6 +1897,17 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1ListTenantDomains(options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1ListTenantDomains(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {TenantApiV1UpdateOutcomePolicyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1UpdateOutcomePolicy(requestParameters: TenantApiV1UpdateOutcomePolicyRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1UpdateOutcomePolicy(requestParameters.policyId, requestParameters.updateOutcomePolicyRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

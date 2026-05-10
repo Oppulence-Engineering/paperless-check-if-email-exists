@@ -5,17 +5,22 @@ All URIs are relative to *https://api.reacher.email*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**V1ClearTenantWebhook**](TenantAPI.md#V1ClearTenantWebhook) | **Delete** /v1/me/webhook | DELETE /v1/me/webhook
+[**V1CreateOutcomePolicy**](TenantAPI.md#V1CreateOutcomePolicy) | **Post** /v1/outcome-policies |
 [**V1CreateScorePolicy**](TenantAPI.md#V1CreateScorePolicy) | **Post** /v1/score-policies | POST /v1/score-policies
 [**V1CreateTenantDomain**](TenantAPI.md#V1CreateTenantDomain) | **Post** /v1/me/domains | POST /v1/me/domains
+[**V1DeleteOutcomePolicy**](TenantAPI.md#V1DeleteOutcomePolicy) | **Delete** /v1/outcome-policies/{policy_id} |
 [**V1DeleteScorePolicy**](TenantAPI.md#V1DeleteScorePolicy) | **Delete** /v1/score-policies/{policy_id} | DELETE /v1/score-policies/{policy_id}
 [**V1DeleteTenantDomain**](TenantAPI.md#V1DeleteTenantDomain) | **Delete** /v1/me/domains/{domain} | DELETE /v1/me/domains/{domain}
+[**V1GetOutcomePolicy**](TenantAPI.md#V1GetOutcomePolicy) | **Get** /v1/outcome-policies/{policy_id} |
 [**V1GetScorePolicy**](TenantAPI.md#V1GetScorePolicy) | **Get** /v1/score-policies/{policy_id} | GET /v1/score-policies/{policy_id}
 [**V1GetTenantDomain**](TenantAPI.md#V1GetTenantDomain) | **Get** /v1/me/domains/{domain} | GET /v1/me/domains/{domain}
 [**V1GetTenantSettings**](TenantAPI.md#V1GetTenantSettings) | **Get** /v1/me/settings | GET /v1/me/settings
 [**V1GetTenantUsage**](TenantAPI.md#V1GetTenantUsage) | **Get** /v1/me/usage | GET /v1/me/usage
 [**V1GetTenantWebhook**](TenantAPI.md#V1GetTenantWebhook) | **Get** /v1/me/webhook | GET /v1/me/webhook
+[**V1ListOutcomePolicies**](TenantAPI.md#V1ListOutcomePolicies) | **Get** /v1/outcome-policies |
 [**V1ListScorePolicies**](TenantAPI.md#V1ListScorePolicies) | **Get** /v1/score-policies | GET /v1/score-policies
 [**V1ListTenantDomains**](TenantAPI.md#V1ListTenantDomains) | **Get** /v1/me/domains | GET /v1/me/domains
+[**V1UpdateOutcomePolicy**](TenantAPI.md#V1UpdateOutcomePolicy) | **Patch** /v1/outcome-policies/{policy_id} |
 [**V1UpdateScorePolicy**](TenantAPI.md#V1UpdateScorePolicy) | **Patch** /v1/score-policies/{policy_id} | PATCH /v1/score-policies/{policy_id}
 [**V1UpdateTenantDomain**](TenantAPI.md#V1UpdateTenantDomain) | **Patch** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}
 [**V1UpdateTenantSettings**](TenantAPI.md#V1UpdateTenantSettings) | **Patch** /v1/me/settings | PATCH /v1/me/settings
@@ -76,6 +81,70 @@ Other parameters are passed through a pointer to a apiV1ClearTenantWebhookReques
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1CreateOutcomePolicy
+
+> OutcomePolicyView V1CreateOutcomePolicy(ctx).CreateOutcomePolicyRequest(createOutcomePolicyRequest).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	createOutcomePolicyRequest := *openapiclient.NewCreateOutcomePolicyRequest("Name_example") // CreateOutcomePolicyRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TenantAPI.V1CreateOutcomePolicy(context.Background()).CreateOutcomePolicyRequest(createOutcomePolicyRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1CreateOutcomePolicy``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1CreateOutcomePolicy`: OutcomePolicyView
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1CreateOutcomePolicy`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1CreateOutcomePolicyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createOutcomePolicyRequest** | [**CreateOutcomePolicyRequest**](CreateOutcomePolicyRequest.md) |  |
+
+### Return type
+
+[**OutcomePolicyView**](OutcomePolicyView.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -185,6 +254,72 @@ This endpoint does not need any parameter.
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CreateTenantDomainRequest struct via the builder pattern
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1DeleteOutcomePolicy
+
+> V1DeleteOutcomePolicy(ctx, policyId).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	policyId := int64(789) // int64 | Outcome policy identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.TenantAPI.V1DeleteOutcomePolicy(context.Background(), policyId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1DeleteOutcomePolicy``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**policyId** | **int64** | Outcome policy identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1DeleteOutcomePolicyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
 
 
 ### Return type
@@ -333,6 +468,74 @@ Name | Type | Description  | Notes
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1GetOutcomePolicy
+
+> OutcomePolicyView V1GetOutcomePolicy(ctx, policyId).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	policyId := int64(789) // int64 | Outcome policy identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TenantAPI.V1GetOutcomePolicy(context.Background(), policyId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1GetOutcomePolicy``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetOutcomePolicy`: OutcomePolicyView
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1GetOutcomePolicy`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**policyId** | **int64** | Outcome policy identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetOutcomePolicyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**OutcomePolicyView**](OutcomePolicyView.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -652,6 +855,72 @@ Other parameters are passed through a pointer to a apiV1GetTenantWebhookRequest 
 [[Back to README]](../README.md)
 
 
+## V1ListOutcomePolicies
+
+> OutcomePolicyListResponse V1ListOutcomePolicies(ctx).Limit(limit).Offset(offset).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TenantAPI.V1ListOutcomePolicies(context.Background()).Limit(limit).Offset(offset).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1ListOutcomePolicies``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListOutcomePolicies`: OutcomePolicyListResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1ListOutcomePolicies`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListOutcomePoliciesRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
+
+### Return type
+
+[**OutcomePolicyListResponse**](OutcomePolicyListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1ListScorePolicies
 
 > ScorePolicyListResponse V1ListScorePolicies(ctx).Limit(limit).Offset(offset).Execute()
@@ -771,6 +1040,76 @@ Other parameters are passed through a pointer to a apiV1ListTenantDomainsRequest
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1UpdateOutcomePolicy
+
+> OutcomePolicyView V1UpdateOutcomePolicy(ctx, policyId).UpdateOutcomePolicyRequest(updateOutcomePolicyRequest).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	policyId := int64(789) // int64 | Outcome policy identifier
+	updateOutcomePolicyRequest := *openapiclient.NewUpdateOutcomePolicyRequest() // UpdateOutcomePolicyRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TenantAPI.V1UpdateOutcomePolicy(context.Background(), policyId).UpdateOutcomePolicyRequest(updateOutcomePolicyRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateOutcomePolicy``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1UpdateOutcomePolicy`: OutcomePolicyView
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1UpdateOutcomePolicy`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**policyId** | **int64** | Outcome policy identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1UpdateOutcomePolicyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **updateOutcomePolicyRequest** | [**UpdateOutcomePolicyRequest**](UpdateOutcomePolicyRequest.md) |  |
+
+### Return type
+
+[**OutcomePolicyView**](OutcomePolicyView.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
