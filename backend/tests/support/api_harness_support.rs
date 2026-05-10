@@ -2618,7 +2618,9 @@ fn outcomes_multipart_body(csv: &[u8]) -> (String, Vec<u8>) {
 	let boundary = "----reacher-outcomes-boundary";
 	let mut body = Vec::new();
 	body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
-	body.extend_from_slice(b"Content-Disposition: form-data; name=\"file\"; filename=\"outcomes.csv\"\r\n");
+	body.extend_from_slice(
+		b"Content-Disposition: form-data; name=\"file\"; filename=\"outcomes.csv\"\r\n",
+	);
 	body.extend_from_slice(b"Content-Type: text/csv\r\n\r\n");
 	body.extend_from_slice(csv);
 	body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
