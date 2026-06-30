@@ -220,6 +220,12 @@ api_routes!(
 		|config| crate::http::v1::reputation::check::v1_check_reputation(config)
 	),
 	(
+		route_v1_source_quality,
+		"GET",
+		"/v1/sources/quality",
+		|config| crate::http::v1::source_quality::v1_source_quality(config)
+	),
+	(
 		route_v1_suppressions_add,
 		"POST",
 		"/v1/suppressions",

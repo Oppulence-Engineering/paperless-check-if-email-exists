@@ -30,6 +30,7 @@ pub mod pipelines;
 pub mod query;
 pub mod reputation;
 pub mod reverification;
+pub mod source_quality;
 pub mod suppressions;
 pub mod tenant_domains;
 pub mod tenant_settings;
