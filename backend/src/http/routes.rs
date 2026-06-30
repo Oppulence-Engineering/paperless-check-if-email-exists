@@ -226,6 +226,18 @@ api_routes!(
 		|config| crate::http::v1::suppressions::add::v1_add_suppressions(config)
 	),
 	(
+		route_v1_suppressions_import,
+		"POST",
+		"/v1/suppressions/import",
+		|config| crate::http::v1::suppressions::add::v1_import_suppressions(config)
+	),
+	(
+		route_v1_suppressions_export,
+		"GET",
+		"/v1/suppressions/export",
+		|config| crate::http::v1::suppressions::export::v1_export_suppressions(config)
+	),
+	(
 		route_v1_suppressions_check,
 		"GET",
 		"/v1/suppressions/check",

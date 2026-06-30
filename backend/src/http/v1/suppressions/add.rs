@@ -291,6 +291,19 @@ pub fn v1_add_suppressions(
 		.with(warp::log(LOG_TARGET))
 }
 
+/// POST /v1/suppressions/import
+pub fn v1_import_suppressions(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "suppressions" / "import")
+		.and(warp::post())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_worker_db(config))
+		.and(warp::body::json())
+		.and_then(http_handler)
+		.with(warp::log(LOG_TARGET))
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
