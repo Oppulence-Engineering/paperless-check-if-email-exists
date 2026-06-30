@@ -351,6 +351,12 @@ api_routes!(
 		"/v1/jobs/{job_id}/latency",
 		|config| crate::http::v1::jobs::latency::v1_job_latency(config)
 	),
+	(
+		route_v1_jobs_failure_center,
+		"GET",
+		"/v1/jobs/{job_id}/failure-center",
+		|config| crate::http::v1::jobs::failure_center::v1_job_failure_center(config)
+	),
 	(route_v1_me, "GET", "/v1/me", |config| {
 		crate::http::v1::me::v1_me(config)
 	}),
