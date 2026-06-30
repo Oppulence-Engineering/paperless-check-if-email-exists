@@ -114,7 +114,10 @@ mod tests {
 		for (action, expected) in cases {
 			let json = serde_json::to_string(&action).unwrap();
 			assert_eq!(json, format!("\"{}\"", expected));
-			assert_eq!(serde_json::from_str::<RecommendedAction>(&json).unwrap(), action);
+			assert_eq!(
+				serde_json::from_str::<RecommendedAction>(&json).unwrap(),
+				action
+			);
 		}
 	}
 
