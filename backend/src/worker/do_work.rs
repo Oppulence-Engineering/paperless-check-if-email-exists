@@ -568,6 +568,15 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 				bounce_risk_action = pri.bounce_risk_action,
 				bounce_risk_model_version = pri.bounce_risk_model_version,
 				bounce_risk_signals = pri.bounce_risk_signals,
+				recommendation = pri.recommendation,
+				recommendation_action = pri.recommendation_action,
+				recommendation_confidence = pri.recommendation_confidence,
+				recommendation_priority = pri.recommendation_priority,
+				policy_mode = pri.policy_mode,
+				policy_profile_key = pri.policy_profile_key,
+				policy_evaluation = pri.policy_evaluation,
+				policy_decision = pri.policy_decision,
+				policy_evaluated_at = pri.policy_evaluated_at,
 				canonical_email = COALESCE(dup.canonical_email, pri.canonical_email),
 				completed_at = NOW(), updated_at = NOW()
 			FROM v1_task_result AS pri

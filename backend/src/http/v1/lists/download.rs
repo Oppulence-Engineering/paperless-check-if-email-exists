@@ -183,7 +183,14 @@ async fn fetch_batch(
 			sub_reason,
 			safe_to_send,
 			reason_codes,
-			completed_at
+			completed_at,
+			recommendation,
+			recommendation_action,
+			recommendation_confidence,
+			recommendation_priority,
+			policy_mode,
+			policy_evaluation,
+			policy_decision
 		FROM v1_task_result
 		WHERE (extra->>'list_id')::INTEGER = $1
 		  AND (extra->>'row_index')::INTEGER > $2
@@ -215,6 +222,13 @@ async fn fetch_batch(
 					safe_to_send: row.get("safe_to_send"),
 					reason_codes: row.get("reason_codes"),
 					completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
+					recommendation: row.get("recommendation"),
+					recommendation_action: row.get("recommendation_action"),
+					recommendation_confidence: row.get("recommendation_confidence"),
+					recommendation_priority: row.get("recommendation_priority"),
+					policy_mode: row.get("policy_mode"),
+					policy_evaluation: row.get("policy_evaluation"),
+					policy_decision: row.get("policy_decision"),
 				},
 			)
 		})
@@ -266,6 +280,13 @@ fn render_row(
 	row.push(flat.verified_at.clone().unwrap_or_default());
 	row.push(flat.age_days.map(|v| v.to_string()).unwrap_or_default());
 	row.push(flat.freshness.clone().unwrap_or_default());
+	row.push(flat.recommended_action.clone().unwrap_or_default());
+	row.push(flat.recommendation_confidence.clone().unwrap_or_default());
+	row.push(flat.recommendation_priority.clone().unwrap_or_default());
+	row.push(flat.recommendation_reasons.clone().unwrap_or_default());
+	row.push(flat.policy_mode.clone().unwrap_or_default());
+	row.push(flat.policy_decision.clone().unwrap_or_default());
+	row.push(flat.policy_reasons.clone().unwrap_or_default());
 	writer.write_record(&row).expect("csv row write");
 	writer.into_inner().expect("csv row bytes")
 }
@@ -287,6 +308,13 @@ fn render_header(headers: &[String]) -> Vec<u8> {
 		"verified_at".to_string(),
 		"age_days".to_string(),
 		"freshness".to_string(),
+		"recommended_action".to_string(),
+		"recommendation_confidence".to_string(),
+		"recommendation_priority".to_string(),
+		"recommendation_reasons".to_string(),
+		"policy_mode".to_string(),
+		"policy_decision".to_string(),
+		"policy_reasons".to_string(),
 	]);
 	writer.write_record(&row).expect("csv header write");
 	writer.into_inner().expect("csv header bytes")

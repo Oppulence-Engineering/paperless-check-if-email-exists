@@ -182,7 +182,9 @@ async fn job_result_csv(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at,
+		       recommendation, recommendation_action, recommendation_confidence, recommendation_priority,
+		       policy_mode, policy_evaluation, policy_decision
 		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
@@ -209,6 +211,13 @@ async fn job_result_csv(
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
 			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
+			recommendation: row.get("recommendation"),
+			recommendation_action: row.get("recommendation_action"),
+			recommendation_confidence: row.get("recommendation_confidence"),
+			recommendation_priority: row.get("recommendation_priority"),
+			policy_mode: row.get("policy_mode"),
+			policy_evaluation: row.get("policy_evaluation"),
+			policy_decision: row.get("policy_decision"),
 		})
 		.collect();
 

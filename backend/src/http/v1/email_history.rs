@@ -23,6 +23,11 @@ struct HistoryEntry {
 	sub_reason: Option<String>,
 	safe_to_send: Option<bool>,
 	reason_codes: Option<Vec<String>>,
+	recommendation_action: Option<String>,
+	recommendation: Option<serde_json::Value>,
+	policy_mode: Option<String>,
+	policy_decision: Option<String>,
+	policy_evaluation: Option<serde_json::Value>,
 	is_reachable: Option<String>,
 	completed_at: Option<DateTime<Utc>>,
 }
@@ -68,6 +73,11 @@ async fn http_handler(
 			sub_reason,
 			safe_to_send,
 			reason_codes,
+			recommendation_action,
+			recommendation,
+			policy_mode,
+			policy_decision,
+			policy_evaluation,
 			result->>'is_reachable' AS is_reachable,
 			completed_at
 		FROM v1_task_result
@@ -94,6 +104,11 @@ async fn http_handler(
 			sub_reason: r.get("sub_reason"),
 			safe_to_send: r.get("safe_to_send"),
 			reason_codes: r.get("reason_codes"),
+			recommendation_action: r.get("recommendation_action"),
+			recommendation: r.get("recommendation"),
+			policy_mode: r.get("policy_mode"),
+			policy_decision: r.get("policy_decision"),
+			policy_evaluation: r.get("policy_evaluation"),
 			is_reachable: r.get("is_reachable"),
 			completed_at: r.get("completed_at"),
 		})
