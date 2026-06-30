@@ -404,6 +404,31 @@ fn generic_json_post_operation(tag: &str, summary: &str, description: &str) -> V
 	operation
 }
 
+fn with_path_parameters(mut operation: Value, parameters: &[(&str, &str)]) -> Value {
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"parameters".to_string(),
+			Value::Array(
+				parameters
+					.iter()
+					.map(|(name, format)| {
+						json!({
+							"name": name,
+							"in": "path",
+							"required": true,
+							"schema": {
+								"type": "integer",
+								"format": format
+							}
+						})
+					})
+					.collect(),
+			),
+		);
+	}
+	operation
+}
+
 fn download_operation(
 	tag: &str,
 	summary: &str,
@@ -1294,6 +1319,47 @@ fn add_phase_two_schemas(spec: &mut Value) {
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
+	insert_schema(
+		spec,
+		"BulkCreateRequest",
+		json!({
+			"type": "object",
+			"properties": {
+				"input": {
+					"type": "array",
+					"items": { "type": "string", "format": "email" }
+				},
+				"webhook": {
+					"type": "object",
+					"nullable": true,
+					"additionalProperties": true
+				},
+				"source_key": {
+					"type": "string",
+					"nullable": true,
+					"description": "Optional source key used for source quality analytics."
+				},
+				"source": {
+					"type": "string",
+					"nullable": true,
+					"description": "Alias for source_key."
+				}
+			},
+			"required": ["input"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"BulkCreateResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"job_id": { "type": "integer", "format": "int32" },
+				"source_key": { "type": "string", "nullable": true }
+			},
+			"required": ["job_id"]
+		}),
+	);
 	set_request_body(
 		spec,
 		"/v0/check_email",
@@ -1323,6 +1389,21 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("CheckEmailOutput", "Email verification result"),
+	);
+	set_request_body(
+		spec,
+		"/v1/bulk",
+		"post",
+		"application/json",
+		"BulkCreateRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v1/bulk",
+		"post",
+		"200",
+		json_response("BulkCreateResponse", "Bulk job created"),
 	);
 
 	set_response(
@@ -1462,29 +1543,41 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		spec,
 		"/v1/lists/{list_id}/remediation-plan",
 		"post",
-		generic_json_post_operation("Lists", "Create remediation plan", "Remediation plan"),
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
 	);
 	upsert_operation(
 		spec,
 		"/v1/lists/{list_id}/remediation-plan",
 		"get",
-		generic_json_operation("Lists", "Get remediation plan", "Remediation plan"),
+		with_path_parameters(
+			generic_json_operation("Lists", "Get remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
 	);
 	upsert_operation(
 		spec,
 		"/v1/lists/{list_id}/remediation-exports",
 		"post",
-		generic_json_post_operation("Lists", "Create remediation export", "Remediation export"),
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation export", "Remediation export"),
+			&[("list_id", "int32")],
+		),
 	);
 	upsert_operation(
 		spec,
 		"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
 		"get",
-		download_operation(
-			"Lists",
-			"Download remediation export",
-			"Remediation export CSV",
-			&["text/csv"],
+		with_path_parameters(
+			download_operation(
+				"Lists",
+				"Download remediation export",
+				"Remediation export CSV",
+				&["text/csv"],
+			),
+			&[("list_id", "int32"), ("export_id", "int64")],
 		),
 	);
 
@@ -1603,7 +1696,10 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		spec,
 		"/v1/suppressions/{id}/events",
 		"get",
-		generic_json_operation("v1", "List suppression events", "Suppression event list"),
+		with_path_parameters(
+			generic_json_operation("v1", "List suppression events", "Suppression event list"),
+			&[("id", "int32")],
+		),
 	);
 	set_response(
 		spec,
@@ -1671,17 +1767,23 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		spec,
 		"/v1/jobs/{job_id}/failure-center",
 		"get",
-		generic_json_operation("Jobs", "Get job failure center", "Job failure center"),
+		with_path_parameters(
+			generic_json_operation("Jobs", "Get job failure center", "Job failure center"),
+			&[("job_id", "int32")],
+		),
 	);
 	upsert_operation(
 		spec,
 		"/v1/jobs/{job_id}/failure-report",
 		"get",
-		download_operation(
-			"Jobs",
-			"Download job failure report",
-			"Job failure report stream",
-			&["text/csv", "application/x-ndjson"],
+		with_path_parameters(
+			download_operation(
+				"Jobs",
+				"Download job failure report",
+				"Job failure report stream",
+				&["text/csv", "application/x-ndjson"],
+			),
+			&[("job_id", "int32")],
 		),
 	);
 	upsert_operation(

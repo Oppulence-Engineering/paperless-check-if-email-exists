@@ -18,35 +18,65 @@
 import type { SuppressionReason } from './suppression-reason';
 
 /**
- * 
+ *
  * @export
  * @interface AddSuppressionsRequest
  */
 export interface AddSuppressionsRequest {
     /**
-     * 
+     *
      * @type {Array<string>}
      * @memberof AddSuppressionsRequest
      */
     'emails': Array<string>;
     /**
-     * 
+     *
+     * @type {string}
+     * @memberof AddSuppressionsRequest
+     */
+    'expires_at'?: string | null;
+    /**
+     *
+     * @type {{ [key: string]: any; }}
+     * @memberof AddSuppressionsRequest
+     */
+    'metadata'?: { [key: string]: any; };
+    /**
+     *
      * @type {string}
      * @memberof AddSuppressionsRequest
      */
     'notes'?: string | null;
     /**
-     * 
+     *
      * @type {SuppressionReason}
      * @memberof AddSuppressionsRequest
      */
     'reason'?: SuppressionReason;
     /**
-     * 
+     *
+     * @type {string}
+     * @memberof AddSuppressionsRequest
+     */
+    'reason_detail'?: string | null;
+    /**
+     *
      * @type {string}
      * @memberof AddSuppressionsRequest
      */
     'source'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AddSuppressionsRequest
+     */
+    'source_ref'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AddSuppressionsRequest
+     */
+    'source_type'?: string | null;
 }
 
 

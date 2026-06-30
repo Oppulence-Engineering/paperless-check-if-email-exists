@@ -25,6 +25,12 @@
 ## Advanced
 
 * [Customer Feature Backlog](advanced/customer-feature-backlog.md)
+* [Decision Policies](advanced/decision-policies.md)
+* [List Remediation](advanced/list-remediation.md)
+* [Suppression Intelligence](advanced/suppression-intelligence.md)
+* [Outcome Ingestion](advanced/outcome-ingestion.md)
+* [Source Quality](advanced/source-quality.md)
+* [Job Observability](advanced/job-observability.md)
 * [RFCs](rfcs/README.md)
   * [RFC 0001: Native Provider Webhooks and Outcome Adapters](rfcs/0001-native-provider-webhooks-and-outcome-adapters.md)
   * [RFC 0002: Deliverability Feedback and Recommendations](rfcs/0002-deliverability-feedback-and-recommendations.md)

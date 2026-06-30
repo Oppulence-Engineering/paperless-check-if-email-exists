@@ -10,6 +10,15 @@
             },
             "type": "array"
           },
+          "expires_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object"
+          },
           "notes": {
             "nullable": true,
             "type": "string"
@@ -17,7 +26,19 @@
           "reason": {
             "$ref": "#/components/schemas/SuppressionReason"
           },
+          "reason_detail": {
+            "nullable": true,
+            "type": "string"
+          },
           "source": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_ref": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source_type": {
             "nullable": true,
             "type": "string"
           }
@@ -34,6 +55,17 @@
             "type": "integer"
           },
           "duplicates": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "entry_ids": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "updated": {
             "format": "int64",
             "type": "integer"
           }
@@ -224,6 +256,52 @@
           "dangerous"
         ],
         "type": "string"
+      },
+      "BulkCreateRequest": {
+        "properties": {
+          "input": {
+            "items": {
+              "format": "email",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "description": "Alias for source_key.",
+            "nullable": true,
+            "type": "string"
+          },
+          "source_key": {
+            "description": "Optional source key used for source quality analytics.",
+            "nullable": true,
+            "type": "string"
+          },
+          "webhook": {
+            "additionalProperties": true,
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "BulkCreateResponse": {
+        "properties": {
+          "job_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "source_key": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "type": "object"
       },
       "BulkJobResultsResponse": {
         "properties": {
@@ -1100,6 +1178,10 @@
           "name": {
             "type": "string"
           },
+          "source_key": {
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "type": "string"
           },
@@ -1140,6 +1222,10 @@
             "type": "string"
           },
           "original_filename": {
+            "type": "string"
+          },
+          "source_key": {
+            "nullable": true,
             "type": "string"
           },
           "status": {
@@ -1262,6 +1348,11 @@
           "name": {
             "nullable": true,
             "type": "string"
+          },
+          "source_key": {
+            "description": "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -1281,6 +1372,10 @@
           "list_id": {
             "format": "int32",
             "type": "integer"
+          },
+          "source_key": {
+            "nullable": true,
+            "type": "string"
           },
           "total_rows": {
             "format": "int32",
@@ -3312,8 +3407,25 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkCreateResponse"
+                }
+              }
+            },
             "description": "Bulk job created"
           }
         },
@@ -3419,6 +3531,20 @@
         ]
       }
     },
+    "/v1/check-email-with-onboard": {
+      "post": {
+        "operationId": "v1_check_email_with_onboard",
+        "responses": {
+          "201": {
+            "description": "Tenant onboarded and email verified"
+          }
+        },
+        "summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/v1/check_email": {
       "post": {
         "description": "Verifies an email address and returns a result.",
@@ -3460,6 +3586,207 @@
         "summary": "POST /v1/check_email",
         "tags": [
           "v1"
+        ]
+      }
+    },
+    "/v1/comments": {
+      "get": {
+        "operationId": "v1_list_comments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "list_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comments list"
+          }
+        },
+        "summary": "GET /v1/comments",
+        "tags": [
+          "Comments"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_comment",
+        "responses": {
+          "201": {
+            "description": "Comment created"
+          }
+        },
+        "summary": "POST /v1/comments",
+        "tags": [
+          "Comments"
+        ]
+      }
+    },
+    "/v1/comments/{comment_id}": {
+      "delete": {
+        "operationId": "v1_delete_comment",
+        "parameters": [
+          {
+            "description": "Comment identifier",
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted"
+          }
+        },
+        "summary": "DELETE /v1/comments/{comment_id}",
+        "tags": [
+          "Comments"
+        ]
+      }
+    },
+    "/v1/emails/{email}/history": {
+      "get": {
+        "description": "Returns the verification history timeline for a specific email address.",
+        "operationId": "v1_email_history",
+        "parameters": [
+          {
+            "description": "Email address to look up",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification history for the email"
+          }
+        },
+        "summary": "GET /v1/emails/{email}/history",
+        "tags": [
+          "Verification"
+        ]
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "description": "Returns a paginated, filterable audit log of all job events for the tenant.",
+        "operationId": "v1_list_events",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log events"
+          }
+        },
+        "summary": "GET /v1/events",
+        "tags": [
+          "Events"
         ]
       }
     },
@@ -3705,6 +4032,103 @@
           }
         },
         "summary": "GET /v1/jobs/{job_id}/events",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/v1/jobs/{job_id}/failure-center": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Job failure center"
+          }
+        },
+        "summary": "Get job failure center",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/v1/jobs/{job_id}/failure-report": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Job failure report stream"
+          }
+        },
+        "summary": "Download job failure report",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/v1/jobs/{job_id}/latency": {
+      "get": {
+        "description": "Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).",
+        "operationId": "v1_job_latency",
+        "parameters": [
+          {
+            "description": "Bulk job identifier",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latency analytics"
+          }
+        },
+        "summary": "GET /v1/jobs/{job_id}/latency",
         "tags": [
           "Jobs"
         ]
@@ -3985,6 +4409,190 @@
         "summary": "GET /v1/lists/{list_id}/download",
         "tags": [
           "v1"
+        ]
+      }
+    },
+    "/v1/lists/{list_id}/quality": {
+      "get": {
+        "description": "Returns a quality benchmark report for a list.",
+        "operationId": "v1_list_quality",
+        "parameters": [
+          {
+            "description": "List identifier",
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List quality benchmark report"
+          }
+        },
+        "summary": "GET /v1/lists/{list_id}/quality",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
+    "/v1/lists/{list_id}/remediation-exports": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Remediation export"
+          }
+        },
+        "summary": "Create remediation export",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
+    "/v1/lists/{list_id}/remediation-exports/{export_id}/download": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Remediation export CSV"
+          }
+        },
+        "summary": "Download remediation export",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
+    "/v1/lists/{list_id}/remediation-plan": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Remediation plan"
+          }
+        },
+        "summary": "Get remediation plan",
+        "tags": [
+          "Lists"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Remediation plan"
+          }
+        },
+        "summary": "Create remediation plan",
+        "tags": [
+          "Lists"
         ]
       }
     },
@@ -4291,6 +4899,38 @@
         "summary": "PATCH /v1/me/webhook",
         "tags": [
           "Tenant"
+        ]
+      }
+    },
+    "/v1/outcomes": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Outcome ingest result"
+          }
+        },
+        "summary": "Ingest provider outcomes",
+        "tags": [
+          "v1"
         ]
       }
     },
@@ -5110,6 +5750,124 @@
         ]
       }
     },
+    "/v1/query": {
+      "get": {
+        "description": "Flexible historical query API for verification results across jobs.",
+        "operationId": "v1_query_results",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_score",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_score",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "safe_to_send",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recommendation_action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "policy_mode",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "policy_decision",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Filtered verification results"
+          }
+        },
+        "summary": "GET /v1/query",
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/v1/reputation/check": {
       "post": {
         "operationId": "v1_check_reputation",
@@ -5162,6 +5920,27 @@
         ]
       }
     },
+    "/v1/sources/quality": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Source quality analytics"
+          }
+        },
+        "summary": "List source quality",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/v1/suppressions": {
       "get": {
         "operationId": "v1_list_suppressions",
@@ -5190,6 +5969,38 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_ref",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_expired",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -5271,6 +6082,59 @@
         ]
       }
     },
+    "/v1/suppressions/export": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Suppression export CSV"
+          }
+        },
+        "summary": "Export suppressions",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/suppressions/import": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Suppression entries imported"
+          }
+        },
+        "summary": "Import suppressions",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/v1/suppressions/{id}": {
       "delete": {
         "operationId": "v1_delete_suppression",
@@ -5299,6 +6163,38 @@
           }
         },
         "summary": "DELETE /v1/suppressions/{id}",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/suppressions/{id}/events": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Suppression event list"
+          }
+        },
+        "summary": "List suppression events",
         "tags": [
           "v1"
         ]

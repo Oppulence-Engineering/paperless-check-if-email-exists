@@ -15,22 +15,34 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface AddSuppressionsResponse
  */
 export interface AddSuppressionsResponse {
     /**
-     * 
+     *
      * @type {number}
      * @memberof AddSuppressionsResponse
      */
     'added': number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof AddSuppressionsResponse
      */
     'duplicates': number;
+    /**
+     *
+     * @type {Array<number>}
+     * @memberof AddSuppressionsResponse
+     */
+    'entry_ids'?: Array<number>;
+    /**
+     *
+     * @type {number}
+     * @memberof AddSuppressionsResponse
+     */
+    'updated'?: number;
 }
 

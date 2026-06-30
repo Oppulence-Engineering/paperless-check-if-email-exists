@@ -26,6 +26,8 @@ type ListUploadRequest struct {
 	EmailColumn NullableString `json:"email_column,omitempty"`
 	File *os.File `json:"file"`
 	Name NullableString `json:"name,omitempty"`
+	// Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+	SourceKey NullableString `json:"source_key,omitempty"`
 }
 
 type _ListUploadRequest ListUploadRequest
@@ -156,6 +158,48 @@ func (o *ListUploadRequest) UnsetName() {
 	o.Name.Unset()
 }
 
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListUploadRequest) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceKey.Get()
+}
+
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListUploadRequest) GetSourceKeyOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
+}
+
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListUploadRequest) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListUploadRequest) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
+}
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListUploadRequest) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
+}
+
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListUploadRequest) UnsetSourceKey() {
+	o.SourceKey.Unset()
+}
+
 func (o ListUploadRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -172,6 +216,9 @@ func (o ListUploadRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["file"] = o.File
 	if o.Name.IsSet() {
 		toSerialize["name"] = o.Name.Get()
+	}
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
 	}
 	return toSerialize, nil
 }

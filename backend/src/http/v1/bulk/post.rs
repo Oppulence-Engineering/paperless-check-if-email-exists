@@ -48,12 +48,16 @@ use crate::worker::do_work::TaskWebhook;
 struct Request {
 	input: Vec<String>,
 	webhook: Option<TaskWebhook>,
+	#[serde(default, alias = "source")]
+	source_key: Option<String>,
 }
 
 /// POST v1/bulk endpoint response body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Response {
 	job_id: i32,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 }
 
 async fn http_handler(
@@ -65,6 +69,7 @@ async fn http_handler(
 	if body.input.is_empty() {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
+	let source_key = normalize_source_key(body.source_key.as_deref());
 
 	// Atomically check and increment quota for all emails in the bulk request.
 	let email_count = body.input.len() as i32;
@@ -91,15 +96,16 @@ async fn http_handler(
 	let tenant_id = tenant_ctx.tenant_id;
 
 	// Create job entry with status = 'pending'
-	let rec = sqlx::query!(
+	let job_id: i32 = sqlx::query_scalar(
 		r#"
-		INSERT INTO v1_bulk_job (total_records, tenant_id, status)
-		VALUES ($1, $2, 'pending')
+		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
+		VALUES ($1, $2, 'pending', $3)
 		RETURNING id
 		"#,
-		body.input.len() as i32,
-		tenant_id,
 	)
+	.bind(body.input.len() as i32)
+	.bind(tenant_id)
+	.bind(source_key.as_deref())
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -115,22 +121,23 @@ async fn http_handler(
 
 		let payload_json = serde_json::to_value(&CheckEmailTask {
 			input,
-			job_id: CheckEmailJobId::Bulk(rec.id),
+			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: body.webhook.clone(),
 			metadata: None,
 		})
 		.map_err(ReacherResponseError::from)?;
 
-		let task_row = sqlx::query_scalar!(
+		let task_row: i32 = sqlx::query_scalar(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id)
-			VALUES ($1, $2, 'queued', $3)
+			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key)
+			VALUES ($1, $2, 'queued', $3, $4)
 			RETURNING id
 			"#,
-			rec.id,
-			payload_json,
-			tenant_id,
 		)
+		.bind(job_id)
+		.bind(payload_json)
+		.bind(tenant_id)
+		.bind(source_key.as_deref())
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -148,7 +155,6 @@ async fn http_handler(
 		.with_content_type("application/json".into())
 		.with_priority(1); // Low priority
 
-	let job_id = rec.id;
 	stream
 		.map::<Result<_, ReacherResponseError>, _>(Ok)
 		.try_for_each_concurrent(10, |(to_email, task_db_id)| {
@@ -216,7 +222,16 @@ async fn http_handler(
 		queue = CHECK_EMAIL_QUEUE,
 		"Added {n} emails",
 	);
-	Ok(warp::reply::json(&Response { job_id }))
+	Ok(warp::reply::json(&Response { job_id, source_key }))
+}
+
+fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
+	let source_key = source_key?.trim().to_ascii_lowercase();
+	if source_key.is_empty() {
+		None
+	} else {
+		Some(source_key)
+	}
 }
 
 /// Publish a task to the "check_email" queue.
@@ -274,4 +289,19 @@ pub fn v1_create_bulk_job(
 		.and(warp::body::json())
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn source_key_is_normalized_for_bulk_jobs() {
+		assert_eq!(
+			normalize_source_key(Some(" Apollo Import ")),
+			Some("apollo import".to_string())
+		);
+		assert_eq!(normalize_source_key(Some(" ")), None);
+		assert_eq!(normalize_source_key(None), None);
+	}
 }

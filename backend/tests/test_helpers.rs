@@ -977,11 +977,13 @@ pub async fn insert_comment(
 }
 
 pub async fn insert_suppression(pool: &PgPool, tenant_id: Uuid, email: &str, reason: &str) -> i32 {
+	let canonical_email = email.trim().to_lowercase();
 	let row = sqlx::query(
-		"INSERT INTO v1_suppression_entries (tenant_id, email, reason) VALUES ($1, $2, $3::suppression_reason) RETURNING id",
+		"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason, reason_code, source_type, last_seen_at) VALUES ($1, $2, $3, $4::suppression_reason, $4, 'harness', NOW()) RETURNING id",
 	)
 	.bind(tenant_id)
 	.bind(email)
+	.bind(canonical_email)
 	.bind(reason)
 	.fetch_one(pool)
 	.await

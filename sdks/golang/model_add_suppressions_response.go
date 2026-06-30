@@ -24,6 +24,8 @@ var _ MappedNullable = &AddSuppressionsResponse{}
 type AddSuppressionsResponse struct {
 	Added int64 `json:"added"`
 	Duplicates int64 `json:"duplicates"`
+	EntryIds []int32 `json:"entry_ids,omitempty"`
+	Updated *int64 `json:"updated,omitempty"`
 }
 
 type _AddSuppressionsResponse AddSuppressionsResponse
@@ -95,6 +97,70 @@ func (o *AddSuppressionsResponse) SetDuplicates(v int64) {
 	o.Duplicates = v
 }
 
+// GetEntryIds returns the EntryIds field value if set, zero value otherwise.
+func (o *AddSuppressionsResponse) GetEntryIds() []int32 {
+	if o == nil || IsNil(o.EntryIds) {
+		var ret []int32
+		return ret
+	}
+	return o.EntryIds
+}
+
+// GetEntryIdsOk returns a tuple with the EntryIds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AddSuppressionsResponse) GetEntryIdsOk() ([]int32, bool) {
+	if o == nil || IsNil(o.EntryIds) {
+		return nil, false
+	}
+	return o.EntryIds, true
+}
+
+// HasEntryIds returns a boolean if a field has been set.
+func (o *AddSuppressionsResponse) HasEntryIds() bool {
+	if o != nil && !IsNil(o.EntryIds) {
+		return true
+	}
+
+	return false
+}
+
+// SetEntryIds gets a reference to the given []int32 and assigns it to the EntryIds field.
+func (o *AddSuppressionsResponse) SetEntryIds(v []int32) {
+	o.EntryIds = v
+}
+
+// GetUpdated returns the Updated field value if set, zero value otherwise.
+func (o *AddSuppressionsResponse) GetUpdated() int64 {
+	if o == nil || IsNil(o.Updated) {
+		var ret int64
+		return ret
+	}
+	return *o.Updated
+}
+
+// GetUpdatedOk returns a tuple with the Updated field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AddSuppressionsResponse) GetUpdatedOk() (*int64, bool) {
+	if o == nil || IsNil(o.Updated) {
+		return nil, false
+	}
+	return o.Updated, true
+}
+
+// HasUpdated returns a boolean if a field has been set.
+func (o *AddSuppressionsResponse) HasUpdated() bool {
+	if o != nil && !IsNil(o.Updated) {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdated gets a reference to the given int64 and assigns it to the Updated field.
+func (o *AddSuppressionsResponse) SetUpdated(v int64) {
+	o.Updated = &v
+}
+
 func (o AddSuppressionsResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -107,6 +173,12 @@ func (o AddSuppressionsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["added"] = o.Added
 	toSerialize["duplicates"] = o.Duplicates
+	if !IsNil(o.EntryIds) {
+		toSerialize["entry_ids"] = o.EntryIds
+	}
+	if !IsNil(o.Updated) {
+		toSerialize["updated"] = o.Updated
+	}
 	return toSerialize, nil
 }
 
