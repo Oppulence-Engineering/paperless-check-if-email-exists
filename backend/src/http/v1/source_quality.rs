@@ -32,9 +32,17 @@ struct SourceQualityRow {
 	review_count: i64,
 	suppress_count: i64,
 	drop_count: i64,
+	outcome_count: i64,
+	delivered_count: i64,
+	opened_count: i64,
+	clicked_count: i64,
+	bounced_count: i64,
+	complained_count: i64,
+	unsubscribed_count: i64,
 	risky_pct: f64,
 	invalid_pct: f64,
 	unsafe_recommendation_pct: f64,
+	negative_outcome_pct: f64,
 	quality_grade: String,
 	summary: String,
 }
@@ -61,6 +69,7 @@ async fn http_handler(
 
 	let rows = sqlx::query(
 		r#"
+		WITH task_stats AS (
 		SELECT
 			source_key,
 			COUNT(*) AS total_records,
@@ -85,10 +94,38 @@ async fn http_handler(
 		  AND ($2::TEXT IS NULL OR source_key = $2)
 		GROUP BY source_key
 		HAVING COUNT(*) >= $3
+		),
+		outcome_stats AS (
+			SELECT
+				source_key,
+				COUNT(*) AS outcome_count,
+				COUNT(*) FILTER (WHERE event_type = 'delivered') AS delivered_count,
+				COUNT(*) FILTER (WHERE event_type = 'opened') AS opened_count,
+				COUNT(*) FILTER (WHERE event_type = 'clicked') AS clicked_count,
+				COUNT(*) FILTER (WHERE event_type = 'bounced') AS bounced_count,
+				COUNT(*) FILTER (WHERE event_type = 'complained') AS complained_count,
+				COUNT(*) FILTER (WHERE event_type = 'unsubscribed') AS unsubscribed_count
+			FROM v1_contact_outcomes
+			WHERE tenant_id = $1
+			  AND source_key IS NOT NULL
+			  AND ($2::TEXT IS NULL OR source_key = $2)
+			GROUP BY source_key
+		)
+		SELECT
+			task_stats.*,
+			COALESCE(outcome_stats.outcome_count, 0) AS outcome_count,
+			COALESCE(outcome_stats.delivered_count, 0) AS delivered_count,
+			COALESCE(outcome_stats.opened_count, 0) AS opened_count,
+			COALESCE(outcome_stats.clicked_count, 0) AS clicked_count,
+			COALESCE(outcome_stats.bounced_count, 0) AS bounced_count,
+			COALESCE(outcome_stats.complained_count, 0) AS complained_count,
+			COALESCE(outcome_stats.unsubscribed_count, 0) AS unsubscribed_count
+		FROM task_stats
+		LEFT JOIN outcome_stats USING (source_key)
 		ORDER BY
-			COUNT(*) FILTER (WHERE score_category = 'invalid') DESC,
-			COUNT(*) FILTER (WHERE score_category = 'risky') DESC,
-			COUNT(*) DESC
+			invalid_count DESC,
+			risky_count DESC,
+			total_records DESC
 		LIMIT $4
 		"#,
 	)
@@ -109,16 +146,29 @@ async fn http_handler(
 			let review_count = row.get::<Option<i64>, _>("review_count").unwrap_or(0);
 			let suppress_count = row.get::<Option<i64>, _>("suppress_count").unwrap_or(0);
 			let drop_count = row.get::<Option<i64>, _>("drop_count").unwrap_or(0);
+			let outcome_count = row.get::<Option<i64>, _>("outcome_count").unwrap_or(0);
+			let bounced_count = row.get::<Option<i64>, _>("bounced_count").unwrap_or(0);
+			let complained_count = row.get::<Option<i64>, _>("complained_count").unwrap_or(0);
+			let unsubscribed_count = row.get::<Option<i64>, _>("unsubscribed_count").unwrap_or(0);
 			let risky_pct = percent(risky_count, total_records);
 			let invalid_pct = percent(invalid_count, total_records);
 			let unsafe_recommendation_pct =
 				percent(review_count + suppress_count + drop_count, total_records);
-			let quality_grade = quality_grade(risky_pct, invalid_pct, unsafe_recommendation_pct);
+			let negative_outcome_pct = percent(
+				bounced_count + complained_count + unsubscribed_count,
+				outcome_count,
+			);
+			let quality_grade = quality_grade(
+				risky_pct,
+				invalid_pct,
+				unsafe_recommendation_pct,
+				negative_outcome_pct,
+			);
 			let source_key: String = row.get("source_key");
 			SourceQualityRow {
 				summary: format!(
-					"This source produces {}% risky contacts and {}% invalid contacts.",
-					risky_pct, invalid_pct
+					"This source produces {}% risky contacts, {}% invalid contacts, and {}% negative outcomes.",
+					risky_pct, invalid_pct, negative_outcome_pct
 				),
 				source_key,
 				total_records,
@@ -135,9 +185,17 @@ async fn http_handler(
 				review_count,
 				suppress_count,
 				drop_count,
+				outcome_count,
+				delivered_count: row.get::<Option<i64>, _>("delivered_count").unwrap_or(0),
+				opened_count: row.get::<Option<i64>, _>("opened_count").unwrap_or(0),
+				clicked_count: row.get::<Option<i64>, _>("clicked_count").unwrap_or(0),
+				bounced_count,
+				complained_count,
+				unsubscribed_count,
 				risky_pct,
 				invalid_pct,
 				unsafe_recommendation_pct,
+				negative_outcome_pct,
 				quality_grade,
 			}
 		})
@@ -153,14 +211,31 @@ fn percent(count: i64, total: i64) -> f64 {
 	((count as f64 / total as f64) * 1000.0).round() / 10.0
 }
 
-fn quality_grade(risky_pct: f64, invalid_pct: f64, unsafe_recommendation_pct: f64) -> String {
-	if invalid_pct >= 20.0 || unsafe_recommendation_pct >= 45.0 {
+fn quality_grade(
+	risky_pct: f64,
+	invalid_pct: f64,
+	unsafe_recommendation_pct: f64,
+	negative_outcome_pct: f64,
+) -> String {
+	if invalid_pct >= 20.0 || unsafe_recommendation_pct >= 45.0 || negative_outcome_pct >= 25.0 {
 		"F"
-	} else if invalid_pct >= 10.0 || risky_pct >= 35.0 || unsafe_recommendation_pct >= 30.0 {
+	} else if invalid_pct >= 10.0
+		|| risky_pct >= 35.0
+		|| unsafe_recommendation_pct >= 30.0
+		|| negative_outcome_pct >= 15.0
+	{
 		"D"
-	} else if invalid_pct >= 5.0 || risky_pct >= 20.0 || unsafe_recommendation_pct >= 20.0 {
+	} else if invalid_pct >= 5.0
+		|| risky_pct >= 20.0
+		|| unsafe_recommendation_pct >= 20.0
+		|| negative_outcome_pct >= 8.0
+	{
 		"C"
-	} else if invalid_pct >= 2.0 || risky_pct >= 10.0 || unsafe_recommendation_pct >= 10.0 {
+	} else if invalid_pct >= 2.0
+		|| risky_pct >= 10.0
+		|| unsafe_recommendation_pct >= 10.0
+		|| negative_outcome_pct >= 3.0
+	{
 		"B"
 	} else {
 		"A"
@@ -194,10 +269,10 @@ mod tests {
 
 	#[test]
 	fn quality_grade_penalizes_bad_sources() {
-		assert_eq!(quality_grade(4.0, 1.0, 3.0), "A");
-		assert_eq!(quality_grade(18.0, 3.0, 12.0), "B");
-		assert_eq!(quality_grade(25.0, 6.0, 21.0), "C");
-		assert_eq!(quality_grade(40.0, 12.0, 31.0), "D");
-		assert_eq!(quality_grade(10.0, 22.0, 50.0), "F");
+		assert_eq!(quality_grade(4.0, 1.0, 3.0, 1.0), "A");
+		assert_eq!(quality_grade(18.0, 3.0, 12.0, 4.0), "B");
+		assert_eq!(quality_grade(25.0, 6.0, 21.0, 9.0), "C");
+		assert_eq!(quality_grade(40.0, 12.0, 31.0, 16.0), "D");
+		assert_eq!(quality_grade(10.0, 22.0, 50.0, 26.0), "F");
 	}
 }
