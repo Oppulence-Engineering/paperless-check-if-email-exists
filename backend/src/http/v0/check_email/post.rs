@@ -28,6 +28,7 @@ use warp::Reply;
 
 use super::backwardcompat::{BackwardCompatHotmailB2CVerifMethod, BackwardCompatYahooVerifMethod};
 use crate::config::BackendConfig;
+use crate::decision::types::PolicyMode;
 use crate::http::deprecation::add_deprecation_headers;
 use crate::http::resolve_tenant;
 use crate::http::shared::check_email::handle_check_email;
@@ -50,6 +51,10 @@ pub struct CheckEmailRequest {
 	/// When false, skips provider-specific syntax validation even if the
 	/// provider is recognized.
 	pub strict_provider_rules: Option<bool>,
+	/// Optional risk policy mode used by the decision layer.
+	pub policy_mode: Option<PolicyMode>,
+	/// Optional tenant custom policy profile key used when policy_mode=custom.
+	pub policy_profile_key: Option<String>,
 	// The following fields are for backward compatibility.
 	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,
 	pub hotmailb2c_verif_method: Option<BackwardCompatHotmailB2CVerifMethod>,

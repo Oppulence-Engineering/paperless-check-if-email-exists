@@ -2,6 +2,7 @@ use crate::bounce_risk::{
 	BounceRiskAssessment, BounceRiskCategory, RecommendedAction as BounceRecommendedAction,
 };
 use crate::decision::explain::{collect_explanations, ExplanationInput};
+use crate::decision::policy::{evaluate_policy, PolicyInput};
 use crate::decision::types::{
 	DecisionConfidence, DecisionPriority, PolicyDecision, PolicyEvaluation, PolicyMode,
 	Recommendation, RecommendedAction,
@@ -34,7 +35,18 @@ pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation)
 		previous_hard_bounce: input.previous_hard_bounce,
 	});
 
-	let action = recommended_action(input);
+	let policy_evaluation = evaluate_policy(&PolicyInput {
+		mode: input.policy_mode,
+		policy_profile_key: input.policy_profile_key.clone(),
+		score: input.score,
+		result_age_days,
+		bounce_risk: input.bounce_risk,
+		active_suppression: input.active_suppression,
+		previous_hard_bounce: input.previous_hard_bounce,
+		evaluated_at: input.evaluated_at,
+	});
+
+	let action = recommended_action(input, policy_evaluation.decision);
 	let confidence = confidence(input);
 	let priority = priority(action);
 	let summary = summary_for(action);
@@ -50,6 +62,14 @@ pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation)
 			},
 		);
 	}
+	for policy_reason in &policy_evaluation.reasons {
+		if !reasons
+			.iter()
+			.any(|reason| reason.code == policy_reason.code)
+		{
+			reasons.push(policy_reason.clone());
+		}
+	}
 
 	let recommendation = Recommendation {
 		action,
@@ -64,29 +84,13 @@ pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation)
 		evaluated_at: input.evaluated_at,
 	};
 
-	let policy_decision = match action {
-		RecommendedAction::Send
-		| RecommendedAction::SendWithCaution
-		| RecommendedAction::FixThenSend => PolicyDecision::Send,
-		RecommendedAction::Review => PolicyDecision::Review,
-		RecommendedAction::Suppress => PolicyDecision::Suppress,
-		RecommendedAction::Drop => PolicyDecision::Drop,
-	};
-
-	let policy_evaluation = PolicyEvaluation {
-		mode: input.policy_mode,
-		policy_profile_key: input.policy_profile_key.clone(),
-		decision: policy_decision,
-		reasons,
-		evaluated_at: input.evaluated_at,
-		result_age_days: Some(result_age_days),
-		engine_version: DECISION_ENGINE_VERSION.to_string(),
-	};
-
 	(recommendation, policy_evaluation)
 }
 
-fn recommended_action(input: &DecisionInput<'_>) -> RecommendedAction {
+fn recommended_action(
+	input: &DecisionInput<'_>,
+	policy_decision: PolicyDecision,
+) -> RecommendedAction {
 	if input.active_suppression || is_hard_invalid(input.score) {
 		return RecommendedAction::Drop;
 	}
@@ -106,10 +110,6 @@ fn recommended_action(input: &DecisionInput<'_>) -> RecommendedAction {
 		return RecommendedAction::FixThenSend;
 	}
 
-	if requires_review(input) {
-		return RecommendedAction::Review;
-	}
-
 	if matches!(
 		input.bounce_risk.map(|risk| &risk.category),
 		Some(BounceRiskCategory::Medium)
@@ -120,11 +120,12 @@ fn recommended_action(input: &DecisionInput<'_>) -> RecommendedAction {
 		return RecommendedAction::SendWithCaution;
 	}
 
-	if input.score.safe_to_send {
-		return RecommendedAction::Send;
+	match policy_decision {
+		PolicyDecision::Send => RecommendedAction::Send,
+		PolicyDecision::Review => RecommendedAction::Review,
+		PolicyDecision::Suppress => RecommendedAction::Suppress,
+		PolicyDecision::Drop => RecommendedAction::Drop,
 	}
-
-	RecommendedAction::Review
 }
 
 fn is_hard_invalid(score: &EmailScore) -> bool {
@@ -147,26 +148,6 @@ fn disposable_should_suppress(input: &DecisionInput<'_>) -> bool {
 				| PolicyMode::SignupProtection
 				| PolicyMode::EnterpriseStrict
 		)
-}
-
-fn requires_review(input: &DecisionInput<'_>) -> bool {
-	let age_days = (input.evaluated_at - input.completed_at).num_days().max(0);
-	age_days > 30
-		|| matches!(
-			input.score.category,
-			EmailCategory::Risky | EmailCategory::Unknown
-		) || input.score.signals.smtp_is_catch_all
-		|| input.score.signals.is_role_account
-		|| !input.score.signals.has_mx_records
-		|| input.score.signals.smtp_error
-		|| !input.score.signals.smtp_can_connect
-		|| matches!(
-			input.bounce_risk.map(|risk| &risk.category),
-			Some(BounceRiskCategory::High | BounceRiskCategory::Dangerous)
-		) || matches!(
-		input.bounce_risk.map(|risk| &risk.action),
-		Some(BounceRecommendedAction::VerifyManually | BounceRecommendedAction::DoNotSend)
-	)
 }
 
 fn confidence(input: &DecisionInput<'_>) -> DecisionConfidence {
