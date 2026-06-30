@@ -238,6 +238,12 @@ api_routes!(
 		|config| crate::http::v1::suppressions::list::v1_list_suppressions(config)
 	),
 	(
+		route_v1_suppressions_events,
+		"GET",
+		"/v1/suppressions/{id}/events",
+		|config| crate::http::v1::suppressions::events::v1_list_suppression_events(config)
+	),
+	(
 		route_v1_suppressions_delete,
 		"DELETE",
 		"/v1/suppressions/{id}",
