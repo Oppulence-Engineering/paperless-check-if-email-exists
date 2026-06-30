@@ -4,19 +4,24 @@ use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
+use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
+use futures::stream;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use sqlx::{PgPool, Row};
 use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
+use std::io;
 use std::sync::Arc;
 use warp::http::StatusCode;
+use warp::hyper::Body;
 use warp::Filter;
 
 const RULE_VERSION: &str = "remediation_v1";
 const PREVIEW_ROW_LIMIT: i64 = 100;
+const EXPORT_BATCH_SIZE: i64 = 500;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -66,6 +71,13 @@ struct CreatePlanRequest {
 	normalize_emails: Option<bool>,
 	deduplicate: Option<bool>,
 	drop_suppressed: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct CreateExportRequest {
+	plan_id: Option<i64>,
+	partitions: Option<Vec<String>>,
+	format: Option<String>,
 }
 
 impl From<CreatePlanRequest> for PlanOptions {
@@ -133,6 +145,17 @@ struct RemediationRowResponse {
 	reasons: Value,
 }
 
+#[derive(Debug, Serialize)]
+struct ExportResponse {
+	id: i64,
+	list_id: i32,
+	plan_id: i64,
+	partitions: Vec<String>,
+	format: String,
+	download_url: String,
+	created_at: String,
+}
+
 struct ListContext {
 	id: i32,
 	job_id: i32,
@@ -174,6 +197,27 @@ struct PlannedRemediationRow {
 	after: Value,
 	reasons: Value,
 	task_result_id: Option<i32>,
+}
+
+struct ExportRow {
+	row_index: i32,
+	classification: String,
+	rule_id: String,
+	confidence: String,
+	original_email: String,
+	effective_email: String,
+	after: Value,
+	reasons: Value,
+}
+
+struct ExportDownloadState {
+	pg_pool: PgPool,
+	tenant_id: uuid::Uuid,
+	plan_id: i64,
+	partitions: Vec<String>,
+	headers: Vec<String>,
+	last_row_index: i32,
+	header_sent: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -290,6 +334,175 @@ async fn get_plan_handler(
 		.await
 		.map_err(warp::reject::custom)?;
 	Ok(warp::reply::json(&response))
+}
+
+async fn create_export_handler(
+	list_id: i32,
+	tenant_ctx: TenantContext,
+	pg_pool: PgPool,
+	body: CreateExportRequest,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	load_list_context(&pg_pool, list_id, tenant_id)
+		.await
+		.map_err(warp::reject::custom)?;
+	let format = body.format.unwrap_or_else(|| "csv".to_string());
+	if format != "csv" {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Only format=csv is supported",
+		)
+		.into());
+	}
+	let partitions = normalize_export_partitions(body.partitions)?;
+	let plan_id = find_plan_id(&pg_pool, tenant_id, list_id, body.plan_id)
+		.await
+		.map_err(warp::reject::custom)?;
+
+	let row = sqlx::query(
+		r#"
+		INSERT INTO v1_remediation_exports (tenant_id, plan_id, partitions, format)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(plan_id)
+	.bind(&partitions)
+	.bind(&format)
+	.fetch_one(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)
+	.map_err(warp::reject::custom)?;
+
+	let id: i64 = row.get("id");
+	let created_at = row.get::<DateTime<Utc>, _>("created_at").to_rfc3339();
+	Ok(warp::reply::with_status(
+		warp::reply::json(&ExportResponse {
+			id,
+			list_id,
+			plan_id,
+			partitions,
+			format,
+			download_url: format!("/v1/lists/{}/remediation-exports/{}/download", list_id, id),
+			created_at,
+		}),
+		StatusCode::CREATED,
+	))
+}
+
+async fn download_export_handler(
+	list_id: i32,
+	export_id: i64,
+	tenant_ctx: TenantContext,
+	pg_pool: PgPool,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	let export = sqlx::query(
+		r#"
+		SELECT e.id, e.plan_id, e.partitions, e.format, l.original_headers
+		FROM v1_remediation_exports e
+		JOIN v1_remediation_plans p ON p.id = e.plan_id
+		JOIN v1_lists l ON l.id = p.list_id
+		WHERE e.id = $1
+		  AND e.tenant_id = $2
+		  AND p.tenant_id = $2
+		  AND p.list_id = $3
+		"#,
+	)
+	.bind(export_id)
+	.bind(tenant_id)
+	.bind(list_id)
+	.fetch_optional(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
+	let export = export.ok_or_else(|| {
+		warp::reject::custom(ReacherResponseError::new(
+			StatusCode::NOT_FOUND,
+			"Remediation export not found",
+		))
+	})?;
+	let format: String = export.get("format");
+	if format != "csv" {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Only format=csv is supported",
+		)
+		.into());
+	}
+
+	let partitions: Vec<String> = export.get("partitions");
+	let headers: Vec<String> = export.get("original_headers");
+	let plan_id: i64 = export.get("plan_id");
+	let body = Body::wrap_stream(stream::unfold(
+		ExportDownloadState {
+			pg_pool,
+			tenant_id,
+			plan_id,
+			partitions,
+			headers,
+			last_row_index: -1,
+			header_sent: false,
+		},
+		|mut state| async move {
+			if !state.header_sent {
+				state.header_sent = true;
+				return Some((
+					Ok::<Bytes, io::Error>(Bytes::from(render_export_header(&state.headers))),
+					state,
+				));
+			}
+
+			loop {
+				match fetch_export_batch(
+					&state.pg_pool,
+					state.tenant_id,
+					state.plan_id,
+					state.last_row_index,
+				)
+				.await
+				{
+					Ok(rows) if rows.is_empty() => return None,
+					Ok(rows) => {
+						state.last_row_index = rows
+							.last()
+							.map(|row| row.row_index)
+							.unwrap_or(state.last_row_index);
+						let mut chunk = Vec::new();
+						for row in rows {
+							if export_partition_includes(
+								&state.partitions,
+								&row.classification,
+								&row.original_email,
+								&row.effective_email,
+							) {
+								chunk.extend_from_slice(&render_export_row(&state.headers, &row));
+							}
+						}
+						if !chunk.is_empty() {
+							return Some((Ok(Bytes::from(chunk)), state));
+						}
+					}
+					Err(err) => return Some((Err(io::Error::other(err.to_string())), state)),
+				}
+			}
+		},
+	));
+
+	let response = warp::http::Response::builder()
+		.header("Content-Type", "text/csv")
+		.header(
+			"Content-Disposition",
+			format!(
+				"attachment; filename=\"list_{}_remediation_export_{}.csv\"",
+				list_id, export_id
+			),
+		)
+		.body(body)
+		.map_err(|err| ReacherResponseError::new(StatusCode::INTERNAL_SERVER_ERROR, err))
+		.map_err(warp::reject::custom)?;
+
+	Ok(response)
 }
 
 async fn load_list_context(
@@ -533,6 +746,75 @@ async fn fetch_plan_response(
 			})
 			.collect(),
 	})
+}
+
+async fn find_plan_id(
+	pg_pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	list_id: i32,
+	plan_id: Option<i64>,
+) -> Result<i64, ReacherResponseError> {
+	let row = sqlx::query(
+		r#"
+		SELECT id
+		FROM v1_remediation_plans
+		WHERE tenant_id = $1
+		  AND list_id = $2
+		  AND ($3::BIGINT IS NULL OR id = $3)
+		ORDER BY created_at DESC
+		LIMIT 1
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(list_id)
+	.bind(plan_id)
+	.fetch_optional(pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
+	row.map(|row| row.get("id")).ok_or_else(|| {
+		ReacherResponseError::new(StatusCode::NOT_FOUND, "Remediation plan not found")
+	})
+}
+
+async fn fetch_export_batch(
+	pg_pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	plan_id: i64,
+	last_row_index: i32,
+) -> Result<Vec<ExportRow>, ReacherResponseError> {
+	let rows = sqlx::query(
+		r#"
+		SELECT row_index, classification, rule_id, confidence, original_email,
+		       effective_email, after, reasons
+		FROM v1_remediation_rows
+		WHERE tenant_id = $1
+		  AND plan_id = $2
+		  AND row_index > $3
+		ORDER BY row_index ASC
+		LIMIT $4
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(plan_id)
+	.bind(last_row_index)
+	.bind(EXPORT_BATCH_SIZE)
+	.fetch_all(pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
+
+	Ok(rows
+		.into_iter()
+		.map(|row| ExportRow {
+			row_index: row.get("row_index"),
+			classification: row.get("classification"),
+			rule_id: row.get("rule_id"),
+			confidence: row.get("confidence"),
+			original_email: row.get("original_email"),
+			effective_email: row.get("effective_email"),
+			after: row.get("after"),
+			reasons: row.get("reasons"),
+		})
+		.collect())
 }
 
 fn original_rows_by_index(original_data: &Value) -> BTreeMap<i32, Value> {
@@ -809,6 +1091,126 @@ fn reasons_value(row: &RawTaskRow, local_reasons: &[LocalReason]) -> Value {
 	Value::Array(reasons)
 }
 
+fn normalize_export_partitions(
+	partitions: Option<Vec<String>>,
+) -> Result<Vec<String>, warp::Rejection> {
+	let raw = partitions.unwrap_or_else(|| vec!["safe_to_send".to_string()]);
+	if raw.is_empty() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"partitions array must not be empty",
+		)
+		.into());
+	}
+
+	let mut normalized = Vec::new();
+	for partition in raw {
+		let partition = partition.trim().to_lowercase();
+		if partition.is_empty() {
+			continue;
+		}
+		if !matches!(
+			partition.as_str(),
+			"all" | "safe_to_send" | "fixed" | "safe" | "review" | "drop" | "changed"
+		) {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("Invalid remediation export partition: {}", partition),
+			)
+			.into());
+		}
+		if !normalized.contains(&partition) {
+			normalized.push(partition);
+		}
+	}
+
+	if normalized.is_empty() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"partitions array must include at least one valid partition",
+		)
+		.into());
+	}
+	Ok(normalized)
+}
+
+fn export_partition_includes(
+	partitions: &[String],
+	classification: &str,
+	original_email: &str,
+	effective_email: &str,
+) -> bool {
+	partitions.iter().any(|partition| match partition.as_str() {
+		"all" => true,
+		"safe_to_send" => matches!(classification, "fixed" | "safe"),
+		"changed" => original_email.trim() != effective_email,
+		other => other == classification,
+	})
+}
+
+fn render_export_header(headers: &[String]) -> Vec<u8> {
+	let mut writer = csv::WriterBuilder::new()
+		.has_headers(false)
+		.from_writer(Vec::new());
+	let mut row = headers.to_vec();
+	row.extend([
+		"remediation_classification".to_string(),
+		"remediation_rule_id".to_string(),
+		"remediation_confidence".to_string(),
+		"original_email".to_string(),
+		"effective_email".to_string(),
+		"remediation_changed".to_string(),
+		"remediation_reasons".to_string(),
+	]);
+	writer.write_record(&row).expect("csv header write");
+	writer.into_inner().expect("csv header bytes")
+}
+
+fn render_export_row(headers: &[String], row: &ExportRow) -> Vec<u8> {
+	let mut writer = csv::WriterBuilder::new()
+		.has_headers(false)
+		.from_writer(Vec::new());
+	let object = row.after.as_object();
+	let mut record = headers
+		.iter()
+		.map(|header| {
+			object
+				.and_then(|object| object.get(header))
+				.map(value_to_cell)
+				.unwrap_or_default()
+		})
+		.collect::<Vec<_>>();
+	record.push(row.classification.clone());
+	record.push(row.rule_id.clone());
+	record.push(row.confidence.clone());
+	record.push(row.original_email.clone());
+	record.push(row.effective_email.clone());
+	record.push((row.original_email.trim() != row.effective_email).to_string());
+	record.push(compact_export_reason_codes(&row.reasons));
+	writer.write_record(&record).expect("csv row write");
+	writer.into_inner().expect("csv row bytes")
+}
+
+fn value_to_cell(value: &Value) -> String {
+	match value {
+		Value::Null => String::new(),
+		Value::String(value) => value.clone(),
+		Value::Bool(value) => value.to_string(),
+		Value::Number(value) => value.to_string(),
+		other => other.to_string(),
+	}
+}
+
+fn compact_export_reason_codes(value: &Value) -> String {
+	value
+		.as_array()
+		.into_iter()
+		.flat_map(|reasons| reasons.iter())
+		.filter_map(|reason| reason.get("code").and_then(Value::as_str))
+		.collect::<Vec<_>>()
+		.join("|")
+}
+
 /// POST /v1/lists/{list_id}/remediation-plan
 pub fn v1_create_remediation_plan(
 	config: Arc<BackendConfig>,
@@ -831,6 +1233,31 @@ pub fn v1_get_remediation_plan(
 		.and(resolve_tenant(Arc::clone(&config)))
 		.and(with_worker_db(config))
 		.and_then(get_plan_handler)
+		.with(warp::log(LOG_TARGET))
+}
+
+/// POST /v1/lists/{list_id}/remediation-exports
+pub fn v1_create_remediation_export(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "lists" / i32 / "remediation-exports")
+		.and(warp::post())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_worker_db(config))
+		.and(warp::body::json())
+		.and_then(create_export_handler)
+		.with(warp::log(LOG_TARGET))
+}
+
+/// GET /v1/lists/{list_id}/remediation-exports/{export_id}/download
+pub fn v1_download_remediation_export(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "lists" / i32 / "remediation-exports" / i64 / "download")
+		.and(warp::get())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_worker_db(config))
+		.and_then(download_export_handler)
 		.with(warp::log(LOG_TARGET))
 }
 
@@ -930,5 +1357,54 @@ mod tests {
 		let result = ensure_plan_allowed("processing", 10, 4, true);
 
 		assert!(result.is_ok());
+	}
+
+	#[test]
+	fn safe_to_send_export_includes_fixed_and_safe_rows() {
+		let partitions = normalize_export_partitions(Some(vec!["safe_to_send".to_string()]))
+			.expect("partition should normalize");
+
+		assert!(export_partition_includes(
+			&partitions,
+			"fixed",
+			"user@gmial.com",
+			"user@gmail.com"
+		));
+		assert!(export_partition_includes(
+			&partitions,
+			"safe",
+			"user@example.com",
+			"user@example.com"
+		));
+		assert!(!export_partition_includes(
+			&partitions,
+			"review",
+			"user@example.com",
+			"user@example.com"
+		));
+	}
+
+	#[test]
+	fn export_row_renders_repaired_after_values() {
+		let row = ExportRow {
+			row_index: 1,
+			classification: "fixed".to_string(),
+			rule_id: "recommended_fix".to_string(),
+			confidence: "high".to_string(),
+			original_email: "user@gmial.com".to_string(),
+			effective_email: "user@gmail.com".to_string(),
+			after: json!({"email": "user@gmail.com", "name": "Ada"}),
+			reasons: json!([{"code": "possible_domain_typo"}]),
+		};
+
+		let rendered = String::from_utf8(render_export_row(
+			&["name".to_string(), "email".to_string()],
+			&row,
+		))
+		.expect("csv should be utf8");
+
+		assert!(rendered.contains("Ada,user@gmail.com,fixed"));
+		assert!(rendered.contains("user@gmial.com,user@gmail.com,true"));
+		assert!(rendered.contains("possible_domain_typo"));
 	}
 }

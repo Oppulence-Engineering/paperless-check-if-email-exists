@@ -139,6 +139,18 @@ api_routes!(
 		|config| crate::http::v1::lists::remediation::v1_get_remediation_plan(config)
 	),
 	(
+		route_v1_lists_remediation_exports_create,
+		"POST",
+		"/v1/lists/{list_id}/remediation-exports",
+		|config| crate::http::v1::lists::remediation::v1_create_remediation_export(config)
+	),
+	(
+		route_v1_lists_remediation_export_download,
+		"GET",
+		"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+		|config| crate::http::v1::lists::remediation::v1_download_remediation_export(config)
+	),
+	(
 		route_v1_lists_delete,
 		"DELETE",
 		"/v1/lists/{list_id}",
