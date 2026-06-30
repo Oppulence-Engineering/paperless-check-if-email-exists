@@ -127,6 +127,18 @@ api_routes!(
 		|config| crate::http::v1::lists::download::v1_download_list(config)
 	),
 	(
+		route_v1_lists_remediation_plan_create,
+		"POST",
+		"/v1/lists/{list_id}/remediation-plan",
+		|config| crate::http::v1::lists::remediation::v1_create_remediation_plan(config)
+	),
+	(
+		route_v1_lists_remediation_plan_get,
+		"GET",
+		"/v1/lists/{list_id}/remediation-plan",
+		|config| crate::http::v1::lists::remediation::v1_get_remediation_plan(config)
+	),
+	(
 		route_v1_lists_delete,
 		"DELETE",
 		"/v1/lists/{list_id}",
