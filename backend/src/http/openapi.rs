@@ -353,6 +353,87 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 	}
 }
 
+fn upsert_operation(spec: &mut Value, path: &str, method: &str, operation: Value) {
+	let path_item = paths_mut(spec)
+		.entry(path.to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("path item object");
+	path_item.insert(method.to_string(), operation);
+}
+
+fn generic_object_schema() -> Value {
+	json!({
+		"type": "object",
+		"additionalProperties": true
+	})
+}
+
+fn generic_json_operation(tag: &str, summary: &str, description: &str) -> Value {
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}
+		}
+	})
+}
+
+fn generic_json_post_operation(tag: &str, summary: &str, description: &str) -> Value {
+	let mut operation = generic_json_operation(tag, summary, description);
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"requestBody".to_string(),
+			json!({
+				"required": true,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}),
+		);
+	}
+	operation
+}
+
+fn download_operation(
+	tag: &str,
+	summary: &str,
+	description: &str,
+	content_types: &[&str],
+) -> Value {
+	let mut content = Map::new();
+	for content_type in content_types {
+		content.insert(
+			(*content_type).to_string(),
+			json!({
+				"schema": {
+					"type": "string",
+					"format": "binary"
+				}
+			}),
+		);
+	}
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": content
+			}
+		}
+	})
+}
+
 fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
 	if let Some(schema) = schemas_mut(spec)
 		.get_mut(schema_name)
@@ -1349,6 +1430,63 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		binary_response("Cleaned list CSV download", "text/csv"),
 	);
+	set_schema_property(
+		spec,
+		"ListUploadRequest",
+		"source_key",
+		json!({
+			"type": "string",
+			"nullable": true,
+			"description": "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor."
+		}),
+	);
+	set_schema_property(
+		spec,
+		"ListUploadResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListItem",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListDetailResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
+		"post",
+		generic_json_post_operation("Lists", "Create remediation plan", "Remediation plan"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
+		"get",
+		generic_json_operation("Lists", "Get remediation plan", "Remediation plan"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports",
+		"post",
+		generic_json_post_operation("Lists", "Create remediation export", "Remediation export"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+		"get",
+		download_operation(
+			"Lists",
+			"Download remediation export",
+			"Remediation export CSV",
+			&["text/csv"],
+		),
+	);
 
 	set_request_body(
 		spec,
@@ -1401,6 +1539,71 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"delete",
 		"200",
 		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"reason_detail",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_type",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_ref",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"expires_at",
+		json!({ "type": "string", "format": "date-time", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"metadata",
+		generic_object_schema(),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"updated",
+		json!({ "type": "integer", "format": "int64" }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"entry_ids",
+		json!({ "type": "array", "items": { "type": "integer", "format": "int32" } }),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		generic_json_post_operation("v1", "Import suppressions", "Suppression entries imported"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/export",
+		"get",
+		download_operation(
+			"v1",
+			"Export suppressions",
+			"Suppression export CSV",
+			&["text/csv"],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/{id}/events",
+		"get",
+		generic_json_operation("v1", "List suppression events", "Suppression event list"),
 	);
 	set_response(
 		spec,
@@ -1463,6 +1666,35 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"get",
 		"200",
 		json_response("ApprovalChecklistResponse", "Pre-send approval checklist"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-center",
+		"get",
+		generic_json_operation("Jobs", "Get job failure center", "Job failure center"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-report",
+		"get",
+		download_operation(
+			"Jobs",
+			"Download job failure report",
+			"Job failure report stream",
+			&["text/csv", "application/x-ndjson"],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/sources/quality",
+		"get",
+		generic_json_operation("v1", "List source quality", "Source quality analytics"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/outcomes",
+		"post",
+		generic_json_post_operation("v1", "Ingest provider outcomes", "Outcome ingest result"),
 	);
 	set_response(
 		spec,
