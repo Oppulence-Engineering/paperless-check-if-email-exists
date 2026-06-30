@@ -402,6 +402,9 @@ api_routes!(
 	(route_v1_me_usage, "GET", "/v1/me/usage", |config| {
 		crate::http::v1::tenant_settings::v1_get_tenant_usage(config)
 	}),
+	(route_v1_outcomes_ingest, "POST", "/v1/outcomes", |config| {
+		crate::http::v1::outcomes::v1_ingest_outcomes(config)
+	}),
 	(
 		route_v1_me_domains_list,
 		"GET",
