@@ -19,7 +19,6 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1GetList**](#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}|
 |[**v1ListLists**](#v1listlists) | **GET** /v1/lists | GET /v1/lists|
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
-|[**v1OutcomesPost**](#v1outcomespost) | **POST** /v1/outcomes | Ingest provider outcomes|
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
 |[**v1SourcesQualityGet**](#v1sourcesqualityget) | **GET** /v1/sources/quality | List source quality|
 |[**v1SuppressionsExportGet**](#v1suppressionsexportget) | **GET** /v1/suppressions/export | Export suppressions|
@@ -818,56 +817,6 @@ const { status, data } = await apiInstance.v1ListSuppressions(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **v1OutcomesPost**
-> { [key: string]: any; } v1OutcomesPost(requestBody)
-
-
-### Example
-
-```typescript
-import {
-    V1Api,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new V1Api(configuration);
-
-let requestBody: { [key: string]: any; }; //
-
-const { status, data } = await apiInstance.v1OutcomesPost(
-    requestBody
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **requestBody** | **{ [key: string]: any; }**|  | |
-
-
-### Return type
-
-**{ [key: string]: any; }**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Outcome ingest result |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **v1ReverificationStatus**
 > ReverificationStatusResponse v1ReverificationStatus()
 
@@ -1096,4 +1045,3 @@ const { status, data } = await apiInstance.v1SuppressionsImportPost(
 |**200** | Suppression entries imported |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

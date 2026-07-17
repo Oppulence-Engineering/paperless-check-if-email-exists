@@ -651,7 +651,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "check-if-email-exists"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -683,7 +683,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "anyhow",
  "check-if-email-exists",
@@ -3355,10 +3355,11 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "anyhow",
  "async-smtp",
+ "base64 0.22.1",
  "bytes",
  "check-if-email-exists",
  "chrono",
@@ -3381,6 +3382,7 @@ dependencies = [
  "sentry-anyhow",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "serial_test",
  "sha2",
  "sqlx",
@@ -3402,7 +3404,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_sqs"
-version = "4.2.0"
+version = "4.3.0"
 dependencies = [
  "check-if-email-exists",
  "lambda_runtime",

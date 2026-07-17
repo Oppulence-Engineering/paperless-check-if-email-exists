@@ -1,6 +1,6 @@
 {
   "name": "@oppulence/reacher-sdk",
-  "version": "0.11.0",
+  "version": "4.3.0",
   "description": "OpenAPI client for @oppulence/reacher-sdk",
   "author": "OpenAPI-Generator Contributors",
   "repository": {

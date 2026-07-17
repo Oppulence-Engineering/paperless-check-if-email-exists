@@ -3,9 +3,10 @@ use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::pipelines::{
-	create_manual_pipeline_run, create_pipeline, delete_pipeline, get_pipeline, get_pipeline_run,
-	list_pipeline_runs, list_pipelines, set_pipeline_status, update_pipeline, CreatePipelineInput,
-	PipelineRequestError, PipelineRunView, PipelineStatus, PipelineView, TriggerPipelineInput,
+	create_manual_pipeline_run, create_pipeline, create_push_pipeline_run, delete_pipeline,
+	get_pipeline, get_pipeline_run, list_pipeline_runs, list_pipelines, set_pipeline_status,
+	update_pipeline, CreatePipelineInput, PipelineRequestError, PipelineRunView, PipelineStatus,
+	PipelineView, PushPipelineInput, PushPipelineResponse, TriggerPipelineInput,
 	TriggerPipelineResponse, UpdatePipelineInput,
 };
 use crate::tenant::context::{scope, TenantContext};
@@ -231,6 +232,32 @@ async fn trigger_handler(
 		pipeline_id,
 		body.force,
 		body.reason,
+	)
+	.await
+	.map_err(map_pipeline_request_error)?;
+	Ok(warp::reply::with_status(
+		warp::reply::json(&response),
+		StatusCode::ACCEPTED,
+	))
+}
+
+async fn push_handler(
+	pipeline_id: i64,
+	tenant_ctx: TenantContext,
+	config: Arc<BackendConfig>,
+	pg_pool: PgPool,
+	idempotency_key: Option<String>,
+	body: PushPipelineInput,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::PIPELINES_TRIGGER)?;
+	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	let response = create_push_pipeline_run(
+		config,
+		&pg_pool,
+		tenant_id,
+		pipeline_id,
+		idempotency_key.unwrap_or_default(),
+		body,
 	)
 	.await
 	.map_err(map_pipeline_request_error)?;
@@ -517,6 +544,40 @@ pub fn v1_trigger_pipeline(
 		.and(with_worker_db(Arc::clone(&config)))
 		.and(warp::body::json())
 		.and_then(trigger_handler)
+		.with(warp::log(LOG_TARGET))
+}
+
+/// POST /v1/pipelines/{pipeline_id}/push
+#[utoipa::path(
+	post,
+	path = "/v1/pipelines/{pipeline_id}/push",
+	tag = "Pipelines",
+	params(
+		("pipeline_id" = i64, Path, description = "Push pipeline identifier"),
+		("Idempotency-Key" = String, Header, description = "Required idempotency key")
+	),
+	request_body = PushPipelineInput,
+	responses(
+		(status = 202, description = "Push batch accepted", body = PushPipelineResponse),
+		(status = 400, description = "Bad request", body = PipelineErrorResponse),
+		(status = 403, description = "Forbidden", body = PipelineErrorResponse),
+		(status = 404, description = "Not found", body = PipelineErrorResponse),
+		(status = 409, description = "Conflict", body = PipelineErrorResponse),
+		(status = 503, description = "Service unavailable", body = PipelineErrorResponse)
+	)
+)]
+pub fn v1_push_pipeline(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	let config_for_handler = Arc::clone(&config);
+	warp::path!("v1" / "pipelines" / i64 / "push")
+		.and(warp::post())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(warp::any().map(move || Arc::clone(&config_for_handler)))
+		.and(with_worker_db(Arc::clone(&config)))
+		.and(warp::header::optional::<String>("Idempotency-Key"))
+		.and(warp::body::json())
+		.and_then(push_handler)
 		.with(warp::log(LOG_TARGET))
 }
 

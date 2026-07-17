@@ -29,6 +29,7 @@
 * [List Remediation](advanced/list-remediation.md)
 * [Suppression Intelligence](advanced/suppression-intelligence.md)
 * [Outcome Ingestion](advanced/outcome-ingestion.md)
+* [Push Pipelines](advanced/push-pipelines.md)
 * [Source Quality](advanced/source-quality.md)
 * [Job Observability](advanced/job-observability.md)
 * [RFCs](rfcs/README.md)

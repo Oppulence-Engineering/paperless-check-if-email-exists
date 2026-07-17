@@ -9,6 +9,7 @@ api_events.go
 api_health.go
 api_jobs.go
 api_lists.go
+api_outcomes.go
 api_pipelines.go
 api_query.go
 api_system.go
@@ -42,6 +43,7 @@ docs/CommentsAPI.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
+docs/CreateProviderEndpointInput.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
 docs/DeletePipelineResponse.md
@@ -62,6 +64,7 @@ docs/GmailVerifMethod.md
 docs/HealthAPI.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
+docs/InboundOutcomeResponse.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsAPI.md
@@ -77,6 +80,12 @@ docs/ListUploadResponse.md
 docs/ListsAPI.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OutcomeIngestRequest.md
+docs/OutcomeIngestResponse.md
+docs/OutcomeInput.md
+docs/OutcomeListResponse.md
+docs/OutcomeView.md
+docs/OutcomesAPI.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
@@ -98,7 +107,12 @@ docs/PipelineView.md
 docs/PipelinesAPI.md
 docs/Provider.md
 docs/ProviderConfidence.md
+docs/ProviderDeleteResponse.md
+docs/ProviderEndpointListResponse.md
+docs/ProviderEndpointView.md
 docs/ProviderRejectionReason.md
+docs/PushPipelineInput.md
+docs/PushPipelineResponse.md
 docs/QueryAPI.md
 docs/Reachable.md
 docs/ReasonCode.md
@@ -124,6 +138,7 @@ docs/TenantAPI.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
 docs/UpdatePipelineInput.md
+docs/UpdateProviderEndpointInput.md
 docs/V0API.md
 docs/V1API.md
 docs/VerifMethod.md
@@ -151,6 +166,7 @@ model_check_email_request.go
 model_confidence_explanation.go
 model_core_error.go
 model_create_pipeline_input.go
+model_create_provider_endpoint_input.go
 model_debug_details.go
 model_debug_details_smtp.go
 model_delete_pipeline_response.go
@@ -169,6 +185,7 @@ model_freshness.go
 model_gmail_verif_method.go
 model_hotmail_b2_b_verif_method.go
 model_hotmail_b2_c_verif_method.go
+model_inbound_outcome_response.go
 model_job_result_page_response.go
 model_job_task_result.go
 model_list_delete_response.go
@@ -182,6 +199,11 @@ model_list_upload_request.go
 model_list_upload_response.go
 model_misc_details.go
 model_mx_details.go
+model_outcome_ingest_request.go
+model_outcome_ingest_response.go
+model_outcome_input.go
+model_outcome_list_response.go
+model_outcome_view.go
 model_pipeline_delivery_config.go
 model_pipeline_delivery_status.go
 model_pipeline_delivery_webhook.go
@@ -202,7 +224,12 @@ model_pipeline_verification_settings.go
 model_pipeline_view.go
 model_provider.go
 model_provider_confidence.go
+model_provider_delete_response.go
+model_provider_endpoint_list_response.go
+model_provider_endpoint_view.go
 model_provider_rejection_reason.go
+model_push_pipeline_input.go
+model_push_pipeline_response.go
 model_reachable.go
 model_reason_code.go
 model_recommended_action.go
@@ -225,6 +252,7 @@ model_task_webhook.go
 model_trigger_pipeline_input.go
 model_trigger_pipeline_response.go
 model_update_pipeline_input.go
+model_update_provider_endpoint_input.go
 model_verif_method.go
 model_webhook.go
 model_yahoo_verif_method.go

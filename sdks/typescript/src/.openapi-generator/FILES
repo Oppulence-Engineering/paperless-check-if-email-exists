@@ -10,6 +10,7 @@ api/events-api.ts
 api/health-api.ts
 api/jobs-api.ts
 api/lists-api.ts
+api/outcomes-api.ts
 api/pipelines-api.ts
 api/query-api.ts
 api/system-api.ts
@@ -44,6 +45,7 @@ docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
+docs/CreateProviderEndpointInput.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
 docs/DeletePipelineResponse.md
@@ -64,6 +66,7 @@ docs/GmailVerifMethod.md
 docs/HealthApi.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
+docs/InboundOutcomeResponse.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsApi.md
@@ -78,6 +81,12 @@ docs/ListUploadResponse.md
 docs/ListsApi.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OutcomeIngestRequest.md
+docs/OutcomeIngestResponse.md
+docs/OutcomeInput.md
+docs/OutcomeListResponse.md
+docs/OutcomeView.md
+docs/OutcomesApi.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
@@ -99,7 +108,12 @@ docs/PipelineView.md
 docs/PipelinesApi.md
 docs/Provider.md
 docs/ProviderConfidence.md
+docs/ProviderDeleteResponse.md
+docs/ProviderEndpointListResponse.md
+docs/ProviderEndpointView.md
 docs/ProviderRejectionReason.md
+docs/PushPipelineInput.md
+docs/PushPipelineResponse.md
 docs/QueryApi.md
 docs/Reachable.md
 docs/ReasonCode.md
@@ -125,6 +139,7 @@ docs/TenantApi.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
 docs/UpdatePipelineInput.md
+docs/UpdateProviderEndpointInput.md
 docs/V0Api.md
 docs/V1Api.md
 docs/VerifMethod.md
@@ -153,6 +168,7 @@ models/check-email-request.ts
 models/confidence-explanation.ts
 models/core-error.ts
 models/create-pipeline-input.ts
+models/create-provider-endpoint-input.ts
 models/debug-details-smtp.ts
 models/debug-details.ts
 models/delete-pipeline-response.ts
@@ -171,6 +187,7 @@ models/freshness.ts
 models/gmail-verif-method.ts
 models/hotmail-b2-bverif-method.ts
 models/hotmail-b2-cverif-method.ts
+models/inbound-outcome-response.ts
 models/index.ts
 models/job-result-page-response.ts
 models/job-task-result.ts
@@ -184,6 +201,11 @@ models/list-summary.ts
 models/list-upload-response.ts
 models/misc-details.ts
 models/mx-details.ts
+models/outcome-ingest-request.ts
+models/outcome-ingest-response.ts
+models/outcome-input.ts
+models/outcome-list-response.ts
+models/outcome-view.ts
 models/pipeline-delivery-config.ts
 models/pipeline-delivery-status.ts
 models/pipeline-delivery-webhook.ts
@@ -203,8 +225,13 @@ models/pipeline-status.ts
 models/pipeline-verification-settings.ts
 models/pipeline-view.ts
 models/provider-confidence.ts
+models/provider-delete-response.ts
+models/provider-endpoint-list-response.ts
+models/provider-endpoint-view.ts
 models/provider-rejection-reason.ts
 models/provider.ts
+models/push-pipeline-input.ts
+models/push-pipeline-response.ts
 models/reachable.ts
 models/reason-code.ts
 models/recommended-action.ts
@@ -227,6 +254,7 @@ models/task-webhook.ts
 models/trigger-pipeline-input.ts
 models/trigger-pipeline-response.ts
 models/update-pipeline-input.ts
+models/update-provider-endpoint-input.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts
