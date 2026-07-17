@@ -10,7 +10,7 @@
         "inputSpec": "#{cwd}/backend/openapi.json",
         "additionalProperties": {
           "npmName": "@oppulence/reacher-sdk",
-          "npmVersion": "4.2.0",
+          "npmVersion": "4.3.0",
           "supportsES6": "true",
           "withInterfaces": "true",
           "withSeparateModelsAndApi": "true",
@@ -26,7 +26,7 @@
         "inputSpec": "#{cwd}/backend/openapi.json",
         "additionalProperties": {
           "packageName": "reacher",
-          "packageVersion": "4.2.0",
+          "packageVersion": "4.3.0",
           "isGoSubmodule": "true",
           "generateInterfaces": "true",
           "structPrefix": "true",
