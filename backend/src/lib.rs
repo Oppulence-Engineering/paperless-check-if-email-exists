@@ -18,6 +18,7 @@
 
 pub mod bounce_risk;
 pub mod config;
+pub mod decision;
 pub mod finder;
 pub mod http;
 pub mod pipelines;

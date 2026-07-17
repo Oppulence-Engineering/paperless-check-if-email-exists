@@ -22,6 +22,7 @@ use crate::scoring::response::{
 };
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
+use chrono::{DateTime, Utc};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
@@ -50,6 +51,15 @@ struct SuccessColumns {
 	bounce_risk_action: Option<String>,
 	bounce_risk_model_version: Option<String>,
 	bounce_risk_signals: Option<serde_json::Value>,
+	recommendation: Option<serde_json::Value>,
+	recommendation_action: Option<String>,
+	recommendation_confidence: Option<String>,
+	recommendation_priority: Option<String>,
+	policy_mode: Option<String>,
+	policy_profile_key: Option<String>,
+	policy_evaluation: Option<serde_json::Value>,
+	policy_decision: Option<String>,
+	policy_evaluated_at: Option<DateTime<Utc>>,
 }
 
 impl PostgresStorage {
@@ -173,8 +183,17 @@ impl PostgresStorage {
 				    bounce_risk_action = $14,
 				    bounce_risk_model_version = $15,
 				    bounce_risk_signals = $16,
+				    recommendation = $17,
+				    recommendation_action = $18,
+				    recommendation_confidence = $19,
+				    recommendation_priority = $20,
+				    policy_mode = $21,
+				    policy_profile_key = $22,
+				    policy_evaluation = $23,
+				    policy_decision = $24,
+				    policy_evaluated_at = $25,
 				    updated_at = NOW()
-				WHERE id = $17
+				WHERE id = $26
 				"#,
 			)
 			.bind(payload_json)
@@ -193,6 +212,15 @@ impl PostgresStorage {
 			.bind(&columns.bounce_risk_action)
 			.bind(&columns.bounce_risk_model_version)
 			.bind(&columns.bounce_risk_signals)
+			.bind(&columns.recommendation)
+			.bind(&columns.recommendation_action)
+			.bind(&columns.recommendation_confidence)
+			.bind(&columns.recommendation_priority)
+			.bind(&columns.policy_mode)
+			.bind(&columns.policy_profile_key)
+			.bind(&columns.policy_evaluation)
+			.bind(&columns.policy_decision)
+			.bind(columns.policy_evaluated_at)
 			.bind(db_id)
 			.execute(&self.pg_pool)
 			.await?;
@@ -223,14 +251,20 @@ impl PostgresStorage {
 				score, score_category, sub_reason, safe_to_send, reason_codes,
 				canonical_email,
 				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
-				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals
+				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
+				recommendation, recommendation_action, recommendation_confidence,
+				recommendation_priority, policy_mode, policy_profile_key,
+				policy_evaluation, policy_decision, policy_evaluated_at
 			)
 			VALUES (
 				$1, $2, $3, $4, $5,
 				$6, $7, $8, $9, $10,
 				$11,
 				$12, $13, $14,
-				$15, $16, $17
+				$15, $16, $17,
+				$18, $19, $20,
+				$21, $22, $23,
+				$24, $25, $26
 			)
 			RETURNING id
 			"#,
@@ -255,6 +289,15 @@ impl PostgresStorage {
 		.bind(&columns.bounce_risk_action)
 		.bind(&columns.bounce_risk_model_version)
 		.bind(&columns.bounce_risk_signals)
+		.bind(&columns.recommendation)
+		.bind(&columns.recommendation_action)
+		.bind(&columns.recommendation_confidence)
+		.bind(&columns.recommendation_priority)
+		.bind(&columns.policy_mode)
+		.bind(&columns.policy_profile_key)
+		.bind(&columns.policy_evaluation)
+		.bind(&columns.policy_decision)
+		.bind(columns.policy_evaluated_at)
 		.fetch_one(&self.pg_pool)
 		.await?;
 
@@ -291,7 +334,16 @@ impl PostgresStorage {
 				    bounce_risk_confidence = NULL,
 				    bounce_risk_action = NULL,
 				    bounce_risk_model_version = NULL,
-				    bounce_risk_signals = NULL
+				    bounce_risk_signals = NULL,
+				    recommendation = NULL,
+				    recommendation_action = NULL,
+				    recommendation_confidence = NULL,
+				    recommendation_priority = NULL,
+				    policy_mode = NULL,
+				    policy_profile_key = NULL,
+				    policy_evaluation = NULL,
+				    policy_decision = NULL,
+				    policy_evaluated_at = NULL
 				WHERE id = $6
 				"#,
 			)
@@ -380,6 +432,15 @@ fn success_columns_from_output(
 		bounce_risk_action: None,
 		bounce_risk_model_version: None,
 		bounce_risk_signals: None,
+		recommendation: None,
+		recommendation_action: None,
+		recommendation_confidence: None,
+		recommendation_priority: None,
+		policy_mode: None,
+		policy_profile_key: None,
+		policy_evaluation: None,
+		policy_decision: None,
+		policy_evaluated_at: None,
 	})
 }
 
@@ -420,5 +481,52 @@ fn success_columns_from_prepared(
 			.as_ref()
 			.map(|risk| risk.model_version.clone()),
 		bounce_risk_signals: response.bounce_risk_signals.clone(),
+		recommendation: response
+			.recommendation
+			.as_ref()
+			.map(serde_json::to_value)
+			.transpose()?,
+		recommendation_action: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.action))
+			.transpose()?,
+		recommendation_confidence: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.confidence))
+			.transpose()?,
+		recommendation_priority: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.priority))
+			.transpose()?,
+		policy_mode: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| serialize_enum(&policy.mode))
+			.transpose()?,
+		policy_profile_key: response
+			.policy_evaluation
+			.as_ref()
+			.and_then(|policy| policy.policy_profile_key.clone()),
+		policy_evaluation: response
+			.policy_evaluation
+			.as_ref()
+			.map(serde_json::to_value)
+			.transpose()?,
+		policy_decision: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| serialize_enum(&policy.decision))
+			.transpose()?,
+		policy_evaluated_at: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| policy.evaluated_at),
 	})
+}
+
+fn serialize_enum<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Error> {
+	Ok(serde_json::to_string(value)?.trim_matches('"').to_string())
 }

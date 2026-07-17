@@ -62,10 +62,12 @@ async fn http_handler(
 			Option<String>,
 			i32,
 			Option<DateTime<Utc>>,
+			Option<serde_json::Value>,
+			Option<serde_json::Value>,
 		),
 	>(
 		r#"
-		SELECT id, task_state::TEXT, result, error, retry_count, completed_at
+		SELECT id, task_state::TEXT, result, error, retry_count, completed_at, recommendation, policy_evaluation
 		FROM v1_task_result
 		WHERE job_id = $1
 		  AND task_state = $4::task_state
@@ -91,6 +93,9 @@ async fn http_handler(
 			if let (Some(ref mut res), Some(completed_at)) = (&mut result, r.5) {
 				inject_freshness_into_result(res, completed_at);
 			}
+			if let Some(ref mut res) = result {
+				inject_result_decision_fallbacks(res, r.6, r.7);
+			}
 			TaskResult {
 				id: r.0 as i64,
 				task_state: r.1,
@@ -112,6 +117,26 @@ async fn http_handler(
 		next_cursor,
 		has_more,
 	}))
+}
+
+fn inject_result_decision_fallbacks(
+	result: &mut serde_json::Value,
+	recommendation: Option<serde_json::Value>,
+	policy_evaluation: Option<serde_json::Value>,
+) {
+	let Some(map) = result.as_object_mut() else {
+		return;
+	};
+	if !map.contains_key("recommendation") {
+		if let Some(value) = recommendation {
+			map.insert("recommendation".to_string(), value);
+		}
+	}
+	if !map.contains_key("policy_evaluation") {
+		if let Some(value) = policy_evaluation {
+			map.insert("policy_evaluation".to_string(), value);
+		}
+	}
 }
 
 /// GET /v1/jobs/{job_id}/results

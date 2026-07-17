@@ -62,7 +62,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -104,7 +104,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -141,7 +141,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -156,8 +156,8 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * @summary GET /v1/bulk/{job_id}/results
          * @param {number} jobId V1 bulk job identifier
          * @param {string} [format] Supported values: &#x60;json&#x60;, &#x60;csv&#x60;
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -193,7 +193,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -207,8 +207,8 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * Returns paginated event history for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/events
          * @param {number} jobId Bulk job identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -240,7 +240,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -254,9 +254,9 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
-         * @param {number} [cursor] 
-         * @param {number} [limit] 
-         * @param {string} [state] 
+         * @param {number} [cursor]
+         * @param {number} [limit]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -292,7 +292,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -329,7 +329,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -366,7 +366,118 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {number} jobId Bulk job identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobLatency: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1JobLatency', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/latency`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Get job failure center
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobsJobIdFailureCenterGet: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1JobsJobIdFailureCenterGet', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/failure-center`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobsJobIdFailureReportGet: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1JobsJobIdFailureReportGet', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/failure-report`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -403,7 +514,7 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -468,8 +579,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @summary GET /v1/bulk/{job_id}/results
          * @param {number} jobId V1 bulk job identifier
          * @param {string} [format] Supported values: &#x60;json&#x60;, &#x60;csv&#x60;
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -483,8 +594,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * Returns paginated event history for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/events
          * @param {number} jobId Bulk job identifier
-         * @param {number} [limit] 
-         * @param {number} [offset] 
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -498,9 +609,9 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
-         * @param {number} [cursor] 
-         * @param {number} [limit] 
-         * @param {string} [state] 
+         * @param {number} [cursor]
+         * @param {number} [limit]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -534,6 +645,45 @@ export const JobsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobApprovalChecklist(jobId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobApprovalChecklist']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {number} jobId Bulk job identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1JobLatency(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobLatency(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobLatency']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Get job failure center
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1JobsJobIdFailureCenterGet(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobsJobIdFailureCenterGet(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobsJobIdFailureCenterGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1JobsJobIdFailureReportGet(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobsJobIdFailureReportGet(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobsJobIdFailureReportGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -640,6 +790,36 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.v1JobApprovalChecklist(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+         * @summary GET /v1/jobs/{job_id}/latency
+         * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1JobLatency(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Get job failure center
+         * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
+            return localVarFp.v1JobsJobIdFailureCenterGet(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.v1JobsJobIdFailureReportGet(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {JobsApiV1RetryJobRequest} requestParameters Request parameters.
@@ -739,6 +919,36 @@ export interface JobsApiInterface {
     v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig): AxiosPromise<ApprovalChecklistResponse>;
 
     /**
+     * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+     * @summary GET /v1/jobs/{job_id}/latency
+     * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @summary Get job failure center
+     * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
+     *
+     * @summary Download job failure report
+     * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+
+    /**
      * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
      * @summary POST /v1/jobs/{job_id}/retry
      * @param {JobsApiV1RetryJobRequest} requestParameters Request parameters.
@@ -820,14 +1030,14 @@ export interface JobsApiV1GetBulkJobResultsRequest {
     readonly format?: string
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetBulkJobResults
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetBulkJobResults
      */
@@ -848,14 +1058,14 @@ export interface JobsApiV1GetJobEventsRequest {
     readonly jobId: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobEvents
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobEvents
      */
@@ -876,21 +1086,21 @@ export interface JobsApiV1GetJobResultsRequest {
     readonly jobId: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobResults
      */
     readonly cursor?: number
 
     /**
-     * 
+     *
      * @type {number}
      * @memberof JobsApiV1GetJobResults
      */
     readonly limit?: number
 
     /**
-     * 
+     *
      * @type {string}
      * @memberof JobsApiV1GetJobResults
      */
@@ -921,6 +1131,48 @@ export interface JobsApiV1JobApprovalChecklistRequest {
      * Bulk job identifier
      * @type {number}
      * @memberof JobsApiV1JobApprovalChecklist
+     */
+    readonly jobId: number
+}
+
+/**
+ * Request parameters for v1JobLatency operation in JobsApi.
+ * @export
+ * @interface JobsApiV1JobLatencyRequest
+ */
+export interface JobsApiV1JobLatencyRequest {
+    /**
+     * Bulk job identifier
+     * @type {number}
+     * @memberof JobsApiV1JobLatency
+     */
+    readonly jobId: number
+}
+
+/**
+ * Request parameters for v1JobsJobIdFailureCenterGet operation in JobsApi.
+ * @export
+ * @interface JobsApiV1JobsJobIdFailureCenterGetRequest
+ */
+export interface JobsApiV1JobsJobIdFailureCenterGetRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1JobsJobIdFailureCenterGet
+     */
+    readonly jobId: number
+}
+
+/**
+ * Request parameters for v1JobsJobIdFailureReportGet operation in JobsApi.
+ * @export
+ * @interface JobsApiV1JobsJobIdFailureReportGetRequest
+ */
+export interface JobsApiV1JobsJobIdFailureReportGetRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1JobsJobIdFailureReportGet
      */
     readonly jobId: number
 }
@@ -1040,6 +1292,42 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
      */
     public v1JobApprovalChecklist(requestParameters: JobsApiV1JobApprovalChecklistRequest, options?: RawAxiosRequestConfig) {
         return JobsApiFp(this.configuration).v1JobApprovalChecklist(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+     * @summary GET /v1/jobs/{job_id}/latency
+     * @param {JobsApiV1JobLatencyRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1JobLatency(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Get job failure center
+     * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1JobsJobIdFailureCenterGet(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Download job failure report
+     * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1JobsJobIdFailureReportGet(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

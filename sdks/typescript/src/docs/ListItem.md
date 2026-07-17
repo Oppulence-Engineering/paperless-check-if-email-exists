@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **id** | **number** |  | [required]
 **name** | **string** |  | [required]
 **original_filename** | **string** |  | [required]
+**source_key** | **string** |  | [optional]
 **status** | **string** |  | [required]
 **total_rows** | **number** |  | [required]
 
@@ -22,6 +23,7 @@ const instance: ListItem = {
     id: 0,
     name: 'Weekly Cleanup',
     original_filename: 'example',
+    source_key: 'example',
     status: 'example',
     total_rows: 0,
 };

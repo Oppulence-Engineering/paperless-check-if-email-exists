@@ -26,6 +26,7 @@ type ListItem struct {
 	Id int32 `json:"id"`
 	Name string `json:"name"`
 	OriginalFilename string `json:"original_filename"`
+	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	TotalRows int32 `json:"total_rows"`
 }
@@ -151,6 +152,48 @@ func (o *ListItem) SetOriginalFilename(v string) {
 	o.OriginalFilename = v
 }
 
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListItem) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceKey.Get()
+}
+
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListItem) GetSourceKeyOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
+}
+
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListItem) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListItem) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
+}
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListItem) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
+}
+
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListItem) UnsetSourceKey() {
+	o.SourceKey.Unset()
+}
+
 // GetStatus returns the Status field value
 func (o *ListItem) GetStatus() string {
 	if o == nil {
@@ -213,6 +256,9 @@ func (o ListItem) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["name"] = o.Name
 	toSerialize["original_filename"] = o.OriginalFilename
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
+	}
 	toSerialize["status"] = o.Status
 	toSerialize["total_rows"] = o.TotalRows
 	return toSerialize, nil

@@ -25,6 +25,8 @@ struct ListItem {
 	status: String,
 	total_rows: i32,
 	email_column: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 	created_at: String,
 	completed_at: Option<String>,
 }
@@ -52,6 +54,7 @@ async fn http_handler(
 			status::TEXT AS status,
 			total_rows,
 			email_column,
+			source_key,
 			created_at,
 			completed_at
 		FROM v1_lists
@@ -82,6 +85,7 @@ async fn http_handler(
 				status: sqlx::Row::get(&row, "status"),
 				total_rows: sqlx::Row::get(&row, "total_rows"),
 				email_column: sqlx::Row::get(&row, "email_column"),
+				source_key: sqlx::Row::get(&row, "source_key"),
 				created_at: sqlx::Row::get::<DateTime<Utc>, _>(&row, "created_at").to_rfc3339(),
 				completed_at: sqlx::Row::get::<Option<DateTime<Utc>>, _>(&row, "completed_at")
 					.map(|value| value.to_rfc3339()),

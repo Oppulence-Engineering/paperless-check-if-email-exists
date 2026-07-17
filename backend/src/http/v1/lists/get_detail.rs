@@ -27,6 +27,8 @@ struct Response {
 	status: String,
 	total_rows: i32,
 	email_column: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 	summary: Summary,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	unique_emails: Option<i32>,
@@ -42,7 +44,7 @@ async fn http_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let row = sqlx::query(
 		r#"
-		SELECT id, job_id, name, status::TEXT AS status, total_rows, email_column,
+		SELECT id, job_id, name, status::TEXT AS status, total_rows, email_column, source_key,
 			   unique_emails, deduplicated_count
 		FROM v1_lists
 		WHERE id = $1 AND tenant_id = $2
@@ -88,6 +90,7 @@ async fn http_handler(
 		},
 		total_rows: row.get("total_rows"),
 		email_column: row.get("email_column"),
+		source_key: row.get("source_key"),
 		summary,
 		unique_emails: row.get("unique_emails"),
 		deduplicated_count: row.get::<Option<i32>, _>("deduplicated_count"),

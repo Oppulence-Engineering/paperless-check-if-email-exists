@@ -5,13 +5,18 @@ api.ts
 api/account-api.ts
 api/admin-api.ts
 api/admin-jobs-api.ts
+api/comments-api.ts
+api/events-api.ts
 api/health-api.ts
 api/jobs-api.ts
+api/lists-api.ts
 api/pipelines-api.ts
+api/query-api.ts
 api/system-api.ts
 api/tenant-api.ts
 api/v0-api.ts
 api/v1-api.ts
+api/verification-api.ts
 base.ts
 common.ts
 configuration.ts
@@ -26,6 +31,8 @@ docs/ApprovalRiskFlags.md
 docs/BlacklistResult.md
 docs/BounceRiskAssessment.md
 docs/BounceRiskCategory.md
+docs/BulkCreateRequest.md
+docs/BulkCreateResponse.md
 docs/BulkJobResultsResponse.md
 docs/CheckEmailInputProxy.md
 docs/CheckEmailOutput.md
@@ -33,6 +40,7 @@ docs/CheckEmailOutputMisc.md
 docs/CheckEmailOutputMx.md
 docs/CheckEmailOutputSmtp.md
 docs/CheckEmailRequest.md
+docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
 docs/CreatePipelineInput.md
@@ -45,6 +53,7 @@ docs/Duration.md
 docs/EmailCategory.md
 docs/EmailScore.md
 docs/ErrorResponse.md
+docs/EventsApi.md
 docs/FindEmailAcceptedResponse.md
 docs/FindEmailRequest.md
 docs/FindEmailStatusResponse.md
@@ -66,6 +75,7 @@ docs/ListPipelineRunsResponse.md
 docs/ListPipelinesResponse.md
 docs/ListSummary.md
 docs/ListUploadResponse.md
+docs/ListsApi.md
 docs/MiscDetails.md
 docs/MxDetails.md
 docs/PipelineDeliveryConfig.md
@@ -90,6 +100,7 @@ docs/PipelinesApi.md
 docs/Provider.md
 docs/ProviderConfidence.md
 docs/ProviderRejectionReason.md
+docs/QueryApi.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
@@ -117,6 +128,7 @@ docs/UpdatePipelineInput.md
 docs/V0Api.md
 docs/V1Api.md
 docs/VerifMethod.md
+docs/VerificationApi.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
 git_push.sh
@@ -129,6 +141,8 @@ models/approval-risk-flags.ts
 models/blacklist-result.ts
 models/bounce-risk-assessment.ts
 models/bounce-risk-category.ts
+models/bulk-create-request.ts
+models/bulk-create-response.ts
 models/bulk-job-results-response.ts
 models/check-email-input-proxy.ts
 models/check-email-output-misc.ts

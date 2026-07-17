@@ -27,6 +27,7 @@ type ListDetailResponse struct {
 	Id int32 `json:"id"`
 	JobId int32 `json:"job_id"`
 	Name string `json:"name"`
+	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	Summary ListSummary `json:"summary"`
 	TotalRows int32 `json:"total_rows"`
@@ -197,6 +198,48 @@ func (o *ListDetailResponse) SetName(v string) {
 	o.Name = v
 }
 
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceKey.Get()
+}
+
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListDetailResponse) GetSourceKeyOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
+}
+
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListDetailResponse) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
+}
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListDetailResponse) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
+}
+
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListDetailResponse) UnsetSourceKey() {
+	o.SourceKey.Unset()
+}
+
 // GetStatus returns the Status field value
 func (o *ListDetailResponse) GetStatus() string {
 	if o == nil {
@@ -328,6 +371,9 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["job_id"] = o.JobId
 	toSerialize["name"] = o.Name
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
+	}
 	toSerialize["status"] = o.Status
 	toSerialize["summary"] = o.Summary
 	toSerialize["total_rows"] = o.TotalRows

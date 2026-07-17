@@ -10,7 +10,7 @@ Priority guide:
 
 The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
 
-## Completed (20 features)
+## Completed (27 features)
 
 | # | Area | Feature | PR | Shipped |
 |---|---|---|---|---|
@@ -26,6 +26,7 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 15 | Automation | Conditional actions based on score and category | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 16 | Verification | Provider-specific syntax validation | [#29](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/29) | Yes |
 | 17 | Verification | Bounce-risk prediction model | [#30](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/30) | Yes |
+| 18 | Analytics / Reporting | Campaign outcome feedback loop | develop | Yes |
 | 21 | Developer / API | Sandbox mode with deterministic mock results | [#22](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/22) | Yes |
 | 22 | Developer / API | Partial retry endpoint for failed bulk rows | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 | 27 | Verification | Result freshness / confidence decay | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
@@ -33,13 +34,18 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 31 | Verification | Domain typo correction suggestions | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 | 32 | Verification | Alias and plus-address normalization | [#23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/23) | Yes |
 | 33 | Verification | Pre-send audience approval checklist | [#24](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/24) | Yes |
+| 34 | Analytics / Reporting | Custom score-threshold policies | develop | Yes |
+| 36 | List Cleaning | Data repair suggestions for bad rows | develop | Yes |
+| 38 | List Cleaning | Export only changed or newly invalid rows | develop | Yes |
+| 42 | List Cleaning | Automatic remediation workflows for bad rows | develop | Yes |
+| 43 | List Cleaning | Side-by-side original and cleaned data views | develop | Yes |
+| 80 | Analytics / Reporting | Acquisition-source quality benchmarks | develop | Yes |
 | 84 | Reliability / Insight | Self-serve replay for failed jobs | [#21](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/21) | Yes |
 
 ## Remaining — Core Platform (no external integrations needed)
 
 | # | Area | Feature | Why customers would care | Priority |
 |---|---|---|---|---|
-| 18 | Analytics / Reporting | Campaign outcome feedback loop | Lets customers feed bounce and engagement outcomes back into verification decisions | Critical |
 | 19 | Analytics / Reporting | Deliverability trends dashboard | Helps customers monitor quality changes over time instead of treating each job in isolation | Critical |
 | 20 | Finder / Enrichment | Account-based bulk people finder | Lets teams discover multiple likely contacts for a target company in one workflow | Critical |
 | 23 | Team / Admin | SSO / SAML / SCIM | Required by many larger customers before they can adopt a new vendor | Critical |
@@ -48,15 +54,10 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 26 | Security / Compliance | Consent and provenance tracking | Lets customers retain where contact data came from and whether it can be used | Critical |
 | 28 | Verification | Historical verification timeline | Lets customers see how an address changed across checks over time | High |
 | 29 | Verification | Mailbox status change alerts | Notifies teams when previously valid contacts become risky or invalid | High |
-| 34 | Analytics / Reporting | Custom score-threshold policies | Lets teams define their own send, review, or suppress rules by workflow | High |
 | 35 | List Cleaning | Saved segmentation rules | Makes it easy to repeatedly pull only valid, only risky, or only role-based subsets | High |
-| 36 | List Cleaning | Data repair suggestions for bad rows | Helps customers fix malformed emails and broken CSV inputs quickly | High |
-| 38 | List Cleaning | Export only changed or newly invalid rows | Reduces downstream churn for customers who only need incremental updates | High |
 | 39 | List Cleaning | Custom export templates | Lets customers tailor output columns for ESPs, CRMs, and internal systems | High |
 | 40 | List Cleaning | Multi-file upload jobs | Lets customers clean many CSVs in one run instead of one file at a time | High |
 | 41 | List Cleaning | Resume interrupted uploads | Saves time on large imports and poor connections | High |
-| 42 | List Cleaning | Automatic remediation workflows for bad rows | Fixes common formatting and parsing issues without manual cleanup | High |
-| 43 | List Cleaning | Side-by-side original and cleaned data views | Helps teams review what changed and build trust in the cleaning process | High |
 | 44 | List Cleaning | List-to-list diffing | Shows what improved, worsened, or changed between two cleanings | High |
 | 48 | Finder / Enrichment | Department-based finder presets | Supports searches for sales, support, finance, legal, and recruiting addresses | High |
 | 50 | Finder / Enrichment | Team / role mailbox finder | Helps users locate functional inboxes like billing@ or partnerships@ | High |
@@ -76,7 +77,6 @@ The table below is sorted by overall priority rank, with `#1` as the highest-pri
 | 77 | Security / Compliance | Data-processing region lock | Gives customers a hard guarantee that processing stays in an approved geography | High |
 | 78 | Security / Compliance | Customer-managed encryption keys | Gives security-sensitive buyers more control over stored data protection | High |
 | 79 | Security / Compliance | Sensitive-field masking in UI and exports | Helps customers minimize exposure of contact data to the wrong users | High |
-| 80 | Analytics / Reporting | Acquisition-source quality benchmarks | Shows which lead sources, vendors, or imports produce the worst data so customers can spend smarter | High |
 | 81 | Analytics / Reporting | Provider and ISP breakdown reporting | Makes it easier to understand Gmail, Outlook, Yahoo, and corporate-domain risk patterns separately | High |
 | 82 | Verification | Internationalized email support | Expands usability for customers with global audiences and non-ASCII addresses | High |
 | 83 | Reliability / Insight | Cost-per-job and cost-per-source forecasting | Gives customers a better handle on budget efficiency and vendor quality | High |
@@ -137,8 +137,9 @@ If the goal is maximum customer value, the strongest next sequence would be:
 4. ~~domain typo suggestions, catch-all tiers, alias normalization~~ — **Done** (PR #23)
 5. ~~waterfall search, approval checklist~~ — **Done** (PR #24)
 6. ~~scheduled pipelines, provider-specific validation, bounce-risk prediction~~ — **Done** (PRs #28-#30)
-7. HubSpot, Salesforce, Zapier, and Google Sheets integrations
-8. RBAC, SSO, retention controls, and audit log search
+7. ~~decision policies, remediation workflows, outcome feedback, and source quality~~ — **Done** (develop)
+8. HubSpot, Salesforce, Zapier, and Google Sheets integrations
+9. RBAC, SSO, retention controls, and audit log search
 
 ## Notes
 

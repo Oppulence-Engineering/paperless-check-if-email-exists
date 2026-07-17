@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **Id** | **int32** |  | [required]
 **Name** | **string** |  | [required]
 **OriginalFilename** | **string** |  | [required]
+**SourceKey** | Pointer to **NullableString** |  | [optional]
 **Status** | **string** |  | [required]
 **TotalRows** | **int32** |  | [required]
 
@@ -109,6 +110,42 @@ and a boolean to check if the value has been set.
 
 SetOriginalFilename sets OriginalFilename field to given value.
 
+
+### GetSourceKey
+
+`func (o *ListItem) GetSourceKey() string`
+
+GetSourceKey returns the SourceKey field if non-nil, zero value otherwise.
+
+### GetSourceKeyOk
+
+`func (o *ListItem) GetSourceKeyOk() (*string, bool)`
+
+GetSourceKeyOk returns a tuple with the SourceKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSourceKey
+
+`func (o *ListItem) SetSourceKey(v string)`
+
+SetSourceKey sets SourceKey field to given value.
+
+### HasSourceKey
+
+`func (o *ListItem) HasSourceKey() bool`
+
+HasSourceKey returns a boolean if a field has been set.
+
+### SetSourceKeyNil
+
+`func (o *ListItem) SetSourceKeyNil()`
+
+ SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+
+### UnsetSourceKey
+`func (o *ListItem) UnsetSourceKey()`
+
+UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
 
 ### GetStatus
 

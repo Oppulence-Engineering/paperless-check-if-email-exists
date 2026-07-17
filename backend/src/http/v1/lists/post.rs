@@ -31,6 +31,8 @@ struct Response {
 	job_id: i32,
 	total_rows: i32,
 	email_column: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 }
 
 async fn http_handler(
@@ -43,6 +45,7 @@ async fn http_handler(
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
 	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
 		.map_err(warp::reject::custom)?;
+	let source_key = normalize_source_key(upload.source_key.as_deref());
 
 	enforce_row_limit(&tenant_ctx, parsed.rows.len())?;
 
@@ -102,10 +105,11 @@ async fn http_handler(
 	}
 
 	let job_id: i32 = sqlx::query_scalar(
-		"INSERT INTO v1_bulk_job (total_records, tenant_id, status) VALUES ($1, $2, 'pending'::job_state) RETURNING id",
+		"INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key) VALUES ($1, $2, 'pending'::job_state, $3) RETURNING id",
 	)
 	.bind(parsed.rows.len() as i32)
 	.bind(tenant_id)
+	.bind(&source_key)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -122,9 +126,9 @@ async fn http_handler(
 		INSERT INTO v1_lists (
 			tenant_id, job_id, name, original_filename, file_size_bytes, total_rows,
 			email_column, original_headers, original_data, status,
-			unique_emails, deduplicated_count
+			unique_emails, deduplicated_count, source_key
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11, $12)
 		RETURNING id
 		"#,
 	)
@@ -139,6 +143,7 @@ async fn http_handler(
 	.bind(&original_data)
 	.bind(unique_email_count)
 	.bind(deduplicated_count)
+	.bind(&source_key)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -167,9 +172,9 @@ async fn http_handler(
 				score, score_category, sub_reason, safe_to_send, reason_codes,
 				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
 				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
-				completed_at, canonical_email, is_duplicate
+				completed_at, canonical_email, is_duplicate, source_key
 			)
-				VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NULL, false)
+				VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NULL, false, $17)
 				"#,
 			)
 		.bind(job_id)
@@ -219,6 +224,7 @@ async fn http_handler(
 					.map(|risk| risk.model_version.clone()),
 			)
 			.bind(invalid_result.bounce_risk_signals)
+			.bind(&source_key)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -243,8 +249,8 @@ async fn http_handler(
 		// Use the canonical email for verification (not the raw first-seen email)
 		let primary_task_id: i32 = sqlx::query_scalar(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate)
-			VALUES ($1, $2, $3, 'queued', $4, $5, false)
+			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate, source_key)
+			VALUES ($1, $2, $3, 'queued', $4, $5, false, $6)
 			RETURNING id
 			"#,
 		)
@@ -257,6 +263,7 @@ async fn http_handler(
 		.bind(primary_extra)
 		.bind(tenant_id)
 		.bind(canonical)
+		.bind(&source_key)
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -309,9 +316,9 @@ async fn http_handler(
 				r#"
 				INSERT INTO v1_task_result (
 					job_id, payload, extra, task_state, tenant_id,
-					canonical_email, is_duplicate, canonical_task_id
+					canonical_email, is_duplicate, canonical_task_id, source_key
 				)
-				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
 				"#,
 			)
 			.bind(job_id)
@@ -324,6 +331,7 @@ async fn http_handler(
 			.bind(tenant_id)
 			.bind(canonical)
 			.bind(primary_task_id)
+			.bind(&source_key)
 			.execute(&pg_pool)
 			.await
 			.map_err(ReacherResponseError::from)?;
@@ -359,6 +367,7 @@ async fn http_handler(
 			job_id,
 			total_rows: parsed.rows.len() as i32,
 			email_column: parsed.email_column,
+			source_key,
 		}),
 		StatusCode::ACCEPTED,
 	))
@@ -369,6 +378,7 @@ struct UploadData {
 	filename: String,
 	name: Option<String>,
 	email_column: Option<String>,
+	source_key: Option<String>,
 }
 
 async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseError> {
@@ -376,6 +386,7 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 	let mut filename = None;
 	let mut name = None;
 	let mut email_column = None;
+	let mut source_key = None;
 
 	while let Some(part) = form
 		.try_next()
@@ -402,6 +413,9 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
 			}
+			"source_key" | "source" => {
+				source_key = Some(String::from_utf8_lossy(&collected).trim().to_string())
+			}
 			_ => {}
 		}
 	}
@@ -416,7 +430,17 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 		filename: filename.unwrap_or_else(|| "upload.csv".to_string()),
 		name,
 		email_column,
+		source_key,
 	})
+}
+
+fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
+	let source_key = source_key?.trim().to_ascii_lowercase();
+	if source_key.is_empty() {
+		None
+	} else {
+		Some(source_key)
+	}
 }
 
 fn build_original_data(parsed: &ParsedCsv) -> serde_json::Value {
@@ -473,4 +497,19 @@ pub fn v1_create_list(
 		.and(warp::multipart::form().max_length(50_000_000))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn source_key_is_normalized_for_grouping() {
+		assert_eq!(
+			normalize_source_key(Some(" HubSpot Campaign ")),
+			Some("hubspot campaign".to_string())
+		);
+		assert_eq!(normalize_source_key(Some(" ")), None);
+		assert_eq!(normalize_source_key(None), None);
+	}
 }

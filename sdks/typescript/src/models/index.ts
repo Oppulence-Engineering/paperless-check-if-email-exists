@@ -6,6 +6,8 @@ export * from './approval-risk-flags';
 export * from './blacklist-result';
 export * from './bounce-risk-assessment';
 export * from './bounce-risk-category';
+export * from './bulk-create-request';
+export * from './bulk-create-response';
 export * from './bulk-job-results-response';
 export * from './check-email-input-proxy';
 export * from './check-email-output';

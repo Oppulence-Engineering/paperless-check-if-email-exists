@@ -1,5 +1,7 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext};
 use crate::config::BackendConfig;
+use crate::decision::engine::{evaluate as evaluate_decision, DecisionInput};
+use crate::decision::types::{PolicyEvaluation, PolicyMode, Recommendation};
 use crate::scoring::{compute_freshness_at, compute_score, EmailScore};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
@@ -120,6 +122,8 @@ pub struct PreparedVerificationResponse {
 	pub canonical_email: Option<String>,
 	pub bounce_risk: Option<BounceRiskAssessment>,
 	pub bounce_risk_signals: Option<Value>,
+	pub recommendation: Option<Recommendation>,
+	pub policy_evaluation: Option<PolicyEvaluation>,
 }
 
 impl Serialize for PreparedVerificationResponse {
@@ -236,6 +240,31 @@ pub async fn prepare_verification_response(
 		(None, None)
 	};
 
+	let evaluated_at = Utc::now();
+	let decision_input = DecisionInput {
+		score: &email_score,
+		completed_at,
+		evaluated_at,
+		policy_mode: PolicyMode::Deliverability,
+		policy_profile_key: None,
+		domain_suggestion: output.syntax.suggestion.as_deref(),
+		suggested_email: output.syntax.suggestion.clone(),
+		bounce_risk: bounce_risk.as_ref(),
+		active_suppression: false,
+		previous_hard_bounce: false,
+	};
+	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);
+	if let Some(result_obj) = value.as_object_mut() {
+		result_obj.insert(
+			"recommendation".into(),
+			serde_json::to_value(&recommendation)?,
+		);
+		result_obj.insert(
+			"policy_evaluation".into(),
+			serde_json::to_value(&policy_evaluation)?,
+		);
+	}
+
 	let body = serde_json::to_vec(&value)?;
 
 	Ok(PreparedVerificationResponse {
@@ -245,6 +274,8 @@ pub async fn prepare_verification_response(
 		canonical_email,
 		bounce_risk,
 		bounce_risk_signals,
+		recommendation: Some(recommendation),
+		policy_evaluation: Some(policy_evaluation),
 	})
 }
 
@@ -353,5 +384,18 @@ mod tests {
 			.await
 			.unwrap();
 		assert!(response.json.get("bounce_risk").is_none());
+	}
+
+	#[tokio::test]
+	async fn prepared_response_includes_recommendation_and_policy_evaluation() {
+		let config = BackendConfig::empty();
+		let output = CheckEmailOutput::default();
+		let response = prepare_verification_response(&config, &output, None, Utc::now(), false)
+			.await
+			.unwrap();
+		assert!(response.json.get("recommendation").is_some());
+		assert!(response.json.get("policy_evaluation").is_some());
+		assert!(response.recommendation.is_some());
+		assert!(response.policy_evaluation.is_some());
 	}
 }

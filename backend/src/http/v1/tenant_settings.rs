@@ -15,6 +15,7 @@ struct UpdateTenantSettingsRequest {
 	pub default_webhook_url: Option<Option<String>>,
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
+	pub default_policy_mode: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,6 +34,7 @@ struct TenantSettingsResponse {
 	pub period_reset_at: String,
 	pub result_retention_days: i32,
 	pub default_webhook_url: Option<String>,
+	pub default_policy_mode: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -90,6 +92,7 @@ fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
 		period_reset_at: row.get::<DateTime<Utc>, _>("period_reset_at").to_rfc3339(),
 		result_retention_days: row.get("result_retention_days"),
 		default_webhook_url: row.get("default_webhook_url"),
+		default_policy_mode: row.get("default_policy_mode"),
 	}
 }
 
@@ -115,7 +118,7 @@ async fn settings_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let row = sqlx::query(
-		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url \
+		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode \
 		 FROM tenants WHERE id = $1",
 	)
 	.bind(tenant_id)
@@ -187,6 +190,7 @@ async fn update_settings_handler(
 	if body.default_webhook_url.is_none()
 		&& body.webhook_signing_secret.is_none()
 		&& body.result_retention_days.is_none()
+		&& body.default_policy_mode.is_none()
 	{
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -204,6 +208,9 @@ async fn update_settings_handler(
 			.into());
 		}
 	}
+	if let Some(mode) = &body.default_policy_mode {
+		validate_policy_mode(mode)?;
+	}
 
 	let mut sets = Vec::new();
 	let mut idx = 2u32;
@@ -218,11 +225,15 @@ async fn update_settings_handler(
 	}
 	if body.result_retention_days.is_some() {
 		sets.push(format!("result_retention_days = ${}", idx));
+		idx += 1;
+	}
+	if body.default_policy_mode.is_some() {
+		sets.push(format!("default_policy_mode = ${}", idx));
 	}
 
 	let sql = format!(
 		"UPDATE tenants SET {} WHERE id = $1 \
-		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url",
+		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode",
 		sets.join(", ")
 	);
 
@@ -234,6 +245,9 @@ async fn update_settings_handler(
 		query = query.bind(v);
 	}
 	if let Some(v) = body.result_retention_days {
+		query = query.bind(v);
+	}
+	if let Some(v) = body.default_policy_mode {
 		query = query.bind(v);
 	}
 
@@ -250,6 +264,24 @@ async fn update_settings_handler(
 	};
 
 	Ok(warp::reply::json(&row_to_settings(&row)))
+}
+
+fn validate_policy_mode(mode: &str) -> Result<(), warp::Rejection> {
+	if matches!(
+		mode,
+		"growth" | "deliverability" | "signup_protection" | "enterprise_strict" | "custom"
+	) {
+		Ok(())
+	} else {
+		Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			format!(
+				"Invalid default_policy_mode '{}'. Must be one of: growth, deliverability, signup_protection, enterprise_strict, custom",
+				mode
+			),
+		)
+		.into())
+	}
 }
 
 async fn update_webhook_handler(

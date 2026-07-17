@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **EmailColumn** | Pointer to **NullableString** |  | [optional]
 **File** | ***os.File** |  | [required]
 **Name** | Pointer to **NullableString** |  | [optional]
+**SourceKey** | Pointer to **NullableString** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. | [optional]
 
 ## Methods
 
@@ -118,5 +119,41 @@ HasName returns a boolean if a field has been set.
 `func (o *ListUploadRequest) UnsetName()`
 
 UnsetName ensures that no value is present for Name, not even an explicit nil
+
+### GetSourceKey
+
+`func (o *ListUploadRequest) GetSourceKey() string`
+
+GetSourceKey returns the SourceKey field if non-nil, zero value otherwise.
+
+### GetSourceKeyOk
+
+`func (o *ListUploadRequest) GetSourceKeyOk() (*string, bool)`
+
+GetSourceKeyOk returns a tuple with the SourceKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSourceKey
+
+`func (o *ListUploadRequest) SetSourceKey(v string)`
+
+SetSourceKey sets SourceKey field to given value.
+
+### HasSourceKey
+
+`func (o *ListUploadRequest) HasSourceKey() bool`
+
+HasSourceKey returns a boolean if a field has been set.
+
+### SetSourceKeyNil
+
+`func (o *ListUploadRequest) SetSourceKeyNil()`
+
+ SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+
+### UnsetSourceKey
+`func (o *ListUploadRequest) UnsetSourceKey()`
+
+UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
