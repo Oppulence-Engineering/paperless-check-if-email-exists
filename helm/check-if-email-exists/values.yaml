@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 0
 
 image:
   repository: ghcr.io/oppulence-engineering/check-if-email-exists-backend
@@ -56,7 +56,7 @@ readinessProbe:
     port: http
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 2
   targetCPUUtilizationPercentage: 95
