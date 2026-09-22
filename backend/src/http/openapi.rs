@@ -53,6 +53,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::pipelines::v1_pause_pipeline,
 		crate::http::v1::pipelines::v1_resume_pipeline,
 		crate::http::v1::pipelines::v1_trigger_pipeline,
+		crate::http::v1::pipelines::v1_push_pipeline,
 		crate::http::v1::pipelines::v1_list_pipeline_runs,
 		crate::http::v1::pipelines::v1_get_pipeline_run,
 		crate::http::v1::reputation::check::v1_check_reputation,
@@ -68,6 +69,13 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::comments::v1_list_comments,
 		crate::http::v1::comments::v1_delete_comment,
 		crate::http::v1::me::v1_me,
+		crate::http::v1::outcomes::v1_ingest_outcomes,
+		crate::http::v1::outcomes::v1_list_outcomes,
+		crate::http::v1::provider_outcomes::v1_list_provider_endpoints,
+		crate::http::v1::provider_outcomes::v1_create_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_update_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_delete_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_ingest_provider_outcomes,
 		account_api_keys::get_api_key,
 		account_api_keys::list_api_keys,
 		account_api_keys::create_api_key,
@@ -121,6 +129,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "Events", description = "Advanced audit log endpoints"),
 		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
 		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
+		(name = "Outcomes", description = "Normalized provider outcomes, suppression feedback, and authenticated provider adapters"),
 	)
 )]
 struct BackendApiDoc;
@@ -1792,12 +1801,6 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"get",
 		generic_json_operation("v1", "List source quality", "Source quality analytics"),
 	);
-	upsert_operation(
-		spec,
-		"/v1/outcomes",
-		"post",
-		generic_json_post_operation("v1", "Ingest provider outcomes", "Outcome ingest result"),
-	);
 	set_response(
 		spec,
 		"/v1/reverification/status",
@@ -1969,9 +1972,20 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 		serde_json::to_value(BackendApiDoc::openapi()).map_err(ReacherResponseError::from)?;
 
 	merge_openapi(&mut spec, generated_spec);
+	// These generic names were emitted by an earlier outcomes contract. Keeping
+	// them in the self-hosted base spec produces stale SDK models indefinitely.
+	for stale_schema in ["Request", "Response"] {
+		schemas_mut(&mut spec).remove(stale_schema);
+	}
 	normalize_nullable_types(&mut spec);
 	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
+	if let Some(info) = spec.get_mut("info").and_then(Value::as_object_mut) {
+		info.insert(
+			"version".to_string(),
+			Value::String(env!("CARGO_PKG_VERSION").to_string()),
+		);
+	}
 	Ok(spec)
 }
 

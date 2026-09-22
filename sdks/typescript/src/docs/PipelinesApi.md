@@ -11,6 +11,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1ListPipelineRuns**](#v1listpipelineruns) | **GET** /v1/pipelines/{pipeline_id}/runs | GET /v1/pipelines/{pipeline_id}/runs|
 |[**v1ListPipelines**](#v1listpipelines) | **GET** /v1/pipelines | GET /v1/pipelines|
 |[**v1PausePipeline**](#v1pausepipeline) | **POST** /v1/pipelines/{pipeline_id}/pause | POST /v1/pipelines/{pipeline_id}/pause|
+|[**v1PushPipeline**](#v1pushpipeline) | **POST** /v1/pipelines/{pipeline_id}/push | POST /v1/pipelines/{pipeline_id}/push|
 |[**v1ResumePipeline**](#v1resumepipeline) | **POST** /v1/pipelines/{pipeline_id}/resume | POST /v1/pipelines/{pipeline_id}/resume|
 |[**v1TriggerPipeline**](#v1triggerpipeline) | **POST** /v1/pipelines/{pipeline_id}/trigger | POST /v1/pipelines/{pipeline_id}/trigger|
 |[**v1UpdatePipeline**](#v1updatepipeline) | **PATCH** /v1/pipelines/{pipeline_id} | PATCH /v1/pipelines/{pipeline_id}|
@@ -409,6 +410,68 @@ const { status, data } = await apiInstance.v1PausePipeline(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1PushPipeline**
+> PushPipelineResponse v1PushPipeline(pushPipelineInput)
+
+
+### Example
+
+```typescript
+import {
+    PipelinesApi,
+    Configuration,
+    PushPipelineInput
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new PipelinesApi(configuration);
+
+let pipelineId: number; //Push pipeline identifier (default to undefined)
+let idempotencyKey: string; //Required idempotency key (default to undefined)
+let pushPipelineInput: PushPipelineInput; //
+
+const { status, data } = await apiInstance.v1PushPipeline(
+    pipelineId,
+    idempotencyKey,
+    pushPipelineInput
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **pushPipelineInput** | **PushPipelineInput**|  | |
+| **pipelineId** | [**number**] | Push pipeline identifier | defaults to undefined|
+| **idempotencyKey** | [**string**] | Required idempotency key | defaults to undefined|
+
+
+### Return type
+
+**PushPipelineResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**202** | Push batch accepted |  -  |
+|**400** | Bad request |  -  |
+|**403** | Forbidden |  -  |
+|**404** | Not found |  -  |
+|**409** | Conflict |  -  |
+|**503** | Service unavailable |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1ResumePipeline**
 > PipelineView v1ResumePipeline()
 
@@ -581,4 +644,3 @@ const { status, data } = await apiInstance.v1UpdatePipeline(
 |**503** | Service unavailable |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

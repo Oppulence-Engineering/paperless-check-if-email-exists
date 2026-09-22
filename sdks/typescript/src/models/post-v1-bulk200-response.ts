@@ -15,7 +15,7 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface PostV1Bulk200Response
  */
@@ -27,4 +27,3 @@ export interface PostV1Bulk200Response {
      */
     'job_id': number;
 }
-

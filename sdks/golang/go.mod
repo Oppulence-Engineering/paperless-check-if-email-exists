@@ -1,4 +1,4 @@
-module github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang
+module github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4
 
 go 1.21
 

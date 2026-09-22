@@ -18,13 +18,13 @@
 import type { GetV1Bulk200ResponseSummary } from './get-v1-bulk200-response-summary';
 
 /**
- * 
+ *
  * @export
  * @interface GetV1Bulk200Response
  */
 export interface GetV1Bulk200Response {
     /**
-     * 
+     *
      * @type {number}
      * @memberof GetV1Bulk200Response
      */
@@ -54,7 +54,7 @@ export interface GetV1Bulk200Response {
      */
     'total_processed': number;
     /**
-     * 
+     *
      * @type {GetV1Bulk200ResponseSummary}
      * @memberof GetV1Bulk200Response
      */
@@ -73,5 +73,3 @@ export const GetV1Bulk200ResponseJobStatusEnum = {
 } as const;
 
 export type GetV1Bulk200ResponseJobStatusEnum = typeof GetV1Bulk200ResponseJobStatusEnum[keyof typeof GetV1Bulk200ResponseJobStatusEnum];
-
-

@@ -45,4 +45,3 @@ export interface GetV1Bulk200ResponseSummary {
      */
     'total_unknown': number;
 }
-

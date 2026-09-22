@@ -202,6 +202,12 @@ api_routes!(
 		|config| crate::http::v1::pipelines::v1_trigger_pipeline(config)
 	),
 	(
+		route_v1_pipelines_push,
+		"POST",
+		"/v1/pipelines/{pipeline_id}/push",
+		|config| crate::http::v1::pipelines::v1_push_pipeline(config)
+	),
+	(
 		route_v1_pipelines_runs,
 		"GET",
 		"/v1/pipelines/{pipeline_id}/runs",
@@ -405,6 +411,39 @@ api_routes!(
 	(route_v1_outcomes_ingest, "POST", "/v1/outcomes", |config| {
 		crate::http::v1::outcomes::v1_ingest_outcomes(config)
 	}),
+	(route_v1_outcomes_list, "GET", "/v1/outcomes", |config| {
+		crate::http::v1::outcomes::v1_list_outcomes(config)
+	}),
+	(
+		route_v1_provider_endpoints_list,
+		"GET",
+		"/v1/provider-endpoints",
+		|config| crate::http::v1::provider_outcomes::v1_list_provider_endpoints(config)
+	),
+	(
+		route_v1_provider_endpoints_create,
+		"POST",
+		"/v1/provider-endpoints",
+		|config| crate::http::v1::provider_outcomes::v1_create_provider_endpoint(config)
+	),
+	(
+		route_v1_provider_endpoints_update,
+		"PATCH",
+		"/v1/provider-endpoints/{endpoint_id}",
+		|config| crate::http::v1::provider_outcomes::v1_update_provider_endpoint(config)
+	),
+	(
+		route_v1_provider_endpoints_delete,
+		"DELETE",
+		"/v1/provider-endpoints/{endpoint_id}",
+		|config| crate::http::v1::provider_outcomes::v1_delete_provider_endpoint(config)
+	),
+	(
+		route_v1_provider_outcomes_ingest,
+		"POST",
+		"/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}",
+		|config| crate::http::v1::provider_outcomes::v1_ingest_provider_outcomes(config)
+	),
 	(
 		route_v1_me_domains_list,
 		"GET",

@@ -1,4 +1,4 @@
-## @oppulence/reacher-sdk@0.11.0
+## @oppulence/reacher-sdk@4.3.0
 
 This generator creates TypeScript/JavaScript client that utilizes [axios](https://github.com/axios/axios). The generated Node module can be used in the following environments:
 
@@ -36,7 +36,7 @@ navigate to the folder of your consuming project and run one of the following co
 _published:_
 
 ```
-npm install @oppulence/reacher-sdk@0.11.0 --save
+npm install @oppulence/reacher-sdk@4.3.0 --save
 ```
 
 _unPublished (not recommended):_
@@ -100,6 +100,13 @@ Class | Method | HTTP request | Description
 *ListsApi* | [**v1ListsListIdRemediationExportsPost**](docs/ListsApi.md#v1listslistidremediationexportspost) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export
 *ListsApi* | [**v1ListsListIdRemediationPlanGet**](docs/ListsApi.md#v1listslistidremediationplanget) | **GET** /v1/lists/{list_id}/remediation-plan | Get remediation plan
 *ListsApi* | [**v1ListsListIdRemediationPlanPost**](docs/ListsApi.md#v1listslistidremediationplanpost) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan
+*OutcomesApi* | [**v1CreateProviderEndpoint**](docs/OutcomesApi.md#v1createproviderendpoint) | **POST** /v1/provider-endpoints |
+*OutcomesApi* | [**v1DeleteProviderEndpoint**](docs/OutcomesApi.md#v1deleteproviderendpoint) | **DELETE** /v1/provider-endpoints/{endpoint_id} |
+*OutcomesApi* | [**v1IngestOutcomes**](docs/OutcomesApi.md#v1ingestoutcomes) | **POST** /v1/outcomes | POST /v1/outcomes
+*OutcomesApi* | [**v1IngestProviderOutcomes**](docs/OutcomesApi.md#v1ingestprovideroutcomes) | **POST** /v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token} |
+*OutcomesApi* | [**v1ListOutcomes**](docs/OutcomesApi.md#v1listoutcomes) | **GET** /v1/outcomes | GET /v1/outcomes
+*OutcomesApi* | [**v1ListProviderEndpoints**](docs/OutcomesApi.md#v1listproviderendpoints) | **GET** /v1/provider-endpoints |
+*OutcomesApi* | [**v1UpdateProviderEndpoint**](docs/OutcomesApi.md#v1updateproviderendpoint) | **PATCH** /v1/provider-endpoints/{endpoint_id} |
 _PipelinesApi_ | [__v1CreatePipeline__](docs/PipelinesApi.md#v1createpipeline) | **POST** /v1/pipelines | POST /v1/pipelines
 _PipelinesApi_ | [__v1DeletePipeline__](docs/PipelinesApi.md#v1deletepipeline) | **DELETE** /v1/pipelines/{pipeline_id} | DELETE /v1/pipelines/{pipeline_id}
 _PipelinesApi_ | [__v1GetPipeline__](docs/PipelinesApi.md#v1getpipeline) | **GET** /v1/pipelines/{pipeline_id} | GET /v1/pipelines/{pipeline_id}
@@ -107,6 +114,7 @@ _PipelinesApi_ | [__v1GetPipelineRun__](docs/PipelinesApi.md#v1getpipelinerun) |
 _PipelinesApi_ | [__v1ListPipelineRuns__](docs/PipelinesApi.md#v1listpipelineruns) | **GET** /v1/pipelines/{pipeline_id}/runs | GET /v1/pipelines/{pipeline_id}/runs
 _PipelinesApi_ | [__v1ListPipelines__](docs/PipelinesApi.md#v1listpipelines) | **GET** /v1/pipelines | GET /v1/pipelines
 _PipelinesApi_ | [__v1PausePipeline__](docs/PipelinesApi.md#v1pausepipeline) | **POST** /v1/pipelines/{pipeline_id}/pause | POST /v1/pipelines/{pipeline_id}/pause
+_PipelinesApi_ | [**v1PushPipeline**](docs/PipelinesApi.md#v1pushpipeline) | **POST** /v1/pipelines/{pipeline_id}/push | POST /v1/pipelines/{pipeline_id}/push
 _PipelinesApi_ | [__v1ResumePipeline__](docs/PipelinesApi.md#v1resumepipeline) | **POST** /v1/pipelines/{pipeline_id}/resume | POST /v1/pipelines/{pipeline_id}/resume
 _PipelinesApi_ | [__v1TriggerPipeline__](docs/PipelinesApi.md#v1triggerpipeline) | **POST** /v1/pipelines/{pipeline_id}/trigger | POST /v1/pipelines/{pipeline_id}/trigger
 _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) | **PATCH** /v1/pipelines/{pipeline_id} | PATCH /v1/pipelines/{pipeline_id}
@@ -143,7 +151,6 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
-*V1Api* | [**v1OutcomesPost**](docs/V1Api.md#v1outcomespost) | **POST** /v1/outcomes | Ingest provider outcomes
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
 *V1Api* | [**v1SourcesQualityGet**](docs/V1Api.md#v1sourcesqualityget) | **GET** /v1/sources/quality | List source quality
 *V1Api* | [**v1SuppressionsExportGet**](docs/V1Api.md#v1suppressionsexportget) | **GET** /v1/suppressions/export | Export suppressions
@@ -174,6 +181,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [CoreError](docs/CoreError.md)
  - [CreatePipelineInput](docs/CreatePipelineInput.md)
+ - [CreateProviderEndpointInput](docs/CreateProviderEndpointInput.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)
  - [DeletePipelineResponse](docs/DeletePipelineResponse.md)
@@ -192,6 +200,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [GmailVerifMethod](docs/GmailVerifMethod.md)
  - [HotmailB2BVerifMethod](docs/HotmailB2BVerifMethod.md)
  - [HotmailB2CVerifMethod](docs/HotmailB2CVerifMethod.md)
+ - [InboundOutcomeResponse](docs/InboundOutcomeResponse.md)
  - [JobResultPageResponse](docs/JobResultPageResponse.md)
  - [JobTaskResult](docs/JobTaskResult.md)
  - [ListDeleteResponse](docs/ListDeleteResponse.md)
@@ -204,6 +213,11 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ListUploadResponse](docs/ListUploadResponse.md)
  - [MiscDetails](docs/MiscDetails.md)
  - [MxDetails](docs/MxDetails.md)
+ - [OutcomeIngestRequest](docs/OutcomeIngestRequest.md)
+ - [OutcomeIngestResponse](docs/OutcomeIngestResponse.md)
+ - [OutcomeInput](docs/OutcomeInput.md)
+ - [OutcomeListResponse](docs/OutcomeListResponse.md)
+ - [OutcomeView](docs/OutcomeView.md)
  - [PipelineDeliveryConfig](docs/PipelineDeliveryConfig.md)
  - [PipelineDeliveryStatus](docs/PipelineDeliveryStatus.md)
  - [PipelineDeliveryWebhook](docs/PipelineDeliveryWebhook.md)
@@ -224,7 +238,12 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [PipelineView](docs/PipelineView.md)
  - [Provider](docs/Provider.md)
  - [ProviderConfidence](docs/ProviderConfidence.md)
+ - [ProviderDeleteResponse](docs/ProviderDeleteResponse.md)
+ - [ProviderEndpointListResponse](docs/ProviderEndpointListResponse.md)
+ - [ProviderEndpointView](docs/ProviderEndpointView.md)
  - [ProviderRejectionReason](docs/ProviderRejectionReason.md)
+ - [PushPipelineInput](docs/PushPipelineInput.md)
+ - [PushPipelineResponse](docs/PushPipelineResponse.md)
  - [Reachable](docs/Reachable.md)
  - [ReasonCode](docs/ReasonCode.md)
  - [RecommendedAction](docs/RecommendedAction.md)
@@ -247,6 +266,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
  - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
+ - [UpdateProviderEndpointInput](docs/UpdateProviderEndpointInput.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)
@@ -263,4 +283,3 @@ Authentication schemes defined for the API:
 - **Type**: API key
 - **API key parameter name**: Authorization
 - **Location**: HTTP header
-

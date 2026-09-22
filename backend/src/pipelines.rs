@@ -335,6 +335,28 @@ pub struct TriggerPipelineResponse {
 	pub status: PipelineRunStatus,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PushPipelineInput {
+	pub rows: Vec<Map<String, Value>>,
+	#[serde(default = "default_push_email_column")]
+	pub email_column: String,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub source_key: Option<String>,
+}
+
+fn default_push_email_column() -> String {
+	"email".to_string()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PushPipelineResponse {
+	pub batch_id: i64,
+	pub run_id: i64,
+	pub status: PipelineRunStatus,
+	pub accepted_rows: i32,
+	pub replayed: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct PipelineListQuery {
 	pub status: Option<PipelineStatus>,
@@ -344,7 +366,7 @@ pub struct PipelineListQuery {
 
 #[derive(Debug)]
 struct PreparedList {
-	source_list_id: i32,
+	source_list_id: Option<i32>,
 	headers: Vec<String>,
 	email_column: String,
 	rows: Vec<Map<String, Value>>,
@@ -822,14 +844,15 @@ pub async fn create_pipeline(
 	)
 	.await?;
 
-	let next_run_at = match input.status {
-		PipelineStatus::Active => Some(compute_next_run_at(
+	let next_run_at = match (&input.source, &input.status) {
+		(PipelineSource::Push { .. }, _) => None,
+		(_, PipelineStatus::Active) => Some(compute_next_run_at(
 			&input.schedule.cron,
 			&input.schedule.timezone,
 			Utc::now(),
 			pipeline_config.min_interval_seconds,
 		)?),
-		PipelineStatus::Paused | PipelineStatus::Deleted => None,
+		(_, PipelineStatus::Paused | PipelineStatus::Deleted) => None,
 	};
 
 	let source_type = input.source.source_type();
@@ -975,8 +998,11 @@ pub async fn update_pipeline(
 	)
 	.await?;
 
-	let next_run_at = match next_status {
-		PipelineStatus::Active if current.status == PipelineStatus::Active && !schedule_changed => {
+	let next_run_at = match (&next_source, &next_status) {
+		(PipelineSource::Push { .. }, _) => None,
+		(_, &PipelineStatus::Active)
+			if current.status == PipelineStatus::Active && !schedule_changed =>
+		{
 			current.next_run_at.or(Some(compute_next_run_at(
 				&next_schedule.cron,
 				&next_schedule.timezone,
@@ -984,13 +1010,13 @@ pub async fn update_pipeline(
 				pipeline_config.min_interval_seconds,
 			)?))
 		}
-		PipelineStatus::Active => Some(compute_next_run_at(
+		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
 			&next_schedule.cron,
 			&next_schedule.timezone,
 			Utc::now(),
 			pipeline_config.min_interval_seconds,
 		)?),
-		PipelineStatus::Paused | PipelineStatus::Deleted => None,
+		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
 
 	let row = sqlx::query(
@@ -1060,14 +1086,15 @@ pub async fn set_pipeline_status(
 		Some(p) => p,
 		None => return Ok(None),
 	};
-	let next_run_at = match status {
-		PipelineStatus::Active => Some(compute_next_run_at(
+	let next_run_at = match (&current.source, &status) {
+		(PipelineSource::Push { .. }, _) => None,
+		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
 			&current.schedule.cron,
 			&current.schedule.timezone,
 			Utc::now(),
 			min_interval_seconds,
 		)?),
-		PipelineStatus::Paused | PipelineStatus::Deleted => None,
+		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
 	let row = sqlx::query(
 		r#"
@@ -1103,6 +1130,15 @@ pub async fn create_manual_pipeline_run(
 		Some(row) if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
 		_ => return Err(PipelineRequestError::not_found("Pipeline not found").into()),
 	};
+	if matches!(
+		serde_json::from_value::<PipelineSource>(pipeline.source_config.clone()),
+		Ok(PipelineSource::Push { .. })
+	) {
+		return Err(PipelineRequestError::validation(
+			"Push pipelines are triggered through the push endpoint",
+		)
+		.into());
+	}
 
 	let has_active_run = has_active_run(&mut tx, pipeline_id).await?;
 	if !force && has_active_run {
@@ -1146,6 +1182,150 @@ pub async fn create_manual_pipeline_run(
 	Ok(TriggerPipelineResponse {
 		run_id,
 		status: parse_pipeline_run_status(&actual_status)?,
+	})
+}
+
+pub async fn create_push_pipeline_run(
+	config: Arc<BackendConfig>,
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	pipeline_id: i64,
+	idempotency_key: String,
+	input: PushPipelineInput,
+) -> Result<PushPipelineResponse> {
+	let idempotency_key = idempotency_key.trim();
+	if idempotency_key.is_empty() || idempotency_key.len() > 200 {
+		return Err(PipelineRequestError::validation(
+			"Idempotency-Key is required and must not exceed 200 characters",
+		)
+		.into());
+	}
+	if input.rows.is_empty() || input.rows.len() > 10_000 {
+		return Err(PipelineRequestError::validation(
+			"rows must contain between 1 and 10000 contacts",
+		)
+		.into());
+	}
+	let email_column = input.email_column.trim();
+	if email_column.is_empty() || email_column.len() > 100 {
+		return Err(PipelineRequestError::validation("email_column is invalid").into());
+	}
+	if input.rows.iter().any(|row| !row.contains_key(email_column)) {
+		return Err(PipelineRequestError::validation(
+			"Every pushed row must contain the configured email column",
+		)
+		.into());
+	}
+
+	let mut tx = pg_pool.begin().await?;
+	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
+		Some(row) if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
+		_ => return Err(PipelineRequestError::not_found("Pipeline not found").into()),
+	};
+	let source: PipelineSource = serde_json::from_value(pipeline.source_config.clone())?;
+	let PipelineSource::Push {
+		accepted_format, ..
+	} = source
+	else {
+		return Err(PipelineRequestError::validation("Pipeline source is not push").into());
+	};
+	if accepted_format.to_ascii_lowercase() != "json" {
+		return Err(PipelineRequestError::validation(
+			"Only json push pipeline payloads are currently supported",
+		)
+		.into());
+	}
+	let status: String = sqlx::query_scalar(
+		"SELECT status::TEXT FROM v1_pipelines WHERE id = $1 AND tenant_id = $2",
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.fetch_one(&mut *tx)
+	.await?;
+	if status != "active" {
+		return Err(PipelineRequestError::conflict("Pipeline is not active").into());
+	}
+
+	if let Some(row) = sqlx::query(
+		"SELECT id, run_id, row_count FROM v1_pipeline_push_batches WHERE pipeline_id = $1 AND idempotency_key = $2",
+	)
+	.bind(pipeline_id)
+	.bind(idempotency_key)
+	.fetch_optional(&mut *tx)
+	.await?
+	{
+		let run_id: Option<i64> = row.get("run_id");
+		let run_id = run_id.context("Existing push batch is missing its run")?;
+		let run_status: String = sqlx::query_scalar(
+			"SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1",
+		)
+		.bind(run_id)
+		.fetch_one(&mut *tx)
+		.await?;
+		tx.commit().await?;
+		return Ok(PushPipelineResponse {
+			batch_id: row.get("id"),
+			run_id,
+			status: parse_pipeline_run_status(&run_status)?,
+			accepted_rows: row.get("row_count"),
+			replayed: true,
+		});
+	}
+
+	if has_active_run(&mut tx, pipeline_id).await? {
+		return Err(PipelineRequestError::conflict("Pipeline already has an active run").into());
+	}
+	let rows = serde_json::to_value(&input.rows)?;
+	let batch_id: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_pipeline_push_batches (pipeline_id, tenant_id, idempotency_key, source_key, email_column, rows, row_count) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.bind(idempotency_key)
+	.bind(input.source_key.as_deref().map(str::trim).filter(|v| !v.is_empty()))
+	.bind(email_column)
+	.bind(rows)
+	.bind(input.rows.len() as i32)
+	.fetch_one(&mut *tx)
+	.await?;
+	let source_snapshot = json!({
+		"source": pipeline.source_config,
+		"push_batch_id": batch_id,
+		"source_key": input.source_key,
+	});
+	let run_id: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats) VALUES ($1, $2, 'push', 'queued', $3, $4) RETURNING id",
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.bind(source_snapshot)
+	.bind(json!({"accepted_rows": input.rows.len()}))
+	.fetch_one(&mut *tx)
+	.await?;
+	sqlx::query("UPDATE v1_pipeline_push_batches SET run_id = $2 WHERE id = $1")
+		.bind(batch_id)
+		.bind(run_id)
+		.execute(&mut *tx)
+		.await?;
+	sqlx::query("UPDATE v1_pipelines SET last_run_id = $2, updated_at = NOW() WHERE id = $1")
+		.bind(pipeline_id)
+		.bind(run_id)
+		.execute(&mut *tx)
+		.await?;
+	tx.commit().await?;
+
+	execute_pipeline_run(config, pg_pool, run_id).await?;
+	let run_status: String =
+		sqlx::query_scalar("SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1")
+			.bind(run_id)
+			.fetch_one(pg_pool)
+			.await?;
+	Ok(PushPipelineResponse {
+		batch_id,
+		run_id,
+		status: parse_pipeline_run_status(&run_status)?,
+		accepted_rows: input.rows.len() as i32,
+		replayed: false,
 	})
 }
 
@@ -1568,7 +1748,7 @@ async fn execute_pipeline_run_inner(
 	.execute(pg_pool)
 	.await?;
 
-	let prepared_list = load_source_list_snapshot(pg_pool, tenant_id, &source).await?;
+	let prepared_list = load_pipeline_source(pg_pool, tenant_id, &source, &source_snapshot).await?;
 	let (prepared_list, delta_summary) =
 		apply_delta_selection(pg_pool, pipeline_id, &verification, prepared_list).await?;
 	let tenant_ctx = resolve_tenant_context_by_id(pg_pool, tenant_id).await?;
@@ -2156,7 +2336,7 @@ async fn load_source_list_snapshot(
 		(canonical_groups.values().map(|v| v.len()).sum::<usize>() - canonical_groups.len()) as i32;
 
 	Ok(PreparedList {
-		source_list_id: row.get("id"),
+		source_list_id: Some(row.get("id")),
 		headers,
 		email_column,
 		rows,
@@ -2168,6 +2348,58 @@ async fn load_source_list_snapshot(
 		blank_indices,
 		invalid_indices,
 	})
+}
+
+async fn load_pipeline_source(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	source: &PipelineSource,
+	source_snapshot: &Value,
+) -> Result<PreparedList> {
+	match source {
+		PipelineSource::ListSnapshot { .. } => {
+			load_source_list_snapshot(pg_pool, tenant_id, source).await
+		}
+		PipelineSource::Push { .. } => {
+			let batch_id = source_snapshot
+				.get("push_batch_id")
+				.and_then(Value::as_i64)
+				.context("Push pipeline run is missing push_batch_id")?;
+			let row = sqlx::query(
+				"SELECT source_key, email_column, rows, row_count FROM v1_pipeline_push_batches WHERE id = $1 AND tenant_id = $2",
+			)
+			.bind(batch_id)
+			.bind(tenant_id)
+			.fetch_optional(pg_pool)
+			.await?
+			.context("Push pipeline batch not found")?;
+			let rows: Vec<Map<String, Value>> = serde_json::from_value(row.get("rows"))?;
+			let email_column: String = row.get("email_column");
+			let (canonical_groups, blank_indices, invalid_indices) =
+				build_canonical_groups(&rows, &email_column);
+			let unique_email_count = canonical_groups.len() as i32;
+			let deduplicated_count = (canonical_groups.values().map(Vec::len).sum::<usize>()
+				- canonical_groups.len()) as i32;
+			let source_key: Option<String> = row.get("source_key");
+			Ok(PreparedList {
+				source_list_id: None,
+				headers: rows
+					.first()
+					.map(|value| value.keys().cloned().collect())
+					.unwrap_or_default(),
+				email_column,
+				rows,
+				source_filename: format!("push-batch-{batch_id}.json"),
+				source_name: source_key.unwrap_or_else(|| format!("push-batch-{batch_id}")),
+				unique_email_count,
+				deduplicated_count,
+				canonical_groups,
+				blank_indices,
+				invalid_indices,
+			})
+		}
+		_ => bail!("Pipeline source type is not implemented"),
+	}
 }
 
 fn build_canonical_groups(
@@ -2826,16 +3058,25 @@ async fn validate_pipeline_input(
 				));
 			}
 		}
+		PipelineSource::Push {
+			accepted_format, ..
+		} => {
+			if accepted_format.trim().to_ascii_lowercase() != "json" {
+				return Err(PipelineRequestError::validation(
+					"Push pipeline accepted_format must be json",
+				));
+			}
+		}
 		_ => {
 			return Err(PipelineRequestError::validation(
-				"Only list_snapshot sources are supported in phase 1",
+				"Only list_snapshot and push sources are supported",
 			));
 		}
 	}
 	Ok(())
 }
 
-fn validate_webhook_url(url: &str) -> Result<()> {
+pub(crate) fn validate_webhook_url(url: &str) -> Result<()> {
 	let parsed = reqwest::Url::parse(url).context("Invalid webhook URL")?;
 	match parsed.scheme() {
 		"https" => {}
@@ -2865,7 +3106,7 @@ fn validate_webhook_url(url: &str) -> Result<()> {
 	Ok(())
 }
 
-async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
+pub(crate) async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
 	let parsed = reqwest::Url::parse(url).context("Invalid webhook URL")?;
 	let host = parsed
 		.host_str()

@@ -191,5 +191,3 @@ func (v *NullablePostV1BulkRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

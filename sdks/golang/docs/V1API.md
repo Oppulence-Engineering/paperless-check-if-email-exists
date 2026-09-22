@@ -19,7 +19,6 @@ Method | HTTP request | Description
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
-[**V1OutcomesPost**](V1API.md#V1OutcomesPost) | **Post** /v1/outcomes | Ingest provider outcomes
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
 [**V1SourcesQualityGet**](V1API.md#V1SourcesQualityGet) | **Get** /v1/sources/quality | List source quality
 [**V1SuppressionsExportGet**](V1API.md#V1SuppressionsExportGet) | **Get** /v1/suppressions/export | Export suppressions
@@ -1033,70 +1032,6 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## V1OutcomesPost
-
-> map[string]interface{} V1OutcomesPost(ctx).RequestBody(requestBody).Execute()
-
-Ingest provider outcomes
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
-)
-
-func main() {
-	requestBody := map[string]interface{}{"key": interface{}(123)} // map[string]interface{} |
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1OutcomesPost(context.Background()).RequestBody(requestBody).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1OutcomesPost``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `V1OutcomesPost`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `V1API.V1OutcomesPost`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiV1OutcomesPostRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **requestBody** | **map[string]interface{}** |  |
-
-### Return type
-
-**map[string]interface{}**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
 ## V1ReverificationStatus
 
 > ReverificationStatusResponse V1ReverificationStatus(ctx).Execute()
@@ -1404,4 +1339,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

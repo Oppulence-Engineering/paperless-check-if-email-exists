@@ -111,7 +111,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -238,7 +238,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -306,7 +306,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -392,4 +392,3 @@ Other parameters are passed through a pointer to a apiV1MeRequest struct via the
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

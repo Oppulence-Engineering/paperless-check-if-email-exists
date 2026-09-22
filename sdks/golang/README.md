@@ -5,7 +5,7 @@ Official Go SDK for the Reacher Email Verification API.
 ## Installation
 
 ```bash
-go get github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang
+go get github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4
 ```
 
 ## Quick Start
@@ -18,7 +18,7 @@ import (
     "fmt"
     "log"
 
-    reacher "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang"
+    reacher "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4"
 )
 
 func main() {
@@ -60,7 +60,7 @@ import (
     "log"
     "time"
 
-    reacher "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang"
+    reacher "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4"
 )
 
 func main() {

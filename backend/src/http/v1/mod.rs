@@ -28,6 +28,7 @@ pub mod me;
 pub mod onboard;
 pub mod outcomes;
 pub mod pipelines;
+pub mod provider_outcomes;
 pub mod query;
 pub mod reputation;
 pub mod reverification;

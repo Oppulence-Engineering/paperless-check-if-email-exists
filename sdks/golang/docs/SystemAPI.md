@@ -123,4 +123,3 @@ Other parameters are passed through a pointer to a apiOpenapiSpecRequest struct 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

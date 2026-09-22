@@ -48,10 +48,9 @@
     "sdks/golang": {
       "component": "sdk-golang",
       "release-type": "go",
-      "package-name": "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang",
+      "package-name": "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4",
       "path": "sdks/golang",
       "skip-github-release": true
     }
   }
 }
-

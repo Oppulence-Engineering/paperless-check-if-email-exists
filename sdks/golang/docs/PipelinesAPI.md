@@ -11,6 +11,7 @@ Method | HTTP request | Description
 [**V1ListPipelineRuns**](PipelinesAPI.md#V1ListPipelineRuns) | **Get** /v1/pipelines/{pipeline_id}/runs | GET /v1/pipelines/{pipeline_id}/runs
 [**V1ListPipelines**](PipelinesAPI.md#V1ListPipelines) | **Get** /v1/pipelines | GET /v1/pipelines
 [**V1PausePipeline**](PipelinesAPI.md#V1PausePipeline) | **Post** /v1/pipelines/{pipeline_id}/pause | POST /v1/pipelines/{pipeline_id}/pause
+[**V1PushPipeline**](PipelinesAPI.md#V1PushPipeline) | **Post** /v1/pipelines/{pipeline_id}/push | POST /v1/pipelines/{pipeline_id}/push
 [**V1ResumePipeline**](PipelinesAPI.md#V1ResumePipeline) | **Post** /v1/pipelines/{pipeline_id}/resume | POST /v1/pipelines/{pipeline_id}/resume
 [**V1TriggerPipeline**](PipelinesAPI.md#V1TriggerPipeline) | **Post** /v1/pipelines/{pipeline_id}/trigger | POST /v1/pipelines/{pipeline_id}/trigger
 [**V1UpdatePipeline**](PipelinesAPI.md#V1UpdatePipeline) | **Patch** /v1/pipelines/{pipeline_id} | PATCH /v1/pipelines/{pipeline_id}
@@ -36,7 +37,7 @@ import (
 )
 
 func main() {
-	createPipelineInput := *openapiclient.NewCreatePipelineInput("Name_example", *openapiclient.NewPipelineSchedule("Cron_example", "Timezone_example"), openapiclient.PipelineSource{PipelineSourceOneOf: openapiclient.NewPipelineSourceOneOf(int32(123), "Type_example")}) // CreatePipelineInput | 
+	createPipelineInput := *openapiclient.NewCreatePipelineInput("Name_example", *openapiclient.NewPipelineSchedule("Cron_example", "Timezone_example"), openapiclient.PipelineSource{PipelineSourceOneOf: openapiclient.NewPipelineSourceOneOf(int32(123), "Type_example")}) // CreatePipelineInput |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -61,7 +62,7 @@ Other parameters are passed through a pointer to a apiV1CreatePipelineRequest st
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **createPipelineInput** | [**CreatePipelineInput**](CreatePipelineInput.md) |  | 
+ **createPipelineInput** | [**CreatePipelineInput**](CreatePipelineInput.md) |  |
 
 ### Return type
 
@@ -120,7 +121,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -188,7 +189,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -257,8 +258,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
-**runId** | **int64** | Pipeline run identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
+**runId** | **int64** | Pipeline run identifier |
 
 ### Other Parameters
 
@@ -329,7 +330,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -339,8 +340,8 @@ Other parameters are passed through a pointer to a apiV1ListPipelineRunsRequest 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -406,9 +407,9 @@ Other parameters are passed through a pointer to a apiV1ListPipelinesRequest str
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **status** | [**PipelineStatus**](PipelineStatus.md) |  | 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **status** | [**PipelineStatus**](PipelineStatus.md) |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -467,7 +468,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -489,6 +490,78 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1PushPipeline
+
+> PushPipelineResponse V1PushPipeline(ctx, pipelineId).IdempotencyKey(idempotencyKey).PushPipelineInput(pushPipelineInput).Execute()
+
+POST /v1/pipelines/{pipeline_id}/push
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	pipelineId := int64(789) // int64 | Push pipeline identifier
+	idempotencyKey := "idempotencyKey_example" // string | Required idempotency key
+	pushPipelineInput := *openapiclient.NewPushPipelineInput([]map[string]interface{}{map[string]interface{}{"key": interface{}(123)}}) // PushPipelineInput |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.PipelinesAPI.V1PushPipeline(context.Background(), pipelineId).IdempotencyKey(idempotencyKey).PushPipelineInput(pushPipelineInput).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `PipelinesAPI.V1PushPipeline``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1PushPipeline`: PushPipelineResponse
+	fmt.Fprintf(os.Stdout, "Response from `PipelinesAPI.V1PushPipeline`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**pipelineId** | **int64** | Push pipeline identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1PushPipelineRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **idempotencyKey** | **string** | Required idempotency key |
+ **pushPipelineInput** | [**PushPipelineInput**](PushPipelineInput.md) |  |
+
+### Return type
+
+[**PushPipelineResponse**](PushPipelineResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -535,7 +608,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -584,7 +657,7 @@ import (
 
 func main() {
 	pipelineId := int64(789) // int64 | Pipeline identifier
-	triggerPipelineInput := *openapiclient.NewTriggerPipelineInput() // TriggerPipelineInput | 
+	triggerPipelineInput := *openapiclient.NewTriggerPipelineInput() // TriggerPipelineInput |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -604,7 +677,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -614,7 +687,7 @@ Other parameters are passed through a pointer to a apiV1TriggerPipelineRequest s
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **triggerPipelineInput** | [**TriggerPipelineInput**](TriggerPipelineInput.md) |  | 
+ **triggerPipelineInput** | [**TriggerPipelineInput**](TriggerPipelineInput.md) |  |
 
 ### Return type
 
@@ -654,7 +727,7 @@ import (
 
 func main() {
 	pipelineId := int64(789) // int64 | Pipeline identifier
-	updatePipelineInput := *openapiclient.NewUpdatePipelineInput() // UpdatePipelineInput | 
+	updatePipelineInput := *openapiclient.NewUpdatePipelineInput() // UpdatePipelineInput |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -674,7 +747,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pipelineId** | **int64** | Pipeline identifier | 
+**pipelineId** | **int64** | Pipeline identifier |
 
 ### Other Parameters
 
@@ -684,7 +757,7 @@ Other parameters are passed through a pointer to a apiV1UpdatePipelineRequest st
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **updatePipelineInput** | [**UpdatePipelineInput**](UpdatePipelineInput.md) |  | 
+ **updatePipelineInput** | [**UpdatePipelineInput**](UpdatePipelineInput.md) |  |
 
 ### Return type
 
@@ -702,4 +775,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -12,36 +12,98 @@ use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
-struct Request {
-	provider: String,
-	outcomes: Vec<OutcomeInput>,
-	source_key: Option<String>,
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct OutcomeIngestRequest {
+	pub(crate) provider: String,
+	pub(crate) outcomes: Vec<OutcomeInput>,
+	pub(crate) source_key: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-struct OutcomeInput {
-	email: String,
-	event_type: String,
-	source_key: Option<String>,
-	campaign_id: Option<String>,
-	occurred_at: Option<DateTime<Utc>>,
-	metadata: Option<Value>,
+#[derive(Clone, Debug, Deserialize, Serialize, utoipa::ToSchema)]
+pub struct OutcomeInput {
+	pub(crate) email: String,
+	pub(crate) event_type: String,
+	pub(crate) source_key: Option<String>,
+	pub(crate) campaign_id: Option<String>,
+	pub(crate) occurred_at: Option<DateTime<Utc>>,
+	pub(crate) metadata: Option<Value>,
+	#[serde(skip)]
+	#[schema(ignore)]
+	pub(crate) endpoint_id: Option<uuid::Uuid>,
+	#[serde(skip)]
+	#[schema(ignore)]
+	pub(crate) receipt_id: Option<uuid::Uuid>,
+	pub(crate) provider_event_id: Option<String>,
+	pub(crate) provider_message_id: Option<String>,
+	#[serde(skip)]
+	#[schema(ignore)]
+	pub(crate) event_family: Option<String>,
+	#[serde(skip)]
+	#[schema(ignore)]
+	pub(crate) correlation_status: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
-struct Response {
-	ingested: i64,
-	auto_suppressed: i64,
-	ignored: i64,
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct OutcomeIngestResponse {
+	pub ingested: i64,
+	pub auto_suppressed: i64,
+	pub ignored: i64,
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+struct OutcomeListQuery {
+	limit: Option<i64>,
+	offset: Option<i64>,
+	email: Option<String>,
+	event_type: Option<String>,
+	source_key: Option<String>,
+	since: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct OutcomeView {
+	pub id: i64,
+	pub email: String,
+	pub canonical_email: String,
+	pub provider: String,
+	pub event_type: String,
+	pub source_key: Option<String>,
+	pub campaign_id: Option<String>,
+	pub occurred_at: DateTime<Utc>,
+	pub metadata: Value,
+	pub endpoint_id: Option<uuid::Uuid>,
+	pub receipt_id: Option<uuid::Uuid>,
+	pub provider_event_id: Option<String>,
+	pub provider_message_id: Option<String>,
+	pub event_family: Option<String>,
+	pub correlation_status: String,
+	pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct OutcomeListResponse {
+	pub outcomes: Vec<OutcomeView>,
+	pub limit: i64,
+	pub offset: i64,
 }
 
 async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
-	body: Request,
+	body: OutcomeIngestRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	let response = ingest_outcomes(&pg_pool, tenant_id, body).await?;
+	Ok(warp::reply::json(&response))
+}
+
+pub(crate) async fn ingest_outcomes(
+	pg_pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	body: OutcomeIngestRequest,
+) -> Result<OutcomeIngestResponse, warp::Rejection> {
 	if body.provider.trim().is_empty() {
 		return Err(
 			ReacherResponseError::new(StatusCode::BAD_REQUEST, "provider is required").into(),
@@ -82,13 +144,17 @@ async fn http_handler(
 		let occurred_at = outcome.occurred_at.unwrap_or_else(Utc::now);
 		let event_type = outcome.event_type.trim().to_ascii_lowercase();
 
-		let outcome_id: i64 = sqlx::query_scalar(
+		let outcome_id: Option<i64> = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_contact_outcomes (
 				tenant_id, email, canonical_email, provider, event_type, source_key,
-				campaign_id, occurred_at, metadata
+				campaign_id, occurred_at, metadata, endpoint_id, receipt_id,
+				provider_event_id, provider_message_id, event_family, correlation_status
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+			ON CONFLICT (tenant_id, provider, provider_event_id)
+				WHERE provider_event_id IS NOT NULL
+			DO NOTHING
 			RETURNING id
 			"#,
 		)
@@ -101,9 +167,19 @@ async fn http_handler(
 		.bind(&outcome.campaign_id)
 		.bind(occurred_at)
 		.bind(&metadata)
-		.fetch_one(&mut *tx)
+		.bind(outcome.endpoint_id)
+		.bind(outcome.receipt_id)
+		.bind(&outcome.provider_event_id)
+		.bind(&outcome.provider_message_id)
+		.bind(&outcome.event_family)
+		.bind(outcome.correlation_status.as_deref().unwrap_or("unmatched"))
+		.fetch_optional(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
+		let Some(outcome_id) = outcome_id else {
+			ignored += 1;
+			continue;
+		};
 		ingested += 1;
 
 		if let Some(reason) = suppression_reason_for_event(&event_type) {
@@ -124,10 +200,77 @@ async fn http_handler(
 	}
 
 	tx.commit().await.map_err(ReacherResponseError::from)?;
-	Ok(warp::reply::json(&Response {
+	Ok(OutcomeIngestResponse {
 		ingested,
 		auto_suppressed,
 		ignored,
+	})
+}
+
+async fn list_handler(
+	tenant_ctx: TenantContext,
+	pg_pool: PgPool,
+	query: OutcomeListQuery,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
+	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	let limit = query.limit.unwrap_or(100).clamp(1, 500);
+	let offset = query.offset.unwrap_or(0).max(0);
+	let email = query.email.map(|value| normalize_email(&value));
+	let event_type = query
+		.event_type
+		.map(|value| value.trim().to_ascii_lowercase());
+	let source_key = normalize_source_key(query.source_key.as_deref());
+	let rows = sqlx::query(
+		r#"
+		SELECT id, email, canonical_email, provider, event_type, source_key, campaign_id,
+		       occurred_at, metadata, endpoint_id, receipt_id, provider_event_id,
+		       provider_message_id, event_family, correlation_status, created_at
+		FROM v1_contact_outcomes
+		WHERE tenant_id = $1
+		  AND ($2::TEXT IS NULL OR canonical_email = $2)
+		  AND ($3::TEXT IS NULL OR event_type = $3)
+		  AND ($4::TEXT IS NULL OR source_key = $4)
+		  AND ($5::TIMESTAMPTZ IS NULL OR occurred_at >= $5)
+		ORDER BY occurred_at DESC, id DESC
+		LIMIT $6 OFFSET $7
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(email)
+	.bind(event_type)
+	.bind(source_key)
+	.bind(query.since)
+	.bind(limit)
+	.bind(offset)
+	.fetch_all(&pg_pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
+	let outcomes = rows
+		.into_iter()
+		.map(|row| OutcomeView {
+			id: row.get("id"),
+			email: row.get("email"),
+			canonical_email: row.get("canonical_email"),
+			provider: row.get("provider"),
+			event_type: row.get("event_type"),
+			source_key: row.get("source_key"),
+			campaign_id: row.get("campaign_id"),
+			occurred_at: row.get("occurred_at"),
+			metadata: row.get("metadata"),
+			endpoint_id: row.get("endpoint_id"),
+			receipt_id: row.get("receipt_id"),
+			provider_event_id: row.get("provider_event_id"),
+			provider_message_id: row.get("provider_message_id"),
+			event_family: row.get("event_family"),
+			correlation_status: row.get("correlation_status"),
+			created_at: row.get("created_at"),
+		})
+		.collect::<Vec<_>>();
+	Ok(warp::reply::json(&OutcomeListResponse {
+		outcomes,
+		limit,
+		offset,
 	}))
 }
 
@@ -275,6 +418,16 @@ fn outcome_suppression_metadata(provider: &str, outcome_id: i64, metadata: &Valu
 }
 
 /// POST /v1/outcomes
+#[utoipa::path(
+	post,
+	path = "/v1/outcomes",
+	tag = "Outcomes",
+	request_body = OutcomeIngestRequest,
+	responses(
+		(status = 200, description = "Provider outcomes ingested", body = OutcomeIngestResponse),
+		(status = 400, description = "Invalid outcome payload")
+	)
+)]
 pub fn v1_ingest_outcomes(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -284,6 +437,26 @@ pub fn v1_ingest_outcomes(
 		.and(with_worker_db(config))
 		.and(warp::body::json())
 		.and_then(http_handler)
+		.with(warp::log(LOG_TARGET))
+}
+
+/// GET /v1/outcomes
+#[utoipa::path(
+	get,
+	path = "/v1/outcomes",
+	tag = "Outcomes",
+	params(OutcomeListQuery),
+	responses((status = 200, description = "Paginated provider outcomes", body = OutcomeListResponse))
+)]
+pub fn v1_list_outcomes(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "outcomes")
+		.and(warp::get())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_worker_db(config))
+		.and(warp::query::<OutcomeListQuery>())
+		.and_then(list_handler)
 		.with(warp::log(LOG_TARGET))
 }
 
