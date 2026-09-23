@@ -214,7 +214,7 @@ const { status, data } = await apiInstance.v1IngestProviderOutcomes(
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 

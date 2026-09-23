@@ -74,6 +74,7 @@ export default defineConfig({
 			"components/auth/**/*.test.{ts,tsx}",
 			"components/features/**/*.test.{ts,tsx}",
 			"app/**/_components/**/*.test.{ts,tsx}",
+			"app/**/route.test.{ts,tsx}",
 			"app/(marketing)/marketing-faq.test.tsx",
 			"hooks/**/*.test.{ts,tsx}",
 			"lib/**/*.test.{ts,tsx}",

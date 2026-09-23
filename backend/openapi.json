@@ -3353,8 +3353,20 @@
       }
     },
     "securitySchemes": {
+      "AdminSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-reacher-secret",
+        "description": "Private operator credential for backend admin routes. Never send from a browser or workspace API key."
+      },
+      "LegacySecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-reacher-secret",
+        "description": "Legacy self-hosted v0 bulk credential. The shared hosted app does not expose v0."
+      },
       "Authorization": {
-        "description": "Send a workspace API key as Bearer rch_live_... for tenant API calls. Provider callbacks use their delivery token and provider signature.",
+        "description": "Send Authorization: Bearer rch_live_... for tenant API calls. The signed-in console uses a server-issued backend token.",
         "in": "header",
         "name": "Authorization",
         "type": "apiKey"
@@ -3390,7 +3402,8 @@
         "summary": "GET /healthz",
         "tags": [
           "Health"
-        ]
+        ],
+        "security": []
       }
     },
     "/openapi.json": {
@@ -3404,7 +3417,8 @@
         "summary": "Serve the merged OpenAPI document for all documented REST endpoints.",
         "tags": [
           "System"
-        ]
+        ],
+        "security": []
       }
     },
     "/readyz": {
@@ -3419,7 +3433,8 @@
         "summary": "GET /readyz",
         "tags": [
           "Health"
-        ]
+        ],
+        "security": []
       }
     },
     "/v0/bulk": {
@@ -3434,6 +3449,11 @@
         "summary": "POST /v0/bulk",
         "tags": [
           "v0"
+        ],
+        "security": [
+          {
+            "LegacySecret": []
+          }
         ]
       }
     },
@@ -3461,6 +3481,11 @@
         "summary": "GET /v0/bulk/{job_id}",
         "tags": [
           "v0"
+        ],
+        "security": [
+          {
+            "LegacySecret": []
+          }
         ]
       }
     },
@@ -3488,6 +3513,11 @@
         "summary": "GET /v0/bulk/{job_id}/results",
         "tags": [
           "v0"
+        ],
+        "security": [
+          {
+            "LegacySecret": []
+          }
         ]
       }
     },
@@ -3532,6 +3562,14 @@
         "summary": "POST /v0/check_email",
         "tags": [
           "v0"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          },
+          {
+            "LegacySecret": []
+          }
         ]
       }
     },
@@ -3557,6 +3595,11 @@
         "summary": "GET /v1/admin/api-keys",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3582,6 +3625,11 @@
         "summary": "GET /v1/admin/jobs",
         "tags": [
           "Admin Jobs"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3619,6 +3667,11 @@
         "summary": "GET /v1/admin/jobs/{job_id}",
         "tags": [
           "Admin Jobs"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3656,6 +3709,11 @@
         "summary": "GET /v1/admin/jobs/{job_id}/events",
         "tags": [
           "Admin Jobs"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3693,6 +3751,11 @@
         "summary": "GET /v1/admin/jobs/{job_id}/results",
         "tags": [
           "Admin Jobs"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3718,6 +3781,11 @@
         "summary": "GET /v1/admin/tenants",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "post": {
@@ -3741,6 +3809,11 @@
         "summary": "POST /v1/admin/tenants",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3777,6 +3850,11 @@
         "summary": "DELETE /v1/admin/tenants/{tenant_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "get": {
@@ -3811,6 +3889,11 @@
         "summary": "GET /v1/admin/tenants/{tenant_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "put": {
@@ -3845,6 +3928,11 @@
         "summary": "PUT /v1/admin/tenants/{tenant_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3881,6 +3969,11 @@
         "summary": "GET /v1/admin/tenants/{tenant_id}/api-keys",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "post": {
@@ -3916,6 +4009,11 @@
         "summary": "POST /v1/admin/tenants/{tenant_id}/api-keys",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -3962,6 +4060,11 @@
         "summary": "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "get": {
@@ -4006,6 +4109,11 @@
         "summary": "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "patch": {
@@ -4050,6 +4158,11 @@
         "summary": "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -4096,6 +4209,11 @@
         "summary": "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -4132,6 +4250,11 @@
         "summary": "GET /v1/admin/tenants/{tenant_id}/jobs",
         "tags": [
           "Admin Jobs"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -4168,6 +4291,11 @@
         "summary": "GET /v1/admin/tenants/{tenant_id}/quota",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       },
       "patch": {
@@ -4202,6 +4330,11 @@
         "summary": "PATCH /v1/admin/tenants/{tenant_id}/quota",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -4238,6 +4371,11 @@
         "summary": "POST /v1/admin/tenants/{tenant_id}/quota/reset",
         "tags": [
           "Admin"
+        ],
+        "security": [
+          {
+            "AdminSecret": []
+          }
         ]
       }
     },
@@ -4432,7 +4570,8 @@
         "summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
         "tags": [
           "v1"
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/check_email": {
@@ -4929,7 +5068,8 @@
         },
         "tags": [
           "Outcomes"
-        ]
+        ],
+        "security": []
       }
     },
     "/v1/jobs/{job_id}": {
@@ -5167,6 +5307,7 @@
     },
     "/v1/jobs/{job_id}/failure-center": {
       "get": {
+        "operationId": "v1_get_job_failure_center",
         "parameters": [
           {
             "in": "path",
@@ -5209,6 +5350,7 @@
     },
     "/v1/jobs/{job_id}/failure-report": {
       "get": {
+        "operationId": "v1_get_job_failure_report",
         "parameters": [
           {
             "in": "path",
@@ -5679,6 +5821,7 @@
     },
     "/v1/lists/{list_id}/remediation-exports": {
       "post": {
+        "operationId": "v1_create_remediation_export",
         "parameters": [
           {
             "in": "path",
@@ -5732,6 +5875,7 @@
     },
     "/v1/lists/{list_id}/remediation-exports/{export_id}/download": {
       "get": {
+        "operationId": "v1_download_remediation_export",
         "parameters": [
           {
             "in": "path",
@@ -5783,6 +5927,7 @@
     },
     "/v1/lists/{list_id}/remediation-plan": {
       "get": {
+        "operationId": "v1_get_remediation_plan",
         "parameters": [
           {
             "in": "path",
@@ -5823,6 +5968,7 @@
         ]
       },
       "post": {
+        "operationId": "v1_create_remediation_plan",
         "parameters": [
           {
             "in": "path",
@@ -7930,6 +8076,7 @@
     },
     "/v1/sources/quality": {
       "get": {
+        "operationId": "v1_source_quality",
         "responses": {
           "200": {
             "content": {
@@ -8132,6 +8279,7 @@
     },
     "/v1/suppressions/export": {
       "get": {
+        "operationId": "v1_export_suppressions",
         "responses": {
           "200": {
             "content": {
@@ -8163,6 +8311,7 @@
     },
     "/v1/suppressions/import": {
       "post": {
+        "operationId": "v1_import_suppressions",
         "requestBody": {
           "content": {
             "application/json": {
@@ -8248,6 +8397,7 @@
     },
     "/v1/suppressions/{id}/events": {
       "get": {
+        "operationId": "v1_list_suppression_events",
         "parameters": [
           {
             "in": "path",
@@ -8300,7 +8450,8 @@
         "summary": "GET /version",
         "tags": [
           "System"
-        ]
+        ],
+        "security": []
       }
     }
   },

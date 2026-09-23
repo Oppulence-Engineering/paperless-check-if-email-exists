@@ -45,6 +45,22 @@ describe("backend proxy", () => {
 		expect(upstream).not.toHaveBeenCalled();
 	});
 
+	it.each([
+		["v0", "check_email"],
+		["v1", "admin", "tenants"],
+		["v1", "check-email-with-onboard"],
+		["v1", "inbound", "providers"],
+	])("keeps internal and legacy routes out of the generic BFF: %j", async (...path) => {
+		const upstream = vi.fn();
+		vi.stubGlobal("fetch", upstream);
+		const response = await proxyBackendAPI(
+			new NextRequest(`https://app.example.test/api/backend/${path.join("/")}`),
+			path,
+		);
+		expect(response.status).toBe(404);
+		expect(upstream).not.toHaveBeenCalled();
+	});
+
 	it("rejects a cross-origin mutation before checking the session", async () => {
 		const response = await proxyBackendAPI(
 			new NextRequest("https://app.example.test/api/backend/v1/lists", {

@@ -88,18 +88,18 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetBulkJobProgress**](docs/JobsApi.md#v1getbulkjobprogress) | **GET** /v1/bulk/{job_id} | GET /v1/bulk/{job_id}
 *JobsApi* | [**v1GetBulkJobResults**](docs/JobsApi.md#v1getbulkjobresults) | **GET** /v1/bulk/{job_id}/results | GET /v1/bulk/{job_id}/results
 *JobsApi* | [**v1GetJobEvents**](docs/JobsApi.md#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events
+*JobsApi* | [**v1GetJobFailureCenter**](docs/JobsApi.md#v1getjobfailurecenter) | **GET** /v1/jobs/{job_id}/failure-center | Get job failure center
+*JobsApi* | [**v1GetJobFailureReport**](docs/JobsApi.md#v1getjobfailurereport) | **GET** /v1/jobs/{job_id}/failure-report | Download job failure report
 *JobsApi* | [**v1GetJobResults**](docs/JobsApi.md#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1JobLatency**](docs/JobsApi.md#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
-*JobsApi* | [**v1JobsJobIdFailureCenterGet**](docs/JobsApi.md#v1jobsjobidfailurecenterget) | **GET** /v1/jobs/{job_id}/failure-center | Get job failure center
-*JobsApi* | [**v1JobsJobIdFailureReportGet**](docs/JobsApi.md#v1jobsjobidfailurereportget) | **GET** /v1/jobs/{job_id}/failure-report | Download job failure report
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
+*ListsApi* | [**v1CreateRemediationExport**](docs/ListsApi.md#v1createremediationexport) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export
+*ListsApi* | [**v1CreateRemediationPlan**](docs/ListsApi.md#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan
+*ListsApi* | [**v1DownloadRemediationExport**](docs/ListsApi.md#v1downloadremediationexport) | **GET** /v1/lists/{list_id}/remediation-exports/{export_id}/download | Download remediation export
+*ListsApi* | [**v1GetRemediationPlan**](docs/ListsApi.md#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | Get remediation plan
 *ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
-*ListsApi* | [**v1ListsListIdRemediationExportsExportIdDownloadGet**](docs/ListsApi.md#v1listslistidremediationexportsexportiddownloadget) | **GET** /v1/lists/{list_id}/remediation-exports/{export_id}/download | Download remediation export
-*ListsApi* | [**v1ListsListIdRemediationExportsPost**](docs/ListsApi.md#v1listslistidremediationexportspost) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export
-*ListsApi* | [**v1ListsListIdRemediationPlanGet**](docs/ListsApi.md#v1listslistidremediationplanget) | **GET** /v1/lists/{list_id}/remediation-plan | Get remediation plan
-*ListsApi* | [**v1ListsListIdRemediationPlanPost**](docs/ListsApi.md#v1listslistidremediationplanpost) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan
 *OutcomesApi* | [**v1CreateProviderEndpoint**](docs/OutcomesApi.md#v1createproviderendpoint) | **POST** /v1/provider-endpoints |
 *OutcomesApi* | [**v1DeleteProviderEndpoint**](docs/OutcomesApi.md#v1deleteproviderendpoint) | **DELETE** /v1/provider-endpoints/{endpoint_id} |
 *OutcomesApi* | [**v1IngestOutcomes**](docs/OutcomesApi.md#v1ingestoutcomes) | **POST** /v1/outcomes | POST /v1/outcomes
@@ -146,16 +146,16 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1DeleteList**](docs/V1Api.md#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
 *V1Api* | [**v1DeleteSuppression**](docs/V1Api.md#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 *V1Api* | [**v1DownloadList**](docs/V1Api.md#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
+*V1Api* | [**v1ExportSuppressions**](docs/V1Api.md#v1exportsuppressions) | **GET** /v1/suppressions/export | Export suppressions
 *V1Api* | [**v1FindEmail**](docs/V1Api.md#v1findemail) | **POST** /v1/find_email | POST /v1/find_email
 *V1Api* | [**v1GetFindEmail**](docs/V1Api.md#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+*V1Api* | [**v1ImportSuppressions**](docs/V1Api.md#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
+*V1Api* | [**v1ListSuppressionEvents**](docs/V1Api.md#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
-*V1Api* | [**v1SourcesQualityGet**](docs/V1Api.md#v1sourcesqualityget) | **GET** /v1/sources/quality | List source quality
-*V1Api* | [**v1SuppressionsExportGet**](docs/V1Api.md#v1suppressionsexportget) | **GET** /v1/suppressions/export | Export suppressions
-*V1Api* | [**v1SuppressionsIdEventsGet**](docs/V1Api.md#v1suppressionsideventsget) | **GET** /v1/suppressions/{id}/events | List suppression events
-*V1Api* | [**v1SuppressionsImportPost**](docs/V1Api.md#v1suppressionsimportpost) | **POST** /v1/suppressions/import | Import suppressions
+*V1Api* | [**v1SourceQuality**](docs/V1Api.md#v1sourcequality) | **GET** /v1/sources/quality | List source quality
 *VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
 
 
@@ -285,6 +285,20 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 
 
 Authentication schemes defined for the API:
+<a id="AdminSecret"></a>
+### AdminSecret
+
+- **Type**: API key
+- **API key parameter name**: x-reacher-secret
+- **Location**: HTTP header
+
+<a id="LegacySecret"></a>
+### LegacySecret
+
+- **Type**: API key
+- **API key parameter name**: x-reacher-secret
+- **Location**: HTTP header
+
 <a id="Authorization"></a>
 ### Authorization
 

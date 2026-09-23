@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { HttpResponse, http } from "msw";
@@ -16,25 +16,21 @@ import type {
   CheckEmailOutput,
   FindEmailAcceptedResponse,
   FindEmailStatusResponse,
-  GetV1SourcesQuality200,
-  GetV1SuppressionsIdEvents200,
   ListDeleteResponse,
   ListDetailResponse,
   ListListResponse,
   ListUploadResponse,
-  PostV1SuppressionsImport200,
   ReputationCheckResponse,
   ReverificationStatusResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionListResponse,
+  V1ImportSuppressions200,
+  V1ListSuppressionEvents200,
+  V1SourceQuality200,
 } from "../model";
 
 import {
-  getGetV1SourcesQualityResponseMock,
-  getGetV1SuppressionsExportResponseMock,
-  getGetV1SuppressionsIdEventsResponseMock,
-  getPostV1SuppressionsImportResponseMock,
   getV1AddSuppressionsResponseMock,
   getV1CheckEmailResponseMock,
   getV1CheckReputationResponseMock,
@@ -44,12 +40,16 @@ import {
   getV1DeleteListResponseMock,
   getV1DeleteSuppressionResponseMock,
   getV1DownloadListResponseMock,
+  getV1ExportSuppressionsResponseMock,
   getV1FindEmailResponseMock,
   getV1GetFindEmailResponseMock,
   getV1GetListResponseMock,
+  getV1ImportSuppressionsResponseMock,
   getV1ListListsResponseMock,
+  getV1ListSuppressionEventsResponseMock,
   getV1ListSuppressionsResponseMock,
   getV1ReverificationStatusResponseMock,
+  getV1SourceQualityResponseMock,
 } from "./v1.faker";
 
 export {
@@ -64,14 +64,14 @@ export {
   getV1DownloadListResponseMock,
   getV1CheckReputationResponseMock,
   getV1ReverificationStatusResponseMock,
-  getGetV1SourcesQualityResponseMock,
+  getV1SourceQualityResponseMock,
   getV1ListSuppressionsResponseMock,
   getV1AddSuppressionsResponseMock,
   getV1CheckSuppressionResponseMock,
-  getGetV1SuppressionsExportResponseMock,
-  getPostV1SuppressionsImportResponseMock,
+  getV1ExportSuppressionsResponseMock,
+  getV1ImportSuppressionsResponseMock,
   getV1DeleteSuppressionResponseMock,
-  getGetV1SuppressionsIdEventsResponseMock,
+  getV1ListSuppressionEventsResponseMock,
 } from "./v1.faker";
 
 export const getV1CreateBulkJobMockHandler = (
@@ -365,12 +365,12 @@ export const getV1ReverificationStatusMockHandler = (
   );
 };
 
-export const getGetV1SourcesQualityMockHandler = (
+export const getV1SourceQualityMockHandler = (
   overrideResponse?:
-    | GetV1SourcesQuality200
+    | V1SourceQuality200
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<GetV1SourcesQuality200> | GetV1SourcesQuality200),
+      ) => Promise<V1SourceQuality200> | V1SourceQuality200),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -381,7 +381,7 @@ export const getGetV1SourcesQualityMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1SourcesQualityResponseMock(),
+          : getV1SourceQualityResponseMock(),
         { status: 200 },
       );
     },
@@ -461,7 +461,7 @@ export const getV1CheckSuppressionMockHandler = (
   );
 };
 
-export const getGetV1SuppressionsExportMockHandler = (
+export const getV1ExportSuppressionsMockHandler = (
   overrideResponse?:
     | ArrayBuffer
     | ((
@@ -477,7 +477,7 @@ export const getGetV1SuppressionsExportMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1SuppressionsExportResponseMock();
+          : getV1ExportSuppressionsResponseMock();
       return HttpResponse.arrayBuffer(
         binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
         {
@@ -490,12 +490,12 @@ export const getGetV1SuppressionsExportMockHandler = (
   );
 };
 
-export const getPostV1SuppressionsImportMockHandler = (
+export const getV1ImportSuppressionsMockHandler = (
   overrideResponse?:
-    | PostV1SuppressionsImport200
+    | V1ImportSuppressions200
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<PostV1SuppressionsImport200> | PostV1SuppressionsImport200),
+      ) => Promise<V1ImportSuppressions200> | V1ImportSuppressions200),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -506,7 +506,7 @@ export const getPostV1SuppressionsImportMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getPostV1SuppressionsImportResponseMock(),
+          : getV1ImportSuppressionsResponseMock(),
         { status: 200 },
       );
     },
@@ -538,13 +538,12 @@ export const getV1DeleteSuppressionMockHandler = (
   );
 };
 
-export const getGetV1SuppressionsIdEventsMockHandler = (
+export const getV1ListSuppressionEventsMockHandler = (
   overrideResponse?:
-    | GetV1SuppressionsIdEvents200
+    | V1ListSuppressionEvents200
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) =>
-        Promise<GetV1SuppressionsIdEvents200> | GetV1SuppressionsIdEvents200),
+      ) => Promise<V1ListSuppressionEvents200> | V1ListSuppressionEvents200),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -555,7 +554,7 @@ export const getGetV1SuppressionsIdEventsMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1SuppressionsIdEventsResponseMock(),
+          : getV1ListSuppressionEventsResponseMock(),
         { status: 200 },
       );
     },
@@ -575,12 +574,12 @@ export const getV1Mock = () => [
   getV1DownloadListMockHandler(),
   getV1CheckReputationMockHandler(),
   getV1ReverificationStatusMockHandler(),
-  getGetV1SourcesQualityMockHandler(),
+  getV1SourceQualityMockHandler(),
   getV1ListSuppressionsMockHandler(),
   getV1AddSuppressionsMockHandler(),
   getV1CheckSuppressionMockHandler(),
-  getGetV1SuppressionsExportMockHandler(),
-  getPostV1SuppressionsImportMockHandler(),
+  getV1ExportSuppressionsMockHandler(),
+  getV1ImportSuppressionsMockHandler(),
   getV1DeleteSuppressionMockHandler(),
-  getGetV1SuppressionsIdEventsMockHandler(),
+  getV1ListSuppressionEventsMockHandler(),
 ];

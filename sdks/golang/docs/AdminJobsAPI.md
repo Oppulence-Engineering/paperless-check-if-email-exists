@@ -68,7 +68,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -136,7 +136,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -204,7 +204,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -263,7 +263,7 @@ Other parameters are passed through a pointer to a apiListJobsRequest struct via
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -331,7 +331,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 

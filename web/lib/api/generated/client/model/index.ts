@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 
@@ -47,10 +47,6 @@ export * from "./findEmailStatusResponse";
 export * from "./finderBestMatch";
 export * from "./finderCandidateResult";
 export * from "./freshness";
-export * from "./getV1JobsJobIdFailureCenter200";
-export * from "./getV1ListsListIdRemediationPlan200";
-export * from "./getV1SourcesQuality200";
-export * from "./getV1SuppressionsIdEvents200";
 export * from "./gmailVerifMethod";
 export * from "./historyEntry";
 export * from "./hotmailB2BVerifMethod";
@@ -89,12 +85,6 @@ export * from "./pipelineSource";
 export * from "./pipelineStatus";
 export * from "./pipelineVerificationSettings";
 export * from "./pipelineView";
-export * from "./postV1ListsListIdRemediationExports200";
-export * from "./postV1ListsListIdRemediationExportsBody";
-export * from "./postV1ListsListIdRemediationPlan200";
-export * from "./postV1ListsListIdRemediationPlanBody";
-export * from "./postV1SuppressionsImport200";
-export * from "./postV1SuppressionsImportBody";
 export * from "./provider";
 export * from "./providerConfidence";
 export * from "./providerDeleteResponse";
@@ -133,21 +123,31 @@ export * from "./updateProviderEndpointInput";
 export * from "./updateTenantSettingsRequest";
 export * from "./updateWebhookRequest";
 export * from "./v1CheckSuppressionParams";
+export * from "./v1CreateRemediationExport200";
+export * from "./v1CreateRemediationExportBody";
+export * from "./v1CreateRemediationPlan200";
+export * from "./v1CreateRemediationPlanBody";
 export * from "./v1DownloadJobResultsParams";
 export * from "./v1DownloadListParams";
 export * from "./v1EmailHistory200";
 export * from "./v1EmailHistoryParams";
 export * from "./v1GetBulkJobResultsParams";
 export * from "./v1GetJobEventsParams";
+export * from "./v1GetJobFailureCenter200";
 export * from "./v1GetJobResultsParams";
+export * from "./v1GetRemediationPlan200";
+export * from "./v1ImportSuppressions200";
+export * from "./v1ImportSuppressionsBody";
 export * from "./v1ListCommentsParams";
 export * from "./v1ListEventsParams";
 export * from "./v1ListListsParams";
 export * from "./v1ListOutcomesParams";
 export * from "./v1ListPipelineRunsParams";
 export * from "./v1ListPipelinesParams";
+export * from "./v1ListSuppressionEvents200";
 export * from "./v1ListSuppressionsParams";
 export * from "./v1QueryResultsParams";
+export * from "./v1SourceQuality200";
 export * from "./verifMethod";
 export * from "./verifMethodType";
 export * from "./webhook";

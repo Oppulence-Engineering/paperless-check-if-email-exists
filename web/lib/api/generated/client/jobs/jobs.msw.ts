@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { HttpResponse, http } from "msw";
@@ -13,16 +13,16 @@ import type { RequestHandlerOptions } from "msw";
 import type {
   ApprovalChecklistResponse,
   BulkJobResultsResponse,
-  GetV1JobsJobIdFailureCenter200,
   JobResultPageResponse,
   RetryJobResponse,
+  V1GetJobFailureCenter200,
 } from "../model";
 
 import {
-  getGetV1JobsJobIdFailureCenterResponseMock,
-  getGetV1JobsJobIdFailureReportResponseMock,
   getV1DownloadJobResultsResponseMock,
   getV1GetBulkJobResultsResponseMock,
+  getV1GetJobFailureCenterResponseMock,
+  getV1GetJobFailureReportResponseMock,
   getV1GetJobResultsResponseMock,
   getV1JobApprovalChecklistResponseMock,
   getV1RetryJobResponseMock,
@@ -32,8 +32,8 @@ export {
   getV1GetBulkJobResultsResponseMock,
   getV1JobApprovalChecklistResponseMock,
   getV1DownloadJobResultsResponseMock,
-  getGetV1JobsJobIdFailureCenterResponseMock,
-  getGetV1JobsJobIdFailureReportResponseMock,
+  getV1GetJobFailureCenterResponseMock,
+  getV1GetJobFailureReportResponseMock,
   getV1GetJobResultsResponseMock,
   getV1RetryJobResponseMock,
 } from "./jobs.faker";
@@ -208,14 +208,12 @@ export const getV1GetJobEventsMockHandler = (
   );
 };
 
-export const getGetV1JobsJobIdFailureCenterMockHandler = (
+export const getV1GetJobFailureCenterMockHandler = (
   overrideResponse?:
-    | GetV1JobsJobIdFailureCenter200
+    | V1GetJobFailureCenter200
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) =>
-        | Promise<GetV1JobsJobIdFailureCenter200>
-        | GetV1JobsJobIdFailureCenter200),
+      ) => Promise<V1GetJobFailureCenter200> | V1GetJobFailureCenter200),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -226,7 +224,7 @@ export const getGetV1JobsJobIdFailureCenterMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1JobsJobIdFailureCenterResponseMock(),
+          : getV1GetJobFailureCenterResponseMock(),
         { status: 200 },
       );
     },
@@ -234,7 +232,7 @@ export const getGetV1JobsJobIdFailureCenterMockHandler = (
   );
 };
 
-export const getGetV1JobsJobIdFailureReportMockHandler = (
+export const getV1GetJobFailureReportMockHandler = (
   overrideResponse?:
     | ArrayBuffer
     | ((
@@ -250,7 +248,7 @@ export const getGetV1JobsJobIdFailureReportMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1JobsJobIdFailureReportResponseMock();
+          : getV1GetJobFailureReportResponseMock();
       return HttpResponse.arrayBuffer(
         binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
         {
@@ -339,8 +337,8 @@ export const getJobsMock = () => [
   getV1CancelJobMockHandler(),
   getV1DownloadJobResultsMockHandler(),
   getV1GetJobEventsMockHandler(),
-  getGetV1JobsJobIdFailureCenterMockHandler(),
-  getGetV1JobsJobIdFailureReportMockHandler(),
+  getV1GetJobFailureCenterMockHandler(),
+  getV1GetJobFailureReportMockHandler(),
   getV1JobLatencyMockHandler(),
   getV1GetJobResultsMockHandler(),
   getV1RetryJobMockHandler(),

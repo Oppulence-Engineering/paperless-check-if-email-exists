@@ -52,8 +52,8 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -89,8 +89,8 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -126,8 +126,8 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -159,8 +159,8 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -196,8 +196,8 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 

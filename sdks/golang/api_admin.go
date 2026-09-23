@@ -305,14 +305,14 @@ func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -415,14 +415,14 @@ func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -529,14 +529,14 @@ func (a *AdminAPIService) DeleteTenantExecute(r AdminAPIDeleteTenantRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -647,14 +647,14 @@ func (a *AdminAPIService) GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*http.Re
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -761,14 +761,14 @@ func (a *AdminAPIService) GetTenantExecute(r AdminAPIGetTenantRequest) (*http.Re
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -875,14 +875,14 @@ func (a *AdminAPIService) GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest)
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -985,14 +985,14 @@ func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest)
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1099,14 +1099,14 @@ func (a *AdminAPIService) ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*htt
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1209,14 +1209,14 @@ func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*htt
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1327,14 +1327,14 @@ func (a *AdminAPIService) ReactivateApiKeyExecute(r AdminAPIReactivateApiKeyRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1441,14 +1441,14 @@ func (a *AdminAPIService) ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1559,14 +1559,14 @@ func (a *AdminAPIService) RevokeApiKeyExecute(r AdminAPIRevokeApiKeyRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1677,14 +1677,14 @@ func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1791,14 +1791,14 @@ func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1905,14 +1905,14 @@ func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRe
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}

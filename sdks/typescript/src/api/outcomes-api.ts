@@ -193,9 +193,6 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
 
 
             localVarHeaderParameter['Content-Type'] = 'application/json';

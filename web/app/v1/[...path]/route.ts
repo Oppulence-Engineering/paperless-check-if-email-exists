@@ -10,6 +10,9 @@ type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function handle(request: NextRequest, context: RouteContext) {
 	const { path } = await context.params;
+	if (path[0] === "admin") {
+		return NextResponse.json({ error: "Not found" }, { status: 404 });
+	}
 	if (path.length === 1 && path[0] === "check-email-with-onboard") {
 		return NextResponse.json({ error: "Use app sign-up" }, { status: 403 });
 	}

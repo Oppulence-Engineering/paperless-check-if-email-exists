@@ -753,5 +753,5 @@ pub fn list_tenant_jobs(
 fn check_admin_header(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-	crate::http::check_header(config)
+	crate::http::check_admin_header(config)
 }

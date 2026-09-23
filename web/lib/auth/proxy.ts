@@ -136,6 +136,12 @@ export async function proxyBackendAPI(request: NextRequest, path: string[]): Pro
 			{ status, headers: { "cache-control": "no-store", "x-request-id": requestId } },
 		);
 	if (
+		path[0] === "v0" ||
+		(path[0] === "v1" && ["admin", "check-email-with-onboard", "inbound"].includes(path[1] ?? ""))
+	) {
+		return errorResponse(404, "not found", "not_found");
+	}
+	if (
 		method !== "GET" &&
 		method !== "HEAD" &&
 		!isSameOriginBrowserRequest(request, publicOrigin(request))

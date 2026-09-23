@@ -4,16 +4,16 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import type {
   ErrorEnvelope,
-  GetV1ListsListIdRemediationPlan200,
-  PostV1ListsListIdRemediationExports200,
-  PostV1ListsListIdRemediationExportsBody,
-  PostV1ListsListIdRemediationPlan200,
-  PostV1ListsListIdRemediationPlanBody,
+  V1CreateRemediationExport200,
+  V1CreateRemediationExportBody,
+  V1CreateRemediationPlan200,
+  V1CreateRemediationPlanBody,
+  V1GetRemediationPlan200,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -107,85 +107,84 @@ export const v1ListQuality = async (
   } as v1ListQualityResponse;
 };
 
-export type postV1ListsListIdRemediationExportsResponse200 = {
-  data: PostV1ListsListIdRemediationExports200;
+export type v1CreateRemediationExportResponse200 = {
+  data: V1CreateRemediationExport200;
   status: 200;
 };
 
-export type postV1ListsListIdRemediationExportsResponseDefault = {
+export type v1CreateRemediationExportResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type postV1ListsListIdRemediationExportsResponseSuccess =
-  postV1ListsListIdRemediationExportsResponse200 & {
+export type v1CreateRemediationExportResponseSuccess =
+  v1CreateRemediationExportResponse200 & {
     headers: Headers;
   };
-export type postV1ListsListIdRemediationExportsResponseError =
-  postV1ListsListIdRemediationExportsResponseDefault & {
+export type v1CreateRemediationExportResponseError =
+  v1CreateRemediationExportResponseDefault & {
     headers: Headers;
   };
 
-export type postV1ListsListIdRemediationExportsResponse =
-  | postV1ListsListIdRemediationExportsResponseSuccess
-  | postV1ListsListIdRemediationExportsResponseError;
+export type v1CreateRemediationExportResponse =
+  | v1CreateRemediationExportResponseSuccess
+  | v1CreateRemediationExportResponseError;
 
-export const getPostV1ListsListIdRemediationExportsUrl = (listId: number) => {
+export const getV1CreateRemediationExportUrl = (listId: number) => {
   return `/v1/lists/${listId}/remediation-exports`;
 };
 
 /**
  * @summary Create remediation export
  */
-export const postV1ListsListIdRemediationExports = async (
+export const v1CreateRemediationExport = async (
   listId: number,
-  postV1ListsListIdRemediationExportsBody: PostV1ListsListIdRemediationExportsBody,
+  v1CreateRemediationExportBody: V1CreateRemediationExportBody,
   options?: RequestInit,
-): Promise<postV1ListsListIdRemediationExportsResponse> => {
-  const res = await fetch(getPostV1ListsListIdRemediationExportsUrl(listId), {
+): Promise<v1CreateRemediationExportResponse> => {
+  const res = await fetch(getV1CreateRemediationExportUrl(listId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postV1ListsListIdRemediationExportsBody),
+    body: JSON.stringify(v1CreateRemediationExportBody),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postV1ListsListIdRemediationExportsResponse["data"] = body
+  const data: v1CreateRemediationExportResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as postV1ListsListIdRemediationExportsResponse;
+  } as v1CreateRemediationExportResponse;
 };
 
-export type getV1ListsListIdRemediationExportsExportIdDownloadResponse200 = {
+export type v1DownloadRemediationExportResponse200 = {
   data: Blob;
   status: 200;
 };
 
-export type getV1ListsListIdRemediationExportsExportIdDownloadResponseDefault =
-  {
-    data: ErrorEnvelope;
-    status: Exclude<HTTPStatusCodes, 200>;
-  };
+export type v1DownloadRemediationExportResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
 
-export type getV1ListsListIdRemediationExportsExportIdDownloadResponseSuccess =
-  getV1ListsListIdRemediationExportsExportIdDownloadResponse200 & {
+export type v1DownloadRemediationExportResponseSuccess =
+  v1DownloadRemediationExportResponse200 & {
     headers: Headers;
   };
-export type getV1ListsListIdRemediationExportsExportIdDownloadResponseError =
-  getV1ListsListIdRemediationExportsExportIdDownloadResponseDefault & {
+export type v1DownloadRemediationExportResponseError =
+  v1DownloadRemediationExportResponseDefault & {
     headers: Headers;
   };
 
-export type getV1ListsListIdRemediationExportsExportIdDownloadResponse =
-  | getV1ListsListIdRemediationExportsExportIdDownloadResponseSuccess
-  | getV1ListsListIdRemediationExportsExportIdDownloadResponseError;
+export type v1DownloadRemediationExportResponse =
+  | v1DownloadRemediationExportResponseSuccess
+  | v1DownloadRemediationExportResponseError;
 
-export const getGetV1ListsListIdRemediationExportsExportIdDownloadUrl = (
+export const getV1DownloadRemediationExportUrl = (
   listId: number,
   exportId: number,
 ) => {
@@ -195,130 +194,125 @@ export const getGetV1ListsListIdRemediationExportsExportIdDownloadUrl = (
 /**
  * @summary Download remediation export
  */
-export const getV1ListsListIdRemediationExportsExportIdDownload = async (
+export const v1DownloadRemediationExport = async (
   listId: number,
   exportId: number,
   options?: RequestInit,
-): Promise<getV1ListsListIdRemediationExportsExportIdDownloadResponse> => {
-  const res = await fetch(
-    getGetV1ListsListIdRemediationExportsExportIdDownloadUrl(listId, exportId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
+): Promise<v1DownloadRemediationExportResponse> => {
+  const res = await fetch(getV1DownloadRemediationExportUrl(listId, exportId), {
+    ...options,
+    method: "GET",
+  });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.blob();
-  const data: getV1ListsListIdRemediationExportsExportIdDownloadResponse["data"] =
-    body as getV1ListsListIdRemediationExportsExportIdDownloadResponse["data"];
+  const data: v1DownloadRemediationExportResponse["data"] =
+    body as v1DownloadRemediationExportResponse["data"];
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1ListsListIdRemediationExportsExportIdDownloadResponse;
+  } as v1DownloadRemediationExportResponse;
 };
 
-export type getV1ListsListIdRemediationPlanResponse200 = {
-  data: GetV1ListsListIdRemediationPlan200;
+export type v1GetRemediationPlanResponse200 = {
+  data: V1GetRemediationPlan200;
   status: 200;
 };
 
-export type getV1ListsListIdRemediationPlanResponseDefault = {
+export type v1GetRemediationPlanResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1ListsListIdRemediationPlanResponseSuccess =
-  getV1ListsListIdRemediationPlanResponse200 & {
+export type v1GetRemediationPlanResponseSuccess =
+  v1GetRemediationPlanResponse200 & {
     headers: Headers;
   };
-export type getV1ListsListIdRemediationPlanResponseError =
-  getV1ListsListIdRemediationPlanResponseDefault & {
+export type v1GetRemediationPlanResponseError =
+  v1GetRemediationPlanResponseDefault & {
     headers: Headers;
   };
 
-export type getV1ListsListIdRemediationPlanResponse =
-  | getV1ListsListIdRemediationPlanResponseSuccess
-  | getV1ListsListIdRemediationPlanResponseError;
+export type v1GetRemediationPlanResponse =
+  v1GetRemediationPlanResponseSuccess | v1GetRemediationPlanResponseError;
 
-export const getGetV1ListsListIdRemediationPlanUrl = (listId: number) => {
+export const getV1GetRemediationPlanUrl = (listId: number) => {
   return `/v1/lists/${listId}/remediation-plan`;
 };
 
 /**
  * @summary Get remediation plan
  */
-export const getV1ListsListIdRemediationPlan = async (
+export const v1GetRemediationPlan = async (
   listId: number,
   options?: RequestInit,
-): Promise<getV1ListsListIdRemediationPlanResponse> => {
-  const res = await fetch(getGetV1ListsListIdRemediationPlanUrl(listId), {
+): Promise<v1GetRemediationPlanResponse> => {
+  const res = await fetch(getV1GetRemediationPlanUrl(listId), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getV1ListsListIdRemediationPlanResponse["data"] = body
+  const data: v1GetRemediationPlanResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1ListsListIdRemediationPlanResponse;
+  } as v1GetRemediationPlanResponse;
 };
 
-export type postV1ListsListIdRemediationPlanResponse200 = {
-  data: PostV1ListsListIdRemediationPlan200;
+export type v1CreateRemediationPlanResponse200 = {
+  data: V1CreateRemediationPlan200;
   status: 200;
 };
 
-export type postV1ListsListIdRemediationPlanResponseDefault = {
+export type v1CreateRemediationPlanResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type postV1ListsListIdRemediationPlanResponseSuccess =
-  postV1ListsListIdRemediationPlanResponse200 & {
+export type v1CreateRemediationPlanResponseSuccess =
+  v1CreateRemediationPlanResponse200 & {
     headers: Headers;
   };
-export type postV1ListsListIdRemediationPlanResponseError =
-  postV1ListsListIdRemediationPlanResponseDefault & {
+export type v1CreateRemediationPlanResponseError =
+  v1CreateRemediationPlanResponseDefault & {
     headers: Headers;
   };
 
-export type postV1ListsListIdRemediationPlanResponse =
-  | postV1ListsListIdRemediationPlanResponseSuccess
-  | postV1ListsListIdRemediationPlanResponseError;
+export type v1CreateRemediationPlanResponse =
+  v1CreateRemediationPlanResponseSuccess | v1CreateRemediationPlanResponseError;
 
-export const getPostV1ListsListIdRemediationPlanUrl = (listId: number) => {
+export const getV1CreateRemediationPlanUrl = (listId: number) => {
   return `/v1/lists/${listId}/remediation-plan`;
 };
 
 /**
  * @summary Create remediation plan
  */
-export const postV1ListsListIdRemediationPlan = async (
+export const v1CreateRemediationPlan = async (
   listId: number,
-  postV1ListsListIdRemediationPlanBody: PostV1ListsListIdRemediationPlanBody,
+  v1CreateRemediationPlanBody: V1CreateRemediationPlanBody,
   options?: RequestInit,
-): Promise<postV1ListsListIdRemediationPlanResponse> => {
-  const res = await fetch(getPostV1ListsListIdRemediationPlanUrl(listId), {
+): Promise<v1CreateRemediationPlanResponse> => {
+  const res = await fetch(getV1CreateRemediationPlanUrl(listId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postV1ListsListIdRemediationPlanBody),
+    body: JSON.stringify(v1CreateRemediationPlanBody),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postV1ListsListIdRemediationPlanResponse["data"] = body
+  const data: v1CreateRemediationPlanResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as postV1ListsListIdRemediationPlanResponse;
+  } as v1CreateRemediationPlanResponse;
 };

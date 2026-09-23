@@ -14,16 +14,16 @@ All URIs are relative to *http://localhost*
 |[**v1DeleteList**](#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}|
 |[**v1DeleteSuppression**](#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}|
 |[**v1DownloadList**](#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download|
+|[**v1ExportSuppressions**](#v1exportsuppressions) | **GET** /v1/suppressions/export | Export suppressions|
 |[**v1FindEmail**](#v1findemail) | **POST** /v1/find_email | POST /v1/find_email|
 |[**v1GetFindEmail**](#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}|
 |[**v1GetList**](#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}|
+|[**v1ImportSuppressions**](#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions|
 |[**v1ListLists**](#v1listlists) | **GET** /v1/lists | GET /v1/lists|
+|[**v1ListSuppressionEvents**](#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events|
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
-|[**v1SourcesQualityGet**](#v1sourcesqualityget) | **GET** /v1/sources/quality | List source quality|
-|[**v1SuppressionsExportGet**](#v1suppressionsexportget) | **GET** /v1/suppressions/export | Export suppressions|
-|[**v1SuppressionsIdEventsGet**](#v1suppressionsideventsget) | **GET** /v1/suppressions/{id}/events | List suppression events|
-|[**v1SuppressionsImportPost**](#v1suppressionsimportpost) | **POST** /v1/suppressions/import | Import suppressions|
+|[**v1SourceQuality**](#v1sourcequality) | **GET** /v1/sources/quality | List source quality|
 
 # **v1AddSuppressions**
 > AddSuppressionsResponse v1AddSuppressions(addSuppressionsRequest)
@@ -161,7 +161,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 
@@ -555,6 +555,50 @@ const { status, data } = await apiInstance.v1DownloadList(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1ExportSuppressions**
+> File v1ExportSuppressions()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+const { status, data } = await apiInstance.v1ExportSuppressions();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**File**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: text/csv, application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression export CSV |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1FindEmail**
 > FindEmailAcceptedResponse v1FindEmail(findEmailRequest)
 
@@ -709,6 +753,57 @@ const { status, data } = await apiInstance.v1GetList(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1ImportSuppressions**
+> { [key: string]: any; } v1ImportSuppressions(requestBody)
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let requestBody: { [key: string]: any; }; //
+
+const { status, data } = await apiInstance.v1ImportSuppressions(
+    requestBody
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **requestBody** | **{ [key: string]: any; }**|  | |
+
+
+### Return type
+
+**{ [key: string]: any; }**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression entries imported |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1ListLists**
 > ListListResponse v1ListLists()
 
@@ -759,6 +854,57 @@ const { status, data } = await apiInstance.v1ListLists(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List resources |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListSuppressionEvents**
+> { [key: string]: any; } v1ListSuppressionEvents()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let id: number; // (default to undefined)
+
+const { status, data } = await apiInstance.v1ListSuppressionEvents(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+**{ [key: string]: any; }**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression event list |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -876,8 +1022,8 @@ This endpoint does not have any parameters.
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **v1SourcesQualityGet**
-> { [key: string]: any; } v1SourcesQualityGet()
+# **v1SourceQuality**
+> { [key: string]: any; } v1SourceQuality()
 
 
 ### Example
@@ -891,7 +1037,7 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-const { status, data } = await apiInstance.v1SourcesQualityGet();
+const { status, data } = await apiInstance.v1SourceQuality();
 ```
 
 ### Parameters
@@ -916,152 +1062,6 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Source quality analytics |  -  |
-|**0** | Request error |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1SuppressionsExportGet**
-> File v1SuppressionsExportGet()
-
-
-### Example
-
-```typescript
-import {
-    V1Api,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new V1Api(configuration);
-
-const { status, data } = await apiInstance.v1SuppressionsExportGet();
-```
-
-### Parameters
-This endpoint does not have any parameters.
-
-
-### Return type
-
-**File**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: text/csv, application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Suppression export CSV |  -  |
-|**0** | Request error |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1SuppressionsIdEventsGet**
-> { [key: string]: any; } v1SuppressionsIdEventsGet()
-
-
-### Example
-
-```typescript
-import {
-    V1Api,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new V1Api(configuration);
-
-let id: number; // (default to undefined)
-
-const { status, data } = await apiInstance.v1SuppressionsIdEventsGet(
-    id
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **id** | [**number**] |  | defaults to undefined|
-
-
-### Return type
-
-**{ [key: string]: any; }**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Suppression event list |  -  |
-|**0** | Request error |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1SuppressionsImportPost**
-> { [key: string]: any; } v1SuppressionsImportPost(requestBody)
-
-
-### Example
-
-```typescript
-import {
-    V1Api,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new V1Api(configuration);
-
-let requestBody: { [key: string]: any; }; //
-
-const { status, data } = await apiInstance.v1SuppressionsImportPost(
-    requestBody
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **requestBody** | **{ [key: string]: any; }**|  | |
-
-
-### Return type
-
-**{ [key: string]: any; }**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Suppression entries imported |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

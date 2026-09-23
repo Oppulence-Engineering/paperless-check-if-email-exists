@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { faker } from "@faker-js/faker";
@@ -26,12 +26,12 @@ import type {
   ApprovalChecklistResponse,
   BulkJobResultsResponse,
   CoreError,
-  GetV1JobsJobIdFailureCenter200,
   JobResultPageResponse,
   MiscDetails,
   MxDetails,
   RetryJobResponse,
   SmtpDetails,
+  V1GetJobFailureCenter200,
 } from "../model";
 
 export const getV1GetBulkJobResultsResponseMiscDetailsMock = (
@@ -300,10 +300,10 @@ export const getV1DownloadJobResultsResponseMock = (): ArrayBuffer =>
     new ArrayBuffer(faker.number.int({ min: 1, max: 64 })),
   ]);
 
-export const getGetV1JobsJobIdFailureCenterResponseMock =
-  (): GetV1JobsJobIdFailureCenter200 => ({});
+export const getV1GetJobFailureCenterResponseMock =
+  (): V1GetJobFailureCenter200 => ({});
 
-export const getGetV1JobsJobIdFailureReportResponseMock = (): ArrayBuffer =>
+export const getV1GetJobFailureReportResponseMock = (): ArrayBuffer =>
   faker.helpers.arrayElement([
     new ArrayBuffer(faker.number.int({ min: 1, max: 64 })),
     new ArrayBuffer(faker.number.int({ min: 1, max: 64 })),

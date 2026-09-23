@@ -30,6 +30,170 @@ import type { ErrorEnvelope } from '../models';
 export const ListsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         *
+         * @summary Create remediation export
+         * @param {number} listId
+         * @param {{ [key: string]: any; }} requestBody
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationExport: async (listId: number, requestBody: { [key: string]: any; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1CreateRemediationExport', 'listId', listId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('v1CreateRemediationExport', 'requestBody', requestBody)
+            const localVarPath = `/v1/lists/{list_id}/remediation-exports`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Create remediation plan
+         * @param {number} listId
+         * @param {{ [key: string]: any; }} requestBody
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationPlan: async (listId: number, requestBody: { [key: string]: any; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1CreateRemediationPlan', 'listId', listId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('v1CreateRemediationPlan', 'requestBody', requestBody)
+            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Download remediation export
+         * @param {number} listId
+         * @param {number} exportId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DownloadRemediationExport: async (listId: number, exportId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1DownloadRemediationExport', 'listId', listId)
+            // verify required parameter 'exportId' is not null or undefined
+            assertParamExists('v1DownloadRemediationExport', 'exportId', exportId)
+            const localVarPath = `/v1/lists/{list_id}/remediation-exports/{export_id}/download`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)))
+                .replace(`{${"export_id"}}`, encodeURIComponent(String(exportId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Get remediation plan
+         * @param {number} listId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetRemediationPlan: async (listId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'listId' is not null or undefined
+            assertParamExists('v1GetRemediationPlan', 'listId', listId)
+            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
+                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
          * @param {number} listId List identifier
@@ -66,170 +230,6 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
-        /**
-         *
-         * @summary Download remediation export
-         * @param {number} listId
-         * @param {number} exportId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationExportsExportIdDownloadGet: async (listId: number, exportId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'listId' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationExportsExportIdDownloadGet', 'listId', listId)
-            // verify required parameter 'exportId' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationExportsExportIdDownloadGet', 'exportId', exportId)
-            const localVarPath = `/v1/lists/{list_id}/remediation-exports/{export_id}/download`
-                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)))
-                .replace(`{${"export_id"}}`, encodeURIComponent(String(exportId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @summary Create remediation export
-         * @param {number} listId
-         * @param {{ [key: string]: any; }} requestBody
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationExportsPost: async (listId: number, requestBody: { [key: string]: any; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'listId' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationExportsPost', 'listId', listId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationExportsPost', 'requestBody', requestBody)
-            const localVarPath = `/v1/lists/{list_id}/remediation-exports`
-                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @summary Get remediation plan
-         * @param {number} listId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationPlanGet: async (listId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'listId' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationPlanGet', 'listId', listId)
-            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
-                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @summary Create remediation plan
-         * @param {number} listId
-         * @param {{ [key: string]: any; }} requestBody
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationPlanPost: async (listId: number, requestBody: { [key: string]: any; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'listId' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationPlanPost', 'listId', listId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('v1ListsListIdRemediationPlanPost', 'requestBody', requestBody)
-            const localVarPath = `/v1/lists/{list_id}/remediation-plan`
-                .replace(`{${"list_id"}}`, encodeURIComponent(String(listId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -240,6 +240,61 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
 export const ListsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ListsApiAxiosParamCreator(configuration)
     return {
+        /**
+         *
+         * @summary Create remediation export
+         * @param {number} listId
+         * @param {{ [key: string]: any; }} requestBody
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateRemediationExport(listId: number, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateRemediationExport(listId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1CreateRemediationExport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Create remediation plan
+         * @param {number} listId
+         * @param {{ [key: string]: any; }} requestBody
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateRemediationPlan(listId: number, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateRemediationPlan(listId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1CreateRemediationPlan']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Download remediation export
+         * @param {number} listId
+         * @param {number} exportId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DownloadRemediationExport(listId: number, exportId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DownloadRemediationExport(listId, exportId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DownloadRemediationExport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Get remediation plan
+         * @param {number} listId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetRemediationPlan(listId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetRemediationPlan(listId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1GetRemediationPlan']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
@@ -253,61 +308,6 @@ export const ListsApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListQuality']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
-        /**
-         *
-         * @summary Download remediation export
-         * @param {number} listId
-         * @param {number} exportId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1ListsListIdRemediationExportsExportIdDownloadGet(listId: number, exportId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListsListIdRemediationExportsExportIdDownloadGet(listId, exportId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListsListIdRemediationExportsExportIdDownloadGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         *
-         * @summary Create remediation export
-         * @param {number} listId
-         * @param {{ [key: string]: any; }} requestBody
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1ListsListIdRemediationExportsPost(listId: number, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListsListIdRemediationExportsPost(listId, requestBody, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListsListIdRemediationExportsPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         *
-         * @summary Get remediation plan
-         * @param {number} listId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1ListsListIdRemediationPlanGet(listId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListsListIdRemediationPlanGet(listId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListsListIdRemediationPlanGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         *
-         * @summary Create remediation plan
-         * @param {number} listId
-         * @param {{ [key: string]: any; }} requestBody
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1ListsListIdRemediationPlanPost(listId: number, requestBody: { [key: string]: any; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListsListIdRemediationPlanPost(listId, requestBody, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListsListIdRemediationPlanPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
     }
 };
 
@@ -319,6 +319,46 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
     const localVarFp = ListsApiFp(configuration)
     return {
         /**
+         *
+         * @summary Create remediation export
+         * @param {ListsApiV1CreateRemediationExportRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationExport(requestParameters: ListsApiV1CreateRemediationExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
+            return localVarFp.v1CreateRemediationExport(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Create remediation plan
+         * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
+            return localVarFp.v1CreateRemediationPlan(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Download remediation export
+         * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DownloadRemediationExport(requestParameters: ListsApiV1DownloadRemediationExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.v1DownloadRemediationExport(requestParameters.listId, requestParameters.exportId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Get remediation plan
+         * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
+            return localVarFp.v1GetRemediationPlan(requestParameters.listId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
          * @param {ListsApiV1ListQualityRequest} requestParameters Request parameters.
@@ -327,46 +367,6 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
          */
         v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1ListQuality(requestParameters.listId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Download remediation export
-         * @param {ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationExportsExportIdDownloadGet(requestParameters: ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
-            return localVarFp.v1ListsListIdRemediationExportsExportIdDownloadGet(requestParameters.listId, requestParameters.exportId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Create remediation export
-         * @param {ListsApiV1ListsListIdRemediationExportsPostRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationExportsPost(requestParameters: ListsApiV1ListsListIdRemediationExportsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
-            return localVarFp.v1ListsListIdRemediationExportsPost(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Get remediation plan
-         * @param {ListsApiV1ListsListIdRemediationPlanGetRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationPlanGet(requestParameters: ListsApiV1ListsListIdRemediationPlanGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
-            return localVarFp.v1ListsListIdRemediationPlanGet(requestParameters.listId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Create remediation plan
-         * @param {ListsApiV1ListsListIdRemediationPlanPostRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ListsListIdRemediationPlanPost(requestParameters: ListsApiV1ListsListIdRemediationPlanPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
-            return localVarFp.v1ListsListIdRemediationPlanPost(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -378,6 +378,46 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
  */
 export interface ListsApiInterface {
     /**
+     *
+     * @summary Create remediation export
+     * @param {ListsApiV1CreateRemediationExportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1CreateRemediationExport(requestParameters: ListsApiV1CreateRemediationExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
+     *
+     * @summary Create remediation plan
+     * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
+     *
+     * @summary Download remediation export
+     * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1DownloadRemediationExport(requestParameters: ListsApiV1DownloadRemediationExportRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+
+    /**
+     *
+     * @summary Get remediation plan
+     * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
      * Returns a quality benchmark report for a list.
      * @summary GET /v1/lists/{list_id}/quality
      * @param {ListsApiV1ListQualityRequest} requestParameters Request parameters.
@@ -387,46 +427,83 @@ export interface ListsApiInterface {
      */
     v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
+}
+
+/**
+ * Request parameters for v1CreateRemediationExport operation in ListsApi.
+ * @export
+ * @interface ListsApiV1CreateRemediationExportRequest
+ */
+export interface ListsApiV1CreateRemediationExportRequest {
     /**
      *
-     * @summary Download remediation export
-     * @param {ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApiInterface
+     * @type {number}
+     * @memberof ListsApiV1CreateRemediationExport
      */
-    v1ListsListIdRemediationExportsExportIdDownloadGet(requestParameters: ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+    readonly listId: number
 
     /**
      *
-     * @summary Create remediation export
-     * @param {ListsApiV1ListsListIdRemediationExportsPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApiInterface
+     * @type {{ [key: string]: any; }}
+     * @memberof ListsApiV1CreateRemediationExport
      */
-    v1ListsListIdRemediationExportsPost(requestParameters: ListsApiV1ListsListIdRemediationExportsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+    readonly requestBody: { [key: string]: any; }
+}
+
+/**
+ * Request parameters for v1CreateRemediationPlan operation in ListsApi.
+ * @export
+ * @interface ListsApiV1CreateRemediationPlanRequest
+ */
+export interface ListsApiV1CreateRemediationPlanRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1CreateRemediationPlan
+     */
+    readonly listId: number
 
     /**
      *
-     * @summary Get remediation plan
-     * @param {ListsApiV1ListsListIdRemediationPlanGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApiInterface
+     * @type {{ [key: string]: any; }}
+     * @memberof ListsApiV1CreateRemediationPlan
      */
-    v1ListsListIdRemediationPlanGet(requestParameters: ListsApiV1ListsListIdRemediationPlanGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+    readonly requestBody: { [key: string]: any; }
+}
+
+/**
+ * Request parameters for v1DownloadRemediationExport operation in ListsApi.
+ * @export
+ * @interface ListsApiV1DownloadRemediationExportRequest
+ */
+export interface ListsApiV1DownloadRemediationExportRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1DownloadRemediationExport
+     */
+    readonly listId: number
 
     /**
      *
-     * @summary Create remediation plan
-     * @param {ListsApiV1ListsListIdRemediationPlanPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApiInterface
+     * @type {number}
+     * @memberof ListsApiV1DownloadRemediationExport
      */
-    v1ListsListIdRemediationPlanPost(requestParameters: ListsApiV1ListsListIdRemediationPlanPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+    readonly exportId: number
+}
 
+/**
+ * Request parameters for v1GetRemediationPlan operation in ListsApi.
+ * @export
+ * @interface ListsApiV1GetRemediationPlanRequest
+ */
+export interface ListsApiV1GetRemediationPlanRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1GetRemediationPlan
+     */
+    readonly listId: number
 }
 
 /**
@@ -444,89 +521,60 @@ export interface ListsApiV1ListQualityRequest {
 }
 
 /**
- * Request parameters for v1ListsListIdRemediationExportsExportIdDownloadGet operation in ListsApi.
- * @export
- * @interface ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest
- */
-export interface ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof ListsApiV1ListsListIdRemediationExportsExportIdDownloadGet
-     */
-    readonly listId: number
-
-    /**
-     *
-     * @type {number}
-     * @memberof ListsApiV1ListsListIdRemediationExportsExportIdDownloadGet
-     */
-    readonly exportId: number
-}
-
-/**
- * Request parameters for v1ListsListIdRemediationExportsPost operation in ListsApi.
- * @export
- * @interface ListsApiV1ListsListIdRemediationExportsPostRequest
- */
-export interface ListsApiV1ListsListIdRemediationExportsPostRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof ListsApiV1ListsListIdRemediationExportsPost
-     */
-    readonly listId: number
-
-    /**
-     *
-     * @type {{ [key: string]: any; }}
-     * @memberof ListsApiV1ListsListIdRemediationExportsPost
-     */
-    readonly requestBody: { [key: string]: any; }
-}
-
-/**
- * Request parameters for v1ListsListIdRemediationPlanGet operation in ListsApi.
- * @export
- * @interface ListsApiV1ListsListIdRemediationPlanGetRequest
- */
-export interface ListsApiV1ListsListIdRemediationPlanGetRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof ListsApiV1ListsListIdRemediationPlanGet
-     */
-    readonly listId: number
-}
-
-/**
- * Request parameters for v1ListsListIdRemediationPlanPost operation in ListsApi.
- * @export
- * @interface ListsApiV1ListsListIdRemediationPlanPostRequest
- */
-export interface ListsApiV1ListsListIdRemediationPlanPostRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof ListsApiV1ListsListIdRemediationPlanPost
-     */
-    readonly listId: number
-
-    /**
-     *
-     * @type {{ [key: string]: any; }}
-     * @memberof ListsApiV1ListsListIdRemediationPlanPost
-     */
-    readonly requestBody: { [key: string]: any; }
-}
-
-/**
  * ListsApi - object-oriented interface
  * @export
  * @class ListsApi
  * @extends {BaseAPI}
  */
 export class ListsApi extends BaseAPI implements ListsApiInterface {
+    /**
+     *
+     * @summary Create remediation export
+     * @param {ListsApiV1CreateRemediationExportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1CreateRemediationExport(requestParameters: ListsApiV1CreateRemediationExportRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1CreateRemediationExport(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Create remediation plan
+     * @param {ListsApiV1CreateRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1CreateRemediationPlan(requestParameters: ListsApiV1CreateRemediationPlanRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1CreateRemediationPlan(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Download remediation export
+     * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1DownloadRemediationExport(requestParameters: ListsApiV1DownloadRemediationExportRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1DownloadRemediationExport(requestParameters.listId, requestParameters.exportId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Get remediation plan
+     * @param {ListsApiV1GetRemediationPlanRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1GetRemediationPlan(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Returns a quality benchmark report for a list.
      * @summary GET /v1/lists/{list_id}/quality
@@ -537,53 +585,5 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
      */
     public v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig) {
         return ListsApiFp(this.configuration).v1ListQuality(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Download remediation export
-     * @param {ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApi
-     */
-    public v1ListsListIdRemediationExportsExportIdDownloadGet(requestParameters: ListsApiV1ListsListIdRemediationExportsExportIdDownloadGetRequest, options?: RawAxiosRequestConfig) {
-        return ListsApiFp(this.configuration).v1ListsListIdRemediationExportsExportIdDownloadGet(requestParameters.listId, requestParameters.exportId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Create remediation export
-     * @param {ListsApiV1ListsListIdRemediationExportsPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApi
-     */
-    public v1ListsListIdRemediationExportsPost(requestParameters: ListsApiV1ListsListIdRemediationExportsPostRequest, options?: RawAxiosRequestConfig) {
-        return ListsApiFp(this.configuration).v1ListsListIdRemediationExportsPost(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Get remediation plan
-     * @param {ListsApiV1ListsListIdRemediationPlanGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApi
-     */
-    public v1ListsListIdRemediationPlanGet(requestParameters: ListsApiV1ListsListIdRemediationPlanGetRequest, options?: RawAxiosRequestConfig) {
-        return ListsApiFp(this.configuration).v1ListsListIdRemediationPlanGet(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Create remediation plan
-     * @param {ListsApiV1ListsListIdRemediationPlanPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ListsApi
-     */
-    public v1ListsListIdRemediationPlanPost(requestParameters: ListsApiV1ListsListIdRemediationPlanPostRequest, options?: RawAxiosRequestConfig) {
-        return ListsApiFp(this.configuration).v1ListsListIdRemediationPlanPost(requestParameters.listId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
     }
 }

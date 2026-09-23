@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { faker } from "@faker-js/faker";
@@ -30,21 +30,21 @@ import type {
   CoreError,
   FindEmailAcceptedResponse,
   FindEmailStatusResponse,
-  GetV1SourcesQuality200,
-  GetV1SuppressionsIdEvents200,
   ListDeleteResponse,
   ListDetailResponse,
   ListListResponse,
   ListUploadResponse,
   MiscDetails,
   MxDetails,
-  PostV1SuppressionsImport200,
   ReputationCheckResponse,
   ReverificationStatusResponse,
   SmtpDetails,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionListResponse,
+  V1ImportSuppressions200,
+  V1ListSuppressionEvents200,
+  V1SourceQuality200,
 } from "../model";
 
 export const getV1CreateBulkJobResponseMock = (
@@ -747,8 +747,7 @@ export const getV1ReverificationStatusResponseMock = (
   ...overrideResponse,
 });
 
-export const getGetV1SourcesQualityResponseMock =
-  (): GetV1SourcesQuality200 => ({});
+export const getV1SourceQualityResponseMock = (): V1SourceQuality200 => ({});
 
 export const getV1ListSuppressionsResponseMock = (
   overrideResponse: Partial<Extract<SuppressionListResponse, object>> = {},
@@ -821,11 +820,11 @@ export const getV1CheckSuppressionResponseMock = (
   ...overrideResponse,
 });
 
-export const getGetV1SuppressionsExportResponseMock = (): ArrayBuffer =>
+export const getV1ExportSuppressionsResponseMock = (): ArrayBuffer =>
   new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
 
-export const getPostV1SuppressionsImportResponseMock =
-  (): PostV1SuppressionsImport200 => ({});
+export const getV1ImportSuppressionsResponseMock =
+  (): V1ImportSuppressions200 => ({});
 
 export const getV1DeleteSuppressionResponseMock = (
   overrideResponse: Partial<Extract<SuppressionDeleteResponse, object>> = {},
@@ -834,5 +833,5 @@ export const getV1DeleteSuppressionResponseMock = (
   ...overrideResponse,
 });
 
-export const getGetV1SuppressionsIdEventsResponseMock =
-  (): GetV1SuppressionsIdEvents200 => ({});
+export const getV1ListSuppressionEventsResponseMock =
+  (): V1ListSuppressionEvents200 => ({});

@@ -63,6 +63,7 @@ paths:
       responses:
         "200":
           description: Service is alive
+      security: []
       summary: GET /healthz
       tags:
       - Health
@@ -72,6 +73,7 @@ paths:
       responses:
         "200":
           description: Merged OpenAPI specification for all documented REST endpoints
+      security: []
       summary: Serve the merged OpenAPI document for all documented REST endpoints.
       tags:
       - System
@@ -83,6 +85,7 @@ paths:
       responses:
         "200":
           description: Service readiness and dependency checks
+      security: []
       summary: GET /readyz
       tags:
       - Health
@@ -94,6 +97,8 @@ paths:
       responses:
         "200":
           description: Legacy bulk job created
+      security:
+      - LegacySecret: []
       summary: POST /v0/bulk
       tags:
       - v0
@@ -115,6 +120,8 @@ paths:
       responses:
         "200":
           description: Bulk status response
+      security:
+      - LegacySecret: []
       summary: "GET /v0/bulk/{job_id}"
       tags:
       - v0
@@ -135,6 +142,8 @@ paths:
       responses:
         "200":
           description: Bulk job results
+      security:
+      - LegacySecret: []
       summary: "GET /v0/bulk/{job_id}/results"
       tags:
       - v0
@@ -165,6 +174,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/CheckEmailOutput"
           description: Email verification result
+      security:
+      - Authorization: []
+      - LegacySecret: []
       summary: POST /v0/check_email
       tags:
       - v0
@@ -181,6 +193,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: GET /v1/admin/api-keys
       tags:
       - Admin
@@ -197,6 +211,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: GET /v1/admin/jobs
       tags:
       - Admin Jobs
@@ -223,6 +239,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/jobs/{job_id}"
       tags:
       - Admin Jobs
@@ -249,6 +267,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/jobs/{job_id}/events"
       tags:
       - Admin Jobs
@@ -275,6 +295,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/jobs/{job_id}/results"
       tags:
       - Admin Jobs
@@ -291,6 +313,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: GET /v1/admin/tenants
       tags:
       - Admin
@@ -306,6 +330,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: POST /v1/admin/tenants
       tags:
       - Admin
@@ -331,6 +357,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "DELETE /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -355,6 +383,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -379,6 +409,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "PUT /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -404,6 +436,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/tenants/{tenant_id}/api-keys"
       tags:
       - Admin
@@ -429,6 +463,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "POST /v1/admin/tenants/{tenant_id}/api-keys"
       tags:
       - Admin
@@ -463,6 +499,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -496,6 +534,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -529,6 +569,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -563,6 +605,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate"
       tags:
       - Admin
@@ -588,6 +632,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/tenants/{tenant_id}/jobs"
       tags:
       - Admin Jobs
@@ -613,6 +659,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "GET /v1/admin/tenants/{tenant_id}/quota"
       tags:
       - Admin
@@ -637,6 +685,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "PATCH /v1/admin/tenants/{tenant_id}/quota"
       tags:
       - Admin
@@ -662,6 +712,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security:
+      - AdminSecret: []
       summary: "POST /v1/admin/tenants/{tenant_id}/quota/reset"
       tags:
       - Admin
@@ -800,6 +852,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security: []
       summary: |-
         POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
         No authentication required. Creates a tenant, generates an API key,
@@ -1146,6 +1199,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
+      security: []
       tags:
       - Outcomes
   /v1/jobs/{job_id}:
@@ -1317,6 +1371,7 @@ paths:
       - Jobs
   /v1/jobs/{job_id}/failure-center:
     get:
+      operationId: v1_get_job_failure_center
       parameters:
       - explode: false
         in: path
@@ -1345,6 +1400,7 @@ paths:
       - Jobs
   /v1/jobs/{job_id}/failure-report:
     get:
+      operationId: v1_get_job_failure_report
       parameters:
       - explode: false
         in: path
@@ -1676,6 +1732,7 @@ paths:
       - Lists
   /v1/lists/{list_id}/remediation-exports:
     post:
+      operationId: v1_create_remediation_export
       parameters:
       - explode: false
         in: path
@@ -1711,6 +1768,7 @@ paths:
       - Lists
   /v1/lists/{list_id}/remediation-exports/{export_id}/download:
     get:
+      operationId: v1_download_remediation_export
       parameters:
       - explode: false
         in: path
@@ -1747,6 +1805,7 @@ paths:
       - Lists
   /v1/lists/{list_id}/remediation-plan:
     get:
+      operationId: v1_get_remediation_plan
       parameters:
       - explode: false
         in: path
@@ -1774,6 +1833,7 @@ paths:
       tags:
       - Lists
     post:
+      operationId: v1_create_remediation_plan
       parameters:
       - explode: false
         in: path
@@ -3178,6 +3238,7 @@ paths:
       - v1
   /v1/sources/quality:
     get:
+      operationId: v1_source_quality
       responses:
         "200":
           content:
@@ -3319,6 +3380,7 @@ paths:
       - v1
   /v1/suppressions/export:
     get:
+      operationId: v1_export_suppressions
       responses:
         "200":
           content:
@@ -3338,6 +3400,7 @@ paths:
       - v1
   /v1/suppressions/import:
     post:
+      operationId: v1_import_suppressions
       requestBody:
         content:
           application/json:
@@ -3393,6 +3456,7 @@ paths:
       - v1
   /v1/suppressions/{id}/events:
     get:
+      operationId: v1_list_suppression_events
       parameters:
       - explode: false
         in: path
@@ -3426,6 +3490,7 @@ paths:
       responses:
         "200":
           description: Service version
+      security: []
       summary: GET /version
       tags:
       - System
@@ -6887,9 +6952,21 @@ components:
       - type
       type: object
   securitySchemes:
+    AdminSecret:
+      description: Private operator credential for backend admin routes. Never send
+        from a browser or workspace API key.
+      in: header
+      name: x-reacher-secret
+      type: apiKey
+    LegacySecret:
+      description: Legacy self-hosted v0 bulk credential. The shared hosted app does
+        not expose v0.
+      in: header
+      name: x-reacher-secret
+      type: apiKey
     Authorization:
-      description: Send a workspace API key as Bearer rch_live_... for tenant API
-        calls. Provider callbacks use their delivery token and provider signature.
+      description: "Send Authorization: Bearer rch_live_... for tenant API calls.\
+        \ The signed-in console uses a server-issued backend token."
       in: header
       name: Authorization
       type: apiKey

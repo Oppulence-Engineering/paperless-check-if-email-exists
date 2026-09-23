@@ -78,7 +78,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -137,7 +137,7 @@ Other parameters are passed through a pointer to a apiCreateTenantRequest struct
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -205,7 +205,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -276,7 +276,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -344,7 +344,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -412,7 +412,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -471,7 +471,7 @@ Other parameters are passed through a pointer to a apiListAllApiKeysRequest stru
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -539,7 +539,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -598,7 +598,7 @@ Other parameters are passed through a pointer to a apiListTenantsRequest struct 
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -669,7 +669,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -737,7 +737,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -808,7 +808,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -879,7 +879,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -947,7 +947,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -1015,7 +1015,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 

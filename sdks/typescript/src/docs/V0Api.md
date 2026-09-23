@@ -38,7 +38,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -89,7 +89,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -140,7 +140,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -195,7 +195,7 @@ const { status, data } = await apiInstance.postCheckEmail(
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[Authorization](../README.md#Authorization), [LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 

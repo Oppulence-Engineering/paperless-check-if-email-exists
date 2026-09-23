@@ -140,7 +140,22 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 		generated.get("paths").and_then(Value::as_object),
 	) {
 		for (path, value) in generated_paths {
-			base_paths.insert(path.clone(), value.clone());
+			let mut merged = value.clone();
+			if let Some(existing) = base_paths.get(path) {
+				for method in ["get", "post", "put", "patch", "delete"] {
+					if let (Some(source), Some(target)) = (
+						existing.get(method).and_then(Value::as_object),
+						merged.get_mut(method).and_then(Value::as_object_mut),
+					) {
+						for field in ["operationId", "security"] {
+							if let Some(value) = source.get(field) {
+								target.insert(field.to_string(), value.clone());
+							}
+						}
+					}
+				}
+			}
+			base_paths.insert(path.clone(), merged);
 		}
 	}
 
@@ -362,13 +377,66 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 	}
 }
 
-fn upsert_operation(spec: &mut Value, path: &str, method: &str, operation: Value) {
+fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: Value) {
 	let path_item = paths_mut(spec)
 		.entry(path.to_string())
 		.or_insert_with(|| json!({}))
 		.as_object_mut()
 		.expect("path item object");
+	for field in ["operationId", "security"] {
+		if let Some(value) = path_item
+			.get(method)
+			.and_then(|existing| existing.get(field))
+			.cloned()
+		{
+			operation
+				.as_object_mut()
+				.expect("operation object")
+				.entry(field)
+				.or_insert(value);
+		}
+	}
 	path_item.insert(method.to_string(), operation);
+}
+
+#[cfg(test)]
+mod operation_id_tests {
+	use serde_json::json;
+	use std::collections::HashSet;
+
+	#[test]
+	fn every_operation_has_a_unique_id() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut ids = HashSet::new();
+		for (path, path_item) in spec["paths"].as_object().expect("paths") {
+			for (method, operation) in path_item.as_object().expect("path item") {
+				if !["get", "post", "put", "patch", "delete"].contains(&method.as_str()) {
+					continue;
+				}
+				let id = operation["operationId"]
+					.as_str()
+					.unwrap_or_else(|| panic!("missing operationId: {method} {path}"));
+				assert!(ids.insert(id), "duplicate operationId: {id}");
+			}
+		}
+	}
+
+	#[test]
+	fn operation_security_matches_its_audience() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(spec["paths"]["/healthz"]["get"]["security"], json!([]));
+		assert_eq!(
+			spec["paths"]["/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}"]
+				["post"]["security"],
+			json!([])
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["security"],
+			json!([{ "AdminSecret": [] }])
+		);
+		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
+		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
+	}
 }
 
 fn generic_object_schema() -> Value {

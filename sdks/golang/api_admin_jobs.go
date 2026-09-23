@@ -163,14 +163,14 @@ func (a *AdminJobsAPIService) GetJobExecute(r AdminJobsAPIGetJobRequest) (*http.
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -277,14 +277,14 @@ func (a *AdminJobsAPIService) GetJobEventsExecute(r AdminJobsAPIGetJobEventsRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -391,14 +391,14 @@ func (a *AdminJobsAPIService) GetJobResultsExecute(r AdminJobsAPIGetJobResultsRe
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -501,14 +501,14 @@ func (a *AdminJobsAPIService) ListJobsExecute(r AdminJobsAPIListJobsRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -615,14 +615,14 @@ func (a *AdminJobsAPIService) ListTenantJobsExecute(r AdminJobsAPIListTenantJobs
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}

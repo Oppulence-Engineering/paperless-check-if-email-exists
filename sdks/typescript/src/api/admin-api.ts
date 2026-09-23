@@ -52,8 +52,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -85,8 +85,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -122,8 +122,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -163,8 +163,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -200,8 +200,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -237,8 +237,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -270,8 +270,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -307,8 +307,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -340,8 +340,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -381,8 +381,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -418,8 +418,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -459,8 +459,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -500,8 +500,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -537,8 +537,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -574,8 +574,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 

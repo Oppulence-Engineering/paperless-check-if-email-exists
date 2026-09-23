@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import type {
@@ -18,15 +18,11 @@ import type {
   FindEmailAcceptedResponse,
   FindEmailRequest,
   FindEmailStatusResponse,
-  GetV1SourcesQuality200,
-  GetV1SuppressionsIdEvents200,
   ListDeleteResponse,
   ListDetailResponse,
   ListListResponse,
   ListUploadRequest,
   ListUploadResponse,
-  PostV1SuppressionsImport200,
-  PostV1SuppressionsImportBody,
   ReputationCheckRequest,
   ReputationCheckResponse,
   ReverificationStatusResponse,
@@ -35,8 +31,12 @@ import type {
   SuppressionListResponse,
   V1CheckSuppressionParams,
   V1DownloadListParams,
+  V1ImportSuppressions200,
+  V1ImportSuppressionsBody,
   V1ListListsParams,
+  V1ListSuppressionEvents200,
   V1ListSuppressionsParams,
+  V1SourceQuality200,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -699,53 +699,49 @@ export const v1ReverificationStatus = async (
   } as v1ReverificationStatusResponse;
 };
 
-export type getV1SourcesQualityResponse200 = {
-  data: GetV1SourcesQuality200;
+export type v1SourceQualityResponse200 = {
+  data: V1SourceQuality200;
   status: 200;
 };
 
-export type getV1SourcesQualityResponseDefault = {
+export type v1SourceQualityResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1SourcesQualityResponseSuccess =
-  getV1SourcesQualityResponse200 & {
-    headers: Headers;
-  };
-export type getV1SourcesQualityResponseError =
-  getV1SourcesQualityResponseDefault & {
-    headers: Headers;
-  };
+export type v1SourceQualityResponseSuccess = v1SourceQualityResponse200 & {
+  headers: Headers;
+};
+export type v1SourceQualityResponseError = v1SourceQualityResponseDefault & {
+  headers: Headers;
+};
 
-export type getV1SourcesQualityResponse =
-  getV1SourcesQualityResponseSuccess | getV1SourcesQualityResponseError;
+export type v1SourceQualityResponse =
+  v1SourceQualityResponseSuccess | v1SourceQualityResponseError;
 
-export const getGetV1SourcesQualityUrl = () => {
+export const getV1SourceQualityUrl = () => {
   return `/v1/sources/quality`;
 };
 
 /**
  * @summary List source quality
  */
-export const getV1SourcesQuality = async (
+export const v1SourceQuality = async (
   options?: RequestInit,
-): Promise<getV1SourcesQualityResponse> => {
-  const res = await fetch(getGetV1SourcesQualityUrl(), {
+): Promise<v1SourceQualityResponse> => {
+  const res = await fetch(getV1SourceQualityUrl(), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getV1SourcesQualityResponse["data"] = body
-    ? JSON.parse(body)
-    : {};
+  const data: v1SourceQualityResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1SourcesQualityResponse;
+  } as v1SourceQualityResponse;
 };
 
 export type v1ListSuppressionsResponse200 = {
@@ -917,104 +913,103 @@ export const v1CheckSuppression = async (
   } as v1CheckSuppressionResponse;
 };
 
-export type getV1SuppressionsExportResponse200 = {
+export type v1ExportSuppressionsResponse200 = {
   data: Blob;
   status: 200;
 };
 
-export type getV1SuppressionsExportResponseDefault = {
+export type v1ExportSuppressionsResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1SuppressionsExportResponseSuccess =
-  getV1SuppressionsExportResponse200 & {
+export type v1ExportSuppressionsResponseSuccess =
+  v1ExportSuppressionsResponse200 & {
     headers: Headers;
   };
-export type getV1SuppressionsExportResponseError =
-  getV1SuppressionsExportResponseDefault & {
+export type v1ExportSuppressionsResponseError =
+  v1ExportSuppressionsResponseDefault & {
     headers: Headers;
   };
 
-export type getV1SuppressionsExportResponse =
-  getV1SuppressionsExportResponseSuccess | getV1SuppressionsExportResponseError;
+export type v1ExportSuppressionsResponse =
+  v1ExportSuppressionsResponseSuccess | v1ExportSuppressionsResponseError;
 
-export const getGetV1SuppressionsExportUrl = () => {
+export const getV1ExportSuppressionsUrl = () => {
   return `/v1/suppressions/export`;
 };
 
 /**
  * @summary Export suppressions
  */
-export const getV1SuppressionsExport = async (
+export const v1ExportSuppressions = async (
   options?: RequestInit,
-): Promise<getV1SuppressionsExportResponse> => {
-  const res = await fetch(getGetV1SuppressionsExportUrl(), {
+): Promise<v1ExportSuppressionsResponse> => {
+  const res = await fetch(getV1ExportSuppressionsUrl(), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.blob();
-  const data: getV1SuppressionsExportResponse["data"] =
-    body as getV1SuppressionsExportResponse["data"];
+  const data: v1ExportSuppressionsResponse["data"] =
+    body as v1ExportSuppressionsResponse["data"];
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1SuppressionsExportResponse;
+  } as v1ExportSuppressionsResponse;
 };
 
-export type postV1SuppressionsImportResponse200 = {
-  data: PostV1SuppressionsImport200;
+export type v1ImportSuppressionsResponse200 = {
+  data: V1ImportSuppressions200;
   status: 200;
 };
 
-export type postV1SuppressionsImportResponseDefault = {
+export type v1ImportSuppressionsResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type postV1SuppressionsImportResponseSuccess =
-  postV1SuppressionsImportResponse200 & {
+export type v1ImportSuppressionsResponseSuccess =
+  v1ImportSuppressionsResponse200 & {
     headers: Headers;
   };
-export type postV1SuppressionsImportResponseError =
-  postV1SuppressionsImportResponseDefault & {
+export type v1ImportSuppressionsResponseError =
+  v1ImportSuppressionsResponseDefault & {
     headers: Headers;
   };
 
-export type postV1SuppressionsImportResponse =
-  | postV1SuppressionsImportResponseSuccess
-  | postV1SuppressionsImportResponseError;
+export type v1ImportSuppressionsResponse =
+  v1ImportSuppressionsResponseSuccess | v1ImportSuppressionsResponseError;
 
-export const getPostV1SuppressionsImportUrl = () => {
+export const getV1ImportSuppressionsUrl = () => {
   return `/v1/suppressions/import`;
 };
 
 /**
  * @summary Import suppressions
  */
-export const postV1SuppressionsImport = async (
-  postV1SuppressionsImportBody: PostV1SuppressionsImportBody,
+export const v1ImportSuppressions = async (
+  v1ImportSuppressionsBody: V1ImportSuppressionsBody,
   options?: RequestInit,
-): Promise<postV1SuppressionsImportResponse> => {
-  const res = await fetch(getPostV1SuppressionsImportUrl(), {
+): Promise<v1ImportSuppressionsResponse> => {
+  const res = await fetch(getV1ImportSuppressionsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postV1SuppressionsImportBody),
+    body: JSON.stringify(v1ImportSuppressionsBody),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: postV1SuppressionsImportResponse["data"] = body
+  const data: v1ImportSuppressionsResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as postV1SuppressionsImportResponse;
+  } as v1ImportSuppressionsResponse;
 };
 
 export type v1DeleteSuppressionResponse200 = {
@@ -1067,53 +1062,52 @@ export const v1DeleteSuppression = async (
   } as v1DeleteSuppressionResponse;
 };
 
-export type getV1SuppressionsIdEventsResponse200 = {
-  data: GetV1SuppressionsIdEvents200;
+export type v1ListSuppressionEventsResponse200 = {
+  data: V1ListSuppressionEvents200;
   status: 200;
 };
 
-export type getV1SuppressionsIdEventsResponseDefault = {
+export type v1ListSuppressionEventsResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1SuppressionsIdEventsResponseSuccess =
-  getV1SuppressionsIdEventsResponse200 & {
+export type v1ListSuppressionEventsResponseSuccess =
+  v1ListSuppressionEventsResponse200 & {
     headers: Headers;
   };
-export type getV1SuppressionsIdEventsResponseError =
-  getV1SuppressionsIdEventsResponseDefault & {
+export type v1ListSuppressionEventsResponseError =
+  v1ListSuppressionEventsResponseDefault & {
     headers: Headers;
   };
 
-export type getV1SuppressionsIdEventsResponse =
-  | getV1SuppressionsIdEventsResponseSuccess
-  | getV1SuppressionsIdEventsResponseError;
+export type v1ListSuppressionEventsResponse =
+  v1ListSuppressionEventsResponseSuccess | v1ListSuppressionEventsResponseError;
 
-export const getGetV1SuppressionsIdEventsUrl = (id: number) => {
+export const getV1ListSuppressionEventsUrl = (id: number) => {
   return `/v1/suppressions/${id}/events`;
 };
 
 /**
  * @summary List suppression events
  */
-export const getV1SuppressionsIdEvents = async (
+export const v1ListSuppressionEvents = async (
   id: number,
   options?: RequestInit,
-): Promise<getV1SuppressionsIdEventsResponse> => {
-  const res = await fetch(getGetV1SuppressionsIdEventsUrl(id), {
+): Promise<v1ListSuppressionEventsResponse> => {
+  const res = await fetch(getV1ListSuppressionEventsUrl(id), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getV1SuppressionsIdEventsResponse["data"] = body
+  const data: v1ListSuppressionEventsResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1SuppressionsIdEventsResponse;
+  } as v1ListSuppressionEventsResponse;
 };
