@@ -456,13 +456,7 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 													<tr className="border-t" key={row.id}>
 														<td className="p-2">{row.result?.input ?? `Row ${String(row.id)}`}</td>
 														<td className="p-2">{row.task_state}</td>
-														<td className="p-2">
-															{row.result?.is_reachable == null
-																? "—"
-																: row.result.is_reachable
-																	? "Yes"
-																	: "No"}
-														</td>
+														<td className="p-2">{row.result?.is_reachable ?? "—"}</td>
 														<td className="p-2">{row.error ?? "—"}</td>
 													</tr>
 												))}
