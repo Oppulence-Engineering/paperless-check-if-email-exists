@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -23,6 +23,12 @@ export const V1ListTenantDomainsDefaultResponse = zod.strictObject({
  * Add a domain for the authenticated tenant.
  * @summary POST /v1/me/domains
  */
+export const V1CreateTenantDomainBody = zod.strictObject({
+  domain: zod.string(),
+  is_active: zod.boolean().nullish(),
+  notes: zod.string().nullish(),
+});
+
 export const V1CreateTenantDomain201Response = zod.unknown();
 
 export const V1CreateTenantDomainDefaultResponse = zod.strictObject({
@@ -63,6 +69,13 @@ export const V1GetTenantDomainDefaultResponse = zod.strictObject({
  */
 export const V1UpdateTenantDomainParams = zod.object({
   domain: zod.string().describe("Domain identifier"),
+});
+
+export const V1UpdateTenantDomainBody = zod.strictObject({
+  domain: zod.string().nullish(),
+  is_active: zod.boolean().nullish(),
+  is_verified: zod.boolean().nullish(),
+  notes: zod.string().nullish(),
 });
 
 export const V1UpdateTenantDomain200Response = zod.unknown();

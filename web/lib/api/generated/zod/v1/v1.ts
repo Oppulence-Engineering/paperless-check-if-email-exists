@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -44,6 +44,22 @@ export const V1CreateBulkJobDefaultResponse = zod.strictObject({
 No authentication required. Creates a tenant, generates an API key,
 verifies the email, and returns all three.
  */
+export const V1CheckEmailWithOnboardBody = zod.strictObject({
+  contact_email: zod
+    .string()
+    .describe("Contact email for the tenant account (billing, alerts)."),
+  email_to_verify: zod.string().describe("Email address to verify."),
+  plan_tier: zod
+    .string()
+    .nullish()
+    .describe('Optional plan tier (defaults to \"free\").'),
+  slug: zod
+    .string()
+    .nullish()
+    .describe("URL-safe slug (auto-generated from tenant_name if omitted)."),
+  tenant_name: zod.string().describe("Display name for the new tenant."),
+});
+
 export const V1CheckEmailWithOnboard201Response = zod.unknown();
 
 export const V1CheckEmailWithOnboardDefaultResponse = zod.strictObject({
@@ -1182,12 +1198,12 @@ export const V1ReverificationStatusDefaultResponse = zod.strictObject({
 /**
  * @summary List source quality
  */
-export const GetV1SourcesQuality200Response = zod.record(
+export const V1SourceQuality200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const GetV1SourcesQualityDefaultResponse = zod.strictObject({
+export const V1SourceQualityDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 
@@ -1297,26 +1313,23 @@ export const V1CheckSuppressionDefaultResponse = zod.strictObject({
 /**
  * @summary Export suppressions
  */
-export const GetV1SuppressionsExport200Response = zod.unknown();
+export const V1ExportSuppressions200Response = zod.unknown();
 
-export const GetV1SuppressionsExportDefaultResponse = zod.strictObject({
+export const V1ExportSuppressionsDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 
 /**
  * @summary Import suppressions
  */
-export const PostV1SuppressionsImportBody = zod.record(
+export const V1ImportSuppressionsBody = zod.record(zod.string(), zod.unknown());
+
+export const V1ImportSuppressions200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const PostV1SuppressionsImport200Response = zod.record(
-  zod.string(),
-  zod.unknown(),
-);
-
-export const PostV1SuppressionsImportDefaultResponse = zod.strictObject({
+export const V1ImportSuppressionsDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 
@@ -1338,15 +1351,15 @@ export const V1DeleteSuppressionDefaultResponse = zod.strictObject({
 /**
  * @summary List suppression events
  */
-export const GetV1SuppressionsIdEventsParams = zod.object({
+export const V1ListSuppressionEventsParams = zod.object({
   id: zod.coerce.number().int(),
 });
 
-export const GetV1SuppressionsIdEvents200Response = zod.record(
+export const V1ListSuppressionEvents200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const GetV1SuppressionsIdEventsDefaultResponse = zod.strictObject({
+export const V1ListSuppressionEventsDefaultResponse = zod.strictObject({
   error: zod.string(),
 });

@@ -22,7 +22,11 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateApiKeyRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { UpdateApiKeyRequest } from '../models';
 /**
  * AccountApi - axios parameter creator
  * @export
@@ -32,10 +36,13 @@ export const AccountApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * Create a new API key for the authenticated tenant.
          * @summary POST /v1/me/api-keys
+         * @param {CreateApiKeyRequest} createApiKeyRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTenantApiKey: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createTenantApiKey: async (createApiKeyRequest: CreateApiKeyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createApiKeyRequest' is not null or undefined
+            assertParamExists('createTenantApiKey', 'createApiKeyRequest', createApiKeyRequest)
             const localVarPath = `/v1/me/api-keys`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -53,9 +60,12 @@ export const AccountApiAxiosParamCreator = function (configuration?: Configurati
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createApiKeyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -173,12 +183,15 @@ export const AccountApiAxiosParamCreator = function (configuration?: Configurati
          * Update metadata for an existing API key.
          * @summary PATCH /v1/me/api-keys/{key_id}
          * @param {string} keyId API key identifier
+         * @param {UpdateApiKeyRequest} updateApiKeyRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenantApiKey: async (keyId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        updateTenantApiKey: async (keyId: string, updateApiKeyRequest: UpdateApiKeyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'keyId' is not null or undefined
             assertParamExists('updateTenantApiKey', 'keyId', keyId)
+            // verify required parameter 'updateApiKeyRequest' is not null or undefined
+            assertParamExists('updateTenantApiKey', 'updateApiKeyRequest', updateApiKeyRequest)
             const localVarPath = `/v1/me/api-keys/{key_id}`
                 .replace(`{${"key_id"}}`, encodeURIComponent(String(keyId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -197,9 +210,12 @@ export const AccountApiAxiosParamCreator = function (configuration?: Configurati
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateApiKeyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -252,11 +268,12 @@ export const AccountApiFp = function(configuration?: Configuration) {
         /**
          * Create a new API key for the authenticated tenant.
          * @summary POST /v1/me/api-keys
+         * @param {CreateApiKeyRequest} createApiKeyRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createTenantApiKey(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createTenantApiKey(options);
+        async createTenantApiKey(createApiKeyRequest: CreateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createTenantApiKey(createApiKeyRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.createTenantApiKey']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -303,11 +320,12 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * Update metadata for an existing API key.
          * @summary PATCH /v1/me/api-keys/{key_id}
          * @param {string} keyId API key identifier
+         * @param {UpdateApiKeyRequest} updateApiKeyRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateTenantApiKey(keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenantApiKey(keyId, options);
+        async updateTenantApiKey(keyId: string, updateApiKeyRequest: UpdateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenantApiKey(keyId, updateApiKeyRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.updateTenantApiKey']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -337,11 +355,12 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
         /**
          * Create a new API key for the authenticated tenant.
          * @summary POST /v1/me/api-keys
+         * @param {AccountApiCreateTenantApiKeyRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTenantApiKey(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.createTenantApiKey(options).then((request) => request(axios, basePath));
+        createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.createTenantApiKey(requestParameters.createApiKeyRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Return a single API key for the authenticated tenant.
@@ -380,7 +399,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.updateTenantApiKey(requestParameters.keyId, options).then((request) => request(axios, basePath));
+            return localVarFp.updateTenantApiKey(requestParameters.keyId, requestParameters.updateApiKeyRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Returns the authenticated tenant context and quota metadata.
@@ -403,11 +422,12 @@ export interface AccountApiInterface {
     /**
      * Create a new API key for the authenticated tenant.
      * @summary POST /v1/me/api-keys
+     * @param {AccountApiCreateTenantApiKeyRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    createTenantApiKey(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Return a single API key for the authenticated tenant.
@@ -460,6 +480,20 @@ export interface AccountApiInterface {
 }
 
 /**
+ * Request parameters for createTenantApiKey operation in AccountApi.
+ * @export
+ * @interface AccountApiCreateTenantApiKeyRequest
+ */
+export interface AccountApiCreateTenantApiKeyRequest {
+    /**
+     *
+     * @type {CreateApiKeyRequest}
+     * @memberof AccountApiCreateTenantApiKey
+     */
+    readonly createApiKeyRequest: CreateApiKeyRequest
+}
+
+/**
  * Request parameters for getTenantApiKey operation in AccountApi.
  * @export
  * @interface AccountApiGetTenantApiKeyRequest
@@ -499,6 +533,13 @@ export interface AccountApiUpdateTenantApiKeyRequest {
      * @memberof AccountApiUpdateTenantApiKey
      */
     readonly keyId: string
+
+    /**
+     *
+     * @type {UpdateApiKeyRequest}
+     * @memberof AccountApiUpdateTenantApiKey
+     */
+    readonly updateApiKeyRequest: UpdateApiKeyRequest
 }
 
 /**
@@ -511,12 +552,13 @@ export class AccountApi extends BaseAPI implements AccountApiInterface {
     /**
      * Create a new API key for the authenticated tenant.
      * @summary POST /v1/me/api-keys
+     * @param {AccountApiCreateTenantApiKeyRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AccountApi
      */
-    public createTenantApiKey(options?: RawAxiosRequestConfig) {
-        return AccountApiFp(this.configuration).createTenantApiKey(options).then((request) => request(this.axios, this.basePath));
+    public createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig) {
+        return AccountApiFp(this.configuration).createTenantApiKey(requestParameters.createApiKeyRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -563,7 +605,7 @@ export class AccountApi extends BaseAPI implements AccountApiInterface {
      * @memberof AccountApi
      */
     public updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig) {
-        return AccountApiFp(this.configuration).updateTenantApiKey(requestParameters.keyId, options).then((request) => request(this.axios, this.basePath));
+        return AccountApiFp(this.configuration).updateTenantApiKey(requestParameters.keyId, requestParameters.updateApiKeyRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

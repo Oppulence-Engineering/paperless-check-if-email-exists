@@ -4,28 +4,71 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
+import type {
+  AdminAllApiKeys,
+  AdminApiKey,
+  AdminApiKeyList,
+  AdminCreatedApiKey,
+  AdminTenant,
+  AdminTenantList,
+  AdminTenantQuota,
+} from "../model";
+
+import {
+  getCreateApiKeyResponseMock,
+  getCreateTenantResponseMock,
+  getGetApiKeyResponseMock,
+  getGetTenantQuotaResponseMock,
+  getGetTenantResponseMock,
+  getListAllApiKeysResponseMock,
+  getListApiKeysResponseMock,
+  getListTenantsResponseMock,
+  getResetTenantQuotaResponseMock,
+  getUpdateApiKeyResponseMock,
+  getUpdateTenantQuotaResponseMock,
+  getUpdateTenantResponseMock,
+} from "./admin.faker";
+
+export {
+  getListAllApiKeysResponseMock,
+  getListTenantsResponseMock,
+  getCreateTenantResponseMock,
+  getGetTenantResponseMock,
+  getUpdateTenantResponseMock,
+  getListApiKeysResponseMock,
+  getCreateApiKeyResponseMock,
+  getGetApiKeyResponseMock,
+  getUpdateApiKeyResponseMock,
+  getGetTenantQuotaResponseMock,
+  getUpdateTenantQuotaResponseMock,
+  getResetTenantQuotaResponseMock,
+} from "./admin.faker";
+
 export const getListAllApiKeysMockHandler = (
   overrideResponse?:
-    | void
+    | AdminAllApiKeys
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminAllApiKeys> | AdminAllApiKeys),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/api-keys",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListAllApiKeysResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -33,20 +76,23 @@ export const getListAllApiKeysMockHandler = (
 
 export const getListTenantsMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenantList
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenantList> | AdminTenantList),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/tenants",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListTenantsResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -54,20 +100,23 @@ export const getListTenantsMockHandler = (
 
 export const getCreateTenantMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenant
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenant> | AdminTenant),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
     "*/v1/admin/tenants",
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 201 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCreateTenantResponseMock(),
+        { status: 201 },
+      );
     },
     options,
   );
@@ -96,20 +145,23 @@ export const getDeleteTenantMockHandler = (
 
 export const getGetTenantMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenant
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenant> | AdminTenant),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/tenants/:tenantId",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetTenantResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -117,20 +169,23 @@ export const getGetTenantMockHandler = (
 
 export const getUpdateTenantMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenant
     | ((
         info: Parameters<Parameters<typeof http.put>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenant> | AdminTenant),
   options?: RequestHandlerOptions,
 ) => {
   return http.put(
     "*/v1/admin/tenants/:tenantId",
     async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getUpdateTenantResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -138,20 +193,23 @@ export const getUpdateTenantMockHandler = (
 
 export const getListApiKeysMockHandler = (
   overrideResponse?:
-    | void
+    | AdminApiKeyList
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminApiKeyList> | AdminApiKeyList),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/tenants/:tenantId/api-keys",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListApiKeysResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -159,20 +217,23 @@ export const getListApiKeysMockHandler = (
 
 export const getCreateApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | AdminCreatedApiKey
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminCreatedApiKey> | AdminCreatedApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
     "*/v1/admin/tenants/:tenantId/api-keys",
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 201 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCreateApiKeyResponseMock(),
+        { status: 201 },
+      );
     },
     options,
   );
@@ -201,20 +262,23 @@ export const getRevokeApiKeyMockHandler = (
 
 export const getGetApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | AdminApiKey
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminApiKey> | AdminApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/tenants/:tenantId/api-keys/:keyId",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetApiKeyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -222,20 +286,23 @@ export const getGetApiKeyMockHandler = (
 
 export const getUpdateApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | AdminApiKey
     | ((
         info: Parameters<Parameters<typeof http.patch>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminApiKey> | AdminApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
     "*/v1/admin/tenants/:tenantId/api-keys/:keyId",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getUpdateApiKeyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -264,20 +331,23 @@ export const getReactivateApiKeyMockHandler = (
 
 export const getGetTenantQuotaMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenantQuota
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenantQuota> | AdminTenantQuota),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/admin/tenants/:tenantId/quota",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetTenantQuotaResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -285,20 +355,23 @@ export const getGetTenantQuotaMockHandler = (
 
 export const getUpdateTenantQuotaMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenantQuota
     | ((
         info: Parameters<Parameters<typeof http.patch>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenantQuota> | AdminTenantQuota),
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
     "*/v1/admin/tenants/:tenantId/quota",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getUpdateTenantQuotaResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -306,20 +379,23 @@ export const getUpdateTenantQuotaMockHandler = (
 
 export const getResetTenantQuotaMockHandler = (
   overrideResponse?:
-    | void
+    | AdminTenantQuota
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AdminTenantQuota> | AdminTenantQuota),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
     "*/v1/admin/tenants/:tenantId/quota/reset",
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getResetTenantQuotaResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );

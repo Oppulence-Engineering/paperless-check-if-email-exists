@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiCreateBulkJobRequest struc
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -126,7 +126,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -194,7 +194,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 
@@ -262,7 +262,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[Authorization](../README.md#Authorization), [LegacySecret](../README.md#LegacySecret)
 
 ### HTTP request headers
 

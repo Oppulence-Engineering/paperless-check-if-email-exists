@@ -140,7 +140,45 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 		generated.get("paths").and_then(Value::as_object),
 	) {
 		for (path, value) in generated_paths {
-			base_paths.insert(path.clone(), value.clone());
+			let mut merged = value.clone();
+			if let Some(existing) = base_paths.get(path) {
+				for method in ["get", "post", "put", "patch", "delete"] {
+					if let (Some(source), Some(target)) = (
+						existing.get(method).and_then(Value::as_object),
+						merged.get_mut(method).and_then(Value::as_object_mut),
+					) {
+						for field in ["operationId", "security"] {
+							if let Some(value) = source.get(field) {
+								target.insert(field.to_string(), value.clone());
+							}
+						}
+						for field in ["requestBody", "parameters"] {
+							if !target.contains_key(field) {
+								if let Some(value) = source.get(field) {
+									target.insert(field.to_string(), value.clone());
+								}
+							}
+						}
+						if let (Some(source_responses), Some(target_responses)) = (
+							source.get("responses").and_then(Value::as_object),
+							target.get_mut("responses").and_then(Value::as_object_mut),
+						) {
+							for (status, response) in source_responses {
+								if let Some(content) = response.get("content") {
+									target_responses
+										.entry(status.clone())
+										.or_insert_with(|| json!({}))
+										.as_object_mut()
+										.expect("response object")
+										.entry("content")
+										.or_insert_with(|| content.clone());
+								}
+							}
+						}
+					}
+				}
+			}
+			base_paths.insert(path.clone(), merged);
 		}
 	}
 
@@ -362,13 +400,148 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 	}
 }
 
-fn upsert_operation(spec: &mut Value, path: &str, method: &str, operation: Value) {
+fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: Value) {
 	let path_item = paths_mut(spec)
 		.entry(path.to_string())
 		.or_insert_with(|| json!({}))
 		.as_object_mut()
 		.expect("path item object");
+	for field in ["operationId", "security", "requestBody", "parameters"] {
+		if let Some(value) = path_item
+			.get(method)
+			.and_then(|existing| existing.get(field))
+			.cloned()
+		{
+			operation
+				.as_object_mut()
+				.expect("operation object")
+				.entry(field)
+				.or_insert(value);
+		}
+	}
 	path_item.insert(method.to_string(), operation);
+}
+
+#[cfg(test)]
+mod operation_id_tests {
+	use serde_json::json;
+	use std::collections::HashSet;
+
+	#[test]
+	fn every_operation_has_a_unique_id() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut ids = HashSet::new();
+		for (path, path_item) in spec["paths"].as_object().expect("paths") {
+			for (method, operation) in path_item.as_object().expect("path item") {
+				if !["get", "post", "put", "patch", "delete"].contains(&method.as_str()) {
+					continue;
+				}
+				let id = operation["operationId"]
+					.as_str()
+					.unwrap_or_else(|| panic!("missing operationId: {} {}", method, path));
+				assert!(ids.insert(id), "duplicate operationId: {}", id);
+			}
+		}
+	}
+
+	#[test]
+	fn operation_security_matches_its_audience() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(spec["paths"]["/healthz"]["get"]["security"], json!([]));
+		assert_eq!(
+			spec["paths"]["/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}"]
+				["post"]["security"],
+			json!([])
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["security"],
+			json!([{ "AdminSecret": [] }])
+		);
+		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
+		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
+	}
+
+	#[test]
+	fn admin_contract_keeps_request_and_response_schemas() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["post"]["requestBody"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminCreateTenantRequest"
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["responses"]["200"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminTenantList"
+		);
+	}
+
+	#[test]
+	fn json_write_routes_expose_their_request_bodies() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, method, schema) in [
+			("/v1/comments", "post", "CreateCommentRequest"),
+			("/v1/me/api-keys", "post", "CreateApiKeyRequest"),
+			("/v1/me/api-keys/{key_id}", "patch", "UpdateApiKeyRequest"),
+			("/v1/me/domains", "post", "CreateTenantDomainRequest"),
+			(
+				"/v1/me/domains/{domain}",
+				"patch",
+				"UpdateTenantDomainRequest",
+			),
+			("/v1/check-email-with-onboard", "post", "OnboardRequest"),
+		] {
+			assert_eq!(
+				spec["paths"][path][method]["requestBody"]["content"]["application/json"]["schema"]
+					["$ref"],
+				format!("#/components/schemas/{schema}"),
+				"{method} {path}"
+			);
+		}
+	}
+
+	#[test]
+	fn admin_job_queries_keep_their_parameters() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, expected) in [
+			("/v1/admin/jobs/{job_id}/events", &["limit", "offset"][..]),
+			(
+				"/v1/admin/jobs/{job_id}/results",
+				&["limit", "offset", "state"][..],
+			),
+			(
+				"/v1/admin/tenants/{tenant_id}/jobs",
+				&["status", "limit", "offset"][..],
+			),
+		] {
+			let names: Vec<_> = spec["paths"][path]["get"]["parameters"]
+				.as_array()
+				.expect("parameters")
+				.iter()
+				.filter(|parameter| parameter["in"] == "query")
+				.map(|parameter| parameter["name"].as_str().expect("parameter name"))
+				.collect();
+			assert_eq!(names, expected, "{path}");
+		}
+	}
+
+	#[test]
+	fn v1_default_errors_have_descriptions() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, item) in spec["paths"].as_object().expect("paths") {
+			if !path.starts_with("/v1/") {
+				continue;
+			}
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(operation) = item.get(method) {
+					assert!(
+						operation["responses"]["default"]["description"].is_string(),
+						"{method} {path}"
+					);
+				}
+			}
+		}
+	}
 }
 
 fn generic_object_schema() -> Value {
@@ -2002,10 +2175,15 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 					.and_then(|operation| operation.get_mut("responses"))
 					.and_then(Value::as_object_mut)
 				{
-					responses.entry("default").or_insert_with(|| json!({
+					let default = responses.entry("default").or_insert_with(|| json!({
 						"description": "Request error",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
 					}));
+					default
+						.as_object_mut()
+						.expect("default response object")
+						.entry("description")
+						.or_insert_with(|| json!("Request error"));
 				}
 			}
 		}

@@ -22,6 +22,28 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { AdminAllApiKeys } from '../models';
+// @ts-ignore
+import type { AdminApiKey } from '../models';
+// @ts-ignore
+import type { AdminApiKeyList } from '../models';
+// @ts-ignore
+import type { AdminApiKeyWriteRequest } from '../models';
+// @ts-ignore
+import type { AdminCreateTenantRequest } from '../models';
+// @ts-ignore
+import type { AdminCreatedApiKey } from '../models';
+// @ts-ignore
+import type { AdminTenant } from '../models';
+// @ts-ignore
+import type { AdminTenantList } from '../models';
+// @ts-ignore
+import type { AdminTenantQuota } from '../models';
+// @ts-ignore
+import type { AdminUpdateQuotaRequest } from '../models';
+// @ts-ignore
+import type { AdminUpdateTenantRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
 /**
  * AdminApi - axios parameter creator
@@ -33,12 +55,15 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
          * Create a new API key for a tenant.
          * @summary POST /v1/admin/tenants/{tenant_id}/api-keys
          * @param {string} tenantId Tenant identifier
+         * @param {AdminApiKeyWriteRequest} adminApiKeyWriteRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createApiKey: async (tenantId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createApiKey: async (tenantId: string, adminApiKeyWriteRequest: AdminApiKeyWriteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'tenantId' is not null or undefined
             assertParamExists('createApiKey', 'tenantId', tenantId)
+            // verify required parameter 'adminApiKeyWriteRequest' is not null or undefined
+            assertParamExists('createApiKey', 'adminApiKeyWriteRequest', adminApiKeyWriteRequest)
             const localVarPath = `/v1/admin/tenants/{tenant_id}/api-keys`
                 .replace(`{${"tenant_id"}}`, encodeURIComponent(String(tenantId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -52,14 +77,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminApiKeyWriteRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -69,10 +97,13 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Create a new tenant.
          * @summary POST /v1/admin/tenants
+         * @param {AdminCreateTenantRequest} adminCreateTenantRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTenant: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createTenant: async (adminCreateTenantRequest: AdminCreateTenantRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'adminCreateTenantRequest' is not null or undefined
+            assertParamExists('createTenant', 'adminCreateTenantRequest', adminCreateTenantRequest)
             const localVarPath = `/v1/admin/tenants`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -85,14 +116,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminCreateTenantRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -122,8 +156,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -163,8 +197,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -200,8 +234,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -237,8 +271,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -254,10 +288,14 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * List all API keys across tenants with optional filtering.
          * @summary GET /v1/admin/api-keys
+         * @param {string} [tenantId]
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listAllApiKeys: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listAllApiKeys: async (tenantId?: string, status?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/admin/api-keys`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -270,8 +308,24 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
+
+            if (tenantId !== undefined) {
+                localVarQueryParameter['tenant_id'] = tenantId;
+            }
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
 
 
 
@@ -307,8 +361,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -324,10 +378,13 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * List tenants with optional status and pagination filters.
          * @summary GET /v1/admin/tenants
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTenants: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listTenants: async (status?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/admin/tenants`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -340,8 +397,20 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
 
 
 
@@ -381,8 +450,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -418,8 +487,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -459,8 +528,8 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
 
@@ -478,14 +547,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
          * @summary PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
          * @param {string} tenantId Tenant identifier
          * @param {string} keyId API key identifier
+         * @param {AdminApiKeyWriteRequest} adminApiKeyWriteRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateApiKey: async (tenantId: string, keyId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        updateApiKey: async (tenantId: string, keyId: string, adminApiKeyWriteRequest: AdminApiKeyWriteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'tenantId' is not null or undefined
             assertParamExists('updateApiKey', 'tenantId', tenantId)
             // verify required parameter 'keyId' is not null or undefined
             assertParamExists('updateApiKey', 'keyId', keyId)
+            // verify required parameter 'adminApiKeyWriteRequest' is not null or undefined
+            assertParamExists('updateApiKey', 'adminApiKeyWriteRequest', adminApiKeyWriteRequest)
             const localVarPath = `/v1/admin/tenants/{tenant_id}/api-keys/{key_id}`
                 .replace(`{${"tenant_id"}}`, encodeURIComponent(String(tenantId)))
                 .replace(`{${"key_id"}}`, encodeURIComponent(String(keyId)));
@@ -500,14 +572,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminApiKeyWriteRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -518,12 +593,15 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
          * Update tenant fields.
          * @summary PUT /v1/admin/tenants/{tenant_id}
          * @param {string} tenantId Tenant identifier
+         * @param {AdminUpdateTenantRequest} adminUpdateTenantRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenant: async (tenantId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        updateTenant: async (tenantId: string, adminUpdateTenantRequest: AdminUpdateTenantRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'tenantId' is not null or undefined
             assertParamExists('updateTenant', 'tenantId', tenantId)
+            // verify required parameter 'adminUpdateTenantRequest' is not null or undefined
+            assertParamExists('updateTenant', 'adminUpdateTenantRequest', adminUpdateTenantRequest)
             const localVarPath = `/v1/admin/tenants/{tenant_id}`
                 .replace(`{${"tenant_id"}}`, encodeURIComponent(String(tenantId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -537,14 +615,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminUpdateTenantRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -555,12 +636,15 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
          * Update tenant quota limit.
          * @summary PATCH /v1/admin/tenants/{tenant_id}/quota
          * @param {string} tenantId Tenant identifier
+         * @param {AdminUpdateQuotaRequest} adminUpdateQuotaRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenantQuota: async (tenantId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        updateTenantQuota: async (tenantId: string, adminUpdateQuotaRequest: AdminUpdateQuotaRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'tenantId' is not null or undefined
             assertParamExists('updateTenantQuota', 'tenantId', tenantId)
+            // verify required parameter 'adminUpdateQuotaRequest' is not null or undefined
+            assertParamExists('updateTenantQuota', 'adminUpdateQuotaRequest', adminUpdateQuotaRequest)
             const localVarPath = `/v1/admin/tenants/{tenant_id}/quota`
                 .replace(`{${"tenant_id"}}`, encodeURIComponent(String(tenantId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -574,14 +658,17 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+            // authentication AdminSecret required
+            await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
 
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminUpdateQuotaRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -602,11 +689,12 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * Create a new API key for a tenant.
          * @summary POST /v1/admin/tenants/{tenant_id}/api-keys
          * @param {string} tenantId Tenant identifier
+         * @param {AdminApiKeyWriteRequest} adminApiKeyWriteRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createApiKey(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createApiKey(tenantId, options);
+        async createApiKey(tenantId: string, adminApiKeyWriteRequest: AdminApiKeyWriteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminCreatedApiKey>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createApiKey(tenantId, adminApiKeyWriteRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.createApiKey']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -614,11 +702,12 @@ export const AdminApiFp = function(configuration?: Configuration) {
         /**
          * Create a new tenant.
          * @summary POST /v1/admin/tenants
+         * @param {AdminCreateTenantRequest} adminCreateTenantRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createTenant(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createTenant(options);
+        async createTenant(adminCreateTenantRequest: AdminCreateTenantRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenant>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createTenant(adminCreateTenantRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.createTenant']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -644,7 +733,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getApiKey(tenantId: string, keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async getApiKey(tenantId: string, keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminApiKey>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getApiKey(tenantId, keyId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.getApiKey']?.[localVarOperationServerIndex]?.url;
@@ -657,7 +746,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getTenant(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async getTenant(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenant>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getTenant(tenantId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.getTenant']?.[localVarOperationServerIndex]?.url;
@@ -670,7 +759,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getTenantQuota(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async getTenantQuota(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenantQuota>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getTenantQuota(tenantId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.getTenantQuota']?.[localVarOperationServerIndex]?.url;
@@ -679,11 +768,15 @@ export const AdminApiFp = function(configuration?: Configuration) {
         /**
          * List all API keys across tenants with optional filtering.
          * @summary GET /v1/admin/api-keys
+         * @param {string} [tenantId]
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listAllApiKeys(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listAllApiKeys(options);
+        async listAllApiKeys(tenantId?: string, status?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminAllApiKeys>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listAllApiKeys(tenantId, status, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.listAllApiKeys']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -695,7 +788,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listApiKeys(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async listApiKeys(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminApiKeyList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listApiKeys(tenantId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.listApiKeys']?.[localVarOperationServerIndex]?.url;
@@ -704,11 +797,14 @@ export const AdminApiFp = function(configuration?: Configuration) {
         /**
          * List tenants with optional status and pagination filters.
          * @summary GET /v1/admin/tenants
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listTenants(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listTenants(options);
+        async listTenants(status?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenantList>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listTenants(status, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.listTenants']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -734,7 +830,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async resetTenantQuota(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async resetTenantQuota(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenantQuota>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.resetTenantQuota(tenantId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.resetTenantQuota']?.[localVarOperationServerIndex]?.url;
@@ -759,11 +855,12 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * @summary PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
          * @param {string} tenantId Tenant identifier
          * @param {string} keyId API key identifier
+         * @param {AdminApiKeyWriteRequest} adminApiKeyWriteRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateApiKey(tenantId: string, keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.updateApiKey(tenantId, keyId, options);
+        async updateApiKey(tenantId: string, keyId: string, adminApiKeyWriteRequest: AdminApiKeyWriteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminApiKey>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateApiKey(tenantId, keyId, adminApiKeyWriteRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.updateApiKey']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -772,11 +869,12 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * Update tenant fields.
          * @summary PUT /v1/admin/tenants/{tenant_id}
          * @param {string} tenantId Tenant identifier
+         * @param {AdminUpdateTenantRequest} adminUpdateTenantRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateTenant(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenant(tenantId, options);
+        async updateTenant(tenantId: string, adminUpdateTenantRequest: AdminUpdateTenantRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenant>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenant(tenantId, adminUpdateTenantRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.updateTenant']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -785,11 +883,12 @@ export const AdminApiFp = function(configuration?: Configuration) {
          * Update tenant quota limit.
          * @summary PATCH /v1/admin/tenants/{tenant_id}/quota
          * @param {string} tenantId Tenant identifier
+         * @param {AdminUpdateQuotaRequest} adminUpdateQuotaRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateTenantQuota(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenantQuota(tenantId, options);
+        async updateTenantQuota(tenantId: string, adminUpdateQuotaRequest: AdminUpdateQuotaRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminTenantQuota>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenantQuota(tenantId, adminUpdateQuotaRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.updateTenantQuota']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -811,17 +910,18 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createApiKey(requestParameters: AdminApiCreateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.createApiKey(requestParameters.tenantId, options).then((request) => request(axios, basePath));
+        createApiKey(requestParameters: AdminApiCreateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminCreatedApiKey> {
+            return localVarFp.createApiKey(requestParameters.tenantId, requestParameters.adminApiKeyWriteRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Create a new tenant.
          * @summary POST /v1/admin/tenants
+         * @param {AdminApiCreateTenantRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTenant(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.createTenant(options).then((request) => request(axios, basePath));
+        createTenant(requestParameters: AdminApiCreateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant> {
+            return localVarFp.createTenant(requestParameters.adminCreateTenantRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Delete a tenant.
@@ -840,7 +940,7 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getApiKey(requestParameters: AdminApiGetApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        getApiKey(requestParameters: AdminApiGetApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKey> {
             return localVarFp.getApiKey(requestParameters.tenantId, requestParameters.keyId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -850,7 +950,7 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTenant(requestParameters: AdminApiGetTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        getTenant(requestParameters: AdminApiGetTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant> {
             return localVarFp.getTenant(requestParameters.tenantId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -860,17 +960,18 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTenantQuota(requestParameters: AdminApiGetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        getTenantQuota(requestParameters: AdminApiGetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota> {
             return localVarFp.getTenantQuota(requestParameters.tenantId, options).then((request) => request(axios, basePath));
         },
         /**
          * List all API keys across tenants with optional filtering.
          * @summary GET /v1/admin/api-keys
+         * @param {AdminApiListAllApiKeysRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listAllApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.listAllApiKeys(options).then((request) => request(axios, basePath));
+        listAllApiKeys(requestParameters: AdminApiListAllApiKeysRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<AdminAllApiKeys> {
+            return localVarFp.listAllApiKeys(requestParameters.tenantId, requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
          * List API keys for a tenant.
@@ -879,17 +980,18 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listApiKeys(requestParameters: AdminApiListApiKeysRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        listApiKeys(requestParameters: AdminApiListApiKeysRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKeyList> {
             return localVarFp.listApiKeys(requestParameters.tenantId, options).then((request) => request(axios, basePath));
         },
         /**
          * List tenants with optional status and pagination filters.
          * @summary GET /v1/admin/tenants
+         * @param {AdminApiListTenantsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTenants(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.listTenants(options).then((request) => request(axios, basePath));
+        listTenants(requestParameters: AdminApiListTenantsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantList> {
+            return localVarFp.listTenants(requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
          * Reactivate a previously revoked API key.
@@ -908,7 +1010,7 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resetTenantQuota(requestParameters: AdminApiResetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        resetTenantQuota(requestParameters: AdminApiResetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota> {
             return localVarFp.resetTenantQuota(requestParameters.tenantId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -928,8 +1030,8 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateApiKey(requestParameters: AdminApiUpdateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.updateApiKey(requestParameters.tenantId, requestParameters.keyId, options).then((request) => request(axios, basePath));
+        updateApiKey(requestParameters: AdminApiUpdateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKey> {
+            return localVarFp.updateApiKey(requestParameters.tenantId, requestParameters.keyId, requestParameters.adminApiKeyWriteRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update tenant fields.
@@ -938,8 +1040,8 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenant(requestParameters: AdminApiUpdateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.updateTenant(requestParameters.tenantId, options).then((request) => request(axios, basePath));
+        updateTenant(requestParameters: AdminApiUpdateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant> {
+            return localVarFp.updateTenant(requestParameters.tenantId, requestParameters.adminUpdateTenantRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update tenant quota limit.
@@ -948,8 +1050,8 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenantQuota(requestParameters: AdminApiUpdateTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.updateTenantQuota(requestParameters.tenantId, options).then((request) => request(axios, basePath));
+        updateTenantQuota(requestParameters: AdminApiUpdateTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota> {
+            return localVarFp.updateTenantQuota(requestParameters.tenantId, requestParameters.adminUpdateQuotaRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -968,16 +1070,17 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    createApiKey(requestParameters: AdminApiCreateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    createApiKey(requestParameters: AdminApiCreateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminCreatedApiKey>;
 
     /**
      * Create a new tenant.
      * @summary POST /v1/admin/tenants
+     * @param {AdminApiCreateTenantRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    createTenant(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    createTenant(requestParameters: AdminApiCreateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant>;
 
     /**
      * Delete a tenant.
@@ -997,7 +1100,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    getApiKey(requestParameters: AdminApiGetApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    getApiKey(requestParameters: AdminApiGetApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKey>;
 
     /**
      * Fetch tenant details by tenant ID.
@@ -1007,7 +1110,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    getTenant(requestParameters: AdminApiGetTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    getTenant(requestParameters: AdminApiGetTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant>;
 
     /**
      * Fetch current tenant quota usage and remaining allowance.
@@ -1017,16 +1120,17 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    getTenantQuota(requestParameters: AdminApiGetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    getTenantQuota(requestParameters: AdminApiGetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota>;
 
     /**
      * List all API keys across tenants with optional filtering.
      * @summary GET /v1/admin/api-keys
+     * @param {AdminApiListAllApiKeysRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    listAllApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    listAllApiKeys(requestParameters?: AdminApiListAllApiKeysRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminAllApiKeys>;
 
     /**
      * List API keys for a tenant.
@@ -1036,16 +1140,17 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    listApiKeys(requestParameters: AdminApiListApiKeysRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    listApiKeys(requestParameters: AdminApiListApiKeysRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKeyList>;
 
     /**
      * List tenants with optional status and pagination filters.
      * @summary GET /v1/admin/tenants
+     * @param {AdminApiListTenantsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    listTenants(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    listTenants(requestParameters?: AdminApiListTenantsRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantList>;
 
     /**
      * Reactivate a previously revoked API key.
@@ -1065,7 +1170,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    resetTenantQuota(requestParameters: AdminApiResetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    resetTenantQuota(requestParameters: AdminApiResetTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota>;
 
     /**
      * Revoke an API key.
@@ -1085,7 +1190,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    updateApiKey(requestParameters: AdminApiUpdateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    updateApiKey(requestParameters: AdminApiUpdateApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminApiKey>;
 
     /**
      * Update tenant fields.
@@ -1095,7 +1200,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    updateTenant(requestParameters: AdminApiUpdateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    updateTenant(requestParameters: AdminApiUpdateTenantRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenant>;
 
     /**
      * Update tenant quota limit.
@@ -1105,7 +1210,7 @@ export interface AdminApiInterface {
      * @throws {RequiredError}
      * @memberof AdminApiInterface
      */
-    updateTenantQuota(requestParameters: AdminApiUpdateTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    updateTenantQuota(requestParameters: AdminApiUpdateTenantQuotaRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminTenantQuota>;
 
 }
 
@@ -1121,6 +1226,27 @@ export interface AdminApiCreateApiKeyRequest {
      * @memberof AdminApiCreateApiKey
      */
     readonly tenantId: string
+
+    /**
+     *
+     * @type {AdminApiKeyWriteRequest}
+     * @memberof AdminApiCreateApiKey
+     */
+    readonly adminApiKeyWriteRequest: AdminApiKeyWriteRequest
+}
+
+/**
+ * Request parameters for createTenant operation in AdminApi.
+ * @export
+ * @interface AdminApiCreateTenantRequest
+ */
+export interface AdminApiCreateTenantRequest {
+    /**
+     *
+     * @type {AdminCreateTenantRequest}
+     * @memberof AdminApiCreateTenant
+     */
+    readonly adminCreateTenantRequest: AdminCreateTenantRequest
 }
 
 /**
@@ -1187,6 +1313,41 @@ export interface AdminApiGetTenantQuotaRequest {
 }
 
 /**
+ * Request parameters for listAllApiKeys operation in AdminApi.
+ * @export
+ * @interface AdminApiListAllApiKeysRequest
+ */
+export interface AdminApiListAllApiKeysRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiListAllApiKeys
+     */
+    readonly tenantId?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiListAllApiKeys
+     */
+    readonly status?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminApiListAllApiKeys
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminApiListAllApiKeys
+     */
+    readonly offset?: number
+}
+
+/**
  * Request parameters for listApiKeys operation in AdminApi.
  * @export
  * @interface AdminApiListApiKeysRequest
@@ -1198,6 +1359,34 @@ export interface AdminApiListApiKeysRequest {
      * @memberof AdminApiListApiKeys
      */
     readonly tenantId: string
+}
+
+/**
+ * Request parameters for listTenants operation in AdminApi.
+ * @export
+ * @interface AdminApiListTenantsRequest
+ */
+export interface AdminApiListTenantsRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiListTenants
+     */
+    readonly status?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminApiListTenants
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminApiListTenants
+     */
+    readonly offset?: number
 }
 
 /**
@@ -1275,6 +1464,13 @@ export interface AdminApiUpdateApiKeyRequest {
      * @memberof AdminApiUpdateApiKey
      */
     readonly keyId: string
+
+    /**
+     *
+     * @type {AdminApiKeyWriteRequest}
+     * @memberof AdminApiUpdateApiKey
+     */
+    readonly adminApiKeyWriteRequest: AdminApiKeyWriteRequest
 }
 
 /**
@@ -1289,6 +1485,13 @@ export interface AdminApiUpdateTenantRequest {
      * @memberof AdminApiUpdateTenant
      */
     readonly tenantId: string
+
+    /**
+     *
+     * @type {AdminUpdateTenantRequest}
+     * @memberof AdminApiUpdateTenant
+     */
+    readonly adminUpdateTenantRequest: AdminUpdateTenantRequest
 }
 
 /**
@@ -1303,6 +1506,13 @@ export interface AdminApiUpdateTenantQuotaRequest {
      * @memberof AdminApiUpdateTenantQuota
      */
     readonly tenantId: string
+
+    /**
+     *
+     * @type {AdminUpdateQuotaRequest}
+     * @memberof AdminApiUpdateTenantQuota
+     */
+    readonly adminUpdateQuotaRequest: AdminUpdateQuotaRequest
 }
 
 /**
@@ -1321,18 +1531,19 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
      * @memberof AdminApi
      */
     public createApiKey(requestParameters: AdminApiCreateApiKeyRequest, options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).createApiKey(requestParameters.tenantId, options).then((request) => request(this.axios, this.basePath));
+        return AdminApiFp(this.configuration).createApiKey(requestParameters.tenantId, requestParameters.adminApiKeyWriteRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * Create a new tenant.
      * @summary POST /v1/admin/tenants
+     * @param {AdminApiCreateTenantRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApi
      */
-    public createTenant(options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).createTenant(options).then((request) => request(this.axios, this.basePath));
+    public createTenant(requestParameters: AdminApiCreateTenantRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).createTenant(requestParameters.adminCreateTenantRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1386,12 +1597,13 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
     /**
      * List all API keys across tenants with optional filtering.
      * @summary GET /v1/admin/api-keys
+     * @param {AdminApiListAllApiKeysRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApi
      */
-    public listAllApiKeys(options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).listAllApiKeys(options).then((request) => request(this.axios, this.basePath));
+    public listAllApiKeys(requestParameters: AdminApiListAllApiKeysRequest = {}, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).listAllApiKeys(requestParameters.tenantId, requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1409,12 +1621,13 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
     /**
      * List tenants with optional status and pagination filters.
      * @summary GET /v1/admin/tenants
+     * @param {AdminApiListTenantsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminApi
      */
-    public listTenants(options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).listTenants(options).then((request) => request(this.axios, this.basePath));
+    public listTenants(requestParameters: AdminApiListTenantsRequest = {}, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).listTenants(requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1462,7 +1675,7 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
      * @memberof AdminApi
      */
     public updateApiKey(requestParameters: AdminApiUpdateApiKeyRequest, options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).updateApiKey(requestParameters.tenantId, requestParameters.keyId, options).then((request) => request(this.axios, this.basePath));
+        return AdminApiFp(this.configuration).updateApiKey(requestParameters.tenantId, requestParameters.keyId, requestParameters.adminApiKeyWriteRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1474,7 +1687,7 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
      * @memberof AdminApi
      */
     public updateTenant(requestParameters: AdminApiUpdateTenantRequest, options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).updateTenant(requestParameters.tenantId, options).then((request) => request(this.axios, this.basePath));
+        return AdminApiFp(this.configuration).updateTenant(requestParameters.tenantId, requestParameters.adminUpdateTenantRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1486,6 +1699,6 @@ export class AdminApi extends BaseAPI implements AdminApiInterface {
      * @memberof AdminApi
      */
     public updateTenantQuota(requestParameters: AdminApiUpdateTenantQuotaRequest, options?: RawAxiosRequestConfig) {
-        return AdminApiFp(this.configuration).updateTenantQuota(requestParameters.tenantId, options).then((request) => request(this.axios, this.basePath));
+        return AdminApiFp(this.configuration).updateTenantQuota(requestParameters.tenantId, requestParameters.adminUpdateQuotaRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }

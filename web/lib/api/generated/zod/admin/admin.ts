@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -13,7 +13,31 @@ import * as zod from "zod";
  * List all API keys across tenants with optional filtering.
  * @summary GET /v1/admin/api-keys
  */
-export const ListAllApiKeys200Response = zod.unknown();
+export const ListAllApiKeysQueryParams = zod.object({
+  tenant_id: zod.string().optional(),
+  status: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const ListAllApiKeys200Response = zod.strictObject({
+  api_keys: zod
+    .array(
+      zod.strictObject({
+        created_at: zod.iso.datetime({ offset: true }).optional(),
+        expires_at: zod.iso.datetime({ offset: true }).nullish(),
+        id: zod.uuid().optional(),
+        key_prefix: zod.string().optional(),
+        last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+        name: zod.string().optional(),
+        scopes: zod.array(zod.string()).optional(),
+        status: zod.string().optional(),
+        tenant_id: zod.uuid().optional(),
+      }),
+    )
+    .optional(),
+  total: zod.int().optional(),
+});
 
 export const ListAllApiKeysDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -23,7 +47,37 @@ export const ListAllApiKeysDefaultResponse = zod.strictObject({
  * List tenants with optional status and pagination filters.
  * @summary GET /v1/admin/tenants
  */
-export const ListTenants200Response = zod.unknown();
+export const ListTenantsQueryParams = zod.object({
+  status: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const ListTenants200Response = zod.strictObject({
+  tenants: zod
+    .array(
+      zod.strictObject({
+        contact_email: zod.email().optional(),
+        created_at: zod.iso.datetime({ offset: true }).optional(),
+        default_webhook_url: zod.string().nullish(),
+        id: zod.uuid().optional(),
+        max_requests_per_day: zod.int().optional(),
+        max_requests_per_hour: zod.int().optional(),
+        max_requests_per_minute: zod.int().optional(),
+        max_requests_per_second: zod.int().optional(),
+        monthly_email_limit: zod.int().nullish(),
+        name: zod.string().optional(),
+        plan_tier: zod.string().optional(),
+        result_retention_days: zod.int().optional(),
+        slug: zod.string().optional(),
+        status: zod.string().optional(),
+        updated_at: zod.iso.datetime({ offset: true }).optional(),
+        used_this_period: zod.int().optional(),
+      }),
+    )
+    .optional(),
+  total: zod.int().optional(),
+});
 
 export const ListTenantsDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -33,7 +87,39 @@ export const ListTenantsDefaultResponse = zod.strictObject({
  * Create a new tenant.
  * @summary POST /v1/admin/tenants
  */
-export const CreateTenant201Response = zod.unknown();
+export const CreateTenantBody = zod.strictObject({
+  contact_email: zod.email(),
+  default_webhook_url: zod.string().nullish(),
+  max_requests_per_day: zod.int().optional(),
+  max_requests_per_hour: zod.int().optional(),
+  max_requests_per_minute: zod.int().optional(),
+  max_requests_per_second: zod.int().optional(),
+  monthly_email_limit: zod.int().optional(),
+  name: zod.string(),
+  plan_tier: zod.string().optional(),
+  result_retention_days: zod.int().optional(),
+  slug: zod.string(),
+  webhook_signing_secret: zod.string().nullish(),
+});
+
+export const CreateTenant201Response = zod.strictObject({
+  contact_email: zod.email().optional(),
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  default_webhook_url: zod.string().nullish(),
+  id: zod.uuid().optional(),
+  max_requests_per_day: zod.int().optional(),
+  max_requests_per_hour: zod.int().optional(),
+  max_requests_per_minute: zod.int().optional(),
+  max_requests_per_second: zod.int().optional(),
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  plan_tier: zod.string().optional(),
+  result_retention_days: zod.int().optional(),
+  slug: zod.string().optional(),
+  status: zod.string().optional(),
+  updated_at: zod.iso.datetime({ offset: true }).optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const CreateTenantDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -61,7 +147,24 @@ export const GetTenantParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const GetTenant200Response = zod.unknown();
+export const GetTenant200Response = zod.strictObject({
+  contact_email: zod.email().optional(),
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  default_webhook_url: zod.string().nullish(),
+  id: zod.uuid().optional(),
+  max_requests_per_day: zod.int().optional(),
+  max_requests_per_hour: zod.int().optional(),
+  max_requests_per_minute: zod.int().optional(),
+  max_requests_per_second: zod.int().optional(),
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  plan_tier: zod.string().optional(),
+  result_retention_days: zod.int().optional(),
+  slug: zod.string().optional(),
+  status: zod.string().optional(),
+  updated_at: zod.iso.datetime({ offset: true }).optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const GetTenantDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -75,7 +178,39 @@ export const UpdateTenantParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const UpdateTenant200Response = zod.unknown();
+export const UpdateTenantBody = zod.strictObject({
+  contact_email: zod.email().optional(),
+  default_webhook_url: zod.string().nullish(),
+  max_requests_per_day: zod.int().optional(),
+  max_requests_per_hour: zod.int().optional(),
+  max_requests_per_minute: zod.int().optional(),
+  max_requests_per_second: zod.int().optional(),
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  plan_tier: zod.string().optional(),
+  result_retention_days: zod.int().optional(),
+  status: zod.string().optional(),
+  webhook_signing_secret: zod.string().nullish(),
+});
+
+export const UpdateTenant200Response = zod.strictObject({
+  contact_email: zod.email().optional(),
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  default_webhook_url: zod.string().nullish(),
+  id: zod.uuid().optional(),
+  max_requests_per_day: zod.int().optional(),
+  max_requests_per_hour: zod.int().optional(),
+  max_requests_per_minute: zod.int().optional(),
+  max_requests_per_second: zod.int().optional(),
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  plan_tier: zod.string().optional(),
+  result_retention_days: zod.int().optional(),
+  slug: zod.string().optional(),
+  status: zod.string().optional(),
+  updated_at: zod.iso.datetime({ offset: true }).optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const UpdateTenantDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -89,7 +224,23 @@ export const ListApiKeysParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const ListApiKeys200Response = zod.unknown();
+export const ListApiKeys200Response = zod.strictObject({
+  api_keys: zod
+    .array(
+      zod.strictObject({
+        created_at: zod.iso.datetime({ offset: true }).optional(),
+        expires_at: zod.iso.datetime({ offset: true }).nullish(),
+        id: zod.uuid().optional(),
+        key_prefix: zod.string().optional(),
+        last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+        name: zod.string().optional(),
+        scopes: zod.array(zod.string()).optional(),
+        status: zod.string().optional(),
+        tenant_id: zod.uuid().optional(),
+      }),
+    )
+    .optional(),
+});
 
 export const ListApiKeysDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -103,7 +254,24 @@ export const CreateApiKeyParams = zod.object({
   tenant_id: zod.uuid().describe("Tenant identifier"),
 });
 
-export const CreateApiKey201Response = zod.unknown();
+export const CreateApiKeyBody = zod.strictObject({
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string().optional(),
+  scopes: zod.array(zod.string()).optional(),
+});
+
+export const CreateApiKey201Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid().optional(),
+  key_prefix: zod.string().optional(),
+  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string().optional(),
+  scopes: zod.array(zod.string()).optional(),
+  status: zod.string().optional(),
+  tenant_id: zod.uuid().optional(),
+  key: zod.string().describe("Plaintext key returned only at creation."),
+});
 
 export const CreateApiKeyDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -133,7 +301,17 @@ export const GetApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
 });
 
-export const GetApiKey200Response = zod.unknown();
+export const GetApiKey200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid().optional(),
+  key_prefix: zod.string().optional(),
+  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string().optional(),
+  scopes: zod.array(zod.string()).optional(),
+  status: zod.string().optional(),
+  tenant_id: zod.uuid().optional(),
+});
 
 export const GetApiKeyDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -148,7 +326,23 @@ export const UpdateApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
 });
 
-export const UpdateApiKey200Response = zod.unknown();
+export const UpdateApiKeyBody = zod.strictObject({
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string().optional(),
+  scopes: zod.array(zod.string()).optional(),
+});
+
+export const UpdateApiKey200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }).optional(),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid().optional(),
+  key_prefix: zod.string().optional(),
+  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string().optional(),
+  scopes: zod.array(zod.string()).optional(),
+  status: zod.string().optional(),
+  tenant_id: zod.uuid().optional(),
+});
 
 export const UpdateApiKeyDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -177,7 +371,15 @@ export const GetTenantQuotaParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const GetTenantQuota200Response = zod.unknown();
+export const GetTenantQuota200Response = zod.strictObject({
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  period_reset_at: zod.iso.datetime({ offset: true }).optional(),
+  quota_unlimited: zod.boolean().optional(),
+  remaining_quota: zod.int().nullish(),
+  tenant_id: zod.uuid().optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const GetTenantQuotaDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -191,7 +393,19 @@ export const UpdateTenantQuotaParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const UpdateTenantQuota200Response = zod.unknown();
+export const UpdateTenantQuotaBody = zod.strictObject({
+  monthly_email_limit: zod.int().nullable(),
+});
+
+export const UpdateTenantQuota200Response = zod.strictObject({
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  period_reset_at: zod.iso.datetime({ offset: true }).optional(),
+  quota_unlimited: zod.boolean().optional(),
+  remaining_quota: zod.int().nullish(),
+  tenant_id: zod.uuid().optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const UpdateTenantQuotaDefaultResponse = zod.strictObject({
   error: zod.string(),
@@ -205,7 +419,15 @@ export const ResetTenantQuotaParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const ResetTenantQuota200Response = zod.unknown();
+export const ResetTenantQuota200Response = zod.strictObject({
+  monthly_email_limit: zod.int().nullish(),
+  name: zod.string().optional(),
+  period_reset_at: zod.iso.datetime({ offset: true }).optional(),
+  quota_unlimited: zod.boolean().optional(),
+  remaining_quota: zod.int().nullish(),
+  tenant_id: zod.uuid().optional(),
+  used_this_period: zod.int().optional(),
+});
 
 export const ResetTenantQuotaDefaultResponse = zod.strictObject({
   error: zod.string(),

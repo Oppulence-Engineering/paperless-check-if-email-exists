@@ -35,7 +35,8 @@ type AdminAPI interface {
 	CreateApiKey(ctx context.Context, tenantId string) AdminAPICreateApiKeyRequest
 
 	// CreateApiKeyExecute executes the request
-	CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*http.Response, error)
+	//  @return AdminCreatedApiKey
+	CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*AdminCreatedApiKey, *http.Response, error)
 
 	/*
 	CreateTenant POST /v1/admin/tenants
@@ -48,7 +49,8 @@ type AdminAPI interface {
 	CreateTenant(ctx context.Context) AdminAPICreateTenantRequest
 
 	// CreateTenantExecute executes the request
-	CreateTenantExecute(r AdminAPICreateTenantRequest) (*http.Response, error)
+	//  @return AdminTenant
+	CreateTenantExecute(r AdminAPICreateTenantRequest) (*AdminTenant, *http.Response, error)
 
 	/*
 	DeleteTenant DELETE /v1/admin/tenants/{tenant_id}
@@ -77,7 +79,8 @@ type AdminAPI interface {
 	GetApiKey(ctx context.Context, tenantId string, keyId string) AdminAPIGetApiKeyRequest
 
 	// GetApiKeyExecute executes the request
-	GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*http.Response, error)
+	//  @return AdminApiKey
+	GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*AdminApiKey, *http.Response, error)
 
 	/*
 	GetTenant GET /v1/admin/tenants/{tenant_id}
@@ -91,7 +94,8 @@ type AdminAPI interface {
 	GetTenant(ctx context.Context, tenantId string) AdminAPIGetTenantRequest
 
 	// GetTenantExecute executes the request
-	GetTenantExecute(r AdminAPIGetTenantRequest) (*http.Response, error)
+	//  @return AdminTenant
+	GetTenantExecute(r AdminAPIGetTenantRequest) (*AdminTenant, *http.Response, error)
 
 	/*
 	GetTenantQuota GET /v1/admin/tenants/{tenant_id}/quota
@@ -105,7 +109,8 @@ type AdminAPI interface {
 	GetTenantQuota(ctx context.Context, tenantId string) AdminAPIGetTenantQuotaRequest
 
 	// GetTenantQuotaExecute executes the request
-	GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest) (*http.Response, error)
+	//  @return AdminTenantQuota
+	GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error)
 
 	/*
 	ListAllApiKeys GET /v1/admin/api-keys
@@ -118,7 +123,8 @@ type AdminAPI interface {
 	ListAllApiKeys(ctx context.Context) AdminAPIListAllApiKeysRequest
 
 	// ListAllApiKeysExecute executes the request
-	ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest) (*http.Response, error)
+	//  @return AdminAllApiKeys
+	ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest) (*AdminAllApiKeys, *http.Response, error)
 
 	/*
 	ListApiKeys GET /v1/admin/tenants/{tenant_id}/api-keys
@@ -132,7 +138,8 @@ type AdminAPI interface {
 	ListApiKeys(ctx context.Context, tenantId string) AdminAPIListApiKeysRequest
 
 	// ListApiKeysExecute executes the request
-	ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*http.Response, error)
+	//  @return AdminApiKeyList
+	ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*AdminApiKeyList, *http.Response, error)
 
 	/*
 	ListTenants GET /v1/admin/tenants
@@ -145,7 +152,8 @@ type AdminAPI interface {
 	ListTenants(ctx context.Context) AdminAPIListTenantsRequest
 
 	// ListTenantsExecute executes the request
-	ListTenantsExecute(r AdminAPIListTenantsRequest) (*http.Response, error)
+	//  @return AdminTenantList
+	ListTenantsExecute(r AdminAPIListTenantsRequest) (*AdminTenantList, *http.Response, error)
 
 	/*
 	ReactivateApiKey POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate
@@ -174,7 +182,8 @@ type AdminAPI interface {
 	ResetTenantQuota(ctx context.Context, tenantId string) AdminAPIResetTenantQuotaRequest
 
 	// ResetTenantQuotaExecute executes the request
-	ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequest) (*http.Response, error)
+	//  @return AdminTenantQuota
+	ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error)
 
 	/*
 	RevokeApiKey DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
@@ -204,7 +213,8 @@ type AdminAPI interface {
 	UpdateApiKey(ctx context.Context, tenantId string, keyId string) AdminAPIUpdateApiKeyRequest
 
 	// UpdateApiKeyExecute executes the request
-	UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*http.Response, error)
+	//  @return AdminApiKey
+	UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*AdminApiKey, *http.Response, error)
 
 	/*
 	UpdateTenant PUT /v1/admin/tenants/{tenant_id}
@@ -218,7 +228,8 @@ type AdminAPI interface {
 	UpdateTenant(ctx context.Context, tenantId string) AdminAPIUpdateTenantRequest
 
 	// UpdateTenantExecute executes the request
-	UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*http.Response, error)
+	//  @return AdminTenant
+	UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*AdminTenant, *http.Response, error)
 
 	/*
 	UpdateTenantQuota PATCH /v1/admin/tenants/{tenant_id}/quota
@@ -232,7 +243,8 @@ type AdminAPI interface {
 	UpdateTenantQuota(ctx context.Context, tenantId string) AdminAPIUpdateTenantQuotaRequest
 
 	// UpdateTenantQuotaExecute executes the request
-	UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRequest) (*http.Response, error)
+	//  @return AdminTenantQuota
+	UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error)
 }
 
 // AdminAPIService AdminAPI service
@@ -242,9 +254,15 @@ type AdminAPICreateApiKeyRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
 	tenantId string
+	adminApiKeyWriteRequest *AdminApiKeyWriteRequest
 }
 
-func (r AdminAPICreateApiKeyRequest) Execute() (*http.Response, error) {
+func (r AdminAPICreateApiKeyRequest) AdminApiKeyWriteRequest(adminApiKeyWriteRequest AdminApiKeyWriteRequest) AdminAPICreateApiKeyRequest {
+	r.adminApiKeyWriteRequest = &adminApiKeyWriteRequest
+	return r
+}
+
+func (r AdminAPICreateApiKeyRequest) Execute() (*AdminCreatedApiKey, *http.Response, error) {
 	return r.ApiService.CreateApiKeyExecute(r)
 }
 
@@ -266,16 +284,18 @@ func (a *AdminAPIService) CreateApiKey(ctx context.Context, tenantId string) Adm
 }
 
 // Execute executes the request
-func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*http.Response, error) {
+//  @return AdminCreatedApiKey
+func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*AdminCreatedApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminCreatedApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.CreateApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/api-keys"
@@ -284,9 +304,12 @@ func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.adminApiKeyWriteRequest == nil {
+		return localVarReturnValue, nil, reportError("adminApiKeyWriteRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -302,35 +325,37 @@ func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*h
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.adminApiKeyWriteRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -342,22 +367,37 @@ func (a *AdminAPIService) CreateApiKeyExecute(r AdminAPICreateApiKeyRequest) (*h
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPICreateTenantRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
+	adminCreateTenantRequest *AdminCreateTenantRequest
 }
 
-func (r AdminAPICreateTenantRequest) Execute() (*http.Response, error) {
+func (r AdminAPICreateTenantRequest) AdminCreateTenantRequest(adminCreateTenantRequest AdminCreateTenantRequest) AdminAPICreateTenantRequest {
+	r.adminCreateTenantRequest = &adminCreateTenantRequest
+	return r
+}
+
+func (r AdminAPICreateTenantRequest) Execute() (*AdminTenant, *http.Response, error) {
 	return r.ApiService.CreateTenantExecute(r)
 }
 
@@ -377,16 +417,18 @@ func (a *AdminAPIService) CreateTenant(ctx context.Context) AdminAPICreateTenant
 }
 
 // Execute executes the request
-func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*http.Response, error) {
+//  @return AdminTenant
+func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*AdminTenant, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenant
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.CreateTenant")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants"
@@ -394,9 +436,12 @@ func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.adminCreateTenantRequest == nil {
+		return localVarReturnValue, nil, reportError("adminCreateTenantRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -412,35 +457,37 @@ func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*h
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.adminCreateTenantRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -452,14 +499,23 @@ func (a *AdminAPIService) CreateTenantExecute(r AdminAPICreateTenantRequest) (*h
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIDeleteTenantRequest struct {
@@ -529,14 +585,14 @@ func (a *AdminAPIService) DeleteTenantExecute(r AdminAPIDeleteTenantRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -583,7 +639,7 @@ type AdminAPIGetApiKeyRequest struct {
 	keyId string
 }
 
-func (r AdminAPIGetApiKeyRequest) Execute() (*http.Response, error) {
+func (r AdminAPIGetApiKeyRequest) Execute() (*AdminApiKey, *http.Response, error) {
 	return r.ApiService.GetApiKeyExecute(r)
 }
 
@@ -607,16 +663,18 @@ func (a *AdminAPIService) GetApiKey(ctx context.Context, tenantId string, keyId 
 }
 
 // Execute executes the request
-func (a *AdminAPIService) GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*http.Response, error) {
+//  @return AdminApiKey
+func (a *AdminAPIService) GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*AdminApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.GetApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
@@ -647,32 +705,32 @@ func (a *AdminAPIService) GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*http.Re
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -684,14 +742,23 @@ func (a *AdminAPIService) GetApiKeyExecute(r AdminAPIGetApiKeyRequest) (*http.Re
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIGetTenantRequest struct {
@@ -700,7 +767,7 @@ type AdminAPIGetTenantRequest struct {
 	tenantId string
 }
 
-func (r AdminAPIGetTenantRequest) Execute() (*http.Response, error) {
+func (r AdminAPIGetTenantRequest) Execute() (*AdminTenant, *http.Response, error) {
 	return r.ApiService.GetTenantExecute(r)
 }
 
@@ -722,16 +789,18 @@ func (a *AdminAPIService) GetTenant(ctx context.Context, tenantId string) AdminA
 }
 
 // Execute executes the request
-func (a *AdminAPIService) GetTenantExecute(r AdminAPIGetTenantRequest) (*http.Response, error) {
+//  @return AdminTenant
+func (a *AdminAPIService) GetTenantExecute(r AdminAPIGetTenantRequest) (*AdminTenant, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenant
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.GetTenant")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}"
@@ -761,32 +830,32 @@ func (a *AdminAPIService) GetTenantExecute(r AdminAPIGetTenantRequest) (*http.Re
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -798,14 +867,23 @@ func (a *AdminAPIService) GetTenantExecute(r AdminAPIGetTenantRequest) (*http.Re
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIGetTenantQuotaRequest struct {
@@ -814,7 +892,7 @@ type AdminAPIGetTenantQuotaRequest struct {
 	tenantId string
 }
 
-func (r AdminAPIGetTenantQuotaRequest) Execute() (*http.Response, error) {
+func (r AdminAPIGetTenantQuotaRequest) Execute() (*AdminTenantQuota, *http.Response, error) {
 	return r.ApiService.GetTenantQuotaExecute(r)
 }
 
@@ -836,16 +914,18 @@ func (a *AdminAPIService) GetTenantQuota(ctx context.Context, tenantId string) A
 }
 
 // Execute executes the request
-func (a *AdminAPIService) GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest) (*http.Response, error) {
+//  @return AdminTenantQuota
+func (a *AdminAPIService) GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenantQuota
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.GetTenantQuota")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/quota"
@@ -875,32 +955,32 @@ func (a *AdminAPIService) GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest)
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -912,22 +992,55 @@ func (a *AdminAPIService) GetTenantQuotaExecute(r AdminAPIGetTenantQuotaRequest)
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIListAllApiKeysRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
+	tenantId *string
+	status *string
+	limit *int32
+	offset *int32
 }
 
-func (r AdminAPIListAllApiKeysRequest) Execute() (*http.Response, error) {
+func (r AdminAPIListAllApiKeysRequest) TenantId(tenantId string) AdminAPIListAllApiKeysRequest {
+	r.tenantId = &tenantId
+	return r
+}
+
+func (r AdminAPIListAllApiKeysRequest) Status(status string) AdminAPIListAllApiKeysRequest {
+	r.status = &status
+	return r
+}
+
+func (r AdminAPIListAllApiKeysRequest) Limit(limit int32) AdminAPIListAllApiKeysRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminAPIListAllApiKeysRequest) Offset(offset int32) AdminAPIListAllApiKeysRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r AdminAPIListAllApiKeysRequest) Execute() (*AdminAllApiKeys, *http.Response, error) {
 	return r.ApiService.ListAllApiKeysExecute(r)
 }
 
@@ -947,16 +1060,18 @@ func (a *AdminAPIService) ListAllApiKeys(ctx context.Context) AdminAPIListAllApi
 }
 
 // Execute executes the request
-func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest) (*http.Response, error) {
+//  @return AdminAllApiKeys
+func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest) (*AdminAllApiKeys, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminAllApiKeys
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ListAllApiKeys")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/api-keys"
@@ -965,6 +1080,18 @@ func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.tenantId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "tenant_id", r.tenantId, "form", "")
+	}
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -985,32 +1112,32 @@ func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest)
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1022,14 +1149,23 @@ func (a *AdminAPIService) ListAllApiKeysExecute(r AdminAPIListAllApiKeysRequest)
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIListApiKeysRequest struct {
@@ -1038,7 +1174,7 @@ type AdminAPIListApiKeysRequest struct {
 	tenantId string
 }
 
-func (r AdminAPIListApiKeysRequest) Execute() (*http.Response, error) {
+func (r AdminAPIListApiKeysRequest) Execute() (*AdminApiKeyList, *http.Response, error) {
 	return r.ApiService.ListApiKeysExecute(r)
 }
 
@@ -1060,16 +1196,18 @@ func (a *AdminAPIService) ListApiKeys(ctx context.Context, tenantId string) Admi
 }
 
 // Execute executes the request
-func (a *AdminAPIService) ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*http.Response, error) {
+//  @return AdminApiKeyList
+func (a *AdminAPIService) ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*AdminApiKeyList, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminApiKeyList
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ListApiKeys")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/api-keys"
@@ -1099,32 +1237,32 @@ func (a *AdminAPIService) ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*htt
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1136,22 +1274,49 @@ func (a *AdminAPIService) ListApiKeysExecute(r AdminAPIListApiKeysRequest) (*htt
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIListTenantsRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
+	status *string
+	limit *int32
+	offset *int32
 }
 
-func (r AdminAPIListTenantsRequest) Execute() (*http.Response, error) {
+func (r AdminAPIListTenantsRequest) Status(status string) AdminAPIListTenantsRequest {
+	r.status = &status
+	return r
+}
+
+func (r AdminAPIListTenantsRequest) Limit(limit int32) AdminAPIListTenantsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminAPIListTenantsRequest) Offset(offset int32) AdminAPIListTenantsRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r AdminAPIListTenantsRequest) Execute() (*AdminTenantList, *http.Response, error) {
 	return r.ApiService.ListTenantsExecute(r)
 }
 
@@ -1171,16 +1336,18 @@ func (a *AdminAPIService) ListTenants(ctx context.Context) AdminAPIListTenantsRe
 }
 
 // Execute executes the request
-func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*http.Response, error) {
+//  @return AdminTenantList
+func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*AdminTenantList, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenantList
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ListTenants")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants"
@@ -1189,6 +1356,15 @@ func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*htt
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -1209,32 +1385,32 @@ func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*htt
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1246,14 +1422,23 @@ func (a *AdminAPIService) ListTenantsExecute(r AdminAPIListTenantsRequest) (*htt
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIReactivateApiKeyRequest struct {
@@ -1327,14 +1512,14 @@ func (a *AdminAPIService) ReactivateApiKeyExecute(r AdminAPIReactivateApiKeyRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1380,7 +1565,7 @@ type AdminAPIResetTenantQuotaRequest struct {
 	tenantId string
 }
 
-func (r AdminAPIResetTenantQuotaRequest) Execute() (*http.Response, error) {
+func (r AdminAPIResetTenantQuotaRequest) Execute() (*AdminTenantQuota, *http.Response, error) {
 	return r.ApiService.ResetTenantQuotaExecute(r)
 }
 
@@ -1402,16 +1587,18 @@ func (a *AdminAPIService) ResetTenantQuota(ctx context.Context, tenantId string)
 }
 
 // Execute executes the request
-func (a *AdminAPIService) ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequest) (*http.Response, error) {
+//  @return AdminTenantQuota
+func (a *AdminAPIService) ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenantQuota
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ResetTenantQuota")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/quota/reset"
@@ -1441,32 +1628,32 @@ func (a *AdminAPIService) ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1478,14 +1665,23 @@ func (a *AdminAPIService) ResetTenantQuotaExecute(r AdminAPIResetTenantQuotaRequ
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIRevokeApiKeyRequest struct {
@@ -1559,14 +1755,14 @@ func (a *AdminAPIService) RevokeApiKeyExecute(r AdminAPIRevokeApiKeyRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -1611,9 +1807,15 @@ type AdminAPIUpdateApiKeyRequest struct {
 	ApiService AdminAPI
 	tenantId string
 	keyId string
+	adminApiKeyWriteRequest *AdminApiKeyWriteRequest
 }
 
-func (r AdminAPIUpdateApiKeyRequest) Execute() (*http.Response, error) {
+func (r AdminAPIUpdateApiKeyRequest) AdminApiKeyWriteRequest(adminApiKeyWriteRequest AdminApiKeyWriteRequest) AdminAPIUpdateApiKeyRequest {
+	r.adminApiKeyWriteRequest = &adminApiKeyWriteRequest
+	return r
+}
+
+func (r AdminAPIUpdateApiKeyRequest) Execute() (*AdminApiKey, *http.Response, error) {
 	return r.ApiService.UpdateApiKeyExecute(r)
 }
 
@@ -1637,16 +1839,18 @@ func (a *AdminAPIService) UpdateApiKey(ctx context.Context, tenantId string, key
 }
 
 // Execute executes the request
-func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*http.Response, error) {
+//  @return AdminApiKey
+func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*AdminApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.UpdateApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
@@ -1656,9 +1860,12 @@ func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.adminApiKeyWriteRequest == nil {
+		return localVarReturnValue, nil, reportError("adminApiKeyWriteRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1674,35 +1881,37 @@ func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*h
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.adminApiKeyWriteRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1714,23 +1923,38 @@ func (a *AdminAPIService) UpdateApiKeyExecute(r AdminAPIUpdateApiKeyRequest) (*h
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIUpdateTenantRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
 	tenantId string
+	adminUpdateTenantRequest *AdminUpdateTenantRequest
 }
 
-func (r AdminAPIUpdateTenantRequest) Execute() (*http.Response, error) {
+func (r AdminAPIUpdateTenantRequest) AdminUpdateTenantRequest(adminUpdateTenantRequest AdminUpdateTenantRequest) AdminAPIUpdateTenantRequest {
+	r.adminUpdateTenantRequest = &adminUpdateTenantRequest
+	return r
+}
+
+func (r AdminAPIUpdateTenantRequest) Execute() (*AdminTenant, *http.Response, error) {
 	return r.ApiService.UpdateTenantExecute(r)
 }
 
@@ -1752,16 +1976,18 @@ func (a *AdminAPIService) UpdateTenant(ctx context.Context, tenantId string) Adm
 }
 
 // Execute executes the request
-func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*http.Response, error) {
+//  @return AdminTenant
+func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*AdminTenant, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenant
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.UpdateTenant")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}"
@@ -1770,9 +1996,12 @@ func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.adminUpdateTenantRequest == nil {
+		return localVarReturnValue, nil, reportError("adminUpdateTenantRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1788,35 +2017,37 @@ func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*h
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.adminUpdateTenantRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1828,23 +2059,38 @@ func (a *AdminAPIService) UpdateTenantExecute(r AdminAPIUpdateTenantRequest) (*h
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AdminAPIUpdateTenantQuotaRequest struct {
 	ctx context.Context
 	ApiService AdminAPI
 	tenantId string
+	adminUpdateQuotaRequest *AdminUpdateQuotaRequest
 }
 
-func (r AdminAPIUpdateTenantQuotaRequest) Execute() (*http.Response, error) {
+func (r AdminAPIUpdateTenantQuotaRequest) AdminUpdateQuotaRequest(adminUpdateQuotaRequest AdminUpdateQuotaRequest) AdminAPIUpdateTenantQuotaRequest {
+	r.adminUpdateQuotaRequest = &adminUpdateQuotaRequest
+	return r
+}
+
+func (r AdminAPIUpdateTenantQuotaRequest) Execute() (*AdminTenantQuota, *http.Response, error) {
 	return r.ApiService.UpdateTenantQuotaExecute(r)
 }
 
@@ -1866,16 +2112,18 @@ func (a *AdminAPIService) UpdateTenantQuota(ctx context.Context, tenantId string
 }
 
 // Execute executes the request
-func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRequest) (*http.Response, error) {
+//  @return AdminTenantQuota
+func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRequest) (*AdminTenantQuota, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *AdminTenantQuota
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.UpdateTenantQuota")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/admin/tenants/{tenant_id}/quota"
@@ -1884,9 +2132,12 @@ func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.adminUpdateQuotaRequest == nil {
+		return localVarReturnValue, nil, reportError("adminUpdateQuotaRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1902,35 +2153,37 @@ func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRe
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.adminUpdateQuotaRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1942,12 +2195,21 @@ func (a *AdminAPIService) UpdateTenantQuotaExecute(r AdminAPIUpdateTenantQuotaRe
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }

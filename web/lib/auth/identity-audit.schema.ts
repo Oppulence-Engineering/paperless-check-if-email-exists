@@ -13,6 +13,7 @@ export const IdentityAuditInputSchema = z.object({
 	organizationId: z.string().min(1).nullable(),
 	action: z.string().min(1).max(120),
 	targetId: z.string().min(1).max(255).nullable(),
+	reason: z.string().min(10).max(255).nullable().optional(),
 	result: z.enum(["success", "failure"]),
 	requestId: z.string().min(1).max(255).nullable(),
 });
@@ -32,6 +33,7 @@ const IdentityAuditEventSchema = z.object({
 	organizationId: z.string().nullable(),
 	action: z.string().min(1),
 	targetId: z.string().nullable(),
+	reason: z.string().nullable(),
 	result: z.enum(["success", "failure"]),
 	requestId: z.string().nullable(),
 	createdAt: z.coerce.date(),

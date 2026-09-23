@@ -12,14 +12,14 @@ use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct CreateApiKeyRequest {
 	pub name: Option<String>,
 	pub scopes: Option<Vec<String>>,
 	pub expires_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct UpdateApiKeyRequest {
 	pub name: Option<String>,
 	pub scopes: Option<Vec<String>>,
@@ -389,6 +389,7 @@ pub fn list_api_keys(
 	path = "/v1/me/api-keys",
 	operation_id = "createTenantApiKey",
 	tag = "Account",
+	request_body = CreateApiKeyRequest,
 	responses((status = 201, description = "API key created")),
 )]
 pub fn create_api_key(
@@ -411,6 +412,7 @@ pub fn create_api_key(
 	path = "/v1/me/api-keys/{key_id}",
 	operation_id = "updateTenantApiKey",
 	tag = "Account",
+	request_body = UpdateApiKeyRequest,
 	params(("key_id" = Uuid, Path, description = "API key identifier")),
 	responses((status = 200, description = "API key updated")),
 )]

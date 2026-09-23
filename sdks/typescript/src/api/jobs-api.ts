@@ -253,6 +253,80 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
+         *
+         * @summary Get job failure center
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetJobFailureCenter: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1GetJobFailureCenter', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/failure-center`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetJobFailureReport: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('v1GetJobFailureReport', 'jobId', jobId)
+            const localVarPath = `/v1/jobs/{job_id}/failure-report`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
@@ -416,80 +490,6 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         *
-         * @summary Get job failure center
-         * @param {number} jobId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1JobsJobIdFailureCenterGet: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'jobId' is not null or undefined
-            assertParamExists('v1JobsJobIdFailureCenterGet', 'jobId', jobId)
-            const localVarPath = `/v1/jobs/{job_id}/failure-center`
-                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         *
-         * @summary Download job failure report
-         * @param {number} jobId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1JobsJobIdFailureReportGet: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'jobId' is not null or undefined
-            assertParamExists('v1JobsJobIdFailureReportGet', 'jobId', jobId)
-            const localVarPath = `/v1/jobs/{job_id}/failure-report`
-                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication Authorization required
-            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
-
-
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {number} jobId Bulk job identifier
@@ -608,6 +608,32 @@ export const JobsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         *
+         * @summary Get job failure center
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetJobFailureCenter(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetJobFailureCenter(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1GetJobFailureCenter']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {number} jobId
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetJobFailureReport(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetJobFailureReport(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1GetJobFailureReport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {number} jobId Bulk job identifier
@@ -660,32 +686,6 @@ export const JobsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobLatency(jobId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobLatency']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         *
-         * @summary Get job failure center
-         * @param {number} jobId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1JobsJobIdFailureCenterGet(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobsJobIdFailureCenterGet(jobId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobsJobIdFailureCenterGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         *
-         * @summary Download job failure report
-         * @param {number} jobId
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1JobsJobIdFailureReportGet(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1JobsJobIdFailureReportGet(jobId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1JobsJobIdFailureReportGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -762,6 +762,26 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.v1GetJobEvents(requestParameters.jobId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
+         *
+         * @summary Get job failure center
+         * @param {JobsApiV1GetJobFailureCenterRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetJobFailureCenter(requestParameters: JobsApiV1GetJobFailureCenterRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
+            return localVarFp.v1GetJobFailureCenter(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Download job failure report
+         * @param {JobsApiV1GetJobFailureReportRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetJobFailureReport(requestParameters: JobsApiV1GetJobFailureReportRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
+            return localVarFp.v1GetJobFailureReport(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Returns paginated completed task results for a tenant-scoped bulk job.
          * @summary GET /v1/jobs/{job_id}/results
          * @param {JobsApiV1GetJobResultsRequest} requestParameters Request parameters.
@@ -800,26 +820,6 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
          */
         v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1JobLatency(requestParameters.jobId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Get job failure center
-         * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
-            return localVarFp.v1JobsJobIdFailureCenterGet(requestParameters.jobId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         *
-         * @summary Download job failure report
-         * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
-            return localVarFp.v1JobsJobIdFailureReportGet(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
@@ -891,6 +891,26 @@ export interface JobsApiInterface {
     v1GetJobEvents(requestParameters: JobsApiV1GetJobEventsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     *
+     * @summary Get job failure center
+     * @param {JobsApiV1GetJobFailureCenterRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1GetJobFailureCenter(requestParameters: JobsApiV1GetJobFailureCenterRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
+     *
+     * @summary Download job failure report
+     * @param {JobsApiV1GetJobFailureReportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1GetJobFailureReport(requestParameters: JobsApiV1GetJobFailureReportRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+
+    /**
      * Returns paginated completed task results for a tenant-scoped bulk job.
      * @summary GET /v1/jobs/{job_id}/results
      * @param {JobsApiV1GetJobResultsRequest} requestParameters Request parameters.
@@ -929,26 +949,6 @@ export interface JobsApiInterface {
      * @memberof JobsApiInterface
      */
     v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
-
-    /**
-     *
-     * @summary Get job failure center
-     * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApiInterface
-     */
-    v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
-
-    /**
-     *
-     * @summary Download job failure report
-     * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApiInterface
-     */
-    v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
 
     /**
      * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
@@ -1075,6 +1075,34 @@ export interface JobsApiV1GetJobEventsRequest {
 }
 
 /**
+ * Request parameters for v1GetJobFailureCenter operation in JobsApi.
+ * @export
+ * @interface JobsApiV1GetJobFailureCenterRequest
+ */
+export interface JobsApiV1GetJobFailureCenterRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1GetJobFailureCenter
+     */
+    readonly jobId: number
+}
+
+/**
+ * Request parameters for v1GetJobFailureReport operation in JobsApi.
+ * @export
+ * @interface JobsApiV1GetJobFailureReportRequest
+ */
+export interface JobsApiV1GetJobFailureReportRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1GetJobFailureReport
+     */
+    readonly jobId: number
+}
+
+/**
  * Request parameters for v1GetJobResults operation in JobsApi.
  * @export
  * @interface JobsApiV1GetJobResultsRequest
@@ -1147,34 +1175,6 @@ export interface JobsApiV1JobLatencyRequest {
      * Bulk job identifier
      * @type {number}
      * @memberof JobsApiV1JobLatency
-     */
-    readonly jobId: number
-}
-
-/**
- * Request parameters for v1JobsJobIdFailureCenterGet operation in JobsApi.
- * @export
- * @interface JobsApiV1JobsJobIdFailureCenterGetRequest
- */
-export interface JobsApiV1JobsJobIdFailureCenterGetRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof JobsApiV1JobsJobIdFailureCenterGet
-     */
-    readonly jobId: number
-}
-
-/**
- * Request parameters for v1JobsJobIdFailureReportGet operation in JobsApi.
- * @export
- * @interface JobsApiV1JobsJobIdFailureReportGetRequest
- */
-export interface JobsApiV1JobsJobIdFailureReportGetRequest {
-    /**
-     *
-     * @type {number}
-     * @memberof JobsApiV1JobsJobIdFailureReportGet
      */
     readonly jobId: number
 }
@@ -1261,6 +1261,30 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
     }
 
     /**
+     *
+     * @summary Get job failure center
+     * @param {JobsApiV1GetJobFailureCenterRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1GetJobFailureCenter(requestParameters: JobsApiV1GetJobFailureCenterRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1GetJobFailureCenter(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Download job failure report
+     * @param {JobsApiV1GetJobFailureReportRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1GetJobFailureReport(requestParameters: JobsApiV1GetJobFailureReportRequest, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1GetJobFailureReport(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Returns paginated completed task results for a tenant-scoped bulk job.
      * @summary GET /v1/jobs/{job_id}/results
      * @param {JobsApiV1GetJobResultsRequest} requestParameters Request parameters.
@@ -1306,30 +1330,6 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
      */
     public v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig) {
         return JobsApiFp(this.configuration).v1JobLatency(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Get job failure center
-     * @param {JobsApiV1JobsJobIdFailureCenterGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApi
-     */
-    public v1JobsJobIdFailureCenterGet(requestParameters: JobsApiV1JobsJobIdFailureCenterGetRequest, options?: RawAxiosRequestConfig) {
-        return JobsApiFp(this.configuration).v1JobsJobIdFailureCenterGet(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     *
-     * @summary Download job failure report
-     * @param {JobsApiV1JobsJobIdFailureReportGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApi
-     */
-    public v1JobsJobIdFailureReportGet(requestParameters: JobsApiV1JobsJobIdFailureReportGetRequest, options?: RawAxiosRequestConfig) {
-        return JobsApiFp(this.configuration).v1JobsJobIdFailureReportGet(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

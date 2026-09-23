@@ -100,7 +100,9 @@ export function DeveloperSettings({
 	const create = useMutation({
 		mutationFn: async (body: z.infer<typeof CreateApiKeySchema>) =>
 			CreatedApiKeySchema.parse(
-				CreateTenantApiKey201Response.parse((await sdk.createTenantApiKey({ data: body })).data),
+				CreateTenantApiKey201Response.parse(
+					(await sdk.createTenantApiKey({ createApiKeyRequest: body })).data,
+				),
 			),
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey });

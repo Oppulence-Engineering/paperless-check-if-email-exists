@@ -14,16 +14,16 @@ Method | HTTP request | Description
 [**V1DeleteList**](V1API.md#V1DeleteList) | **Delete** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
 [**V1DeleteSuppression**](V1API.md#V1DeleteSuppression) | **Delete** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 [**V1DownloadList**](V1API.md#V1DownloadList) | **Get** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
+[**V1ExportSuppressions**](V1API.md#V1ExportSuppressions) | **Get** /v1/suppressions/export | Export suppressions
 [**V1FindEmail**](V1API.md#V1FindEmail) | **Post** /v1/find_email | POST /v1/find_email
 [**V1GetFindEmail**](V1API.md#V1GetFindEmail) | **Get** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+[**V1ImportSuppressions**](V1API.md#V1ImportSuppressions) | **Post** /v1/suppressions/import | Import suppressions
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
+[**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
-[**V1SourcesQualityGet**](V1API.md#V1SourcesQualityGet) | **Get** /v1/sources/quality | List source quality
-[**V1SuppressionsExportGet**](V1API.md#V1SuppressionsExportGet) | **Get** /v1/suppressions/export | Export suppressions
-[**V1SuppressionsIdEventsGet**](V1API.md#V1SuppressionsIdEventsGet) | **Get** /v1/suppressions/{id}/events | List suppression events
-[**V1SuppressionsImportPost**](V1API.md#V1SuppressionsImportPost) | **Post** /v1/suppressions/import | Import suppressions
+[**V1SourceQuality**](V1API.md#V1SourceQuality) | **Get** /v1/sources/quality | List source quality
 
 
 
@@ -161,7 +161,7 @@ Name | Type | Description  | Notes
 
 ## V1CheckEmailWithOnboard
 
-> V1CheckEmailWithOnboard(ctx).Execute()
+> V1CheckEmailWithOnboard(ctx).OnboardRequest(onboardRequest).Execute()
 
 POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
 
@@ -178,10 +178,11 @@ import (
 )
 
 func main() {
+	onboardRequest := *openapiclient.NewOnboardRequest("ContactEmail_example", "EmailToVerify_example", "TenantName_example") // OnboardRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).Execute()
+	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).OnboardRequest(onboardRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CheckEmailWithOnboard``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -191,12 +192,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CheckEmailWithOnboardRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **onboardRequest** | [**OnboardRequest**](OnboardRequest.md) |  |
 
 ### Return type
 
@@ -204,11 +209,11 @@ Other parameters are passed through a pointer to a apiV1CheckEmailWithOnboardReq
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -690,6 +695,65 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1ExportSuppressions
+
+> *os.File V1ExportSuppressions(ctx).Execute()
+
+Export suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ExportSuppressions(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ExportSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ExportSuppressions`: *os.File
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ExportSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ExportSuppressionsRequest struct via the builder pattern
+
+
+### Return type
+
+[***os.File**](*os.File.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: text/csv, application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1FindEmail
 
 > FindEmailAcceptedResponse V1FindEmail(ctx).FindEmailRequest(findEmailRequest).Execute()
@@ -890,6 +954,70 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1ImportSuppressions
+
+> map[string]interface{} V1ImportSuppressions(ctx).RequestBody(requestBody).Execute()
+
+Import suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	requestBody := map[string]interface{}{"key": interface{}(123)} // map[string]interface{} |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ImportSuppressions(context.Background()).RequestBody(requestBody).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ImportSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ImportSuppressions`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ImportSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ImportSuppressionsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **requestBody** | **map[string]interface{}** |  |
+
+### Return type
+
+**map[string]interface{}**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1ListLists
 
 > ListListResponse V1ListLists(ctx).Limit(limit).Offset(offset).Execute()
@@ -941,6 +1069,74 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListListResponse**](ListListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ListSuppressionEvents
+
+> map[string]interface{} V1ListSuppressionEvents(ctx, id).Execute()
+
+List suppression events
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	id := int32(56) // int32 |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ListSuppressionEvents(context.Background(), id).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListSuppressionEvents``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListSuppressionEvents`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ListSuppressionEvents`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **int32** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListSuppressionEventsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**map[string]interface{}**
 
 ### Authorization
 
@@ -1091,9 +1287,9 @@ Other parameters are passed through a pointer to a apiV1ReverificationStatusRequ
 [[Back to README]](../README.md)
 
 
-## V1SourcesQualityGet
+## V1SourceQuality
 
-> map[string]interface{} V1SourcesQualityGet(ctx).Execute()
+> map[string]interface{} V1SourceQuality(ctx).Execute()
 
 List source quality
 
@@ -1113,13 +1309,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SourcesQualityGet(context.Background()).Execute()
+	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SourcesQualityGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SourceQuality``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1SourcesQualityGet`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SourcesQualityGet`: %v\n", resp)
+	// response from `V1SourceQuality`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SourceQuality`: %v\n", resp)
 }
 ```
 
@@ -1129,7 +1325,7 @@ This endpoint does not need any parameter.
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiV1SourcesQualityGetRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiV1SourceQualityRequest struct via the builder pattern
 
 
 ### Return type
@@ -1143,197 +1339,6 @@ Other parameters are passed through a pointer to a apiV1SourcesQualityGetRequest
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## V1SuppressionsExportGet
-
-> *os.File V1SuppressionsExportGet(ctx).Execute()
-
-Export suppressions
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
-)
-
-func main() {
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SuppressionsExportGet(context.Background()).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SuppressionsExportGet``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `V1SuppressionsExportGet`: *os.File
-	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SuppressionsExportGet`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-This endpoint does not need any parameter.
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiV1SuppressionsExportGetRequest struct via the builder pattern
-
-
-### Return type
-
-[***os.File**](*os.File.md)
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: text/csv, application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## V1SuppressionsIdEventsGet
-
-> map[string]interface{} V1SuppressionsIdEventsGet(ctx, id).Execute()
-
-List suppression events
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
-)
-
-func main() {
-	id := int32(56) // int32 |
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SuppressionsIdEventsGet(context.Background(), id).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SuppressionsIdEventsGet``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `V1SuppressionsIdEventsGet`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SuppressionsIdEventsGet`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**id** | **int32** |  |
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiV1SuppressionsIdEventsGetRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
-
-### Return type
-
-**map[string]interface{}**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## V1SuppressionsImportPost
-
-> map[string]interface{} V1SuppressionsImportPost(ctx).RequestBody(requestBody).Execute()
-
-Import suppressions
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
-)
-
-func main() {
-	requestBody := map[string]interface{}{"key": interface{}(123)} // map[string]interface{} |
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SuppressionsImportPost(context.Background()).RequestBody(requestBody).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SuppressionsImportPost``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `V1SuppressionsImportPost`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SuppressionsImportPost`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiV1SuppressionsImportPostRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **requestBody** | **map[string]interface{}** |  |
-
-### Return type
-
-**map[string]interface{}**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

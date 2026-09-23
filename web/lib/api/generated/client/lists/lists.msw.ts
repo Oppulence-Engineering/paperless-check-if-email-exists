@@ -4,30 +4,30 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
 import type {
-  GetV1ListsListIdRemediationPlan200,
-  PostV1ListsListIdRemediationExports200,
-  PostV1ListsListIdRemediationPlan200,
+  V1CreateRemediationExport200,
+  V1CreateRemediationPlan200,
+  V1GetRemediationPlan200,
 } from "../model";
 
 import {
-  getGetV1ListsListIdRemediationExportsExportIdDownloadResponseMock,
-  getGetV1ListsListIdRemediationPlanResponseMock,
-  getPostV1ListsListIdRemediationExportsResponseMock,
-  getPostV1ListsListIdRemediationPlanResponseMock,
+  getV1CreateRemediationExportResponseMock,
+  getV1CreateRemediationPlanResponseMock,
+  getV1DownloadRemediationExportResponseMock,
+  getV1GetRemediationPlanResponseMock,
 } from "./lists.faker";
 
 export {
-  getPostV1ListsListIdRemediationExportsResponseMock,
-  getGetV1ListsListIdRemediationExportsExportIdDownloadResponseMock,
-  getGetV1ListsListIdRemediationPlanResponseMock,
-  getPostV1ListsListIdRemediationPlanResponseMock,
+  getV1CreateRemediationExportResponseMock,
+  getV1DownloadRemediationExportResponseMock,
+  getV1GetRemediationPlanResponseMock,
+  getV1CreateRemediationPlanResponseMock,
 } from "./lists.faker";
 
 export const getV1ListQualityMockHandler = (
@@ -51,14 +51,13 @@ export const getV1ListQualityMockHandler = (
   );
 };
 
-export const getPostV1ListsListIdRemediationExportsMockHandler = (
+export const getV1CreateRemediationExportMockHandler = (
   overrideResponse?:
-    | PostV1ListsListIdRemediationExports200
+    | V1CreateRemediationExport200
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
       ) =>
-        | Promise<PostV1ListsListIdRemediationExports200>
-        | PostV1ListsListIdRemediationExports200),
+        Promise<V1CreateRemediationExport200> | V1CreateRemediationExport200),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -69,7 +68,7 @@ export const getPostV1ListsListIdRemediationExportsMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getPostV1ListsListIdRemediationExportsResponseMock(),
+          : getV1CreateRemediationExportResponseMock(),
         { status: 200 },
       );
     },
@@ -77,44 +76,41 @@ export const getPostV1ListsListIdRemediationExportsMockHandler = (
   );
 };
 
-export const getGetV1ListsListIdRemediationExportsExportIdDownloadMockHandler =
-  (
-    overrideResponse?:
-      | ArrayBuffer
-      | ((
-          info: Parameters<Parameters<typeof http.get>[1]>[0],
-        ) => Promise<ArrayBuffer> | ArrayBuffer),
-    options?: RequestHandlerOptions,
-  ) => {
-    return http.get(
-      "*/v1/lists/:listId/remediation-exports/:exportId/download",
-      async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-        const binaryBody =
-          overrideResponse !== undefined
-            ? typeof overrideResponse === "function"
-              ? await overrideResponse(info)
-              : overrideResponse
-            : getGetV1ListsListIdRemediationExportsExportIdDownloadResponseMock();
-        return HttpResponse.arrayBuffer(
-          binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/octet-stream" },
-          },
-        );
-      },
-      options,
-    );
-  };
-
-export const getGetV1ListsListIdRemediationPlanMockHandler = (
+export const getV1DownloadRemediationExportMockHandler = (
   overrideResponse?:
-    | GetV1ListsListIdRemediationPlan200
+    | ArrayBuffer
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) =>
-        | Promise<GetV1ListsListIdRemediationPlan200>
-        | GetV1ListsListIdRemediationPlan200),
+      ) => Promise<ArrayBuffer> | ArrayBuffer),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/lists/:listId/remediation-exports/:exportId/download",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      const binaryBody =
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DownloadRemediationExportResponseMock();
+      return HttpResponse.arrayBuffer(
+        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/octet-stream" },
+        },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1GetRemediationPlanMockHandler = (
+  overrideResponse?:
+    | V1GetRemediationPlan200
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<V1GetRemediationPlan200> | V1GetRemediationPlan200),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -125,7 +121,7 @@ export const getGetV1ListsListIdRemediationPlanMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getGetV1ListsListIdRemediationPlanResponseMock(),
+          : getV1GetRemediationPlanResponseMock(),
         { status: 200 },
       );
     },
@@ -133,14 +129,12 @@ export const getGetV1ListsListIdRemediationPlanMockHandler = (
   );
 };
 
-export const getPostV1ListsListIdRemediationPlanMockHandler = (
+export const getV1CreateRemediationPlanMockHandler = (
   overrideResponse?:
-    | PostV1ListsListIdRemediationPlan200
+    | V1CreateRemediationPlan200
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) =>
-        | Promise<PostV1ListsListIdRemediationPlan200>
-        | PostV1ListsListIdRemediationPlan200),
+      ) => Promise<V1CreateRemediationPlan200> | V1CreateRemediationPlan200),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -151,7 +145,7 @@ export const getPostV1ListsListIdRemediationPlanMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getPostV1ListsListIdRemediationPlanResponseMock(),
+          : getV1CreateRemediationPlanResponseMock(),
         { status: 200 },
       );
     },
@@ -160,8 +154,8 @@ export const getPostV1ListsListIdRemediationPlanMockHandler = (
 };
 export const getListsMock = () => [
   getV1ListQualityMockHandler(),
-  getPostV1ListsListIdRemediationExportsMockHandler(),
-  getGetV1ListsListIdRemediationExportsExportIdDownloadMockHandler(),
-  getGetV1ListsListIdRemediationPlanMockHandler(),
-  getPostV1ListsListIdRemediationPlanMockHandler(),
+  getV1CreateRemediationExportMockHandler(),
+  getV1DownloadRemediationExportMockHandler(),
+  getV1GetRemediationPlanMockHandler(),
+  getV1CreateRemediationPlanMockHandler(),
 ];

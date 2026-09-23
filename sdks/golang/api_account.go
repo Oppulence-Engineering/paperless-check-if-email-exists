@@ -111,6 +111,12 @@ type AccountAPIService service
 type AccountAPICreateTenantApiKeyRequest struct {
 	ctx context.Context
 	ApiService AccountAPI
+	createApiKeyRequest *CreateApiKeyRequest
+}
+
+func (r AccountAPICreateTenantApiKeyRequest) CreateApiKeyRequest(createApiKeyRequest CreateApiKeyRequest) AccountAPICreateTenantApiKeyRequest {
+	r.createApiKeyRequest = &createApiKeyRequest
+	return r
 }
 
 func (r AccountAPICreateTenantApiKeyRequest) Execute() (*http.Response, error) {
@@ -150,9 +156,12 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.createApiKeyRequest == nil {
+		return nil, reportError("createApiKeyRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -168,6 +177,8 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.createApiKeyRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -560,6 +571,12 @@ type AccountAPIUpdateTenantApiKeyRequest struct {
 	ctx context.Context
 	ApiService AccountAPI
 	keyId string
+	updateApiKeyRequest *UpdateApiKeyRequest
+}
+
+func (r AccountAPIUpdateTenantApiKeyRequest) UpdateApiKeyRequest(updateApiKeyRequest UpdateApiKeyRequest) AccountAPIUpdateTenantApiKeyRequest {
+	r.updateApiKeyRequest = &updateApiKeyRequest
+	return r
 }
 
 func (r AccountAPIUpdateTenantApiKeyRequest) Execute() (*http.Response, error) {
@@ -602,9 +619,12 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.updateApiKeyRequest == nil {
+		return nil, reportError("updateApiKeyRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -620,6 +640,8 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.updateApiKeyRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {

@@ -4,10 +4,14 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
-import type { ErrorEnvelope, V1ListCommentsParams } from "../model";
+import type {
+  CreateCommentRequest,
+  ErrorEnvelope,
+  V1ListCommentsParams,
+} from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
@@ -139,11 +143,14 @@ export const getV1CreateCommentUrl = () => {
  * @summary POST /v1/comments
  */
 export const v1CreateComment = async (
+  createCommentRequest: CreateCommentRequest,
   options?: RequestInit,
 ): Promise<v1CreateCommentResponse> => {
   const res = await fetch(getV1CreateCommentUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCommentRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();

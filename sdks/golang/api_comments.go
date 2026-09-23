@@ -64,6 +64,12 @@ type CommentsAPIService service
 type CommentsAPIV1CreateCommentRequest struct {
 	ctx context.Context
 	ApiService CommentsAPI
+	createCommentRequest *CreateCommentRequest
+}
+
+func (r CommentsAPIV1CreateCommentRequest) CreateCommentRequest(createCommentRequest CreateCommentRequest) CommentsAPIV1CreateCommentRequest {
+	r.createCommentRequest = &createCommentRequest
+	return r
 }
 
 func (r CommentsAPIV1CreateCommentRequest) Execute() (*http.Response, error) {
@@ -101,9 +107,12 @@ func (a *CommentsAPIService) V1CreateCommentExecute(r CommentsAPIV1CreateComment
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.createCommentRequest == nil {
+		return nil, reportError("createCommentRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -119,6 +128,8 @@ func (a *CommentsAPIService) V1CreateCommentExecute(r CommentsAPIV1CreateComment
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.createCommentRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {

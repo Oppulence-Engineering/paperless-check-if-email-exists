@@ -71,6 +71,337 @@
 				"required": ["added", "duplicates"],
 				"type": "object"
 			},
+			"AdminAllApiKeys": {
+				"properties": {
+					"api_keys": {
+						"items": {
+							"$ref": "#/components/schemas/AdminApiKey"
+						},
+						"type": "array"
+					},
+					"total": {
+						"format": "int64",
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
+			"AdminApiKey": {
+				"properties": {
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"expires_at": {
+						"format": "date-time",
+						"nullable": true,
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"key_prefix": {
+						"type": "string"
+					},
+					"last_used_at": {
+						"format": "date-time",
+						"nullable": true,
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"scopes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"status": {
+						"type": "string"
+					},
+					"tenant_id": {
+						"format": "uuid",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"AdminApiKeyList": {
+				"properties": {
+					"api_keys": {
+						"items": {
+							"$ref": "#/components/schemas/AdminApiKey"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object"
+			},
+			"AdminApiKeyWriteRequest": {
+				"properties": {
+					"expires_at": {
+						"format": "date-time",
+						"nullable": true,
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"scopes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object"
+			},
+			"AdminCreateTenantRequest": {
+				"properties": {
+					"contact_email": {
+						"format": "email",
+						"type": "string"
+					},
+					"default_webhook_url": {
+						"nullable": true,
+						"type": "string"
+					},
+					"max_requests_per_day": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_hour": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_minute": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_second": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"monthly_email_limit": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					},
+					"plan_tier": {
+						"type": "string"
+					},
+					"result_retention_days": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"slug": {
+						"type": "string"
+					},
+					"webhook_signing_secret": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"required": ["name", "slug", "contact_email"],
+				"type": "object"
+			},
+			"AdminCreatedApiKey": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/AdminApiKey"
+					},
+					{
+						"properties": {
+							"key": {
+								"description": "Plaintext key returned only at creation.",
+								"type": "string"
+							}
+						},
+						"required": ["key"],
+						"type": "object"
+					}
+				]
+			},
+			"AdminTenant": {
+				"properties": {
+					"contact_email": {
+						"format": "email",
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"default_webhook_url": {
+						"nullable": true,
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"max_requests_per_day": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_hour": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_minute": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_second": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"monthly_email_limit": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					},
+					"plan_tier": {
+						"type": "string"
+					},
+					"result_retention_days": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"slug": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"used_this_period": {
+						"format": "int32",
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
+			"AdminTenantList": {
+				"properties": {
+					"tenants": {
+						"items": {
+							"$ref": "#/components/schemas/AdminTenant"
+						},
+						"type": "array"
+					},
+					"total": {
+						"format": "int64",
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
+			"AdminTenantQuota": {
+				"properties": {
+					"monthly_email_limit": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					},
+					"period_reset_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"quota_unlimited": {
+						"type": "boolean"
+					},
+					"remaining_quota": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					},
+					"tenant_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"used_this_period": {
+						"format": "int32",
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
+			"AdminUpdateQuotaRequest": {
+				"properties": {
+					"monthly_email_limit": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"required": ["monthly_email_limit"],
+				"type": "object"
+			},
+			"AdminUpdateTenantRequest": {
+				"properties": {
+					"contact_email": {
+						"format": "email",
+						"type": "string"
+					},
+					"default_webhook_url": {
+						"nullable": true,
+						"type": "string"
+					},
+					"max_requests_per_day": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_hour": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_minute": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"max_requests_per_second": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"monthly_email_limit": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					},
+					"plan_tier": {
+						"type": "string"
+					},
+					"result_retention_days": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"status": {
+						"type": "string"
+					},
+					"webhook_signing_secret": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ApprovalCategoryBreakdown": {
 				"properties": {
 					"invalid": {
@@ -543,6 +874,49 @@
 					"id": "a872ead6474cd"
 				}
 			},
+			"CreateApiKeyRequest": {
+				"properties": {
+					"expires_at": {
+						"nullable": true,
+						"type": "string"
+					},
+					"name": {
+						"nullable": true,
+						"type": "string"
+					},
+					"scopes": {
+						"items": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					}
+				},
+				"type": "object"
+			},
+			"CreateCommentRequest": {
+				"properties": {
+					"author": {
+						"nullable": true,
+						"type": "string"
+					},
+					"body": {
+						"type": "string"
+					},
+					"job_id": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					},
+					"list_id": {
+						"format": "int32",
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"required": ["body"],
+				"type": "object"
+			},
 			"CreatePipelineInput": {
 				"example": {
 					"delivery": {
@@ -615,6 +989,23 @@
 					}
 				},
 				"required": ["provider", "label"],
+				"type": "object"
+			},
+			"CreateTenantDomainRequest": {
+				"properties": {
+					"domain": {
+						"type": "string"
+					},
+					"is_active": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"notes": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"required": ["domain"],
 				"type": "object"
 			},
 			"DebugDetails": {
@@ -1426,6 +1817,34 @@
 				},
 				"required": ["accepts_mail", "records"],
 				"title": "MxDetails",
+				"type": "object"
+			},
+			"OnboardRequest": {
+				"properties": {
+					"contact_email": {
+						"description": "Contact email for the tenant account (billing, alerts).",
+						"type": "string"
+					},
+					"email_to_verify": {
+						"description": "Email address to verify.",
+						"type": "string"
+					},
+					"plan_tier": {
+						"description": "Optional plan tier (defaults to \"free\").",
+						"nullable": true,
+						"type": "string"
+					},
+					"slug": {
+						"description": "URL-safe slug (auto-generated from tenant_name if omitted).",
+						"nullable": true,
+						"type": "string"
+					},
+					"tenant_name": {
+						"description": "Display name for the new tenant.",
+						"type": "string"
+					}
+				},
+				"required": ["email_to_verify", "tenant_name", "contact_email"],
 				"type": "object"
 			},
 			"OutcomeIngestRequest": {
@@ -2863,6 +3282,26 @@
 				"required": ["run_id", "status"],
 				"type": "object"
 			},
+			"UpdateApiKeyRequest": {
+				"properties": {
+					"expires_at": {
+						"nullable": true,
+						"type": "string"
+					},
+					"name": {
+						"nullable": true,
+						"type": "string"
+					},
+					"scopes": {
+						"items": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					}
+				},
+				"type": "object"
+			},
 			"UpdatePipelineInput": {
 				"example": {
 					"delivery": {
@@ -2969,6 +3408,27 @@
 				},
 				"type": "object"
 			},
+			"UpdateTenantDomainRequest": {
+				"properties": {
+					"domain": {
+						"nullable": true,
+						"type": "string"
+					},
+					"is_active": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"is_verified": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"notes": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"UpdateTenantSettingsRequest": {
 				"properties": {
 					"default_policy_mode": {
@@ -3054,10 +3514,22 @@
 			}
 		},
 		"securitySchemes": {
+			"AdminSecret": {
+				"description": "Private operator credential for backend admin routes. Never send from a browser or workspace API key.",
+				"in": "header",
+				"name": "x-reacher-secret",
+				"type": "apiKey"
+			},
 			"Authorization": {
-				"description": "A Reacher API key is required for all requests. Sign up on https://reacher.email to get your personal API key.",
+				"description": "Send Authorization: Bearer rch_live_... for tenant API calls. The signed-in console uses a server-issued backend token.",
 				"in": "header",
 				"name": "Authorization",
+				"type": "apiKey"
+			},
+			"LegacySecret": {
+				"description": "Legacy self-hosted v0 bulk credential. The shared hosted app does not expose v0.",
+				"in": "header",
+				"name": "x-reacher-secret",
 				"type": "apiKey"
 			}
 		}
@@ -3068,7 +3540,7 @@
 			"name": "Reacher",
 			"url": "https://reacher.email"
 		},
-		"description": "### What is Reacher?\n\nReacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.",
+		"description": "### What is Reacher?\n\nReacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.",
 		"license": {
 			"name": "AGPL-3.0 OR Commercial",
 			"url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
@@ -3088,6 +3560,7 @@
 						"description": "Service is alive"
 					}
 				},
+				"security": [],
 				"summary": "GET /healthz",
 				"tags": ["Health"]
 			}
@@ -3100,6 +3573,7 @@
 						"description": "Merged OpenAPI specification for all documented REST endpoints"
 					}
 				},
+				"security": [],
 				"summary": "Serve the merged OpenAPI document for all documented REST endpoints.",
 				"tags": ["System"]
 			}
@@ -3113,6 +3587,7 @@
 						"description": "Service readiness and dependency checks"
 					}
 				},
+				"security": [],
 				"summary": "GET /readyz",
 				"tags": ["Health"]
 			}
@@ -3126,6 +3601,11 @@
 						"description": "Legacy bulk job created"
 					}
 				},
+				"security": [
+					{
+						"LegacySecret": []
+					}
+				],
 				"summary": "POST /v0/bulk",
 				"tags": ["v0"]
 			}
@@ -3151,6 +3631,11 @@
 						"description": "Bulk status response"
 					}
 				},
+				"security": [
+					{
+						"LegacySecret": []
+					}
+				],
 				"summary": "GET /v0/bulk/{job_id}",
 				"tags": ["v0"]
 			}
@@ -3176,6 +3661,11 @@
 						"description": "Bulk job results"
 					}
 				},
+				"security": [
+					{
+						"LegacySecret": []
+					}
+				],
 				"summary": "GET /v0/bulk/{job_id}/results",
 				"tags": ["v0"]
 			}
@@ -3218,6 +3708,14 @@
 						"description": "Email verification result"
 					}
 				},
+				"security": [
+					{
+						"Authorization": []
+					},
+					{
+						"LegacySecret": []
+					}
+				],
 				"summary": "POST /v0/check_email",
 				"tags": ["v0"]
 			}
@@ -3226,8 +3724,49 @@
 			"get": {
 				"description": "List all API keys across tenants with optional filtering.",
 				"operationId": "list_all_api_keys",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "tenant_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminAllApiKeys"
+								}
+							}
+						},
 						"description": "All API keys"
 					},
 					"default": {
@@ -3241,6 +3780,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/api-keys",
 				"tags": ["Admin"]
 			}
@@ -3249,6 +3793,40 @@
 			"get": {
 				"description": "List jobs across all tenants with optional filters.",
 				"operationId": "list_jobs",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "tenant_id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Admin job list"
@@ -3264,6 +3842,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/jobs",
 				"tags": ["Admin Jobs"]
 			}
@@ -3299,6 +3882,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/jobs/{job_id}",
 				"tags": ["Admin Jobs"]
 			}
@@ -3315,6 +3903,24 @@
 						"required": true,
 						"schema": {
 							"format": "int32",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "int64",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"format": "int64",
 							"type": "integer"
 						}
 					}
@@ -3334,6 +3940,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/jobs/{job_id}/events",
 				"tags": ["Admin Jobs"]
 			}
@@ -3352,6 +3963,32 @@
 							"format": "int32",
 							"type": "integer"
 						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "int64",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"format": "int64",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "state",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"responses": {
@@ -3369,6 +4006,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/jobs/{job_id}/results",
 				"tags": ["Admin Jobs"]
 			}
@@ -3377,8 +4019,41 @@
 			"get": {
 				"description": "List tenants with optional status and pagination filters.",
 				"operationId": "list_tenants",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenantList"
+								}
+							}
+						},
 						"description": "Tenant list"
 					},
 					"default": {
@@ -3392,14 +4067,37 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants",
 				"tags": ["Admin"]
 			},
 			"post": {
 				"description": "Create a new tenant.",
 				"operationId": "create_tenant",
+				"parameters": [],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdminCreateTenantRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenant"
+								}
+							}
+						},
 						"description": "Tenant created"
 					},
 					"default": {
@@ -3413,6 +4111,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "POST /v1/admin/tenants",
 				"tags": ["Admin"]
 			}
@@ -3447,6 +4150,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "DELETE /v1/admin/tenants/{tenant_id}",
 				"tags": ["Admin"]
 			},
@@ -3466,6 +4174,13 @@
 				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenant"
+								}
+							}
+						},
 						"description": "Tenant details"
 					},
 					"default": {
@@ -3479,6 +4194,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants/{tenant_id}",
 				"tags": ["Admin"]
 			},
@@ -3496,8 +4216,25 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdminUpdateTenantRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenant"
+								}
+							}
+						},
 						"description": "Tenant updated"
 					},
 					"default": {
@@ -3511,6 +4248,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "PUT /v1/admin/tenants/{tenant_id}",
 				"tags": ["Admin"]
 			}
@@ -3532,6 +4274,13 @@
 				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminApiKeyList"
+								}
+							}
+						},
 						"description": "Tenant API keys"
 					},
 					"default": {
@@ -3545,6 +4294,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants/{tenant_id}/api-keys",
 				"tags": ["Admin"]
 			},
@@ -3563,8 +4317,25 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdminApiKeyWriteRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminCreatedApiKey"
+								}
+							}
+						},
 						"description": "API key created"
 					},
 					"default": {
@@ -3578,6 +4349,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "POST /v1/admin/tenants/{tenant_id}/api-keys",
 				"tags": ["Admin"]
 			}
@@ -3622,6 +4398,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
 				"tags": ["Admin"]
 			},
@@ -3651,6 +4432,13 @@
 				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminApiKey"
+								}
+							}
+						},
 						"description": "API key details"
 					},
 					"default": {
@@ -3664,6 +4452,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
 				"tags": ["Admin"]
 			},
@@ -3691,8 +4484,25 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdminApiKeyWriteRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminApiKey"
+								}
+							}
+						},
 						"description": "API key updated"
 					},
 					"default": {
@@ -3706,6 +4516,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
 				"tags": ["Admin"]
 			}
@@ -3750,6 +4565,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate",
 				"tags": ["Admin"]
 			}
@@ -3766,6 +4586,32 @@
 						"required": true,
 						"schema": {
 							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "int64",
+							"type": "integer"
+						}
+					},
+					{
+						"in": "query",
+						"name": "offset",
+						"required": false,
+						"schema": {
+							"format": "int64",
+							"type": "integer"
 						}
 					}
 				],
@@ -3784,6 +4630,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants/{tenant_id}/jobs",
 				"tags": ["Admin Jobs"]
 			}
@@ -3805,6 +4656,13 @@
 				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenantQuota"
+								}
+							}
+						},
 						"description": "Tenant quota details"
 					},
 					"default": {
@@ -3818,6 +4676,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "GET /v1/admin/tenants/{tenant_id}/quota",
 				"tags": ["Admin"]
 			},
@@ -3835,8 +4698,25 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdminUpdateQuotaRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenantQuota"
+								}
+							}
+						},
 						"description": "Quota updated"
 					},
 					"default": {
@@ -3850,6 +4730,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "PATCH /v1/admin/tenants/{tenant_id}/quota",
 				"tags": ["Admin"]
 			}
@@ -3871,6 +4756,13 @@
 				],
 				"responses": {
 					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdminTenantQuota"
+								}
+							}
+						},
 						"description": "Quota reset"
 					},
 					"default": {
@@ -3884,6 +4776,11 @@
 						"description": "Request error"
 					}
 				},
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
 				"summary": "POST /v1/admin/tenants/{tenant_id}/quota/reset",
 				"tags": ["Admin"]
 			}
@@ -4055,6 +4952,16 @@
 		"/v1/check-email-with-onboard": {
 			"post": {
 				"operationId": "v1_check_email_with_onboard",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OnboardRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
 						"description": "Tenant onboarded and email verified"
@@ -4070,6 +4977,7 @@
 						"description": "Request error"
 					}
 				},
+				"security": [],
 				"summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
 				"tags": ["v1"]
 			}
@@ -4187,6 +5095,16 @@
 			},
 			"post": {
 				"operationId": "v1_create_comment",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateCommentRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
 						"description": "Comment created"
@@ -4546,6 +5464,7 @@
 						"description": "Request error"
 					}
 				},
+				"security": [],
 				"tags": ["Outcomes"]
 			}
 		},
@@ -4774,6 +5693,7 @@
 		},
 		"/v1/jobs/{job_id}/failure-center": {
 			"get": {
+				"operationId": "v1_get_job_failure_center",
 				"parameters": [
 					{
 						"in": "path",
@@ -4814,6 +5734,7 @@
 		},
 		"/v1/jobs/{job_id}/failure-report": {
 			"get": {
+				"operationId": "v1_get_job_failure_report",
 				"parameters": [
 					{
 						"in": "path",
@@ -5264,6 +6185,7 @@
 		},
 		"/v1/lists/{list_id}/remediation-exports": {
 			"post": {
+				"operationId": "v1_create_remediation_export",
 				"parameters": [
 					{
 						"in": "path",
@@ -5315,6 +6237,7 @@
 		},
 		"/v1/lists/{list_id}/remediation-exports/{export_id}/download": {
 			"get": {
+				"operationId": "v1_download_remediation_export",
 				"parameters": [
 					{
 						"in": "path",
@@ -5364,6 +6287,7 @@
 		},
 		"/v1/lists/{list_id}/remediation-plan": {
 			"get": {
+				"operationId": "v1_get_remediation_plan",
 				"parameters": [
 					{
 						"in": "path",
@@ -5402,6 +6326,7 @@
 				"tags": ["Lists"]
 			},
 			"post": {
+				"operationId": "v1_create_remediation_plan",
 				"parameters": [
 					{
 						"in": "path",
@@ -5499,6 +6424,16 @@
 			"post": {
 				"description": "Create a new API key for the authenticated tenant.",
 				"operationId": "createTenantApiKey",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateApiKeyRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
 						"description": "API key created"
@@ -5600,6 +6535,16 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateApiKeyRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
 						"description": "API key updated"
@@ -5644,6 +6589,16 @@
 			"post": {
 				"description": "Add a domain for the authenticated tenant.",
 				"operationId": "v1_create_tenant_domain",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTenantDomainRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"201": {
 						"description": "Tenant domain created"
@@ -5742,6 +6697,16 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTenantDomainRequest"
+							}
+						}
+					},
+					"required": true
+				},
 				"responses": {
 					"200": {
 						"description": "Tenant domain updated"
@@ -7433,6 +8398,7 @@
 		},
 		"/v1/sources/quality": {
 			"get": {
+				"operationId": "v1_source_quality",
 				"responses": {
 					"200": {
 						"content": {
@@ -7627,6 +8593,7 @@
 		},
 		"/v1/suppressions/export": {
 			"get": {
+				"operationId": "v1_export_suppressions",
 				"responses": {
 					"200": {
 						"content": {
@@ -7656,6 +8623,7 @@
 		},
 		"/v1/suppressions/import": {
 			"post": {
+				"operationId": "v1_import_suppressions",
 				"requestBody": {
 					"content": {
 						"application/json": {
@@ -7737,6 +8705,7 @@
 		},
 		"/v1/suppressions/{id}/events": {
 			"get": {
+				"operationId": "v1_list_suppression_events",
 				"parameters": [
 					{
 						"in": "path",
@@ -7784,6 +8753,7 @@
 						"description": "Service version"
 					}
 				},
+				"security": [],
 				"summary": "GET /version",
 				"tags": ["System"]
 			}
@@ -7797,7 +8767,7 @@
 	"servers": [
 		{
 			"description": "Reacher Production",
-			"url": "https://api.reacher.email"
+			"url": "/"
 		}
 	],
 	"tags": [

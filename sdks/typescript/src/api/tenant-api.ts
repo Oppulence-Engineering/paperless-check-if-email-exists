@@ -22,6 +22,8 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateTenantDomainRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
 import type { TenantSettingsResponse } from '../models';
@@ -29,6 +31,8 @@ import type { TenantSettingsResponse } from '../models';
 import type { TenantUsageResponse } from '../models';
 // @ts-ignore
 import type { TenantWebhookResponse } from '../models';
+// @ts-ignore
+import type { UpdateTenantDomainRequest } from '../models';
 // @ts-ignore
 import type { UpdateTenantSettingsRequest } from '../models';
 // @ts-ignore
@@ -75,10 +79,13 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
+         * @param {CreateTenantDomainRequest} createTenantDomainRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateTenantDomain: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1CreateTenantDomain: async (createTenantDomainRequest: CreateTenantDomainRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createTenantDomainRequest' is not null or undefined
+            assertParamExists('v1CreateTenantDomain', 'createTenantDomainRequest', createTenantDomainRequest)
             const localVarPath = `/v1/me/domains`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -96,9 +103,12 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createTenantDomainRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -315,12 +325,15 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
          * Update the domain value, status, verification state, or metadata notes.
          * @summary PATCH /v1/me/domains/{domain}
          * @param {string} domain Domain identifier
+         * @param {UpdateTenantDomainRequest} updateTenantDomainRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantDomain: async (domain: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1UpdateTenantDomain: async (domain: string, updateTenantDomainRequest: UpdateTenantDomainRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'domain' is not null or undefined
             assertParamExists('v1UpdateTenantDomain', 'domain', domain)
+            // verify required parameter 'updateTenantDomainRequest' is not null or undefined
+            assertParamExists('v1UpdateTenantDomain', 'updateTenantDomainRequest', updateTenantDomainRequest)
             const localVarPath = `/v1/me/domains/{domain}`
                 .replace(`{${"domain"}}`, encodeURIComponent(String(domain)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -339,9 +352,12 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateTenantDomainRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -451,11 +467,12 @@ export const TenantApiFp = function(configuration?: Configuration) {
         /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
+         * @param {CreateTenantDomainRequest} createTenantDomainRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1CreateTenantDomain(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateTenantDomain(options);
+        async v1CreateTenantDomain(createTenantDomainRequest: CreateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateTenantDomain(createTenantDomainRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateTenantDomain']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -538,11 +555,12 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * Update the domain value, status, verification state, or metadata notes.
          * @summary PATCH /v1/me/domains/{domain}
          * @param {string} domain Domain identifier
+         * @param {UpdateTenantDomainRequest} updateTenantDomainRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1UpdateTenantDomain(domain: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantDomain(domain, options);
+        async v1UpdateTenantDomain(domain: string, updateTenantDomainRequest: UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantDomain(domain, updateTenantDomainRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateTenantDomain']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -595,11 +613,12 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
         /**
          * Add a domain for the authenticated tenant.
          * @summary POST /v1/me/domains
+         * @param {TenantApiV1CreateTenantDomainRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.v1CreateTenantDomain(options).then((request) => request(axios, basePath));
+        v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1CreateTenantDomain(requestParameters.createTenantDomainRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Remove a domain from the authenticated tenant.
@@ -665,7 +684,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @throws {RequiredError}
          */
         v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.v1UpdateTenantDomain(requestParameters.domain, options).then((request) => request(axios, basePath));
+            return localVarFp.v1UpdateTenantDomain(requestParameters.domain, requestParameters.updateTenantDomainRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update tenant settings such as retention, default webhook URL, or secret.
@@ -708,11 +727,12 @@ export interface TenantApiInterface {
     /**
      * Add a domain for the authenticated tenant.
      * @summary POST /v1/me/domains
+     * @param {TenantApiV1CreateTenantDomainRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1CreateTenantDomain(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Remove a domain from the authenticated tenant.
@@ -803,6 +823,20 @@ export interface TenantApiInterface {
 }
 
 /**
+ * Request parameters for v1CreateTenantDomain operation in TenantApi.
+ * @export
+ * @interface TenantApiV1CreateTenantDomainRequest
+ */
+export interface TenantApiV1CreateTenantDomainRequest {
+    /**
+     *
+     * @type {CreateTenantDomainRequest}
+     * @memberof TenantApiV1CreateTenantDomain
+     */
+    readonly createTenantDomainRequest: CreateTenantDomainRequest
+}
+
+/**
  * Request parameters for v1DeleteTenantDomain operation in TenantApi.
  * @export
  * @interface TenantApiV1DeleteTenantDomainRequest
@@ -842,6 +876,13 @@ export interface TenantApiV1UpdateTenantDomainRequest {
      * @memberof TenantApiV1UpdateTenantDomain
      */
     readonly domain: string
+
+    /**
+     *
+     * @type {UpdateTenantDomainRequest}
+     * @memberof TenantApiV1UpdateTenantDomain
+     */
+    readonly updateTenantDomainRequest: UpdateTenantDomainRequest
 }
 
 /**
@@ -893,12 +934,13 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
     /**
      * Add a domain for the authenticated tenant.
      * @summary POST /v1/me/domains
+     * @param {TenantApiV1CreateTenantDomainRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApi
      */
-    public v1CreateTenantDomain(options?: RawAxiosRequestConfig) {
-        return TenantApiFp(this.configuration).v1CreateTenantDomain(options).then((request) => request(this.axios, this.basePath));
+    public v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1CreateTenantDomain(requestParameters.createTenantDomainRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -978,7 +1020,7 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      * @memberof TenantApi
      */
     public v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig) {
-        return TenantApiFp(this.configuration).v1UpdateTenantDomain(requestParameters.domain, options).then((request) => request(this.axios, this.basePath));
+        return TenantApiFp(this.configuration).v1UpdateTenantDomain(requestParameters.domain, requestParameters.updateTenantDomainRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

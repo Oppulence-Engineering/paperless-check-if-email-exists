@@ -4,14 +4,16 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import type {
+  CreateTenantDomainRequest,
   ErrorEnvelope,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
+  UpdateTenantDomainRequest,
   UpdateTenantSettingsRequest,
   UpdateWebhookRequest,
 } from "../model";
@@ -139,11 +141,14 @@ export const getV1CreateTenantDomainUrl = () => {
  * @summary POST /v1/me/domains
  */
 export const v1CreateTenantDomain = async (
+  createTenantDomainRequest: CreateTenantDomainRequest,
   options?: RequestInit,
 ): Promise<v1CreateTenantDomainResponse> => {
   const res = await fetch(getV1CreateTenantDomainUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createTenantDomainRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -291,11 +296,14 @@ export const getV1UpdateTenantDomainUrl = (domain: string) => {
  */
 export const v1UpdateTenantDomain = async (
   domain: string,
+  updateTenantDomainRequest: UpdateTenantDomainRequest,
   options?: RequestInit,
 ): Promise<v1UpdateTenantDomainResponse> => {
   const res = await fetch(getV1UpdateTenantDomainUrl(domain), {
     ...options,
     method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateTenantDomainRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();

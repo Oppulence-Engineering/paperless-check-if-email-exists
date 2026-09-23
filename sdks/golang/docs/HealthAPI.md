@@ -56,7 +56,7 @@ Other parameters are passed through a pointer to a apiHealthzRequest struct via 
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 
@@ -115,7 +115,7 @@ Other parameters are passed through a pointer to a apiReadyzRequest struct via t
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 

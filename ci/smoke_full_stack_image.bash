@@ -8,7 +8,9 @@ RABBITMQ_NAME="reacher-full-stack-smoke-rabbitmq-${RANDOM}-${RANDOM}"
 POSTGRES_NAME="reacher-full-stack-smoke-postgres-${RANDOM}-${RANDOM}"
 NETWORK_NAME="reacher-full-stack-smoke-${RANDOM}-${RANDOM}"
 HOST_PORT="${SMOKE_APP_PORT:-13080}"
+BACKEND_PORT="${SMOKE_BACKEND_PORT:-13081}"
 BASE_URL="http://127.0.0.1:${HOST_PORT}"
+BACKEND_URL="http://127.0.0.1:${BACKEND_PORT}"
 
 dump_logs() {
   echo "::group::Smoke debug"
@@ -72,6 +74,7 @@ docker run -d \
   --name "${CONTAINER_NAME}" \
   --network "${NETWORK_NAME}" \
   -p "${HOST_PORT}:3000" \
+  -p "127.0.0.1:${BACKEND_PORT}:8081" \
   -e DATABASE_URL=postgres://reacher:reacher@postgres:5432/reacher \
   -e BETTER_AUTH_URL=https://smoke.example.test \
   -e BETTER_AUTH_SECRET=smoke-only-auth-secret-0123456789abcdef \
@@ -80,6 +83,7 @@ docker run -d \
   -e RESEND_API_KEY=smoke-not-used \
   -e RESEND_FROM=smoke@example.test \
   -e RCH__HEADER_SECRET=smoke-only-backend-secret \
+  -e RCH__HTTP_HOST=0.0.0.0 \
   -e RCH__WORKER__ENABLE=true \
   -e RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@rabbitmq:5672 \
   "${IMAGE_TAG}" >/dev/null
@@ -116,6 +120,25 @@ status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
   --request POST "${BASE_URL}/v1/check-email-with-onboard")"
 test "$status" = 403
 python3 -c 'from pathlib import Path; assert "API key authentication failed" in Path("/tmp/reacher-api-response.json").read_text()'
+
+tenant_json="$(curl --silent --show-error --fail-with-body \
+  --request POST "${BACKEND_URL}/v1/admin/tenants" \
+  --header 'Content-Type: application/json' \
+  --header 'x-reacher-secret: smoke-only-backend-secret' \
+  --data '{"name":"Smoke tenant","slug":"smoke-tenant","contact_email":"smoke@example.test"}')"
+tenant_id="$(printf '%s' "$tenant_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+key_json="$(curl --silent --show-error --fail-with-body \
+  --request POST "${BACKEND_URL}/v1/admin/tenants/${tenant_id}/api-keys" \
+  --header 'Content-Type: application/json' \
+  --header 'x-reacher-secret: smoke-only-backend-secret' \
+  --data '{"name":"Smoke key","scopes":["verify"]}')"
+api_key="$(printf '%s' "$key_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["key"])')"
+curl --silent --show-error --fail-with-body \
+  --request POST "${BASE_URL}/v1/check_email" \
+  --header 'Content-Type: application/json' \
+  --header "Authorization: Bearer ${api_key}" \
+  --data '{"to_email":"test@valid.example.com","sandbox":true}' \
+  | python3 -c 'import json,sys; assert json.load(sys.stdin)["input"] == "test@valid.example.com"'
 
 status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
   --request POST "${BASE_URL}/v1/check_email" \

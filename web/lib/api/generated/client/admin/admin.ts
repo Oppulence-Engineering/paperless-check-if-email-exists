@@ -4,10 +4,25 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
-import type { ErrorEnvelope } from "../model";
+import type {
+  AdminAllApiKeys,
+  AdminApiKey,
+  AdminApiKeyList,
+  AdminApiKeyWriteRequest,
+  AdminCreateTenantRequest,
+  AdminCreatedApiKey,
+  AdminTenant,
+  AdminTenantList,
+  AdminTenantQuota,
+  AdminUpdateQuotaRequest,
+  AdminUpdateTenantRequest,
+  ErrorEnvelope,
+  ListAllApiKeysParams,
+  ListTenantsParams,
+} from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
@@ -52,7 +67,7 @@ export type HTTPStatusCodes =
   | HTTPStatusCode5xx;
 
 export type listAllApiKeysResponse200 = {
-  data: void;
+  data: AdminAllApiKeys;
   status: 200;
 };
 
@@ -71,8 +86,20 @@ export type listAllApiKeysResponseError = listAllApiKeysResponseDefault & {
 export type listAllApiKeysResponse =
   listAllApiKeysResponseSuccess | listAllApiKeysResponseError;
 
-export const getListAllApiKeysUrl = () => {
-  return `/v1/admin/api-keys`;
+export const getListAllApiKeysUrl = (params?: ListAllApiKeysParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/api-keys?${stringifiedParams}`
+    : `/v1/admin/api-keys`;
 };
 
 /**
@@ -80,18 +107,17 @@ export const getListAllApiKeysUrl = () => {
  * @summary GET /v1/admin/api-keys
  */
 export const listAllApiKeys = async (
+  params?: ListAllApiKeysParams,
   options?: RequestInit,
 ): Promise<listAllApiKeysResponse> => {
-  const res = await fetch(getListAllApiKeysUrl(), {
+  const res = await fetch(getListAllApiKeysUrl(params), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: listAllApiKeysResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: listAllApiKeysResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -100,7 +126,7 @@ export const listAllApiKeys = async (
 };
 
 export type listTenantsResponse200 = {
-  data: void;
+  data: AdminTenantList;
   status: 200;
 };
 
@@ -119,8 +145,20 @@ export type listTenantsResponseError = listTenantsResponseDefault & {
 export type listTenantsResponse =
   listTenantsResponseSuccess | listTenantsResponseError;
 
-export const getListTenantsUrl = () => {
-  return `/v1/admin/tenants`;
+export const getListTenantsUrl = (params?: ListTenantsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/tenants?${stringifiedParams}`
+    : `/v1/admin/tenants`;
 };
 
 /**
@@ -128,16 +166,17 @@ export const getListTenantsUrl = () => {
  * @summary GET /v1/admin/tenants
  */
 export const listTenants = async (
+  params?: ListTenantsParams,
   options?: RequestInit,
 ): Promise<listTenantsResponse> => {
-  const res = await fetch(getListTenantsUrl(), {
+  const res = await fetch(getListTenantsUrl(params), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: listTenantsResponse["data"] = body ? JSON.parse(body) : undefined;
+  const data: listTenantsResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -146,7 +185,7 @@ export const listTenants = async (
 };
 
 export type createTenantResponse201 = {
-  data: void;
+  data: AdminTenant;
   status: 201;
 };
 
@@ -174,18 +213,19 @@ export const getCreateTenantUrl = () => {
  * @summary POST /v1/admin/tenants
  */
 export const createTenant = async (
+  adminCreateTenantRequest: AdminCreateTenantRequest,
   options?: RequestInit,
 ): Promise<createTenantResponse> => {
   const res = await fetch(getCreateTenantUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminCreateTenantRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: createTenantResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: createTenantResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -243,7 +283,7 @@ export const deleteTenant = async (
 };
 
 export type getTenantResponse200 = {
-  data: void;
+  data: AdminTenant;
   status: 200;
 };
 
@@ -281,7 +321,7 @@ export const getTenant = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getTenantResponse["data"] = body ? JSON.parse(body) : undefined;
+  const data: getTenantResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -290,7 +330,7 @@ export const getTenant = async (
 };
 
 export type updateTenantResponse200 = {
-  data: void;
+  data: AdminTenant;
   status: 200;
 };
 
@@ -319,18 +359,19 @@ export const getUpdateTenantUrl = (tenantId: string) => {
  */
 export const updateTenant = async (
   tenantId: string,
+  adminUpdateTenantRequest: AdminUpdateTenantRequest,
   options?: RequestInit,
 ): Promise<updateTenantResponse> => {
   const res = await fetch(getUpdateTenantUrl(tenantId), {
     ...options,
     method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminUpdateTenantRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: updateTenantResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: updateTenantResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -339,7 +380,7 @@ export const updateTenant = async (
 };
 
 export type listApiKeysResponse200 = {
-  data: void;
+  data: AdminApiKeyList;
   status: 200;
 };
 
@@ -377,7 +418,7 @@ export const listApiKeys = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: listApiKeysResponse["data"] = body ? JSON.parse(body) : undefined;
+  const data: listApiKeysResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -386,7 +427,7 @@ export const listApiKeys = async (
 };
 
 export type createApiKeyResponse201 = {
-  data: void;
+  data: AdminCreatedApiKey;
   status: 201;
 };
 
@@ -415,18 +456,19 @@ export const getCreateApiKeyUrl = (tenantId: string) => {
  */
 export const createApiKey = async (
   tenantId: string,
+  adminApiKeyWriteRequest: AdminApiKeyWriteRequest,
   options?: RequestInit,
 ): Promise<createApiKeyResponse> => {
   const res = await fetch(getCreateApiKeyUrl(tenantId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminApiKeyWriteRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: createApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: createApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -485,7 +527,7 @@ export const revokeApiKey = async (
 };
 
 export type getApiKeyResponse200 = {
-  data: void;
+  data: AdminApiKey;
   status: 200;
 };
 
@@ -524,7 +566,7 @@ export const getApiKey = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getApiKeyResponse["data"] = body ? JSON.parse(body) : undefined;
+  const data: getApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -533,7 +575,7 @@ export const getApiKey = async (
 };
 
 export type updateApiKeyResponse200 = {
-  data: void;
+  data: AdminApiKey;
   status: 200;
 };
 
@@ -563,18 +605,19 @@ export const getUpdateApiKeyUrl = (tenantId: string, keyId: string) => {
 export const updateApiKey = async (
   tenantId: string,
   keyId: string,
+  adminApiKeyWriteRequest: AdminApiKeyWriteRequest,
   options?: RequestInit,
 ): Promise<updateApiKeyResponse> => {
   const res = await fetch(getUpdateApiKeyUrl(tenantId, keyId), {
     ...options,
     method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminApiKeyWriteRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: updateApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: updateApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -633,7 +676,7 @@ export const reactivateApiKey = async (
 };
 
 export type getTenantQuotaResponse200 = {
-  data: void;
+  data: AdminTenantQuota;
   status: 200;
 };
 
@@ -671,9 +714,7 @@ export const getTenantQuota = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getTenantQuotaResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: getTenantQuotaResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -682,7 +723,7 @@ export const getTenantQuota = async (
 };
 
 export type updateTenantQuotaResponse200 = {
-  data: void;
+  data: AdminTenantQuota;
   status: 200;
 };
 
@@ -712,18 +753,19 @@ export const getUpdateTenantQuotaUrl = (tenantId: string) => {
  */
 export const updateTenantQuota = async (
   tenantId: string,
+  adminUpdateQuotaRequest: AdminUpdateQuotaRequest,
   options?: RequestInit,
 ): Promise<updateTenantQuotaResponse> => {
   const res = await fetch(getUpdateTenantQuotaUrl(tenantId), {
     ...options,
     method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminUpdateQuotaRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: updateTenantQuotaResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: updateTenantQuotaResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -732,7 +774,7 @@ export const updateTenantQuota = async (
 };
 
 export type resetTenantQuotaResponse200 = {
-  data: void;
+  data: AdminTenantQuota;
   status: 200;
 };
 
@@ -770,9 +812,7 @@ export const resetTenantQuota = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: resetTenantQuotaResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: resetTenantQuotaResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,

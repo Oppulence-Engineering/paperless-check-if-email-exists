@@ -289,9 +289,47 @@ pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()
 	}
 }
 
+/// Control-plane routes must not inherit the legacy open-mode behavior.
+pub fn check_admin_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()> {
+	if !matches!(config.header_secret.as_deref(), Some(secret) if !secret.is_empty()) {
+		return warp::any()
+			.and_then(|| async {
+				Err::<(), _>(warp::reject::custom(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Admin API requires a configured header secret",
+				)))
+			})
+			.untuple_one()
+			.boxed();
+	}
+	check_header(config)
+}
+
 #[cfg(test)]
 mod tests {
 	use super::required_route_scope;
+	use crate::config::BackendConfig;
+	use std::sync::Arc;
+
+	#[tokio::test]
+	async fn admin_header_fails_closed_without_secret() {
+		let filter = super::check_admin_header(Arc::new(BackendConfig::empty()));
+		assert!(warp::test::request()
+			.header(super::REACHER_SECRET_HEADER, "anything")
+			.filter(&filter)
+			.await
+			.is_err());
+
+		let mut config = BackendConfig::empty();
+		config.header_secret = Some("configured-secret".into());
+		let filter = super::check_admin_header(Arc::new(config));
+		assert!(warp::test::request().filter(&filter).await.is_err());
+		assert!(warp::test::request()
+			.header(super::REACHER_SECRET_HEADER, "configured-secret")
+			.filter(&filter)
+			.await
+			.is_ok());
+	}
 
 	#[test]
 	fn every_tenant_api_group_has_a_scope() {
@@ -310,7 +348,8 @@ mod tests {
 			}
 			assert!(
 				required_route_scope(path).is_some(),
-				"missing scope: {path}"
+				"missing scope: {}",
+				path
 			);
 		}
 	}

@@ -43,6 +43,7 @@ const navigation = [
 	{ href: "/app/check", label: "Check email" },
 	{ href: "/app/lists", label: "Lists" },
 	{ href: "/app/history", label: "History" },
+	{ href: "/app/api", label: "API explorer" },
 ];
 
 /** The template's framed product shell, with email verification routes in its rail. */

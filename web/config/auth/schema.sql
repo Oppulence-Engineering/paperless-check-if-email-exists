@@ -226,6 +226,7 @@ create table "identity_audit_event" (
   "organizationId" text,
   "action" text not null,
   "targetId" text,
+  "reason" text,
   "result" text not null check ("result" in ('success', 'failure')),
   "requestId" text,
   "createdAt" timestamptz default CURRENT_TIMESTAMP not null

@@ -21,7 +21,7 @@ All URIs are relative to *http://localhost*
 |[**updateTenantQuota**](#updatetenantquota) | **PATCH** /v1/admin/tenants/{tenant_id}/quota | PATCH /v1/admin/tenants/{tenant_id}/quota|
 
 # **createApiKey**
-> createApiKey()
+> AdminCreatedApiKey createApiKey(adminApiKeyWriteRequest)
 
 Create a new API key for a tenant.
 
@@ -30,16 +30,19 @@ Create a new API key for a tenant.
 ```typescript
 import {
     AdminApi,
-    Configuration
+    Configuration,
+    AdminApiKeyWriteRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
+let adminApiKeyWriteRequest: AdminApiKeyWriteRequest; //
 
 const { status, data } = await apiInstance.createApiKey(
-    tenantId
+    tenantId,
+    adminApiKeyWriteRequest
 );
 ```
 
@@ -47,20 +50,21 @@ const { status, data } = await apiInstance.createApiKey(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **adminApiKeyWriteRequest** | **AdminApiKeyWriteRequest**|  | |
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminCreatedApiKey**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -73,7 +77,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **createTenant**
-> createTenant()
+> AdminTenant createTenant(adminCreateTenantRequest)
 
 Create a new tenant.
 
@@ -82,30 +86,38 @@ Create a new tenant.
 ```typescript
 import {
     AdminApi,
-    Configuration
+    Configuration,
+    AdminCreateTenantRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
-const { status, data } = await apiInstance.createTenant();
+let adminCreateTenantRequest: AdminCreateTenantRequest; //
+
+const { status, data } = await apiInstance.createTenant(
+    adminCreateTenantRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **adminCreateTenantRequest** | **AdminCreateTenantRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**AdminTenant**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -153,7 +165,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -170,7 +182,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getApiKey**
-> getApiKey()
+> AdminApiKey getApiKey()
 
 Fetch one API key by tenant and key ID.
 
@@ -204,11 +216,11 @@ const { status, data } = await apiInstance.getApiKey(
 
 ### Return type
 
-void (empty response body)
+**AdminApiKey**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -225,7 +237,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getTenant**
-> getTenant()
+> AdminTenant getTenant()
 
 Fetch tenant details by tenant ID.
 
@@ -256,11 +268,11 @@ const { status, data } = await apiInstance.getTenant(
 
 ### Return type
 
-void (empty response body)
+**AdminTenant**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -277,7 +289,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getTenantQuota**
-> getTenantQuota()
+> AdminTenantQuota getTenantQuota()
 
 Fetch current tenant quota usage and remaining allowance.
 
@@ -308,11 +320,11 @@ const { status, data } = await apiInstance.getTenantQuota(
 
 ### Return type
 
-void (empty response body)
+**AdminTenantQuota**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -329,7 +341,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **listAllApiKeys**
-> listAllApiKeys()
+> AdminAllApiKeys listAllApiKeys()
 
 List all API keys across tenants with optional filtering.
 
@@ -344,20 +356,36 @@ import {
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
-const { status, data } = await apiInstance.listAllApiKeys();
+let tenantId: string; // (optional) (default to undefined)
+let status: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.listAllApiKeys(
+    tenantId,
+    status,
+    limit,
+    offset
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **tenantId** | [**string**] |  | (optional) defaults to undefined|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminAllApiKeys**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -374,7 +402,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **listApiKeys**
-> listApiKeys()
+> AdminApiKeyList listApiKeys()
 
 List API keys for a tenant.
 
@@ -405,11 +433,11 @@ const { status, data } = await apiInstance.listApiKeys(
 
 ### Return type
 
-void (empty response body)
+**AdminApiKeyList**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -426,7 +454,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **listTenants**
-> listTenants()
+> AdminTenantList listTenants()
 
 List tenants with optional status and pagination filters.
 
@@ -441,20 +469,33 @@ import {
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
-const { status, data } = await apiInstance.listTenants();
+let status: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.listTenants(
+    status,
+    limit,
+    offset
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminTenantList**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -509,7 +550,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -526,7 +567,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **resetTenantQuota**
-> resetTenantQuota()
+> AdminTenantQuota resetTenantQuota()
 
 Reset tenant quota usage counters.
 
@@ -557,11 +598,11 @@ const { status, data } = await apiInstance.resetTenantQuota(
 
 ### Return type
 
-void (empty response body)
+**AdminTenantQuota**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -616,7 +657,7 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -633,7 +674,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **updateApiKey**
-> updateApiKey()
+> AdminApiKey updateApiKey(adminApiKeyWriteRequest)
 
 Update metadata for an API key.
 
@@ -642,7 +683,8 @@ Update metadata for an API key.
 ```typescript
 import {
     AdminApi,
-    Configuration
+    Configuration,
+    AdminApiKeyWriteRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
@@ -650,10 +692,12 @@ const apiInstance = new AdminApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
 let keyId: string; //API key identifier (default to undefined)
+let adminApiKeyWriteRequest: AdminApiKeyWriteRequest; //
 
 const { status, data } = await apiInstance.updateApiKey(
     tenantId,
-    keyId
+    keyId,
+    adminApiKeyWriteRequest
 );
 ```
 
@@ -661,21 +705,22 @@ const { status, data } = await apiInstance.updateApiKey(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **adminApiKeyWriteRequest** | **AdminApiKeyWriteRequest**|  | |
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
 | **keyId** | [**string**] | API key identifier | defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminApiKey**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -688,7 +733,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **updateTenant**
-> updateTenant()
+> AdminTenant updateTenant(adminUpdateTenantRequest)
 
 Update tenant fields.
 
@@ -697,16 +742,19 @@ Update tenant fields.
 ```typescript
 import {
     AdminApi,
-    Configuration
+    Configuration,
+    AdminUpdateTenantRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
+let adminUpdateTenantRequest: AdminUpdateTenantRequest; //
 
 const { status, data } = await apiInstance.updateTenant(
-    tenantId
+    tenantId,
+    adminUpdateTenantRequest
 );
 ```
 
@@ -714,20 +762,21 @@ const { status, data } = await apiInstance.updateTenant(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **adminUpdateTenantRequest** | **AdminUpdateTenantRequest**|  | |
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminTenant**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -740,7 +789,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **updateTenantQuota**
-> updateTenantQuota()
+> AdminTenantQuota updateTenantQuota(adminUpdateQuotaRequest)
 
 Update tenant quota limit.
 
@@ -749,16 +798,19 @@ Update tenant quota limit.
 ```typescript
 import {
     AdminApi,
-    Configuration
+    Configuration,
+    AdminUpdateQuotaRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AdminApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
+let adminUpdateQuotaRequest: AdminUpdateQuotaRequest; //
 
 const { status, data } = await apiInstance.updateTenantQuota(
-    tenantId
+    tenantId,
+    adminUpdateQuotaRequest
 );
 ```
 
@@ -766,20 +818,21 @@ const { status, data } = await apiInstance.updateTenantQuota(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **adminUpdateQuotaRequest** | **AdminUpdateQuotaRequest**|  | |
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**AdminTenantQuota**
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 

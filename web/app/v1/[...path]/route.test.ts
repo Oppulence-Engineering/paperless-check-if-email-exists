@@ -6,6 +6,9 @@ import { POST } from "./route";
 vi.mock("@/lib/auth/config", () => ({
 	backendApiURL: (path: string) => new URL(path, "http://127.0.0.1:8080"),
 }));
+vi.mock("@/lib/auth/proxy", () => ({
+	backendProxyPath: (path: string[]) => `/${path.join("/")}`,
+}));
 vi.mock("@/lib/backend/capabilities", () => ({
 	loadBackendCapabilities: () => ({ http: { requestTimeoutMs: 1000 } }),
 }));
@@ -41,5 +44,13 @@ it("forwards provider callbacks without an API key but protects tenant and onboa
 		{ params: Promise.resolve({ path: ["check-email-with-onboard"] }) },
 	);
 	expect(onboard.status).toBe(403);
+	const admin = await POST(
+		new NextRequest("http://localhost:3000/v1/admin/tenants", {
+			method: "POST",
+			headers: { authorization: "Bearer rch_live_example" },
+		}),
+		{ params: Promise.resolve({ path: ["admin", "tenants"] }) },
+	);
+	expect(admin.status).toBe(404);
 	expect(upstream).toHaveBeenCalledTimes(1);
 });

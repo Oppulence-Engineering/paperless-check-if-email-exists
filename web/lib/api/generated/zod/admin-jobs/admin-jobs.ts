@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -13,6 +13,13 @@ import * as zod from "zod";
  * List jobs across all tenants with optional filters.
  * @summary GET /v1/admin/jobs
  */
+export const ListJobsQueryParams = zod.object({
+  status: zod.string().optional(),
+  tenant_id: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
 export const ListJobs200Response = zod.unknown();
 
 export const ListJobsDefaultResponse = zod.strictObject({
@@ -41,6 +48,11 @@ export const GetJobEventsParams = zod.object({
   job_id: zod.coerce.number().int().describe("Job identifier"),
 });
 
+export const GetJobEventsQueryParams = zod.object({
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
 export const GetJobEvents200Response = zod.unknown();
 
 export const GetJobEventsDefaultResponse = zod.strictObject({
@@ -55,6 +67,12 @@ export const GetJobResultsParams = zod.object({
   job_id: zod.coerce.number().int().describe("Job identifier"),
 });
 
+export const GetJobResultsQueryParams = zod.object({
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+  state: zod.string().optional(),
+});
+
 export const GetJobResults200Response = zod.unknown();
 
 export const GetJobResultsDefaultResponse = zod.strictObject({
@@ -67,6 +85,12 @@ export const GetJobResultsDefaultResponse = zod.strictObject({
  */
 export const ListTenantJobsParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
+});
+
+export const ListTenantJobsQueryParams = zod.object({
+  status: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
 });
 
 export const ListTenantJobs200Response = zod.unknown();

@@ -81,7 +81,7 @@ describe("DeveloperSettings", () => {
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Create API key" }));
 		await waitFor(() => expect(create).toHaveBeenCalled());
-		expect(create.mock.calls[0]?.[0]?.data).toMatchObject({
+		expect(create.mock.calls[0]?.[0]?.createApiKeyRequest).toMatchObject({
 			name: "Production",
 			scopes: ["verify"],
 		});

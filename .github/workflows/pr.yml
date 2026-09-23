@@ -1,5 +1,3 @@
-# Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
-
 name: pr
 
 on:
@@ -82,20 +80,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: rustup update stable && rustup default stable
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all
+        run: cargo check --all
 
   # Explicit full HTTP API harness gate.
   api-harness:
@@ -128,20 +119,13 @@ jobs:
       TEST_AMQP_URL: amqp://guest:guest@127.0.0.1:35672
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: rustup update stable && rustup default stable
 
       - name: Run full HTTP API harness
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -p reacher_backend --test e2e_api_harness -- --nocapture
+        run: cargo test -p reacher_backend --test e2e_api_harness -- --nocapture
 
   migration-upgrade:
     runs-on: ubuntu-latest
@@ -173,20 +157,13 @@ jobs:
       TEST_AMQP_URL: amqp://guest:guest@127.0.0.1:35672
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: rustup update stable && rustup default stable
 
       - name: Run migration upgrade harness
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -p reacher_backend --test e2e_migration_upgrade -- --nocapture
+        run: cargo test -p reacher_backend --test e2e_migration_upgrade -- --nocapture
 
   # Cargo test.
   test:
@@ -219,44 +196,26 @@ jobs:
       TEST_AMQP_URL: amqp://guest:guest@127.0.0.1:35672
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: rustup update stable && rustup default stable
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all
+        run: cargo test --all
 
   # Cargo fmt and clippy
   lints:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+        run: rustup update stable && rustup default stable && rustup component add rustfmt clippy
 
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all -- -A deprecated
+        run: cargo clippy --all -- -A deprecated

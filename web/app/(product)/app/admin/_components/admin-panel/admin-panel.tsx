@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef } from "react";
+import Link from "next/link";
 
 import { cn } from "@oppulence/ui/lib/utils";
 
@@ -29,6 +30,9 @@ export function AdminPanel({ tenants, className, ...props }: AdminPanelProps) {
 					Every workspace on this deployment. Access is limited to the platform admin allowlist and
 					every visit is written to the identity audit trail.
 				</p>
+				<Link href="/app/admin/api" className="text-sm underline">
+					Open the Rust platform API console
+				</Link>
 			</header>
 
 			<div className="settings-panel">

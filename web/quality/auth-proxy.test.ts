@@ -45,6 +45,22 @@ describe("backend proxy", () => {
 		expect(upstream).not.toHaveBeenCalled();
 	});
 
+	it.each([
+		["v0", "check_email"],
+		["v1", "admin", "tenants"],
+		["v1", "check-email-with-onboard"],
+		["v1", "inbound", "providers"],
+	])("keeps internal and legacy routes out of the generic BFF: %j", async (...path) => {
+		const upstream = vi.fn();
+		vi.stubGlobal("fetch", upstream);
+		const response = await proxyBackendAPI(
+			new NextRequest(`https://app.example.test/api/backend/${path.join("/")}`),
+			path,
+		);
+		expect(response.status).toBe(404);
+		expect(upstream).not.toHaveBeenCalled();
+	});
+
 	it("rejects a cross-origin mutation before checking the session", async () => {
 		const response = await proxyBackendAPI(
 			new NextRequest("https://app.example.test/api/backend/v1/lists", {
@@ -83,6 +99,23 @@ describe("backend proxy", () => {
 		expect(headers.get("authorization")).toBe("Bearer server-jwt");
 		expect(headers.get("x-organization-id")).toBe("org-1");
 		expect(headers.get("x-user-id")).toBe("user-1");
+	});
+
+	it("accepts a list upload larger than the ordinary 10 MiB request limit", async () => {
+		const upload = new Uint8Array(11 * 1024 * 1024);
+		const upstream = vi.fn((_url: RequestInfo | URL, options?: RequestInit) => {
+			expect((options?.body as ArrayBuffer).byteLength).toBe(upload.byteLength);
+			return Promise.resolve(Response.json({ list_id: 1, job_id: 2 }));
+		});
+		vi.stubGlobal("fetch", upstream);
+		const request = new NextRequest("https://app.example.test/api/backend/v1/lists", {
+			method: "POST",
+			headers: { origin: "https://app.example.test", "content-type": "multipart/form-data" },
+			body: upload,
+		});
+		const response = await proxyBackendAPI(request, ["v1", "lists"]);
+		expect(response.status).toBe(200);
+		expect(upstream).toHaveBeenCalledTimes(1);
 	});
 
 	it("keeps upstream failures from exposing backend details", async () => {

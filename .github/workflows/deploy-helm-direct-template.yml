@@ -195,6 +195,8 @@ jobs:
           RCH__PROXY__USERNAME: ${{ secrets.RCH__PROXY__USERNAME }}
           RCH__PROXY__PASSWORD: ${{ secrets.RCH__PROXY__PASSWORD }}
           RCH__HEADER_SECRET: ${{ secrets.RCH__HEADER_SECRET }}
+          PLATFORM_ADMIN_EMAILS: ${{ secrets.PLATFORM_ADMIN_EMAILS }}
+          PLATFORM_ADMIN_EMAILS_STAGING: ${{ secrets.PLATFORM_ADMIN_EMAILS_STAGING }}
           HELM_SENTRY_DSN: ${{ secrets.HELM_SENTRY_DSN }}
         run: |
           DATABASE_SECRET_NAME=HELM_POSTGRES_URL
@@ -262,6 +264,8 @@ jobs:
                 echo "Skipping secret override '$key' (empty value)."
                 continue
               fi
+              # Helm --set-string treats commas as separators; allow email allowlists.
+              value="${value//,/\\,}"
               SECRET_ENV_FLAGS+=(--set-string "config.secretEnv.${key}=${value}")
             done <<<"$SECRET_ENV_OVERRIDES"
           fi

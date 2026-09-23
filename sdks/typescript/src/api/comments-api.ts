@@ -22,6 +22,8 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateCommentRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
 /**
  * CommentsApi - axios parameter creator
@@ -32,10 +34,13 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
         /**
          *
          * @summary POST /v1/comments
+         * @param {CreateCommentRequest} createCommentRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateComment: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1CreateComment: async (createCommentRequest: CreateCommentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createCommentRequest' is not null or undefined
+            assertParamExists('v1CreateComment', 'createCommentRequest', createCommentRequest)
             const localVarPath = `/v1/comments`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -53,9 +58,12 @@ export const CommentsApiAxiosParamCreator = function (configuration?: Configurat
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createCommentRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -165,11 +173,12 @@ export const CommentsApiFp = function(configuration?: Configuration) {
         /**
          *
          * @summary POST /v1/comments
+         * @param {CreateCommentRequest} createCommentRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1CreateComment(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateComment(options);
+        async v1CreateComment(createCommentRequest: CreateCommentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateComment(createCommentRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['CommentsApi.v1CreateComment']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -216,11 +225,12 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
         /**
          *
          * @summary POST /v1/comments
+         * @param {CommentsApiV1CreateCommentRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateComment(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.v1CreateComment(options).then((request) => request(axios, basePath));
+        v1CreateComment(requestParameters: CommentsApiV1CreateCommentRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1CreateComment(requestParameters.createCommentRequest, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -254,11 +264,12 @@ export interface CommentsApiInterface {
     /**
      *
      * @summary POST /v1/comments
+     * @param {CommentsApiV1CreateCommentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommentsApiInterface
      */
-    v1CreateComment(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1CreateComment(requestParameters: CommentsApiV1CreateCommentRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      *
@@ -280,6 +291,20 @@ export interface CommentsApiInterface {
      */
     v1ListComments(requestParameters?: CommentsApiV1ListCommentsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
+}
+
+/**
+ * Request parameters for v1CreateComment operation in CommentsApi.
+ * @export
+ * @interface CommentsApiV1CreateCommentRequest
+ */
+export interface CommentsApiV1CreateCommentRequest {
+    /**
+     *
+     * @type {CreateCommentRequest}
+     * @memberof CommentsApiV1CreateComment
+     */
+    readonly createCommentRequest: CreateCommentRequest
 }
 
 /**
@@ -341,12 +366,13 @@ export class CommentsApi extends BaseAPI implements CommentsApiInterface {
     /**
      *
      * @summary POST /v1/comments
+     * @param {CommentsApiV1CreateCommentRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommentsApi
      */
-    public v1CreateComment(options?: RawAxiosRequestConfig) {
-        return CommentsApiFp(this.configuration).v1CreateComment(options).then((request) => request(this.axios, this.basePath));
+    public v1CreateComment(requestParameters: CommentsApiV1CreateCommentRequest, options?: RawAxiosRequestConfig) {
+        return CommentsApiFp(this.configuration).v1CreateComment(requestParameters.createCommentRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

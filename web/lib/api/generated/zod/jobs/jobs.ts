@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -526,29 +526,29 @@ export const V1GetJobEventsDefaultResponse = zod.strictObject({
 /**
  * @summary Get job failure center
  */
-export const GetV1JobsJobIdFailureCenterParams = zod.object({
+export const V1GetJobFailureCenterParams = zod.object({
   job_id: zod.coerce.number().int(),
 });
 
-export const GetV1JobsJobIdFailureCenter200Response = zod.record(
+export const V1GetJobFailureCenter200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const GetV1JobsJobIdFailureCenterDefaultResponse = zod.strictObject({
+export const V1GetJobFailureCenterDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 
 /**
  * @summary Download job failure report
  */
-export const GetV1JobsJobIdFailureReportParams = zod.object({
+export const V1GetJobFailureReportParams = zod.object({
   job_id: zod.coerce.number().int(),
 });
 
-export const GetV1JobsJobIdFailureReport200Response = zod.unknown();
+export const V1GetJobFailureReport200Response = zod.unknown();
 
-export const GetV1JobsJobIdFailureReportDefaultResponse = zod.strictObject({
+export const V1GetJobFailureReportDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 

@@ -163,14 +163,14 @@ func (a *AdminJobsAPIService) GetJobExecute(r AdminJobsAPIGetJobRequest) (*http.
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -214,6 +214,18 @@ type AdminJobsAPIGetJobEventsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
 	jobId int32
+	limit *int64
+	offset *int64
+}
+
+func (r AdminJobsAPIGetJobEventsRequest) Limit(limit int64) AdminJobsAPIGetJobEventsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminJobsAPIGetJobEventsRequest) Offset(offset int64) AdminJobsAPIGetJobEventsRequest {
+	r.offset = &offset
+	return r
 }
 
 func (r AdminJobsAPIGetJobEventsRequest) Execute() (*http.Response, error) {
@@ -257,6 +269,12 @@ func (a *AdminJobsAPIService) GetJobEventsExecute(r AdminJobsAPIGetJobEventsRequ
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -277,14 +295,14 @@ func (a *AdminJobsAPIService) GetJobEventsExecute(r AdminJobsAPIGetJobEventsRequ
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -328,6 +346,24 @@ type AdminJobsAPIGetJobResultsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
 	jobId int32
+	limit *int64
+	offset *int64
+	state *string
+}
+
+func (r AdminJobsAPIGetJobResultsRequest) Limit(limit int64) AdminJobsAPIGetJobResultsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminJobsAPIGetJobResultsRequest) Offset(offset int64) AdminJobsAPIGetJobResultsRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r AdminJobsAPIGetJobResultsRequest) State(state string) AdminJobsAPIGetJobResultsRequest {
+	r.state = &state
+	return r
 }
 
 func (r AdminJobsAPIGetJobResultsRequest) Execute() (*http.Response, error) {
@@ -371,6 +407,15 @@ func (a *AdminJobsAPIService) GetJobResultsExecute(r AdminJobsAPIGetJobResultsRe
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	if r.state != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "state", r.state, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -391,14 +436,14 @@ func (a *AdminJobsAPIService) GetJobResultsExecute(r AdminJobsAPIGetJobResultsRe
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -441,6 +486,30 @@ func (a *AdminJobsAPIService) GetJobResultsExecute(r AdminJobsAPIGetJobResultsRe
 type AdminJobsAPIListJobsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
+	status *string
+	tenantId *string
+	limit *int32
+	offset *int32
+}
+
+func (r AdminJobsAPIListJobsRequest) Status(status string) AdminJobsAPIListJobsRequest {
+	r.status = &status
+	return r
+}
+
+func (r AdminJobsAPIListJobsRequest) TenantId(tenantId string) AdminJobsAPIListJobsRequest {
+	r.tenantId = &tenantId
+	return r
+}
+
+func (r AdminJobsAPIListJobsRequest) Limit(limit int32) AdminJobsAPIListJobsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminJobsAPIListJobsRequest) Offset(offset int32) AdminJobsAPIListJobsRequest {
+	r.offset = &offset
+	return r
 }
 
 func (r AdminJobsAPIListJobsRequest) Execute() (*http.Response, error) {
@@ -481,6 +550,18 @@ func (a *AdminJobsAPIService) ListJobsExecute(r AdminJobsAPIListJobsRequest) (*h
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.tenantId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "tenant_id", r.tenantId, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -501,14 +582,14 @@ func (a *AdminJobsAPIService) ListJobsExecute(r AdminJobsAPIListJobsRequest) (*h
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}
@@ -552,6 +633,24 @@ type AdminJobsAPIListTenantJobsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
 	tenantId string
+	status *string
+	limit *int64
+	offset *int64
+}
+
+func (r AdminJobsAPIListTenantJobsRequest) Status(status string) AdminJobsAPIListTenantJobsRequest {
+	r.status = &status
+	return r
+}
+
+func (r AdminJobsAPIListTenantJobsRequest) Limit(limit int64) AdminJobsAPIListTenantJobsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r AdminJobsAPIListTenantJobsRequest) Offset(offset int64) AdminJobsAPIListTenantJobsRequest {
+	r.offset = &offset
+	return r
 }
 
 func (r AdminJobsAPIListTenantJobsRequest) Execute() (*http.Response, error) {
@@ -595,6 +694,15 @@ func (a *AdminJobsAPIService) ListTenantJobsExecute(r AdminJobsAPIListTenantJobs
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -615,14 +723,14 @@ func (a *AdminJobsAPIService) ListTenantJobsExecute(r AdminJobsAPIListTenantJobs
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
 				var key string
 				if apiKey.Prefix != "" {
 					key = apiKey.Prefix + " " + apiKey.Key
 				} else {
 					key = apiKey.Key
 				}
-				localVarHeaderParams["Authorization"] = key
+				localVarHeaderParams["x-reacher-secret"] = key
 			}
 		}
 	}

@@ -4,19 +4,19 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import type {
   ApprovalChecklistResponse,
   BulkJobResultsResponse,
   ErrorEnvelope,
-  GetV1JobsJobIdFailureCenter200,
   JobResultPageResponse,
   RetryJobResponse,
   V1DownloadJobResultsParams,
   V1GetBulkJobResultsParams,
   V1GetJobEventsParams,
+  V1GetJobFailureCenter200,
   V1GetJobResultsParams,
 } from "../model";
 
@@ -470,99 +470,97 @@ export const v1GetJobEvents = async (
   } as v1GetJobEventsResponse;
 };
 
-export type getV1JobsJobIdFailureCenterResponse200 = {
-  data: GetV1JobsJobIdFailureCenter200;
+export type v1GetJobFailureCenterResponse200 = {
+  data: V1GetJobFailureCenter200;
   status: 200;
 };
 
-export type getV1JobsJobIdFailureCenterResponseDefault = {
+export type v1GetJobFailureCenterResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1JobsJobIdFailureCenterResponseSuccess =
-  getV1JobsJobIdFailureCenterResponse200 & {
+export type v1GetJobFailureCenterResponseSuccess =
+  v1GetJobFailureCenterResponse200 & {
     headers: Headers;
   };
-export type getV1JobsJobIdFailureCenterResponseError =
-  getV1JobsJobIdFailureCenterResponseDefault & {
+export type v1GetJobFailureCenterResponseError =
+  v1GetJobFailureCenterResponseDefault & {
     headers: Headers;
   };
 
-export type getV1JobsJobIdFailureCenterResponse =
-  | getV1JobsJobIdFailureCenterResponseSuccess
-  | getV1JobsJobIdFailureCenterResponseError;
+export type v1GetJobFailureCenterResponse =
+  v1GetJobFailureCenterResponseSuccess | v1GetJobFailureCenterResponseError;
 
-export const getGetV1JobsJobIdFailureCenterUrl = (jobId: number) => {
+export const getV1GetJobFailureCenterUrl = (jobId: number) => {
   return `/v1/jobs/${jobId}/failure-center`;
 };
 
 /**
  * @summary Get job failure center
  */
-export const getV1JobsJobIdFailureCenter = async (
+export const v1GetJobFailureCenter = async (
   jobId: number,
   options?: RequestInit,
-): Promise<getV1JobsJobIdFailureCenterResponse> => {
-  const res = await fetch(getGetV1JobsJobIdFailureCenterUrl(jobId), {
+): Promise<v1GetJobFailureCenterResponse> => {
+  const res = await fetch(getV1GetJobFailureCenterUrl(jobId), {
     ...options,
     method: "GET",
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getV1JobsJobIdFailureCenterResponse["data"] = body
+  const data: v1GetJobFailureCenterResponse["data"] = body
     ? JSON.parse(body)
     : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as getV1JobsJobIdFailureCenterResponse;
+  } as v1GetJobFailureCenterResponse;
 };
 
-export type getV1JobsJobIdFailureReportResponse200ApplicationXNdjson = {
+export type v1GetJobFailureReportResponse200ApplicationXNdjson = {
   stream: TypedResponse<Blob>;
   status: 200;
 };
 
-export type getV1JobsJobIdFailureReportResponse200TextCsv = {
+export type v1GetJobFailureReportResponse200TextCsv = {
   data: Blob;
   status: 200;
 };
 
-export type getV1JobsJobIdFailureReportResponseDefault = {
+export type v1GetJobFailureReportResponseDefault = {
   data: ErrorEnvelope;
   status: Exclude<HTTPStatusCodes, 200>;
 };
 
-export type getV1JobsJobIdFailureReportResponseSuccess = (
-  | getV1JobsJobIdFailureReportResponse200ApplicationXNdjson
-  | getV1JobsJobIdFailureReportResponse200TextCsv
+export type v1GetJobFailureReportResponseSuccess = (
+  | v1GetJobFailureReportResponse200ApplicationXNdjson
+  | v1GetJobFailureReportResponse200TextCsv
 ) & {
   headers: Headers;
 };
-export type getV1JobsJobIdFailureReportResponseError =
-  getV1JobsJobIdFailureReportResponseDefault & {
+export type v1GetJobFailureReportResponseError =
+  v1GetJobFailureReportResponseDefault & {
     headers: Headers;
   };
 
-export type getV1JobsJobIdFailureReportResponse =
-  | getV1JobsJobIdFailureReportResponseSuccess
-  | getV1JobsJobIdFailureReportResponseError;
+export type v1GetJobFailureReportResponse =
+  v1GetJobFailureReportResponseSuccess | v1GetJobFailureReportResponseError;
 
-export const getGetV1JobsJobIdFailureReportUrl = (jobId: number) => {
+export const getV1GetJobFailureReportUrl = (jobId: number) => {
   return `/v1/jobs/${jobId}/failure-report`;
 };
 
 /**
  * @summary Download job failure report
  */
-export const getV1JobsJobIdFailureReport = async (
+export const v1GetJobFailureReport = async (
   jobId: number,
   options?: RequestInit,
-): Promise<getV1JobsJobIdFailureReportResponse> => {
-  const stream = await fetch(getGetV1JobsJobIdFailureReportUrl(jobId), {
+): Promise<v1GetJobFailureReportResponse> => {
+  const stream = await fetch(getV1GetJobFailureReportUrl(jobId), {
     ...options,
     method: "GET",
   });
@@ -571,7 +569,7 @@ export const getV1JobsJobIdFailureReport = async (
     status: stream.status,
     stream,
     headers: stream.headers,
-  } as getV1JobsJobIdFailureReportResponse;
+  } as v1GetJobFailureReportResponse;
 };
 
 export type v1JobLatencyResponse200 = {

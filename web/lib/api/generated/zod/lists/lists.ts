@@ -4,7 +4,7 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import * as zod from "zod";
@@ -26,77 +26,71 @@ export const V1ListQualityDefaultResponse = zod.strictObject({
 /**
  * @summary Create remediation export
  */
-export const PostV1ListsListIdRemediationExportsParams = zod.object({
+export const V1CreateRemediationExportParams = zod.object({
   list_id: zod.coerce.number().int(),
 });
 
-export const PostV1ListsListIdRemediationExportsBody = zod.record(
+export const V1CreateRemediationExportBody = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const PostV1ListsListIdRemediationExports200Response = zod.record(
+export const V1CreateRemediationExport200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const PostV1ListsListIdRemediationExportsDefaultResponse =
-  zod.strictObject({
-    error: zod.string(),
-  });
+export const V1CreateRemediationExportDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
 
 /**
  * @summary Download remediation export
  */
-export const GetV1ListsListIdRemediationExportsExportIdDownloadParams =
-  zod.object({
-    list_id: zod.coerce.number().int(),
-    export_id: zod.coerce.number().int(),
-  });
+export const V1DownloadRemediationExportParams = zod.object({
+  list_id: zod.coerce.number().int(),
+  export_id: zod.coerce.number().int(),
+});
 
-export const GetV1ListsListIdRemediationExportsExportIdDownload200Response =
-  zod.unknown();
+export const V1DownloadRemediationExport200Response = zod.unknown();
 
-export const GetV1ListsListIdRemediationExportsExportIdDownloadDefaultResponse =
-  zod.strictObject({
-    error: zod.string(),
-  });
+export const V1DownloadRemediationExportDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
 
 /**
  * @summary Get remediation plan
  */
-export const GetV1ListsListIdRemediationPlanParams = zod.object({
+export const V1GetRemediationPlanParams = zod.object({
   list_id: zod.coerce.number().int(),
 });
 
-export const GetV1ListsListIdRemediationPlan200Response = zod.record(
+export const V1GetRemediationPlan200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const GetV1ListsListIdRemediationPlanDefaultResponse = zod.strictObject({
+export const V1GetRemediationPlanDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
 
 /**
  * @summary Create remediation plan
  */
-export const PostV1ListsListIdRemediationPlanParams = zod.object({
+export const V1CreateRemediationPlanParams = zod.object({
   list_id: zod.coerce.number().int(),
 });
 
-export const PostV1ListsListIdRemediationPlanBody = zod.record(
+export const V1CreateRemediationPlanBody = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const PostV1ListsListIdRemediationPlan200Response = zod.record(
+export const V1CreateRemediationPlan200Response = zod.record(
   zod.string(),
   zod.unknown(),
 );
 
-export const PostV1ListsListIdRemediationPlanDefaultResponse = zod.strictObject(
-  {
-    error: zod.string(),
-  },
-);
+export const V1CreateRemediationPlanDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});

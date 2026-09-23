@@ -4,25 +4,25 @@
  * Reacher
  * ### What is Reacher?
  *
- * Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
 import { faker } from "@faker-js/faker";
 
 import type {
-  GetV1ListsListIdRemediationPlan200,
-  PostV1ListsListIdRemediationExports200,
-  PostV1ListsListIdRemediationPlan200,
+  V1CreateRemediationExport200,
+  V1CreateRemediationPlan200,
+  V1GetRemediationPlan200,
 } from "../model";
 
-export const getPostV1ListsListIdRemediationExportsResponseMock =
-  (): PostV1ListsListIdRemediationExports200 => ({});
+export const getV1CreateRemediationExportResponseMock =
+  (): V1CreateRemediationExport200 => ({});
 
-export const getGetV1ListsListIdRemediationExportsExportIdDownloadResponseMock =
-  (): ArrayBuffer => new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
+export const getV1DownloadRemediationExportResponseMock = (): ArrayBuffer =>
+  new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
 
-export const getGetV1ListsListIdRemediationPlanResponseMock =
-  (): GetV1ListsListIdRemediationPlan200 => ({});
+export const getV1GetRemediationPlanResponseMock =
+  (): V1GetRemediationPlan200 => ({});
 
-export const getPostV1ListsListIdRemediationPlanResponseMock =
-  (): PostV1ListsListIdRemediationPlan200 => ({});
+export const getV1CreateRemediationPlanResponseMock =
+  (): V1CreateRemediationPlan200 => ({});
