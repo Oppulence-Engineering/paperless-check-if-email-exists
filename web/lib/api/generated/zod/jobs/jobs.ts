@@ -148,7 +148,7 @@ export const V1GetBulkJobResults200Response = zod.strictObject({
               .describe("The timestamp when the email verification started."),
           })
           .optional(),
-        input: zod.email().describe("The email address that was verified."),
+        input: zod.string().describe("The email address that was verified."),
         is_reachable: zod
           .enum(["invalid", "unknown", "safe", "risky"])
           .describe(
@@ -696,7 +696,7 @@ export const V1GetJobResults200Response = zod.strictObject({
                 })
                 .optional(),
               input: zod
-                .email()
+                .string()
                 .describe("The email address that was verified."),
               is_reachable: zod
                 .enum(["invalid", "unknown", "safe", "risky"])
