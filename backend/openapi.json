@@ -3350,6 +3350,345 @@
         ],
         "title": "YahooVerifMethod",
         "type": "string"
+      },
+      "AdminCreateTenantRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "slug",
+          "contact_email"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "plan_tier": {
+            "type": "string"
+          },
+          "monthly_email_limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_second": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_minute": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_day": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "default_webhook_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "webhook_signing_secret": {
+            "type": "string",
+            "nullable": true
+          },
+          "result_retention_days": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminUpdateTenantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "plan_tier": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "monthly_email_limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "max_requests_per_second": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_minute": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_day": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "default_webhook_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "webhook_signing_secret": {
+            "type": "string",
+            "nullable": true
+          },
+          "result_retention_days": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminApiKeyWriteRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AdminUpdateQuotaRequest": {
+        "type": "object",
+        "required": [
+          "monthly_email_limit"
+        ],
+        "properties": {
+          "monthly_email_limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "AdminTenant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "plan_tier": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "monthly_email_limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "max_requests_per_second": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_minute": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_requests_per_day": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "used_this_period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "default_webhook_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "result_retention_days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminTenantList": {
+        "type": "object",
+        "properties": {
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTenant"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminApiKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key_prefix": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminCreatedApiKey": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AdminApiKey"
+          },
+          {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "Plaintext key returned only at creation."
+              }
+            }
+          }
+        ]
+      },
+      "AdminApiKeyList": {
+        "type": "object",
+        "properties": {
+          "api_keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminApiKey"
+            }
+          }
+        }
+      },
+      "AdminAllApiKeys": {
+        "type": "object",
+        "properties": {
+          "api_keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminApiKey"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminTenantQuota": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "monthly_email_limit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "used_this_period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "period_reset_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quota_unlimited": {
+            "type": "boolean"
+          },
+          "remaining_quota": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -3579,7 +3918,14 @@
         "operationId": "list_all_api_keys",
         "responses": {
           "200": {
-            "description": "All API keys"
+            "description": "All API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAllApiKeys"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3599,6 +3945,40 @@
         "security": [
           {
             "AdminSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ]
       }
@@ -3629,6 +4009,40 @@
         "security": [
           {
             "AdminSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ]
       }
@@ -3689,6 +4103,22 @@
               "format": "int32",
               "type": "integer"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -3731,6 +4161,30 @@
               "format": "int32",
               "type": "integer"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3765,7 +4219,14 @@
         "operationId": "list_tenants",
         "responses": {
           "200": {
-            "description": "Tenant list"
+            "description": "Tenant list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenantList"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3786,6 +4247,32 @@
           {
             "AdminSecret": []
           }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ]
       },
       "post": {
@@ -3793,7 +4280,14 @@
         "operationId": "create_tenant",
         "responses": {
           "201": {
-            "description": "Tenant created"
+            "description": "Tenant created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenant"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3814,7 +4308,18 @@
           {
             "AdminSecret": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateTenantRequest"
+              }
+            }
+          }
+        },
+        "parameters": []
       }
     },
     "/v1/admin/tenants/{tenant_id}": {
@@ -3873,7 +4378,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant details"
+            "description": "Tenant details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenant"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3912,7 +4424,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant updated"
+            "description": "Tenant updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenant"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3933,7 +4452,17 @@
           {
             "AdminSecret": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateTenantRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/admin/tenants/{tenant_id}/api-keys": {
@@ -3953,7 +4482,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant API keys"
+            "description": "Tenant API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminApiKeyList"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -3993,7 +4529,14 @@
         ],
         "responses": {
           "201": {
-            "description": "API key created"
+            "description": "API key created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreatedApiKey"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -4014,7 +4557,17 @@
           {
             "AdminSecret": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminApiKeyWriteRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}": {
@@ -4093,7 +4646,14 @@
         ],
         "responses": {
           "200": {
-            "description": "API key details"
+            "description": "API key details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminApiKey"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -4142,7 +4702,14 @@
         ],
         "responses": {
           "200": {
-            "description": "API key updated"
+            "description": "API key updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminApiKey"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -4163,7 +4730,17 @@
           {
             "AdminSecret": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminApiKeyWriteRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate": {
@@ -4230,6 +4807,30 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -4275,7 +4876,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant quota details"
+            "description": "Tenant quota details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenantQuota"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -4314,7 +4922,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Quota updated"
+            "description": "Quota updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenantQuota"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -4335,7 +4950,17 @@
           {
             "AdminSecret": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateQuotaRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/admin/tenants/{tenant_id}/quota/reset": {
@@ -4355,7 +4980,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Quota reset"
+            "description": "Quota reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTenantQuota"
+                }
+              }
+            }
           },
           "default": {
             "content": {

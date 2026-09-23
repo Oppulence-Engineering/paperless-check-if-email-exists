@@ -98,6 +98,7 @@ config:
     RCH__PROXY__USERNAME: ""
     RCH__PROXY__PASSWORD: ""
     RCH__HEADER_SECRET: ""
+    PLATFORM_ADMIN_EMAILS: ""
     RCH__SENTRY_DSN: ""
 
 extraEnv: []

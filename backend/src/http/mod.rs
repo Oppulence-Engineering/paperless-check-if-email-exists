@@ -348,7 +348,8 @@ mod tests {
 			}
 			assert!(
 				required_route_scope(path).is_some(),
-				"missing scope: {path}"
+				"missing scope: {}",
+				path
 			);
 		}
 	}

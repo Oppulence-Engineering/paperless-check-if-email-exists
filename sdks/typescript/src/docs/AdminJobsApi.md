@@ -79,9 +79,13 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let jobId: number; //Job identifier (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.getJobEvents(
-    jobId
+    jobId,
+    limit,
+    offset
 );
 ```
 
@@ -90,6 +94,8 @@ const { status, data } = await apiInstance.getJobEvents(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **jobId** | [**number**] | Job identifier | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -131,9 +137,15 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let jobId: number; //Job identifier (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+let state: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.getJobResults(
-    jobId
+    jobId,
+    limit,
+    offset,
+    state
 );
 ```
 
@@ -142,6 +154,9 @@ const { status, data } = await apiInstance.getJobResults(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **jobId** | [**number**] | Job identifier | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+| **state** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -182,11 +197,27 @@ import {
 const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
-const { status, data } = await apiInstance.listJobs();
+let status: string; // (optional) (default to undefined)
+let tenantId: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.listJobs(
+    status,
+    tenantId,
+    limit,
+    offset
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **tenantId** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -228,9 +259,15 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
+let status: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.listTenantJobs(
-    tenantId
+    tenantId,
+    status,
+    limit,
+    offset
 );
 ```
 
@@ -239,6 +276,9 @@ const { status, data } = await apiInstance.listTenantJobs(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type

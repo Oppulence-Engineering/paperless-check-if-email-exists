@@ -152,6 +152,29 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 								target.insert(field.to_string(), value.clone());
 							}
 						}
+						for field in ["requestBody", "parameters"] {
+							if !target.contains_key(field) {
+								if let Some(value) = source.get(field) {
+									target.insert(field.to_string(), value.clone());
+								}
+							}
+						}
+						if let (Some(source_responses), Some(target_responses)) = (
+							source.get("responses").and_then(Value::as_object),
+							target.get_mut("responses").and_then(Value::as_object_mut),
+						) {
+							for (status, response) in source_responses {
+								if let Some(content) = response.get("content") {
+									target_responses
+										.entry(status.clone())
+										.or_insert_with(|| json!({}))
+										.as_object_mut()
+										.expect("response object")
+										.entry("content")
+										.or_insert_with(|| content.clone());
+								}
+							}
+						}
 					}
 				}
 			}
@@ -383,7 +406,7 @@ fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: V
 		.or_insert_with(|| json!({}))
 		.as_object_mut()
 		.expect("path item object");
-	for field in ["operationId", "security"] {
+	for field in ["operationId", "security", "requestBody", "parameters"] {
 		if let Some(value) = path_item
 			.get(method)
 			.and_then(|existing| existing.get(field))
@@ -415,8 +438,8 @@ mod operation_id_tests {
 				}
 				let id = operation["operationId"]
 					.as_str()
-					.unwrap_or_else(|| panic!("missing operationId: {method} {path}"));
-				assert!(ids.insert(id), "duplicate operationId: {id}");
+					.unwrap_or_else(|| panic!("missing operationId: {} {}", method, path));
+				assert!(ids.insert(id), "duplicate operationId: {}", id);
 			}
 		}
 	}
@@ -436,6 +459,21 @@ mod operation_id_tests {
 		);
 		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
 		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
+	}
+
+	#[test]
+	fn admin_contract_keeps_request_and_response_schemas() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["post"]["requestBody"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminCreateTenantRequest"
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["responses"]["200"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminTenantList"
+		);
 	}
 }
 

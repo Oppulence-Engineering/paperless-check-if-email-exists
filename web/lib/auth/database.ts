@@ -99,6 +99,7 @@ export const identityAuditEvents = schema.table("identity_audit_event", {
 	organizationId: text("organizationId"),
 	action: text("action").notNull(),
 	targetId: text("targetId"),
+	reason: text("reason"),
 	result: text("result").notNull(),
 	requestId: text("requestId"),
 	createdAt: date("createdAt").notNull(),

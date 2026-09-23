@@ -46,8 +46,8 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 	const mutation = useMutation({
 		mutationFn: async (operation: Operation) => {
 			const requestHeaders: Record<string, string> = {};
-				for (const [name, value] of Object.entries(headers))
-					if (value?.trim()) requestHeaders[name] = value.trim();
+			for (const [name, value] of Object.entries(headers))
+				if (value?.trim()) requestHeaders[name] = value.trim();
 			let requestBody: BodyInit | undefined;
 			if (media === "application/json") {
 				try {
@@ -216,9 +216,9 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 							<>
 								<label htmlFor={`${formId}-file`} className="flex flex-col gap-1 text-sm">
 									CSV file
-										<input
-											id={`${formId}-file`}
-											aria-label="CSV file"
+									<input
+										id={`${formId}-file`}
+										aria-label="CSV file"
 										required
 										type="file"
 										accept=".csv,text/csv"
@@ -234,9 +234,9 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 										className="flex flex-col gap-1 text-sm"
 									>
 										{name}
-											<input
-												id={`${formId}-field-${name}`}
-												aria-label={name}
+										<input
+											id={`${formId}-field-${name}`}
+											aria-label={name}
 											className="rounded border border-border bg-background p-2"
 											value={values[name] ?? ""}
 											onChange={(event) => {
@@ -263,9 +263,9 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 										className="flex flex-col gap-1 text-sm"
 									>
 										{name}
-											<input
-												id={`${formId}-header-${name}`}
-												aria-label={name}
+										<input
+											id={`${formId}-header-${name}`}
+											aria-label={name}
 											className="rounded border border-border bg-background p-2"
 											value={headers[name] ?? ""}
 											onChange={(event) => {

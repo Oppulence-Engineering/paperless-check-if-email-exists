@@ -169,6 +169,19 @@ export function operationById(id: string): PortalOperation | undefined {
 	return operations.find((operation) => operation.id === id);
 }
 
+export function adminOperationFor(method: string, path: string[]): PortalOperation | undefined {
+	return operations.find((operation) => {
+		if (operation.audience !== "admin" || operation.method !== method) return false;
+		const parts = operation.path.slice(1).split("/");
+		return (
+			parts.length === path.length &&
+			parts.every(
+				(part, index) => (part.startsWith("{") && part.endsWith("}")) || part === path[index],
+			)
+		);
+	});
+}
+
 export function schemaByRef(ref: string): unknown {
 	const name = ref.replace("#/components/schemas/", "");
 	return spec.components.schemas[name];

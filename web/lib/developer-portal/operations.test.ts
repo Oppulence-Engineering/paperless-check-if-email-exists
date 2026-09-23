@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import contract from "@/config/contracts/backend.openapi.json";
-import { families, operations } from "./operations";
+import { adminOperationFor, families, operations } from "./operations";
 
 it("classifies every API method once for the developer portal", () => {
 	const documented = Object.values(contract.paths).reduce(
@@ -23,4 +23,14 @@ it("classifies every API method once for the developer portal", () => {
 	expect(operations.find((operation) => operation.id === "v1_trigger_pipeline")?.scope).toBe(
 		"pipelines.trigger",
 	);
+});
+
+it("matches only declared platform methods and paths", () => {
+	expect(adminOperationFor("GET", ["v1", "admin", "tenants"])?.id).toBe("list_tenants");
+	expect(adminOperationFor("DELETE", ["v1", "admin", "tenants", "tenant-1"])?.id).toBe(
+		"delete_tenant",
+	);
+	expect(adminOperationFor("GET", ["v1", "admin", "unknown"])).toBeUndefined();
+	expect(adminOperationFor("POST", ["v1", "admin", "tenants", "tenant-1"])).toBeUndefined();
+	expect(adminOperationFor("GET", ["v1", "me"])).toBeUndefined();
 });

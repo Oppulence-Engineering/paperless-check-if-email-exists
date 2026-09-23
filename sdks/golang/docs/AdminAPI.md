@@ -24,7 +24,7 @@ Method | HTTP request | Description
 
 ## CreateApiKey
 
-> CreateApiKey(ctx, tenantId).Execute()
+> AdminCreatedApiKey CreateApiKey(ctx, tenantId).AdminApiKeyWriteRequest(adminApiKeyWriteRequest).Execute()
 
 POST /v1/admin/tenants/{tenant_id}/api-keys
 
@@ -44,14 +44,17 @@ import (
 
 func main() {
 	tenantId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // string | Tenant identifier
+	adminApiKeyWriteRequest := *openapiclient.NewAdminApiKeyWriteRequest() // AdminApiKeyWriteRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.CreateApiKey(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.CreateApiKey(context.Background(), tenantId).AdminApiKeyWriteRequest(adminApiKeyWriteRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.CreateApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `CreateApiKey`: AdminCreatedApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.CreateApiKey`: %v\n", resp)
 }
 ```
 
@@ -71,10 +74,11 @@ Other parameters are passed through a pointer to a apiCreateApiKeyRequest struct
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **adminApiKeyWriteRequest** | [**AdminApiKeyWriteRequest**](AdminApiKeyWriteRequest.md) |  |
 
 ### Return type
 
- (empty response body)
+[**AdminCreatedApiKey**](AdminCreatedApiKey.md)
 
 ### Authorization
 
@@ -82,7 +86,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -92,7 +96,7 @@ Name | Type | Description  | Notes
 
 ## CreateTenant
 
-> CreateTenant(ctx).Execute()
+> AdminTenant CreateTenant(ctx).AdminCreateTenantRequest(adminCreateTenantRequest).Execute()
 
 POST /v1/admin/tenants
 
@@ -111,29 +115,36 @@ import (
 )
 
 func main() {
+	adminCreateTenantRequest := *openapiclient.NewAdminCreateTenantRequest("Name_example", "Slug_example", "ContactEmail_example") // AdminCreateTenantRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.CreateTenant(context.Background()).Execute()
+	resp, r, err := apiClient.AdminAPI.CreateTenant(context.Background()).AdminCreateTenantRequest(adminCreateTenantRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.CreateTenant``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `CreateTenant`: AdminTenant
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.CreateTenant`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiCreateTenantRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **adminCreateTenantRequest** | [**AdminCreateTenantRequest**](AdminCreateTenantRequest.md) |  |
+
 ### Return type
 
- (empty response body)
+[**AdminTenant**](AdminTenant.md)
 
 ### Authorization
 
@@ -141,7 +152,7 @@ Other parameters are passed through a pointer to a apiCreateTenantRequest struct
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -219,7 +230,7 @@ Name | Type | Description  | Notes
 
 ## GetApiKey
 
-> GetApiKey(ctx, tenantId, keyId).Execute()
+> AdminApiKey GetApiKey(ctx, tenantId, keyId).Execute()
 
 GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
 
@@ -243,11 +254,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.GetApiKey(context.Background(), tenantId, keyId).Execute()
+	resp, r, err := apiClient.AdminAPI.GetApiKey(context.Background(), tenantId, keyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.GetApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `GetApiKey`: AdminApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.GetApiKey`: %v\n", resp)
 }
 ```
 
@@ -272,7 +285,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AdminApiKey**](AdminApiKey.md)
 
 ### Authorization
 
@@ -290,7 +303,7 @@ Name | Type | Description  | Notes
 
 ## GetTenant
 
-> GetTenant(ctx, tenantId).Execute()
+> AdminTenant GetTenant(ctx, tenantId).Execute()
 
 GET /v1/admin/tenants/{tenant_id}
 
@@ -313,11 +326,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.GetTenant(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.GetTenant(context.Background(), tenantId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.GetTenant``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `GetTenant`: AdminTenant
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.GetTenant`: %v\n", resp)
 }
 ```
 
@@ -340,7 +355,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AdminTenant**](AdminTenant.md)
 
 ### Authorization
 
@@ -358,7 +373,7 @@ Name | Type | Description  | Notes
 
 ## GetTenantQuota
 
-> GetTenantQuota(ctx, tenantId).Execute()
+> AdminTenantQuota GetTenantQuota(ctx, tenantId).Execute()
 
 GET /v1/admin/tenants/{tenant_id}/quota
 
@@ -381,11 +396,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.GetTenantQuota(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.GetTenantQuota(context.Background(), tenantId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.GetTenantQuota``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `GetTenantQuota`: AdminTenantQuota
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.GetTenantQuota`: %v\n", resp)
 }
 ```
 
@@ -408,7 +425,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AdminTenantQuota**](AdminTenantQuota.md)
 
 ### Authorization
 
@@ -426,7 +443,7 @@ Name | Type | Description  | Notes
 
 ## ListAllApiKeys
 
-> ListAllApiKeys(ctx).Execute()
+> AdminAllApiKeys ListAllApiKeys(ctx).TenantId(tenantId).Status(status).Limit(limit).Offset(offset).Execute()
 
 GET /v1/admin/api-keys
 
@@ -445,29 +462,42 @@ import (
 )
 
 func main() {
+	tenantId := "tenantId_example" // string |  (optional)
+	status := "status_example" // string |  (optional)
+	limit := int32(56) // int32 |  (optional)
+	offset := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.ListAllApiKeys(context.Background()).Execute()
+	resp, r, err := apiClient.AdminAPI.ListAllApiKeys(context.Background()).TenantId(tenantId).Status(status).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.ListAllApiKeys``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `ListAllApiKeys`: AdminAllApiKeys
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.ListAllApiKeys`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiListAllApiKeysRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **tenantId** | **string** |  |
+ **status** | **string** |  |
+ **limit** | **int32** |  |
+ **offset** | **int32** |  |
+
 ### Return type
 
- (empty response body)
+[**AdminAllApiKeys**](AdminAllApiKeys.md)
 
 ### Authorization
 
@@ -485,7 +515,7 @@ Other parameters are passed through a pointer to a apiListAllApiKeysRequest stru
 
 ## ListApiKeys
 
-> ListApiKeys(ctx, tenantId).Execute()
+> AdminApiKeyList ListApiKeys(ctx, tenantId).Execute()
 
 GET /v1/admin/tenants/{tenant_id}/api-keys
 
@@ -508,11 +538,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.ListApiKeys(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.ListApiKeys(context.Background(), tenantId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.ListApiKeys``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `ListApiKeys`: AdminApiKeyList
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.ListApiKeys`: %v\n", resp)
 }
 ```
 
@@ -535,7 +567,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AdminApiKeyList**](AdminApiKeyList.md)
 
 ### Authorization
 
@@ -553,7 +585,7 @@ Name | Type | Description  | Notes
 
 ## ListTenants
 
-> ListTenants(ctx).Execute()
+> AdminTenantList ListTenants(ctx).Status(status).Limit(limit).Offset(offset).Execute()
 
 GET /v1/admin/tenants
 
@@ -572,29 +604,40 @@ import (
 )
 
 func main() {
+	status := "status_example" // string |  (optional)
+	limit := int32(56) // int32 |  (optional)
+	offset := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.ListTenants(context.Background()).Execute()
+	resp, r, err := apiClient.AdminAPI.ListTenants(context.Background()).Status(status).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.ListTenants``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `ListTenants`: AdminTenantList
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.ListTenants`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiListTenantsRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **status** | **string** |  |
+ **limit** | **int32** |  |
+ **offset** | **int32** |  |
+
 ### Return type
 
- (empty response body)
+[**AdminTenantList**](AdminTenantList.md)
 
 ### Authorization
 
@@ -683,7 +726,7 @@ Name | Type | Description  | Notes
 
 ## ResetTenantQuota
 
-> ResetTenantQuota(ctx, tenantId).Execute()
+> AdminTenantQuota ResetTenantQuota(ctx, tenantId).Execute()
 
 POST /v1/admin/tenants/{tenant_id}/quota/reset
 
@@ -706,11 +749,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.ResetTenantQuota(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.ResetTenantQuota(context.Background(), tenantId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.ResetTenantQuota``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `ResetTenantQuota`: AdminTenantQuota
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.ResetTenantQuota`: %v\n", resp)
 }
 ```
 
@@ -733,7 +778,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AdminTenantQuota**](AdminTenantQuota.md)
 
 ### Authorization
 
@@ -822,7 +867,7 @@ Name | Type | Description  | Notes
 
 ## UpdateApiKey
 
-> UpdateApiKey(ctx, tenantId, keyId).Execute()
+> AdminApiKey UpdateApiKey(ctx, tenantId, keyId).AdminApiKeyWriteRequest(adminApiKeyWriteRequest).Execute()
 
 PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}
 
@@ -843,14 +888,17 @@ import (
 func main() {
 	tenantId := "tenantId_example" // string | Tenant identifier
 	keyId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // string | API key identifier
+	adminApiKeyWriteRequest := *openapiclient.NewAdminApiKeyWriteRequest() // AdminApiKeyWriteRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.UpdateApiKey(context.Background(), tenantId, keyId).Execute()
+	resp, r, err := apiClient.AdminAPI.UpdateApiKey(context.Background(), tenantId, keyId).AdminApiKeyWriteRequest(adminApiKeyWriteRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.UpdateApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `UpdateApiKey`: AdminApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.UpdateApiKey`: %v\n", resp)
 }
 ```
 
@@ -872,10 +920,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
+ **adminApiKeyWriteRequest** | [**AdminApiKeyWriteRequest**](AdminApiKeyWriteRequest.md) |  |
 
 ### Return type
 
- (empty response body)
+[**AdminApiKey**](AdminApiKey.md)
 
 ### Authorization
 
@@ -883,7 +932,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -893,7 +942,7 @@ Name | Type | Description  | Notes
 
 ## UpdateTenant
 
-> UpdateTenant(ctx, tenantId).Execute()
+> AdminTenant UpdateTenant(ctx, tenantId).AdminUpdateTenantRequest(adminUpdateTenantRequest).Execute()
 
 PUT /v1/admin/tenants/{tenant_id}
 
@@ -913,14 +962,17 @@ import (
 
 func main() {
 	tenantId := "tenantId_example" // string | Tenant identifier
+	adminUpdateTenantRequest := *openapiclient.NewAdminUpdateTenantRequest() // AdminUpdateTenantRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.UpdateTenant(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.UpdateTenant(context.Background(), tenantId).AdminUpdateTenantRequest(adminUpdateTenantRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.UpdateTenant``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `UpdateTenant`: AdminTenant
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.UpdateTenant`: %v\n", resp)
 }
 ```
 
@@ -940,10 +992,11 @@ Other parameters are passed through a pointer to a apiUpdateTenantRequest struct
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **adminUpdateTenantRequest** | [**AdminUpdateTenantRequest**](AdminUpdateTenantRequest.md) |  |
 
 ### Return type
 
- (empty response body)
+[**AdminTenant**](AdminTenant.md)
 
 ### Authorization
 
@@ -951,7 +1004,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -961,7 +1014,7 @@ Name | Type | Description  | Notes
 
 ## UpdateTenantQuota
 
-> UpdateTenantQuota(ctx, tenantId).Execute()
+> AdminTenantQuota UpdateTenantQuota(ctx, tenantId).AdminUpdateQuotaRequest(adminUpdateQuotaRequest).Execute()
 
 PATCH /v1/admin/tenants/{tenant_id}/quota
 
@@ -981,14 +1034,17 @@ import (
 
 func main() {
 	tenantId := "tenantId_example" // string | Tenant identifier
+	adminUpdateQuotaRequest := *openapiclient.NewAdminUpdateQuotaRequest(NullableInt32(123)) // AdminUpdateQuotaRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminAPI.UpdateTenantQuota(context.Background(), tenantId).Execute()
+	resp, r, err := apiClient.AdminAPI.UpdateTenantQuota(context.Background(), tenantId).AdminUpdateQuotaRequest(adminUpdateQuotaRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminAPI.UpdateTenantQuota``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `UpdateTenantQuota`: AdminTenantQuota
+	fmt.Fprintf(os.Stdout, "Response from `AdminAPI.UpdateTenantQuota`: %v\n", resp)
 }
 ```
 
@@ -1008,10 +1064,11 @@ Other parameters are passed through a pointer to a apiUpdateTenantQuotaRequest s
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **adminUpdateQuotaRequest** | [**AdminUpdateQuotaRequest**](AdminUpdateQuotaRequest.md) |  |
 
 ### Return type
 
- (empty response body)
+[**AdminTenantQuota**](AdminTenantQuota.md)
 
 ### Authorization
 
@@ -1019,7 +1076,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

@@ -7,3 +7,620 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import { faker } from "@faker-js/faker";
+
+import type {
+  AdminAllApiKeys,
+  AdminApiKey,
+  AdminApiKeyList,
+  AdminCreatedApiKey,
+  AdminTenant,
+  AdminTenantList,
+  AdminTenantQuota,
+} from "../model";
+
+export const getListAllApiKeysResponseMock = (
+  overrideResponse: Partial<Extract<AdminAllApiKeys, object>> = {},
+): AdminAllApiKeys => ({
+  api_keys: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+      tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+      key_prefix: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      name: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      scopes: faker.helpers.arrayElement([
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        undefined,
+      ]),
+      status: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      last_used_at: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+        undefined,
+      ]),
+      expires_at: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+        undefined,
+      ]),
+      created_at: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        undefined,
+      ]),
+    })),
+    undefined,
+  ]),
+  total: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  ...overrideResponse,
+});
+
+export const getListTenantsResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenantList, object>> = {},
+): AdminTenantList => ({
+  tenants: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+      name: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      slug: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      contact_email: faker.helpers.arrayElement([
+        faker.internet.email(),
+        undefined,
+      ]),
+      plan_tier: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      status: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      monthly_email_limit: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([faker.number.int(), null]),
+        undefined,
+      ]),
+      max_requests_per_second: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      max_requests_per_minute: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      max_requests_per_hour: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      max_requests_per_day: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      used_this_period: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      default_webhook_url: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        undefined,
+      ]),
+      result_retention_days: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      created_at: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        undefined,
+      ]),
+      updated_at: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        undefined,
+      ]),
+    })),
+    undefined,
+  ]),
+  total: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  ...overrideResponse,
+});
+
+export const getCreateTenantResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenant, object>> = {},
+): AdminTenant => ({
+  id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  slug: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  contact_email: faker.helpers.arrayElement([
+    faker.internet.email(),
+    undefined,
+  ]),
+  plan_tier: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  max_requests_per_second: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_minute: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_hour: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_day: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  default_webhook_url: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  result_retention_days: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  created_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  updated_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getGetTenantResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenant, object>> = {},
+): AdminTenant => ({
+  id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  slug: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  contact_email: faker.helpers.arrayElement([
+    faker.internet.email(),
+    undefined,
+  ]),
+  plan_tier: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  max_requests_per_second: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_minute: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_hour: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_day: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  default_webhook_url: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  result_retention_days: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  created_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  updated_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getUpdateTenantResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenant, object>> = {},
+): AdminTenant => ({
+  id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  slug: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  contact_email: faker.helpers.arrayElement([
+    faker.internet.email(),
+    undefined,
+  ]),
+  plan_tier: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  max_requests_per_second: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_minute: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_hour: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  max_requests_per_day: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  default_webhook_url: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  result_retention_days: faker.helpers.arrayElement([
+    faker.number.int(),
+    undefined,
+  ]),
+  created_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  updated_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getListApiKeysResponseMock = (
+  overrideResponse: Partial<Extract<AdminApiKeyList, object>> = {},
+): AdminApiKeyList => ({
+  api_keys: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+      tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+      key_prefix: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      name: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      scopes: faker.helpers.arrayElement([
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        undefined,
+      ]),
+      status: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
+      last_used_at: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+        undefined,
+      ]),
+      expires_at: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+        undefined,
+      ]),
+      created_at: faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        undefined,
+      ]),
+    })),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getCreateApiKeyResponseMock = (): AdminCreatedApiKey => ({
+  ...{
+    id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+    tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+    key_prefix: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      undefined,
+    ]),
+    name: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      undefined,
+    ]),
+    scopes: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      undefined,
+    ]),
+    last_used_at: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        null,
+      ]),
+      undefined,
+    ]),
+    expires_at: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        null,
+      ]),
+      undefined,
+    ]),
+    created_at: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      undefined,
+    ]),
+  },
+  ...{ key: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+});
+
+export const getGetApiKeyResponseMock = (
+  overrideResponse: Partial<Extract<AdminApiKey, object>> = {},
+): AdminApiKey => ({
+  id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  key_prefix: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  scopes: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  last_used_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  expires_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  created_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getUpdateApiKeyResponseMock = (
+  overrideResponse: Partial<Extract<AdminApiKey, object>> = {},
+): AdminApiKey => ({
+  id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  key_prefix: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  scopes: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  last_used_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  expires_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  created_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getGetTenantQuotaResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenantQuota, object>> = {},
+): AdminTenantQuota => ({
+  tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  period_reset_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  quota_unlimited: faker.helpers.arrayElement([
+    faker.datatype.boolean(),
+    undefined,
+  ]),
+  remaining_quota: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getUpdateTenantQuotaResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenantQuota, object>> = {},
+): AdminTenantQuota => ({
+  tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  period_reset_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  quota_unlimited: faker.helpers.arrayElement([
+    faker.datatype.boolean(),
+    undefined,
+  ]),
+  remaining_quota: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getResetTenantQuotaResponseMock = (
+  overrideResponse: Partial<Extract<AdminTenantQuota, object>> = {},
+): AdminTenantQuota => ({
+  tenant_id: faker.helpers.arrayElement([faker.string.uuid(), undefined]),
+  name: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
+  monthly_email_limit: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  used_this_period: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  period_reset_at: faker.helpers.arrayElement([
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    undefined,
+  ]),
+  quota_unlimited: faker.helpers.arrayElement([
+    faker.datatype.boolean(),
+    undefined,
+  ]),
+  remaining_quota: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});

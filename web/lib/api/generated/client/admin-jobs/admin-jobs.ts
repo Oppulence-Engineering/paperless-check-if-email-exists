@@ -7,7 +7,13 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
-import type { ErrorEnvelope } from "../model";
+import type {
+  ErrorEnvelope,
+  GetJobEventsParams,
+  GetJobResultsParams,
+  ListJobsParams,
+  ListTenantJobsParams,
+} from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
@@ -70,8 +76,20 @@ export type listJobsResponseError = listJobsResponseDefault & {
 
 export type listJobsResponse = listJobsResponseSuccess | listJobsResponseError;
 
-export const getListJobsUrl = () => {
-  return `/v1/admin/jobs`;
+export const getListJobsUrl = (params?: ListJobsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/jobs?${stringifiedParams}`
+    : `/v1/admin/jobs`;
 };
 
 /**
@@ -79,9 +97,10 @@ export const getListJobsUrl = () => {
  * @summary GET /v1/admin/jobs
  */
 export const listJobs = async (
+  params?: ListJobsParams,
   options?: RequestInit,
 ): Promise<listJobsResponse> => {
-  const res = await fetch(getListJobsUrl(), {
+  const res = await fetch(getListJobsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -154,8 +173,23 @@ export type getJobEventsResponseError = getJobEventsResponseDefault & {
 export type getJobEventsResponse =
   getJobEventsResponseSuccess | getJobEventsResponseError;
 
-export const getGetJobEventsUrl = (jobId: number) => {
-  return `/v1/admin/jobs/${jobId}/events`;
+export const getGetJobEventsUrl = (
+  jobId: number,
+  params?: GetJobEventsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/jobs/${jobId}/events?${stringifiedParams}`
+    : `/v1/admin/jobs/${jobId}/events`;
 };
 
 /**
@@ -164,9 +198,10 @@ export const getGetJobEventsUrl = (jobId: number) => {
  */
 export const getJobEvents = async (
   jobId: number,
+  params?: GetJobEventsParams,
   options?: RequestInit,
 ): Promise<getJobEventsResponse> => {
-  const res = await fetch(getGetJobEventsUrl(jobId), {
+  const res = await fetch(getGetJobEventsUrl(jobId, params), {
     ...options,
     method: "GET",
   });
@@ -203,8 +238,23 @@ export type getJobResultsResponseError = getJobResultsResponseDefault & {
 export type getJobResultsResponse =
   getJobResultsResponseSuccess | getJobResultsResponseError;
 
-export const getGetJobResultsUrl = (jobId: number) => {
-  return `/v1/admin/jobs/${jobId}/results`;
+export const getGetJobResultsUrl = (
+  jobId: number,
+  params?: GetJobResultsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/jobs/${jobId}/results?${stringifiedParams}`
+    : `/v1/admin/jobs/${jobId}/results`;
 };
 
 /**
@@ -213,9 +263,10 @@ export const getGetJobResultsUrl = (jobId: number) => {
  */
 export const getJobResults = async (
   jobId: number,
+  params?: GetJobResultsParams,
   options?: RequestInit,
 ): Promise<getJobResultsResponse> => {
-  const res = await fetch(getGetJobResultsUrl(jobId), {
+  const res = await fetch(getGetJobResultsUrl(jobId, params), {
     ...options,
     method: "GET",
   });
@@ -252,8 +303,23 @@ export type listTenantJobsResponseError = listTenantJobsResponseDefault & {
 export type listTenantJobsResponse =
   listTenantJobsResponseSuccess | listTenantJobsResponseError;
 
-export const getListTenantJobsUrl = (tenantId: string) => {
-  return `/v1/admin/tenants/${tenantId}/jobs`;
+export const getListTenantJobsUrl = (
+  tenantId: string,
+  params?: ListTenantJobsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/tenants/${tenantId}/jobs?${stringifiedParams}`
+    : `/v1/admin/tenants/${tenantId}/jobs`;
 };
 
 /**
@@ -262,9 +328,10 @@ export const getListTenantJobsUrl = (tenantId: string) => {
  */
 export const listTenantJobs = async (
   tenantId: string,
+  params?: ListTenantJobsParams,
   options?: RequestInit,
 ): Promise<listTenantJobsResponse> => {
-  const res = await fetch(getListTenantJobsUrl(tenantId), {
+  const res = await fetch(getListTenantJobsUrl(tenantId, params), {
     ...options,
     method: "GET",
   });

@@ -70,10 +70,12 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
          * Fetch events for a job.
          * @summary GET /v1/admin/jobs/{job_id}/events
          * @param {number} jobId Job identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobEvents: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getJobEvents: async (jobId: number, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'jobId' is not null or undefined
             assertParamExists('getJobEvents', 'jobId', jobId)
             const localVarPath = `/v1/admin/jobs/{job_id}/events`
@@ -92,6 +94,14 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             // authentication AdminSecret required
             await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -107,10 +117,13 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
          * Fetch task results for a job.
          * @summary GET /v1/admin/jobs/{job_id}/results
          * @param {number} jobId Job identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobResults: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getJobResults: async (jobId: number, limit?: number, offset?: number, state?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'jobId' is not null or undefined
             assertParamExists('getJobResults', 'jobId', jobId)
             const localVarPath = `/v1/admin/jobs/{job_id}/results`
@@ -129,6 +142,18 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
             // authentication AdminSecret required
             await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
 
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (state !== undefined) {
+                localVarQueryParameter['state'] = state;
+            }
+
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -143,10 +168,14 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
         /**
          * List jobs across all tenants with optional filters.
          * @summary GET /v1/admin/jobs
+         * @param {string} [status]
+         * @param {string} [tenantId]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listJobs: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listJobs: async (status?: string, tenantId?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/admin/jobs`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -161,6 +190,22 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication AdminSecret required
             await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (tenantId !== undefined) {
+                localVarQueryParameter['tenant_id'] = tenantId;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
 
 
 
@@ -177,10 +222,13 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
          * List jobs scoped to one tenant.
          * @summary GET /v1/admin/tenants/{tenant_id}/jobs
          * @param {string} tenantId Tenant identifier
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTenantJobs: async (tenantId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listTenantJobs: async (tenantId: string, status?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'tenantId' is not null or undefined
             assertParamExists('listTenantJobs', 'tenantId', tenantId)
             const localVarPath = `/v1/admin/tenants/{tenant_id}/jobs`
@@ -198,6 +246,18 @@ export const AdminJobsApiAxiosParamCreator = function (configuration?: Configura
 
             // authentication AdminSecret required
             await setApiKeyToObject(localVarHeaderParameter, "x-reacher-secret", configuration)
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
 
 
 
@@ -237,11 +297,13 @@ export const AdminJobsApiFp = function(configuration?: Configuration) {
          * Fetch events for a job.
          * @summary GET /v1/admin/jobs/{job_id}/events
          * @param {number} jobId Job identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getJobEvents(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getJobEvents(jobId, options);
+        async getJobEvents(jobId: number, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getJobEvents(jobId, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminJobsApi.getJobEvents']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -250,11 +312,14 @@ export const AdminJobsApiFp = function(configuration?: Configuration) {
          * Fetch task results for a job.
          * @summary GET /v1/admin/jobs/{job_id}/results
          * @param {number} jobId Job identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {string} [state]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getJobResults(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getJobResults(jobId, options);
+        async getJobResults(jobId: number, limit?: number, offset?: number, state?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getJobResults(jobId, limit, offset, state, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminJobsApi.getJobResults']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -262,11 +327,15 @@ export const AdminJobsApiFp = function(configuration?: Configuration) {
         /**
          * List jobs across all tenants with optional filters.
          * @summary GET /v1/admin/jobs
+         * @param {string} [status]
+         * @param {string} [tenantId]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listJobs(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listJobs(options);
+        async listJobs(status?: string, tenantId?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listJobs(status, tenantId, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminJobsApi.listJobs']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -275,11 +344,14 @@ export const AdminJobsApiFp = function(configuration?: Configuration) {
          * List jobs scoped to one tenant.
          * @summary GET /v1/admin/tenants/{tenant_id}/jobs
          * @param {string} tenantId Tenant identifier
+         * @param {string} [status]
+         * @param {number} [limit]
+         * @param {number} [offset]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listTenantJobs(tenantId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listTenantJobs(tenantId, options);
+        async listTenantJobs(tenantId: string, status?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listTenantJobs(tenantId, status, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminJobsApi.listTenantJobs']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -312,7 +384,7 @@ export const AdminJobsApiFactory = function (configuration?: Configuration, base
          * @throws {RequiredError}
          */
         getJobEvents(requestParameters: AdminJobsApiGetJobEventsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.getJobEvents(requestParameters.jobId, options).then((request) => request(axios, basePath));
+            return localVarFp.getJobEvents(requestParameters.jobId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
          * Fetch task results for a job.
@@ -322,16 +394,17 @@ export const AdminJobsApiFactory = function (configuration?: Configuration, base
          * @throws {RequiredError}
          */
         getJobResults(requestParameters: AdminJobsApiGetJobResultsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.getJobResults(requestParameters.jobId, options).then((request) => request(axios, basePath));
+            return localVarFp.getJobResults(requestParameters.jobId, requestParameters.limit, requestParameters.offset, requestParameters.state, options).then((request) => request(axios, basePath));
         },
         /**
          * List jobs across all tenants with optional filters.
          * @summary GET /v1/admin/jobs
+         * @param {AdminJobsApiListJobsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listJobs(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.listJobs(options).then((request) => request(axios, basePath));
+        listJobs(requestParameters: AdminJobsApiListJobsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.listJobs(requestParameters.status, requestParameters.tenantId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
          * List jobs scoped to one tenant.
@@ -341,7 +414,7 @@ export const AdminJobsApiFactory = function (configuration?: Configuration, base
          * @throws {RequiredError}
          */
         listTenantJobs(requestParameters: AdminJobsApiListTenantJobsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.listTenantJobs(requestParameters.tenantId, options).then((request) => request(axios, basePath));
+            return localVarFp.listTenantJobs(requestParameters.tenantId, requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -385,11 +458,12 @@ export interface AdminJobsApiInterface {
     /**
      * List jobs across all tenants with optional filters.
      * @summary GET /v1/admin/jobs
+     * @param {AdminJobsApiListJobsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminJobsApiInterface
      */
-    listJobs(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    listJobs(requestParameters?: AdminJobsApiListJobsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * List jobs scoped to one tenant.
@@ -429,6 +503,20 @@ export interface AdminJobsApiGetJobEventsRequest {
      * @memberof AdminJobsApiGetJobEvents
      */
     readonly jobId: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiGetJobEvents
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiGetJobEvents
+     */
+    readonly offset?: number
 }
 
 /**
@@ -443,6 +531,62 @@ export interface AdminJobsApiGetJobResultsRequest {
      * @memberof AdminJobsApiGetJobResults
      */
     readonly jobId: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiGetJobResults
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiGetJobResults
+     */
+    readonly offset?: number
+
+    /**
+     *
+     * @type {string}
+     * @memberof AdminJobsApiGetJobResults
+     */
+    readonly state?: string
+}
+
+/**
+ * Request parameters for listJobs operation in AdminJobsApi.
+ * @export
+ * @interface AdminJobsApiListJobsRequest
+ */
+export interface AdminJobsApiListJobsRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof AdminJobsApiListJobs
+     */
+    readonly status?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof AdminJobsApiListJobs
+     */
+    readonly tenantId?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiListJobs
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiListJobs
+     */
+    readonly offset?: number
 }
 
 /**
@@ -457,6 +601,27 @@ export interface AdminJobsApiListTenantJobsRequest {
      * @memberof AdminJobsApiListTenantJobs
      */
     readonly tenantId: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof AdminJobsApiListTenantJobs
+     */
+    readonly status?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiListTenantJobs
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof AdminJobsApiListTenantJobs
+     */
+    readonly offset?: number
 }
 
 /**
@@ -487,7 +652,7 @@ export class AdminJobsApi extends BaseAPI implements AdminJobsApiInterface {
      * @memberof AdminJobsApi
      */
     public getJobEvents(requestParameters: AdminJobsApiGetJobEventsRequest, options?: RawAxiosRequestConfig) {
-        return AdminJobsApiFp(this.configuration).getJobEvents(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+        return AdminJobsApiFp(this.configuration).getJobEvents(requestParameters.jobId, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -499,18 +664,19 @@ export class AdminJobsApi extends BaseAPI implements AdminJobsApiInterface {
      * @memberof AdminJobsApi
      */
     public getJobResults(requestParameters: AdminJobsApiGetJobResultsRequest, options?: RawAxiosRequestConfig) {
-        return AdminJobsApiFp(this.configuration).getJobResults(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+        return AdminJobsApiFp(this.configuration).getJobResults(requestParameters.jobId, requestParameters.limit, requestParameters.offset, requestParameters.state, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * List jobs across all tenants with optional filters.
      * @summary GET /v1/admin/jobs
+     * @param {AdminJobsApiListJobsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AdminJobsApi
      */
-    public listJobs(options?: RawAxiosRequestConfig) {
-        return AdminJobsApiFp(this.configuration).listJobs(options).then((request) => request(this.axios, this.basePath));
+    public listJobs(requestParameters: AdminJobsApiListJobsRequest = {}, options?: RawAxiosRequestConfig) {
+        return AdminJobsApiFp(this.configuration).listJobs(requestParameters.status, requestParameters.tenantId, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -522,6 +688,6 @@ export class AdminJobsApi extends BaseAPI implements AdminJobsApiInterface {
      * @memberof AdminJobsApi
      */
     public listTenantJobs(requestParameters: AdminJobsApiListTenantJobsRequest, options?: RawAxiosRequestConfig) {
-        return AdminJobsApiFp(this.configuration).listTenantJobs(requestParameters.tenantId, options).then((request) => request(this.axios, this.basePath));
+        return AdminJobsApiFp(this.configuration).listTenantJobs(requestParameters.tenantId, requestParameters.status, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 }
