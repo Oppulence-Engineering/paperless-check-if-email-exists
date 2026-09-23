@@ -30,9 +30,11 @@ function accessText(operation: PortalOperation): string {
 		case "callback":
 			return "Provider-to-server delivery. The provider sends its delivery token in the URL and its configured signature. Do not call this from a browser or expose the token in client code.";
 		case "onboarding":
-			return "Public server-side onboarding entry point. Apply abuse controls and use the app sign-up flow for browser users.";
+			return "Backend-only onboarding entry point. The shared app host returns 403; use the app sign-up flow.";
 		case "system":
-			return "Public system endpoint. No workspace API key is required.";
+			return operation.path === "/version"
+				? "Backend-only version endpoint. The shared app host does not route it."
+				: "Public system endpoint on the app host. No workspace API key is required.";
 		default:
 			return "Workspace API key: Authorization: Bearer <key>. The key is scoped to its workspace; the backend checks operation permissions and quota.";
 	}
@@ -51,16 +53,11 @@ function documentedSchema(schema: unknown): unknown {
 }
 
 function curlExample(operation: PortalOperation): string | undefined {
-	if (
-		operation.audience === "callback" ||
-		operation.audience === "admin" ||
-		operation.audience === "legacy"
-	)
-		return;
+	if (operation.audience !== "tenant") return;
 	const body = bodyContent(operation);
 	const media = Object.keys(body)[0];
 	const lines = [`curl --fail-with-body -X ${operation.method} "$API_BASE_URL${operation.path}"`];
-	if (operation.audience === "tenant") lines.push('  -H "Authorization: Bearer $API_KEY"');
+	lines.push('  -H "Authorization: Bearer $API_KEY"');
 	if (media === "application/json") {
 		lines.push('  -H "Content-Type: application/json"');
 		lines.push("  --data-binary @request.json");

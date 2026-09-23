@@ -291,6 +291,12 @@ func (a *TenantAPIService) V1ClearTenantWebhookExecute(r TenantAPIV1ClearTenantW
 type TenantAPIV1CreateTenantDomainRequest struct {
 	ctx context.Context
 	ApiService TenantAPI
+	createTenantDomainRequest *CreateTenantDomainRequest
+}
+
+func (r TenantAPIV1CreateTenantDomainRequest) CreateTenantDomainRequest(createTenantDomainRequest CreateTenantDomainRequest) TenantAPIV1CreateTenantDomainRequest {
+	r.createTenantDomainRequest = &createTenantDomainRequest
+	return r
 }
 
 func (r TenantAPIV1CreateTenantDomainRequest) Execute() (*http.Response, error) {
@@ -330,9 +336,12 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.createTenantDomainRequest == nil {
+		return nil, reportError("createTenantDomainRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -348,6 +357,8 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.createTenantDomainRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -1103,6 +1114,12 @@ type TenantAPIV1UpdateTenantDomainRequest struct {
 	ctx context.Context
 	ApiService TenantAPI
 	domain string
+	updateTenantDomainRequest *UpdateTenantDomainRequest
+}
+
+func (r TenantAPIV1UpdateTenantDomainRequest) UpdateTenantDomainRequest(updateTenantDomainRequest UpdateTenantDomainRequest) TenantAPIV1UpdateTenantDomainRequest {
+	r.updateTenantDomainRequest = &updateTenantDomainRequest
+	return r
 }
 
 func (r TenantAPIV1UpdateTenantDomainRequest) Execute() (*http.Response, error) {
@@ -1145,9 +1162,12 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.updateTenantDomainRequest == nil {
+		return nil, reportError("updateTenantDomainRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1163,6 +1183,8 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.updateTenantDomainRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {

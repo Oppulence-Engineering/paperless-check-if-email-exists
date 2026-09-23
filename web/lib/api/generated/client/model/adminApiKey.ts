@@ -9,15 +9,15 @@
  */
 
 export interface AdminApiKey {
+  created_at?: string;
+  /** @nullable */
+  expires_at?: string | null;
   id?: string;
-  tenant_id?: string;
   key_prefix?: string;
+  /** @nullable */
+  last_used_at?: string | null;
   name?: string;
   scopes?: string[];
   status?: string;
-  /** @nullable */
-  last_used_at?: string | null;
-  /** @nullable */
-  expires_at?: string | null;
-  created_at?: string;
+  tenant_id?: string;
 }

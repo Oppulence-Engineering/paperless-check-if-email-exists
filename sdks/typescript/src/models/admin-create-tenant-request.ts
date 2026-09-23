@@ -25,43 +25,19 @@ export interface AdminCreateTenantRequest {
      * @type {string}
      * @memberof AdminCreateTenantRequest
      */
-    'name': string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminCreateTenantRequest
-     */
-    'slug': string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminCreateTenantRequest
-     */
     'contact_email': string;
     /**
      *
      * @type {string}
      * @memberof AdminCreateTenantRequest
      */
-    'plan_tier'?: string;
+    'default_webhook_url'?: string | null;
     /**
      *
      * @type {number}
      * @memberof AdminCreateTenantRequest
      */
-    'monthly_email_limit'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminCreateTenantRequest
-     */
-    'max_requests_per_second'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminCreateTenantRequest
-     */
-    'max_requests_per_minute'?: number;
+    'max_requests_per_day'?: number;
     /**
      *
      * @type {number}
@@ -73,23 +49,47 @@ export interface AdminCreateTenantRequest {
      * @type {number}
      * @memberof AdminCreateTenantRequest
      */
-    'max_requests_per_day'?: number;
+    'max_requests_per_minute'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminCreateTenantRequest
+     */
+    'max_requests_per_second'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminCreateTenantRequest
+     */
+    'monthly_email_limit'?: number;
     /**
      *
      * @type {string}
      * @memberof AdminCreateTenantRequest
      */
-    'default_webhook_url'?: string | null;
+    'name': string;
     /**
      *
      * @type {string}
      * @memberof AdminCreateTenantRequest
      */
-    'webhook_signing_secret'?: string | null;
+    'plan_tier'?: string;
     /**
      *
      * @type {number}
      * @memberof AdminCreateTenantRequest
      */
     'result_retention_days'?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminCreateTenantRequest
+     */
+    'slug': string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminCreateTenantRequest
+     */
+    'webhook_signing_secret'?: string | null;
 }

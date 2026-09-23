@@ -9,7 +9,7 @@ All URIs are relative to *http://localhost*
 |[**v1ListComments**](#v1listcomments) | **GET** /v1/comments | GET /v1/comments|
 
 # **v1CreateComment**
-> v1CreateComment()
+> v1CreateComment(createCommentRequest)
 
 
 ### Example
@@ -17,17 +17,25 @@ All URIs are relative to *http://localhost*
 ```typescript
 import {
     CommentsApi,
-    Configuration
+    Configuration,
+    CreateCommentRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CommentsApi(configuration);
 
-const { status, data } = await apiInstance.v1CreateComment();
+let createCommentRequest: CreateCommentRequest; //
+
+const { status, data } = await apiInstance.v1CreateComment(
+    createCommentRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createCommentRequest** | **CreateCommentRequest**|  | |
 
 
 ### Return type
@@ -40,7 +48,7 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 

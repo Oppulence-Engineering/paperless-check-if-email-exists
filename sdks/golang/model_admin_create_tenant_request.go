@@ -22,18 +22,18 @@ var _ MappedNullable = &AdminCreateTenantRequest{}
 
 // AdminCreateTenantRequest struct for AdminCreateTenantRequest
 type AdminCreateTenantRequest struct {
-	Name string `json:"name"`
-	Slug string `json:"slug"`
 	ContactEmail string `json:"contact_email"`
-	PlanTier *string `json:"plan_tier,omitempty"`
-	MonthlyEmailLimit *int32 `json:"monthly_email_limit,omitempty"`
-	MaxRequestsPerSecond *int32 `json:"max_requests_per_second,omitempty"`
-	MaxRequestsPerMinute *int32 `json:"max_requests_per_minute,omitempty"`
-	MaxRequestsPerHour *int32 `json:"max_requests_per_hour,omitempty"`
-	MaxRequestsPerDay *int32 `json:"max_requests_per_day,omitempty"`
 	DefaultWebhookUrl NullableString `json:"default_webhook_url,omitempty"`
-	WebhookSigningSecret NullableString `json:"webhook_signing_secret,omitempty"`
+	MaxRequestsPerDay *int32 `json:"max_requests_per_day,omitempty"`
+	MaxRequestsPerHour *int32 `json:"max_requests_per_hour,omitempty"`
+	MaxRequestsPerMinute *int32 `json:"max_requests_per_minute,omitempty"`
+	MaxRequestsPerSecond *int32 `json:"max_requests_per_second,omitempty"`
+	MonthlyEmailLimit *int32 `json:"monthly_email_limit,omitempty"`
+	Name string `json:"name"`
+	PlanTier *string `json:"plan_tier,omitempty"`
 	ResultRetentionDays *int32 `json:"result_retention_days,omitempty"`
+	Slug string `json:"slug"`
+	WebhookSigningSecret NullableString `json:"webhook_signing_secret,omitempty"`
 }
 
 type _AdminCreateTenantRequest AdminCreateTenantRequest
@@ -42,11 +42,11 @@ type _AdminCreateTenantRequest AdminCreateTenantRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAdminCreateTenantRequest(name string, slug string, contactEmail string) *AdminCreateTenantRequest {
+func NewAdminCreateTenantRequest(contactEmail string, name string, slug string) *AdminCreateTenantRequest {
 	this := AdminCreateTenantRequest{}
+	this.ContactEmail = contactEmail
 	this.Name = name
 	this.Slug = slug
-	this.ContactEmail = contactEmail
 	return &this
 }
 
@@ -56,54 +56,6 @@ func NewAdminCreateTenantRequest(name string, slug string, contactEmail string) 
 func NewAdminCreateTenantRequestWithDefaults() *AdminCreateTenantRequest {
 	this := AdminCreateTenantRequest{}
 	return &this
-}
-
-// GetName returns the Name field value
-func (o *AdminCreateTenantRequest) GetName() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Name
-}
-
-// GetNameOk returns a tuple with the Name field value
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetNameOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Name, true
-}
-
-// SetName sets field value
-func (o *AdminCreateTenantRequest) SetName(v string) {
-	o.Name = v
-}
-
-// GetSlug returns the Slug field value
-func (o *AdminCreateTenantRequest) GetSlug() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Slug
-}
-
-// GetSlugOk returns a tuple with the Slug field value
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetSlugOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Slug, true
-}
-
-// SetSlug sets field value
-func (o *AdminCreateTenantRequest) SetSlug(v string) {
-	o.Slug = v
 }
 
 // GetContactEmail returns the ContactEmail field value
@@ -128,198 +80,6 @@ func (o *AdminCreateTenantRequest) GetContactEmailOk() (*string, bool) {
 // SetContactEmail sets field value
 func (o *AdminCreateTenantRequest) SetContactEmail(v string) {
 	o.ContactEmail = v
-}
-
-// GetPlanTier returns the PlanTier field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetPlanTier() string {
-	if o == nil || IsNil(o.PlanTier) {
-		var ret string
-		return ret
-	}
-	return *o.PlanTier
-}
-
-// GetPlanTierOk returns a tuple with the PlanTier field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetPlanTierOk() (*string, bool) {
-	if o == nil || IsNil(o.PlanTier) {
-		return nil, false
-	}
-	return o.PlanTier, true
-}
-
-// HasPlanTier returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasPlanTier() bool {
-	if o != nil && !IsNil(o.PlanTier) {
-		return true
-	}
-
-	return false
-}
-
-// SetPlanTier gets a reference to the given string and assigns it to the PlanTier field.
-func (o *AdminCreateTenantRequest) SetPlanTier(v string) {
-	o.PlanTier = &v
-}
-
-// GetMonthlyEmailLimit returns the MonthlyEmailLimit field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetMonthlyEmailLimit() int32 {
-	if o == nil || IsNil(o.MonthlyEmailLimit) {
-		var ret int32
-		return ret
-	}
-	return *o.MonthlyEmailLimit
-}
-
-// GetMonthlyEmailLimitOk returns a tuple with the MonthlyEmailLimit field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetMonthlyEmailLimitOk() (*int32, bool) {
-	if o == nil || IsNil(o.MonthlyEmailLimit) {
-		return nil, false
-	}
-	return o.MonthlyEmailLimit, true
-}
-
-// HasMonthlyEmailLimit returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasMonthlyEmailLimit() bool {
-	if o != nil && !IsNil(o.MonthlyEmailLimit) {
-		return true
-	}
-
-	return false
-}
-
-// SetMonthlyEmailLimit gets a reference to the given int32 and assigns it to the MonthlyEmailLimit field.
-func (o *AdminCreateTenantRequest) SetMonthlyEmailLimit(v int32) {
-	o.MonthlyEmailLimit = &v
-}
-
-// GetMaxRequestsPerSecond returns the MaxRequestsPerSecond field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerSecond() int32 {
-	if o == nil || IsNil(o.MaxRequestsPerSecond) {
-		var ret int32
-		return ret
-	}
-	return *o.MaxRequestsPerSecond
-}
-
-// GetMaxRequestsPerSecondOk returns a tuple with the MaxRequestsPerSecond field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerSecondOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxRequestsPerSecond) {
-		return nil, false
-	}
-	return o.MaxRequestsPerSecond, true
-}
-
-// HasMaxRequestsPerSecond returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasMaxRequestsPerSecond() bool {
-	if o != nil && !IsNil(o.MaxRequestsPerSecond) {
-		return true
-	}
-
-	return false
-}
-
-// SetMaxRequestsPerSecond gets a reference to the given int32 and assigns it to the MaxRequestsPerSecond field.
-func (o *AdminCreateTenantRequest) SetMaxRequestsPerSecond(v int32) {
-	o.MaxRequestsPerSecond = &v
-}
-
-// GetMaxRequestsPerMinute returns the MaxRequestsPerMinute field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerMinute() int32 {
-	if o == nil || IsNil(o.MaxRequestsPerMinute) {
-		var ret int32
-		return ret
-	}
-	return *o.MaxRequestsPerMinute
-}
-
-// GetMaxRequestsPerMinuteOk returns a tuple with the MaxRequestsPerMinute field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerMinuteOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxRequestsPerMinute) {
-		return nil, false
-	}
-	return o.MaxRequestsPerMinute, true
-}
-
-// HasMaxRequestsPerMinute returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasMaxRequestsPerMinute() bool {
-	if o != nil && !IsNil(o.MaxRequestsPerMinute) {
-		return true
-	}
-
-	return false
-}
-
-// SetMaxRequestsPerMinute gets a reference to the given int32 and assigns it to the MaxRequestsPerMinute field.
-func (o *AdminCreateTenantRequest) SetMaxRequestsPerMinute(v int32) {
-	o.MaxRequestsPerMinute = &v
-}
-
-// GetMaxRequestsPerHour returns the MaxRequestsPerHour field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerHour() int32 {
-	if o == nil || IsNil(o.MaxRequestsPerHour) {
-		var ret int32
-		return ret
-	}
-	return *o.MaxRequestsPerHour
-}
-
-// GetMaxRequestsPerHourOk returns a tuple with the MaxRequestsPerHour field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerHourOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxRequestsPerHour) {
-		return nil, false
-	}
-	return o.MaxRequestsPerHour, true
-}
-
-// HasMaxRequestsPerHour returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasMaxRequestsPerHour() bool {
-	if o != nil && !IsNil(o.MaxRequestsPerHour) {
-		return true
-	}
-
-	return false
-}
-
-// SetMaxRequestsPerHour gets a reference to the given int32 and assigns it to the MaxRequestsPerHour field.
-func (o *AdminCreateTenantRequest) SetMaxRequestsPerHour(v int32) {
-	o.MaxRequestsPerHour = &v
-}
-
-// GetMaxRequestsPerDay returns the MaxRequestsPerDay field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerDay() int32 {
-	if o == nil || IsNil(o.MaxRequestsPerDay) {
-		var ret int32
-		return ret
-	}
-	return *o.MaxRequestsPerDay
-}
-
-// GetMaxRequestsPerDayOk returns a tuple with the MaxRequestsPerDay field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetMaxRequestsPerDayOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxRequestsPerDay) {
-		return nil, false
-	}
-	return o.MaxRequestsPerDay, true
-}
-
-// HasMaxRequestsPerDay returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasMaxRequestsPerDay() bool {
-	if o != nil && !IsNil(o.MaxRequestsPerDay) {
-		return true
-	}
-
-	return false
-}
-
-// SetMaxRequestsPerDay gets a reference to the given int32 and assigns it to the MaxRequestsPerDay field.
-func (o *AdminCreateTenantRequest) SetMaxRequestsPerDay(v int32) {
-	o.MaxRequestsPerDay = &v
 }
 
 // GetDefaultWebhookUrl returns the DefaultWebhookUrl field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -364,6 +124,278 @@ func (o *AdminCreateTenantRequest) UnsetDefaultWebhookUrl() {
 	o.DefaultWebhookUrl.Unset()
 }
 
+// GetMaxRequestsPerDay returns the MaxRequestsPerDay field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerDay() int32 {
+	if o == nil || IsNil(o.MaxRequestsPerDay) {
+		var ret int32
+		return ret
+	}
+	return *o.MaxRequestsPerDay
+}
+
+// GetMaxRequestsPerDayOk returns a tuple with the MaxRequestsPerDay field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerDayOk() (*int32, bool) {
+	if o == nil || IsNil(o.MaxRequestsPerDay) {
+		return nil, false
+	}
+	return o.MaxRequestsPerDay, true
+}
+
+// HasMaxRequestsPerDay returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasMaxRequestsPerDay() bool {
+	if o != nil && !IsNil(o.MaxRequestsPerDay) {
+		return true
+	}
+
+	return false
+}
+
+// SetMaxRequestsPerDay gets a reference to the given int32 and assigns it to the MaxRequestsPerDay field.
+func (o *AdminCreateTenantRequest) SetMaxRequestsPerDay(v int32) {
+	o.MaxRequestsPerDay = &v
+}
+
+// GetMaxRequestsPerHour returns the MaxRequestsPerHour field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerHour() int32 {
+	if o == nil || IsNil(o.MaxRequestsPerHour) {
+		var ret int32
+		return ret
+	}
+	return *o.MaxRequestsPerHour
+}
+
+// GetMaxRequestsPerHourOk returns a tuple with the MaxRequestsPerHour field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerHourOk() (*int32, bool) {
+	if o == nil || IsNil(o.MaxRequestsPerHour) {
+		return nil, false
+	}
+	return o.MaxRequestsPerHour, true
+}
+
+// HasMaxRequestsPerHour returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasMaxRequestsPerHour() bool {
+	if o != nil && !IsNil(o.MaxRequestsPerHour) {
+		return true
+	}
+
+	return false
+}
+
+// SetMaxRequestsPerHour gets a reference to the given int32 and assigns it to the MaxRequestsPerHour field.
+func (o *AdminCreateTenantRequest) SetMaxRequestsPerHour(v int32) {
+	o.MaxRequestsPerHour = &v
+}
+
+// GetMaxRequestsPerMinute returns the MaxRequestsPerMinute field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerMinute() int32 {
+	if o == nil || IsNil(o.MaxRequestsPerMinute) {
+		var ret int32
+		return ret
+	}
+	return *o.MaxRequestsPerMinute
+}
+
+// GetMaxRequestsPerMinuteOk returns a tuple with the MaxRequestsPerMinute field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerMinuteOk() (*int32, bool) {
+	if o == nil || IsNil(o.MaxRequestsPerMinute) {
+		return nil, false
+	}
+	return o.MaxRequestsPerMinute, true
+}
+
+// HasMaxRequestsPerMinute returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasMaxRequestsPerMinute() bool {
+	if o != nil && !IsNil(o.MaxRequestsPerMinute) {
+		return true
+	}
+
+	return false
+}
+
+// SetMaxRequestsPerMinute gets a reference to the given int32 and assigns it to the MaxRequestsPerMinute field.
+func (o *AdminCreateTenantRequest) SetMaxRequestsPerMinute(v int32) {
+	o.MaxRequestsPerMinute = &v
+}
+
+// GetMaxRequestsPerSecond returns the MaxRequestsPerSecond field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerSecond() int32 {
+	if o == nil || IsNil(o.MaxRequestsPerSecond) {
+		var ret int32
+		return ret
+	}
+	return *o.MaxRequestsPerSecond
+}
+
+// GetMaxRequestsPerSecondOk returns a tuple with the MaxRequestsPerSecond field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetMaxRequestsPerSecondOk() (*int32, bool) {
+	if o == nil || IsNil(o.MaxRequestsPerSecond) {
+		return nil, false
+	}
+	return o.MaxRequestsPerSecond, true
+}
+
+// HasMaxRequestsPerSecond returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasMaxRequestsPerSecond() bool {
+	if o != nil && !IsNil(o.MaxRequestsPerSecond) {
+		return true
+	}
+
+	return false
+}
+
+// SetMaxRequestsPerSecond gets a reference to the given int32 and assigns it to the MaxRequestsPerSecond field.
+func (o *AdminCreateTenantRequest) SetMaxRequestsPerSecond(v int32) {
+	o.MaxRequestsPerSecond = &v
+}
+
+// GetMonthlyEmailLimit returns the MonthlyEmailLimit field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetMonthlyEmailLimit() int32 {
+	if o == nil || IsNil(o.MonthlyEmailLimit) {
+		var ret int32
+		return ret
+	}
+	return *o.MonthlyEmailLimit
+}
+
+// GetMonthlyEmailLimitOk returns a tuple with the MonthlyEmailLimit field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetMonthlyEmailLimitOk() (*int32, bool) {
+	if o == nil || IsNil(o.MonthlyEmailLimit) {
+		return nil, false
+	}
+	return o.MonthlyEmailLimit, true
+}
+
+// HasMonthlyEmailLimit returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasMonthlyEmailLimit() bool {
+	if o != nil && !IsNil(o.MonthlyEmailLimit) {
+		return true
+	}
+
+	return false
+}
+
+// SetMonthlyEmailLimit gets a reference to the given int32 and assigns it to the MonthlyEmailLimit field.
+func (o *AdminCreateTenantRequest) SetMonthlyEmailLimit(v int32) {
+	o.MonthlyEmailLimit = &v
+}
+
+// GetName returns the Name field value
+func (o *AdminCreateTenantRequest) GetName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Name
+}
+
+// GetNameOk returns a tuple with the Name field value
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Name, true
+}
+
+// SetName sets field value
+func (o *AdminCreateTenantRequest) SetName(v string) {
+	o.Name = v
+}
+
+// GetPlanTier returns the PlanTier field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetPlanTier() string {
+	if o == nil || IsNil(o.PlanTier) {
+		var ret string
+		return ret
+	}
+	return *o.PlanTier
+}
+
+// GetPlanTierOk returns a tuple with the PlanTier field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetPlanTierOk() (*string, bool) {
+	if o == nil || IsNil(o.PlanTier) {
+		return nil, false
+	}
+	return o.PlanTier, true
+}
+
+// HasPlanTier returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasPlanTier() bool {
+	if o != nil && !IsNil(o.PlanTier) {
+		return true
+	}
+
+	return false
+}
+
+// SetPlanTier gets a reference to the given string and assigns it to the PlanTier field.
+func (o *AdminCreateTenantRequest) SetPlanTier(v string) {
+	o.PlanTier = &v
+}
+
+// GetResultRetentionDays returns the ResultRetentionDays field value if set, zero value otherwise.
+func (o *AdminCreateTenantRequest) GetResultRetentionDays() int32 {
+	if o == nil || IsNil(o.ResultRetentionDays) {
+		var ret int32
+		return ret
+	}
+	return *o.ResultRetentionDays
+}
+
+// GetResultRetentionDaysOk returns a tuple with the ResultRetentionDays field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetResultRetentionDaysOk() (*int32, bool) {
+	if o == nil || IsNil(o.ResultRetentionDays) {
+		return nil, false
+	}
+	return o.ResultRetentionDays, true
+}
+
+// HasResultRetentionDays returns a boolean if a field has been set.
+func (o *AdminCreateTenantRequest) HasResultRetentionDays() bool {
+	if o != nil && !IsNil(o.ResultRetentionDays) {
+		return true
+	}
+
+	return false
+}
+
+// SetResultRetentionDays gets a reference to the given int32 and assigns it to the ResultRetentionDays field.
+func (o *AdminCreateTenantRequest) SetResultRetentionDays(v int32) {
+	o.ResultRetentionDays = &v
+}
+
+// GetSlug returns the Slug field value
+func (o *AdminCreateTenantRequest) GetSlug() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Slug
+}
+
+// GetSlugOk returns a tuple with the Slug field value
+// and a boolean to check if the value has been set.
+func (o *AdminCreateTenantRequest) GetSlugOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Slug, true
+}
+
+// SetSlug sets field value
+func (o *AdminCreateTenantRequest) SetSlug(v string) {
+	o.Slug = v
+}
+
 // GetWebhookSigningSecret returns the WebhookSigningSecret field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *AdminCreateTenantRequest) GetWebhookSigningSecret() string {
 	if o == nil || IsNil(o.WebhookSigningSecret.Get()) {
@@ -406,38 +438,6 @@ func (o *AdminCreateTenantRequest) UnsetWebhookSigningSecret() {
 	o.WebhookSigningSecret.Unset()
 }
 
-// GetResultRetentionDays returns the ResultRetentionDays field value if set, zero value otherwise.
-func (o *AdminCreateTenantRequest) GetResultRetentionDays() int32 {
-	if o == nil || IsNil(o.ResultRetentionDays) {
-		var ret int32
-		return ret
-	}
-	return *o.ResultRetentionDays
-}
-
-// GetResultRetentionDaysOk returns a tuple with the ResultRetentionDays field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreateTenantRequest) GetResultRetentionDaysOk() (*int32, bool) {
-	if o == nil || IsNil(o.ResultRetentionDays) {
-		return nil, false
-	}
-	return o.ResultRetentionDays, true
-}
-
-// HasResultRetentionDays returns a boolean if a field has been set.
-func (o *AdminCreateTenantRequest) HasResultRetentionDays() bool {
-	if o != nil && !IsNil(o.ResultRetentionDays) {
-		return true
-	}
-
-	return false
-}
-
-// SetResultRetentionDays gets a reference to the given int32 and assigns it to the ResultRetentionDays field.
-func (o *AdminCreateTenantRequest) SetResultRetentionDays(v int32) {
-	o.ResultRetentionDays = &v
-}
-
 func (o AdminCreateTenantRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -448,35 +448,35 @@ func (o AdminCreateTenantRequest) MarshalJSON() ([]byte, error) {
 
 func (o AdminCreateTenantRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["name"] = o.Name
-	toSerialize["slug"] = o.Slug
 	toSerialize["contact_email"] = o.ContactEmail
-	if !IsNil(o.PlanTier) {
-		toSerialize["plan_tier"] = o.PlanTier
-	}
-	if !IsNil(o.MonthlyEmailLimit) {
-		toSerialize["monthly_email_limit"] = o.MonthlyEmailLimit
-	}
-	if !IsNil(o.MaxRequestsPerSecond) {
-		toSerialize["max_requests_per_second"] = o.MaxRequestsPerSecond
-	}
-	if !IsNil(o.MaxRequestsPerMinute) {
-		toSerialize["max_requests_per_minute"] = o.MaxRequestsPerMinute
-	}
-	if !IsNil(o.MaxRequestsPerHour) {
-		toSerialize["max_requests_per_hour"] = o.MaxRequestsPerHour
+	if o.DefaultWebhookUrl.IsSet() {
+		toSerialize["default_webhook_url"] = o.DefaultWebhookUrl.Get()
 	}
 	if !IsNil(o.MaxRequestsPerDay) {
 		toSerialize["max_requests_per_day"] = o.MaxRequestsPerDay
 	}
-	if o.DefaultWebhookUrl.IsSet() {
-		toSerialize["default_webhook_url"] = o.DefaultWebhookUrl.Get()
+	if !IsNil(o.MaxRequestsPerHour) {
+		toSerialize["max_requests_per_hour"] = o.MaxRequestsPerHour
 	}
-	if o.WebhookSigningSecret.IsSet() {
-		toSerialize["webhook_signing_secret"] = o.WebhookSigningSecret.Get()
+	if !IsNil(o.MaxRequestsPerMinute) {
+		toSerialize["max_requests_per_minute"] = o.MaxRequestsPerMinute
+	}
+	if !IsNil(o.MaxRequestsPerSecond) {
+		toSerialize["max_requests_per_second"] = o.MaxRequestsPerSecond
+	}
+	if !IsNil(o.MonthlyEmailLimit) {
+		toSerialize["monthly_email_limit"] = o.MonthlyEmailLimit
+	}
+	toSerialize["name"] = o.Name
+	if !IsNil(o.PlanTier) {
+		toSerialize["plan_tier"] = o.PlanTier
 	}
 	if !IsNil(o.ResultRetentionDays) {
 		toSerialize["result_retention_days"] = o.ResultRetentionDays
+	}
+	toSerialize["slug"] = o.Slug
+	if o.WebhookSigningSecret.IsSet() {
+		toSerialize["webhook_signing_secret"] = o.WebhookSigningSecret.Get()
 	}
 	return toSerialize, nil
 }
@@ -486,9 +486,9 @@ func (o *AdminCreateTenantRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"contact_email",
 		"name",
 		"slug",
-		"contact_email",
 	}
 
 	allProperties := make(map[string]interface{})

@@ -21,9 +21,9 @@ var _ MappedNullable = &AdminApiKeyWriteRequest{}
 
 // AdminApiKeyWriteRequest struct for AdminApiKeyWriteRequest
 type AdminApiKeyWriteRequest struct {
+	ExpiresAt NullableTime `json:"expires_at,omitempty"`
 	Name *string `json:"name,omitempty"`
 	Scopes []string `json:"scopes,omitempty"`
-	ExpiresAt NullableTime `json:"expires_at,omitempty"`
 }
 
 // NewAdminApiKeyWriteRequest instantiates a new AdminApiKeyWriteRequest object
@@ -41,6 +41,48 @@ func NewAdminApiKeyWriteRequest() *AdminApiKeyWriteRequest {
 func NewAdminApiKeyWriteRequestWithDefaults() *AdminApiKeyWriteRequest {
 	this := AdminApiKeyWriteRequest{}
 	return &this
+}
+
+// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *AdminApiKeyWriteRequest) GetExpiresAt() time.Time {
+	if o == nil || IsNil(o.ExpiresAt.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.ExpiresAt.Get()
+}
+
+// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *AdminApiKeyWriteRequest) GetExpiresAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ExpiresAt.Get(), o.ExpiresAt.IsSet()
+}
+
+// HasExpiresAt returns a boolean if a field has been set.
+func (o *AdminApiKeyWriteRequest) HasExpiresAt() bool {
+	if o != nil && o.ExpiresAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetExpiresAt gets a reference to the given NullableTime and assigns it to the ExpiresAt field.
+func (o *AdminApiKeyWriteRequest) SetExpiresAt(v time.Time) {
+	o.ExpiresAt.Set(&v)
+}
+// SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
+func (o *AdminApiKeyWriteRequest) SetExpiresAtNil() {
+	o.ExpiresAt.Set(nil)
+}
+
+// UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
+func (o *AdminApiKeyWriteRequest) UnsetExpiresAt() {
+	o.ExpiresAt.Unset()
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -107,48 +149,6 @@ func (o *AdminApiKeyWriteRequest) SetScopes(v []string) {
 	o.Scopes = v
 }
 
-// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *AdminApiKeyWriteRequest) GetExpiresAt() time.Time {
-	if o == nil || IsNil(o.ExpiresAt.Get()) {
-		var ret time.Time
-		return ret
-	}
-	return *o.ExpiresAt.Get()
-}
-
-// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *AdminApiKeyWriteRequest) GetExpiresAtOk() (*time.Time, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.ExpiresAt.Get(), o.ExpiresAt.IsSet()
-}
-
-// HasExpiresAt returns a boolean if a field has been set.
-func (o *AdminApiKeyWriteRequest) HasExpiresAt() bool {
-	if o != nil && o.ExpiresAt.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetExpiresAt gets a reference to the given NullableTime and assigns it to the ExpiresAt field.
-func (o *AdminApiKeyWriteRequest) SetExpiresAt(v time.Time) {
-	o.ExpiresAt.Set(&v)
-}
-// SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
-func (o *AdminApiKeyWriteRequest) SetExpiresAtNil() {
-	o.ExpiresAt.Set(nil)
-}
-
-// UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
-func (o *AdminApiKeyWriteRequest) UnsetExpiresAt() {
-	o.ExpiresAt.Unset()
-}
-
 func (o AdminApiKeyWriteRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -159,14 +159,14 @@ func (o AdminApiKeyWriteRequest) MarshalJSON() ([]byte, error) {
 
 func (o AdminApiKeyWriteRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.ExpiresAt.IsSet() {
+		toSerialize["expires_at"] = o.ExpiresAt.Get()
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
 	if !IsNil(o.Scopes) {
 		toSerialize["scopes"] = o.Scopes
-	}
-	if o.ExpiresAt.IsSet() {
-		toSerialize["expires_at"] = o.ExpiresAt.Get()
 	}
 	return toSerialize, nil
 }

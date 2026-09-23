@@ -475,6 +475,73 @@ mod operation_id_tests {
 			"#/components/schemas/AdminTenantList"
 		);
 	}
+
+	#[test]
+	fn json_write_routes_expose_their_request_bodies() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, method, schema) in [
+			("/v1/comments", "post", "CreateCommentRequest"),
+			("/v1/me/api-keys", "post", "CreateApiKeyRequest"),
+			("/v1/me/api-keys/{key_id}", "patch", "UpdateApiKeyRequest"),
+			("/v1/me/domains", "post", "CreateTenantDomainRequest"),
+			(
+				"/v1/me/domains/{domain}",
+				"patch",
+				"UpdateTenantDomainRequest",
+			),
+			("/v1/check-email-with-onboard", "post", "OnboardRequest"),
+		] {
+			assert_eq!(
+				spec["paths"][path][method]["requestBody"]["content"]["application/json"]["schema"]
+					["$ref"],
+				format!("#/components/schemas/{schema}"),
+				"{method} {path}"
+			);
+		}
+	}
+
+	#[test]
+	fn admin_job_queries_keep_their_parameters() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, expected) in [
+			("/v1/admin/jobs/{job_id}/events", &["limit", "offset"][..]),
+			(
+				"/v1/admin/jobs/{job_id}/results",
+				&["limit", "offset", "state"][..],
+			),
+			(
+				"/v1/admin/tenants/{tenant_id}/jobs",
+				&["status", "limit", "offset"][..],
+			),
+		] {
+			let names: Vec<_> = spec["paths"][path]["get"]["parameters"]
+				.as_array()
+				.expect("parameters")
+				.iter()
+				.filter(|parameter| parameter["in"] == "query")
+				.map(|parameter| parameter["name"].as_str().expect("parameter name"))
+				.collect();
+			assert_eq!(names, expected, "{path}");
+		}
+	}
+
+	#[test]
+	fn v1_default_errors_have_descriptions() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, item) in spec["paths"].as_object().expect("paths") {
+			if !path.starts_with("/v1/") {
+				continue;
+			}
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(operation) = item.get(method) {
+					assert!(
+						operation["responses"]["default"]["description"].is_string(),
+						"{method} {path}"
+					);
+				}
+			}
+		}
+	}
 }
 
 fn generic_object_schema() -> Value {
@@ -2108,10 +2175,15 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 					.and_then(|operation| operation.get_mut("responses"))
 					.and_then(Value::as_object_mut)
 				{
-					responses.entry("default").or_insert_with(|| json!({
+					let default = responses.entry("default").or_insert_with(|| json!({
 						"description": "Request error",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
 					}));
+					default
+						.as_object_mut()
+						.expect("default response object")
+						.entry("description")
+						.or_insert_with(|| json!("Request error"));
 				}
 			}
 		}

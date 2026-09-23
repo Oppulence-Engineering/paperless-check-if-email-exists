@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**TenantId** | Pointer to **string** |  | [optional]
-**Name** | Pointer to **string** |  | [optional]
 **MonthlyEmailLimit** | Pointer to **NullableInt32** |  | [optional]
-**UsedThisPeriod** | Pointer to **int32** |  | [optional]
+**Name** | Pointer to **string** |  | [optional]
 **PeriodResetAt** | Pointer to **time.Time** |  | [optional]
 **QuotaUnlimited** | Pointer to **bool** |  | [optional]
 **RemainingQuota** | Pointer to **NullableInt32** |  | [optional]
+**TenantId** | Pointer to **string** |  | [optional]
+**UsedThisPeriod** | Pointer to **int32** |  | [optional]
 
 ## Methods
 
@@ -30,56 +30,6 @@ will change when the set of required properties is changed
 NewAdminTenantQuotaWithDefaults instantiates a new AdminTenantQuota object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
-
-### GetTenantId
-
-`func (o *AdminTenantQuota) GetTenantId() string`
-
-GetTenantId returns the TenantId field if non-nil, zero value otherwise.
-
-### GetTenantIdOk
-
-`func (o *AdminTenantQuota) GetTenantIdOk() (*string, bool)`
-
-GetTenantIdOk returns a tuple with the TenantId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetTenantId
-
-`func (o *AdminTenantQuota) SetTenantId(v string)`
-
-SetTenantId sets TenantId field to given value.
-
-### HasTenantId
-
-`func (o *AdminTenantQuota) HasTenantId() bool`
-
-HasTenantId returns a boolean if a field has been set.
-
-### GetName
-
-`func (o *AdminTenantQuota) GetName() string`
-
-GetName returns the Name field if non-nil, zero value otherwise.
-
-### GetNameOk
-
-`func (o *AdminTenantQuota) GetNameOk() (*string, bool)`
-
-GetNameOk returns a tuple with the Name field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetName
-
-`func (o *AdminTenantQuota) SetName(v string)`
-
-SetName sets Name field to given value.
-
-### HasName
-
-`func (o *AdminTenantQuota) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetMonthlyEmailLimit
 
@@ -117,30 +67,30 @@ HasMonthlyEmailLimit returns a boolean if a field has been set.
 
 UnsetMonthlyEmailLimit ensures that no value is present for MonthlyEmailLimit, not even an explicit nil
 
-### GetUsedThisPeriod
+### GetName
 
-`func (o *AdminTenantQuota) GetUsedThisPeriod() int32`
+`func (o *AdminTenantQuota) GetName() string`
 
-GetUsedThisPeriod returns the UsedThisPeriod field if non-nil, zero value otherwise.
+GetName returns the Name field if non-nil, zero value otherwise.
 
-### GetUsedThisPeriodOk
+### GetNameOk
 
-`func (o *AdminTenantQuota) GetUsedThisPeriodOk() (*int32, bool)`
+`func (o *AdminTenantQuota) GetNameOk() (*string, bool)`
 
-GetUsedThisPeriodOk returns a tuple with the UsedThisPeriod field if it's non-nil, zero value otherwise
+GetNameOk returns a tuple with the Name field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetUsedThisPeriod
+### SetName
 
-`func (o *AdminTenantQuota) SetUsedThisPeriod(v int32)`
+`func (o *AdminTenantQuota) SetName(v string)`
 
-SetUsedThisPeriod sets UsedThisPeriod field to given value.
+SetName sets Name field to given value.
 
-### HasUsedThisPeriod
+### HasName
 
-`func (o *AdminTenantQuota) HasUsedThisPeriod() bool`
+`func (o *AdminTenantQuota) HasName() bool`
 
-HasUsedThisPeriod returns a boolean if a field has been set.
+HasName returns a boolean if a field has been set.
 
 ### GetPeriodResetAt
 
@@ -227,5 +177,56 @@ HasRemainingQuota returns a boolean if a field has been set.
 `func (o *AdminTenantQuota) UnsetRemainingQuota()`
 
 UnsetRemainingQuota ensures that no value is present for RemainingQuota, not even an explicit nil
+
+### GetTenantId
+
+`func (o *AdminTenantQuota) GetTenantId() string`
+
+GetTenantId returns the TenantId field if non-nil, zero value otherwise.
+
+### GetTenantIdOk
+
+`func (o *AdminTenantQuota) GetTenantIdOk() (*string, bool)`
+
+GetTenantIdOk returns a tuple with the TenantId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTenantId
+
+`func (o *AdminTenantQuota) SetTenantId(v string)`
+
+SetTenantId sets TenantId field to given value.
+
+### HasTenantId
+
+`func (o *AdminTenantQuota) HasTenantId() bool`
+
+HasTenantId returns a boolean if a field has been set.
+
+### GetUsedThisPeriod
+
+`func (o *AdminTenantQuota) GetUsedThisPeriod() int32`
+
+GetUsedThisPeriod returns the UsedThisPeriod field if non-nil, zero value otherwise.
+
+### GetUsedThisPeriodOk
+
+`func (o *AdminTenantQuota) GetUsedThisPeriodOk() (*int32, bool)`
+
+GetUsedThisPeriodOk returns a tuple with the UsedThisPeriod field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUsedThisPeriod
+
+`func (o *AdminTenantQuota) SetUsedThisPeriod(v int32)`
+
+SetUsedThisPeriod sets UsedThisPeriod field to given value.
+
+### HasUsedThisPeriod
+
+`func (o *AdminTenantQuota) HasUsedThisPeriod() bool`
+
+HasUsedThisPeriod returns a boolean if a field has been set.
+
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

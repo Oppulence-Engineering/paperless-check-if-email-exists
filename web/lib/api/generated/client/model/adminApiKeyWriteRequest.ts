@@ -9,8 +9,8 @@
  */
 
 export interface AdminApiKeyWriteRequest {
-  name?: string;
-  scopes?: string[];
   /** @nullable */
   expires_at?: string | null;
+  name?: string;
+  scopes?: string[];
 }

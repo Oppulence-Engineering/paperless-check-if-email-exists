@@ -28,6 +28,13 @@ export const V1ListCommentsDefaultResponse = zod.strictObject({
 /**
  * @summary POST /v1/comments
  */
+export const V1CreateCommentBody = zod.strictObject({
+  author: zod.string().nullish(),
+  body: zod.string(),
+  job_id: zod.int().nullish(),
+  list_id: zod.int().nullish(),
+});
+
 export const V1CreateComment201Response = zod.unknown();
 
 export const V1CreateCommentDefaultResponse = zod.strictObject({

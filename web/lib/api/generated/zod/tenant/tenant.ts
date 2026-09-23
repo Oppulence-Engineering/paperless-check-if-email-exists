@@ -23,6 +23,12 @@ export const V1ListTenantDomainsDefaultResponse = zod.strictObject({
  * Add a domain for the authenticated tenant.
  * @summary POST /v1/me/domains
  */
+export const V1CreateTenantDomainBody = zod.strictObject({
+  domain: zod.string(),
+  is_active: zod.boolean().nullish(),
+  notes: zod.string().nullish(),
+});
+
 export const V1CreateTenantDomain201Response = zod.unknown();
 
 export const V1CreateTenantDomainDefaultResponse = zod.strictObject({
@@ -63,6 +69,13 @@ export const V1GetTenantDomainDefaultResponse = zod.strictObject({
  */
 export const V1UpdateTenantDomainParams = zod.object({
   domain: zod.string().describe("Domain identifier"),
+});
+
+export const V1UpdateTenantDomainBody = zod.strictObject({
+  domain: zod.string().nullish(),
+  is_active: zod.boolean().nullish(),
+  is_verified: zod.boolean().nullish(),
+  notes: zod.string().nullish(),
 });
 
 export const V1UpdateTenantDomain200Response = zod.unknown();

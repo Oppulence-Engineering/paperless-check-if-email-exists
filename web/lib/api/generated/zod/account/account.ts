@@ -33,6 +33,12 @@ export const ListTenantApiKeysDefaultResponse = zod.strictObject({
  * Create a new API key for the authenticated tenant.
  * @summary POST /v1/me/api-keys
  */
+export const CreateTenantApiKeyBody = zod.strictObject({
+  expires_at: zod.string().nullish(),
+  name: zod.string().nullish(),
+  scopes: zod.array(zod.string()).nullish(),
+});
+
 export const CreateTenantApiKey201Response = zod.unknown();
 
 export const CreateTenantApiKeyDefaultResponse = zod.strictObject({
@@ -73,6 +79,12 @@ export const GetTenantApiKeyDefaultResponse = zod.strictObject({
  */
 export const UpdateTenantApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
+});
+
+export const UpdateTenantApiKeyBody = zod.strictObject({
+  expires_at: zod.string().nullish(),
+  name: zod.string().nullish(),
+  scopes: zod.array(zod.string()).nullish(),
 });
 
 export const UpdateTenantApiKey200Response = zod.unknown();

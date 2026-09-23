@@ -552,6 +552,12 @@ func (a *V1APIService) V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*CheckEm
 type V1APIV1CheckEmailWithOnboardRequest struct {
 	ctx context.Context
 	ApiService V1API
+	onboardRequest *OnboardRequest
+}
+
+func (r V1APIV1CheckEmailWithOnboardRequest) OnboardRequest(onboardRequest OnboardRequest) V1APIV1CheckEmailWithOnboardRequest {
+	r.onboardRequest = &onboardRequest
+	return r
 }
 
 func (r V1APIV1CheckEmailWithOnboardRequest) Execute() (*http.Response, error) {
@@ -589,9 +595,12 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.onboardRequest == nil {
+		return nil, reportError("onboardRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -607,6 +616,8 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.onboardRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err

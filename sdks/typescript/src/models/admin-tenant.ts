@@ -25,85 +25,7 @@ export interface AdminTenant {
      * @type {string}
      * @memberof AdminTenant
      */
-    'id'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
-    'name'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
-    'slug'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
     'contact_email'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
-    'plan_tier'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
-    'status'?: string;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'monthly_email_limit'?: number | null;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'max_requests_per_second'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'max_requests_per_minute'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'max_requests_per_hour'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'max_requests_per_day'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'used_this_period'?: number;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenant
-     */
-    'default_webhook_url'?: string | null;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminTenant
-     */
-    'result_retention_days'?: number;
     /**
      *
      * @type {string}
@@ -115,5 +37,83 @@ export interface AdminTenant {
      * @type {string}
      * @memberof AdminTenant
      */
+    'default_webhook_url'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
+    'id'?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'max_requests_per_day'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'max_requests_per_hour'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'max_requests_per_minute'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'max_requests_per_second'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'monthly_email_limit'?: number | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
+    'name'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
+    'plan_tier'?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'result_retention_days'?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
+    'slug'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
+    'status'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenant
+     */
     'updated_at'?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenant
+     */
+    'used_this_period'?: number;
 }

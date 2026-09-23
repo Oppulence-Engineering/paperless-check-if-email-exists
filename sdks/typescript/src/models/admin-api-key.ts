@@ -25,19 +25,31 @@ export interface AdminApiKey {
      * @type {string}
      * @memberof AdminApiKey
      */
+    'created_at'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiKey
+     */
+    'expires_at'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiKey
+     */
     'id'?: string;
     /**
      *
      * @type {string}
      * @memberof AdminApiKey
      */
-    'tenant_id'?: string;
+    'key_prefix'?: string;
     /**
      *
      * @type {string}
      * @memberof AdminApiKey
      */
-    'key_prefix'?: string;
+    'last_used_at'?: string | null;
     /**
      *
      * @type {string}
@@ -61,17 +73,5 @@ export interface AdminApiKey {
      * @type {string}
      * @memberof AdminApiKey
      */
-    'last_used_at'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminApiKey
-     */
-    'expires_at'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminApiKey
-     */
-    'created_at'?: string;
+    'tenant_id'?: string;
 }

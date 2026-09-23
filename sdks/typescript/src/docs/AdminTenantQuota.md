@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**tenant_id** | **string** |  | [optional]
-**name** | **string** |  | [optional]
 **monthly_email_limit** | **number** |  | [optional]
-**used_this_period** | **number** |  | [optional]
+**name** | **string** |  | [optional]
 **period_reset_at** | **string** |  | [optional]
 **quota_unlimited** | **boolean** |  | [optional]
 **remaining_quota** | **number** |  | [optional]
+**tenant_id** | **string** |  | [optional]
+**used_this_period** | **number** |  | [optional]
 
 ## Example
 
@@ -19,13 +19,13 @@ Name | Type | Description | Notes
 import { AdminTenantQuota } from '@oppulence/reacher-sdk';
 
 const instance: AdminTenantQuota = {
-    tenant_id: 'example',
-    name: 'Weekly Cleanup',
     monthly_email_limit: 0,
-    used_this_period: 0,
+    name: 'Weekly Cleanup',
     period_reset_at: 'example',
     quota_unlimited: true,
     remaining_quota: 0,
+    tenant_id: 'example',
+    used_this_period: 0,
 };
 ```
 

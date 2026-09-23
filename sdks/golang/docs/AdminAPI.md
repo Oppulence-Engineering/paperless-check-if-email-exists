@@ -115,7 +115,7 @@ import (
 )
 
 func main() {
-	adminCreateTenantRequest := *openapiclient.NewAdminCreateTenantRequest("Name_example", "Slug_example", "ContactEmail_example") // AdminCreateTenantRequest |
+	adminCreateTenantRequest := *openapiclient.NewAdminCreateTenantRequest("ContactEmail_example", "Name_example", "Slug_example") // AdminCreateTenantRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

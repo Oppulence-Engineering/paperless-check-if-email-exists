@@ -9,18 +9,18 @@
  */
 
 export interface AdminCreateTenantRequest {
-  name: string;
-  slug: string;
   contact_email: string;
-  plan_tier?: string;
-  monthly_email_limit?: number;
-  max_requests_per_second?: number;
-  max_requests_per_minute?: number;
-  max_requests_per_hour?: number;
-  max_requests_per_day?: number;
   /** @nullable */
   default_webhook_url?: string | null;
+  max_requests_per_day?: number;
+  max_requests_per_hour?: number;
+  max_requests_per_minute?: number;
+  max_requests_per_second?: number;
+  monthly_email_limit?: number;
+  name: string;
+  plan_tier?: string;
+  result_retention_days?: number;
+  slug: string;
   /** @nullable */
   webhook_signing_secret?: string | null;
-  result_retention_days?: number;
 }

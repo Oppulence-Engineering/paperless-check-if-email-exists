@@ -191,8 +191,11 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [CheckEmailRequest](docs/CheckEmailRequest.md)
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [CoreError](docs/CoreError.md)
+ - [CreateApiKeyRequest](docs/CreateApiKeyRequest.md)
+ - [CreateCommentRequest](docs/CreateCommentRequest.md)
  - [CreatePipelineInput](docs/CreatePipelineInput.md)
  - [CreateProviderEndpointInput](docs/CreateProviderEndpointInput.md)
+ - [CreateTenantDomainRequest](docs/CreateTenantDomainRequest.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)
  - [DeletePipelineResponse](docs/DeletePipelineResponse.md)
@@ -226,6 +229,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ListUploadResponse](docs/ListUploadResponse.md)
  - [MiscDetails](docs/MiscDetails.md)
  - [MxDetails](docs/MxDetails.md)
+ - [OnboardRequest](docs/OnboardRequest.md)
  - [OutcomeIngestRequest](docs/OutcomeIngestRequest.md)
  - [OutcomeIngestResponse](docs/OutcomeIngestResponse.md)
  - [OutcomeInput](docs/OutcomeInput.md)
@@ -281,8 +285,10 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [TenantWebhookResponse](docs/TenantWebhookResponse.md)
  - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
  - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
+ - [UpdateApiKeyRequest](docs/UpdateApiKeyRequest.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
  - [UpdateProviderEndpointInput](docs/UpdateProviderEndpointInput.md)
+ - [UpdateTenantDomainRequest](docs/UpdateTenantDomainRequest.md)
  - [UpdateTenantSettingsRequest](docs/UpdateTenantSettingsRequest.md)
  - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)
  - [V1EmailHistory200Response](docs/V1EmailHistory200Response.md)
@@ -303,16 +309,16 @@ Authentication schemes defined for the API:
 - **API key parameter name**: x-reacher-secret
 - **Location**: HTTP header
 
-<a id="LegacySecret"></a>
-### LegacySecret
-
-- **Type**: API key
-- **API key parameter name**: x-reacher-secret
-- **Location**: HTTP header
-
 <a id="Authorization"></a>
 ### Authorization
 
 - **Type**: API key
 - **API key parameter name**: Authorization
+- **Location**: HTTP header
+
+<a id="LegacySecret"></a>
+### LegacySecret
+
+- **Type**: API key
+- **API key parameter name**: x-reacher-secret
 - **Location**: HTTP header

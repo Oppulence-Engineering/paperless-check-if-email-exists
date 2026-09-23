@@ -5,15 +5,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**created_at** | **string** |  | [optional]
+**expires_at** | **string** |  | [optional]
 **id** | **string** |  | [optional]
-**tenant_id** | **string** |  | [optional]
 **key_prefix** | **string** |  | [optional]
+**last_used_at** | **string** |  | [optional]
 **name** | **string** |  | [optional]
 **scopes** | **Array&lt;string&gt;** |  | [optional]
 **status** | **string** |  | [optional]
-**last_used_at** | **string** |  | [optional]
-**expires_at** | **string** |  | [optional]
-**created_at** | **string** |  | [optional]
+**tenant_id** | **string** |  | [optional]
 
 ## Example
 
@@ -21,15 +21,15 @@ Name | Type | Description | Notes
 import { AdminApiKey } from '@oppulence/reacher-sdk';
 
 const instance: AdminApiKey = {
+    created_at: 'example',
+    expires_at: 'example',
     id: 'example',
-    tenant_id: 'example',
     key_prefix: 'example',
+    last_used_at: 'example',
     name: 'Weekly Cleanup',
     scopes: [],
     status: 'example',
-    last_used_at: 'example',
-    expires_at: 'example',
-    created_at: 'example',
+    tenant_id: 'example',
 };
 ```
 

@@ -161,7 +161,7 @@ Name | Type | Description  | Notes
 
 ## V1CheckEmailWithOnboard
 
-> V1CheckEmailWithOnboard(ctx).Execute()
+> V1CheckEmailWithOnboard(ctx).OnboardRequest(onboardRequest).Execute()
 
 POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
 
@@ -178,10 +178,11 @@ import (
 )
 
 func main() {
+	onboardRequest := *openapiclient.NewOnboardRequest("ContactEmail_example", "EmailToVerify_example", "TenantName_example") // OnboardRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).Execute()
+	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).OnboardRequest(onboardRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CheckEmailWithOnboard``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -191,12 +192,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CheckEmailWithOnboardRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **onboardRequest** | [**OnboardRequest**](OnboardRequest.md) |  |
 
 ### Return type
 
@@ -208,7 +213,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

@@ -62,7 +62,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CreateTenantDomain**
-> v1CreateTenantDomain()
+> v1CreateTenantDomain(createTenantDomainRequest)
 
 Add a domain for the authenticated tenant.
 
@@ -71,17 +71,25 @@ Add a domain for the authenticated tenant.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    CreateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1CreateTenantDomain();
+let createTenantDomainRequest: CreateTenantDomainRequest; //
+
+const { status, data } = await apiInstance.v1CreateTenantDomain(
+    createTenantDomainRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createTenantDomainRequest** | **CreateTenantDomainRequest**|  | |
 
 
 ### Return type
@@ -94,7 +102,7 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -391,7 +399,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantDomain**
-> v1UpdateTenantDomain()
+> v1UpdateTenantDomain(updateTenantDomainRequest)
 
 Update the domain value, status, verification state, or metadata notes.
 
@@ -400,16 +408,19 @@ Update the domain value, status, verification state, or metadata notes.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
 let domain: string; //Domain identifier (default to undefined)
+let updateTenantDomainRequest: UpdateTenantDomainRequest; //
 
 const { status, data } = await apiInstance.v1UpdateTenantDomain(
-    domain
+    domain,
+    updateTenantDomainRequest
 );
 ```
 
@@ -417,6 +428,7 @@ const { status, data } = await apiInstance.v1UpdateTenantDomain(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **updateTenantDomainRequest** | **UpdateTenantDomainRequest**|  | |
 | **domain** | [**string**] | Domain identifier | defaults to undefined|
 
 
@@ -430,7 +442,7 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 

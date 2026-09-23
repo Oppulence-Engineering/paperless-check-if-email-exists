@@ -23,15 +23,15 @@ var _ MappedNullable = &AdminCreatedApiKey{}
 
 // AdminCreatedApiKey struct for AdminCreatedApiKey
 type AdminCreatedApiKey struct {
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	ExpiresAt NullableTime `json:"expires_at,omitempty"`
 	Id *string `json:"id,omitempty"`
-	TenantId *string `json:"tenant_id,omitempty"`
 	KeyPrefix *string `json:"key_prefix,omitempty"`
+	LastUsedAt NullableTime `json:"last_used_at,omitempty"`
 	Name *string `json:"name,omitempty"`
 	Scopes []string `json:"scopes,omitempty"`
 	Status *string `json:"status,omitempty"`
-	LastUsedAt NullableTime `json:"last_used_at,omitempty"`
-	ExpiresAt NullableTime `json:"expires_at,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	TenantId *string `json:"tenant_id,omitempty"`
 	// Plaintext key returned only at creation.
 	Key string `json:"key"`
 }
@@ -54,6 +54,80 @@ func NewAdminCreatedApiKey(key string) *AdminCreatedApiKey {
 func NewAdminCreatedApiKeyWithDefaults() *AdminCreatedApiKey {
 	this := AdminCreatedApiKey{}
 	return &this
+}
+
+// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
+func (o *AdminCreatedApiKey) GetCreatedAt() time.Time {
+	if o == nil || IsNil(o.CreatedAt) {
+		var ret time.Time
+		return ret
+	}
+	return *o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminCreatedApiKey) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil || IsNil(o.CreatedAt) {
+		return nil, false
+	}
+	return o.CreatedAt, true
+}
+
+// HasCreatedAt returns a boolean if a field has been set.
+func (o *AdminCreatedApiKey) HasCreatedAt() bool {
+	if o != nil && !IsNil(o.CreatedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
+func (o *AdminCreatedApiKey) SetCreatedAt(v time.Time) {
+	o.CreatedAt = &v
+}
+
+// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *AdminCreatedApiKey) GetExpiresAt() time.Time {
+	if o == nil || IsNil(o.ExpiresAt.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.ExpiresAt.Get()
+}
+
+// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *AdminCreatedApiKey) GetExpiresAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ExpiresAt.Get(), o.ExpiresAt.IsSet()
+}
+
+// HasExpiresAt returns a boolean if a field has been set.
+func (o *AdminCreatedApiKey) HasExpiresAt() bool {
+	if o != nil && o.ExpiresAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetExpiresAt gets a reference to the given NullableTime and assigns it to the ExpiresAt field.
+func (o *AdminCreatedApiKey) SetExpiresAt(v time.Time) {
+	o.ExpiresAt.Set(&v)
+}
+// SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
+func (o *AdminCreatedApiKey) SetExpiresAtNil() {
+	o.ExpiresAt.Set(nil)
+}
+
+// UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
+func (o *AdminCreatedApiKey) UnsetExpiresAt() {
+	o.ExpiresAt.Unset()
 }
 
 // GetId returns the Id field value if set, zero value otherwise.
@@ -88,38 +162,6 @@ func (o *AdminCreatedApiKey) SetId(v string) {
 	o.Id = &v
 }
 
-// GetTenantId returns the TenantId field value if set, zero value otherwise.
-func (o *AdminCreatedApiKey) GetTenantId() string {
-	if o == nil || IsNil(o.TenantId) {
-		var ret string
-		return ret
-	}
-	return *o.TenantId
-}
-
-// GetTenantIdOk returns a tuple with the TenantId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreatedApiKey) GetTenantIdOk() (*string, bool) {
-	if o == nil || IsNil(o.TenantId) {
-		return nil, false
-	}
-	return o.TenantId, true
-}
-
-// HasTenantId returns a boolean if a field has been set.
-func (o *AdminCreatedApiKey) HasTenantId() bool {
-	if o != nil && !IsNil(o.TenantId) {
-		return true
-	}
-
-	return false
-}
-
-// SetTenantId gets a reference to the given string and assigns it to the TenantId field.
-func (o *AdminCreatedApiKey) SetTenantId(v string) {
-	o.TenantId = &v
-}
-
 // GetKeyPrefix returns the KeyPrefix field value if set, zero value otherwise.
 func (o *AdminCreatedApiKey) GetKeyPrefix() string {
 	if o == nil || IsNil(o.KeyPrefix) {
@@ -150,6 +192,48 @@ func (o *AdminCreatedApiKey) HasKeyPrefix() bool {
 // SetKeyPrefix gets a reference to the given string and assigns it to the KeyPrefix field.
 func (o *AdminCreatedApiKey) SetKeyPrefix(v string) {
 	o.KeyPrefix = &v
+}
+
+// GetLastUsedAt returns the LastUsedAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *AdminCreatedApiKey) GetLastUsedAt() time.Time {
+	if o == nil || IsNil(o.LastUsedAt.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.LastUsedAt.Get()
+}
+
+// GetLastUsedAtOk returns a tuple with the LastUsedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *AdminCreatedApiKey) GetLastUsedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.LastUsedAt.Get(), o.LastUsedAt.IsSet()
+}
+
+// HasLastUsedAt returns a boolean if a field has been set.
+func (o *AdminCreatedApiKey) HasLastUsedAt() bool {
+	if o != nil && o.LastUsedAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLastUsedAt gets a reference to the given NullableTime and assigns it to the LastUsedAt field.
+func (o *AdminCreatedApiKey) SetLastUsedAt(v time.Time) {
+	o.LastUsedAt.Set(&v)
+}
+// SetLastUsedAtNil sets the value for LastUsedAt to be an explicit nil
+func (o *AdminCreatedApiKey) SetLastUsedAtNil() {
+	o.LastUsedAt.Set(nil)
+}
+
+// UnsetLastUsedAt ensures that no value is present for LastUsedAt, not even an explicit nil
+func (o *AdminCreatedApiKey) UnsetLastUsedAt() {
+	o.LastUsedAt.Unset()
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -248,120 +332,36 @@ func (o *AdminCreatedApiKey) SetStatus(v string) {
 	o.Status = &v
 }
 
-// GetLastUsedAt returns the LastUsedAt field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *AdminCreatedApiKey) GetLastUsedAt() time.Time {
-	if o == nil || IsNil(o.LastUsedAt.Get()) {
-		var ret time.Time
+// GetTenantId returns the TenantId field value if set, zero value otherwise.
+func (o *AdminCreatedApiKey) GetTenantId() string {
+	if o == nil || IsNil(o.TenantId) {
+		var ret string
 		return ret
 	}
-	return *o.LastUsedAt.Get()
+	return *o.TenantId
 }
 
-// GetLastUsedAtOk returns a tuple with the LastUsedAt field value if set, nil otherwise
+// GetTenantIdOk returns a tuple with the TenantId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *AdminCreatedApiKey) GetLastUsedAtOk() (*time.Time, bool) {
-	if o == nil {
+func (o *AdminCreatedApiKey) GetTenantIdOk() (*string, bool) {
+	if o == nil || IsNil(o.TenantId) {
 		return nil, false
 	}
-	return o.LastUsedAt.Get(), o.LastUsedAt.IsSet()
+	return o.TenantId, true
 }
 
-// HasLastUsedAt returns a boolean if a field has been set.
-func (o *AdminCreatedApiKey) HasLastUsedAt() bool {
-	if o != nil && o.LastUsedAt.IsSet() {
+// HasTenantId returns a boolean if a field has been set.
+func (o *AdminCreatedApiKey) HasTenantId() bool {
+	if o != nil && !IsNil(o.TenantId) {
 		return true
 	}
 
 	return false
 }
 
-// SetLastUsedAt gets a reference to the given NullableTime and assigns it to the LastUsedAt field.
-func (o *AdminCreatedApiKey) SetLastUsedAt(v time.Time) {
-	o.LastUsedAt.Set(&v)
-}
-// SetLastUsedAtNil sets the value for LastUsedAt to be an explicit nil
-func (o *AdminCreatedApiKey) SetLastUsedAtNil() {
-	o.LastUsedAt.Set(nil)
-}
-
-// UnsetLastUsedAt ensures that no value is present for LastUsedAt, not even an explicit nil
-func (o *AdminCreatedApiKey) UnsetLastUsedAt() {
-	o.LastUsedAt.Unset()
-}
-
-// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *AdminCreatedApiKey) GetExpiresAt() time.Time {
-	if o == nil || IsNil(o.ExpiresAt.Get()) {
-		var ret time.Time
-		return ret
-	}
-	return *o.ExpiresAt.Get()
-}
-
-// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *AdminCreatedApiKey) GetExpiresAtOk() (*time.Time, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.ExpiresAt.Get(), o.ExpiresAt.IsSet()
-}
-
-// HasExpiresAt returns a boolean if a field has been set.
-func (o *AdminCreatedApiKey) HasExpiresAt() bool {
-	if o != nil && o.ExpiresAt.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetExpiresAt gets a reference to the given NullableTime and assigns it to the ExpiresAt field.
-func (o *AdminCreatedApiKey) SetExpiresAt(v time.Time) {
-	o.ExpiresAt.Set(&v)
-}
-// SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
-func (o *AdminCreatedApiKey) SetExpiresAtNil() {
-	o.ExpiresAt.Set(nil)
-}
-
-// UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
-func (o *AdminCreatedApiKey) UnsetExpiresAt() {
-	o.ExpiresAt.Unset()
-}
-
-// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
-func (o *AdminCreatedApiKey) GetCreatedAt() time.Time {
-	if o == nil || IsNil(o.CreatedAt) {
-		var ret time.Time
-		return ret
-	}
-	return *o.CreatedAt
-}
-
-// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminCreatedApiKey) GetCreatedAtOk() (*time.Time, bool) {
-	if o == nil || IsNil(o.CreatedAt) {
-		return nil, false
-	}
-	return o.CreatedAt, true
-}
-
-// HasCreatedAt returns a boolean if a field has been set.
-func (o *AdminCreatedApiKey) HasCreatedAt() bool {
-	if o != nil && !IsNil(o.CreatedAt) {
-		return true
-	}
-
-	return false
-}
-
-// SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
-func (o *AdminCreatedApiKey) SetCreatedAt(v time.Time) {
-	o.CreatedAt = &v
+// SetTenantId gets a reference to the given string and assigns it to the TenantId field.
+func (o *AdminCreatedApiKey) SetTenantId(v string) {
+	o.TenantId = &v
 }
 
 // GetKey returns the Key field value
@@ -398,14 +398,20 @@ func (o AdminCreatedApiKey) MarshalJSON() ([]byte, error) {
 
 func (o AdminCreatedApiKey) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.CreatedAt) {
+		toSerialize["created_at"] = o.CreatedAt
+	}
+	if o.ExpiresAt.IsSet() {
+		toSerialize["expires_at"] = o.ExpiresAt.Get()
+	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
 	}
-	if !IsNil(o.TenantId) {
-		toSerialize["tenant_id"] = o.TenantId
-	}
 	if !IsNil(o.KeyPrefix) {
 		toSerialize["key_prefix"] = o.KeyPrefix
+	}
+	if o.LastUsedAt.IsSet() {
+		toSerialize["last_used_at"] = o.LastUsedAt.Get()
 	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
@@ -416,14 +422,8 @@ func (o AdminCreatedApiKey) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
 	}
-	if o.LastUsedAt.IsSet() {
-		toSerialize["last_used_at"] = o.LastUsedAt.Get()
-	}
-	if o.ExpiresAt.IsSet() {
-		toSerialize["expires_at"] = o.ExpiresAt.Get()
-	}
-	if !IsNil(o.CreatedAt) {
-		toSerialize["created_at"] = o.CreatedAt
+	if !IsNil(o.TenantId) {
+		toSerialize["tenant_id"] = o.TenantId
 	}
 	toSerialize["key"] = o.Key
 	return toSerialize, nil

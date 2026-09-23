@@ -102,8 +102,8 @@ import (
 
 func main() {
 	jobId := int32(56) // int32 | Job identifier
-	limit := int32(56) // int32 |  (optional)
-	offset := int32(56) // int32 |  (optional)
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -131,8 +131,8 @@ Other parameters are passed through a pointer to a apiGetJobEventsRequest struct
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int32** |  |
- **offset** | **int32** |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -174,8 +174,8 @@ import (
 
 func main() {
 	jobId := int32(56) // int32 | Job identifier
-	limit := int32(56) // int32 |  (optional)
-	offset := int32(56) // int32 |  (optional)
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 	state := "state_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -204,8 +204,8 @@ Other parameters are passed through a pointer to a apiGetJobResultsRequest struc
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int32** |  |
- **offset** | **int32** |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
  **state** | **string** |  |
 
 ### Return type
@@ -319,8 +319,8 @@ import (
 func main() {
 	tenantId := "tenantId_example" // string | Tenant identifier
 	status := "status_example" // string |  (optional)
-	limit := int32(56) // int32 |  (optional)
-	offset := int32(56) // int32 |  (optional)
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -349,8 +349,8 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **status** | **string** |  |
- **limit** | **int32** |  |
- **offset** | **int32** |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 

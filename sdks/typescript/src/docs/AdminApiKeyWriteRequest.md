@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**expires_at** | **string** |  | [optional]
 **name** | **string** |  | [optional]
 **scopes** | **Array&lt;string&gt;** |  | [optional]
-**expires_at** | **string** |  | [optional]
 
 ## Example
 
@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 import { AdminApiKeyWriteRequest } from '@oppulence/reacher-sdk';
 
 const instance: AdminApiKeyWriteRequest = {
+    expires_at: 'example',
     name: 'Weekly Cleanup',
     scopes: [],
-    expires_at: 'example',
 };
 ```
 

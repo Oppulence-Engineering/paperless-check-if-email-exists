@@ -5,18 +5,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**name** | **string** |  | [optional]
 **contact_email** | **string** |  | [optional]
-**plan_tier** | **string** |  | [optional]
-**status** | **string** |  | [optional]
-**monthly_email_limit** | **number** |  | [optional]
-**max_requests_per_second** | **number** |  | [optional]
-**max_requests_per_minute** | **number** |  | [optional]
-**max_requests_per_hour** | **number** |  | [optional]
-**max_requests_per_day** | **number** |  | [optional]
 **default_webhook_url** | **string** |  | [optional]
-**webhook_signing_secret** | **string** |  | [optional]
+**max_requests_per_day** | **number** |  | [optional]
+**max_requests_per_hour** | **number** |  | [optional]
+**max_requests_per_minute** | **number** |  | [optional]
+**max_requests_per_second** | **number** |  | [optional]
+**monthly_email_limit** | **number** |  | [optional]
+**name** | **string** |  | [optional]
+**plan_tier** | **string** |  | [optional]
 **result_retention_days** | **number** |  | [optional]
+**status** | **string** |  | [optional]
+**webhook_signing_secret** | **string** |  | [optional]
 
 ## Example
 
@@ -24,18 +24,18 @@ Name | Type | Description | Notes
 import { AdminUpdateTenantRequest } from '@oppulence/reacher-sdk';
 
 const instance: AdminUpdateTenantRequest = {
-    name: 'Weekly Cleanup',
     contact_email: 'example',
-    plan_tier: 'example',
-    status: 'example',
-    monthly_email_limit: 0,
-    max_requests_per_second: 0,
-    max_requests_per_minute: 0,
-    max_requests_per_hour: 0,
-    max_requests_per_day: 0,
     default_webhook_url: 'example',
-    webhook_signing_secret: 'example',
+    max_requests_per_day: 0,
+    max_requests_per_hour: 0,
+    max_requests_per_minute: 0,
+    max_requests_per_second: 0,
+    monthly_email_limit: 0,
+    name: 'Weekly Cleanup',
+    plan_tier: 'example',
     result_retention_days: 0,
+    status: 'example',
+    webhook_signing_secret: 'example',
 };
 ```
 

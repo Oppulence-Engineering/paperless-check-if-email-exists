@@ -9,19 +9,19 @@
  */
 
 export interface AdminUpdateTenantRequest {
-  name?: string;
   contact_email?: string;
-  plan_tier?: string;
-  status?: string;
-  /** @nullable */
-  monthly_email_limit?: number | null;
-  max_requests_per_second?: number;
-  max_requests_per_minute?: number;
-  max_requests_per_hour?: number;
-  max_requests_per_day?: number;
   /** @nullable */
   default_webhook_url?: string | null;
+  max_requests_per_day?: number;
+  max_requests_per_hour?: number;
+  max_requests_per_minute?: number;
+  max_requests_per_second?: number;
+  /** @nullable */
+  monthly_email_limit?: number | null;
+  name?: string;
+  plan_tier?: string;
+  result_retention_days?: number;
+  status?: string;
   /** @nullable */
   webhook_signing_secret?: string | null;
-  result_retention_days?: number;
 }

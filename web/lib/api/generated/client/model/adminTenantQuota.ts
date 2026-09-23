@@ -9,13 +9,13 @@
  */
 
 export interface AdminTenantQuota {
-  tenant_id?: string;
-  name?: string;
   /** @nullable */
   monthly_email_limit?: number | null;
-  used_this_period?: number;
+  name?: string;
   period_reset_at?: string;
   quota_unlimited?: boolean;
   /** @nullable */
   remaining_quota?: number | null;
+  tenant_id?: string;
+  used_this_period?: number;
 }

@@ -25,6 +25,12 @@ export interface AdminApiKeyWriteRequest {
      * @type {string}
      * @memberof AdminApiKeyWriteRequest
      */
+    'expires_at'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminApiKeyWriteRequest
+     */
     'name'?: string;
     /**
      *
@@ -32,10 +38,4 @@ export interface AdminApiKeyWriteRequest {
      * @memberof AdminApiKeyWriteRequest
      */
     'scopes'?: Array<string>;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminApiKeyWriteRequest
-     */
-    'expires_at'?: string | null;
 }

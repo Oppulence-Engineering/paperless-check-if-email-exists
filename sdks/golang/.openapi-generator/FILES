@@ -53,8 +53,11 @@ docs/CheckEmailRequest.md
 docs/CommentsAPI.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
+docs/CreateApiKeyRequest.md
+docs/CreateCommentRequest.md
 docs/CreatePipelineInput.md
 docs/CreateProviderEndpointInput.md
+docs/CreateTenantDomainRequest.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
 docs/DeletePipelineResponse.md
@@ -93,6 +96,7 @@ docs/ListUploadResponse.md
 docs/ListsAPI.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OnboardRequest.md
 docs/OutcomeIngestRequest.md
 docs/OutcomeIngestResponse.md
 docs/OutcomeInput.md
@@ -153,8 +157,10 @@ docs/TenantUsageResponse.md
 docs/TenantWebhookResponse.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
+docs/UpdateApiKeyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateProviderEndpointInput.md
+docs/UpdateTenantDomainRequest.md
 docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
 docs/V0API.md
@@ -195,8 +201,11 @@ model_check_email_output_smtp.go
 model_check_email_request.go
 model_confidence_explanation.go
 model_core_error.go
+model_create_api_key_request.go
+model_create_comment_request.go
 model_create_pipeline_input.go
 model_create_provider_endpoint_input.go
+model_create_tenant_domain_request.go
 model_debug_details.go
 model_debug_details_smtp.go
 model_delete_pipeline_response.go
@@ -231,6 +240,7 @@ model_list_upload_request.go
 model_list_upload_response.go
 model_misc_details.go
 model_mx_details.go
+model_onboard_request.go
 model_outcome_ingest_request.go
 model_outcome_ingest_response.go
 model_outcome_input.go
@@ -286,8 +296,10 @@ model_tenant_usage_response.go
 model_tenant_webhook_response.go
 model_trigger_pipeline_input.go
 model_trigger_pipeline_response.go
+model_update_api_key_request.go
 model_update_pipeline_input.go
 model_update_provider_endpoint_input.go
+model_update_tenant_domain_request.go
 model_update_tenant_settings_request.go
 model_update_webhook_request.go
 model_v1_email_history_200_response.go

@@ -214,16 +214,16 @@ type AdminJobsAPIGetJobEventsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
 	jobId int32
-	limit *int32
-	offset *int32
+	limit *int64
+	offset *int64
 }
 
-func (r AdminJobsAPIGetJobEventsRequest) Limit(limit int32) AdminJobsAPIGetJobEventsRequest {
+func (r AdminJobsAPIGetJobEventsRequest) Limit(limit int64) AdminJobsAPIGetJobEventsRequest {
 	r.limit = &limit
 	return r
 }
 
-func (r AdminJobsAPIGetJobEventsRequest) Offset(offset int32) AdminJobsAPIGetJobEventsRequest {
+func (r AdminJobsAPIGetJobEventsRequest) Offset(offset int64) AdminJobsAPIGetJobEventsRequest {
 	r.offset = &offset
 	return r
 }
@@ -346,17 +346,17 @@ type AdminJobsAPIGetJobResultsRequest struct {
 	ctx context.Context
 	ApiService AdminJobsAPI
 	jobId int32
-	limit *int32
-	offset *int32
+	limit *int64
+	offset *int64
 	state *string
 }
 
-func (r AdminJobsAPIGetJobResultsRequest) Limit(limit int32) AdminJobsAPIGetJobResultsRequest {
+func (r AdminJobsAPIGetJobResultsRequest) Limit(limit int64) AdminJobsAPIGetJobResultsRequest {
 	r.limit = &limit
 	return r
 }
 
-func (r AdminJobsAPIGetJobResultsRequest) Offset(offset int32) AdminJobsAPIGetJobResultsRequest {
+func (r AdminJobsAPIGetJobResultsRequest) Offset(offset int64) AdminJobsAPIGetJobResultsRequest {
 	r.offset = &offset
 	return r
 }
@@ -634,8 +634,8 @@ type AdminJobsAPIListTenantJobsRequest struct {
 	ApiService AdminJobsAPI
 	tenantId string
 	status *string
-	limit *int32
-	offset *int32
+	limit *int64
+	offset *int64
 }
 
 func (r AdminJobsAPIListTenantJobsRequest) Status(status string) AdminJobsAPIListTenantJobsRequest {
@@ -643,12 +643,12 @@ func (r AdminJobsAPIListTenantJobsRequest) Status(status string) AdminJobsAPILis
 	return r
 }
 
-func (r AdminJobsAPIListTenantJobsRequest) Limit(limit int32) AdminJobsAPIListTenantJobsRequest {
+func (r AdminJobsAPIListTenantJobsRequest) Limit(limit int64) AdminJobsAPIListTenantJobsRequest {
 	r.limit = &limit
 	return r
 }
 
-func (r AdminJobsAPIListTenantJobsRequest) Offset(offset int32) AdminJobsAPIListTenantJobsRequest {
+func (r AdminJobsAPIListTenantJobsRequest) Offset(offset int64) AdminJobsAPIListTenantJobsRequest {
 	r.offset = &offset
 	return r
 }

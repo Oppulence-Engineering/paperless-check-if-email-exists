@@ -22,28 +22,16 @@
 export interface AdminTenantQuota {
     /**
      *
-     * @type {string}
-     * @memberof AdminTenantQuota
-     */
-    'tenant_id'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminTenantQuota
-     */
-    'name'?: string;
-    /**
-     *
      * @type {number}
      * @memberof AdminTenantQuota
      */
     'monthly_email_limit'?: number | null;
     /**
      *
-     * @type {number}
+     * @type {string}
      * @memberof AdminTenantQuota
      */
-    'used_this_period'?: number;
+    'name'?: string;
     /**
      *
      * @type {string}
@@ -62,4 +50,16 @@ export interface AdminTenantQuota {
      * @memberof AdminTenantQuota
      */
     'remaining_quota'?: number | null;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminTenantQuota
+     */
+    'tenant_id'?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminTenantQuota
+     */
+    'used_this_period'?: number;
 }

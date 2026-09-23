@@ -21,13 +21,13 @@ var _ MappedNullable = &AdminTenantQuota{}
 
 // AdminTenantQuota struct for AdminTenantQuota
 type AdminTenantQuota struct {
-	TenantId *string `json:"tenant_id,omitempty"`
-	Name *string `json:"name,omitempty"`
 	MonthlyEmailLimit NullableInt32 `json:"monthly_email_limit,omitempty"`
-	UsedThisPeriod *int32 `json:"used_this_period,omitempty"`
+	Name *string `json:"name,omitempty"`
 	PeriodResetAt *time.Time `json:"period_reset_at,omitempty"`
 	QuotaUnlimited *bool `json:"quota_unlimited,omitempty"`
 	RemainingQuota NullableInt32 `json:"remaining_quota,omitempty"`
+	TenantId *string `json:"tenant_id,omitempty"`
+	UsedThisPeriod *int32 `json:"used_this_period,omitempty"`
 }
 
 // NewAdminTenantQuota instantiates a new AdminTenantQuota object
@@ -45,70 +45,6 @@ func NewAdminTenantQuota() *AdminTenantQuota {
 func NewAdminTenantQuotaWithDefaults() *AdminTenantQuota {
 	this := AdminTenantQuota{}
 	return &this
-}
-
-// GetTenantId returns the TenantId field value if set, zero value otherwise.
-func (o *AdminTenantQuota) GetTenantId() string {
-	if o == nil || IsNil(o.TenantId) {
-		var ret string
-		return ret
-	}
-	return *o.TenantId
-}
-
-// GetTenantIdOk returns a tuple with the TenantId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminTenantQuota) GetTenantIdOk() (*string, bool) {
-	if o == nil || IsNil(o.TenantId) {
-		return nil, false
-	}
-	return o.TenantId, true
-}
-
-// HasTenantId returns a boolean if a field has been set.
-func (o *AdminTenantQuota) HasTenantId() bool {
-	if o != nil && !IsNil(o.TenantId) {
-		return true
-	}
-
-	return false
-}
-
-// SetTenantId gets a reference to the given string and assigns it to the TenantId field.
-func (o *AdminTenantQuota) SetTenantId(v string) {
-	o.TenantId = &v
-}
-
-// GetName returns the Name field value if set, zero value otherwise.
-func (o *AdminTenantQuota) GetName() string {
-	if o == nil || IsNil(o.Name) {
-		var ret string
-		return ret
-	}
-	return *o.Name
-}
-
-// GetNameOk returns a tuple with the Name field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *AdminTenantQuota) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
-		return nil, false
-	}
-	return o.Name, true
-}
-
-// HasName returns a boolean if a field has been set.
-func (o *AdminTenantQuota) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
-		return true
-	}
-
-	return false
-}
-
-// SetName gets a reference to the given string and assigns it to the Name field.
-func (o *AdminTenantQuota) SetName(v string) {
-	o.Name = &v
 }
 
 // GetMonthlyEmailLimit returns the MonthlyEmailLimit field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -153,36 +89,36 @@ func (o *AdminTenantQuota) UnsetMonthlyEmailLimit() {
 	o.MonthlyEmailLimit.Unset()
 }
 
-// GetUsedThisPeriod returns the UsedThisPeriod field value if set, zero value otherwise.
-func (o *AdminTenantQuota) GetUsedThisPeriod() int32 {
-	if o == nil || IsNil(o.UsedThisPeriod) {
-		var ret int32
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *AdminTenantQuota) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
 		return ret
 	}
-	return *o.UsedThisPeriod
+	return *o.Name
 }
 
-// GetUsedThisPeriodOk returns a tuple with the UsedThisPeriod field value if set, nil otherwise
+// GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *AdminTenantQuota) GetUsedThisPeriodOk() (*int32, bool) {
-	if o == nil || IsNil(o.UsedThisPeriod) {
+func (o *AdminTenantQuota) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
 		return nil, false
 	}
-	return o.UsedThisPeriod, true
+	return o.Name, true
 }
 
-// HasUsedThisPeriod returns a boolean if a field has been set.
-func (o *AdminTenantQuota) HasUsedThisPeriod() bool {
-	if o != nil && !IsNil(o.UsedThisPeriod) {
+// HasName returns a boolean if a field has been set.
+func (o *AdminTenantQuota) HasName() bool {
+	if o != nil && !IsNil(o.Name) {
 		return true
 	}
 
 	return false
 }
 
-// SetUsedThisPeriod gets a reference to the given int32 and assigns it to the UsedThisPeriod field.
-func (o *AdminTenantQuota) SetUsedThisPeriod(v int32) {
-	o.UsedThisPeriod = &v
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *AdminTenantQuota) SetName(v string) {
+	o.Name = &v
 }
 
 // GetPeriodResetAt returns the PeriodResetAt field value if set, zero value otherwise.
@@ -291,6 +227,70 @@ func (o *AdminTenantQuota) UnsetRemainingQuota() {
 	o.RemainingQuota.Unset()
 }
 
+// GetTenantId returns the TenantId field value if set, zero value otherwise.
+func (o *AdminTenantQuota) GetTenantId() string {
+	if o == nil || IsNil(o.TenantId) {
+		var ret string
+		return ret
+	}
+	return *o.TenantId
+}
+
+// GetTenantIdOk returns a tuple with the TenantId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminTenantQuota) GetTenantIdOk() (*string, bool) {
+	if o == nil || IsNil(o.TenantId) {
+		return nil, false
+	}
+	return o.TenantId, true
+}
+
+// HasTenantId returns a boolean if a field has been set.
+func (o *AdminTenantQuota) HasTenantId() bool {
+	if o != nil && !IsNil(o.TenantId) {
+		return true
+	}
+
+	return false
+}
+
+// SetTenantId gets a reference to the given string and assigns it to the TenantId field.
+func (o *AdminTenantQuota) SetTenantId(v string) {
+	o.TenantId = &v
+}
+
+// GetUsedThisPeriod returns the UsedThisPeriod field value if set, zero value otherwise.
+func (o *AdminTenantQuota) GetUsedThisPeriod() int32 {
+	if o == nil || IsNil(o.UsedThisPeriod) {
+		var ret int32
+		return ret
+	}
+	return *o.UsedThisPeriod
+}
+
+// GetUsedThisPeriodOk returns a tuple with the UsedThisPeriod field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AdminTenantQuota) GetUsedThisPeriodOk() (*int32, bool) {
+	if o == nil || IsNil(o.UsedThisPeriod) {
+		return nil, false
+	}
+	return o.UsedThisPeriod, true
+}
+
+// HasUsedThisPeriod returns a boolean if a field has been set.
+func (o *AdminTenantQuota) HasUsedThisPeriod() bool {
+	if o != nil && !IsNil(o.UsedThisPeriod) {
+		return true
+	}
+
+	return false
+}
+
+// SetUsedThisPeriod gets a reference to the given int32 and assigns it to the UsedThisPeriod field.
+func (o *AdminTenantQuota) SetUsedThisPeriod(v int32) {
+	o.UsedThisPeriod = &v
+}
+
 func (o AdminTenantQuota) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -301,17 +301,11 @@ func (o AdminTenantQuota) MarshalJSON() ([]byte, error) {
 
 func (o AdminTenantQuota) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.TenantId) {
-		toSerialize["tenant_id"] = o.TenantId
-	}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
-	}
 	if o.MonthlyEmailLimit.IsSet() {
 		toSerialize["monthly_email_limit"] = o.MonthlyEmailLimit.Get()
 	}
-	if !IsNil(o.UsedThisPeriod) {
-		toSerialize["used_this_period"] = o.UsedThisPeriod
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
 	}
 	if !IsNil(o.PeriodResetAt) {
 		toSerialize["period_reset_at"] = o.PeriodResetAt
@@ -321,6 +315,12 @@ func (o AdminTenantQuota) ToMap() (map[string]interface{}, error) {
 	}
 	if o.RemainingQuota.IsSet() {
 		toSerialize["remaining_quota"] = o.RemainingQuota.Get()
+	}
+	if !IsNil(o.TenantId) {
+		toSerialize["tenant_id"] = o.TenantId
+	}
+	if !IsNil(o.UsedThisPeriod) {
+		toSerialize["used_this_period"] = o.UsedThisPeriod
 	}
 	return toSerialize, nil
 }

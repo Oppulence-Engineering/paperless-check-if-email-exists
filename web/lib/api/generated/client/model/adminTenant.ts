@@ -9,22 +9,22 @@
  */
 
 export interface AdminTenant {
-  id?: string;
-  name?: string;
-  slug?: string;
   contact_email?: string;
-  plan_tier?: string;
-  status?: string;
-  /** @nullable */
-  monthly_email_limit?: number | null;
-  max_requests_per_second?: number;
-  max_requests_per_minute?: number;
-  max_requests_per_hour?: number;
-  max_requests_per_day?: number;
-  used_this_period?: number;
+  created_at?: string;
   /** @nullable */
   default_webhook_url?: string | null;
+  id?: string;
+  max_requests_per_day?: number;
+  max_requests_per_hour?: number;
+  max_requests_per_minute?: number;
+  max_requests_per_second?: number;
+  /** @nullable */
+  monthly_email_limit?: number | null;
+  name?: string;
+  plan_tier?: string;
   result_retention_days?: number;
-  created_at?: string;
+  slug?: string;
+  status?: string;
   updated_at?: string;
+  used_this_period?: number;
 }

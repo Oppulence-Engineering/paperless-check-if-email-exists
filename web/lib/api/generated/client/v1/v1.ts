@@ -23,6 +23,7 @@ import type {
   ListListResponse,
   ListUploadRequest,
   ListUploadResponse,
+  OnboardRequest,
   ReputationCheckRequest,
   ReputationCheckResponse,
   ReverificationStatusResponse,
@@ -162,11 +163,14 @@ No authentication required. Creates a tenant, generates an API key,
 verifies the email, and returns all three.
  */
 export const v1CheckEmailWithOnboard = async (
+  onboardRequest: OnboardRequest,
   options?: RequestInit,
 ): Promise<v1CheckEmailWithOnboardResponse> => {
   const res = await fetch(getV1CheckEmailWithOnboardUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(onboardRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();

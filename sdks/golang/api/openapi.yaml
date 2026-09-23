@@ -325,6 +325,7 @@ paths:
         name: limit
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       - explode: true
@@ -332,6 +333,7 @@ paths:
         name: offset
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       responses:
@@ -367,6 +369,7 @@ paths:
         name: limit
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       - explode: true
@@ -374,6 +377,7 @@ paths:
         name: offset
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       - explode: true
@@ -811,6 +815,7 @@ paths:
         name: limit
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       - explode: true
@@ -818,6 +823,7 @@ paths:
         name: offset
         required: false
         schema:
+          format: int64
           type: integer
         style: form
       responses:
@@ -1058,6 +1064,12 @@ paths:
   /v1/check-email-with-onboard:
     post:
       operationId: v1_check_email_with_onboard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardRequest"
+        required: true
       responses:
         "201":
           description: Tenant onboarded and email verified
@@ -1160,6 +1172,12 @@ paths:
       - Comments
     post:
       operationId: v1_create_comment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+        required: true
       responses:
         "201":
           description: Comment created
@@ -2117,6 +2135,12 @@ paths:
     post:
       description: Create a new API key for the authenticated tenant.
       operationId: createTenantApiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+        required: true
       responses:
         "201":
           description: API key created
@@ -2193,6 +2217,12 @@ paths:
           format: uuid
           type: string
         style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApiKeyRequest"
+        required: true
       responses:
         "200":
           description: API key updated
@@ -2225,6 +2255,12 @@ paths:
     post:
       description: Add a domain for the authenticated tenant.
       operationId: v1_create_tenant_domain
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTenantDomainRequest"
+        required: true
       responses:
         "201":
           description: Tenant domain created
@@ -2299,6 +2335,12 @@ paths:
         schema:
           type: string
         style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantDomainRequest"
+        required: true
       responses:
         "200":
           description: Tenant domain updated
@@ -3785,6 +3827,412 @@ components:
       - added
       - duplicates
       type: object
+    AdminAllApiKeys:
+      example:
+        total: 0
+        api_keys:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+      properties:
+        api_keys:
+          items:
+            $ref: "#/components/schemas/AdminApiKey"
+          type: array
+        total:
+          format: int64
+          type: integer
+      type: object
+    AdminApiKey:
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        last_used_at: 2000-01-23T04:56:07.000+00:00
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        key_prefix: key_prefix
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        scopes:
+        - scopes
+        - scopes
+        status: status
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          format: uuid
+          type: string
+        key_prefix:
+          type: string
+        last_used_at:
+          format: date-time
+          nullable: true
+          type: string
+        name:
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+      type: object
+    AdminApiKeyList:
+      example:
+        api_keys:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+      properties:
+        api_keys:
+          items:
+            $ref: "#/components/schemas/AdminApiKey"
+          type: array
+      type: object
+    AdminApiKeyWriteRequest:
+      example:
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        name: name
+        scopes:
+        - scopes
+        - scopes
+      properties:
+        expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        name:
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+      type: object
+    AdminCreateTenantRequest:
+      example:
+        webhook_signing_secret: webhook_signing_secret
+        result_retention_days: 2
+        max_requests_per_day: 0
+        max_requests_per_minute: 1
+        max_requests_per_second: 5
+        name: name
+        plan_tier: plan_tier
+        max_requests_per_hour: 6
+        monthly_email_limit: 5
+        default_webhook_url: default_webhook_url
+        slug: slug
+        contact_email: contact_email
+      properties:
+        contact_email:
+          format: email
+          type: string
+        default_webhook_url:
+          nullable: true
+          type: string
+        max_requests_per_day:
+          format: int32
+          type: integer
+        max_requests_per_hour:
+          format: int32
+          type: integer
+        max_requests_per_minute:
+          format: int32
+          type: integer
+        max_requests_per_second:
+          format: int32
+          type: integer
+        monthly_email_limit:
+          format: int32
+          type: integer
+        name:
+          type: string
+        plan_tier:
+          type: string
+        result_retention_days:
+          format: int32
+          type: integer
+        slug:
+          type: string
+        webhook_signing_secret:
+          nullable: true
+          type: string
+      required:
+      - contact_email
+      - name
+      - slug
+      type: object
+    AdminCreatedApiKey:
+      allOf:
+      - $ref: "#/components/schemas/AdminApiKey"
+      - properties:
+          key:
+            description: Plaintext key returned only at creation.
+            type: string
+        required:
+        - key
+        type: object
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        last_used_at: 2000-01-23T04:56:07.000+00:00
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        key_prefix: key_prefix
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        scopes:
+        - scopes
+        - scopes
+        key: key
+        status: status
+    AdminTenant:
+      example:
+        max_requests_per_day: 0
+        created_at: 2000-01-23T04:56:07.000+00:00
+        plan_tier: plan_tier
+        max_requests_per_hour: 6
+        contact_email: contact_email
+        result_retention_days: 2
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        max_requests_per_minute: 1
+        max_requests_per_second: 5
+        name: name
+        used_this_period: 7
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        monthly_email_limit: 5
+        default_webhook_url: default_webhook_url
+        slug: slug
+        status: status
+      properties:
+        contact_email:
+          format: email
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        default_webhook_url:
+          nullable: true
+          type: string
+        id:
+          format: uuid
+          type: string
+        max_requests_per_day:
+          format: int32
+          type: integer
+        max_requests_per_hour:
+          format: int32
+          type: integer
+        max_requests_per_minute:
+          format: int32
+          type: integer
+        max_requests_per_second:
+          format: int32
+          type: integer
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+        name:
+          type: string
+        plan_tier:
+          type: string
+        result_retention_days:
+          format: int32
+          type: integer
+        slug:
+          type: string
+        status:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        used_this_period:
+          format: int32
+          type: integer
+      type: object
+    AdminTenantList:
+      example:
+        tenants:
+        - max_requests_per_day: 0
+          created_at: 2000-01-23T04:56:07.000+00:00
+          plan_tier: plan_tier
+          max_requests_per_hour: 6
+          contact_email: contact_email
+          result_retention_days: 2
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          max_requests_per_minute: 1
+          max_requests_per_second: 5
+          name: name
+          used_this_period: 7
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          monthly_email_limit: 5
+          default_webhook_url: default_webhook_url
+          slug: slug
+          status: status
+        - max_requests_per_day: 0
+          created_at: 2000-01-23T04:56:07.000+00:00
+          plan_tier: plan_tier
+          max_requests_per_hour: 6
+          contact_email: contact_email
+          result_retention_days: 2
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          max_requests_per_minute: 1
+          max_requests_per_second: 5
+          name: name
+          used_this_period: 7
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          monthly_email_limit: 5
+          default_webhook_url: default_webhook_url
+          slug: slug
+          status: status
+        total: 9
+      properties:
+        tenants:
+          items:
+            $ref: "#/components/schemas/AdminTenant"
+          type: array
+        total:
+          format: int64
+          type: integer
+      type: object
+    AdminTenantQuota:
+      example:
+        period_reset_at: 2000-01-23T04:56:07.000+00:00
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        remaining_quota: 6
+        name: name
+        used_this_period: 1
+        monthly_email_limit: 0
+        quota_unlimited: true
+      properties:
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+        name:
+          type: string
+        period_reset_at:
+          format: date-time
+          type: string
+        quota_unlimited:
+          type: boolean
+        remaining_quota:
+          format: int32
+          nullable: true
+          type: integer
+        tenant_id:
+          format: uuid
+          type: string
+        used_this_period:
+          format: int32
+          type: integer
+      type: object
+    AdminUpdateQuotaRequest:
+      example:
+        monthly_email_limit: 0
+      properties:
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+      required:
+      - monthly_email_limit
+      type: object
+    AdminUpdateTenantRequest:
+      example:
+        webhook_signing_secret: webhook_signing_secret
+        result_retention_days: 2
+        max_requests_per_day: 0
+        max_requests_per_minute: 1
+        max_requests_per_second: 5
+        name: name
+        plan_tier: plan_tier
+        max_requests_per_hour: 6
+        monthly_email_limit: 5
+        default_webhook_url: default_webhook_url
+        contact_email: contact_email
+        status: status
+      properties:
+        contact_email:
+          format: email
+          type: string
+        default_webhook_url:
+          nullable: true
+          type: string
+        max_requests_per_day:
+          format: int32
+          type: integer
+        max_requests_per_hour:
+          format: int32
+          type: integer
+        max_requests_per_minute:
+          format: int32
+          type: integer
+        max_requests_per_second:
+          format: int32
+          type: integer
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+        name:
+          type: string
+        plan_tier:
+          type: string
+        result_retention_days:
+          format: int32
+          type: integer
+        status:
+          type: string
+        webhook_signing_secret:
+          nullable: true
+          type: string
+      type: object
     ApprovalCategoryBreakdown:
       example:
         valid: 5
@@ -4434,6 +4882,49 @@ components:
       type: object
       x-stoplight:
         id: a872ead6474cd
+    CreateApiKeyRequest:
+      example:
+        expires_at: expires_at
+        name: name
+        scopes:
+        - scopes
+        - scopes
+      properties:
+        expires_at:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        scopes:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    CreateCommentRequest:
+      example:
+        list_id: 6
+        author: author
+        job_id: 0
+        body: body
+      properties:
+        author:
+          nullable: true
+          type: string
+        body:
+          type: string
+        job_id:
+          format: int32
+          nullable: true
+          type: integer
+        list_id:
+          format: int32
+          nullable: true
+          type: integer
+      required:
+      - body
+      type: object
     CreatePipelineInput:
       example:
         delivery:
@@ -4498,6 +4989,23 @@ components:
       required:
       - label
       - provider
+      type: object
+    CreateTenantDomainRequest:
+      example:
+        is_active: true
+        notes: notes
+        domain: domain
+      properties:
+        domain:
+          type: string
+        is_active:
+          nullable: true
+          type: boolean
+        notes:
+          nullable: true
+          type: string
+      required:
+      - domain
       type: object
     DebugDetails:
       example:
@@ -5514,6 +6022,36 @@ components:
       - accepts_mail
       - records
       title: MxDetails
+      type: object
+    OnboardRequest:
+      example:
+        tenant_name: tenant_name
+        email_to_verify: email_to_verify
+        plan_tier: plan_tier
+        slug: slug
+        contact_email: contact_email
+      properties:
+        contact_email:
+          description: "Contact email for the tenant account (billing, alerts)."
+          type: string
+        email_to_verify:
+          description: Email address to verify.
+          type: string
+        plan_tier:
+          description: Optional plan tier (defaults to "free").
+          nullable: true
+          type: string
+        slug:
+          description: URL-safe slug (auto-generated from tenant_name if omitted).
+          nullable: true
+          type: string
+        tenant_name:
+          description: Display name for the new tenant.
+          type: string
+      required:
+      - contact_email
+      - email_to_verify
+      - tenant_name
       type: object
     OutcomeIngestRequest:
       example:
@@ -6874,6 +7412,26 @@ components:
       - run_id
       - status
       type: object
+    UpdateApiKeyRequest:
+      example:
+        expires_at: expires_at
+        name: name
+        scopes:
+        - scopes
+        - scopes
+      properties:
+        expires_at:
+          nullable: true
+          type: string
+        name:
+          nullable: true
+          type: string
+        scopes:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
     UpdatePipelineInput:
       example:
         delivery:
@@ -6945,6 +7503,26 @@ components:
         rotate_delivery_token:
           type: boolean
         status:
+          nullable: true
+          type: string
+      type: object
+    UpdateTenantDomainRequest:
+      example:
+        is_active: true
+        notes: notes
+        domain: domain
+        is_verified: true
+      properties:
+        domain:
+          nullable: true
+          type: string
+        is_active:
+          nullable: true
+          type: boolean
+        is_verified:
+          nullable: true
+          type: boolean
+        notes:
           nullable: true
           type: string
       type: object
@@ -7030,412 +7608,6 @@ components:
       - Smtp
       title: YahooVerifMethod
       type: string
-    AdminCreateTenantRequest:
-      example:
-        webhook_signing_secret: webhook_signing_secret
-        result_retention_days: 2
-        max_requests_per_day: 5
-        name: name
-        max_requests_per_second: 6
-        max_requests_per_minute: 1
-        plan_tier: plan_tier
-        monthly_email_limit: 0
-        max_requests_per_hour: 5
-        slug: slug
-        default_webhook_url: default_webhook_url
-        contact_email: contact_email
-      properties:
-        name:
-          type: string
-        slug:
-          type: string
-        contact_email:
-          format: email
-          type: string
-        plan_tier:
-          type: string
-        monthly_email_limit:
-          format: int32
-          type: integer
-        max_requests_per_second:
-          format: int32
-          type: integer
-        max_requests_per_minute:
-          format: int32
-          type: integer
-        max_requests_per_hour:
-          format: int32
-          type: integer
-        max_requests_per_day:
-          format: int32
-          type: integer
-        default_webhook_url:
-          nullable: true
-          type: string
-        webhook_signing_secret:
-          nullable: true
-          type: string
-        result_retention_days:
-          format: int32
-          type: integer
-      required:
-      - contact_email
-      - name
-      - slug
-      type: object
-    AdminUpdateTenantRequest:
-      example:
-        webhook_signing_secret: webhook_signing_secret
-        result_retention_days: 2
-        max_requests_per_day: 5
-        name: name
-        max_requests_per_second: 6
-        max_requests_per_minute: 1
-        plan_tier: plan_tier
-        monthly_email_limit: 0
-        max_requests_per_hour: 5
-        default_webhook_url: default_webhook_url
-        contact_email: contact_email
-        status: status
-      properties:
-        name:
-          type: string
-        contact_email:
-          format: email
-          type: string
-        plan_tier:
-          type: string
-        status:
-          type: string
-        monthly_email_limit:
-          format: int32
-          nullable: true
-          type: integer
-        max_requests_per_second:
-          format: int32
-          type: integer
-        max_requests_per_minute:
-          format: int32
-          type: integer
-        max_requests_per_hour:
-          format: int32
-          type: integer
-        max_requests_per_day:
-          format: int32
-          type: integer
-        default_webhook_url:
-          nullable: true
-          type: string
-        webhook_signing_secret:
-          nullable: true
-          type: string
-        result_retention_days:
-          format: int32
-          type: integer
-      type: object
-    AdminApiKeyWriteRequest:
-      example:
-        expires_at: 2000-01-23T04:56:07.000+00:00
-        name: name
-        scopes:
-        - scopes
-        - scopes
-      properties:
-        name:
-          type: string
-        scopes:
-          items:
-            type: string
-          type: array
-        expires_at:
-          format: date-time
-          nullable: true
-          type: string
-      type: object
-    AdminUpdateQuotaRequest:
-      example:
-        monthly_email_limit: 0
-      properties:
-        monthly_email_limit:
-          format: int32
-          nullable: true
-          type: integer
-      required:
-      - monthly_email_limit
-      type: object
-    AdminTenant:
-      example:
-        max_requests_per_day: 5
-        created_at: 2000-01-23T04:56:07.000+00:00
-        plan_tier: plan_tier
-        max_requests_per_hour: 5
-        contact_email: contact_email
-        result_retention_days: 7
-        updated_at: 2000-01-23T04:56:07.000+00:00
-        name: name
-        max_requests_per_second: 6
-        max_requests_per_minute: 1
-        used_this_period: 2
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        monthly_email_limit: 0
-        slug: slug
-        default_webhook_url: default_webhook_url
-        status: status
-      properties:
-        id:
-          format: uuid
-          type: string
-        name:
-          type: string
-        slug:
-          type: string
-        contact_email:
-          format: email
-          type: string
-        plan_tier:
-          type: string
-        status:
-          type: string
-        monthly_email_limit:
-          format: int32
-          nullable: true
-          type: integer
-        max_requests_per_second:
-          format: int32
-          type: integer
-        max_requests_per_minute:
-          format: int32
-          type: integer
-        max_requests_per_hour:
-          format: int32
-          type: integer
-        max_requests_per_day:
-          format: int32
-          type: integer
-        used_this_period:
-          format: int32
-          type: integer
-        default_webhook_url:
-          nullable: true
-          type: string
-        result_retention_days:
-          format: int32
-          type: integer
-        created_at:
-          format: date-time
-          type: string
-        updated_at:
-          format: date-time
-          type: string
-      type: object
-    AdminTenantList:
-      example:
-        tenants:
-        - max_requests_per_day: 5
-          created_at: 2000-01-23T04:56:07.000+00:00
-          plan_tier: plan_tier
-          max_requests_per_hour: 5
-          contact_email: contact_email
-          result_retention_days: 7
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          name: name
-          max_requests_per_second: 6
-          max_requests_per_minute: 1
-          used_this_period: 2
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          monthly_email_limit: 0
-          slug: slug
-          default_webhook_url: default_webhook_url
-          status: status
-        - max_requests_per_day: 5
-          created_at: 2000-01-23T04:56:07.000+00:00
-          plan_tier: plan_tier
-          max_requests_per_hour: 5
-          contact_email: contact_email
-          result_retention_days: 7
-          updated_at: 2000-01-23T04:56:07.000+00:00
-          name: name
-          max_requests_per_second: 6
-          max_requests_per_minute: 1
-          used_this_period: 2
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          monthly_email_limit: 0
-          slug: slug
-          default_webhook_url: default_webhook_url
-          status: status
-        total: 9
-      properties:
-        tenants:
-          items:
-            $ref: "#/components/schemas/AdminTenant"
-          type: array
-        total:
-          format: int64
-          type: integer
-      type: object
-    AdminApiKey:
-      example:
-        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        last_used_at: 2000-01-23T04:56:07.000+00:00
-        expires_at: 2000-01-23T04:56:07.000+00:00
-        key_prefix: key_prefix
-        name: name
-        created_at: 2000-01-23T04:56:07.000+00:00
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        scopes:
-        - scopes
-        - scopes
-        status: status
-      properties:
-        id:
-          format: uuid
-          type: string
-        tenant_id:
-          format: uuid
-          type: string
-        key_prefix:
-          type: string
-        name:
-          type: string
-        scopes:
-          items:
-            type: string
-          type: array
-        status:
-          type: string
-        last_used_at:
-          format: date-time
-          nullable: true
-          type: string
-        expires_at:
-          format: date-time
-          nullable: true
-          type: string
-        created_at:
-          format: date-time
-          type: string
-      type: object
-    AdminCreatedApiKey:
-      allOf:
-      - $ref: "#/components/schemas/AdminApiKey"
-      - properties:
-          key:
-            description: Plaintext key returned only at creation.
-            type: string
-        required:
-        - key
-        type: object
-      example:
-        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        last_used_at: 2000-01-23T04:56:07.000+00:00
-        expires_at: 2000-01-23T04:56:07.000+00:00
-        key_prefix: key_prefix
-        name: name
-        created_at: 2000-01-23T04:56:07.000+00:00
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        scopes:
-        - scopes
-        - scopes
-        key: key
-        status: status
-    AdminApiKeyList:
-      example:
-        api_keys:
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          last_used_at: 2000-01-23T04:56:07.000+00:00
-          expires_at: 2000-01-23T04:56:07.000+00:00
-          key_prefix: key_prefix
-          name: name
-          created_at: 2000-01-23T04:56:07.000+00:00
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          scopes:
-          - scopes
-          - scopes
-          status: status
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          last_used_at: 2000-01-23T04:56:07.000+00:00
-          expires_at: 2000-01-23T04:56:07.000+00:00
-          key_prefix: key_prefix
-          name: name
-          created_at: 2000-01-23T04:56:07.000+00:00
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          scopes:
-          - scopes
-          - scopes
-          status: status
-      properties:
-        api_keys:
-          items:
-            $ref: "#/components/schemas/AdminApiKey"
-          type: array
-      type: object
-    AdminAllApiKeys:
-      example:
-        total: 0
-        api_keys:
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          last_used_at: 2000-01-23T04:56:07.000+00:00
-          expires_at: 2000-01-23T04:56:07.000+00:00
-          key_prefix: key_prefix
-          name: name
-          created_at: 2000-01-23T04:56:07.000+00:00
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          scopes:
-          - scopes
-          - scopes
-          status: status
-        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          last_used_at: 2000-01-23T04:56:07.000+00:00
-          expires_at: 2000-01-23T04:56:07.000+00:00
-          key_prefix: key_prefix
-          name: name
-          created_at: 2000-01-23T04:56:07.000+00:00
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          scopes:
-          - scopes
-          - scopes
-          status: status
-      properties:
-        api_keys:
-          items:
-            $ref: "#/components/schemas/AdminApiKey"
-          type: array
-        total:
-          format: int64
-          type: integer
-      type: object
-    AdminTenantQuota:
-      example:
-        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        period_reset_at: 2000-01-23T04:56:07.000+00:00
-        remaining_quota: 1
-        name: name
-        used_this_period: 6
-        monthly_email_limit: 0
-        quota_unlimited: true
-      properties:
-        tenant_id:
-          format: uuid
-          type: string
-        name:
-          type: string
-        monthly_email_limit:
-          format: int32
-          nullable: true
-          type: integer
-        used_this_period:
-          format: int32
-          type: integer
-        period_reset_at:
-          format: date-time
-          type: string
-        quota_unlimited:
-          type: boolean
-        remaining_quota:
-          format: int32
-          nullable: true
-          type: integer
-      type: object
     v1_email_history_200_response:
       example:
         total: 1
@@ -7579,15 +7751,15 @@ components:
       in: header
       name: x-reacher-secret
       type: apiKey
-    LegacySecret:
-      description: Legacy self-hosted v0 bulk credential. The shared hosted app does
-        not expose v0.
-      in: header
-      name: x-reacher-secret
-      type: apiKey
     Authorization:
       description: "Send Authorization: Bearer rch_live_... for tenant API calls.\
         \ The signed-in console uses a server-issued backend token."
       in: header
       name: Authorization
+      type: apiKey
+    LegacySecret:
+      description: Legacy self-hosted v0 bulk credential. The shared hosted app does
+        not expose v0.
+      in: header
+      name: x-reacher-secret
       type: apiKey

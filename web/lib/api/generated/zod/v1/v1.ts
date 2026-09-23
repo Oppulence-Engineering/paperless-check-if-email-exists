@@ -44,6 +44,22 @@ export const V1CreateBulkJobDefaultResponse = zod.strictObject({
 No authentication required. Creates a tenant, generates an API key,
 verifies the email, and returns all three.
  */
+export const V1CheckEmailWithOnboardBody = zod.strictObject({
+  contact_email: zod
+    .string()
+    .describe("Contact email for the tenant account (billing, alerts)."),
+  email_to_verify: zod.string().describe("Email address to verify."),
+  plan_tier: zod
+    .string()
+    .nullish()
+    .describe('Optional plan tier (defaults to \"free\").'),
+  slug: zod
+    .string()
+    .nullish()
+    .describe("URL-safe slug (auto-generated from tenant_name if omitted)."),
+  tenant_name: zod.string().describe("Display name for the new tenant."),
+});
+
 export const V1CheckEmailWithOnboard201Response = zod.unknown();
 
 export const V1CheckEmailWithOnboardDefaultResponse = zod.strictObject({

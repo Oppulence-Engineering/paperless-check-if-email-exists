@@ -25,43 +25,19 @@ export interface AdminUpdateTenantRequest {
      * @type {string}
      * @memberof AdminUpdateTenantRequest
      */
-    'name'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminUpdateTenantRequest
-     */
     'contact_email'?: string;
     /**
      *
      * @type {string}
      * @memberof AdminUpdateTenantRequest
      */
-    'plan_tier'?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof AdminUpdateTenantRequest
-     */
-    'status'?: string;
+    'default_webhook_url'?: string | null;
     /**
      *
      * @type {number}
      * @memberof AdminUpdateTenantRequest
      */
-    'monthly_email_limit'?: number | null;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminUpdateTenantRequest
-     */
-    'max_requests_per_second'?: number;
-    /**
-     *
-     * @type {number}
-     * @memberof AdminUpdateTenantRequest
-     */
-    'max_requests_per_minute'?: number;
+    'max_requests_per_day'?: number;
     /**
      *
      * @type {number}
@@ -73,23 +49,47 @@ export interface AdminUpdateTenantRequest {
      * @type {number}
      * @memberof AdminUpdateTenantRequest
      */
-    'max_requests_per_day'?: number;
+    'max_requests_per_minute'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminUpdateTenantRequest
+     */
+    'max_requests_per_second'?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof AdminUpdateTenantRequest
+     */
+    'monthly_email_limit'?: number | null;
     /**
      *
      * @type {string}
      * @memberof AdminUpdateTenantRequest
      */
-    'default_webhook_url'?: string | null;
+    'name'?: string;
     /**
      *
      * @type {string}
      * @memberof AdminUpdateTenantRequest
      */
-    'webhook_signing_secret'?: string | null;
+    'plan_tier'?: string;
     /**
      *
      * @type {number}
      * @memberof AdminUpdateTenantRequest
      */
     'result_retention_days'?: number;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminUpdateTenantRequest
+     */
+    'status'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof AdminUpdateTenantRequest
+     */
+    'webhook_signing_secret'?: string | null;
 }

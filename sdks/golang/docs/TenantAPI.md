@@ -79,7 +79,7 @@ Other parameters are passed through a pointer to a apiV1ClearTenantWebhookReques
 
 ## V1CreateTenantDomain
 
-> V1CreateTenantDomain(ctx).Execute()
+> V1CreateTenantDomain(ctx).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 
 POST /v1/me/domains
 
@@ -98,10 +98,11 @@ import (
 )
 
 func main() {
+	createTenantDomainRequest := *openapiclient.NewCreateTenantDomainRequest("Domain_example") // CreateTenantDomainRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).Execute()
+	r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1CreateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -111,12 +112,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CreateTenantDomainRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createTenantDomainRequest** | [**CreateTenantDomainRequest**](CreateTenantDomainRequest.md) |  |
 
 ### Return type
 
@@ -128,7 +133,7 @@ Other parameters are passed through a pointer to a apiV1CreateTenantDomainReques
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -516,7 +521,7 @@ Other parameters are passed through a pointer to a apiV1ListTenantDomainsRequest
 
 ## V1UpdateTenantDomain
 
-> V1UpdateTenantDomain(ctx, domain).Execute()
+> V1UpdateTenantDomain(ctx, domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 
 PATCH /v1/me/domains/{domain}
 
@@ -536,10 +541,11 @@ import (
 
 func main() {
 	domain := "domain_example" // string | Domain identifier
+	updateTenantDomainRequest := *openapiclient.NewUpdateTenantDomainRequest() // UpdateTenantDomainRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).Execute()
+	r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -563,6 +569,7 @@ Other parameters are passed through a pointer to a apiV1UpdateTenantDomainReques
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **updateTenantDomainRequest** | [**UpdateTenantDomainRequest**](UpdateTenantDomainRequest.md) |  |
 
 ### Return type
 
@@ -574,7 +581,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

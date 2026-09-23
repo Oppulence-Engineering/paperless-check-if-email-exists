@@ -55,8 +55,11 @@ docs/CheckEmailRequest.md
 docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/CoreError.md
+docs/CreateApiKeyRequest.md
+docs/CreateCommentRequest.md
 docs/CreatePipelineInput.md
 docs/CreateProviderEndpointInput.md
+docs/CreateTenantDomainRequest.md
 docs/DebugDetails.md
 docs/DebugDetailsSmtp.md
 docs/DeletePipelineResponse.md
@@ -94,6 +97,7 @@ docs/ListUploadResponse.md
 docs/ListsApi.md
 docs/MiscDetails.md
 docs/MxDetails.md
+docs/OnboardRequest.md
 docs/OutcomeIngestRequest.md
 docs/OutcomeIngestResponse.md
 docs/OutcomeInput.md
@@ -154,8 +158,10 @@ docs/TenantUsageResponse.md
 docs/TenantWebhookResponse.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
+docs/UpdateApiKeyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateProviderEndpointInput.md
+docs/UpdateTenantDomainRequest.md
 docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
 docs/V0Api.md
@@ -197,8 +203,11 @@ models/check-email-output.ts
 models/check-email-request.ts
 models/confidence-explanation.ts
 models/core-error.ts
+models/create-api-key-request.ts
+models/create-comment-request.ts
 models/create-pipeline-input.ts
 models/create-provider-endpoint-input.ts
+models/create-tenant-domain-request.ts
 models/debug-details-smtp.ts
 models/debug-details.ts
 models/delete-pipeline-response.ts
@@ -233,6 +242,7 @@ models/list-summary.ts
 models/list-upload-response.ts
 models/misc-details.ts
 models/mx-details.ts
+models/onboard-request.ts
 models/outcome-ingest-request.ts
 models/outcome-ingest-response.ts
 models/outcome-input.ts
@@ -288,8 +298,10 @@ models/tenant-usage-response.ts
 models/tenant-webhook-response.ts
 models/trigger-pipeline-input.ts
 models/trigger-pipeline-response.ts
+models/update-api-key-request.ts
 models/update-pipeline-input.ts
 models/update-provider-endpoint-input.ts
+models/update-tenant-domain-request.ts
 models/update-tenant-settings-request.ts
 models/update-webhook-request.ts
 models/v1-email-history200-response.ts

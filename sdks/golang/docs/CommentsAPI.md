@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 ## V1CreateComment
 
-> V1CreateComment(ctx).Execute()
+> V1CreateComment(ctx).CreateCommentRequest(createCommentRequest).Execute()
 
 POST /v1/comments
 
@@ -29,10 +29,11 @@ import (
 )
 
 func main() {
+	createCommentRequest := *openapiclient.NewCreateCommentRequest("Body_example") // CreateCommentRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.CommentsAPI.V1CreateComment(context.Background()).Execute()
+	r, err := apiClient.CommentsAPI.V1CreateComment(context.Background()).CreateCommentRequest(createCommentRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `CommentsAPI.V1CreateComment``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -42,12 +43,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CreateCommentRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createCommentRequest** | [**CreateCommentRequest**](CreateCommentRequest.md) |  |
 
 ### Return type
 
@@ -59,7 +64,7 @@ Other parameters are passed through a pointer to a apiV1CreateCommentRequest str
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

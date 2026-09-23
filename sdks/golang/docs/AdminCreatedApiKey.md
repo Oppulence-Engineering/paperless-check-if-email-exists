@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**CreatedAt** | Pointer to **time.Time** |  | [optional]
+**ExpiresAt** | Pointer to **NullableTime** |  | [optional]
 **Id** | Pointer to **string** |  | [optional]
-**TenantId** | Pointer to **string** |  | [optional]
 **KeyPrefix** | Pointer to **string** |  | [optional]
+**LastUsedAt** | Pointer to **NullableTime** |  | [optional]
 **Name** | Pointer to **string** |  | [optional]
 **Scopes** | Pointer to **[]string** |  | [optional]
 **Status** | Pointer to **string** |  | [optional]
-**LastUsedAt** | Pointer to **NullableTime** |  | [optional]
-**ExpiresAt** | Pointer to **NullableTime** |  | [optional]
-**CreatedAt** | Pointer to **time.Time** |  | [optional]
+**TenantId** | Pointer to **string** |  | [optional]
 **Key** | **string** | Plaintext key returned only at creation. | [required]
 
 ## Methods
@@ -33,6 +33,67 @@ will change when the set of required properties is changed
 NewAdminCreatedApiKeyWithDefaults instantiates a new AdminCreatedApiKey object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetCreatedAt
+
+`func (o *AdminCreatedApiKey) GetCreatedAt() time.Time`
+
+GetCreatedAt returns the CreatedAt field if non-nil, zero value otherwise.
+
+### GetCreatedAtOk
+
+`func (o *AdminCreatedApiKey) GetCreatedAtOk() (*time.Time, bool)`
+
+GetCreatedAtOk returns a tuple with the CreatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatedAt
+
+`func (o *AdminCreatedApiKey) SetCreatedAt(v time.Time)`
+
+SetCreatedAt sets CreatedAt field to given value.
+
+### HasCreatedAt
+
+`func (o *AdminCreatedApiKey) HasCreatedAt() bool`
+
+HasCreatedAt returns a boolean if a field has been set.
+
+### GetExpiresAt
+
+`func (o *AdminCreatedApiKey) GetExpiresAt() time.Time`
+
+GetExpiresAt returns the ExpiresAt field if non-nil, zero value otherwise.
+
+### GetExpiresAtOk
+
+`func (o *AdminCreatedApiKey) GetExpiresAtOk() (*time.Time, bool)`
+
+GetExpiresAtOk returns a tuple with the ExpiresAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExpiresAt
+
+`func (o *AdminCreatedApiKey) SetExpiresAt(v time.Time)`
+
+SetExpiresAt sets ExpiresAt field to given value.
+
+### HasExpiresAt
+
+`func (o *AdminCreatedApiKey) HasExpiresAt() bool`
+
+HasExpiresAt returns a boolean if a field has been set.
+
+### SetExpiresAtNil
+
+`func (o *AdminCreatedApiKey) SetExpiresAtNil()`
+
+ SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
+
+### UnsetExpiresAt
+`func (o *AdminCreatedApiKey) UnsetExpiresAt()`
+
+UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
 
 ### GetId
 
@@ -59,31 +120,6 @@ SetId sets Id field to given value.
 
 HasId returns a boolean if a field has been set.
 
-### GetTenantId
-
-`func (o *AdminCreatedApiKey) GetTenantId() string`
-
-GetTenantId returns the TenantId field if non-nil, zero value otherwise.
-
-### GetTenantIdOk
-
-`func (o *AdminCreatedApiKey) GetTenantIdOk() (*string, bool)`
-
-GetTenantIdOk returns a tuple with the TenantId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetTenantId
-
-`func (o *AdminCreatedApiKey) SetTenantId(v string)`
-
-SetTenantId sets TenantId field to given value.
-
-### HasTenantId
-
-`func (o *AdminCreatedApiKey) HasTenantId() bool`
-
-HasTenantId returns a boolean if a field has been set.
-
 ### GetKeyPrefix
 
 `func (o *AdminCreatedApiKey) GetKeyPrefix() string`
@@ -108,6 +144,42 @@ SetKeyPrefix sets KeyPrefix field to given value.
 `func (o *AdminCreatedApiKey) HasKeyPrefix() bool`
 
 HasKeyPrefix returns a boolean if a field has been set.
+
+### GetLastUsedAt
+
+`func (o *AdminCreatedApiKey) GetLastUsedAt() time.Time`
+
+GetLastUsedAt returns the LastUsedAt field if non-nil, zero value otherwise.
+
+### GetLastUsedAtOk
+
+`func (o *AdminCreatedApiKey) GetLastUsedAtOk() (*time.Time, bool)`
+
+GetLastUsedAtOk returns a tuple with the LastUsedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastUsedAt
+
+`func (o *AdminCreatedApiKey) SetLastUsedAt(v time.Time)`
+
+SetLastUsedAt sets LastUsedAt field to given value.
+
+### HasLastUsedAt
+
+`func (o *AdminCreatedApiKey) HasLastUsedAt() bool`
+
+HasLastUsedAt returns a boolean if a field has been set.
+
+### SetLastUsedAtNil
+
+`func (o *AdminCreatedApiKey) SetLastUsedAtNil()`
+
+ SetLastUsedAtNil sets the value for LastUsedAt to be an explicit nil
+
+### UnsetLastUsedAt
+`func (o *AdminCreatedApiKey) UnsetLastUsedAt()`
+
+UnsetLastUsedAt ensures that no value is present for LastUsedAt, not even an explicit nil
 
 ### GetName
 
@@ -184,102 +256,30 @@ SetStatus sets Status field to given value.
 
 HasStatus returns a boolean if a field has been set.
 
-### GetLastUsedAt
+### GetTenantId
 
-`func (o *AdminCreatedApiKey) GetLastUsedAt() time.Time`
+`func (o *AdminCreatedApiKey) GetTenantId() string`
 
-GetLastUsedAt returns the LastUsedAt field if non-nil, zero value otherwise.
+GetTenantId returns the TenantId field if non-nil, zero value otherwise.
 
-### GetLastUsedAtOk
+### GetTenantIdOk
 
-`func (o *AdminCreatedApiKey) GetLastUsedAtOk() (*time.Time, bool)`
+`func (o *AdminCreatedApiKey) GetTenantIdOk() (*string, bool)`
 
-GetLastUsedAtOk returns a tuple with the LastUsedAt field if it's non-nil, zero value otherwise
+GetTenantIdOk returns a tuple with the TenantId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetLastUsedAt
+### SetTenantId
 
-`func (o *AdminCreatedApiKey) SetLastUsedAt(v time.Time)`
+`func (o *AdminCreatedApiKey) SetTenantId(v string)`
 
-SetLastUsedAt sets LastUsedAt field to given value.
+SetTenantId sets TenantId field to given value.
 
-### HasLastUsedAt
+### HasTenantId
 
-`func (o *AdminCreatedApiKey) HasLastUsedAt() bool`
+`func (o *AdminCreatedApiKey) HasTenantId() bool`
 
-HasLastUsedAt returns a boolean if a field has been set.
-
-### SetLastUsedAtNil
-
-`func (o *AdminCreatedApiKey) SetLastUsedAtNil()`
-
- SetLastUsedAtNil sets the value for LastUsedAt to be an explicit nil
-
-### UnsetLastUsedAt
-`func (o *AdminCreatedApiKey) UnsetLastUsedAt()`
-
-UnsetLastUsedAt ensures that no value is present for LastUsedAt, not even an explicit nil
-
-### GetExpiresAt
-
-`func (o *AdminCreatedApiKey) GetExpiresAt() time.Time`
-
-GetExpiresAt returns the ExpiresAt field if non-nil, zero value otherwise.
-
-### GetExpiresAtOk
-
-`func (o *AdminCreatedApiKey) GetExpiresAtOk() (*time.Time, bool)`
-
-GetExpiresAtOk returns a tuple with the ExpiresAt field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetExpiresAt
-
-`func (o *AdminCreatedApiKey) SetExpiresAt(v time.Time)`
-
-SetExpiresAt sets ExpiresAt field to given value.
-
-### HasExpiresAt
-
-`func (o *AdminCreatedApiKey) HasExpiresAt() bool`
-
-HasExpiresAt returns a boolean if a field has been set.
-
-### SetExpiresAtNil
-
-`func (o *AdminCreatedApiKey) SetExpiresAtNil()`
-
- SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
-
-### UnsetExpiresAt
-`func (o *AdminCreatedApiKey) UnsetExpiresAt()`
-
-UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
-
-### GetCreatedAt
-
-`func (o *AdminCreatedApiKey) GetCreatedAt() time.Time`
-
-GetCreatedAt returns the CreatedAt field if non-nil, zero value otherwise.
-
-### GetCreatedAtOk
-
-`func (o *AdminCreatedApiKey) GetCreatedAtOk() (*time.Time, bool)`
-
-GetCreatedAtOk returns a tuple with the CreatedAt field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetCreatedAt
-
-`func (o *AdminCreatedApiKey) SetCreatedAt(v time.Time)`
-
-SetCreatedAt sets CreatedAt field to given value.
-
-### HasCreatedAt
-
-`func (o *AdminCreatedApiKey) HasCreatedAt() bool`
-
-HasCreatedAt returns a boolean if a field has been set.
+HasTenantId returns a boolean if a field has been set.
 
 ### GetKey
 

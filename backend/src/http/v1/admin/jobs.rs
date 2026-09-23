@@ -691,7 +691,7 @@ pub fn get_job(
 	get,
 	path = "/v1/admin/jobs/{job_id}/events",
 	tag = "Admin Jobs",
-	params(("job_id" = i32, Path, description = "Job identifier")),
+	params(("job_id" = i32, Path, description = "Job identifier"), ListEventsQuery),
 	responses((status = 200, description = "Job event list")),
 )]
 pub fn get_job_events(
@@ -713,7 +713,7 @@ pub fn get_job_events(
 	get,
 	path = "/v1/admin/jobs/{job_id}/results",
 	tag = "Admin Jobs",
-	params(("job_id" = i32, Path, description = "Job identifier")),
+	params(("job_id" = i32, Path, description = "Job identifier"), ListTaskResultsQuery),
 	responses((status = 200, description = "Job result list")),
 )]
 pub fn get_job_results(
@@ -735,7 +735,7 @@ pub fn get_job_results(
 	get,
 	path = "/v1/admin/tenants/{tenant_id}/jobs",
 	tag = "Admin Jobs",
-	params(("tenant_id" = String, Path, description = "Tenant identifier")),
+	params(("tenant_id" = String, Path, description = "Tenant identifier"), ListTenantJobsQuery),
 	responses((status = 200, description = "Tenant job list")),
 )]
 pub fn list_tenant_jobs(
