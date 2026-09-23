@@ -14,6 +14,10 @@ TEST_AMQP_URL ?= amqp://guest:guest@127.0.0.1:35672
 # Run
 ###############################################################################
 
+.PHONY: dev
+dev:
+	bash scripts/dev.sh
+
 # Run the backend without worker mode, i.e. only enabling single-shot
 # verifications via the /v1/check_email endpoint.
 .PHONY: run

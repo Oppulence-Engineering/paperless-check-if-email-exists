@@ -7,7 +7,7 @@ info:
   description: |-
     ### What is Reacher?
 
-    Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+    Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
   license:
     name: AGPL-3.0 OR Commercial
     url: https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md
@@ -16,7 +16,7 @@ info:
   version: 4.3.0
 servers:
 - description: Reacher Production
-  url: https://api.reacher.email
+  url: /
 security:
 - Authorization: []
 tags:
@@ -175,6 +175,12 @@ paths:
       responses:
         "200":
           description: All API keys
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/admin/api-keys
       tags:
       - Admin
@@ -185,6 +191,12 @@ paths:
       responses:
         "200":
           description: Admin job list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/admin/jobs
       tags:
       - Admin Jobs
@@ -205,6 +217,12 @@ paths:
       responses:
         "200":
           description: Admin job details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/jobs/{job_id}"
       tags:
       - Admin Jobs
@@ -225,6 +243,12 @@ paths:
       responses:
         "200":
           description: Job event list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/jobs/{job_id}/events"
       tags:
       - Admin Jobs
@@ -245,6 +269,12 @@ paths:
       responses:
         "200":
           description: Job result list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/jobs/{job_id}/results"
       tags:
       - Admin Jobs
@@ -255,6 +285,12 @@ paths:
       responses:
         "200":
           description: Tenant list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/admin/tenants
       tags:
       - Admin
@@ -264,6 +300,12 @@ paths:
       responses:
         "201":
           description: Tenant created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/admin/tenants
       tags:
       - Admin
@@ -283,6 +325,12 @@ paths:
       responses:
         "200":
           description: Tenant deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -301,6 +349,12 @@ paths:
       responses:
         "200":
           description: Tenant details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -319,6 +373,12 @@ paths:
       responses:
         "200":
           description: Tenant updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PUT /v1/admin/tenants/{tenant_id}"
       tags:
       - Admin
@@ -338,6 +398,12 @@ paths:
       responses:
         "200":
           description: Tenant API keys
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/tenants/{tenant_id}/api-keys"
       tags:
       - Admin
@@ -357,6 +423,12 @@ paths:
       responses:
         "201":
           description: API key created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/admin/tenants/{tenant_id}/api-keys"
       tags:
       - Admin
@@ -385,6 +457,12 @@ paths:
       responses:
         "200":
           description: API key revoked
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -412,6 +490,12 @@ paths:
       responses:
         "200":
           description: API key details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -439,6 +523,12 @@ paths:
       responses:
         "200":
           description: API key updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}"
       tags:
       - Admin
@@ -467,6 +557,12 @@ paths:
       responses:
         "200":
           description: API key reactivated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate"
       tags:
       - Admin
@@ -486,6 +582,12 @@ paths:
       responses:
         "200":
           description: Tenant job list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/tenants/{tenant_id}/jobs"
       tags:
       - Admin Jobs
@@ -505,6 +607,12 @@ paths:
       responses:
         "200":
           description: Tenant quota details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/admin/tenants/{tenant_id}/quota"
       tags:
       - Admin
@@ -523,6 +631,12 @@ paths:
       responses:
         "200":
           description: Quota updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PATCH /v1/admin/tenants/{tenant_id}/quota"
       tags:
       - Admin
@@ -542,6 +656,12 @@ paths:
       responses:
         "200":
           description: Quota reset
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/admin/tenants/{tenant_id}/quota/reset"
       tags:
       - Admin
@@ -572,6 +692,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/BulkCreateResponse"
           description: Bulk job created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Create the v1 bulk endpoint.
       tags:
       - v1
@@ -593,6 +719,12 @@ paths:
       responses:
         "200":
           description: Bulk job progress
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/bulk/{job_id}"
       tags:
       - Jobs
@@ -647,6 +779,12 @@ paths:
                 format: binary
                 type: string
           description: Bulk job results
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/bulk/{job_id}/results"
       tags:
       - Jobs
@@ -656,6 +794,12 @@ paths:
       responses:
         "201":
           description: Tenant onboarded and email verified
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: |-
         POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
         No authentication required. Creates a tenant, generates an API key,
@@ -689,6 +833,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/CheckEmailOutput"
           description: Email verification result
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/check_email
       tags:
       - v1
@@ -731,6 +881,12 @@ paths:
       responses:
         "200":
           description: Comments list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/comments
       tags:
       - Comments
@@ -739,6 +895,12 @@ paths:
       responses:
         "201":
           description: Comment created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/comments
       tags:
       - Comments
@@ -758,6 +920,12 @@ paths:
       responses:
         "200":
           description: Comment deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/comments/{comment_id}"
       tags:
       - Comments
@@ -785,7 +953,17 @@ paths:
         style: form
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1_email_history_200_response"
           description: Verification history for the email
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/emails/{email}/history"
       tags:
       - Verification
@@ -850,6 +1028,12 @@ paths:
       responses:
         "200":
           description: Audit log events
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/events
       tags:
       - Events
@@ -869,6 +1053,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/FindEmailAcceptedResponse"
           description: Finder job accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/find_email
       tags:
       - v1
@@ -892,6 +1082,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/FindEmailStatusResponse"
           description: Finder job result
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/find_email/{job_id}"
       tags:
       - v1
@@ -944,6 +1140,12 @@ paths:
           description: Receipt retained while endpoint is paused
         "401":
           description: Provider signature rejected
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Outcomes
   /v1/jobs/{job_id}:
@@ -963,6 +1165,12 @@ paths:
       responses:
         "200":
           description: Bulk job progress summary
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}"
       tags:
       - Jobs
@@ -987,6 +1195,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApprovalChecklistResponse"
           description: Pre-send approval checklist
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}/approval"
       tags:
       - Jobs
@@ -1007,6 +1221,12 @@ paths:
       responses:
         "200":
           description: Job cancellation accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/jobs/{job_id}/cancel"
       tags:
       - Jobs
@@ -1044,6 +1264,12 @@ paths:
                 format: binary
                 type: string
           description: Job result download stream
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}/download"
       tags:
       - Jobs
@@ -1080,6 +1306,12 @@ paths:
       responses:
         "200":
           description: Job events
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}/events"
       tags:
       - Jobs
@@ -1102,6 +1334,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Job failure center
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Get job failure center
       tags:
       - Jobs
@@ -1128,6 +1366,12 @@ paths:
                 format: binary
                 type: string
           description: Job failure report stream
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Download job failure report
       tags:
       - Jobs
@@ -1149,6 +1393,12 @@ paths:
       responses:
         "200":
           description: Latency analytics
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}/latency"
       tags:
       - Jobs
@@ -1197,6 +1447,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/JobResultPageResponse"
           description: Job result page
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/jobs/{job_id}/results"
       tags:
       - Jobs
@@ -1222,6 +1478,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/RetryJobResponse"
           description: Retry initiated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/jobs/{job_id}/retry"
       tags:
       - Jobs
@@ -1252,6 +1514,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListListResponse"
           description: List resources
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/lists
       tags:
       - v1
@@ -1270,6 +1538,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListUploadResponse"
           description: List upload accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/lists
       tags:
       - v1
@@ -1293,6 +1567,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListDeleteResponse"
           description: List deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/lists/{list_id}"
       tags:
       - v1
@@ -1315,6 +1595,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListDetailResponse"
           description: List detail
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/lists/{list_id}"
       tags:
       - v1
@@ -1353,6 +1639,12 @@ paths:
                 format: binary
                 type: string
           description: Cleaned list CSV download
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/lists/{list_id}/download"
       tags:
       - v1
@@ -1373,6 +1665,12 @@ paths:
       responses:
         "200":
           description: List quality benchmark report
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/lists/{list_id}/quality"
       tags:
       - Lists
@@ -1402,6 +1700,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Remediation export
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Create remediation export
       tags:
       - Lists
@@ -1432,6 +1736,12 @@ paths:
                 format: binary
                 type: string
           description: Remediation export CSV
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Download remediation export
       tags:
       - Lists
@@ -1454,6 +1764,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Remediation plan
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Get remediation plan
       tags:
       - Lists
@@ -1482,6 +1798,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Remediation plan
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Create remediation plan
       tags:
       - Lists
@@ -1492,6 +1814,12 @@ paths:
       responses:
         "200":
           description: Current tenant profile
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me
       tags:
       - Account
@@ -1502,6 +1830,12 @@ paths:
       responses:
         "200":
           description: API key list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me/api-keys
       tags:
       - Account
@@ -1511,6 +1845,12 @@ paths:
       responses:
         "201":
           description: API key created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/me/api-keys
       tags:
       - Account
@@ -1531,6 +1871,12 @@ paths:
       responses:
         "200":
           description: API key revoked
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/me/api-keys/{key_id}"
       tags:
       - Account
@@ -1550,6 +1896,12 @@ paths:
       responses:
         "200":
           description: API key details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/me/api-keys/{key_id}"
       tags:
       - Account
@@ -1569,6 +1921,12 @@ paths:
       responses:
         "200":
           description: API key updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PATCH /v1/me/api-keys/{key_id}"
       tags:
       - Account
@@ -1580,6 +1938,12 @@ paths:
       responses:
         "200":
           description: Tenant domains list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me/domains
       tags:
       - Tenant
@@ -1589,6 +1953,12 @@ paths:
       responses:
         "201":
           description: Tenant domain created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/me/domains
       tags:
       - Tenant
@@ -1608,6 +1978,12 @@ paths:
       responses:
         "200":
           description: Tenant domain deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/me/domains/{domain}"
       tags:
       - Tenant
@@ -1626,6 +2002,12 @@ paths:
       responses:
         "200":
           description: Tenant domain details
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/me/domains/{domain}"
       tags:
       - Tenant
@@ -1645,6 +2027,12 @@ paths:
       responses:
         "200":
           description: Tenant domain updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PATCH /v1/me/domains/{domain}"
       tags:
       - Tenant
@@ -1654,7 +2042,17 @@ paths:
       operationId: v1_get_tenant_settings
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantSettingsResponse"
           description: Tenant settings
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me/settings
       tags:
       - Tenant
@@ -1662,9 +2060,25 @@ paths:
       description: "Update tenant settings such as retention, default webhook URL,\
         \ or secret."
       operationId: v1_update_tenant_settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantSettingsRequest"
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantSettingsResponse"
           description: Tenant settings updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: PATCH /v1/me/settings
       tags:
       - Tenant
@@ -1674,7 +2088,17 @@ paths:
       operationId: v1_get_tenant_usage
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantUsageResponse"
           description: Tenant usage summary
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me/usage
       tags:
       - Tenant
@@ -1685,6 +2109,12 @@ paths:
       responses:
         "200":
           description: Tenant webhook cleared
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: DELETE /v1/me/webhook
       tags:
       - Tenant
@@ -1693,16 +2123,42 @@ paths:
       operationId: v1_get_tenant_webhook
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantWebhookResponse"
           description: Tenant webhook state
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/me/webhook
       tags:
       - Tenant
     patch:
       description: Update tenant webhook URL and signing secret.
       operationId: v1_update_tenant_webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWebhookRequest"
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantWebhookResponse"
           description: Tenant webhook updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: PATCH /v1/me/webhook
       tags:
       - Tenant
@@ -1762,6 +2218,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/OutcomeListResponse"
           description: Paginated provider outcomes
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/outcomes
       tags:
       - Outcomes
@@ -1782,6 +2244,12 @@ paths:
           description: Provider outcomes ingested
         "400":
           description: Invalid outcome payload
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/outcomes
       tags:
       - Outcomes
@@ -1843,6 +2311,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/pipelines
       tags:
       - Pipelines
@@ -1885,6 +2359,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/pipelines
       tags:
       - Pipelines
@@ -1932,6 +2412,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -1978,6 +2464,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -2036,6 +2528,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "PATCH /v1/pipelines/{pipeline_id}"
       tags:
       - Pipelines
@@ -2083,6 +2581,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/pipelines/{pipeline_id}/pause"
       tags:
       - Pipelines
@@ -2150,6 +2654,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/pipelines/{pipeline_id}/push"
       tags:
       - Pipelines
@@ -2197,6 +2707,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/pipelines/{pipeline_id}/resume"
       tags:
       - Pipelines
@@ -2260,6 +2776,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/pipelines/{pipeline_id}/runs"
       tags:
       - Pipelines
@@ -2316,6 +2838,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "GET /v1/pipelines/{pipeline_id}/runs/{run_id}"
       tags:
       - Pipelines
@@ -2381,6 +2909,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/PipelineErrorResponse"
           description: Service unavailable
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "POST /v1/pipelines/{pipeline_id}/trigger"
       tags:
       - Pipelines
@@ -2394,6 +2928,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProviderEndpointListResponse"
           description: Configured provider endpoints
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Outcomes
     post:
@@ -2413,6 +2953,12 @@ paths:
           description: Provider endpoint created; delivery token is returned once
         "400":
           description: Invalid provider endpoint
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Outcomes
   /v1/provider-endpoints/{endpoint_id}:
@@ -2437,6 +2983,12 @@ paths:
           description: Provider endpoint disabled and deleted
         "404":
           description: Provider endpoint not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Outcomes
     patch:
@@ -2466,6 +3018,12 @@ paths:
           description: Provider endpoint updated
         "404":
           description: Provider endpoint not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Outcomes
   /v1/query:
@@ -2565,6 +3123,12 @@ paths:
       responses:
         "200":
           description: Filtered verification results
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/query
       tags:
       - Query
@@ -2584,6 +3148,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReputationCheckResponse"
           description: Reputation check response
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/reputation/check
       tags:
       - v1
@@ -2597,6 +3167,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReverificationStatusResponse"
           description: Reverification schedule status
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/reverification/status
       tags:
       - v1
@@ -2610,6 +3186,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Source quality analytics
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: List source quality
       tags:
       - v1
@@ -2675,6 +3257,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuppressionListResponse"
           description: Suppression list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/suppressions
       tags:
       - v1
@@ -2693,6 +3281,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/AddSuppressionsResponse"
           description: Suppression entries added
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: POST /v1/suppressions
       tags:
       - v1
@@ -2714,6 +3308,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuppressionCheckResponse"
           description: Suppression check result
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: GET /v1/suppressions/check
       tags:
       - v1
@@ -2727,6 +3327,12 @@ paths:
                 format: binary
                 type: string
           description: Suppression export CSV
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Export suppressions
       tags:
       - v1
@@ -2747,6 +3353,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Suppression entries imported
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: Import suppressions
       tags:
       - v1
@@ -2770,6 +3382,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuppressionDeleteResponse"
           description: Suppression entry deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: "DELETE /v1/suppressions/{id}"
       tags:
       - v1
@@ -2792,6 +3410,12 @@ paths:
                 additionalProperties: true
                 type: object
           description: Suppression event list
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       summary: List suppression events
       tags:
       - v1
@@ -3103,11 +3727,11 @@ components:
             duration:
               nanos: 0.8008281904610115
               secs: 6.027456183070403
-            server_name: server_name
             start_time: start_time
             smtp:
               verif_method:
                 type: Smtp
+            backend_name: backend_name
             end_time: end_time
           smtp:
             is_catch_all: true
@@ -3117,11 +3741,13 @@ components:
             is_deliverable: true
           is_reachable: invalid
           provider_confidence: high
+          recommendation: ""
           mx:
             accepts_mail: true
             records:
             - records
             - records
+          policy_evaluation: ""
           input: input
           score:
             reason_codes:
@@ -3155,11 +3781,16 @@ components:
           provider: gmail
           bounce_risk: ""
           syntax:
+            address: address
             domain: domain
+            suggestion: suggestion
             is_valid_syntax: true
+            normalized_email: normalized_email
             username: username
           misc:
             is_b2c: true
+            is_spam_trap_domain: true
+            haveibeenpwned: true
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
@@ -3169,11 +3800,11 @@ components:
             duration:
               nanos: 0.8008281904610115
               secs: 6.027456183070403
-            server_name: server_name
             start_time: start_time
             smtp:
               verif_method:
                 type: Smtp
+            backend_name: backend_name
             end_time: end_time
           smtp:
             is_catch_all: true
@@ -3183,11 +3814,13 @@ components:
             is_deliverable: true
           is_reachable: invalid
           provider_confidence: high
+          recommendation: ""
           mx:
             accepts_mail: true
             records:
             - records
             - records
+          policy_evaluation: ""
           input: input
           score:
             reason_codes:
@@ -3221,11 +3854,16 @@ components:
           provider: gmail
           bounce_risk: ""
           syntax:
+            address: address
             domain: domain
+            suggestion: suggestion
             is_valid_syntax: true
+            normalized_email: normalized_email
             username: username
           misc:
             is_b2c: true
+            is_spam_trap_domain: true
+            haveibeenpwned: true
             gravatar_url: gravatar_url
             is_role_account: true
             is_disposable: true
@@ -3276,11 +3914,11 @@ components:
           duration:
             nanos: 0.8008281904610115
             secs: 6.027456183070403
-          server_name: server_name
           start_time: start_time
           smtp:
             verif_method:
               type: Smtp
+          backend_name: backend_name
           end_time: end_time
         smtp:
           is_catch_all: true
@@ -3290,11 +3928,13 @@ components:
           is_deliverable: true
         is_reachable: invalid
         provider_confidence: high
+        recommendation: ""
         mx:
           accepts_mail: true
           records:
           - records
           - records
+        policy_evaluation: ""
         input: input
         score:
           reason_codes:
@@ -3328,11 +3968,16 @@ components:
         provider: gmail
         bounce_risk: ""
         syntax:
+          address: address
           domain: domain
+          suggestion: suggestion
           is_valid_syntax: true
+          normalized_email: normalized_email
           username: username
         misc:
           is_b2c: true
+          is_spam_trap_domain: true
+          haveibeenpwned: true
           gravatar_url: gravatar_url
           is_role_account: true
           is_disposable: true
@@ -3356,6 +4001,7 @@ components:
           $ref: "#/components/schemas/CheckEmailOutput_misc"
         mx:
           $ref: "#/components/schemas/CheckEmailOutput_mx"
+        policy_evaluation: {}
         provider:
           $ref: "#/components/schemas/Provider"
         provider_confidence:
@@ -3364,6 +4010,7 @@ components:
           $ref: "#/components/schemas/ProviderRejectionReason"
         provider_rules_applied:
           type: boolean
+        recommendation: {}
         score:
           $ref: "#/components/schemas/EmailScore"
         smtp:
@@ -3577,13 +4224,18 @@ components:
         duration:
           nanos: 0.8008281904610115
           secs: 6.027456183070403
-        server_name: server_name
         start_time: start_time
         smtp:
           verif_method:
             type: Smtp
+        backend_name: backend_name
         end_time: end_time
       properties:
+        backend_name:
+          description: The name of the backend that performed the verification.
+          type: string
+          x-stoplight:
+            id: 2jrbdecvqh4t5
         duration:
           $ref: "#/components/schemas/Duration"
         end_time:
@@ -3591,11 +4243,6 @@ components:
           type: string
           x-stoplight:
             id: zw4ccbvwsoh6q
-        server_name:
-          description: The name of the server that performed the verification.
-          type: string
-          x-stoplight:
-            id: 2jrbdecvqh4t5
         smtp:
           $ref: "#/components/schemas/DebugDetailsSmtp"
         start_time:
@@ -3604,9 +4251,9 @@ components:
           x-stoplight:
             id: 60i65k60m8e8d
       required:
+      - backend_name
       - duration
       - end_time
-      - server_name
       - smtp
       - start_time
       title: DebugDetails
@@ -3789,6 +4436,15 @@ components:
       - score
       - signals
       - sub_reason
+      type: object
+    ErrorEnvelope:
+      example:
+        error: error
+      properties:
+        error:
+          type: string
+      required:
+      - error
       type: object
     ErrorResponse:
       properties:
@@ -3980,6 +4636,65 @@ components:
       x-internal: false
       x-stoplight:
         id: xo5r48yhtxiwr
+    HistoryEntry:
+      example:
+        policy_mode: policy_mode
+        is_reachable: is_reachable
+        recommendation: ""
+        policy_evaluation: ""
+        safe_to_send: true
+        sub_reason: sub_reason
+        recommendation_action: recommendation_action
+        reason_codes:
+        - reason_codes
+        - reason_codes
+        completed_at: 2000-01-23T04:56:07.000+00:00
+        score: 6
+        job_id: 0
+        policy_decision: policy_decision
+        category: category
+      properties:
+        category:
+          nullable: true
+          type: string
+        completed_at:
+          format: date-time
+          nullable: true
+          type: string
+        is_reachable:
+          nullable: true
+          type: string
+        job_id:
+          format: int32
+          nullable: true
+          type: integer
+        policy_decision:
+          nullable: true
+          type: string
+        policy_evaluation: {}
+        policy_mode:
+          nullable: true
+          type: string
+        reason_codes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        recommendation: {}
+        recommendation_action:
+          nullable: true
+          type: string
+        safe_to_send:
+          nullable: true
+          type: boolean
+        score:
+          format: int32
+          nullable: true
+          type: integer
+        sub_reason:
+          nullable: true
+          type: string
+      type: object
     HotmailB2BVerifMethod:
       description: Enumeration describing the method used to verify Hotmail B2B emails.
       enum:
@@ -4156,13 +4871,22 @@ components:
     ListItem:
       example:
         email_column: email_column
+        completed_at: 2000-01-23T04:56:07.000+00:00
         original_filename: original_filename
         total_rows: 6
         name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
         id: 0
         source_key: source_key
         status: status
       properties:
+        completed_at:
+          format: date-time
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          type: string
         email_column:
           type: string
         id:
@@ -4181,6 +4905,8 @@ components:
           format: int32
           type: integer
       required:
+      - completed_at
+      - created_at
       - email_column
       - id
       - name
@@ -4193,16 +4919,20 @@ components:
         total: 1
         lists:
         - email_column: email_column
+          completed_at: 2000-01-23T04:56:07.000+00:00
           original_filename: original_filename
           total_rows: 6
           name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
           id: 0
           source_key: source_key
           status: status
         - email_column: email_column
+          completed_at: 2000-01-23T04:56:07.000+00:00
           original_filename: original_filename
           total_rows: 6
           name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
           id: 0
           source_key: source_key
           status: status
@@ -4447,6 +5177,8 @@ components:
       description: Additional information about the email account.
       example:
         is_b2c: true
+        is_spam_trap_domain: true
+        haveibeenpwned: true
         gravatar_url: gravatar_url
         is_role_account: true
         is_disposable: true
@@ -4454,7 +5186,11 @@ components:
         gravatar_url:
           description: "URL to the Gravatar profile picture associated with the email,\
             \ if available and requested."
+          nullable: true
           type: string
+        haveibeenpwned:
+          nullable: true
+          type: boolean
         is_b2c:
           description: Is this a B2C email address?
           type: boolean
@@ -4467,10 +5203,15 @@ components:
         is_role_account:
           description: Indicates if the email address is a role-based account.
           type: boolean
+        is_spam_trap_domain:
+          type: boolean
       required:
+      - gravatar_url
+      - haveibeenpwned
       - is_b2c
       - is_disposable
       - is_role_account
+      - is_spam_trap_domain
       title: MiscDetails
       type: object
     MxDetails:
@@ -5676,22 +6417,37 @@ components:
     SyntaxDetails:
       description: Validation of the email address syntax.
       example:
+        address: address
         domain: domain
+        suggestion: suggestion
         is_valid_syntax: true
+        normalized_email: normalized_email
         username: username
       properties:
+        address:
+          nullable: true
+          type: string
         domain:
           description: The domain part of the email address.
           type: string
         is_valid_syntax:
           description: Indicates if the email address syntax is valid.
           type: boolean
+        normalized_email:
+          nullable: true
+          type: string
+        suggestion:
+          nullable: true
+          type: string
         username:
           description: The username part of the email address.
           type: string
       required:
+      - address
       - domain
       - is_valid_syntax
+      - normalized_email
+      - suggestion
       - username
       title: SyntaxDetails
       type: object
@@ -5705,6 +6461,114 @@ components:
       type: object
       x-stoplight:
         id: 6053d3ngu2hfn
+    TenantSettingsResponse:
+      example:
+        period_reset_at: period_reset_at
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        result_retention_days: 6
+        default_policy_mode: default_policy_mode
+        name: name
+        used_this_period: 1
+        monthly_email_limit: 0
+        default_webhook_url: default_webhook_url
+        slug: slug
+      properties:
+        default_policy_mode:
+          type: string
+        default_webhook_url:
+          nullable: true
+          type: string
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+        name:
+          type: string
+        period_reset_at:
+          type: string
+        result_retention_days:
+          format: int32
+          type: integer
+        slug:
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+        used_this_period:
+          format: int32
+          type: integer
+      required:
+      - default_policy_mode
+      - name
+      - period_reset_at
+      - result_retention_days
+      - slug
+      - tenant_id
+      - used_this_period
+      type: object
+    TenantUsageResponse:
+      example:
+        period_reset_at: period_reset_at
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        tenant_name: tenant_name
+        quota_remaining: 6
+        used_this_period: 1
+        plan_tier: plan_tier
+        monthly_email_limit: 0
+        quota_unlimited: true
+      properties:
+        monthly_email_limit:
+          format: int32
+          nullable: true
+          type: integer
+        period_reset_at:
+          type: string
+        plan_tier:
+          type: string
+        quota_remaining:
+          format: int32
+          nullable: true
+          type: integer
+        quota_unlimited:
+          type: boolean
+        tenant_id:
+          format: uuid
+          type: string
+        tenant_name:
+          type: string
+        used_this_period:
+          format: int32
+          type: integer
+      required:
+      - period_reset_at
+      - plan_tier
+      - quota_unlimited
+      - tenant_id
+      - tenant_name
+      - used_this_period
+      type: object
+    TenantWebhookResponse:
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        tenant_name: tenant_name
+        webhook_signing_secret_configured: true
+        default_webhook_url: default_webhook_url
+      properties:
+        default_webhook_url:
+          nullable: true
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+        tenant_name:
+          type: string
+        webhook_signing_secret_configured:
+          type: boolean
+      required:
+      - tenant_id
+      - tenant_name
+      - webhook_signing_secret_configured
+      type: object
     TriggerPipelineInput:
       example:
         reason: reason
@@ -5804,6 +6668,39 @@ components:
           nullable: true
           type: string
       type: object
+    UpdateTenantSettingsRequest:
+      example:
+        webhook_signing_secret: webhook_signing_secret
+        result_retention_days: 0
+        default_policy_mode: default_policy_mode
+        default_webhook_url: default_webhook_url
+      properties:
+        default_policy_mode:
+          nullable: true
+          type: string
+        default_webhook_url:
+          nullable: true
+          type: string
+        result_retention_days:
+          format: int32
+          nullable: true
+          type: integer
+        webhook_signing_secret:
+          nullable: true
+          type: string
+      type: object
+    UpdateWebhookRequest:
+      example:
+        webhook_signing_secret: webhook_signing_secret
+        default_webhook_url: default_webhook_url
+      properties:
+        default_webhook_url:
+          nullable: true
+          type: string
+        webhook_signing_secret:
+          nullable: true
+          type: string
+      type: object
     VerifMethod:
       description: The method used for email verification.
       example:
@@ -5853,6 +6750,56 @@ components:
       - Smtp
       title: YahooVerifMethod
       type: string
+    v1_email_history_200_response:
+      example:
+        total: 1
+        history:
+        - policy_mode: policy_mode
+          is_reachable: is_reachable
+          recommendation: ""
+          policy_evaluation: ""
+          safe_to_send: true
+          sub_reason: sub_reason
+          recommendation_action: recommendation_action
+          reason_codes:
+          - reason_codes
+          - reason_codes
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          score: 6
+          job_id: 0
+          policy_decision: policy_decision
+          category: category
+        - policy_mode: policy_mode
+          is_reachable: is_reachable
+          recommendation: ""
+          policy_evaluation: ""
+          safe_to_send: true
+          sub_reason: sub_reason
+          recommendation_action: recommendation_action
+          reason_codes:
+          - reason_codes
+          - reason_codes
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          score: 6
+          job_id: 0
+          policy_decision: policy_decision
+          category: category
+        email: email
+      properties:
+        email:
+          type: string
+        history:
+          items:
+            $ref: "#/components/schemas/HistoryEntry"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - email
+      - history
+      - total
+      type: object
     CheckEmailOutput_misc:
       description: Additional information about the email account.
       oneOf:
@@ -5941,8 +6888,8 @@ components:
       type: object
   securitySchemes:
     Authorization:
-      description: A Reacher API key is required for all requests. Sign up on https://reacher.email
-        to get your personal API key.
+      description: Send a workspace API key as Bearer rch_live_... for tenant API
+        calls. Provider callbacks use their delivery token and provider signature.
       in: header
       name: Authorization
       type: apiKey

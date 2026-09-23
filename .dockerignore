@@ -3,6 +3,15 @@
 .vscode
 ci
 target/
+**/node_modules/
+**/.next/
+**/dist/
+web/.turbo/
+web/.source/
+web/test-results/
+web/playwright-report/
 Dockerfile.*
 docs/
 .env
+**/.env
+**/.env.*

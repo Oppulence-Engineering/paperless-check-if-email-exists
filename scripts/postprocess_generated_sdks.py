@@ -602,12 +602,42 @@ def remove_obsolete_outcome_files() -> None:
             path.unlink()
 
 
+def fix_typescript_library_build() -> None:
+    sdk = ROOT / "sdks" / "typescript" / "src"
+    base = sdk / "base.ts"
+    write_if_changed(
+        base,
+        replace_or_raise(
+            base.read_text(),
+            'BASE_PATH = "http://localhost"',
+            'BASE_PATH = ""',
+            file=base,
+            label="same-origin SDK default",
+        ),
+    )
+    tsconfig = sdk / "tsconfig.json"
+    config = json.loads(tsconfig.read_text())
+    config["exclude"] = ["dist", "node_modules", "**/*.test.ts"]
+    write_if_changed(tsconfig, json.dumps(config, indent=2) + "\n")
+
+    common = sdk / "common.ts"
+    content = common.read_text().replace(
+        "configuration?: Configuration) {\n    return <T = unknown, R = AxiosResponse<T>>",
+        "configuration?: Configuration): <T = unknown, R = AxiosResponse<T>>(axios?: AxiosInstance, basePath?: string) => Promise<R> {\n    return <T = unknown, R = AxiosResponse<T>>",
+    ).replace(
+        "return axios.request<T, R>(axiosRequestArgs);",
+        "return axios.request<T, R>(axiosRequestArgs) as Promise<R>;",
+    )
+    write_if_changed(common, content)
+
+
 def main() -> None:
     remove_obsolete_outcome_files()
     normalize_go_models()
     normalize_go_docs()
     normalize_typescript_docs()
     normalize_typescript_readme()
+    fix_typescript_library_build()
     normalize_generated_whitespace()
 
 

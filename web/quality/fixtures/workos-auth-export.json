@@ -1,0 +1,24 @@
+{
+	"users": [
+		{
+			"id": "user_legacy_1",
+			"email": "migration-test@example.com",
+			"name": "Migration Test",
+			"emailVerified": true
+		}
+	],
+	"organizations": [
+		{
+			"id": "org_legacy_1",
+			"name": "Migration Test",
+			"slug": "migration-test"
+		}
+	],
+	"memberships": [
+		{
+			"userId": "user_legacy_1",
+			"organizationId": "org_legacy_1",
+			"role": "owner"
+		}
+	]
+}

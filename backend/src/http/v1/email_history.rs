@@ -15,7 +15,7 @@ struct Query {
 	limit: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct HistoryEntry {
 	job_id: Option<i32>,
 	score: Option<i16>,
@@ -32,7 +32,7 @@ struct HistoryEntry {
 	completed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct Response {
 	email: String,
 	history: Vec<HistoryEntry>,
@@ -132,7 +132,7 @@ async fn http_handler(
 		("email" = String, Path, description = "Email address to look up"),
 		Query
 	),
-	responses((status = 200, description = "Verification history for the email"))
+	responses((status = 200, description = "Verification history for the email", body = inline(Response)))
 )]
 pub fn v1_email_history(
 	config: Arc<BackendConfig>,

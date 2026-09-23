@@ -1,0 +1,38 @@
+"use client";
+
+import "client-only";
+
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+import { ReconnectingWebSocketClient } from "@/lib/realtime/websocket-client";
+import type { WebsocketClientInput } from "@/lib/realtime/websocket-client.schema";
+
+import { parse{{pascalName}}Event } from "./parse-{{name}}";
+
+/** @oppulence-gen kind={{artifactKind}} Client hook for validated {{title}} events. */
+export function use{{pascalName}}(input: WebsocketClientInput = {}) {
+  const [client] = useState(
+    () => new ReconnectingWebSocketClient({ ...input, autoConnect: false }),
+  );
+  const snapshot = useSyncExternalStore(client.subscribe, client.getSnapshot, client.getSnapshot);
+  const [event, setEvent] = useState<ReturnType<typeof parse{{pascalName}}Event> | null>(null);
+  const [eventError, setEventError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (input.autoConnect !== false) void client.connect();
+    const removeMessageListener = client.addMessageListener((message) => {
+      try {
+        setEvent(parse{{pascalName}}Event(message));
+        setEventError(null);
+      } catch (error) {
+        setEventError(error instanceof Error ? error : new Error("Invalid realtime event"));
+      }
+    });
+    return () => {
+      removeMessageListener();
+      client.close();
+    };
+  }, [client, input.autoConnect]);
+
+  return { client, event, eventError, snapshot };
+}

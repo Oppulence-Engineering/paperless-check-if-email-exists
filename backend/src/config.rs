@@ -37,6 +37,13 @@ use std::time::Duration;
 use tracing::warn;
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JwtAuthConfig {
+	pub jwks_url: String,
+	pub issuer: String,
+	pub audience: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
 	/// Name of the backend.
@@ -67,6 +74,8 @@ pub struct BackendConfig {
 	pub http_port: u16,
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
+	/// Optional Better Auth resource-server verification. Legacy API keys remain supported.
+	pub auth: Option<JwtAuthConfig>,
 	/// Sentry DSN to report errors to
 	pub sentry_dsn: Option<String>,
 
@@ -127,6 +136,7 @@ impl BackendConfig {
 			http_host: "127.0.0.1".to_string(),
 			http_port: 8080,
 			header_secret: None,
+			auth: None,
 			sentry_dsn: None,
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),

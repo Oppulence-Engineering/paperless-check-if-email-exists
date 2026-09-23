@@ -241,11 +241,24 @@ pub async fn prepare_verification_response(
 	};
 
 	let evaluated_at = Utc::now();
+	// ponytail: Read the tenant default per check; carry it in task context if DB load grows.
+	let policy_mode = if let (Some(tenant_id), Some(pool)) =
+		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))
+	{
+		let configured: String =
+			sqlx::query_scalar("SELECT default_policy_mode FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(pool)
+				.await?;
+		serde_json::from_value(serde_json::Value::String(configured))?
+	} else {
+		PolicyMode::Deliverability
+	};
 	let decision_input = DecisionInput {
 		score: &email_score,
 		completed_at,
 		evaluated_at,
-		policy_mode: PolicyMode::Deliverability,
+		policy_mode,
 		policy_profile_key: None,
 		domain_suggestion: output.syntax.suggestion.as_deref(),
 		suggested_email: output.syntax.suggestion.clone(),

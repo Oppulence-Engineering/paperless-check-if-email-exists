@@ -10,10 +10,12 @@ Name | Type | Description | Notes
 **IsReachable** | [**Reachable**](Reachable.md) |  | [required]
 **Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
 **Mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [required]
+**PolicyEvaluation** | Pointer to **interface{}** |  | [optional]
 **Provider** | Pointer to [**Provider**](Provider.md) |  | [optional]
 **ProviderConfidence** | Pointer to [**ProviderConfidence**](ProviderConfidence.md) |  | [optional]
 **ProviderRejectionReason** | Pointer to [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional]
 **ProviderRulesApplied** | **bool** |  | [required]
+**Recommendation** | Pointer to **interface{}** |  | [optional]
 **Score** | [**EmailScore**](EmailScore.md) |  | [required]
 **Smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [required]
 **Syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [required]
@@ -178,6 +180,31 @@ and a boolean to check if the value has been set.
 SetMx sets Mx field to given value.
 
 
+### GetPolicyEvaluation
+
+`func (o *CheckEmailOutput) GetPolicyEvaluation() interface{}`
+
+GetPolicyEvaluation returns the PolicyEvaluation field if non-nil, zero value otherwise.
+
+### GetPolicyEvaluationOk
+
+`func (o *CheckEmailOutput) GetPolicyEvaluationOk() (*interface{}, bool)`
+
+GetPolicyEvaluationOk returns a tuple with the PolicyEvaluation field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPolicyEvaluation
+
+`func (o *CheckEmailOutput) SetPolicyEvaluation(v interface{})`
+
+SetPolicyEvaluation sets PolicyEvaluation field to given value.
+
+### HasPolicyEvaluation
+
+`func (o *CheckEmailOutput) HasPolicyEvaluation() bool`
+
+HasPolicyEvaluation returns a boolean if a field has been set.
+
 ### GetProvider
 
 `func (o *CheckEmailOutput) GetProvider() Provider`
@@ -272,6 +299,31 @@ and a boolean to check if the value has been set.
 
 SetProviderRulesApplied sets ProviderRulesApplied field to given value.
 
+
+### GetRecommendation
+
+`func (o *CheckEmailOutput) GetRecommendation() interface{}`
+
+GetRecommendation returns the Recommendation field if non-nil, zero value otherwise.
+
+### GetRecommendationOk
+
+`func (o *CheckEmailOutput) GetRecommendationOk() (*interface{}, bool)`
+
+GetRecommendationOk returns a tuple with the Recommendation field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRecommendation
+
+`func (o *CheckEmailOutput) SetRecommendation(v interface{})`
+
+SetRecommendation sets Recommendation field to given value.
+
+### HasRecommendation
+
+`func (o *CheckEmailOutput) HasRecommendation() bool`
+
+HasRecommendation returns a boolean if a field has been set.
 
 ### GetScore
 

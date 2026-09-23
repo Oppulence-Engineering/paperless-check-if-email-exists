@@ -991,9 +991,11 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"original_filename": { "type": "string" },
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
-				"email_column": { "type": "string" }
+				"email_column": { "type": "string" },
+				"created_at": { "type": "string", "format": "date-time" },
+				"completed_at": { "type": "string", "format": "date-time", "nullable": true }
 			},
-			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column"]
+			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column", "created_at", "completed_at"]
 		}),
 	);
 	insert_schema(
@@ -1980,6 +1982,34 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 	normalize_nullable_types(&mut spec);
 	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
+	insert_schema(
+		&mut spec,
+		"ErrorEnvelope",
+		json!({
+			"type": "object",
+			"required": ["error"],
+			"properties": { "error": { "type": "string" } }
+		}),
+	);
+	for (path, item) in paths_mut(&mut spec).iter_mut() {
+		if !path.starts_with("/v1/") {
+			continue;
+		}
+		if let Some(item) = item.as_object_mut() {
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(responses) = item
+					.get_mut(method)
+					.and_then(|operation| operation.get_mut("responses"))
+					.and_then(Value::as_object_mut)
+				{
+					responses.entry("default").or_insert_with(|| json!({
+						"description": "Request error",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+					}));
+				}
+			}
+		}
+	}
 	if let Some(info) = spec.get_mut("info").and_then(Value::as_object_mut) {
 		info.insert(
 			"version".to_string(),

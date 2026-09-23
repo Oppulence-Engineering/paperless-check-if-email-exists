@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -168,6 +168,10 @@ func (o *PipelineSourceOneOf2) UnmarshalJSON(data []byte) (err error) {
 
 	if err != nil {
 		return err
+	}
+
+	if varPipelineSourceOneOf2.Type != "push" {
+		return fmt.Errorf("invalid discriminator value for PipelineSourceOneOf2: expected \"push\", got %q", varPipelineSourceOneOf2.Type)
 	}
 
 	if varPipelineSourceOneOf2.Type != "push" {

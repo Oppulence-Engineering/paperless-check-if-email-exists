@@ -5,6 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**completed_at** | **string** |  | [required]
+**created_at** | **string** |  | [required]
 **email_column** | **string** |  | [required]
 **id** | **number** |  | [required]
 **name** | **string** |  | [required]
@@ -19,6 +21,8 @@ Name | Type | Description | Notes
 import { ListItem } from '@oppulence/reacher-sdk';
 
 const instance: ListItem = {
+    completed_at: 'example',
+    created_at: 'example',
     email_column: 'example',
     id: 0,
     name: 'Weekly Cleanup',

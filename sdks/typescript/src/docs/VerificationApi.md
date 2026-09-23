@@ -1,13 +1,13 @@
 # VerificationApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**v1EmailHistory**](#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history|
 
 # **v1EmailHistory**
-> v1EmailHistory()
+> V1EmailHistory200Response v1EmailHistory()
 
 Returns the verification history timeline for a specific email address.
 
@@ -41,7 +41,7 @@ const { status, data } = await apiInstance.v1EmailHistory(
 
 ### Return type
 
-void (empty response body)
+**V1EmailHistory200Response**
 
 ### Authorization
 
@@ -50,12 +50,13 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Verification history for the email |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

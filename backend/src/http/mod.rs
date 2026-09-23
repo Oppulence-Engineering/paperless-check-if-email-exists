@@ -28,7 +28,8 @@ mod version;
 
 use crate::config::BackendConfig;
 use crate::tenant::auth::resolve_from_api_key;
-use crate::tenant::context::TenantContext;
+use crate::tenant::context::{scope, TenantContext};
+use crate::tenant::jwt::resolve_from_jwt;
 use check_if_email_exists::LOG_TARGET;
 use error::handle_rejection;
 pub use error::ReacherResponseError;
@@ -134,6 +135,33 @@ pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejecti
 	}
 }
 
+fn required_route_scope(path: &str) -> Option<&'static str> {
+	let route = path.strip_prefix("/v1/")?;
+	match route.split('/').next()? {
+		"check_email" | "emails" => Some(scope::VERIFY),
+		"bulk" | "jobs" | "events" | "query" | "sources" => Some(scope::BULK),
+		"find_email" => Some(scope::FIND),
+		"lists" => Some(scope::LISTS),
+		"suppressions" | "outcomes" => Some(scope::SUPPRESSIONS),
+		"reputation" => Some(scope::REPUTATION),
+		"provider-endpoints" | "reverification" => Some(scope::SETTINGS),
+		"me" => match route.split('/').nth(1) {
+			Some("settings" | "domains" | "webhook") => Some(scope::SETTINGS),
+			Some("api-keys") => Some(scope::ADMIN),
+			_ => None,
+		},
+		// Pipelines and comments choose scopes by method and resource in their handlers.
+		_ => None,
+	}
+}
+
+fn check_route_scope(ctx: &TenantContext, path: &str) -> Result<(), warp::Rejection> {
+	if let Some(scope) = required_route_scope(path) {
+		check_scope(ctx, scope)?;
+	}
+	Ok(())
+}
+
 /// The header which holds the Reacher backend secret.
 pub const REACHER_SECRET_HEADER: &str = "x-reacher-secret";
 
@@ -144,24 +172,28 @@ const API_KEY_PREFIX: &str = "rch_live_";
 ///
 /// Resolution order:
 /// 1. `Authorization: Bearer rch_live_...` → resolve via API key lookup
-/// 2. `x-reacher-secret` header → validate against config → legacy context
-/// 3. No auth headers + no `header_secret` configured → legacy context (open mode)
-/// 4. Otherwise → 401 Unauthorized
+/// 2. `Authorization: Bearer <Better Auth JWT>` → verify signature, tenant and role
+/// 3. `x-reacher-secret` header → validate against config → legacy context
+/// 4. No auth headers + no `header_secret` configured → legacy context (open mode)
+/// 5. Otherwise → 401 Unauthorized
 pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<(TenantContext,)> {
 	let config_clone = Arc::clone(&config);
 	warp::any()
+		.and(warp::method())
+		.and(warp::path::full())
 		.and(warp::header::optional::<String>("authorization"))
 		.and(warp::header::optional::<String>(REACHER_SECRET_HEADER))
-		.and_then(move |auth_header: Option<String>, secret_header: Option<String>| {
+		.and_then(move |method: warp::http::Method, path: warp::path::FullPath, auth_header: Option<String>, secret_header: Option<String>| {
 			let config = Arc::clone(&config_clone);
 			async move {
-				// Path 1: Bearer token with rch_live_ prefix
+				// Authentication headers always take precedence over open/legacy mode.
 				if let Some(auth) = &auth_header {
 					if let Some(token) = auth.strip_prefix(BEARER_PREFIX) {
 						if token.starts_with(API_KEY_PREFIX) {
 							if let Some(pool) = config.get_pg_pool() {
 								match resolve_from_api_key(&pool, token, &config.throttle).await {
 									Ok(ctx) => {
+										check_route_scope(&ctx, path.as_str())?;
 										debug!(target: LOG_TARGET, tenant=?ctx.tenant_name, "Resolved tenant from API key");
 										return Ok(ctx);
 									}
@@ -181,7 +213,21 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 								)));
 							}
 						}
+						if let (Some(auth_config), Some(pool)) = (&config.auth, config.get_pg_pool()) {
+								let ctx = resolve_from_jwt(&pool, token, auth_config, method.as_str(), path.as_str())
+									.await
+									.map_err(|_| warp::reject::custom(ReacherResponseError::new(
+										StatusCode::UNAUTHORIZED,
+										"Invalid or unauthorized backend token",
+									)))?;
+								check_route_scope(&ctx, path.as_str())?;
+								return Ok(ctx);
+						}
 					}
+					return Err(warp::reject::custom(ReacherResponseError::new(
+						StatusCode::UNAUTHORIZED,
+						"Invalid Authorization header",
+					)));
 				}
 
 				// Path 2: Legacy x-reacher-secret header
@@ -240,5 +286,32 @@ pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()
 		warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
 	} else {
 		warp::any().boxed()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::required_route_scope;
+
+	#[test]
+	fn every_tenant_api_group_has_a_scope() {
+		let spec = super::openapi::build_spec().expect("OpenAPI spec");
+		for path in spec["paths"].as_object().expect("OpenAPI paths").keys() {
+			if !path.starts_with("/v1/")
+				|| path.starts_with("/v1/admin/")
+				|| path.starts_with("/v1/inbound/")
+				|| path.starts_with("/v1/pipelines")
+				|| path.starts_with("/v1/comments")
+				|| matches!(
+					path.as_str(),
+					"/v1/check-email-with-onboard" | "/v1/me" | "/v1/me/usage"
+				) {
+				continue;
+			}
+			assert!(
+				required_route_scope(path).is_some(),
+				"missing scope: {path}"
+			);
+		}
 	}
 }

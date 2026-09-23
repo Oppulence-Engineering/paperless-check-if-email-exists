@@ -1,0 +1,75 @@
+import { cacheLife } from "next/cache";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+
+import {
+	blogCategories,
+	blogPostSlug,
+	blogPostsInCategory,
+	isBlogCategory,
+} from "@/lib/content/editorial";
+
+import { SimBlogIndexPage } from "../../../sim-landing/subpages/sim-blog-index-page";
+import { marketingMetadata } from "../../../metadata";
+
+export function generateStaticParams() {
+	return blogCategories.map((category) => ({ category }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
+	const { category } = await params;
+	if (!isBlogCategory(category)) return { title: "Page not found — Check If Email Exists" };
+	return marketingMetadata({
+		title: `${category} notes`,
+		description: `Check If Email Exists notes in the ${category} category.`,
+		path: `/blog/category/${category}`,
+	});
+}
+
+async function renderBlogCategory(category: string) {
+	"use cache";
+	cacheLife("days");
+	if (!isBlogCategory(category)) notFound();
+	const posts = blogPostsInCategory(category);
+
+	return (
+		<SimBlogIndexPage
+			categories={blogCategories.map((item) => ({
+				label: item,
+				href: `/blog/category/${item}`,
+			}))}
+			description={
+				posts.length === 0
+					? "No published notes in this category yet."
+					: `${posts.length} published note${posts.length === 1 ? "" : "s"}.`
+			}
+			eyebrow={`[blog / ${category}]`}
+			listHeading={`${category} notes`}
+			posts={posts.map((post) => {
+				const slug = blogPostSlug(post);
+				return {
+					slug,
+					href: `/blog/${slug}`,
+					title: post.title,
+					description: post.description,
+					category: post.category,
+					date: post.date,
+				};
+			})}
+			title={category}
+		/>
+	);
+}
+
+export default function BlogCategoryPage({ params }: { params: Promise<{ category: string }> }) {
+	return (
+		<Suspense fallback={null}>
+			<BlogCategoryFromParams params={params} />
+		</Suspense>
+	);
+}
+
+async function BlogCategoryFromParams({ params }: { params: Promise<{ category: string }> }) {
+	const { category } = await params;
+	return renderBlogCategory(category);
+}

@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**backend_name** | **string** | The name of the backend that performed the verification. | [required]
 **duration** | [**Duration**](Duration.md) |  | [required]
 **end_time** | **string** | The timestamp when the email verification ended. | [required]
-**server_name** | **string** | The name of the server that performed the verification. | [required]
 **smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | [required]
 **start_time** | **string** | The timestamp when the email verification started. | [required]
 
@@ -17,9 +17,9 @@ Name | Type | Description | Notes
 import { DebugDetails } from '@oppulence/reacher-sdk';
 
 const instance: DebugDetails = {
+    backend_name: 'example',
     duration: {} as any,
     end_time: 'example',
-    server_name: 'example',
     smtp: {} as any,
     start_time: 'example',
 };

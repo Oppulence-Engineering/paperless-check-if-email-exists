@@ -23,7 +23,6 @@ on:
         description: 'Kubernetes namespace to deploy to'
         required: true
         type: string
-        default: 'oppulence'
       create_namespace:
         description: 'Whether to create the namespace if it does not exist'
         required: false
@@ -181,6 +180,16 @@ jobs:
           HELM_POSTGRES_URL_STAGING: ${{ secrets.HELM_POSTGRES_URL_STAGING }}
           HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          BETTER_AUTH_URL_STAGING: ${{ secrets.BETTER_AUTH_URL_STAGING }}
+          BETTER_AUTH_SECRET_STAGING: ${{ secrets.BETTER_AUTH_SECRET_STAGING }}
+          SCIM_CREDENTIAL_HASH_SECRET_STAGING: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
+          RESEND_API_KEY_STAGING: ${{ secrets.RESEND_API_KEY_STAGING }}
+          RESEND_FROM_STAGING: ${{ secrets.RESEND_FROM_STAGING }}
           RCH__PROXY__HOST: ${{ secrets.RCH__PROXY__HOST }}
           RCH__PROXY__PORT: ${{ secrets.RCH__PROXY__PORT }}
           RCH__PROXY__USERNAME: ${{ secrets.RCH__PROXY__USERNAME }}
@@ -188,31 +197,45 @@ jobs:
           RCH__HEADER_SECRET: ${{ secrets.RCH__HEADER_SECRET }}
           HELM_SENTRY_DSN: ${{ secrets.HELM_SENTRY_DSN }}
         run: |
-          NAMESPACE_FLAG="-n ${{ inputs.namespace }}"
-          CREATE_NAMESPACE_FLAG=""
-          VERSION_FLAG=""
-          VALUES_FLAG=""
-          IMAGE_REPO_FLAG=""
-          IMAGE_TAG_FLAG=""
+          DATABASE_SECRET_NAME=HELM_POSTGRES_URL
+          WEB_SECRET_SUFFIX=""
+          if [ "${{ inputs.namespace }}" = "paperless-staging" ]; then
+            DATABASE_SECRET_NAME=HELM_POSTGRES_URL_STAGING
+            WEB_SECRET_SUFFIX=_STAGING
+          fi
+          for required in "$DATABASE_SECRET_NAME" HELM_RABBIT_URL RCH__HEADER_SECRET; do
+            if [ -z "${!required:-}" ]; then
+              echo "Missing required deployment secret: $required"
+              exit 1
+            fi
+          done
+          for key in BETTER_AUTH_URL BETTER_AUTH_SECRET SCIM_CREDENTIAL_HASH_SECRET RESEND_API_KEY RESEND_FROM; do
+            required="${key}${WEB_SECRET_SUFFIX}"
+            if [ -z "${!required:-}" ]; then
+              echo "Missing required deployment secret: $required"
+              exit 1
+            fi
+          done
+          HELM_ARGS=(upgrade --install "${{ inputs.service_name }}" "${{ inputs.chart_repository }}" -n "${{ inputs.namespace }}" --wait --force-conflicts)
 
           if [ "${{ inputs.create_namespace }}" = "true" ]; then
-            CREATE_NAMESPACE_FLAG="--create-namespace"
+            HELM_ARGS+=(--create-namespace)
           fi
 
           if [ -n "${{ inputs.version }}" ] && [ "${{ inputs.version }}" != "latest" ]; then
-            VERSION_FLAG="--version ${{ inputs.version }}"
+            HELM_ARGS+=(--version "${{ inputs.version }}")
           fi
 
           if [ -n "${{ inputs.values_file }}" ]; then
-            VALUES_FLAG="-f ${{ inputs.values_file }}"
+            HELM_ARGS+=(-f "${{ inputs.values_file }}")
           fi
 
           if [ -n "${{ inputs.image_repository }}" ]; then
-            IMAGE_REPO_FLAG="--set image.repository=${{ inputs.image_repository }}"
+            HELM_ARGS+=(--set-string "image.repository=${{ inputs.image_repository }}")
           fi
 
           if [ -n "${{ inputs.image_tag }}" ]; then
-            IMAGE_TAG_FLAG="--set image.tag=${{ inputs.image_tag }}"
+            HELM_ARGS+=(--set-string "image.tag=${{ inputs.image_tag }}")
           fi
 
           SECRET_ENV_OVERRIDES="${{ inputs.secret_env_overrides }}"
@@ -244,14 +267,4 @@ jobs:
           fi
 
           echo "Deploying ${{ inputs.service_name }} from: ${{ inputs.chart_repository }}"
-
-          helm upgrade --install ${{ inputs.service_name }} \
-            ${VERSION_FLAG} \
-            ${{ inputs.chart_repository }} \
-            ${VALUES_FLAG} \
-            ${IMAGE_REPO_FLAG} \
-            ${IMAGE_TAG_FLAG} \
-            "${SECRET_ENV_FLAGS[@]}" \
-            ${NAMESPACE_FLAG} ${CREATE_NAMESPACE_FLAG} \
-            --wait \
-            --force-conflicts
+          helm "${HELM_ARGS[@]}" "${SECRET_ENV_FLAGS[@]}"

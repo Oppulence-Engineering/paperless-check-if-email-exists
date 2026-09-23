@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -88,7 +88,8 @@ type TenantAPI interface {
 	V1GetTenantSettings(ctx context.Context) TenantAPIV1GetTenantSettingsRequest
 
 	// V1GetTenantSettingsExecute executes the request
-	V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSettingsRequest) (*http.Response, error)
+	//  @return TenantSettingsResponse
+	V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSettingsRequest) (*TenantSettingsResponse, *http.Response, error)
 
 	/*
 	V1GetTenantUsage GET /v1/me/usage
@@ -101,7 +102,8 @@ type TenantAPI interface {
 	V1GetTenantUsage(ctx context.Context) TenantAPIV1GetTenantUsageRequest
 
 	// V1GetTenantUsageExecute executes the request
-	V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRequest) (*http.Response, error)
+	//  @return TenantUsageResponse
+	V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRequest) (*TenantUsageResponse, *http.Response, error)
 
 	/*
 	V1GetTenantWebhook GET /v1/me/webhook
@@ -114,7 +116,8 @@ type TenantAPI interface {
 	V1GetTenantWebhook(ctx context.Context) TenantAPIV1GetTenantWebhookRequest
 
 	// V1GetTenantWebhookExecute executes the request
-	V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebhookRequest) (*http.Response, error)
+	//  @return TenantWebhookResponse
+	V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebhookRequest) (*TenantWebhookResponse, *http.Response, error)
 
 	/*
 	V1ListTenantDomains GET /v1/me/domains
@@ -154,7 +157,8 @@ type TenantAPI interface {
 	V1UpdateTenantSettings(ctx context.Context) TenantAPIV1UpdateTenantSettingsRequest
 
 	// V1UpdateTenantSettingsExecute executes the request
-	V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTenantSettingsRequest) (*http.Response, error)
+	//  @return TenantSettingsResponse
+	V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTenantSettingsRequest) (*TenantSettingsResponse, *http.Response, error)
 
 	/*
 	V1UpdateTenantWebhook PATCH /v1/me/webhook
@@ -167,7 +171,8 @@ type TenantAPI interface {
 	V1UpdateTenantWebhook(ctx context.Context) TenantAPIV1UpdateTenantWebhookRequest
 
 	// V1UpdateTenantWebhookExecute executes the request
-	V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenantWebhookRequest) (*http.Response, error)
+	//  @return TenantWebhookResponse
+	V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenantWebhookRequest) (*TenantWebhookResponse, *http.Response, error)
 }
 
 // TenantAPIService TenantAPI service
@@ -226,7 +231,7 @@ func (a *TenantAPIService) V1ClearTenantWebhookExecute(r TenantAPIV1ClearTenantW
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -269,6 +274,14 @@ func (a *TenantAPIService) V1ClearTenantWebhookExecute(r TenantAPIV1ClearTenantW
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -328,7 +341,7 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -371,6 +384,14 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -434,7 +455,7 @@ func (a *TenantAPIService) V1DeleteTenantDomainExecute(r TenantAPIV1DeleteTenant
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -477,6 +498,14 @@ func (a *TenantAPIService) V1DeleteTenantDomainExecute(r TenantAPIV1DeleteTenant
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -540,7 +569,7 @@ func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomain
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -583,6 +612,14 @@ func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomain
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -594,7 +631,7 @@ type TenantAPIV1GetTenantSettingsRequest struct {
 	ApiService TenantAPI
 }
 
-func (r TenantAPIV1GetTenantSettingsRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1GetTenantSettingsRequest) Execute() (*TenantSettingsResponse, *http.Response, error) {
 	return r.ApiService.V1GetTenantSettingsExecute(r)
 }
 
@@ -614,16 +651,18 @@ func (a *TenantAPIService) V1GetTenantSettings(ctx context.Context) TenantAPIV1G
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSettingsRequest) (*http.Response, error) {
+//  @return TenantSettingsResponse
+func (a *TenantAPIService) V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSettingsRequest) (*TenantSettingsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantSettingsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1GetTenantSettings")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/settings"
@@ -642,7 +681,7 @@ func (a *TenantAPIService) V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSett
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -665,19 +704,19 @@ func (a *TenantAPIService) V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSett
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -685,10 +724,27 @@ func (a *TenantAPIService) V1GetTenantSettingsExecute(r TenantAPIV1GetTenantSett
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1GetTenantUsageRequest struct {
@@ -696,7 +752,7 @@ type TenantAPIV1GetTenantUsageRequest struct {
 	ApiService TenantAPI
 }
 
-func (r TenantAPIV1GetTenantUsageRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1GetTenantUsageRequest) Execute() (*TenantUsageResponse, *http.Response, error) {
 	return r.ApiService.V1GetTenantUsageExecute(r)
 }
 
@@ -716,16 +772,18 @@ func (a *TenantAPIService) V1GetTenantUsage(ctx context.Context) TenantAPIV1GetT
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRequest) (*http.Response, error) {
+//  @return TenantUsageResponse
+func (a *TenantAPIService) V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRequest) (*TenantUsageResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantUsageResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1GetTenantUsage")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/usage"
@@ -744,7 +802,7 @@ func (a *TenantAPIService) V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -767,19 +825,19 @@ func (a *TenantAPIService) V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRe
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -787,10 +845,27 @@ func (a *TenantAPIService) V1GetTenantUsageExecute(r TenantAPIV1GetTenantUsageRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1GetTenantWebhookRequest struct {
@@ -798,7 +873,7 @@ type TenantAPIV1GetTenantWebhookRequest struct {
 	ApiService TenantAPI
 }
 
-func (r TenantAPIV1GetTenantWebhookRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1GetTenantWebhookRequest) Execute() (*TenantWebhookResponse, *http.Response, error) {
 	return r.ApiService.V1GetTenantWebhookExecute(r)
 }
 
@@ -818,16 +893,18 @@ func (a *TenantAPIService) V1GetTenantWebhook(ctx context.Context) TenantAPIV1Ge
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebhookRequest) (*http.Response, error) {
+//  @return TenantWebhookResponse
+func (a *TenantAPIService) V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebhookRequest) (*TenantWebhookResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantWebhookResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1GetTenantWebhook")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/webhook"
@@ -846,7 +923,7 @@ func (a *TenantAPIService) V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebho
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -869,19 +946,19 @@ func (a *TenantAPIService) V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebho
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -889,10 +966,27 @@ func (a *TenantAPIService) V1GetTenantWebhookExecute(r TenantAPIV1GetTenantWebho
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1ListTenantDomainsRequest struct {
@@ -948,7 +1042,7 @@ func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDom
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -991,6 +1085,14 @@ func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDom
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -1054,7 +1156,7 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -1097,6 +1199,14 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -1106,9 +1216,15 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 type TenantAPIV1UpdateTenantSettingsRequest struct {
 	ctx context.Context
 	ApiService TenantAPI
+	updateTenantSettingsRequest *UpdateTenantSettingsRequest
 }
 
-func (r TenantAPIV1UpdateTenantSettingsRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1UpdateTenantSettingsRequest) UpdateTenantSettingsRequest(updateTenantSettingsRequest UpdateTenantSettingsRequest) TenantAPIV1UpdateTenantSettingsRequest {
+	r.updateTenantSettingsRequest = &updateTenantSettingsRequest
+	return r
+}
+
+func (r TenantAPIV1UpdateTenantSettingsRequest) Execute() (*TenantSettingsResponse, *http.Response, error) {
 	return r.ApiService.V1UpdateTenantSettingsExecute(r)
 }
 
@@ -1128,16 +1244,18 @@ func (a *TenantAPIService) V1UpdateTenantSettings(ctx context.Context) TenantAPI
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTenantSettingsRequest) (*http.Response, error) {
+//  @return TenantSettingsResponse
+func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTenantSettingsRequest) (*TenantSettingsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantSettingsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1UpdateTenantSettings")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/settings"
@@ -1145,9 +1263,12 @@ func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTena
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.updateTenantSettingsRequest == nil {
+		return localVarReturnValue, nil, reportError("updateTenantSettingsRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1156,13 +1277,15 @@ func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTena
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.updateTenantSettingsRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -1179,19 +1302,19 @@ func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTena
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1199,18 +1322,41 @@ func (a *TenantAPIService) V1UpdateTenantSettingsExecute(r TenantAPIV1UpdateTena
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1UpdateTenantWebhookRequest struct {
 	ctx context.Context
 	ApiService TenantAPI
+	updateWebhookRequest *UpdateWebhookRequest
 }
 
-func (r TenantAPIV1UpdateTenantWebhookRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1UpdateTenantWebhookRequest) UpdateWebhookRequest(updateWebhookRequest UpdateWebhookRequest) TenantAPIV1UpdateTenantWebhookRequest {
+	r.updateWebhookRequest = &updateWebhookRequest
+	return r
+}
+
+func (r TenantAPIV1UpdateTenantWebhookRequest) Execute() (*TenantWebhookResponse, *http.Response, error) {
 	return r.ApiService.V1UpdateTenantWebhookExecute(r)
 }
 
@@ -1230,16 +1376,18 @@ func (a *TenantAPIService) V1UpdateTenantWebhook(ctx context.Context) TenantAPIV
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenantWebhookRequest) (*http.Response, error) {
+//  @return TenantWebhookResponse
+func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenantWebhookRequest) (*TenantWebhookResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantWebhookResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1UpdateTenantWebhook")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/webhook"
@@ -1247,9 +1395,12 @@ func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenan
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.updateWebhookRequest == nil {
+		return localVarReturnValue, nil, reportError("updateWebhookRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1258,13 +1409,15 @@ func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenan
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.updateWebhookRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -1281,19 +1434,19 @@ func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenan
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1301,8 +1454,25 @@ func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenan
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }

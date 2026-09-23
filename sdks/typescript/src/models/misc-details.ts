@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  *
  * The version of the OpenAPI document: 4.3.0
  * Contact: amaury@reacher.email
@@ -25,7 +25,13 @@ export interface MiscDetails {
      * @type {string}
      * @memberof MiscDetails
      */
-    'gravatar_url'?: string;
+    'gravatar_url': string | null;
+    /**
+     *
+     * @type {boolean}
+     * @memberof MiscDetails
+     */
+    'haveibeenpwned': boolean | null;
     /**
      * Is this a B2C email address?
      * @type {boolean}
@@ -44,4 +50,10 @@ export interface MiscDetails {
      * @memberof MiscDetails
      */
     'is_role_account': boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof MiscDetails
+     */
+    'is_spam_trap_domain': boolean;
 }

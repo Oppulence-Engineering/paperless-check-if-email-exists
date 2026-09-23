@@ -1,0 +1,75 @@
+import { z } from "zod";
+
+import { {{orvalSchema}}{{#if hasBody}}, {{orvalBody}}{{/if}} } from "{{orvalImport}}";
+import { requestJson, type RequestJsonFn } from "@/lib/api/request-json";
+import { validateUploadDescriptor } from "@/lib/backend/integration-contract";
+import { UploadRequestSchema, type UploadDescriptor } from "@/lib/backend/integration-contract.schema";
+
+export const {{pascalName}}UploadInputSchema = z.strictObject({
+  file: z.custom<File>((value) => typeof File !== "undefined" && value instanceof File),
+  checksumSha256: z.string().regex(/^[A-Fa-f0-9]{64}$/).optional(),
+});
+
+export type {{pascalName}}UploadInput = z.infer<typeof {{pascalName}}UploadInputSchema>;
+
+export function {{camelName}}DescriptorPath({{#if hasPathParams}}{{pathParamsSignature}}{{/if}}): string {
+  return {{fetchPathExpression}};
+}
+
+/** @oppulence-gen kind={{artifactKind}} Requests and validates a short-lived upload descriptor. */
+export async function request{{pascalName}}Descriptor(
+  request: RequestJsonFn,
+  {{#if hasPathParams}}{{pathParamsSignature}},
+  {{/if}}input: {{pascalName}}UploadInput,
+  signal?: AbortSignal,
+): Promise<UploadDescriptor> {
+  const parsedInput = {{pascalName}}UploadInputSchema.parse(input);
+  const uploadRequest = UploadRequestSchema.parse({
+    fileName: parsedInput.file.name,
+    contentType: parsedInput.file.type || "application/octet-stream",
+    sizeBytes: parsedInput.file.size,
+    checksumSha256: parsedInput.checksumSha256,
+  });
+  const response = await request({
+    path: {{camelName}}DescriptorPath({{#if hasPathParams}}{{pathParamsCall}}{{/if}}),
+    method: "{{httpMethod}}",
+    schema: {{orvalSchema}},
+    body: {{#if hasBody}}{{orvalBody}}.parse(uploadRequest){{else}}uploadRequest{{/if}},
+    signal,
+  });
+  return validateUploadDescriptor(response);
+}
+
+/** Uploads the file directly to the validated backend-issued destination. */
+export async function upload{{pascalName}}File(
+  descriptor: UploadDescriptor,
+  file: File,
+  signal?: AbortSignal,
+  fetcher: typeof fetch = globalThis.fetch,
+): Promise<void> {
+  const validated = validateUploadDescriptor(descriptor);
+  const response = await fetcher(validated.url, {
+    method: validated.method,
+    headers: validated.headers,
+    body: file,
+    signal,
+    credentials: "omit",
+    redirect: "error",
+  });
+  if (!response.ok) throw new Error(`Upload failed (${String(response.status)})`);
+}
+
+export async function execute{{pascalName}}Upload(
+  request: RequestJsonFn,
+  {{#if hasPathParams}}{{pathParamsSignature}},
+  {{/if}}input: {{pascalName}}UploadInput,
+  signal?: AbortSignal,
+): Promise<UploadDescriptor> {
+  const descriptor = await request{{pascalName}}Descriptor(request, {{#if hasPathParams}}{{pathParamsCall}}, {{/if}}input, signal);
+  await upload{{pascalName}}File(descriptor, input.file, signal);
+  return descriptor;
+}
+
+export function upload{{pascalName}}({{#if hasPathParams}}{{pathParamsSignature}}, {{/if}}input: {{pascalName}}UploadInput, signal?: AbortSignal) {
+  return execute{{pascalName}}Upload(requestJson, {{#if hasPathParams}}{{pathParamsCall}}, {{/if}}input, signal);
+}

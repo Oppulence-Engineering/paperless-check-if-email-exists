@@ -1,6 +1,6 @@
 # OutcomesApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -61,6 +61,7 @@ const { status, data } = await apiInstance.v1CreateProviderEndpoint(
 |-------------|-------------|------------------|
 |**201** | Provider endpoint created; delivery token is returned once |  -  |
 |**400** | Invalid provider endpoint |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -112,6 +113,7 @@ const { status, data } = await apiInstance.v1DeleteProviderEndpoint(
 |-------------|-------------|------------------|
 |**200** | Provider endpoint disabled and deleted |  -  |
 |**404** | Provider endpoint not found |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -164,6 +166,7 @@ const { status, data } = await apiInstance.v1IngestOutcomes(
 |-------------|-------------|------------------|
 |**200** | Provider outcomes ingested |  -  |
 |**400** | Invalid outcome payload |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -225,6 +228,7 @@ const { status, data } = await apiInstance.v1IngestProviderOutcomes(
 |**200** | Provider events authenticated and ingested |  -  |
 |**202** | Receipt retained while endpoint is paused |  -  |
 |**401** | Provider signature rejected |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -290,6 +294,7 @@ const { status, data } = await apiInstance.v1ListOutcomes(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Paginated provider outcomes |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -333,6 +338,7 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Configured provider endpoints |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -388,5 +394,6 @@ const { status, data } = await apiInstance.v1UpdateProviderEndpoint(
 |-------------|-------------|------------------|
 |**200** | Provider endpoint updated |  -  |
 |**404** | Provider endpoint not found |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
