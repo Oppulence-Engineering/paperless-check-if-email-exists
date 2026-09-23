@@ -7,6 +7,7 @@ import {
 	operationById,
 	operations,
 	schemaByRef,
+	workflowDestination,
 	type PortalOperation,
 } from "@/lib/developer-portal/operations";
 
@@ -72,6 +73,7 @@ export default async function OperationPage({ params }: Props) {
 	if (!operation) notFound();
 	const body = bodyContent(operation);
 	const example = curlExample(operation);
+	const workflow = workflowDestination(operation);
 
 	return (
 		<DocsPage>
@@ -86,6 +88,9 @@ export default async function OperationPage({ params }: Props) {
 				</p>
 				<h2>Access</h2>
 				<p>{accessText(operation)}</p>
+				<p>
+					<Link href={workflow.href}>{workflow.label}</Link>
+				</p>
 				{operation.audience === "tenant" ? (
 					<p>
 						<strong>Required scope:</strong> {operation.scope ?? "any authenticated workspace key"}

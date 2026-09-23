@@ -40,7 +40,7 @@ export function ApiPanel({ className, ...props }: ApiPanelProps) {
 			{...props}
 		>
 			<header>
-				<h1 className="text-2xl font-semibold">Platform API</h1>
+				<h1 className="text-2xl font-semibold">Platform operations</h1>
 				<p className="mt-2 text-sm text-muted-foreground">
 					Restricted Rust control plane. Each request is audited. Mutations require a reason,
 					confirmation, and recent TOTP or passkey verification.

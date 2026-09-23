@@ -86,6 +86,52 @@ export type PortalOperation = {
 	scope?: string;
 };
 
+export function workflowDestination(operation: PortalOperation): { href: string; label: string } {
+	switch (operation.family) {
+		case "System":
+		case "Legacy v0":
+		case "Onboarding":
+		case "Provider callback":
+			return { href: "/app/integrations", label: "Open setup and status journey" };
+		case "Verification and finder":
+			if (operation.path.startsWith("/v1/find_email"))
+				return { href: "/app/finder", label: "Open finder" };
+			if (operation.path.startsWith("/v1/emails/"))
+				return { href: "/app/history", label: "Open history" };
+			if (operation.path.startsWith("/v1/reverification/"))
+				return { href: "/app/settings?settings=verification", label: "Open reverification status" };
+			if (operation.path.startsWith("/v1/reputation/"))
+				return { href: "/app/analytics", label: "Open domain reputation" };
+			return { href: "/app/check", label: "Open verification" };
+		case "Bulk and observability":
+			return ["/v1/events", "/v1/query", "/v1/sources/"].some((prefix) =>
+				operation.path.startsWith(prefix),
+			)
+				? { href: "/app/analytics", label: "Open analytics" }
+				: { href: "/app/jobs", label: "Open bulk jobs" };
+		case "Lists and collaboration":
+			return { href: "/app/lists", label: "Open lists" };
+		case "Suppressions":
+			return { href: "/app/suppressions", label: "Open suppressions" };
+		case "Feedback and providers":
+			return { href: "/app/outcomes", label: "Open outcomes and provider setup" };
+		case "Pipelines":
+			return { href: "/app/pipelines", label: "Open pipelines" };
+		case "Workspace account":
+			if (operation.path.startsWith("/v1/me/api-keys"))
+				return { href: "/app/settings?settings=developer", label: "Manage workspace API keys" };
+			if (operation.path.startsWith("/v1/me/domains"))
+				return { href: "/app/domains", label: "Manage workspace domains" };
+			if (operation.path.startsWith("/v1/me/webhook"))
+				return { href: "/app/settings?settings=webhooks", label: "Open webhook settings" };
+			if (operation.path.startsWith("/v1/me/usage"))
+				return { href: "/app/settings?settings=usage", label: "Open usage" };
+			return { href: "/app/settings?settings=verification", label: "Open workspace settings" };
+		case "Platform admin":
+			return { href: "/app/admin/api", label: "Open platform operations" };
+	}
+}
+
 function audienceFor(family: Family): PortalOperation["audience"] {
 	switch (family) {
 		case "Platform admin":
