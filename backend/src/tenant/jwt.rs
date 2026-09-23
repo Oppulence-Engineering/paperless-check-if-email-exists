@@ -145,7 +145,7 @@ pub async fn resolve_from_jwt(
 ) -> Result<TenantContext> {
 	// ponytail: Fetch keys per request; cache them if this becomes a measured latency cost.
 	let jwks = reqwest::Client::builder()
-		.timeout(std::time::Duration::from_secs(2))
+		.timeout(std::time::Duration::from_secs(5))
 		.redirect(reqwest::redirect::Policy::none())
 		.build()?
 		.get(&config.jwks_url)
