@@ -3,6 +3,7 @@
 import "client-only";
 
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
@@ -25,12 +26,20 @@ export type CheckPanelProps = CheckPanelPropsFields & ComponentPropsWithoutRef<"
 
 export function CheckPanel({ className, ...props }: CheckPanelProps) {
 	const [email, setEmail] = useState("");
+	const [inputError, setInputError] = useState<string | null>(null);
 	const [sample, setSample] = useState(false);
 	const check = useV1CheckEmail();
 
 	function submit(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
-		check.mutate({ to_email: email.trim(), sandbox: sample });
+		const address = email.trim();
+		if (!z.email().safeParse(address).success) {
+			check.reset();
+			setInputError("Enter a complete email address, such as name@example.com.");
+			return;
+		}
+		setInputError(null);
+		check.mutate({ to_email: address, sandbox: sample });
 	}
 
 	const result = check.data;
@@ -53,20 +62,33 @@ export function CheckPanel({ className, ...props }: CheckPanelProps) {
 					<CardTitle>Single address check</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={submit}>
+					<form
+						className="flex flex-col gap-4 sm:flex-row sm:items-end"
+						noValidate
+						onSubmit={submit}
+					>
 						<div className="flex-1 space-y-2">
 							<Label htmlFor="email-to-check">Email address</Label>
 							<Input
 								autoComplete="off"
 								id="email-to-check"
+								aria-describedby={inputError ? "email-to-check-error" : undefined}
+								aria-invalid={Boolean(inputError)}
 								onChange={(event) => {
 									setEmail(event.target.value);
+									setInputError(null);
+									check.reset();
 								}}
 								placeholder="name@example.com"
 								required
 								type="email"
 								value={email}
 							/>
+							{inputError ? (
+								<p className="text-sm text-destructive" id="email-to-check-error" role="alert">
+									{inputError}
+								</p>
+							) : null}
 						</div>
 						<Label className="flex items-center gap-2 text-sm" htmlFor="use-sample-result">
 							<Checkbox

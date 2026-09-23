@@ -141,7 +141,7 @@ export const getPostCheckEmailResponseMock = (
     },
     undefined,
   ]),
-  input: faker.internet.email(),
+  input: faker.string.alpha({ length: { min: 10, max: 20 } }),
   is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
   misc: faker.helpers.arrayElement([
     { ...getPostCheckEmailResponseMiscDetailsMock() },

@@ -1,12 +1,42 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
+import { V1CheckEmail200Response } from "@/lib/api/generated/zod/v1/v1";
 import { CheckPanel } from "./check-panel";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+	cleanup();
+	vi.restoreAllMocks();
+});
+
+it("accepts the raw submitted address in an API result", () => {
+	expect(V1CheckEmail200Response.shape.input.safeParse("yoanyomba@solomon-ai.c").success).toBe(
+		true,
+	);
+});
+
+it("shows an inline error for an incomplete email address", () => {
+	const check = vi.spyOn(V1Api.prototype, "v1CheckEmail");
+	const client = new QueryClient();
+	render(
+		<QueryClientProvider client={client}>
+			<CheckPanel />
+		</QueryClientProvider>,
+	);
+	const input = screen.getByLabelText("Email address");
+	fireEvent.change(input, { target: { value: "yoanyomba@solomon-ai.c" } });
+	fireEvent.click(screen.getByRole("button", { name: "Check email" }));
+	expect(screen.getByRole("alert")).toHaveTextContent("Enter a complete email address");
+	expect(input).toHaveAttribute("aria-invalid", "true");
+	expect(check).not.toHaveBeenCalled();
+	fireEvent.change(input, { target: { value: "not-an-email" } });
+	fireEvent.click(screen.getByRole("button", { name: "Check email" }));
+	expect(screen.getByRole("alert")).toHaveTextContent("Enter a complete email address");
+	expect(check).not.toHaveBeenCalled();
+});
 
 it("shows loading and backend errors for an SDK check", async () => {
 	let failCheck!: (error: Error) => void;

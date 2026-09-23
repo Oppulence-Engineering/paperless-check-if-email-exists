@@ -4721,7 +4721,6 @@ components:
           $ref: "#/components/schemas/DebugDetails"
         input:
           description: The email address that was verified.
-          format: email
           type: string
         is_reachable:
           $ref: "#/components/schemas/Reachable"

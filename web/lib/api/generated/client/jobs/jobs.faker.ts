@@ -163,7 +163,7 @@ export const getV1GetBulkJobResultsResponseMock = (
           },
           undefined,
         ]),
-        input: faker.internet.email(),
+        input: faker.string.alpha({ length: { min: 10, max: 20 } }),
         is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
         misc: faker.helpers.arrayElement([
           { ...getV1GetBulkJobResultsResponseMiscDetailsMock() },
@@ -452,7 +452,7 @@ export const getV1GetJobResultsResponseMock = (
             },
             undefined,
           ]),
-          input: faker.internet.email(),
+          input: faker.string.alpha({ length: { min: 10, max: 20 } }),
           is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
           misc: faker.helpers.arrayElement([
             { ...getV1GetJobResultsResponseMiscDetailsMock() },

@@ -239,7 +239,7 @@ export const V1CheckEmail200Response = zod
           .describe("The timestamp when the email verification started."),
       })
       .optional(),
-    input: zod.email().describe("The email address that was verified."),
+    input: zod.string().describe("The email address that was verified."),
     is_reachable: zod
       .enum(["invalid", "unknown", "safe", "risky"])
       .describe(
@@ -695,7 +695,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
                 })
                 .optional(),
               input: zod
-                .email()
+                .string()
                 .describe("The email address that was verified."),
               is_reachable: zod
                 .enum(["invalid", "unknown", "safe", "risky"])
