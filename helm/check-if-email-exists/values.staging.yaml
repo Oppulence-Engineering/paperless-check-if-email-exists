@@ -3,3 +3,7 @@ replicaCount: 1
 
 autoscaling:
   enabled: false
+
+config:
+  env:
+    NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
