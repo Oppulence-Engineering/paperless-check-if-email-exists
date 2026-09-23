@@ -2,10 +2,16 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TenantApi } from "@oppulence/reacher-sdk";
-import { afterEach, expect, it, vi } from "vitest";
+import { TenantApi, V1Api } from "@oppulence/reacher-sdk";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { VerificationSettings } from "./verification-settings";
+
+beforeEach(() => {
+	vi.spyOn(V1Api.prototype, "v1ReverificationStatus").mockResolvedValue({
+		data: { enabled: false },
+	} as never);
+});
 
 afterEach(() => {
 	cleanup();

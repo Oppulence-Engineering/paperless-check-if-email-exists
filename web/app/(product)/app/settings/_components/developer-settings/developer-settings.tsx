@@ -2,6 +2,8 @@
 
 import "client-only";
 
+import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
+
 import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,12 +25,15 @@ import {
 import { cn } from "@oppulence/ui/lib/utils";
 import {
 	CreateTenantApiKey201Response,
+	GetTenantApiKey200Response,
 	ListTenantApiKeys200Response,
 	RevokeTenantApiKey200Response,
+	UpdateTenantApiKey200Response,
 } from "@/lib/api/generated/zod/account/account";
 
 import {
 	ApiKeyListSchema,
+	ApiKeySchema,
 	ApiKeyScopeSchema,
 	CreateApiKeySchema,
 	CreatedApiKeySchema,
@@ -88,6 +93,9 @@ export function DeveloperSettings({
 	const [copied, setCopied] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
+	const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
+	const [editName, setEditName] = useState("");
+	const [editScopes, setEditScopes] = useState<z.infer<typeof ApiKeyScopeSchema>[]>([]);
 
 	const keys = useQuery({
 		queryKey,
@@ -105,6 +113,39 @@ export function DeveloperSettings({
 				),
 			),
 		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey });
+		},
+	});
+	const selectedKey = useQuery({
+		queryKey: workflowQueryKey(...queryKey, selectedKeyId),
+		enabled: canManage && Boolean(selectedKeyId),
+		queryFn: async () => {
+			if (!selectedKeyId) throw new Error("Select a key first.");
+			return ApiKeySchema.parse(
+				GetTenantApiKey200Response.parse(
+					(await sdk.getTenantApiKey({ keyId: selectedKeyId })).data,
+				),
+			);
+		},
+	});
+	const update = useMutation({
+		mutationFn: async () => {
+			if (!selectedKeyId) throw new Error("Select a key first.");
+			if (!editName.trim() || !editScopes.length)
+				throw new Error("Enter a name and choose at least one scope.");
+			return ApiKeySchema.parse(
+				UpdateTenantApiKey200Response.parse(
+					(
+						await sdk.updateTenantApiKey({
+							keyId: selectedKeyId,
+							updateApiKeyRequest: { name: editName.trim(), scopes: editScopes },
+						})
+					).data,
+				),
+			);
+		},
+		onSuccess: async () => {
+			setNotice("API key updated.");
 			await queryClient.invalidateQueries({ queryKey });
 		},
 	});
@@ -252,19 +293,112 @@ export function DeveloperSettings({
 										</p>
 									</div>
 									{key.status === "active" ? (
-										<Button
-											disabled={revoke.isPending}
-											onClick={() => void revokeKey(key.id, key.name)}
-											size="sm"
-											type="button"
-											variant="destructive"
-										>
-											Revoke {key.name}
-										</Button>
+										<div className="flex gap-2">
+											<Button
+												onClick={() => {
+													setSelectedKeyId(key.id);
+													setEditName(key.name);
+													setEditScopes(
+														key.scopes.filter(
+															(scope): scope is z.infer<typeof ApiKeyScopeSchema> =>
+																ApiKeyScopeSchema.safeParse(scope).success,
+														),
+													);
+												}}
+												size="sm"
+												type="button"
+												variant="outline"
+											>
+												Manage
+											</Button>
+											<Button
+												disabled={revoke.isPending}
+												onClick={() => void revokeKey(key.id, key.name)}
+												size="sm"
+												type="button"
+												variant="destructive"
+											>
+												Revoke {key.name}
+											</Button>
+										</div>
 									) : null}
 								</div>
 							))}
 						</div>
+						{selectedKeyId ? (
+							<div className="border-t p-5">
+								<h3 className="font-medium">Manage key</h3>
+								{selectedKey.isPending ? <p role="status">Loading key details…</p> : null}
+								{selectedKey.isError ? <p role="alert">{requestError(selectedKey.error)}</p> : null}
+								{selectedKey.data ? (
+									<p className="text-sm text-muted-foreground">
+										{selectedKey.data.key_prefix}… · {selectedKey.data.status} · Expires{" "}
+										{selectedKey.data.expires_at
+											? new Date(selectedKey.data.expires_at).toLocaleDateString()
+											: "never"}
+									</p>
+								) : null}
+								<form
+									className="mt-4 space-y-4"
+									onSubmit={(event) => {
+										event.preventDefault();
+										void update.mutateAsync().catch((cause: unknown) => {
+											setError(requestError(cause));
+										});
+									}}
+								>
+									<div className="space-y-2">
+										<Label htmlFor="edit-api-key-name">Name</Label>
+										<Input
+											id="edit-api-key-name"
+											value={editName}
+											onChange={(event) => {
+												setEditName(event.target.value);
+											}}
+										/>
+									</div>
+									<fieldset className="space-y-2">
+										<legend className="text-sm font-medium">Scopes</legend>
+										<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+											{scopeOptions.map(([scope, label]) => (
+												<Label
+													className="flex items-center gap-2 text-sm"
+													htmlFor={`edit-api-key-scope-${scope}`}
+													key={scope}
+												>
+													<Checkbox
+														id={`edit-api-key-scope-${scope}`}
+														checked={editScopes.includes(scope)}
+														onCheckedChange={(checked) => {
+															setEditScopes((current) =>
+																checked === true
+																	? [...current, scope]
+																	: current.filter((item) => item !== scope),
+															);
+														}}
+													/>
+													{label}
+												</Label>
+											))}
+										</div>
+									</fieldset>
+									<div className="flex gap-2">
+										<Button type="submit" disabled={update.isPending}>
+											Save key
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											onClick={() => {
+												setSelectedKeyId(null);
+											}}
+										>
+											Close
+										</Button>
+									</div>
+								</form>
+							</div>
+						) : null}
 					</section>
 					<section className="settings-section-block">
 						<div className="settings-section-heading">

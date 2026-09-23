@@ -2,6 +2,7 @@
 
 import "client-only";
 
+import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
@@ -79,7 +80,11 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 					) : null}
 					{upload.isSuccess ? (
 						<p className="mt-4 text-sm text-emerald-700" role="status">
-							List accepted. Processing job {upload.data.job_id}.
+							List accepted.{" "}
+							<Link className="underline" href={`/app/jobs?job=${String(upload.data.job_id)}`}>
+								Track job {upload.data.job_id}
+							</Link>
+							.
 						</p>
 					) : null}
 				</CardContent>
@@ -107,7 +112,12 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 											key={list.id}
 										>
 											<div>
-												<p className="font-medium">{list.name}</p>
+												<Link
+													className="font-medium underline"
+													href={`/app/lists/detail?list=${String(list.id)}`}
+												>
+													{list.name}
+												</Link>
 												<p className="text-sm text-muted-foreground">
 													{list.original_filename} · {list.total_rows} rows
 												</p>

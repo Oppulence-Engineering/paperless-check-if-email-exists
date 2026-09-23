@@ -2,9 +2,11 @@
 
 import "client-only";
 
+import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
+
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Configuration, TenantApi } from "@oppulence/reacher-sdk";
+import { Configuration, TenantApi, V1Api } from "@oppulence/reacher-sdk";
 import { z } from "zod";
 
 import { Alert, AlertDescription } from "@oppulence/ui/components/alert";
@@ -43,6 +45,16 @@ export type VerificationSettingsProps = VerificationSettingsPropsFields &
 	ComponentPropsWithoutRef<"section">;
 
 const sdk = new TenantApi(new Configuration({ basePath: "/api/backend" }));
+const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
+const reverificationSchema = z.object({
+	enabled: z.boolean(),
+	staleness_days: z.number().optional(),
+	batch_size: z.number().optional(),
+	last_run_at: z.string().optional(),
+	next_run_at: z.string().optional(),
+	last_job_id: z.number().optional(),
+	emails_requeued: z.number().optional(),
+});
 const policyModes = [
 	["growth", "Growth"],
 	["deliverability", "Deliverability"],
@@ -111,6 +123,11 @@ export function VerificationSettings({
 		enabled: canManage && showWebhook,
 		queryFn: async ({ signal }) =>
 			V1GetTenantWebhook200Response.parse((await sdk.v1GetTenantWebhook({ signal })).data),
+	});
+	const reverification = useQuery({
+		queryKey: workflowQueryKey("reverification-status", organizationId),
+		enabled: showDefaults,
+		queryFn: async () => reverificationSchema.parse((await v1Api.v1ReverificationStatus()).data),
 	});
 	const saveSettings = useMutation({
 		mutationFn: async (body: z.input<typeof V1UpdateTenantSettingsBody>) =>
@@ -336,6 +353,36 @@ export function VerificationSettings({
 									Save verification defaults
 								</Button>
 							</form>
+						) : null}
+					</CardContent>
+				</Card>
+			) : null}
+			{showDefaults ? (
+				<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
+					<CardHeader className="gap-1.5 px-5">
+						<CardTitle className="text-sm">Reverification schedule</CardTitle>
+						<CardDescription className="text-xs">
+							Track stale-address checks and the next scheduled batch.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-2 px-5 text-sm">
+						{reverification.isPending ? <p role="status">Loading reverification status…</p> : null}
+						{reverification.isError ? (
+							<p role="alert">{requestError(reverification.error)}</p>
+						) : null}
+						{reverification.data ? (
+							<>
+								<p>{reverification.data.enabled ? "Enabled" : "Disabled"}</p>
+								{reverification.data.staleness_days ? (
+									<p>Staleness threshold: {reverification.data.staleness_days} days</p>
+								) : null}
+								{reverification.data.next_run_at ? (
+									<p>Next run: {new Date(reverification.data.next_run_at).toLocaleString()}</p>
+								) : null}
+								{reverification.data.emails_requeued != null ? (
+									<p>Addresses requeued: {reverification.data.emails_requeued}</p>
+								) : null}
+							</>
 						) : null}
 					</CardContent>
 				</Card>

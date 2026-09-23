@@ -94,6 +94,45 @@ describe("DeveloperSettings", () => {
 		).not.toBeInTheDocument();
 	});
 
+	it("loads one key and updates its name and scopes", async () => {
+		const key = {
+			id: keyId,
+			tenant_id: tenantId,
+			key_prefix: "rch_live_example",
+			name: "Production",
+			scopes: ["verify"],
+			status: "active",
+			last_used_at: null,
+			expires_at: null,
+			created_at: "2026-09-22T00:00:00Z",
+		};
+		vi.spyOn(AccountApi.prototype, "listTenantApiKeys").mockResolvedValue({
+			data: { api_keys: [key] },
+		} as never);
+		const get = vi
+			.spyOn(AccountApi.prototype, "getTenantApiKey")
+			.mockResolvedValue({ data: key } as never);
+		const update = vi.spyOn(AccountApi.prototype, "updateTenantApiKey").mockResolvedValue({
+			data: { ...key, name: "Staging", scopes: ["verify", "bulk"] },
+		} as never);
+		renderSettings();
+		fireEvent.click(await screen.findByRole("button", { name: "Manage" }));
+		await waitFor(() => expect(get).toHaveBeenCalledWith({ keyId }));
+		fireEvent.change(screen.getByLabelText("Name", { selector: "#edit-api-key-name" }), {
+			target: { value: "Staging" },
+		});
+		const editScope = document.getElementById("edit-api-key-scope-pipelines.read");
+		if (!editScope) throw new Error("Edit scope control is missing");
+		fireEvent.click(editScope);
+		fireEvent.click(screen.getByRole("button", { name: "Save key" }));
+		await waitFor(() =>
+			expect(update).toHaveBeenCalledWith({
+				keyId,
+				updateApiKeyRequest: { name: "Staging", scopes: ["verify", "pipelines.read"] },
+			}),
+		);
+	});
+
 	it("does not request credentials for members", () => {
 		const list = vi.spyOn(AccountApi.prototype, "listTenantApiKeys");
 		renderSettings("member");

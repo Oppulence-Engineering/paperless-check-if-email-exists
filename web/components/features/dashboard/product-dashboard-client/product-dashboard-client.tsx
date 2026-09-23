@@ -41,8 +41,16 @@ export type ProductDashboardClientProps = {
 
 const navigation = [
 	{ href: "/app/check", label: "Check email" },
+	{ href: "/app/finder", label: "Find email" },
+	{ href: "/app/jobs", label: "Jobs" },
 	{ href: "/app/lists", label: "Lists" },
+	{ href: "/app/suppressions", label: "Suppressions" },
+	{ href: "/app/pipelines", label: "Pipelines" },
+	{ href: "/app/outcomes", label: "Outcomes" },
+	{ href: "/app/domains", label: "Domains" },
+	{ href: "/app/analytics", label: "Analytics" },
 	{ href: "/app/history", label: "History" },
+	{ href: "/app/integrations", label: "Integrations" },
 	{ href: "/app/api", label: "API explorer" },
 ];
 

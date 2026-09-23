@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=component
- * Platform operation runner — Run audited platform API operations.
+ * Audited tenant, key, and job workflows for platform operators.
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const PlatformOperationRunnerLit = PlatformOperationRunnerLitSchema.parse
 	domain: "",
 	owner: "route",
 	client: true,
-	summary: "Run audited platform API operations.",
+	summary: "Audited tenant, key, and job workflows for platform operators.",
 	schemas: [
 		"app/(product)/app/admin/api/_components/platform-operation-runner/platform-operation-runner.schema.ts",
 	],
