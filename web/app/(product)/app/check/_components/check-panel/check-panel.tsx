@@ -62,7 +62,11 @@ export function CheckPanel({ className, ...props }: CheckPanelProps) {
 					<CardTitle>Single address check</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={submit}>
+					<form
+						className="flex flex-col gap-4 sm:flex-row sm:items-end"
+						noValidate
+						onSubmit={submit}
+					>
 						<div className="flex-1 space-y-2">
 							<Label htmlFor="email-to-check">Email address</Label>
 							<Input

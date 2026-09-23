@@ -32,6 +32,10 @@ it("shows an inline error for an incomplete email address", () => {
 	expect(screen.getByRole("alert")).toHaveTextContent("Enter a complete email address");
 	expect(input).toHaveAttribute("aria-invalid", "true");
 	expect(check).not.toHaveBeenCalled();
+	fireEvent.change(input, { target: { value: "not-an-email" } });
+	fireEvent.click(screen.getByRole("button", { name: "Check email" }));
+	expect(screen.getByRole("alert")).toHaveTextContent("Enter a complete email address");
+	expect(check).not.toHaveBeenCalled();
 });
 
 it("shows loading and backend errors for an SDK check", async () => {
