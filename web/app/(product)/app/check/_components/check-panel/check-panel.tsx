@@ -2,7 +2,12 @@
 
 import "client-only";
 
-import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import {
+	useState,
+	type ComponentPropsWithoutRef,
+	type ReactNode,
+	type SyntheticEvent,
+} from "react";
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
@@ -113,43 +118,89 @@ export function CheckPanel({ className, ...props }: CheckPanelProps) {
 			</Card>
 
 			{result ? (
-				<Card aria-live="polite">
-					<CardHeader>
-						<CardTitle className="flex flex-wrap items-center justify-between gap-3">
-							<span>{result.input}</span>
-							<span className="rounded-full bg-muted px-3 py-1 text-sm capitalize">
-								{result.score.category}
-							</span>
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="grid gap-5 sm:grid-cols-3">
-						<div>
-							<p className="text-sm text-muted-foreground">Reachability</p>
-							<p className="mt-1 font-semibold capitalize">{result.is_reachable}</p>
-						</div>
-						<div>
-							<p className="text-sm text-muted-foreground">Safe to send</p>
-							<p className="mt-1 font-semibold">{result.score.safe_to_send ? "Yes" : "No"}</p>
-						</div>
-						<div>
-							<p className="text-sm text-muted-foreground">Quality score</p>
-							<p className="mt-1 font-semibold">{result.score.score}/100</p>
-						</div>
-						<div>
-							<p className="text-sm text-muted-foreground">Syntax</p>
-							<p className="mt-1 font-semibold">
-								{result.syntax.is_valid_syntax ? "Valid" : "Invalid"}
-							</p>
-						</div>
-						{result.score.reason_codes.length > 0 ? (
-							<div className="sm:col-span-3">
-								<p className="text-sm text-muted-foreground">Reasons</p>
-								<p className="mt-1 text-sm">{result.score.reason_codes.join(", ")}</p>
+				<>
+					<Card aria-live="polite">
+						<CardHeader>
+							<CardTitle className="flex flex-wrap items-center justify-between gap-3">
+								<span>{result.input}</span>
+								<span className="rounded-full bg-muted px-3 py-1 text-sm capitalize">
+									{result.score.category}
+								</span>
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="grid gap-5 sm:grid-cols-3">
+							<div>
+								<p className="text-sm text-muted-foreground">Reachability</p>
+								<p className="mt-1 font-semibold capitalize">{result.is_reachable}</p>
 							</div>
-						) : null}
-					</CardContent>
-				</Card>
+							<div>
+								<p className="text-sm text-muted-foreground">Safe to send</p>
+								<p className="mt-1 font-semibold">{result.score.safe_to_send ? "Yes" : "No"}</p>
+							</div>
+							<div>
+								<p className="text-sm text-muted-foreground">Quality score</p>
+								<p className="mt-1 font-semibold">{result.score.score}/100</p>
+							</div>
+							<div>
+								<p className="text-sm text-muted-foreground">Syntax</p>
+								<p className="mt-1 font-semibold">
+									{result.syntax.is_valid_syntax ? "Valid" : "Invalid"}
+								</p>
+							</div>
+							{result.score.reason_codes.length > 0 ? (
+								<div className="sm:col-span-3">
+									<p className="text-sm text-muted-foreground">Reasons</p>
+									<p className="mt-1 text-sm">{result.score.reason_codes.join(", ")}</p>
+								</div>
+							) : null}
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle>All check details</CardTitle>
+						</CardHeader>
+						<CardContent className="text-sm">
+							<ResultValue value={result} />
+						</CardContent>
+					</Card>
+				</>
 			) : null}
 		</section>
 	);
+}
+
+export function ResultValue({ value }: { value: unknown }): ReactNode {
+	if (value === null || value === undefined) return "Not available";
+	if (Array.isArray(value)) {
+		const items = value as unknown[];
+		if (items.length === 0) return "None";
+		return (
+			<ol className="list-decimal space-y-2 pl-5">
+				{items.map((item, index) => (
+					<li key={index}>
+						<ResultValue value={item} />
+					</li>
+				))}
+			</ol>
+		);
+	}
+	if (typeof value === "object") {
+		const entries = Object.entries(value as Record<string, unknown>);
+		if (entries.length === 0) return "None";
+		return (
+			<dl className="divide-y divide-border">
+				{entries.map(([key, field]) => (
+					<div className="grid gap-2 py-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)]" key={key}>
+						<dt className="font-medium break-words">{key.replaceAll("_", " ")}</dt>
+						<dd className="min-w-0 break-words text-muted-foreground">
+							<ResultValue value={field} />
+						</dd>
+					</div>
+				))}
+			</dl>
+		);
+	}
+	if (typeof value === "boolean") return value ? "Yes" : "No";
+	if (typeof value === "string" || typeof value === "number") return String(value) || "Empty";
+	return "Not available";
 }
