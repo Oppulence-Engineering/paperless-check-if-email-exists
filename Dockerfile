@@ -49,6 +49,7 @@ COPY --from=web-build --chown=node:node /src/web/config/contracts/backend.openap
 COPY --from=web-build --chown=node:node /src/web/config/contracts/backend.capabilities.json ./config/contracts/backend.capabilities.json
 COPY --from=web-build --chown=node:node /src/web/config/auth/migrations ./config/auth/migrations
 COPY --from=web-build --chown=node:node /src/web/scripts/migrate-auth.mjs ./scripts/migrate-auth.mjs
+COPY --chown=node:node web/config/auth/digitalocean-db-ca.pem /srv/digitalocean-db-ca.pem
 COPY --chown=node:node scripts/full-stack-entrypoint.sh /srv/full-stack-entrypoint.sh
 USER node
 EXPOSE 3000
