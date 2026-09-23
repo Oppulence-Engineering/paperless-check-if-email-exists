@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 import { V1CheckEmail200Response } from "@/lib/api/generated/zod/v1/v1";
-import { CheckPanel } from "./check-panel";
+import { CheckPanel, ResultValue } from "./check-panel";
 
 afterEach(() => {
 	cleanup();
@@ -16,6 +16,24 @@ it("accepts the raw submitted address in an API result", () => {
 	expect(V1CheckEmail200Response.shape.input.safeParse("yoanyomba@solomon-ai.c").success).toBe(
 		true,
 	);
+});
+
+it("shows every returned result field, including nested and empty values", () => {
+	render(
+		<ResultValue
+			value={{
+				syntax: { is_valid_syntax: false, error: null },
+				reasons: ["invalid_syntax"],
+				mx: {},
+			}}
+		/>,
+	);
+	expect(screen.getByText("syntax")).toBeVisible();
+	expect(screen.getByText("is valid syntax")).toBeVisible();
+	expect(screen.getByText("No")).toBeVisible();
+	expect(screen.getByText("Not available")).toBeVisible();
+	expect(screen.getByText("invalid_syntax")).toBeVisible();
+	expect(screen.getByText("None")).toBeVisible();
 });
 
 it("shows an inline error for an incomplete email address", () => {

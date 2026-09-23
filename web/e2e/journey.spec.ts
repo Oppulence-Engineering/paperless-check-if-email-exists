@@ -29,8 +29,11 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByLabel("Email address").fill("test@valid.example.com");
 	await page.getByLabel("Use sample result").check();
 	await page.getByRole("button", { name: "Check email" }).click();
-	await expect(page.getByText("test@valid.example.com")).toBeVisible();
+	await expect(page.getByText("test@valid.example.com").first()).toBeVisible();
 	await expect(page.getByText("Quality score")).toBeVisible();
+	await expect(page.getByText("All check details")).toBeVisible();
+	await expect(page.getByText("bounce risk", { exact: true })).toBeVisible();
+	await expect(page.getByText("recommendation", { exact: true })).toBeVisible();
 
 	await page.goto("/app/lists");
 	await expect(page.getByText("No lists yet.")).toBeVisible();
