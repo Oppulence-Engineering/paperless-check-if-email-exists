@@ -187,9 +187,20 @@ export async function proxyBackendAPI(request: NextRequest, path: string[]): Pro
 	contextHeaders.forEach((value, key) => headers.set(key, value));
 	headers.set("authorization", `Bearer ${authorized.token}`);
 	let body: ArrayBuffer | undefined;
+	// The Rust bulk endpoint accepts 50 MiB and list multipart accepts 50 MB.
+	const largeUpload =
+		method === "POST" &&
+		path[0] === "v1" &&
+		path.length === 2 &&
+		(path[1] === "bulk" || path[1] === "lists");
 	if (method !== "GET" && method !== "HEAD") {
 		try {
-			const boundedBody = await readBoundedBody(request, capabilities.http.maxRequestBodyBytes);
+			const boundedBody = await readBoundedBody(
+				request,
+				largeUpload
+					? Math.max(capabilities.http.maxRequestBodyBytes, 50 * 1024 * 1024)
+					: capabilities.http.maxRequestBodyBytes,
+			);
 			if (!boundedBody.success) {
 				return errorResponse(413, "request body is too large", "payload_too_large");
 			}
@@ -207,7 +218,12 @@ export async function proxyBackendAPI(request: NextRequest, path: string[]): Pro
 			body,
 			cache: "no-store",
 			redirect: "manual",
-			signal: requestSignal(request.signal, capabilities.http.requestTimeoutMs),
+			signal: requestSignal(
+				request.signal,
+				largeUpload
+					? Math.max(capabilities.http.requestTimeoutMs, 120_000)
+					: capabilities.http.requestTimeoutMs,
+			),
 		});
 	} catch {
 		return errorResponse(503, "backend is unreachable", "upstream_unavailable");
