@@ -47,7 +47,7 @@ npm install PATH_TO_GENERATED_PACKAGE --save
 
 ### Documentation for API Endpoints
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -190,6 +190,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [Duration](docs/Duration.md)
  - [EmailCategory](docs/EmailCategory.md)
  - [EmailScore](docs/EmailScore.md)
+ - [ErrorEnvelope](docs/ErrorEnvelope.md)
  - [ErrorResponse](docs/ErrorResponse.md)
  - [FindEmailAcceptedResponse](docs/FindEmailAcceptedResponse.md)
  - [FindEmailRequest](docs/FindEmailRequest.md)
@@ -198,6 +199,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [FinderCandidateResult](docs/FinderCandidateResult.md)
  - [Freshness](docs/Freshness.md)
  - [GmailVerifMethod](docs/GmailVerifMethod.md)
+ - [HistoryEntry](docs/HistoryEntry.md)
  - [HotmailB2BVerifMethod](docs/HotmailB2BVerifMethod.md)
  - [HotmailB2CVerifMethod](docs/HotmailB2CVerifMethod.md)
  - [InboundOutcomeResponse](docs/InboundOutcomeResponse.md)
@@ -263,10 +265,16 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [SuppressionReason](docs/SuppressionReason.md)
  - [SyntaxDetails](docs/SyntaxDetails.md)
  - [TaskWebhook](docs/TaskWebhook.md)
+ - [TenantSettingsResponse](docs/TenantSettingsResponse.md)
+ - [TenantUsageResponse](docs/TenantUsageResponse.md)
+ - [TenantWebhookResponse](docs/TenantWebhookResponse.md)
  - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
  - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
  - [UpdateProviderEndpointInput](docs/UpdateProviderEndpointInput.md)
+ - [UpdateTenantSettingsRequest](docs/UpdateTenantSettingsRequest.md)
+ - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)
+ - [V1EmailHistory200Response](docs/V1EmailHistory200Response.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)

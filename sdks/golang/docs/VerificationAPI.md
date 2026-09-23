@@ -1,6 +1,6 @@
 # \VerificationAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## V1EmailHistory
 
-> V1EmailHistory(ctx, email).Limit(limit).Execute()
+> V1EmailHistory200Response V1EmailHistory(ctx, email).Limit(limit).Execute()
 
 GET /v1/emails/{email}/history
 
@@ -34,11 +34,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.VerificationAPI.V1EmailHistory(context.Background(), email).Limit(limit).Execute()
+	resp, r, err := apiClient.VerificationAPI.V1EmailHistory(context.Background(), email).Limit(limit).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `VerificationAPI.V1EmailHistory``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1EmailHistory`: V1EmailHistory200Response
+	fmt.Fprintf(os.Stdout, "Response from `VerificationAPI.V1EmailHistory`: %v\n", resp)
 }
 ```
 
@@ -62,7 +64,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**V1EmailHistory200Response**](V1EmailHistory200Response.md)
 
 ### Authorization
 
@@ -71,7 +73,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**BackendName** | **string** | The name of the backend that performed the verification. | [required]
 **Duration** | [**Duration**](Duration.md) |  | [required]
 **EndTime** | **string** | The timestamp when the email verification ended. | [required]
-**ServerName** | **string** | The name of the server that performed the verification. | [required]
 **Smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | [required]
 **StartTime** | **string** | The timestamp when the email verification started. | [required]
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 
 ### NewDebugDetails
 
-`func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string) *DebugDetails`
+`func NewDebugDetails(backendName string, duration Duration, endTime string, smtp DebugDetailsSmtp, startTime string) *DebugDetails`
 
 NewDebugDetails instantiates a new DebugDetails object
 This constructor will assign default values to properties that have it defined,
@@ -28,6 +28,26 @@ will change when the set of required properties is changed
 NewDebugDetailsWithDefaults instantiates a new DebugDetails object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetBackendName
+
+`func (o *DebugDetails) GetBackendName() string`
+
+GetBackendName returns the BackendName field if non-nil, zero value otherwise.
+
+### GetBackendNameOk
+
+`func (o *DebugDetails) GetBackendNameOk() (*string, bool)`
+
+GetBackendNameOk returns a tuple with the BackendName field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBackendName
+
+`func (o *DebugDetails) SetBackendName(v string)`
+
+SetBackendName sets BackendName field to given value.
+
 
 ### GetDuration
 
@@ -67,26 +87,6 @@ and a boolean to check if the value has been set.
 `func (o *DebugDetails) SetEndTime(v string)`
 
 SetEndTime sets EndTime field to given value.
-
-
-### GetServerName
-
-`func (o *DebugDetails) GetServerName() string`
-
-GetServerName returns the ServerName field if non-nil, zero value otherwise.
-
-### GetServerNameOk
-
-`func (o *DebugDetails) GetServerNameOk() (*string, bool)`
-
-GetServerNameOk returns a tuple with the ServerName field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetServerName
-
-`func (o *DebugDetails) SetServerName(v string)`
-
-SetServerName sets ServerName field to given value.
 
 
 ### GetSmtp

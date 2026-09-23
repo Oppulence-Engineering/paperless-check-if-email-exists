@@ -13,7 +13,7 @@
 
 ## Repository Scope
 
-This repository is strongest as a backend/API engine for email verification and list hygiene workflows. The supported core in this codebase is:
+This repository contains the email verification backend, workers, SDKs, CLI, and the Next.js web application in [`web/`](./web). The supported core is:
 
 - single email verification
 - bulk jobs and CSV list cleaning
@@ -21,11 +21,19 @@ This repository is strongest as a backend/API engine for email verification and 
 - scheduled re-verification and pipelines
 - tenant auth, quotas, job approval, and email history
 
-The hosted Reacher dashboard is a separate product surface and is not part of this repository.
+The web application uses Better Auth for identity and the existing Rust API for product data. See the [web guide](./web/README.md).
 
 ## 👉 Live Demo: https://reacher.email
 
-The open-source backend can also be used through the hosted Reacher SaaS. That hosted dashboard experience is separate from this repo's backend and worker implementation.
+The open-source backend can also be used through the hosted Reacher SaaS. The hosted service is separate from this repository's self-hosted application.
+
+## Run the full application locally
+
+Install Rust, Node.js 24, pnpm 9.15.4, and Docker. Run `make dev` from the repository root. It starts the existing Compose PostgreSQL and RabbitMQ services, applies Better Auth migrations, starts the Rust API on `127.0.0.1:8081`, and serves the Next.js app on `http://localhost:3000`. The local sign-in code is `123456`. Both the frontend and Rust API reload on source changes.
+
+The Rust API still supports its existing standalone commands such as `make run` and `make run-with-worker`. The web app calls it through the same-origin `/api/backend/*` route. Browser requests carry a Better Auth session; Next.js sends a short-lived JWT to the Rust API, which verifies the signature and organization role. The SDK is generated from [`backend/openapi.json`](./backend/openapi.json).
+
+For production, build the combined image with `docker build -t check-if-email-exists .`. CI publishes it as `ghcr.io/oppulence-engineering/check-if-email-exists`. It contains the Rust API, worker, and Next.js runtime, and exposes port 3000. PostgreSQL and RabbitMQ remain external services. Set `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `SCIM_CREDENTIAL_HASH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM`, `RCH__HEADER_SECRET`, `RCH__WORKER__RABBITMQ__URL`, and `BACKEND_JWT_AUDIENCE` at runtime. Use independent random secrets and a public HTTPS `BETTER_AUTH_URL`. The container checks `/readyz`; `/healthz` checks only the web process. Workspace API-key clients call tenant `/v1/*` routes on the same public host. Platform admin, legacy v0, and self-service onboarding routes are not available through the public gateway. The [web guide](./web/README.md) has an example request and verification commands.
 
 ## Get Started
 
@@ -711,7 +719,7 @@ Refer to `backend/backend_config.toml` for the canonical schema and to `docs/sel
 
 ## CI/CD & Release Flow
 
-- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds the backend image with `docker/build-push-action`, pushes it to GHCR, then defers Helm deployment to the reusable workflow (`deploy-helm-direct-template.yml`). Tagging a release (`v*.*.*`) automatically publishes the image and rolls out the chart to the `paperless` namespace.
+- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds and smokes the combined web, API, and worker image, pushes it to GHCR, then deploys its immutable SHA tag through `deploy-helm-direct-template.yml`. `develop` targets `paperless-staging`; version tags target `paperless-production`. Deployment requires the Better Auth and Resend secrets listed in the workflow.
 - **CLI release pipeline**: `.github/workflows/deploy_cli.yml` builds the CLI binaries, signs them, and attaches artifacts to GitHub releases. Update this workflow when the CLI requires new targets or toolchains.
 - **Reusable Helm template**: `.github/workflows/deploy-helm-direct-template.yml` constructs kubeconfig material straight from GitHub secrets (`HELM_DIRECT_*`). Any service in the org can inherit it by pointing `uses:` to the template and passing chart metadata plus image overrides.
 - **Secret overrides**: The same template now accepts newline-delimited `secret_env_overrides` so deployments inject `config.secretEnv.*` values (e.g., `RCH__PROXY__PORT`) straight from GitHub Secrets without duplicating scripts across repos.

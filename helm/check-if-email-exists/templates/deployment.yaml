@@ -58,13 +58,18 @@ spec:
             {{- end }}
             {{- end }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            - name: web
+              containerPort: {{ .Values.service.webPort }}
+              protocol: TCP
+            - name: backend
+              containerPort: 8081
               protocol: TCP
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}

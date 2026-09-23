@@ -54,6 +54,7 @@ docs/DomainInfo.md
 docs/Duration.md
 docs/EmailCategory.md
 docs/EmailScore.md
+docs/ErrorEnvelope.md
 docs/ErrorResponse.md
 docs/EventsApi.md
 docs/FindEmailAcceptedResponse.md
@@ -64,6 +65,7 @@ docs/FinderCandidateResult.md
 docs/Freshness.md
 docs/GmailVerifMethod.md
 docs/HealthApi.md
+docs/HistoryEntry.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
 docs/InboundOutcomeResponse.md
@@ -136,12 +138,18 @@ docs/SyntaxDetails.md
 docs/SystemApi.md
 docs/TaskWebhook.md
 docs/TenantApi.md
+docs/TenantSettingsResponse.md
+docs/TenantUsageResponse.md
+docs/TenantWebhookResponse.md
 docs/TriggerPipelineInput.md
 docs/TriggerPipelineResponse.md
 docs/UpdatePipelineInput.md
 docs/UpdateProviderEndpointInput.md
+docs/UpdateTenantSettingsRequest.md
+docs/UpdateWebhookRequest.md
 docs/V0Api.md
 docs/V1Api.md
+docs/V1EmailHistory200Response.md
 docs/VerifMethod.md
 docs/VerificationApi.md
 docs/Webhook.md
@@ -177,6 +185,7 @@ models/domain-info.ts
 models/duration.ts
 models/email-category.ts
 models/email-score.ts
+models/error-envelope.ts
 models/error-response.ts
 models/find-email-accepted-response.ts
 models/find-email-request.ts
@@ -185,6 +194,7 @@ models/finder-best-match.ts
 models/finder-candidate-result.ts
 models/freshness.ts
 models/gmail-verif-method.ts
+models/history-entry.ts
 models/hotmail-b2-bverif-method.ts
 models/hotmail-b2-cverif-method.ts
 models/inbound-outcome-response.ts
@@ -251,10 +261,16 @@ models/suppression-list-response.ts
 models/suppression-reason.ts
 models/syntax-details.ts
 models/task-webhook.ts
+models/tenant-settings-response.ts
+models/tenant-usage-response.ts
+models/tenant-webhook-response.ts
 models/trigger-pipeline-input.ts
 models/trigger-pipeline-response.ts
 models/update-pipeline-input.ts
 models/update-provider-endpoint-input.ts
+models/update-tenant-settings-request.ts
+models/update-webhook-request.ts
+models/v1-email-history200-response.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts

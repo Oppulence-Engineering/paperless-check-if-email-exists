@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -161,7 +161,7 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -204,6 +204,14 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -267,7 +275,7 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -310,6 +318,14 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -369,7 +385,7 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -412,6 +428,14 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -475,7 +499,7 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -518,6 +542,14 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -581,7 +613,7 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -624,6 +656,14 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -683,7 +723,7 @@ func (a *AccountAPIService) V1MeExecute(r AccountAPIV1MeRequest) (*http.Response
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -726,6 +766,14 @@ func (a *AccountAPIService) V1MeExecute(r AccountAPIV1MeRequest) (*http.Response
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 

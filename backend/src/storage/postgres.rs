@@ -254,7 +254,8 @@ impl PostgresStorage {
 				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
 				recommendation, recommendation_action, recommendation_confidence,
 				recommendation_priority, policy_mode, policy_profile_key,
-				policy_evaluation, policy_decision, policy_evaluated_at
+				policy_evaluation, policy_decision, policy_evaluated_at,
+				task_state, completed_at
 			)
 			VALUES (
 				$1, $2, $3, $4, $5,
@@ -264,7 +265,8 @@ impl PostgresStorage {
 				$15, $16, $17,
 				$18, $19, $20,
 				$21, $22, $23,
-				$24, $25, $26
+				$24, $25, $26,
+				'completed', NOW()
 			)
 			RETURNING id
 			"#,
@@ -378,8 +380,8 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		sqlx::query(
 			r#"
-			INSERT INTO v1_task_result (payload, job_id, extra, error, tenant_id, canonical_email)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO v1_task_result (payload, job_id, extra, error, tenant_id, canonical_email, task_state, completed_at)
+			VALUES ($1, $2, $3, $4, $5, $6, 'failed', NOW())
 			RETURNING id
 			"#,
 		)

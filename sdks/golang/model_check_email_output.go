@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -30,10 +30,12 @@ type CheckEmailOutput struct {
 	IsReachable Reachable `json:"is_reachable"`
 	Misc CheckEmailOutputMisc `json:"misc"`
 	Mx CheckEmailOutputMx `json:"mx"`
+	PolicyEvaluation interface{} `json:"policy_evaluation,omitempty"`
 	Provider *Provider `json:"provider,omitempty"`
 	ProviderConfidence *ProviderConfidence `json:"provider_confidence,omitempty"`
 	ProviderRejectionReason *ProviderRejectionReason `json:"provider_rejection_reason,omitempty"`
 	ProviderRulesApplied bool `json:"provider_rules_applied"`
+	Recommendation interface{} `json:"recommendation,omitempty"`
 	Score EmailScore `json:"score"`
 	Smtp CheckEmailOutputSmtp `json:"smtp"`
 	Syntax SyntaxDetails `json:"syntax"`
@@ -236,6 +238,39 @@ func (o *CheckEmailOutput) SetMx(v CheckEmailOutputMx) {
 	o.Mx = v
 }
 
+// GetPolicyEvaluation returns the PolicyEvaluation field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CheckEmailOutput) GetPolicyEvaluation() interface{} {
+	if o == nil {
+		var ret interface{}
+		return ret
+	}
+	return o.PolicyEvaluation
+}
+
+// GetPolicyEvaluationOk returns a tuple with the PolicyEvaluation field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CheckEmailOutput) GetPolicyEvaluationOk() (*interface{}, bool) {
+	if o == nil || IsNil(o.PolicyEvaluation) {
+		return nil, false
+	}
+	return &o.PolicyEvaluation, true
+}
+
+// HasPolicyEvaluation returns a boolean if a field has been set.
+func (o *CheckEmailOutput) HasPolicyEvaluation() bool {
+	if o != nil && !IsNil(o.PolicyEvaluation) {
+		return true
+	}
+
+	return false
+}
+
+// SetPolicyEvaluation gets a reference to the given interface{} and assigns it to the PolicyEvaluation field.
+func (o *CheckEmailOutput) SetPolicyEvaluation(v interface{}) {
+	o.PolicyEvaluation = v
+}
+
 // GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *CheckEmailOutput) GetProvider() Provider {
 	if o == nil || IsNil(o.Provider) {
@@ -356,6 +391,39 @@ func (o *CheckEmailOutput) SetProviderRulesApplied(v bool) {
 	o.ProviderRulesApplied = v
 }
 
+// GetRecommendation returns the Recommendation field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CheckEmailOutput) GetRecommendation() interface{} {
+	if o == nil {
+		var ret interface{}
+		return ret
+	}
+	return o.Recommendation
+}
+
+// GetRecommendationOk returns a tuple with the Recommendation field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CheckEmailOutput) GetRecommendationOk() (*interface{}, bool) {
+	if o == nil || IsNil(o.Recommendation) {
+		return nil, false
+	}
+	return &o.Recommendation, true
+}
+
+// HasRecommendation returns a boolean if a field has been set.
+func (o *CheckEmailOutput) HasRecommendation() bool {
+	if o != nil && !IsNil(o.Recommendation) {
+		return true
+	}
+
+	return false
+}
+
+// SetRecommendation gets a reference to the given interface{} and assigns it to the Recommendation field.
+func (o *CheckEmailOutput) SetRecommendation(v interface{}) {
+	o.Recommendation = v
+}
+
 // GetScore returns the Score field value
 func (o *CheckEmailOutput) GetScore() EmailScore {
 	if o == nil {
@@ -448,6 +516,9 @@ func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 	toSerialize["is_reachable"] = o.IsReachable
 	toSerialize["misc"] = o.Misc
 	toSerialize["mx"] = o.Mx
+	if o.PolicyEvaluation != nil {
+		toSerialize["policy_evaluation"] = o.PolicyEvaluation
+	}
 	if !IsNil(o.Provider) {
 		toSerialize["provider"] = o.Provider
 	}
@@ -458,6 +529,9 @@ func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 		toSerialize["provider_rejection_reason"] = o.ProviderRejectionReason
 	}
 	toSerialize["provider_rules_applied"] = o.ProviderRulesApplied
+	if o.Recommendation != nil {
+		toSerialize["recommendation"] = o.Recommendation
+	}
 	toSerialize["score"] = o.Score
 	toSerialize["smtp"] = o.Smtp
 	toSerialize["syntax"] = o.Syntax

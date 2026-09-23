@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -22,10 +22,13 @@ var _ MappedNullable = &SyntaxDetails{}
 
 // SyntaxDetails Validation of the email address syntax.
 type SyntaxDetails struct {
+	Address NullableString `json:"address"`
 	// The domain part of the email address.
 	Domain string `json:"domain"`
 	// Indicates if the email address syntax is valid.
 	IsValidSyntax bool `json:"is_valid_syntax"`
+	NormalizedEmail NullableString `json:"normalized_email"`
+	Suggestion NullableString `json:"suggestion"`
 	// The username part of the email address.
 	Username string `json:"username"`
 }
@@ -36,10 +39,13 @@ type _SyntaxDetails SyntaxDetails
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSyntaxDetails(domain string, isValidSyntax bool, username string) *SyntaxDetails {
+func NewSyntaxDetails(address NullableString, domain string, isValidSyntax bool, normalizedEmail NullableString, suggestion NullableString, username string) *SyntaxDetails {
 	this := SyntaxDetails{}
+	this.Address = address
 	this.Domain = domain
 	this.IsValidSyntax = isValidSyntax
+	this.NormalizedEmail = normalizedEmail
+	this.Suggestion = suggestion
 	this.Username = username
 	return &this
 }
@@ -50,6 +56,32 @@ func NewSyntaxDetails(domain string, isValidSyntax bool, username string) *Synta
 func NewSyntaxDetailsWithDefaults() *SyntaxDetails {
 	this := SyntaxDetails{}
 	return &this
+}
+
+// GetAddress returns the Address field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *SyntaxDetails) GetAddress() string {
+	if o == nil || o.Address.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.Address.Get()
+}
+
+// GetAddressOk returns a tuple with the Address field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SyntaxDetails) GetAddressOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Address.Get(), o.Address.IsSet()
+}
+
+// SetAddress sets field value
+func (o *SyntaxDetails) SetAddress(v string) {
+	o.Address.Set(&v)
 }
 
 // GetDomain returns the Domain field value
@@ -100,6 +132,58 @@ func (o *SyntaxDetails) SetIsValidSyntax(v bool) {
 	o.IsValidSyntax = v
 }
 
+// GetNormalizedEmail returns the NormalizedEmail field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *SyntaxDetails) GetNormalizedEmail() string {
+	if o == nil || o.NormalizedEmail.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.NormalizedEmail.Get()
+}
+
+// GetNormalizedEmailOk returns a tuple with the NormalizedEmail field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SyntaxDetails) GetNormalizedEmailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.NormalizedEmail.Get(), o.NormalizedEmail.IsSet()
+}
+
+// SetNormalizedEmail sets field value
+func (o *SyntaxDetails) SetNormalizedEmail(v string) {
+	o.NormalizedEmail.Set(&v)
+}
+
+// GetSuggestion returns the Suggestion field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *SyntaxDetails) GetSuggestion() string {
+	if o == nil || o.Suggestion.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.Suggestion.Get()
+}
+
+// GetSuggestionOk returns a tuple with the Suggestion field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SyntaxDetails) GetSuggestionOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Suggestion.Get(), o.Suggestion.IsSet()
+}
+
+// SetSuggestion sets field value
+func (o *SyntaxDetails) SetSuggestion(v string) {
+	o.Suggestion.Set(&v)
+}
+
 // GetUsername returns the Username field value
 func (o *SyntaxDetails) GetUsername() string {
 	if o == nil {
@@ -134,8 +218,11 @@ func (o SyntaxDetails) MarshalJSON() ([]byte, error) {
 
 func (o SyntaxDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["address"] = o.Address.Get()
 	toSerialize["domain"] = o.Domain
 	toSerialize["is_valid_syntax"] = o.IsValidSyntax
+	toSerialize["normalized_email"] = o.NormalizedEmail.Get()
+	toSerialize["suggestion"] = o.Suggestion.Get()
 	toSerialize["username"] = o.Username
 	return toSerialize, nil
 }
@@ -145,8 +232,11 @@ func (o *SyntaxDetails) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"address",
 		"domain",
 		"is_valid_syntax",
+		"normalized_email",
+		"suggestion",
 		"username",
 	}
 

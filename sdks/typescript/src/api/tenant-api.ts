@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  *
  * The version of the OpenAPI document: 4.3.0
  * Contact: amaury@reacher.email
@@ -21,6 +21,18 @@ import globalAxios from 'axios';
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
+// @ts-ignore
+import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { TenantSettingsResponse } from '../models';
+// @ts-ignore
+import type { TenantUsageResponse } from '../models';
+// @ts-ignore
+import type { TenantWebhookResponse } from '../models';
+// @ts-ignore
+import type { UpdateTenantSettingsRequest } from '../models';
+// @ts-ignore
+import type { UpdateWebhookRequest } from '../models';
 /**
  * TenantApi - axios parameter creator
  * @export
@@ -339,10 +351,13 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Update tenant settings such as retention, default webhook URL, or secret.
          * @summary PATCH /v1/me/settings
+         * @param {UpdateTenantSettingsRequest} updateTenantSettingsRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantSettings: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1UpdateTenantSettings: async (updateTenantSettingsRequest: UpdateTenantSettingsRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'updateTenantSettingsRequest' is not null or undefined
+            assertParamExists('v1UpdateTenantSettings', 'updateTenantSettingsRequest', updateTenantSettingsRequest)
             const localVarPath = `/v1/me/settings`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -360,9 +375,12 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateTenantSettingsRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -372,10 +390,13 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Update tenant webhook URL and signing secret.
          * @summary PATCH /v1/me/webhook
+         * @param {UpdateWebhookRequest} updateWebhookRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantWebhook: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1UpdateTenantWebhook: async (updateWebhookRequest: UpdateWebhookRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'updateWebhookRequest' is not null or undefined
+            assertParamExists('v1UpdateTenantWebhook', 'updateWebhookRequest', updateWebhookRequest)
             const localVarPath = `/v1/me/webhook`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -393,9 +414,12 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
 
 
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateWebhookRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -468,7 +492,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1GetTenantSettings(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1GetTenantSettings(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantSettingsResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetTenantSettings(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetTenantSettings']?.[localVarOperationServerIndex]?.url;
@@ -480,7 +504,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1GetTenantUsage(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1GetTenantUsage(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantUsageResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetTenantUsage(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetTenantUsage']?.[localVarOperationServerIndex]?.url;
@@ -492,7 +516,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1GetTenantWebhook(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1GetTenantWebhook(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantWebhookResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetTenantWebhook(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetTenantWebhook']?.[localVarOperationServerIndex]?.url;
@@ -526,11 +550,12 @@ export const TenantApiFp = function(configuration?: Configuration) {
         /**
          * Update tenant settings such as retention, default webhook URL, or secret.
          * @summary PATCH /v1/me/settings
+         * @param {UpdateTenantSettingsRequest} updateTenantSettingsRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1UpdateTenantSettings(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantSettings(options);
+        async v1UpdateTenantSettings(updateTenantSettingsRequest: UpdateTenantSettingsRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantSettingsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantSettings(updateTenantSettingsRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateTenantSettings']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -538,11 +563,12 @@ export const TenantApiFp = function(configuration?: Configuration) {
         /**
          * Update tenant webhook URL and signing secret.
          * @summary PATCH /v1/me/webhook
+         * @param {UpdateWebhookRequest} updateWebhookRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1UpdateTenantWebhook(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantWebhook(options);
+        async v1UpdateTenantWebhook(updateWebhookRequest: UpdateWebhookRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantWebhookResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantWebhook(updateWebhookRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateTenantWebhook']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -601,7 +627,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1GetTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1GetTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<TenantSettingsResponse> {
             return localVarFp.v1GetTenantSettings(options).then((request) => request(axios, basePath));
         },
         /**
@@ -610,7 +636,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1GetTenantUsage(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1GetTenantUsage(options?: RawAxiosRequestConfig): AxiosPromise<TenantUsageResponse> {
             return localVarFp.v1GetTenantUsage(options).then((request) => request(axios, basePath));
         },
         /**
@@ -619,7 +645,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1GetTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1GetTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse> {
             return localVarFp.v1GetTenantWebhook(options).then((request) => request(axios, basePath));
         },
         /**
@@ -644,20 +670,22 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
         /**
          * Update tenant settings such as retention, default webhook URL, or secret.
          * @summary PATCH /v1/me/settings
+         * @param {TenantApiV1UpdateTenantSettingsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.v1UpdateTenantSettings(options).then((request) => request(axios, basePath));
+        v1UpdateTenantSettings(requestParameters: TenantApiV1UpdateTenantSettingsRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantSettingsResponse> {
+            return localVarFp.v1UpdateTenantSettings(requestParameters.updateTenantSettingsRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Update tenant webhook URL and signing secret.
          * @summary PATCH /v1/me/webhook
+         * @param {TenantApiV1UpdateTenantWebhookRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.v1UpdateTenantWebhook(options).then((request) => request(axios, basePath));
+        v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse> {
+            return localVarFp.v1UpdateTenantWebhook(requestParameters.updateWebhookRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -713,7 +741,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1GetTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1GetTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<TenantSettingsResponse>;
 
     /**
      * Return current tenant usage and quota summary.
@@ -722,7 +750,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1GetTenantUsage(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1GetTenantUsage(options?: RawAxiosRequestConfig): AxiosPromise<TenantUsageResponse>;
 
     /**
      * Get masked tenant webhook integration state.
@@ -731,7 +759,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1GetTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1GetTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse>;
 
     /**
      * List all active and inactive domain entries for the authenticated tenant.
@@ -755,20 +783,22 @@ export interface TenantApiInterface {
     /**
      * Update tenant settings such as retention, default webhook URL, or secret.
      * @summary PATCH /v1/me/settings
+     * @param {TenantApiV1UpdateTenantSettingsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1UpdateTenantSettings(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1UpdateTenantSettings(requestParameters: TenantApiV1UpdateTenantSettingsRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantSettingsResponse>;
 
     /**
      * Update tenant webhook URL and signing secret.
      * @summary PATCH /v1/me/webhook
+     * @param {TenantApiV1UpdateTenantWebhookRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1UpdateTenantWebhook(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse>;
 
 }
 
@@ -812,6 +842,34 @@ export interface TenantApiV1UpdateTenantDomainRequest {
      * @memberof TenantApiV1UpdateTenantDomain
      */
     readonly domain: string
+}
+
+/**
+ * Request parameters for v1UpdateTenantSettings operation in TenantApi.
+ * @export
+ * @interface TenantApiV1UpdateTenantSettingsRequest
+ */
+export interface TenantApiV1UpdateTenantSettingsRequest {
+    /**
+     *
+     * @type {UpdateTenantSettingsRequest}
+     * @memberof TenantApiV1UpdateTenantSettings
+     */
+    readonly updateTenantSettingsRequest: UpdateTenantSettingsRequest
+}
+
+/**
+ * Request parameters for v1UpdateTenantWebhook operation in TenantApi.
+ * @export
+ * @interface TenantApiV1UpdateTenantWebhookRequest
+ */
+export interface TenantApiV1UpdateTenantWebhookRequest {
+    /**
+     *
+     * @type {UpdateWebhookRequest}
+     * @memberof TenantApiV1UpdateTenantWebhook
+     */
+    readonly updateWebhookRequest: UpdateWebhookRequest
 }
 
 /**
@@ -926,22 +984,24 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
     /**
      * Update tenant settings such as retention, default webhook URL, or secret.
      * @summary PATCH /v1/me/settings
+     * @param {TenantApiV1UpdateTenantSettingsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApi
      */
-    public v1UpdateTenantSettings(options?: RawAxiosRequestConfig) {
-        return TenantApiFp(this.configuration).v1UpdateTenantSettings(options).then((request) => request(this.axios, this.basePath));
+    public v1UpdateTenantSettings(requestParameters: TenantApiV1UpdateTenantSettingsRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1UpdateTenantSettings(requestParameters.updateTenantSettingsRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * Update tenant webhook URL and signing secret.
      * @summary PATCH /v1/me/webhook
+     * @param {TenantApiV1UpdateTenantWebhookRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TenantApi
      */
-    public v1UpdateTenantWebhook(options?: RawAxiosRequestConfig) {
-        return TenantApiFp(this.configuration).v1UpdateTenantWebhook(options).then((request) => request(this.axios, this.basePath));
+    public v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1UpdateTenantWebhook(requestParameters.updateWebhookRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }

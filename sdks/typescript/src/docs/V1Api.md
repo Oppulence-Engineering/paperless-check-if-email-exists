@@ -1,6 +1,6 @@
 # V1Api
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -73,6 +73,7 @@ const { status, data } = await apiInstance.v1AddSuppressions(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression entries added |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -128,6 +129,7 @@ const { status, data } = await apiInstance.v1CheckEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Email verification result |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -164,13 +166,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Tenant onboarded and email verified |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -222,6 +225,7 @@ const { status, data } = await apiInstance.v1CheckReputation(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Reputation check response |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -272,6 +276,7 @@ const { status, data } = await apiInstance.v1CheckSuppression(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression check result |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -327,6 +332,7 @@ const { status, data } = await apiInstance.v1CreateBulkJob(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -386,6 +392,7 @@ const { status, data } = await apiInstance.v1CreateList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**202** | List upload accepted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -436,6 +443,7 @@ const { status, data } = await apiInstance.v1DeleteList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -486,6 +494,7 @@ const { status, data } = await apiInstance.v1DeleteSuppression(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression entry deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -535,13 +544,14 @@ const { status, data } = await apiInstance.v1DownloadList(
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: text/csv
+ - **Accept**: text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Cleaned list CSV download |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -593,6 +603,7 @@ const { status, data } = await apiInstance.v1FindEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**202** | Finder job accepted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -643,6 +654,7 @@ const { status, data } = await apiInstance.v1GetFindEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Finder job result |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -693,6 +705,7 @@ const { status, data } = await apiInstance.v1GetList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List detail |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -746,6 +759,7 @@ const { status, data } = await apiInstance.v1ListLists(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List resources |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -814,6 +828,7 @@ const { status, data } = await apiInstance.v1ListSuppressions(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -857,6 +872,7 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Reverification schedule status |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -900,6 +916,7 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Source quality analytics |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -936,13 +953,14 @@ This endpoint does not have any parameters.
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: text/csv
+ - **Accept**: text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression export CSV |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -993,6 +1011,7 @@ const { status, data } = await apiInstance.v1SuppressionsIdEventsGet(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression event list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -1043,5 +1062,6 @@ const { status, data } = await apiInstance.v1SuppressionsImportPost(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression entries imported |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

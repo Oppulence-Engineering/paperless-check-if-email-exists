@@ -8,8 +8,12 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: backend
       protocol: TCP
-      name: http
+      name: backend
+    - port: {{ .Values.service.webPort }}
+      targetPort: web
+      protocol: TCP
+      name: web
   selector:
     {{- include "check-if-email-exists.selectorLabels" . | nindent 4 }}

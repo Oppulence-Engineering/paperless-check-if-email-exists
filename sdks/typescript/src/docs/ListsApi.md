@@ -1,6 +1,6 @@
 # ListsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -51,13 +51,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List quality benchmark report |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -104,13 +105,14 @@ const { status, data } = await apiInstance.v1ListsListIdRemediationExportsExport
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: text/csv
+ - **Accept**: text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Remediation export CSV |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -164,6 +166,7 @@ const { status, data } = await apiInstance.v1ListsListIdRemediationExportsPost(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Remediation export |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -214,6 +217,7 @@ const { status, data } = await apiInstance.v1ListsListIdRemediationPlanGet(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Remediation plan |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -267,5 +271,6 @@ const { status, data } = await apiInstance.v1ListsListIdRemediationPlanPost(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Remediation plan |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

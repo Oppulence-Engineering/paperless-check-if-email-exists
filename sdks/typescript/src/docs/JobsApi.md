@@ -1,6 +1,6 @@
 # JobsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -58,13 +58,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job cancellation accepted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -112,13 +113,14 @@ const { status, data } = await apiInstance.v1DownloadJobResults(
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/x-ndjson, text/csv
+ - **Accept**: application/x-ndjson, text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job result download stream |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -163,13 +165,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -230,6 +233,7 @@ const { status, data } = await apiInstance.v1GetBulkJobResults(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job results |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -280,13 +284,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job events |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -347,6 +352,7 @@ const { status, data } = await apiInstance.v1GetJobResults(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job result page |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -391,13 +397,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress summary |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -449,6 +456,7 @@ const { status, data } = await apiInstance.v1JobApprovalChecklist(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Pre-send approval checklist |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -493,13 +501,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Latency analytics |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -550,6 +559,7 @@ const { status, data } = await apiInstance.v1JobsJobIdFailureCenterGet(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job failure center |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -593,13 +603,14 @@ const { status, data } = await apiInstance.v1JobsJobIdFailureReportGet(
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/x-ndjson, text/csv
+ - **Accept**: application/x-ndjson, text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job failure report stream |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -651,5 +662,6 @@ const { status, data } = await apiInstance.v1RetryJob(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Retry initiated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

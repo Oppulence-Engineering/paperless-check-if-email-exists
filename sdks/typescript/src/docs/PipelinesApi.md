@@ -1,6 +1,6 @@
 # PipelinesApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -68,6 +68,7 @@ const { status, data } = await apiInstance.v1CreatePipeline(
 |**403** | Forbidden |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -122,6 +123,7 @@ const { status, data } = await apiInstance.v1DeletePipeline(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -176,6 +178,7 @@ const { status, data } = await apiInstance.v1GetPipeline(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -233,6 +236,7 @@ const { status, data } = await apiInstance.v1GetPipelineRun(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -293,6 +297,7 @@ const { status, data } = await apiInstance.v1ListPipelineRuns(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -353,6 +358,7 @@ const { status, data } = await apiInstance.v1ListPipelines(
 |**403** | Forbidden |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -407,6 +413,7 @@ const { status, data } = await apiInstance.v1PausePipeline(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -469,6 +476,7 @@ const { status, data } = await apiInstance.v1PushPipeline(
 |**404** | Not found |  -  |
 |**409** | Conflict |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -523,6 +531,7 @@ const { status, data } = await apiInstance.v1ResumePipeline(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -583,6 +592,7 @@ const { status, data } = await apiInstance.v1TriggerPipeline(
 |**409** | Conflict |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -642,5 +652,6 @@ const { status, data } = await apiInstance.v1UpdatePipeline(
 |**404** | Not found |  -  |
 |**500** | Internal server error |  -  |
 |**503** | Service unavailable |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

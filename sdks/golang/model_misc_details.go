@@ -1,7 +1,7 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
 API version: 4.3.0
 Contact: amaury@reacher.email
@@ -23,13 +23,15 @@ var _ MappedNullable = &MiscDetails{}
 // MiscDetails Additional information about the email account.
 type MiscDetails struct {
 	// URL to the Gravatar profile picture associated with the email, if available and requested.
-	GravatarUrl *string `json:"gravatar_url,omitempty"`
+	GravatarUrl NullableString `json:"gravatar_url"`
+	Haveibeenpwned NullableBool `json:"haveibeenpwned"`
 	// Is this a B2C email address?
 	IsB2c bool `json:"is_b2c"`
 	// Indicates if the email address is from a known disposable email provider.
 	IsDisposable bool `json:"is_disposable"`
 	// Indicates if the email address is a role-based account.
 	IsRoleAccount bool `json:"is_role_account"`
+	IsSpamTrapDomain bool `json:"is_spam_trap_domain"`
 }
 
 type _MiscDetails MiscDetails
@@ -38,11 +40,14 @@ type _MiscDetails MiscDetails
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool) *MiscDetails {
+func NewMiscDetails(gravatarUrl NullableString, haveibeenpwned NullableBool, isB2c bool, isDisposable bool, isRoleAccount bool, isSpamTrapDomain bool) *MiscDetails {
 	this := MiscDetails{}
+	this.GravatarUrl = gravatarUrl
+	this.Haveibeenpwned = haveibeenpwned
 	this.IsB2c = isB2c
 	this.IsDisposable = isDisposable
 	this.IsRoleAccount = isRoleAccount
+	this.IsSpamTrapDomain = isSpamTrapDomain
 	return &this
 }
 
@@ -54,36 +59,56 @@ func NewMiscDetailsWithDefaults() *MiscDetails {
 	return &this
 }
 
-// GetGravatarUrl returns the GravatarUrl field value if set, zero value otherwise.
+// GetGravatarUrl returns the GravatarUrl field value
+// If the value is explicit nil, the zero value for string will be returned
 func (o *MiscDetails) GetGravatarUrl() string {
-	if o == nil || IsNil(o.GravatarUrl) {
+	if o == nil || o.GravatarUrl.Get() == nil {
 		var ret string
 		return ret
 	}
-	return *o.GravatarUrl
+
+	return *o.GravatarUrl.Get()
 }
 
-// GetGravatarUrlOk returns a tuple with the GravatarUrl field value if set, nil otherwise
+// GetGravatarUrlOk returns a tuple with the GravatarUrl field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *MiscDetails) GetGravatarUrlOk() (*string, bool) {
-	if o == nil || IsNil(o.GravatarUrl) {
+	if o == nil {
 		return nil, false
 	}
-	return o.GravatarUrl, true
+	return o.GravatarUrl.Get(), o.GravatarUrl.IsSet()
 }
 
-// HasGravatarUrl returns a boolean if a field has been set.
-func (o *MiscDetails) HasGravatarUrl() bool {
-	if o != nil && !IsNil(o.GravatarUrl) {
-		return true
+// SetGravatarUrl sets field value
+func (o *MiscDetails) SetGravatarUrl(v string) {
+	o.GravatarUrl.Set(&v)
+}
+
+// GetHaveibeenpwned returns the Haveibeenpwned field value
+// If the value is explicit nil, the zero value for bool will be returned
+func (o *MiscDetails) GetHaveibeenpwned() bool {
+	if o == nil || o.Haveibeenpwned.Get() == nil {
+		var ret bool
+		return ret
 	}
 
-	return false
+	return *o.Haveibeenpwned.Get()
 }
 
-// SetGravatarUrl gets a reference to the given string and assigns it to the GravatarUrl field.
-func (o *MiscDetails) SetGravatarUrl(v string) {
-	o.GravatarUrl = &v
+// GetHaveibeenpwnedOk returns a tuple with the Haveibeenpwned field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *MiscDetails) GetHaveibeenpwnedOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Haveibeenpwned.Get(), o.Haveibeenpwned.IsSet()
+}
+
+// SetHaveibeenpwned sets field value
+func (o *MiscDetails) SetHaveibeenpwned(v bool) {
+	o.Haveibeenpwned.Set(&v)
 }
 
 // GetIsB2c returns the IsB2c field value
@@ -158,6 +183,30 @@ func (o *MiscDetails) SetIsRoleAccount(v bool) {
 	o.IsRoleAccount = v
 }
 
+// GetIsSpamTrapDomain returns the IsSpamTrapDomain field value
+func (o *MiscDetails) GetIsSpamTrapDomain() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsSpamTrapDomain
+}
+
+// GetIsSpamTrapDomainOk returns a tuple with the IsSpamTrapDomain field value
+// and a boolean to check if the value has been set.
+func (o *MiscDetails) GetIsSpamTrapDomainOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsSpamTrapDomain, true
+}
+
+// SetIsSpamTrapDomain sets field value
+func (o *MiscDetails) SetIsSpamTrapDomain(v bool) {
+	o.IsSpamTrapDomain = v
+}
+
 func (o MiscDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -168,12 +217,12 @@ func (o MiscDetails) MarshalJSON() ([]byte, error) {
 
 func (o MiscDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.GravatarUrl) {
-		toSerialize["gravatar_url"] = o.GravatarUrl
-	}
+	toSerialize["gravatar_url"] = o.GravatarUrl.Get()
+	toSerialize["haveibeenpwned"] = o.Haveibeenpwned.Get()
 	toSerialize["is_b2c"] = o.IsB2c
 	toSerialize["is_disposable"] = o.IsDisposable
 	toSerialize["is_role_account"] = o.IsRoleAccount
+	toSerialize["is_spam_trap_domain"] = o.IsSpamTrapDomain
 	return toSerialize, nil
 }
 
@@ -182,9 +231,12 @@ func (o *MiscDetails) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"gravatar_url",
+		"haveibeenpwned",
 		"is_b2c",
 		"is_disposable",
 		"is_role_account",
+		"is_spam_trap_domain",
 	}
 
 	allProperties := make(map[string]interface{})

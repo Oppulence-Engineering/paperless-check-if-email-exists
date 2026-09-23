@@ -4,6 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**CompletedAt** | **NullableTime** |  | [required]
+**CreatedAt** | **time.Time** |  | [required]
 **EmailColumn** | **string** |  | [required]
 **Id** | **int32** |  | [required]
 **Name** | **string** |  | [required]
@@ -16,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewListItem
 
-`func NewListItem(emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32) *ListItem`
+`func NewListItem(completedAt NullableTime, createdAt time.Time, emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32) *ListItem`
 
 NewListItem instantiates a new ListItem object
 This constructor will assign default values to properties that have it defined,
@@ -30,6 +32,46 @@ will change when the set of required properties is changed
 NewListItemWithDefaults instantiates a new ListItem object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetCompletedAt
+
+`func (o *ListItem) GetCompletedAt() time.Time`
+
+GetCompletedAt returns the CompletedAt field if non-nil, zero value otherwise.
+
+### GetCompletedAtOk
+
+`func (o *ListItem) GetCompletedAtOk() (*time.Time, bool)`
+
+GetCompletedAtOk returns a tuple with the CompletedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCompletedAt
+
+`func (o *ListItem) SetCompletedAt(v time.Time)`
+
+SetCompletedAt sets CompletedAt field to given value.
+
+
+### GetCreatedAt
+
+`func (o *ListItem) GetCreatedAt() time.Time`
+
+GetCreatedAt returns the CreatedAt field if non-nil, zero value otherwise.
+
+### GetCreatedAtOk
+
+`func (o *ListItem) GetCreatedAtOk() (*time.Time, bool)`
+
+GetCreatedAtOk returns a tuple with the CreatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatedAt
+
+`func (o *ListItem) SetCreatedAt(v time.Time)`
+
+SetCreatedAt sets CreatedAt field to given value.
+
 
 ### GetEmailColumn
 

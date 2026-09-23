@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Reacher
- * ### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+ * ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  *
  * The version of the OpenAPI document: 4.3.0
  * Contact: amaury@reacher.email
@@ -21,6 +21,10 @@ import globalAxios from 'axios';
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
+// @ts-ignore
+import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { V1EmailHistory200Response } from '../models';
 /**
  * VerificationApi - axios parameter creator
  * @export
@@ -87,7 +91,7 @@ export const VerificationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1EmailHistory(email: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1EmailHistory(email: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1EmailHistory200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1EmailHistory(email, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1EmailHistory']?.[localVarOperationServerIndex]?.url;
@@ -110,7 +114,7 @@ export const VerificationApiFactory = function (configuration?: Configuration, b
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response> {
             return localVarFp.v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
     };
@@ -130,7 +134,7 @@ export interface VerificationApiInterface {
      * @throws {RequiredError}
      * @memberof VerificationApiInterface
      */
-    v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response>;
 
 }
 

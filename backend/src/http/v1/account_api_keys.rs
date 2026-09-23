@@ -1,7 +1,8 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
+use crate::http::{check_scope, resolve_tenant};
 use crate::tenant::auth::generate_api_key;
+use crate::tenant::context::scope;
 use crate::tenant::context::TenantContext;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -73,12 +74,33 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::ADMIN)?;
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
-			"API key authentication required for account API key management",
+			"Tenant authentication required for account API key management",
 		))
 	})
+}
+
+#[cfg(test)]
+mod authorization_tests {
+	use super::*;
+	use crate::config::ThrottleConfig;
+
+	#[test]
+	fn scoped_keys_cannot_manage_api_keys() {
+		let mut context = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		context.is_legacy = false;
+		context.tenant_id = Some(Uuid::new_v4());
+		context.scopes = vec![scope::VERIFY.to_string()];
+		assert!(ensure_tenant_id(context.clone()).is_err());
+		context.scopes = vec![scope::ADMIN.to_string()];
+		assert_eq!(
+			ensure_tenant_id(context.clone()).unwrap(),
+			context.tenant_id.unwrap()
+		);
+	}
 }
 
 fn parse_expiry(expires_at: Option<String>) -> Result<Option<DateTime<Utc>>, warp::Rejection> {

@@ -1,30 +1,43 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::pipelines::validate_webhook_url;
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use utoipa::ToSchema;
 use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 struct UpdateTenantSettingsRequest {
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub default_webhook_url: Option<Option<String>>,
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
 	pub default_policy_mode: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 struct UpdateWebhookRequest {
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub default_webhook_url: Option<Option<String>>,
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub webhook_signing_secret: Option<Option<String>>,
 }
 
-#[derive(Debug, Serialize)]
+fn present_nullable_string<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	Option::<String>::deserialize(deserializer).map(Some)
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantSettingsResponse {
 	pub tenant_id: Uuid,
 	pub name: String,
@@ -37,7 +50,7 @@ struct TenantSettingsResponse {
 	pub default_policy_mode: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantWebhookResponse {
 	pub tenant_id: Uuid,
 	pub tenant_name: String,
@@ -45,7 +58,7 @@ struct TenantWebhookResponse {
 	pub webhook_signing_secret_configured: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantUsageResponse {
 	pub tenant_id: Uuid,
 	pub tenant_name: String,
@@ -74,12 +87,22 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
 			"Tenant context is required for tenant settings endpoints",
 		))
 	})
+}
+
+fn validate_webhook_setting(value: &Option<Option<String>>) -> Result<(), warp::Rejection> {
+	if let Some(Some(url)) = value {
+		validate_webhook_url(url).map_err(|error| {
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, error.to_string())
+		})?;
+	}
+	Ok(())
 }
 
 fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
@@ -211,6 +234,7 @@ async fn update_settings_handler(
 	if let Some(mode) = &body.default_policy_mode {
 		validate_policy_mode(mode)?;
 	}
+	validate_webhook_setting(&body.default_webhook_url)?;
 
 	let mut sets = Vec::new();
 	let mut idx = 2u32;
@@ -298,13 +322,21 @@ async fn update_webhook_handler(
 		)
 		.into());
 	}
+	validate_webhook_setting(&body.default_webhook_url)?;
+	let update_url = body.default_webhook_url.is_some();
+	let update_secret = body.webhook_signing_secret.is_some();
 
 	let row = sqlx::query(
-		"UPDATE tenants SET default_webhook_url = $2, webhook_signing_secret = $3 WHERE id = $1 \
+		"UPDATE tenants SET \
+		 default_webhook_url = CASE WHEN $2 THEN $3 ELSE default_webhook_url END, \
+		 webhook_signing_secret = CASE WHEN $4 THEN $5 ELSE webhook_signing_secret END \
+		 WHERE id = $1 \
 		 RETURNING id, name, default_webhook_url, webhook_signing_secret",
 	)
 	.bind(tenant_id)
+	.bind(update_url)
 	.bind(body.default_webhook_url)
+	.bind(update_secret)
 	.bind(body.webhook_signing_secret)
 	.fetch_optional(&pg_pool)
 	.await
@@ -353,7 +385,7 @@ async fn clear_webhook_handler(
 	get,
 	path = "/v1/me/settings",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant settings")),
+	responses((status = 200, description = "Tenant settings", body = TenantSettingsResponse)),
 )]
 pub fn v1_get_tenant_settings(
 	config: Arc<BackendConfig>,
@@ -373,7 +405,7 @@ pub fn v1_get_tenant_settings(
 	get,
 	path = "/v1/me/webhook",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant webhook state")),
+	responses((status = 200, description = "Tenant webhook state", body = TenantWebhookResponse)),
 )]
 pub fn v1_get_tenant_webhook(
 	config: Arc<BackendConfig>,
@@ -393,7 +425,8 @@ pub fn v1_get_tenant_webhook(
 	patch,
 	path = "/v1/me/webhook",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant webhook updated")),
+	request_body = UpdateWebhookRequest,
+	responses((status = 200, description = "Tenant webhook updated", body = TenantWebhookResponse)),
 )]
 pub fn v1_update_tenant_webhook(
 	config: Arc<BackendConfig>,
@@ -434,7 +467,8 @@ pub fn v1_clear_tenant_webhook(
 	patch,
 	path = "/v1/me/settings",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant settings updated")),
+	request_body = UpdateTenantSettingsRequest,
+	responses((status = 200, description = "Tenant settings updated", body = TenantSettingsResponse)),
 )]
 pub fn v1_update_tenant_settings(
 	config: Arc<BackendConfig>,
@@ -455,7 +489,7 @@ pub fn v1_update_tenant_settings(
 	get,
 	path = "/v1/me/usage",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant usage summary")),
+	responses((status = 200, description = "Tenant usage summary", body = TenantUsageResponse)),
 )]
 pub fn v1_get_tenant_usage(
 	config: Arc<BackendConfig>,
@@ -465,4 +499,40 @@ pub fn v1_get_tenant_usage(
 		.and(resolve_tenant(Arc::clone(&config)))
 		.and_then(usage_handler)
 		.with(warp::log("reacher_backend::v1::tenant::usage"))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn webhook_patch_distinguishes_omitted_and_null_fields() {
+		let update: UpdateWebhookRequest =
+			serde_json::from_str(r#"{"default_webhook_url":"https://example.com/hook"}"#).unwrap();
+		assert_eq!(
+			update.default_webhook_url,
+			Some(Some("https://example.com/hook".into()))
+		);
+		assert_eq!(update.webhook_signing_secret, None);
+
+		let clear: UpdateWebhookRequest =
+			serde_json::from_str(r#"{"webhook_signing_secret":null}"#).unwrap();
+		assert_eq!(clear.webhook_signing_secret, Some(None));
+		assert_eq!(clear.default_webhook_url, None);
+		let settings: UpdateTenantSettingsRequest =
+			serde_json::from_str(r#"{"default_webhook_url":null}"#).unwrap();
+		assert_eq!(settings.default_webhook_url, Some(None));
+	}
+
+	#[test]
+	fn settings_scope_is_required() {
+		let mut context =
+			TenantContext::legacy(crate::config::ThrottleConfig::new_without_throttle());
+		context.is_legacy = false;
+		context.tenant_id = Some(Uuid::nil());
+		context.scopes = vec![scope::VERIFY.into()];
+		assert!(ensure_tenant_id(context.clone()).is_err());
+		context.scopes = vec![scope::SETTINGS.into()];
+		assert_eq!(ensure_tenant_id(context).unwrap(), Uuid::nil());
+	}
 }

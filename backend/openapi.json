@@ -397,6 +397,7 @@
               }
             ]
           },
+          "policy_evaluation": {},
           "provider": {
             "$ref": "#/components/schemas/Provider",
             "nullable": true
@@ -412,6 +413,7 @@
           "provider_rules_applied": {
             "type": "boolean"
           },
+          "recommendation": {},
           "score": {
             "$ref": "#/components/schemas/EmailScore"
           },
@@ -668,6 +670,13 @@
       },
       "DebugDetails": {
         "properties": {
+          "backend_name": {
+            "description": "The name of the backend that performed the verification.",
+            "type": "string",
+            "x-stoplight": {
+              "id": "2jrbdecvqh4t5"
+            }
+          },
           "duration": {
             "$ref": "#/components/schemas/Duration"
           },
@@ -676,13 +685,6 @@
             "type": "string",
             "x-stoplight": {
               "id": "zw4ccbvwsoh6q"
-            }
-          },
-          "server_name": {
-            "description": "The name of the server that performed the verification.",
-            "type": "string",
-            "x-stoplight": {
-              "id": "2jrbdecvqh4t5"
             }
           },
           "smtp": {
@@ -700,7 +702,7 @@
           "start_time",
           "end_time",
           "duration",
-          "server_name",
+          "backend_name",
           "smtp"
         ],
         "title": "DebugDetails",
@@ -881,6 +883,17 @@
           "safe_to_send",
           "reason_codes",
           "signals"
+        ],
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
         ],
         "type": "object"
       },
@@ -1092,6 +1105,63 @@
           "id": "xo5r48yhtxiwr"
         }
       },
+      "HistoryEntry": {
+        "properties": {
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "completed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "is_reachable": {
+            "nullable": true,
+            "type": "string"
+          },
+          "job_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "policy_decision": {
+            "nullable": true,
+            "type": "string"
+          },
+          "policy_evaluation": {},
+          "policy_mode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "recommendation": {},
+          "recommendation_action": {
+            "nullable": true,
+            "type": "string"
+          },
+          "safe_to_send": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "score": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "sub_reason": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "HotmailB2BVerifMethod": {
         "description": "Enumeration describing the method used to verify Hotmail B2B emails.",
         "enum": [
@@ -1272,6 +1342,15 @@
       },
       "ListItem": {
         "properties": {
+          "completed_at": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
           "email_column": {
             "type": "string"
           },
@@ -1303,7 +1382,9 @@
           "original_filename",
           "status",
           "total_rows",
-          "email_column"
+          "email_column",
+          "created_at",
+          "completed_at"
         ],
         "type": "object"
       },
@@ -1456,7 +1537,12 @@
         "properties": {
           "gravatar_url": {
             "description": "URL to the Gravatar profile picture associated with the email, if available and requested.",
+            "nullable": true,
             "type": "string"
+          },
+          "haveibeenpwned": {
+            "nullable": true,
+            "type": "boolean"
           },
           "is_b2c": {
             "description": "Is this a B2C email address?",
@@ -1472,12 +1558,18 @@
           "is_role_account": {
             "description": "Indicates if the email address is a role-based account.",
             "type": "boolean"
+          },
+          "is_spam_trap_domain": {
+            "type": "boolean"
           }
         },
         "required": [
           "is_disposable",
           "is_role_account",
-          "is_b2c"
+          "is_b2c",
+          "is_spam_trap_domain",
+          "gravatar_url",
+          "haveibeenpwned"
         ],
         "title": "MiscDetails",
         "type": "object"
@@ -2866,6 +2958,10 @@
       "SyntaxDetails": {
         "description": "Validation of the email address syntax.",
         "properties": {
+          "address": {
+            "nullable": true,
+            "type": "string"
+          },
           "domain": {
             "description": "The domain part of the email address.",
             "type": "string"
@@ -2873,6 +2969,14 @@
           "is_valid_syntax": {
             "description": "Indicates if the email address syntax is valid.",
             "type": "boolean"
+          },
+          "normalized_email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "suggestion": {
+            "nullable": true,
+            "type": "string"
           },
           "username": {
             "description": "The username part of the email address.",
@@ -2882,7 +2986,10 @@
         "required": [
           "domain",
           "is_valid_syntax",
-          "username"
+          "username",
+          "address",
+          "normalized_email",
+          "suggestion"
         ],
         "title": "SyntaxDetails",
         "type": "object"
@@ -2899,6 +3006,120 @@
         "x-stoplight": {
           "id": "6053d3ngu2hfn"
         }
+      },
+      "TenantSettingsResponse": {
+        "properties": {
+          "default_policy_mode": {
+            "type": "string"
+          },
+          "default_webhook_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "monthly_email_limit": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "period_reset_at": {
+            "type": "string"
+          },
+          "result_retention_days": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "used_this_period": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "name",
+          "slug",
+          "used_this_period",
+          "period_reset_at",
+          "result_retention_days",
+          "default_policy_mode"
+        ],
+        "type": "object"
+      },
+      "TenantUsageResponse": {
+        "properties": {
+          "monthly_email_limit": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "period_reset_at": {
+            "type": "string"
+          },
+          "plan_tier": {
+            "type": "string"
+          },
+          "quota_remaining": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "quota_unlimited": {
+            "type": "boolean"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "tenant_name": {
+            "type": "string"
+          },
+          "used_this_period": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tenant_name",
+          "plan_tier",
+          "used_this_period",
+          "period_reset_at",
+          "quota_unlimited"
+        ],
+        "type": "object"
+      },
+      "TenantWebhookResponse": {
+        "properties": {
+          "default_webhook_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "tenant_name": {
+            "type": "string"
+          },
+          "webhook_signing_secret_configured": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tenant_name",
+          "webhook_signing_secret_configured"
+        ],
+        "type": "object"
       },
       "TriggerPipelineInput": {
         "properties": {
@@ -3034,6 +3255,41 @@
         },
         "type": "object"
       },
+      "UpdateTenantSettingsRequest": {
+        "properties": {
+          "default_policy_mode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "default_webhook_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "result_retention_days": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "webhook_signing_secret": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateWebhookRequest": {
+        "properties": {
+          "default_webhook_url": {
+            "nullable": true,
+            "type": "string"
+          },
+          "webhook_signing_secret": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "VerifMethod": {
         "description": "The method used for email verification.",
         "properties": {
@@ -3098,7 +3354,7 @@
     },
     "securitySchemes": {
       "Authorization": {
-        "description": "A Reacher API key is required for all requests. Sign up on https://reacher.email to get your personal API key.",
+        "description": "Send a workspace API key as Bearer rch_live_... for tenant API calls. Provider callbacks use their delivery token and provider signature.",
         "in": "header",
         "name": "Authorization",
         "type": "apiKey"
@@ -3111,7 +3367,7 @@
       "name": "Reacher",
       "url": "https://reacher.email"
     },
-    "description": "### What is Reacher?\n\nReacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.",
+    "description": "### What is Reacher?\n\nReacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.",
     "license": {
       "name": "AGPL-3.0 OR Commercial",
       "url": "https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md"
@@ -3286,6 +3542,16 @@
         "responses": {
           "200": {
             "description": "All API keys"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/api-keys",
@@ -3301,6 +3567,16 @@
         "responses": {
           "200": {
             "description": "Admin job list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/jobs",
@@ -3328,6 +3604,16 @@
         "responses": {
           "200": {
             "description": "Admin job details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/jobs/{job_id}",
@@ -3355,6 +3641,16 @@
         "responses": {
           "200": {
             "description": "Job event list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/jobs/{job_id}/events",
@@ -3382,6 +3678,16 @@
         "responses": {
           "200": {
             "description": "Job result list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/jobs/{job_id}/results",
@@ -3397,6 +3703,16 @@
         "responses": {
           "200": {
             "description": "Tenant list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants",
@@ -3410,6 +3726,16 @@
         "responses": {
           "201": {
             "description": "Tenant created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/admin/tenants",
@@ -3436,6 +3762,16 @@
         "responses": {
           "200": {
             "description": "Tenant deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/admin/tenants/{tenant_id}",
@@ -3460,6 +3796,16 @@
         "responses": {
           "200": {
             "description": "Tenant details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants/{tenant_id}",
@@ -3484,6 +3830,16 @@
         "responses": {
           "200": {
             "description": "Tenant updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PUT /v1/admin/tenants/{tenant_id}",
@@ -3510,6 +3866,16 @@
         "responses": {
           "200": {
             "description": "Tenant API keys"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants/{tenant_id}/api-keys",
@@ -3535,6 +3901,16 @@
         "responses": {
           "201": {
             "description": "API key created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/admin/tenants/{tenant_id}/api-keys",
@@ -3571,6 +3947,16 @@
         "responses": {
           "200": {
             "description": "API key revoked"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
@@ -3605,6 +3991,16 @@
         "responses": {
           "200": {
             "description": "API key details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
@@ -3639,6 +4035,16 @@
         "responses": {
           "200": {
             "description": "API key updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/admin/tenants/{tenant_id}/api-keys/{key_id}",
@@ -3675,6 +4081,16 @@
         "responses": {
           "200": {
             "description": "API key reactivated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/admin/tenants/{tenant_id}/api-keys/{key_id}/reactivate",
@@ -3701,6 +4117,16 @@
         "responses": {
           "200": {
             "description": "Tenant job list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants/{tenant_id}/jobs",
@@ -3727,6 +4153,16 @@
         "responses": {
           "200": {
             "description": "Tenant quota details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/admin/tenants/{tenant_id}/quota",
@@ -3751,6 +4187,16 @@
         "responses": {
           "200": {
             "description": "Quota updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/admin/tenants/{tenant_id}/quota",
@@ -3777,6 +4223,16 @@
         "responses": {
           "200": {
             "description": "Quota reset"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/admin/tenants/{tenant_id}/quota/reset",
@@ -3821,6 +4277,16 @@
               }
             },
             "description": "Bulk job created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Create the v1 bulk endpoint.",
@@ -3848,6 +4314,16 @@
         "responses": {
           "200": {
             "description": "Bulk job progress"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/bulk/{job_id}",
@@ -3917,6 +4393,16 @@
               }
             },
             "description": "Bulk job results"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/bulk/{job_id}/results",
@@ -3931,6 +4417,16 @@
         "responses": {
           "201": {
             "description": "Tenant onboarded and email verified"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
@@ -3975,6 +4471,16 @@
               }
             },
             "description": "Email verification result"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/check_email",
@@ -4027,6 +4533,16 @@
         "responses": {
           "200": {
             "description": "Comments list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/comments",
@@ -4039,6 +4555,16 @@
         "responses": {
           "201": {
             "description": "Comment created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/comments",
@@ -4065,6 +4591,16 @@
         "responses": {
           "200": {
             "description": "Comment deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/comments/{comment_id}",
@@ -4099,7 +4635,44 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    },
+                    "history": {
+                      "items": {
+                        "$ref": "#/components/schemas/HistoryEntry"
+                      },
+                      "type": "array"
+                    },
+                    "total": {
+                      "format": "int64",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "history",
+                    "total"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
             "description": "Verification history for the email"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/emails/{email}/history",
@@ -4176,6 +4749,16 @@
         "responses": {
           "200": {
             "description": "Audit log events"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/events",
@@ -4207,6 +4790,16 @@
               }
             },
             "description": "Finder job accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/find_email",
@@ -4240,6 +4833,16 @@
               }
             },
             "description": "Finder job result"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/find_email/{job_id}",
@@ -4312,6 +4915,16 @@
           },
           "401": {
             "description": "Provider signature rejected"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "tags": [
@@ -4338,6 +4951,16 @@
         "responses": {
           "200": {
             "description": "Bulk job progress summary"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}",
@@ -4372,6 +4995,16 @@
               }
             },
             "description": "Pre-send approval checklist"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}/approval",
@@ -4399,6 +5032,16 @@
         "responses": {
           "200": {
             "description": "Job cancellation accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/jobs/{job_id}/cancel",
@@ -4449,6 +5092,16 @@
               }
             },
             "description": "Job result download stream"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}/download",
@@ -4494,6 +5147,16 @@
         "responses": {
           "200": {
             "description": "Job events"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}/events",
@@ -4526,6 +5189,16 @@
               }
             },
             "description": "Job failure center"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Get job failure center",
@@ -4564,6 +5237,16 @@
               }
             },
             "description": "Job failure report stream"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Download job failure report",
@@ -4591,6 +5274,16 @@
         "responses": {
           "200": {
             "description": "Latency analytics"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}/latency",
@@ -4651,6 +5344,16 @@
               }
             },
             "description": "Job result page"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/jobs/{job_id}/results",
@@ -4685,6 +5388,16 @@
               }
             },
             "description": "Retry initiated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/jobs/{job_id}/retry",
@@ -4726,6 +5439,16 @@
               }
             },
             "description": "List resources"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/lists",
@@ -4755,6 +5478,16 @@
               }
             },
             "description": "List upload accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/lists",
@@ -4788,6 +5521,16 @@
               }
             },
             "description": "List deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/lists/{list_id}",
@@ -4819,6 +5562,16 @@
               }
             },
             "description": "List detail"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/lists/{list_id}",
@@ -4869,6 +5622,16 @@
               }
             },
             "description": "Cleaned list CSV download"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/lists/{list_id}/download",
@@ -4896,6 +5659,16 @@
         "responses": {
           "200": {
             "description": "List quality benchmark report"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/lists/{list_id}/quality",
@@ -4939,6 +5712,16 @@
               }
             },
             "description": "Remediation export"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Create remediation export",
@@ -4980,6 +5763,16 @@
               }
             },
             "description": "Remediation export CSV"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Download remediation export",
@@ -5012,6 +5805,16 @@
               }
             },
             "description": "Remediation plan"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Get remediation plan",
@@ -5053,6 +5856,16 @@
               }
             },
             "description": "Remediation plan"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Create remediation plan",
@@ -5068,6 +5881,16 @@
         "responses": {
           "200": {
             "description": "Current tenant profile"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me",
@@ -5083,6 +5906,16 @@
         "responses": {
           "200": {
             "description": "API key list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/api-keys",
@@ -5096,6 +5929,16 @@
         "responses": {
           "201": {
             "description": "API key created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/me/api-keys",
@@ -5123,6 +5966,16 @@
         "responses": {
           "200": {
             "description": "API key revoked"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/me/api-keys/{key_id}",
@@ -5148,6 +6001,16 @@
         "responses": {
           "200": {
             "description": "API key details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/api-keys/{key_id}",
@@ -5173,6 +6036,16 @@
         "responses": {
           "200": {
             "description": "API key updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/me/api-keys/{key_id}",
@@ -5188,6 +6061,16 @@
         "responses": {
           "200": {
             "description": "Tenant domains list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/domains",
@@ -5201,6 +6084,16 @@
         "responses": {
           "201": {
             "description": "Tenant domain created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/me/domains",
@@ -5227,6 +6120,16 @@
         "responses": {
           "200": {
             "description": "Tenant domain deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/me/domains/{domain}",
@@ -5251,6 +6154,16 @@
         "responses": {
           "200": {
             "description": "Tenant domain details"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/domains/{domain}",
@@ -5275,6 +6188,16 @@
         "responses": {
           "200": {
             "description": "Tenant domain updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/me/domains/{domain}",
@@ -5289,7 +6212,24 @@
         "operationId": "v1_get_tenant_settings",
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingsResponse"
+                }
+              }
+            },
             "description": "Tenant settings"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/settings",
@@ -5300,9 +6240,36 @@
       "patch": {
         "description": "Update tenant settings such as retention, default webhook URL, or secret.",
         "operationId": "v1_update_tenant_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingsResponse"
+                }
+              }
+            },
             "description": "Tenant settings updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/me/settings",
@@ -5317,7 +6284,24 @@
         "operationId": "v1_get_tenant_usage",
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantUsageResponse"
+                }
+              }
+            },
             "description": "Tenant usage summary"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/usage",
@@ -5333,6 +6317,16 @@
         "responses": {
           "200": {
             "description": "Tenant webhook cleared"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/me/webhook",
@@ -5345,7 +6339,24 @@
         "operationId": "v1_get_tenant_webhook",
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantWebhookResponse"
+                }
+              }
+            },
             "description": "Tenant webhook state"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/me/webhook",
@@ -5356,9 +6367,36 @@
       "patch": {
         "description": "Update tenant webhook URL and signing secret.",
         "operationId": "v1_update_tenant_webhook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantWebhookResponse"
+                }
+              }
+            },
             "description": "Tenant webhook updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/me/webhook",
@@ -5433,6 +6471,16 @@
               }
             },
             "description": "Paginated provider outcomes"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/outcomes",
@@ -5465,6 +6513,16 @@
           },
           "400": {
             "description": "Invalid outcome payload"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/outcomes",
@@ -5554,6 +6612,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/pipelines",
@@ -5623,6 +6691,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/pipelines",
@@ -5696,6 +6774,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/pipelines/{pipeline_id}",
@@ -5767,6 +6855,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}",
@@ -5858,6 +6956,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "PATCH /v1/pipelines/{pipeline_id}",
@@ -5931,6 +7039,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/pause",
@@ -6033,6 +7151,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/push",
@@ -6106,6 +7234,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/resume",
@@ -6197,6 +7335,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}/runs",
@@ -6280,6 +7428,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/pipelines/{pipeline_id}/runs/{run_id}",
@@ -6383,6 +7541,16 @@
               }
             },
             "description": "Service unavailable"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/pipelines/{pipeline_id}/trigger",
@@ -6404,6 +7572,16 @@
               }
             },
             "description": "Configured provider endpoints"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "tags": [
@@ -6435,6 +7613,16 @@
           },
           "400": {
             "description": "Invalid provider endpoint"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "tags": [
@@ -6470,6 +7658,16 @@
           },
           "404": {
             "description": "Provider endpoint not found"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "tags": [
@@ -6513,6 +7711,16 @@
           },
           "404": {
             "description": "Provider endpoint not found"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "tags": [
@@ -6630,6 +7838,16 @@
         "responses": {
           "200": {
             "description": "Filtered verification results"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/query",
@@ -6661,6 +7879,16 @@
               }
             },
             "description": "Reputation check response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/reputation/check",
@@ -6682,6 +7910,16 @@
               }
             },
             "description": "Reverification schedule status"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/reverification/status",
@@ -6703,6 +7941,16 @@
               }
             },
             "description": "Source quality analytics"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "List source quality",
@@ -6784,6 +8032,16 @@
               }
             },
             "description": "Suppression list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/suppressions",
@@ -6813,6 +8071,16 @@
               }
             },
             "description": "Suppression entries added"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "POST /v1/suppressions",
@@ -6844,6 +8112,16 @@
               }
             },
             "description": "Suppression check result"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "GET /v1/suppressions/check",
@@ -6865,6 +8143,16 @@
               }
             },
             "description": "Suppression export CSV"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Export suppressions",
@@ -6897,6 +8185,16 @@
               }
             },
             "description": "Suppression entries imported"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "Import suppressions",
@@ -6930,6 +8228,16 @@
               }
             },
             "description": "Suppression entry deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "DELETE /v1/suppressions/{id}",
@@ -6962,6 +8270,16 @@
               }
             },
             "description": "Suppression event list"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
           }
         },
         "summary": "List suppression events",
@@ -6994,7 +8312,7 @@
   "servers": [
     {
       "description": "Reacher Production",
-      "url": "https://api.reacher.email"
+      "url": "/"
     }
   ],
   "tags": [
