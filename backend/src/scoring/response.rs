@@ -2,7 +2,7 @@ use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext};
 use crate::config::BackendConfig;
 use crate::decision::engine::{evaluate as evaluate_decision, DecisionInput};
 use crate::decision::types::{PolicyEvaluation, PolicyMode, Recommendation};
-use crate::scoring::{compute_freshness_at, compute_score, EmailScore};
+use crate::scoring::{catch_all_severity, compute_freshness_at, compute_score, EmailScore};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -43,21 +43,14 @@ pub fn scored_json_with_score(
 		}
 	}
 
-	// Add catch-all severity tier (#30)
-	if let Some(obj) = score.as_object_mut() {
-		if let Some(signals) = obj.get("signals").and_then(|s| s.as_object()) {
-			if signals
-				.get("smtp_is_catch_all")
-				.and_then(|v| v.as_bool())
-				.unwrap_or(false)
-			{
-				let is_free = signals
-					.get("is_free_provider")
-					.and_then(|v| v.as_bool())
-					.unwrap_or(false);
-				let tier = if is_free { "low" } else { "high" };
-				obj.insert("catch_all_severity".into(), Value::String(tier.to_string()));
-			}
+	// Add catch-all severity tier (#30). The same tier drives the score
+	// penalty and safe_to_send in `compute_score`.
+	if let Some(tier) = catch_all_severity(&email_score.signals) {
+		if let Some(obj) = score.as_object_mut() {
+			obj.insert(
+				"catch_all_severity".into(),
+				Value::String(tier.as_str().to_string()),
+			);
 		}
 	}
 
@@ -363,6 +356,60 @@ mod tests {
 			score.get("catch_all_severity").and_then(|v| v.as_str()),
 			Some("high")
 		);
+	}
+
+	#[test]
+	fn wire_response_never_contradicts_itself_on_catch_all() {
+		// The serialised response carries the tier and safe_to_send side by
+		// side. A client that reads either one must reach the same conclusion,
+		// so "high" and safe_to_send=true must never appear together.
+		for (is_b2c, is_role_account, has_full_inbox) in [
+			(true, false, false),
+			(false, false, false),
+			(true, true, false),
+			(true, false, true),
+			(false, true, false),
+		] {
+			let mut output = CheckEmailOutput {
+				input: "user@company.com".to_string(),
+				is_reachable: Reachable::Safe,
+				smtp: Ok(SmtpDetails {
+					can_connect_smtp: true,
+					has_full_inbox,
+					is_catch_all: true,
+					is_deliverable: true,
+					is_disabled: false,
+				}),
+				misc: Ok(check_if_email_exists::misc::MiscDetails {
+					is_b2c,
+					is_role_account,
+					..Default::default()
+				}),
+				..Default::default()
+			};
+			output.syntax.is_valid_syntax = true;
+
+			let value = scored_json(&output).unwrap();
+			let score = value.get("score").unwrap();
+			let tier = score.get("catch_all_severity").and_then(|v| v.as_str());
+			let safe = score
+				.get("safe_to_send")
+				.and_then(|v| v.as_bool())
+				.expect("safe_to_send is required by the schema");
+
+			assert!(
+				tier.is_some(),
+				"every catch-all result must carry a tier: b2c={}",
+				is_b2c
+			);
+			if tier == Some("high") {
+				assert!(
+					!safe,
+					"high tier reported safe_to_send=true: b2c={} role={} full={}",
+					is_b2c, is_role_account, has_full_inbox
+				);
+			}
+		}
 	}
 
 	#[test]

@@ -51,6 +51,60 @@ pub struct ScoringSignals {
 	pub has_domain_suggestion: bool,
 }
 
+/// Severity tier for a catch-all (accept-all) domain.
+///
+/// A catch-all domain accepts every address, so SMTP cannot prove a mailbox
+/// exists. The tiers follow the split already used by the bounce-risk model in
+/// `bounce_risk.toml`, which scores a corporate catch-all higher than a
+/// free-provider one.
+///
+/// ponytail: two tiers, because the published schema declares exactly these
+/// two. Split `High` into corporate and aggravated once the measured bounce
+/// rate per tier justifies the spec change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CatchAllSeverity {
+	/// Free-provider domain, with no other negative signal.
+	Low,
+	/// Corporate domain, or any catch-all carrying another negative signal.
+	High,
+}
+
+impl CatchAllSeverity {
+	pub fn as_str(self) -> &'static str {
+		match self {
+			Self::Low => "low",
+			Self::High => "high",
+		}
+	}
+}
+
+/// Grades a catch-all domain. Returns `None` when the domain is not catch-all.
+pub fn catch_all_severity(signals: &ScoringSignals) -> Option<CatchAllSeverity> {
+	if !signals.smtp_is_catch_all {
+		return None;
+	}
+
+	let otherwise_clean = signals.valid_syntax
+		&& matches!(signals.reachable, Reachable::Safe)
+		&& signals.has_mx_records
+		&& !signals.smtp_error
+		&& signals.smtp_can_connect
+		&& signals.smtp_is_deliverable
+		&& !signals.smtp_is_disabled
+		&& !signals.smtp_has_full_inbox
+		&& !signals.is_disposable
+		&& !signals.is_role_account
+		&& !signals.is_spam_trap_domain
+		&& !signals.has_domain_suggestion;
+
+	if signals.is_free_provider && otherwise_clean {
+		Some(CatchAllSeverity::Low)
+	} else {
+		Some(CatchAllSeverity::High)
+	}
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EmailScore {
 	pub score: i16,
@@ -183,8 +237,10 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	if !signals.smtp_can_connect {
 		score -= 30;
 	}
-	if signals.smtp_is_catch_all {
-		score -= 15;
+	match catch_all_severity(&signals) {
+		Some(CatchAllSeverity::Low) => score -= 10,
+		Some(CatchAllSeverity::High) => score -= 15,
+		None => {}
 	}
 	if signals.smtp_has_full_inbox {
 		score -= 20;
@@ -237,7 +293,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 
 	let safe_to_send = category == EmailCategory::Valid
 		&& !signals.is_disposable
-		&& !signals.smtp_is_catch_all
+		&& catch_all_severity(&signals) != Some(CatchAllSeverity::High)
 		&& !signals.is_role_account
 		&& !signals.is_spam_trap_domain;
 
@@ -357,6 +413,20 @@ mod tests {
 		misc::MiscDetails, mx::MxDetails, provider::ProviderRejectionReason, smtp::SmtpDetails,
 		syntax::SyntaxDetails,
 	};
+	use hickory_resolver::{
+		lookup::{Lookup, MxLookup},
+		proto::op::Query,
+		proto::rr::{rdata::MX, Name, RData, RecordType},
+	};
+
+	fn test_mx(domain: &str) -> MxDetails {
+		let domain = Name::from_ascii(domain).expect("test domain is valid");
+		let exchange = Name::from_ascii("mail.example.com.").expect("test MX is valid");
+		MxDetails::from(MxLookup::from(Lookup::from_rdata(
+			Query::query(domain, RecordType::MX),
+			RData::MX(MX::new(10, exchange)),
+		)))
+	}
 
 	fn base_output() -> CheckEmailOutput {
 		CheckEmailOutput {
@@ -497,6 +567,161 @@ mod tests {
 		assert!(score.safe_to_send);
 	}
 
+	/// Flips one signal on a `ScoringSignals` fixture.
+	type SignalMutator = fn(&mut ScoringSignals);
+
+	fn catch_all_signals(is_free_provider: bool) -> ScoringSignals {
+		ScoringSignals {
+			valid_syntax: true,
+			reachable: Reachable::Safe,
+			has_mx_records: true,
+			smtp_error: false,
+			smtp_can_connect: true,
+			smtp_is_deliverable: true,
+			smtp_is_disabled: false,
+			smtp_is_catch_all: true,
+			smtp_has_full_inbox: false,
+			is_disposable: false,
+			is_role_account: false,
+			is_spam_trap_domain: false,
+			is_free_provider,
+			has_domain_suggestion: false,
+		}
+	}
+
+	#[test]
+	fn catch_all_severity_grades_by_provider_and_signals() {
+		// Not catch-all at all.
+		let mut clean = catch_all_signals(false);
+		clean.smtp_is_catch_all = false;
+		assert_eq!(catch_all_severity(&clean), None);
+
+		// Free provider, nothing else wrong.
+		assert_eq!(
+			catch_all_severity(&catch_all_signals(true)),
+			Some(CatchAllSeverity::Low)
+		);
+
+		// Corporate domain. The bounce-risk model weights this higher.
+		assert_eq!(
+			catch_all_severity(&catch_all_signals(false)),
+			Some(CatchAllSeverity::High)
+		);
+	}
+
+	#[test]
+	fn every_aggravating_signal_pushes_a_free_provider_to_high() {
+		// Each signal below, on its own, must be enough to lose the Low tier.
+		// If someone adds a negative signal to ScoringSignals and forgets to
+		// list it in catch_all_severity, add the case here and this fails.
+		let mutators: [(&str, SignalMutator); 13] = [
+			("valid_syntax", |s| s.valid_syntax = false),
+			("reachable_risky", |s| s.reachable = Reachable::Risky),
+			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
+			("smtp_error", |s| s.smtp_error = true),
+			("smtp_is_deliverable", |s| s.smtp_is_deliverable = false),
+			("smtp_is_disabled", |s| s.smtp_is_disabled = true),
+			("is_role_account", |s| s.is_role_account = true),
+			("is_spam_trap_domain", |s| s.is_spam_trap_domain = true),
+			("is_disposable", |s| s.is_disposable = true),
+			("smtp_has_full_inbox", |s| s.smtp_has_full_inbox = true),
+			("has_domain_suggestion", |s| s.has_domain_suggestion = true),
+			("smtp_can_connect", |s| s.smtp_can_connect = false),
+			("has_mx_records", |s| s.has_mx_records = false),
+		];
+
+		for (name, mutate) in mutators {
+			let mut signals = catch_all_signals(true);
+			mutate(&mut signals);
+			assert_eq!(
+				catch_all_severity(&signals),
+				Some(CatchAllSeverity::High),
+				"{} must aggravate a free-provider catch-all to High",
+				name
+			);
+		}
+	}
+
+	#[test]
+	fn catch_all_severity_never_fires_without_the_catch_all_signal() {
+		// Every other signal bad, but not catch-all: still None. The tier must
+		// never leak onto a result that is not a catch-all.
+		let mut signals = catch_all_signals(false);
+		signals.smtp_is_catch_all = false;
+		signals.is_role_account = true;
+		signals.is_spam_trap_domain = true;
+		signals.is_disposable = true;
+		signals.smtp_has_full_inbox = true;
+		signals.reachable = Reachable::Unknown;
+		assert_eq!(catch_all_severity(&signals), None);
+	}
+
+	#[test]
+	fn high_tier_catch_all_is_never_safe_to_send() {
+		// The invariant the whole change rests on. Walk the signal
+		// combinations and assert safe_to_send and the tier never disagree.
+		for is_free in [true, false] {
+			for role in [true, false] {
+				for full_inbox in [true, false] {
+					let mut output = base_output();
+					output.mx = Ok(test_mx("example.com."));
+					output.smtp = Ok(SmtpDetails {
+						can_connect_smtp: true,
+						has_full_inbox: full_inbox,
+						is_catch_all: true,
+						is_deliverable: true,
+						is_disabled: false,
+					});
+					output.misc = Ok(MiscDetails {
+						is_b2c: is_free,
+						is_role_account: role,
+						..Default::default()
+					});
+					let score = compute_score(&output);
+					if catch_all_severity(&score.signals) == Some(CatchAllSeverity::High) {
+						assert!(
+							!score.safe_to_send,
+							"high tier must veto: free={} role={} full={}",
+							is_free, role, full_inbox
+						);
+					}
+				}
+			}
+		}
+	}
+
+	#[test]
+	fn catch_all_tier_drives_penalty_and_safe_to_send() {
+		let catch_all_output = |is_b2c: bool| {
+			let mut output = base_output();
+			output.mx = Ok(test_mx("example.com."));
+			output.smtp = Ok(SmtpDetails {
+				can_connect_smtp: true,
+				has_full_inbox: false,
+				is_catch_all: true,
+				is_deliverable: true,
+				is_disabled: false,
+			});
+			output.misc = Ok(MiscDetails {
+				is_b2c,
+				..Default::default()
+			});
+			compute_score(&output)
+		};
+
+		// Low tier: lighter penalty, and no longer vetoed.
+		let low = catch_all_output(true);
+		assert_eq!(low.score, 90);
+		assert_eq!(low.category, EmailCategory::Valid);
+		assert!(low.safe_to_send);
+
+		// High tier: unchanged penalty, still vetoed.
+		let high = catch_all_output(false);
+		assert_eq!(high.score, 85);
+		assert_eq!(high.category, EmailCategory::Valid);
+		assert!(!high.safe_to_send);
+	}
+
 	#[test]
 	fn safe_to_send_false_catch_all() {
 		let mut output = base_output();
@@ -508,7 +733,7 @@ mod tests {
 			is_disabled: false,
 		});
 		let score = compute_score(&output);
-		// catch-all emails are never safe to send regardless of category
+		// Corporate catch-all emails are never safe to send regardless of category.
 		assert!(!score.safe_to_send);
 	}
 

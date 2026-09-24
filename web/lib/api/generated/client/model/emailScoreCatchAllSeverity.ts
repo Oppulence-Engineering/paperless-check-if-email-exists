@@ -9,7 +9,7 @@
  */
 
 /**
- * Severity tier for catch-all domains (low=free provider, high=corporate)
+ * Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.
  */
 export type EmailScoreCatchAllSeverity =
   (typeof EmailScoreCatchAllSeverity)[keyof typeof EmailScoreCatchAllSeverity];
