@@ -1010,7 +1010,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"freshness": { "$ref": "#/components/schemas/Freshness" },
 				"domain_suggestion": { "type": "string", "description": "Suggested corrected email when a likely domain typo is detected" },
 				"normalized_email": { "type": "string", "description": "Canonical form of the email after alias/plus-address normalization" },
-				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains (low=free provider, high=corporate)" }
+				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send." }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),

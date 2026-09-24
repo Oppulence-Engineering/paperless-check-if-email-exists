@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AgeDays** | Pointer to **int64** |  | [optional]
-**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional]
+**CatchAllSeverity** | Pointer to **string** | Severity tier for catch-all domains. low&#x3D;free provider with no other negative signal; high&#x3D;corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send. | [optional]
 **Category** | [**EmailCategory**](EmailCategory.md) |  | [required]
 **DomainSuggestion** | Pointer to **string** | Suggested corrected email when a likely domain typo is detected | [optional]
 **Freshness** | Pointer to [**Freshness**](Freshness.md) |  | [optional]
