@@ -26,7 +26,7 @@ use chrono::{DateTime, Utc};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -162,8 +162,8 @@ impl PostgresStorage {
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError> {
-		if let Some(db_id) = task_db_id {
-			let upd = sqlx::query(
+		let task_result_id = if let Some(db_id) = task_db_id {
+			let updated_id = sqlx::query_scalar(
 				r#"
 				UPDATE v1_task_result
 				SET payload = $1,
@@ -192,8 +192,11 @@ impl PostgresStorage {
 				    policy_evaluation = $23,
 				    policy_decision = $24,
 				    policy_evaluated_at = $25,
+				    task_state = 'completed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
 				WHERE id = $26
+				RETURNING id
 				"#,
 			)
 			.bind(payload_json)
@@ -222,15 +225,31 @@ impl PostgresStorage {
 			.bind(&columns.policy_decision)
 			.bind(columns.policy_evaluated_at)
 			.bind(db_id)
-			.execute(&self.pg_pool)
+			.fetch_optional(&self.pg_pool)
 			.await?;
-			if upd.rows_affected() == 0 {
+			if let Some(updated_id) = updated_id {
+				updated_id
+			} else {
 				self.insert_success(task, payload_json, tenant_id, columns, extra)
-					.await?;
+					.await?
 			}
 		} else {
 			self.insert_success(task, payload_json, tenant_id, columns, extra)
-				.await?;
+				.await?
+		};
+
+		if let Err(err) = crate::list_intelligence::record_verification_change_event(
+			&self.pg_pool,
+			task_result_id,
+		)
+		.await
+		{
+			warn!(
+				target: LOG_TARGET,
+				task_result_id = task_result_id,
+				error = ?err,
+				"Failed to record verification change event"
+			);
 		}
 
 		Ok(())
@@ -243,8 +262,8 @@ impl PostgresStorage {
 		tenant_id: Option<Uuid>,
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
-	) -> Result<(), StorageError> {
-		sqlx::query(
+	) -> Result<i32, StorageError> {
+		let id = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (
 				payload, job_id, extra, result, tenant_id,
@@ -266,7 +285,7 @@ impl PostgresStorage {
 				$18, $19, $20,
 				$21, $22, $23,
 				$24, $25, $26,
-				'completed', NOW()
+				'completed'::task_state, NOW()
 			)
 			RETURNING id
 			"#,
@@ -303,7 +322,7 @@ impl PostgresStorage {
 		.fetch_one(&self.pg_pool)
 		.await?;
 
-		Ok(())
+		Ok(id)
 	}
 
 	async fn store_error(
@@ -326,6 +345,7 @@ impl PostgresStorage {
 				    error = $3,
 				    tenant_id = $4,
 				    canonical_email = COALESCE($5, canonical_email),
+				    result = NULL,
 				    score = NULL,
 				    score_category = NULL,
 				    sub_reason = NULL,
@@ -345,7 +365,10 @@ impl PostgresStorage {
 				    policy_profile_key = NULL,
 				    policy_evaluation = NULL,
 				    policy_decision = NULL,
-				    policy_evaluated_at = NULL
+				    policy_evaluated_at = NULL,
+				    task_state = 'failed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
+				    updated_at = NOW()
 				WHERE id = $6
 				"#,
 			)
@@ -380,8 +403,11 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		sqlx::query(
 			r#"
-			INSERT INTO v1_task_result (payload, job_id, extra, error, tenant_id, canonical_email, task_state, completed_at)
-			VALUES ($1, $2, $3, $4, $5, $6, 'failed', NOW())
+			INSERT INTO v1_task_result (
+				payload, job_id, extra, error, tenant_id, canonical_email,
+				task_state, completed_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, 'failed'::task_state, NOW())
 			RETURNING id
 			"#,
 		)

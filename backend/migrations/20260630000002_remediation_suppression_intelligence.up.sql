@@ -62,48 +62,107 @@ CREATE TABLE v1_suppression_events (
 CREATE INDEX idx_v1_suppression_events_entry
     ON v1_suppression_events (tenant_id, entry_id, created_at DESC);
 
-CREATE TABLE v1_remediation_plans (
-    id BIGSERIAL PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    list_id INTEGER NOT NULL REFERENCES v1_lists(id) ON DELETE CASCADE,
-    job_id INTEGER REFERENCES v1_bulk_job(id) ON DELETE SET NULL,
-    status TEXT NOT NULL DEFAULT 'completed',
-    rule_version TEXT NOT NULL,
-    options JSONB NOT NULL,
-    result_state_digest TEXT NOT NULL,
-    summary_counts JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (tenant_id, list_id, rule_version, result_state_digest, options)
-);
+-- Master already created these tables with a different shape (20260402000001).
+-- Fresh databases get the develop schema. Databases that already have the
+-- master tables are altered so both histories can migrate forward.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'v1_remediation_plans'
+    ) THEN
+        CREATE TABLE v1_remediation_plans (
+            id BIGSERIAL PRIMARY KEY,
+            tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+            list_id INTEGER NOT NULL REFERENCES v1_lists(id) ON DELETE CASCADE,
+            job_id INTEGER REFERENCES v1_bulk_job(id) ON DELETE SET NULL,
+            status TEXT NOT NULL DEFAULT 'completed',
+            rule_version TEXT NOT NULL,
+            options JSONB NOT NULL,
+            result_state_digest TEXT NOT NULL,
+            summary_counts JSONB NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (tenant_id, list_id, rule_version, result_state_digest, options)
+        );
 
-CREATE TABLE v1_remediation_rows (
-    id BIGSERIAL PRIMARY KEY,
-    plan_id BIGINT NOT NULL REFERENCES v1_remediation_plans(id) ON DELETE CASCADE,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    list_id INTEGER NOT NULL REFERENCES v1_lists(id) ON DELETE CASCADE,
-    task_result_id INTEGER REFERENCES v1_task_result(id) ON DELETE SET NULL,
-    row_index INTEGER NOT NULL,
-    classification TEXT NOT NULL,
-    rule_id TEXT NOT NULL,
-    confidence TEXT NOT NULL,
-    original_email TEXT NOT NULL,
-    effective_email TEXT NOT NULL,
-    before JSONB NOT NULL,
-    after JSONB NOT NULL,
-    reasons JSONB NOT NULL DEFAULT '[]'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (plan_id, row_index)
-);
+        CREATE TABLE v1_remediation_rows (
+            id BIGSERIAL PRIMARY KEY,
+            plan_id BIGINT NOT NULL REFERENCES v1_remediation_plans(id) ON DELETE CASCADE,
+            tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+            list_id INTEGER NOT NULL REFERENCES v1_lists(id) ON DELETE CASCADE,
+            task_result_id INTEGER REFERENCES v1_task_result(id) ON DELETE SET NULL,
+            row_index INTEGER NOT NULL,
+            classification TEXT NOT NULL,
+            rule_id TEXT NOT NULL,
+            confidence TEXT NOT NULL,
+            original_email TEXT NOT NULL,
+            effective_email TEXT NOT NULL,
+            before JSONB NOT NULL,
+            after JSONB NOT NULL,
+            reasons JSONB NOT NULL DEFAULT '[]'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (plan_id, row_index)
+        );
 
-CREATE INDEX idx_v1_remediation_rows_partition
-    ON v1_remediation_rows (tenant_id, plan_id, classification, row_index);
+        CREATE INDEX idx_v1_remediation_rows_partition
+            ON v1_remediation_rows (tenant_id, plan_id, classification, row_index);
 
-CREATE TABLE v1_remediation_exports (
-    id BIGSERIAL PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    plan_id BIGINT NOT NULL REFERENCES v1_remediation_plans(id) ON DELETE CASCADE,
-    partitions TEXT[] NOT NULL,
-    format TEXT NOT NULL DEFAULT 'csv',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+        CREATE TABLE v1_remediation_exports (
+            id BIGSERIAL PRIMARY KEY,
+            tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+            plan_id BIGINT NOT NULL REFERENCES v1_remediation_plans(id) ON DELETE CASCADE,
+            partitions TEXT[] NOT NULL,
+            format TEXT NOT NULL DEFAULT 'csv',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    ELSE
+        ALTER TABLE v1_remediation_plans
+            ADD COLUMN IF NOT EXISTS job_id INTEGER REFERENCES v1_bulk_job(id) ON DELETE SET NULL;
+        -- Develop writes plans by options JSON, not the master options_hash column.
+        ALTER TABLE v1_remediation_plans ALTER COLUMN options_hash DROP NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_v1_remediation_plan_options_identity
+            ON v1_remediation_plans (tenant_id, list_id, rule_version, result_state_digest, options);
+
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS list_id INTEGER REFERENCES v1_lists(id) ON DELETE CASCADE;
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS task_result_id INTEGER REFERENCES v1_task_result(id) ON DELETE SET NULL;
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS row_index INTEGER;
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS original_email TEXT;
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS effective_email TEXT;
+        ALTER TABLE v1_remediation_rows
+            ADD COLUMN IF NOT EXISTS reasons JSONB NOT NULL DEFAULT '[]'::jsonb;
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'v1_remediation_rows'
+              AND column_name = 'row_number'
+        ) THEN
+            ALTER TABLE v1_remediation_rows ALTER COLUMN row_number DROP NOT NULL;
+            UPDATE v1_remediation_rows
+            SET row_index = row_number
+            WHERE row_index IS NULL;
+        END IF;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_v1_remediation_rows_plan_row_index
+            ON v1_remediation_rows (plan_id, row_index);
+        CREATE INDEX IF NOT EXISTS idx_v1_remediation_rows_partition
+            ON v1_remediation_rows (tenant_id, plan_id, classification, row_index);
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'v1_remediation_exports'
+              AND column_name = 'partitions'
+              AND udt_name = 'jsonb'
+        ) THEN
+            ALTER TABLE v1_remediation_exports RENAME COLUMN partitions TO partitions_json;
+            ALTER TABLE v1_remediation_exports
+                ADD COLUMN partitions TEXT[] NOT NULL DEFAULT '{}';
+        END IF;
+    END IF;
+END $$;

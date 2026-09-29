@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::http::csv_shared::{csv_rows, ndjson_rows, TaskResultRecord, CSV_HEADER};
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
@@ -45,6 +45,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	let job_exists = sqlx::query(
 		"SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)",
 	)

@@ -58,6 +58,7 @@ GO_UNION_DOCS = {
         ],
     },
 }
+TEXT_SUFFIXES = {".go", ".json", ".md", ".ts", ".yaml", ".yml"}
 
 
 def camel_to_snake(name: str) -> str:
@@ -75,6 +76,23 @@ def required_fields(schema_name: str) -> Set[str]:
 def write_if_changed(path: Path, content: str) -> None:
     if not path.exists() or path.read_text() != content:
         path.write_text(content)
+
+
+def normalize_text_whitespace(path: Path) -> None:
+    text = path.read_text()
+    normalized = "\n".join(line.rstrip() for line in text.splitlines()).rstrip() + "\n"
+    write_if_changed(path, normalized)
+
+
+def normalize_generated_whitespace() -> None:
+    paths = [SPEC_PATH]
+    for directory in (GO_SDK_DIR, ROOT / "sdks" / "typescript" / "src"):
+        if directory.exists():
+            paths.extend(path for path in directory.rglob("*") if path.suffix in TEXT_SUFFIXES)
+
+    for path in paths:
+        if path.exists():
+            normalize_text_whitespace(path)
 
 
 def replace_or_raise(

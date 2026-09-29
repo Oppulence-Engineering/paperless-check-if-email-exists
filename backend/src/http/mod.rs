@@ -70,6 +70,22 @@ pub async fn run_warp_server(
 		idempotency::spawn_idempotency_cleanup(pool.clone());
 		crate::reputation::spawn_cache_cleanup(pool.clone());
 
+		if config.delayed_recheck.enable && config.worker.enable {
+			crate::delayed_recheck::spawn_delayed_recheck_scheduler(
+				Arc::clone(&config),
+				pool.clone(),
+			);
+			crate::delayed_recheck::spawn_delayed_recheck_cleanup(
+				Arc::clone(&config),
+				pool.clone(),
+			);
+		} else if config.delayed_recheck.enable {
+			tracing::warn!(
+				target: check_if_email_exists::LOG_TARGET,
+				"Delayed recheck is enabled but worker mode is disabled. Scheduler will not start."
+			);
+		}
+
 		if config.reverification.enable && config.worker.enable {
 			crate::reverification::spawn_reverification_scheduler(Arc::clone(&config), pool);
 		} else if config.reverification.enable {
@@ -141,10 +157,15 @@ fn required_route_scope(path: &str) -> Option<&'static str> {
 		"check_email" | "emails" => Some(scope::VERIFY),
 		"bulk" | "jobs" | "events" | "query" | "sources" => Some(scope::BULK),
 		"find_email" => Some(scope::FIND),
-		"lists" => Some(scope::LISTS),
+		"lists" | "segments" => Some(scope::LISTS),
+		"alerts" => Some(scope::VERIFY),
 		"suppressions" | "outcomes" => Some(scope::SUPPRESSIONS),
 		"reputation" => Some(scope::REPUTATION),
-		"provider-endpoints" | "reverification" => Some(scope::SETTINGS),
+		"provider-endpoints" | "reverification" | "score-policies" | "outcome-policies" => {
+			Some(scope::SETTINGS)
+		}
+		// Campaign outcome read and write scopes differ by method and are
+		// enforced in the handlers.
 		"me" => match route.split('/').nth(1) {
 			Some("settings" | "domains" | "webhook") => Some(scope::SETTINGS),
 			Some("api-keys") => Some(scope::ADMIN),
@@ -340,6 +361,7 @@ mod tests {
 				|| path.starts_with("/v1/inbound/")
 				|| path.starts_with("/v1/pipelines")
 				|| path.starts_with("/v1/comments")
+				|| path.starts_with("/v1/campaign-outcomes")
 				|| matches!(
 					path.as_str(),
 					"/v1/check-email-with-onboard" | "/v1/me" | "/v1/me/usage"

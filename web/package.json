@@ -183,7 +183,7 @@
 		"overrides": {
 			"postcss": "8.5.26",
 			"sharp": "0.35.4",
-			"undici": "6.28.0",
+			"undici": "6.28.1",
 			"hono": "4.13.5",
 			"js-yaml": "4.3.2",
 			"handlebars": "4.7.9",

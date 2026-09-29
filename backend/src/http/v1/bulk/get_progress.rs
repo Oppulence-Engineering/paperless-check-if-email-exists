@@ -27,9 +27,9 @@ use warp::Filter;
 
 use super::with_worker_read_db;
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 enum ValidStatus {
@@ -68,6 +68,8 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	conn_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	let job_rec = sqlx::query_as!(
 		JobRecord,
 		r#"

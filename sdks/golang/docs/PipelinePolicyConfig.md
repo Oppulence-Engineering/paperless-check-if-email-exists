@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **MissedRunWindowHours** | Pointer to **int32** |  | [optional]
+**PolicyId** | Pointer to **NullableInt64** |  | [optional]
 
 ## Methods
 
@@ -50,5 +51,40 @@ SetMissedRunWindowHours sets MissedRunWindowHours field to given value.
 
 HasMissedRunWindowHours returns a boolean if a field has been set.
 
+### GetPolicyId
+
+`func (o *PipelinePolicyConfig) GetPolicyId() int64`
+
+GetPolicyId returns the PolicyId field if non-nil, zero value otherwise.
+
+### GetPolicyIdOk
+
+`func (o *PipelinePolicyConfig) GetPolicyIdOk() (*int64, bool)`
+
+GetPolicyIdOk returns a tuple with the PolicyId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPolicyId
+
+`func (o *PipelinePolicyConfig) SetPolicyId(v int64)`
+
+SetPolicyId sets PolicyId field to given value.
+
+### HasPolicyId
+
+`func (o *PipelinePolicyConfig) HasPolicyId() bool`
+
+HasPolicyId returns a boolean if a field has been set.
+
+### SetPolicyIdNil
+
+`func (o *PipelinePolicyConfig) SetPolicyIdNil()`
+
+ SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+
+### UnsetPolicyId
+`func (o *PipelinePolicyConfig) UnsetPolicyId()`
+
+UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

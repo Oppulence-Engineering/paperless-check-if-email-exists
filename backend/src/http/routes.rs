@@ -151,10 +151,40 @@ api_routes!(
 		|config| crate::http::v1::lists::remediation::v1_download_remediation_export(config)
 	),
 	(
+		route_v1_lists_diff,
+		"GET",
+		"/v1/lists/{base_list_id}/diff/{compare_list_id}",
+		|config| crate::http::v1::lists::diff::v1_diff_lists(config)
+	),
+	(
 		route_v1_lists_delete,
 		"DELETE",
 		"/v1/lists/{list_id}",
 		|config| crate::http::v1::lists::delete::v1_delete_list(config)
+	),
+	(route_v1_segments_create, "POST", "/v1/segments", |config| {
+		crate::http::v1::saved_segments::v1_create_saved_segment(config)
+	}),
+	(route_v1_segments_list, "GET", "/v1/segments", |config| {
+		crate::http::v1::saved_segments::v1_list_saved_segments(config)
+	}),
+	(
+		route_v1_segments_get,
+		"GET",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_get_saved_segment(config)
+	),
+	(
+		route_v1_segments_update,
+		"PATCH",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_update_saved_segment(config)
+	),
+	(
+		route_v1_segments_delete,
+		"DELETE",
+		"/v1/segments/{segment_id}",
+		|config| crate::http::v1::saved_segments::v1_delete_saved_segment(config)
 	),
 	(
 		route_v1_pipelines_create,
@@ -297,6 +327,15 @@ api_routes!(
 	(route_v1_events, "GET", "/v1/events", |config| {
 		crate::http::v1::events::v1_list_events(config)
 	}),
+	(route_v1_alerts_list, "GET", "/v1/alerts", |config| {
+		crate::http::v1::alerts::v1_list_alerts(config)
+	}),
+	(
+		route_v1_alerts_update,
+		"PATCH",
+		"/v1/alerts/{alert_id}",
+		|config| crate::http::v1::alerts::v1_update_alert(config)
+	),
 	(
 		route_v1_email_history,
 		"GET",
@@ -443,6 +482,84 @@ api_routes!(
 		"POST",
 		"/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}",
 		|config| crate::http::v1::provider_outcomes::v1_ingest_provider_outcomes(config)
+	),
+	(
+		route_v1_score_policies_create,
+		"POST",
+		"/v1/score-policies",
+		|config| crate::http::v1::score_policies::v1_create_score_policy(config)
+	),
+	(
+		route_v1_score_policies_list,
+		"GET",
+		"/v1/score-policies",
+		|config| crate::http::v1::score_policies::v1_list_score_policies(config)
+	),
+	(
+		route_v1_score_policies_get,
+		"GET",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_get_score_policy(config)
+	),
+	(
+		route_v1_score_policies_update,
+		"PATCH",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_update_score_policy(config)
+	),
+	(
+		route_v1_score_policies_delete,
+		"DELETE",
+		"/v1/score-policies/{policy_id}",
+		|config| crate::http::v1::score_policies::v1_delete_score_policy(config)
+	),
+	(
+		route_v1_outcome_policies_create,
+		"POST",
+		"/v1/outcome-policies",
+		|config| crate::http::v1::outcome_policies::v1_create_outcome_policy(config)
+	),
+	(
+		route_v1_outcome_policies_list,
+		"GET",
+		"/v1/outcome-policies",
+		|config| crate::http::v1::outcome_policies::v1_list_outcome_policies(config)
+	),
+	(
+		route_v1_outcome_policies_get,
+		"GET",
+		"/v1/outcome-policies/{policy_id}",
+		|config| crate::http::v1::outcome_policies::v1_get_outcome_policy(config)
+	),
+	(
+		route_v1_outcome_policies_update,
+		"PATCH",
+		"/v1/outcome-policies/{policy_id}",
+		|config| crate::http::v1::outcome_policies::v1_update_outcome_policy(config)
+	),
+	(
+		route_v1_outcome_policies_delete,
+		"DELETE",
+		"/v1/outcome-policies/{policy_id}",
+		|config| crate::http::v1::outcome_policies::v1_delete_outcome_policy(config)
+	),
+	(
+		route_v1_campaign_outcomes_post,
+		"POST",
+		"/v1/campaign-outcomes",
+		|config| crate::http::v1::campaign_outcomes::v1_post_outcomes(config)
+	),
+	(
+		route_v1_campaign_outcomes_upload,
+		"POST",
+		"/v1/campaign-outcomes/upload",
+		|config| crate::http::v1::campaign_outcomes::v1_upload_outcomes(config)
+	),
+	(
+		route_v1_campaign_outcomes_list,
+		"GET",
+		"/v1/campaign-outcomes",
+		|config| crate::http::v1::campaign_outcomes::v1_list_outcomes(config)
 	),
 	(
 		route_v1_me_domains_list,
@@ -635,5 +752,9 @@ pub fn build_all_routes(config: Arc<BackendConfig>) -> ResponseFilter {
 		.iter()
 		.map(|spec| (spec.build)(Arc::clone(&config)));
 	let first = routes.next().expect("http route inventory cannot be empty");
-	routes.fold(first, |acc, next| acc.or(next).unify().boxed())
+	let api_routes = routes.fold(first, |acc, next| acc.or(next).unify().boxed());
+	api_routes
+		.or(box_route(crate::http::openapi::scalar_docs()))
+		.unify()
+		.boxed()
 }
