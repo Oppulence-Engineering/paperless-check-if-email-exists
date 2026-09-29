@@ -169,10 +169,13 @@ mod tests {
 			created.body()
 		);
 		let body: serde_json::Value = serde_json::from_slice(created.body()).unwrap();
-		assert_eq!(body["summary_counts"]["fixed"], 1);
-		assert_eq!(body["summary_counts"]["safe"], 1);
-		assert_eq!(body["summary_counts"]["review"], 1);
-		assert_eq!(body["summary_counts"]["drop"], 2);
+		// Case-normalized user@Example.COM is fixed. A role account that is
+		// still safe_to_send stays safe; invalid syntax and the active
+		// suppression are dropped.
+		assert_eq!(body["summary_counts"]["fixed"], 1, "{body}");
+		assert_eq!(body["summary_counts"]["safe"], 2, "{body}");
+		assert_eq!(body["summary_counts"]["review"], 0, "{body}");
+		assert_eq!(body["summary_counts"]["drop"], 2, "{body}");
 		let plan_id = body["id"].as_i64().unwrap();
 
 		let repeated = request()
@@ -229,7 +232,7 @@ mod tests {
 		assert!(csv.contains("remediation_classification"));
 		assert!(csv.contains("user@example.com"));
 		assert!(csv.contains("good@example.com"));
-		assert!(!csv.contains("billing@example.com"));
+		assert!(csv.contains("billing@example.com"));
 		assert!(!csv.contains("suppressed@example.com"));
 		assert!(!csv.contains("bad,"));
 	}
@@ -252,6 +255,23 @@ mod tests {
 			serde_json::json!({"0": {"email": "pending@example.com"}}),
 		)
 		.await;
+		insert_scored_task(
+			db.pool(),
+			job_id,
+			Some(tenant_id),
+			"pending@example.com",
+			Some(serde_json::json!({"list_id": list_id, "row_index": 0, "email_column": "email"})),
+			None,
+			"running",
+			None,
+			None,
+			None,
+			None,
+			None,
+			Some("pending@example.com"),
+			false,
+		)
+		.await;
 
 		let config = build_test_config(ConfigProfile::PseudoWorker, Some(db.db_url()), None).await;
 		let routes = create_routes(config);
@@ -264,7 +284,7 @@ mod tests {
 			.await;
 		assert_eq!(
 			rejected.status(),
-			StatusCode::CONFLICT,
+			StatusCode::BAD_REQUEST,
 			"{:?}",
 			rejected.body()
 		);

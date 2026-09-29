@@ -42,22 +42,20 @@ pub async fn evaluate_post_completion_actions(
 		if normalized_email.is_empty() {
 			return;
 		}
-		let result = sqlx::query(
-			r#"
-			INSERT INTO v1_suppression_entries (tenant_id, email, reason, source)
-			VALUES ($1, $2, $3, 'auto_action')
-			ON CONFLICT (tenant_id, email) DO NOTHING
-			"#,
+		let result = crate::suppression::insert_active_suppression(
+			pg_pool,
+			tenant_id,
+			&normalized_email,
+			reason,
+			"auto_action",
+			"auto_action",
+			"worker",
 		)
-		.bind(tenant_id)
-		.bind(&normalized_email)
-		.bind(reason)
-		.execute(pg_pool)
 		.await;
 
 		let domain = normalized_email.split('@').nth(1).unwrap_or("unknown");
 		match result {
-			Ok(r) if r.rows_affected() > 0 => {
+			Ok(true) => {
 				debug!(
 					target: LOG_TARGET,
 					domain = domain,

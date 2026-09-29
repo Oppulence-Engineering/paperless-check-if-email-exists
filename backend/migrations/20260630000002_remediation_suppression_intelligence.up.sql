@@ -120,6 +120,8 @@ BEGIN
     ELSE
         ALTER TABLE v1_remediation_plans
             ADD COLUMN IF NOT EXISTS job_id INTEGER REFERENCES v1_bulk_job(id) ON DELETE SET NULL;
+        -- Develop writes plans by options JSON, not the master options_hash column.
+        ALTER TABLE v1_remediation_plans ALTER COLUMN options_hash DROP NOT NULL;
         CREATE UNIQUE INDEX IF NOT EXISTS idx_v1_remediation_plan_options_identity
             ON v1_remediation_plans (tenant_id, list_id, rule_version, result_state_digest, options);
 

@@ -31,6 +31,7 @@ pub mod reverification;
 pub mod sandbox;
 pub mod scoring;
 pub mod storage;
+pub mod suppression;
 pub mod tenant;
 pub mod throttle;
 pub mod worker;
