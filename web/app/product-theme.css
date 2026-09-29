@@ -1,0 +1,1494 @@
+/*
+ * Canonical web product theme, imported directly by Electron. Keep product
+ * color, border, radius, and dark-mode changes here so the two surfaces cannot
+ * drift independently.
+ */
+
+:root {
+	--polar-50: #d7d8da;
+	--polar-100: #c7c8cc;
+	--polar-200: #aaabb1;
+	--polar-300: #9a9ba2;
+	--polar-400: #808189;
+	--polar-500: #71727a;
+	--polar-600: #27282a;
+	--polar-700: #1d1e20;
+	--polar-800: #171719;
+	--polar-900: #101011;
+	--polar-950: #090909;
+	--background: var(--bg-color, #f9fafb);
+	--background-50: #f7f8f9;
+	--background-100: #f3f4f6;
+	--background-200: #edeef1;
+	--background-300: #e5e7eb;
+	--background-400: #d7d8da;
+	--background-500: #c7c8cc;
+	--background-600: #aaabb1;
+	--background-700: #9a9ba2;
+	--foreground: var(--text-color, oklch(14.5% 0 0));
+	--card: oklch(1 0 0);
+	--card-foreground: var(--text-color, oklch(14.5% 0 0));
+	--popover: oklch(1 0 0);
+	--popover-foreground: var(--text-color, oklch(14.5% 0 0));
+	--primary: var(--main-color, oklch(20.5% 0 0));
+	--primary-foreground: oklch(98.5% 0 0);
+	--secondary: var(--background-100);
+	--secondary-foreground: var(--text-color, oklch(20.5% 0 0));
+	--muted: var(--background-100);
+	--muted-foreground: var(--sub-color, #6a7282);
+	--accent: var(--background-200);
+	--accent-foreground: var(--text-color, oklch(20.5% 0 0));
+	--destructive: var(--error-color, oklch(80% 0.22 31));
+	--destructive-foreground: var(--error-color, oklch(80% 0.22 31));
+	--border: #e5e7eb;
+	--input: #e5e7eb;
+	--ring: var(--main-color, oklch(70.8% 0 0));
+	--radius: 0.5rem;
+	--sidebar: hsl(0 0% 98%);
+	--sidebar-foreground: hsl(240 5.3% 26.1%);
+	--sidebar-primary: hsl(240 5.9% 10%);
+	--sidebar-primary-foreground: hsl(0 0% 98%);
+	--sidebar-accent: hsl(240 4.8% 95.9%);
+	--sidebar-accent-foreground: hsl(240 5.9% 10%);
+	--sidebar-border: hsl(220 13% 91%);
+	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+	--chart-1: oklch(0.646 0.222 41.116);
+	--chart-2: oklch(0.6 0.118 184.704);
+	--chart-3: oklch(0.398 0.07 227.392);
+	--chart-4: oklch(0.828 0.189 84.429);
+	--chart-5: oklch(0.769 0.188 70.08);
+	--oppulence-pink: hsla(314, 100%, 80%, 1);
+	--oppulence-yellow: hsla(38, 92%, 50%, 1);
+	--oppulence-yellow-100: hsla(45, 70%, 88%, 1);
+	--oppulence-yellow-600: hsla(40, 90%, 28%, 1);
+	--oppulence-blue: hsla(214, 72%, 51%, 1);
+	--oppulence-orange: hsla(19, 90%, 48%, 1);
+	--oppulence-green: hsla(96, 48%, 38%, 1);
+	--brand: hsla(96, 48%, 38%, 1);
+	--brand-bar: hsla(86, 52%, 64%, 1);
+	--surface: oklch(0.98 0 0);
+	--surface-foreground: var(--foreground);
+	--code: var(--surface);
+	--code-foreground: var(--surface-foreground);
+	--code-highlight: oklch(0.96 0 0);
+	--code-number: oklch(0.56 0 0);
+	--selection: oklch(0.145 0 0);
+	--selection-foreground: oklch(1 0 0);
+}
+
+.dark {
+	--background: var(--bg-color, var(--polar-950));
+	--background-50: var(--polar-900);
+	--background-100: var(--polar-800);
+	--background-200: var(--polar-700);
+	--background-300: var(--polar-600);
+	--background-400: #303134;
+	--background-500: #3c3d41;
+	--background-600: #4c4d53;
+	--background-700: #606168;
+	--foreground: var(--text-color, #f7f7f8);
+	--card: var(--polar-900);
+	--card-foreground: var(--polar-50);
+	--popover: var(--polar-900);
+	--popover-foreground: var(--polar-50);
+	--primary: #ffffff;
+	--primary-foreground: var(--polar-950);
+	--secondary: var(--polar-800);
+	--secondary-foreground: var(--polar-50);
+	--muted: var(--polar-800);
+	--muted-foreground: var(--polar-300);
+	--accent: var(--polar-700);
+	--accent-foreground: var(--polar-50);
+	--destructive: var(--error-color, oklch(80% 0.22 31));
+	--destructive-foreground: var(--error-color, oklch(80% 0.22 31));
+	--border: var(--polar-700);
+	--input: var(--polar-700);
+	--ring: var(--polar-500);
+	--sidebar: var(--polar-950);
+	--sidebar-foreground: var(--polar-50);
+	--sidebar-primary: #ffffff;
+	--sidebar-primary-foreground: var(--polar-950);
+	--sidebar-accent: var(--polar-800);
+	--sidebar-accent-foreground: var(--polar-50);
+	--sidebar-border: var(--polar-700);
+	--sidebar-ring: var(--polar-500);
+	--chart-1: oklch(0.488 0.243 264.376);
+	--chart-2: oklch(0.696 0.17 162.48);
+	--chart-3: oklch(0.769 0.188 70.08);
+	--chart-4: oklch(0.627 0.265 303.9);
+	--chart-5: oklch(0.645 0.246 16.439);
+	--oppulence-pink: hsla(314, 100%, 85%, 1);
+	--oppulence-yellow: hsla(58, 92%, 79%, 1);
+	--oppulence-yellow-100: hsla(58, 70%, 20%, 1);
+	--oppulence-yellow-600: hsla(58, 92%, 79%, 1);
+	--oppulence-blue: hsla(218, 91%, 78%, 1);
+	--oppulence-orange: hsla(19, 99%, 50%, 1);
+	--oppulence-green: hsla(156, 86%, 64%, 1);
+	--brand: hsla(96, 48%, 58%, 1);
+	--brand-bar: hsla(86, 52%, 44%, 1);
+	--surface: oklch(0.2 0 0);
+	--surface-foreground: oklch(0.708 0 0);
+	--code: var(--surface);
+	--code-foreground: var(--surface-foreground);
+	--code-highlight: oklch(0.27 0 0);
+	--code-number: oklch(0.72 0 0);
+	--selection: oklch(0.922 0 0);
+	--selection-foreground: oklch(0.205 0 0);
+}
+
+/*
+ * Settings workspace
+ * ------------------
+ * This is the canonical settings skin for both the web console and Electron.
+ * The desktop renderer imports this file directly; keep every settings-specific
+ * visual decision here instead of recreating it in App.css.
+ */
+/*
+ * Declared for both selectors on purpose. A custom property substitutes its
+ * var() at the element that declares it, so a `:root`-only block bakes in the
+ * root palette: in dark mode the product shell redefines --foreground, but
+ * --settings-copy had already resolved to the light value and inherited down
+ * as near-black text on a near-black panel. Repeating the block on the
+ * workspace re-resolves every token against the shell's palette, and the
+ * `:root` copy keeps the Electron renderer working without the wrapper class.
+ */
+:root,
+.settings-workspace {
+	--settings-canvas: var(--background);
+	--settings-rail: color-mix(in srgb, var(--foreground) 2.5%, var(--background));
+	--settings-rail-hover: color-mix(in srgb, var(--foreground) 5%, transparent);
+	--settings-rail-active: color-mix(in srgb, var(--foreground) 6%, transparent);
+	--settings-panel: color-mix(in srgb, var(--foreground) 1.5%, var(--background));
+	--settings-line: color-mix(in srgb, var(--foreground) 7%, transparent);
+	--settings-line-strong: color-mix(in srgb, var(--foreground) 12%, transparent);
+	--settings-copy: var(--foreground);
+	--settings-muted: var(--muted-foreground);
+	--settings-faint: color-mix(in srgb, var(--foreground) 42%, transparent);
+	--settings-accent: var(--foreground);
+	--settings-accent-soft: var(--background-100);
+	--settings-danger: #b64235;
+	--settings-warning: #9a6511;
+	--settings-warning-soft: #fff6dc;
+	--settings-success: var(--foreground);
+	--settings-success-soft: var(--background-100);
+}
+
+.dark,
+.dark .settings-workspace {
+	--settings-warning: #e8be70;
+	--settings-warning-soft: #332a17;
+}
+
+.settings-workspace {
+	color: var(--settings-copy);
+	background: var(--settings-canvas);
+}
+
+.settings-workspace .text-lg {
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.settings-workspace .text-sm {
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.settings-workspace .text-xs {
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+/*
+ * Square by design. One rule instead of chasing a radius through every
+ * primitive the settings surfaces borrow. Portalled content (select, dropdown)
+ * mounts outside this subtree and squares itself with `rounded-none`.
+ */
+.settings-workspace,
+.settings-workspace *,
+.settings-workspace *::before,
+.settings-workspace *::after {
+	border-radius: 0;
+}
+
+.settings-rail {
+	background: var(--settings-rail);
+	border-color: var(--settings-line);
+	color: var(--settings-copy);
+}
+
+.settings-rail-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--settings-muted) 28%, transparent) transparent;
+}
+
+/*
+ * Rail filter. Sixteen sections is more than a person should scan, so the rail
+ * narrows to what was typed and hides groups that no longer match.
+ */
+.settings-rail-search {
+	align-items: center;
+	background: color-mix(in srgb, var(--foreground) 4%, transparent);
+	border: 1px solid transparent;
+	color: var(--settings-muted);
+	display: flex;
+	gap: 7px;
+	margin: 4px 2px 6px;
+	min-height: 30px;
+	padding: 0 9px;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease;
+}
+
+.settings-rail-search:focus-within {
+	background: var(--settings-canvas);
+	border-color: var(--settings-line-strong);
+}
+
+.settings-rail-search-input {
+	background: transparent;
+	border: 0;
+	color: var(--settings-copy);
+	font-size: 12px;
+	min-width: 0;
+	outline: 0;
+	width: 100%;
+}
+
+.settings-rail-search-input::placeholder {
+	color: var(--settings-faint);
+}
+
+/* The native affordance is round and off-palette; the rail owns the clear. */
+.settings-rail-search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.settings-rail-empty {
+	color: var(--settings-faint);
+	font-size: 12px;
+	line-height: 1.5;
+	padding: 12px;
+}
+
+/* Keyboard users get the same active marker the pointer gets. */
+.settings-back:focus-visible,
+.settings-nav-item:focus-visible {
+	box-shadow: inset 2px 0 0 0 var(--settings-accent);
+	outline: 1px solid var(--settings-line-strong);
+	outline-offset: -1px;
+}
+
+/* Button defaults center content; settings rail must read like a left nav. */
+.settings-rail-footer a,
+.settings-rail-footer button {
+	justify-content: flex-start;
+	text-align: left;
+}
+
+.settings-rail-heading {
+	color: var(--settings-faint);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	line-height: 1;
+	padding: 16px 12px 4px;
+	text-align: left;
+	text-transform: uppercase;
+}
+
+.settings-back,
+.settings-nav-item {
+	align-items: center;
+	border: 0;
+	color: var(--settings-muted);
+	display: flex;
+	font: inherit;
+	justify-content: flex-start;
+	text-align: left;
+}
+
+.settings-back {
+	font-size: 11px;
+	gap: 7px;
+	min-height: 32px;
+	padding: 0 12px;
+	width: 100%;
+}
+
+.settings-back:hover {
+	color: var(--settings-copy);
+}
+
+.settings-nav-item {
+	border-radius: 0;
+	font-size: 13px;
+	gap: 8px;
+	min-height: 32px;
+	padding: 6px 10px 6px 12px;
+	transition:
+		background-color 140ms ease,
+		box-shadow 140ms ease,
+		color 140ms ease;
+	width: 100%;
+}
+
+.settings-nav-item:hover {
+	background: var(--settings-rail-hover);
+	color: var(--settings-copy);
+}
+
+.settings-nav-item[data-active="true"] {
+	background: var(--settings-rail-active);
+	box-shadow: inset 2px 0 0 0 var(--settings-accent);
+	color: var(--settings-copy);
+	font-weight: 520;
+}
+
+.settings-nav-item svg {
+	height: 14px;
+	opacity: 0.85;
+	width: 14px;
+}
+
+.settings-beta {
+	background: var(--settings-warning-soft);
+	border-radius: 0;
+	color: var(--settings-warning);
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	margin-left: auto;
+	padding: 2px 5px;
+	text-transform: uppercase;
+}
+
+.settings-stage {
+	background: var(--settings-canvas);
+	color: var(--settings-copy);
+	min-width: 0;
+}
+
+.settings-stage-header {
+	align-items: center;
+	background: color-mix(in srgb, var(--settings-canvas) 88%, transparent);
+	backdrop-filter: blur(8px);
+	border-bottom: 1px solid var(--settings-line);
+	display: flex;
+	flex: 0 0 44px;
+	gap: 8px;
+	justify-content: space-between;
+	min-height: 44px;
+	padding: 0 20px;
+}
+
+.settings-stage-header-title {
+	color: var(--settings-muted);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+}
+
+.settings-page-scroll {
+	background: var(--settings-canvas);
+	overflow: auto;
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--settings-muted) 24%, transparent) transparent;
+}
+
+.settings-page {
+	margin: 0;
+	max-width: none;
+	padding: 44px clamp(28px, 4.5vw, 72px) 96px;
+	width: 100%;
+}
+
+.settings-page--wide {
+	max-width: none;
+}
+
+.settings-page-title {
+	color: var(--settings-copy);
+	font-size: clamp(1.8rem, 2.6vw, 2.35rem);
+	font-weight: 620;
+	letter-spacing: -0.045em;
+	line-height: 1.08;
+}
+
+.settings-page-description {
+	color: var(--settings-muted);
+	font-size: 13px;
+	line-height: 1.6;
+	margin-top: 10px;
+	max-width: 48rem;
+}
+
+.settings-divider {
+	display: none;
+}
+
+.settings-page-intro {
+	border-bottom: 1px solid var(--settings-line);
+	margin-bottom: 32px;
+	padding-bottom: 24px;
+}
+
+.settings-overview-grid {
+	display: grid;
+	gap: 20px;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settings-overview-group {
+	background: var(--settings-panel);
+	border: 1px solid var(--settings-line);
+	border-radius: 0;
+	min-width: 0;
+	padding: 18px;
+}
+
+.settings-section-kicker {
+	color: var(--settings-muted);
+	font-size: 12px;
+	font-weight: 610;
+	margin-bottom: 10px;
+}
+
+.settings-card-grid,
+.settings-link-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.settings-card,
+.settings-link-row {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--settings-line);
+	border-radius: 0;
+	color: var(--settings-copy);
+	display: flex;
+	gap: 12px;
+	min-height: 58px;
+	padding: 12px 0;
+	text-align: left;
+	transition:
+		color 140ms ease,
+		opacity 140ms ease;
+	width: 100%;
+}
+
+.settings-link-list > :first-child,
+.settings-card-grid > :first-child {
+	border-top: 1px solid var(--settings-line);
+}
+
+.settings-overview-group .settings-link-row {
+	border: 0;
+	border-radius: 0;
+	min-height: 64px;
+	padding: 12px;
+	white-space: normal;
+}
+
+.settings-overview-group .settings-link-list > :first-child {
+	border-top: 0;
+}
+
+.settings-card:hover,
+.settings-link-row:hover {
+	background: var(--settings-rail-hover);
+	color: var(--settings-copy);
+}
+
+.settings-card-icon,
+.settings-link-row-icon {
+	align-items: center;
+	color: var(--settings-muted);
+	display: flex;
+	flex: 0 0 16px;
+	height: 16px;
+	justify-content: center;
+}
+
+.settings-card-icon svg,
+.settings-link-row-icon svg {
+	height: 15px;
+	opacity: 0.72;
+	width: 15px;
+}
+
+.settings-card-copy,
+.settings-link-row-copy {
+	min-width: 0;
+}
+
+.settings-card-title,
+.settings-link-row-title {
+	display: block;
+	font-size: 13px;
+	font-weight: 520;
+	letter-spacing: -0.01em;
+}
+
+.settings-card-description,
+.settings-link-row-description {
+	color: var(--settings-muted);
+	display: block;
+	font-size: 12px;
+	line-height: 1.45;
+	margin-top: 2px;
+}
+
+.settings-section-block {
+	margin-top: 32px;
+}
+
+.settings-section-block:first-of-type {
+	margin-top: 0;
+}
+
+.settings-section-heading {
+	align-items: flex-start;
+	display: flex;
+	gap: 20px;
+	justify-content: space-between;
+	margin-bottom: 12px;
+	padding: 0 2px;
+}
+
+.settings-section-title {
+	color: var(--settings-copy);
+	font-size: 13px;
+	font-weight: 620;
+	letter-spacing: -0.01em;
+}
+
+.settings-section-description {
+	color: var(--settings-muted);
+	font-size: 12px;
+	line-height: 1.5;
+	margin-top: 4px;
+	max-width: 36rem;
+	text-transform: none;
+}
+
+.settings-panel {
+	background: var(--settings-panel);
+	border: 1px solid var(--settings-line);
+	border-radius: 0;
+	overflow: hidden;
+}
+
+.settings-panel > .settings-row:first-child {
+	border-top: 0;
+}
+
+.settings-row {
+	align-items: center;
+	border-top: 1px solid var(--settings-line);
+	display: flex;
+	gap: 20px;
+	justify-content: space-between;
+	min-height: 64px;
+	padding: 15px 18px;
+}
+
+.settings-row:first-child {
+	border-top: 0;
+}
+
+.settings-row-copy {
+	min-width: 0;
+}
+
+.settings-row-label {
+	color: var(--settings-copy);
+	font-size: 13px;
+	font-weight: 580;
+}
+
+.settings-row-description {
+	color: var(--settings-muted);
+	font-size: 12px;
+	line-height: 1.45;
+	margin-top: 3px;
+	max-width: 560px;
+}
+
+/*
+ * The native file button is the one control the browser paints itself. Style
+ * the ::file-selector-button so it matches the squared system instead of
+ * landing as a grey OS pill inside a bordered box.
+ */
+.settings-workspace input[type="file"] {
+	align-items: center;
+	color: var(--settings-muted);
+	display: flex;
+	font-size: 12px;
+	padding: 0;
+}
+
+.settings-workspace input[type="file"]::file-selector-button {
+	background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+	border: 0;
+	border-right: 1px solid var(--settings-line-strong);
+	color: var(--settings-copy);
+	cursor: pointer;
+	font: inherit;
+	font-weight: 560;
+	height: 100%;
+	margin-right: 10px;
+	padding: 0 12px;
+	transition: background-color 140ms ease;
+}
+
+.settings-workspace input[type="file"]::file-selector-button:hover {
+	background: color-mix(in srgb, var(--foreground) 8%, var(--background));
+}
+
+.settings-workspace input[type="file"]:disabled::file-selector-button {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/* Member rows: a square initial tile reads as a person without an image. */
+.settings-avatar {
+	align-items: center;
+	background: color-mix(in srgb, var(--foreground) 6%, var(--background));
+	border: 1px solid var(--settings-line);
+	color: var(--settings-muted);
+	display: inline-flex;
+	flex: 0 0 28px;
+	font-size: 11px;
+	font-weight: 600;
+	height: 28px;
+	justify-content: center;
+	letter-spacing: 0.02em;
+	width: 28px;
+}
+
+.settings-subheading {
+	color: var(--settings-copy);
+	font-size: 12px;
+	font-weight: 600;
+	padding-top: 4px;
+}
+
+.settings-empty-line {
+	color: var(--settings-faint);
+	font-size: 12px;
+}
+
+.settings-status {
+	align-items: center;
+	display: inline-flex;
+	font-size: 10px;
+	gap: 5px;
+}
+
+.settings-status::before {
+	background: currentColor;
+	border-radius: 0;
+	content: "";
+	height: 5px;
+	width: 5px;
+}
+
+.settings-status--ok {
+	color: var(--settings-success);
+}
+
+.settings-status--warn {
+	color: var(--settings-warning);
+}
+
+.settings-inline-notice {
+	background: var(--settings-success-soft);
+	border: 1px solid color-mix(in srgb, var(--settings-success) 18%, transparent);
+	border-radius: 0;
+	color: var(--settings-success);
+	font-size: 10px;
+	margin-top: 16px;
+	padding: 12px 14px;
+}
+
+.settings-preview {
+	background: var(--settings-panel);
+	border: 1px solid var(--settings-line);
+	border-radius: 0;
+	overflow: hidden;
+}
+
+.settings-preview img {
+	display: block;
+	height: auto;
+	max-height: 330px;
+	object-fit: cover;
+	object-position: top;
+	width: 100%;
+}
+
+.settings-choice-grid {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settings-choice {
+	background: color-mix(in srgb, var(--foreground) 3%, var(--background));
+	border: 1px solid var(--settings-line);
+	border-radius: 0;
+	color: var(--settings-copy);
+	padding: 12px;
+	text-align: left;
+	transition:
+		border-color 140ms ease,
+		box-shadow 140ms ease;
+}
+
+.settings-choice:hover,
+.settings-choice[data-selected="true"] {
+	border-color: var(--settings-line-strong);
+}
+
+.settings-choice[data-selected="true"] {
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--settings-accent) 18%, transparent);
+}
+
+.settings-choice-label {
+	display: block;
+	font-size: 10px;
+	font-weight: 610;
+	padding: 8px 2px 2px;
+}
+
+.settings-control,
+.settings-select,
+.settings-button {
+	border-radius: 0;
+	font: inherit;
+	font-size: 13px;
+	min-height: 31px;
+}
+
+.settings-control,
+.settings-select {
+	background: var(--settings-panel);
+	border: 1px solid var(--settings-line-strong);
+	color: var(--settings-copy);
+	outline: 0;
+	padding: 0 10px;
+}
+
+.settings-control:focus,
+.settings-select:focus {
+	border-color: color-mix(in srgb, var(--settings-accent) 55%, var(--settings-line));
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--settings-accent) 10%, transparent);
+}
+
+.settings-button {
+	align-items: center;
+	background: var(--settings-panel);
+	border: 1px solid var(--settings-line-strong);
+	color: var(--settings-copy);
+	display: inline-flex;
+	font-weight: 570;
+	gap: 6px;
+	justify-content: center;
+	padding: 0 11px;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease;
+}
+
+.settings-button:hover {
+	background: color-mix(in srgb, var(--settings-rail) 54%, var(--settings-panel));
+	border-color: color-mix(in srgb, var(--settings-copy) 22%, var(--settings-line));
+}
+
+.settings-button--primary {
+	background: var(--settings-copy);
+	border-color: var(--settings-copy);
+	color: var(--settings-panel);
+}
+
+.settings-button--primary:hover {
+	background: color-mix(in srgb, var(--settings-copy) 88%, var(--settings-panel));
+}
+
+.settings-button:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+/*
+ * A squared switch loses the pill silhouette that carried its meaning, so the
+ * track and the thumb both need a real edge. Without one the off state is a
+ * white thumb on a near-white track and reads as empty space.
+ */
+.settings-workspace [data-slot="switch"] {
+	/* WCAG asks a control to carry 3:1 against its surroundings; the hairline
+     used elsewhere in the skin measures about 1.2:1 at this size. */
+	border-color: color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+
+.settings-workspace [data-slot="switch"][data-state="unchecked"] {
+	background: color-mix(in srgb, var(--foreground) 16%, var(--background));
+}
+
+.settings-workspace [data-slot="switch"][data-state="unchecked"] [data-slot="switch-thumb"] {
+	background: var(--settings-canvas);
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+
+.settings-switch {
+	background: color-mix(in srgb, var(--foreground) 16%, var(--background));
+	border: 1px solid color-mix(in srgb, var(--foreground) 50%, transparent);
+	border-radius: 0;
+	height: 18px;
+	padding: 2px;
+	transition: background-color 140ms ease;
+	width: 32px;
+}
+
+.settings-switch::after {
+	background: var(--settings-panel);
+	border-radius: 0;
+	box-shadow: 0 1px 3px rgba(24, 35, 39, 0.2);
+	content: "";
+	display: block;
+	height: 14px;
+	transform: translateX(0);
+	transition: transform 140ms ease;
+	width: 14px;
+}
+
+.settings-switch[aria-checked="true"] {
+	background: var(--settings-accent);
+}
+
+.settings-switch[aria-checked="true"]::after {
+	transform: translateX(14px);
+}
+
+/* The ask sheet holds a full loom, so its body owns the remaining space. */
+.ask-sheet-body {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+}
+
+/* The loom is a grid that sizes to its content; in the sheet it takes the room. */
+.ask-sheet-body > * {
+	flex: 1;
+	min-width: 0;
+}
+
+/* First run: the only screen a new workspace has before it has anything. */
+.first-run {
+	border: 1px solid var(--border);
+	margin: 14px 14px 0;
+	padding: 14px;
+}
+
+.first-run-head {
+	align-items: flex-start;
+	display: flex;
+	gap: 12px;
+	justify-content: space-between;
+}
+
+.first-run-title {
+	color: var(--text-primary);
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.first-run-progress {
+	color: var(--text-muted);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 11px;
+	margin: 2px 0 0;
+}
+
+.first-run-steps {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+}
+
+.first-run-step {
+	align-items: center;
+	border-top: 1px solid var(--border);
+	display: grid;
+	gap: 10px;
+	grid-template-columns: 1rem minmax(0, 1fr) auto;
+	padding: 10px 0;
+}
+
+.first-run-mark {
+	color: var(--text-muted);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 12px;
+	text-align: center;
+}
+
+.first-run-step[data-done="false"] .first-run-mark::before {
+	border: 1px solid var(--border);
+	content: "";
+	display: block;
+	height: 10px;
+	margin: 0 auto;
+	width: 10px;
+}
+
+.first-run-copy {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.first-run-step-title {
+	color: var(--text-primary);
+	font-size: 13px;
+}
+
+.first-run-step[data-done="true"] .first-run-step-title {
+	color: var(--text-muted);
+}
+
+.first-run-step-description {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.first-run-done {
+	color: var(--text-muted);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 11px;
+}
+
+/*
+ * The loom
+ * --------
+ * The assistant surface. A run is a record of work, so it is drawn as one:
+ * a numbered spine of moves on the left, the yield those moves produced on
+ * the right, and a single density dial instead of twenty expand toggles.
+ * Monochrome by default — colour is reserved for "this needs a person".
+ */
+.loom {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	height: 100%;
+	min-height: 0;
+}
+
+.loom-bar {
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
+	min-height: 38px;
+	padding: 0 14px;
+}
+
+.loom-bar-strip {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.loom-dial {
+	display: flex;
+	flex: 0 0 auto;
+}
+
+.loom-dial-option {
+	background: transparent;
+	border: 1px solid var(--border);
+	color: var(--text-muted);
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	margin-left: -1px;
+	padding: 3px 9px;
+	transition:
+		background-color 120ms ease,
+		color 120ms ease;
+}
+
+.loom-dial-option:hover {
+	color: var(--text-primary);
+}
+
+.loom-dial-option[aria-pressed="true"] {
+	background: var(--text-primary);
+	border-color: var(--text-primary);
+	color: var(--surface-2);
+}
+
+.loom-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+	min-height: 0;
+}
+
+.loom-spine-scroll {
+	min-height: 0;
+	overflow-y: auto;
+	padding: 10px 0 24px;
+	scrollbar-width: thin;
+}
+
+.loom-spine {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+}
+
+/*
+ * One row per move. The four columns never move, so a run reads down the
+ * index and the verb the way a ledger does.
+ */
+.loom-move-head {
+	align-items: baseline;
+	background: transparent;
+	border: 0;
+	border-left: 2px solid transparent;
+	color: var(--text-secondary);
+	display: grid;
+	font: inherit;
+	gap: 10px;
+	grid-template-columns: 1.75rem 4rem minmax(0, 1fr) auto;
+	padding: 5px 14px 5px 12px;
+	text-align: left;
+	transition: background-color 120ms ease;
+	width: 100%;
+}
+
+.loom-move-head:hover {
+	background: var(--surface-hover);
+}
+
+.loom-move-head:focus-visible {
+	outline: 1px solid var(--text-muted);
+	outline-offset: -2px;
+}
+
+.loom-move[data-selected="true"] .loom-move-head {
+	background: var(--surface-hover);
+	border-left-color: var(--text-primary);
+}
+
+.loom-move-index,
+.loom-move-verb,
+.loom-move-time {
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 11px;
+}
+
+.loom-move-index {
+	color: color-mix(in srgb, var(--text-muted) 65%, transparent);
+	text-align: right;
+}
+
+.loom-move-verb {
+	color: var(--text-muted);
+	letter-spacing: 0.06em;
+}
+
+/* The two verbs a person actually authored carry the weight. */
+.loom-move[data-verb="ask"] .loom-move-verb,
+.loom-move[data-verb="answer"] .loom-move-verb {
+	color: var(--text-primary);
+}
+
+.loom-move[data-verb="think"] .loom-move-verb {
+	opacity: 0.55;
+}
+
+.loom-move[data-status="waiting"] .loom-move-verb,
+.loom-move[data-verb="approve"] .loom-move-verb {
+	color: var(--settings-warning);
+}
+
+.loom-move[data-status="failed"] .loom-move-verb,
+.loom-move[data-status="failed"] .loom-move-label {
+	color: var(--settings-danger);
+}
+
+.loom-move-label {
+	color: var(--text-secondary);
+	font-size: 13px;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loom-move[data-verb="ask"] .loom-move-label,
+.loom-move[data-verb="answer"] .loom-move-label {
+	color: var(--text-primary);
+}
+
+.loom-move-time {
+	color: color-mix(in srgb, var(--text-muted) 70%, transparent);
+}
+
+.loom-move-detail {
+	border-left: 1px solid var(--border);
+	margin: 2px 14px 10px 2.4rem;
+	padding: 6px 0 6px 12px;
+}
+
+.loom-move-prose {
+	color: var(--text-secondary);
+	font-size: 13px;
+	line-height: 1.6;
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.loom-move-raw {
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	color: var(--text-secondary);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 11.5px;
+	line-height: 1.55;
+	margin: 0;
+	max-height: 320px;
+	overflow: auto;
+	padding: 8px 10px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.loom-move--live .loom-move-head {
+	cursor: default;
+}
+
+.loom-move--live .loom-move-verb {
+	animation: loom-pulse 1.4s ease-in-out infinite;
+	color: var(--text-primary);
+}
+
+@keyframes loom-pulse {
+	50% {
+		opacity: 0.35;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loom-move--live .loom-move-verb {
+		animation: none;
+	}
+}
+
+.loom-openings {
+	padding: 28px 14px 14px;
+}
+
+.loom-openings-note {
+	color: var(--text-muted);
+	font-size: 13px;
+	margin: 0 0 12px;
+}
+
+.loom-opening {
+	border-top: 1px solid var(--border);
+}
+
+.loom-opening:last-child {
+	border-bottom: 1px solid var(--border);
+}
+
+.loom-opening-body {
+	align-items: baseline;
+	background: transparent;
+	border: 0;
+	color: var(--text-secondary);
+	display: grid;
+	font: inherit;
+	gap: 10px;
+	grid-template-columns: 1.75rem 4rem minmax(0, 1fr);
+	padding: 9px 4px;
+	text-align: left;
+	transition: background-color 120ms ease;
+	width: 100%;
+}
+
+.loom-opening-body:hover {
+	background: var(--surface-hover);
+	color: var(--text-primary);
+}
+
+.loom-opening-title {
+	font-size: 13px;
+}
+
+/* The yield: durable output, held still while the spine keeps moving. */
+.loom-yield {
+	border-left: 1px solid var(--border);
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 14px 12px 24px;
+	scrollbar-width: thin;
+}
+
+.loom-yield-heading {
+	align-items: center;
+	color: var(--text-muted);
+	display: flex;
+	font-size: 10px;
+	font-weight: 600;
+	gap: 6px;
+	letter-spacing: 0.08em;
+	margin: 0 0 8px;
+	text-transform: uppercase;
+}
+
+.loom-yield-group[data-group="waiting"] .loom-yield-heading {
+	color: var(--settings-warning);
+}
+
+.loom-count {
+	color: var(--text-muted);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-weight: 400;
+}
+
+.loom-tiles {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.loom-tile {
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	border-left-width: 2px;
+}
+
+.loom-tile--pending {
+	border-left-color: var(--settings-warning);
+}
+
+.loom-tile--error {
+	border-left-color: var(--settings-danger);
+}
+
+.loom-tile--selected {
+	border-color: var(--text-primary);
+}
+
+.loom-tile-body {
+	background: transparent;
+	border: 0;
+	color: inherit;
+	display: block;
+	font: inherit;
+	padding: 8px 10px;
+	text-align: left;
+	width: 100%;
+}
+
+.loom-tile-body:hover .loom-tile-title {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.loom-tile-kind {
+	color: var(--text-muted);
+	display: block;
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 10px;
+	letter-spacing: 0.06em;
+}
+
+.loom-tile-title {
+	color: var(--text-primary);
+	display: block;
+	font-size: 13px;
+	margin-top: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loom-tile-subtitle {
+	color: var(--text-muted);
+	display: -webkit-box;
+	font-size: 12px;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	margin-top: 2px;
+	overflow: hidden;
+}
+
+.loom-tile-actions {
+	border-top: 1px solid var(--border);
+	display: flex;
+	gap: 6px;
+	padding: 8px 10px;
+}
+
+.loom-empty {
+	color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+	font-size: 12px;
+	line-height: 1.5;
+	margin: 0;
+}
+
+.loom-footer {
+	border-top: 1px solid var(--border);
+	padding: 10px 14px 12px;
+}
+
+.loom-keys {
+	color: color-mix(in srgb, var(--text-muted) 75%, transparent);
+	font-size: 11px;
+	margin: 8px 0 0;
+	text-align: center;
+}
+
+.loom-keys kbd {
+	border: 1px solid var(--border);
+	font-family: var(--font-geist-mono, ui-monospace), ui-monospace, monospace;
+	font-size: 10px;
+	margin: 0 1px;
+	padding: 1px 4px;
+}
+
+@media (max-width: 900px) {
+	.loom-body {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) auto;
+	}
+
+	.loom-yield {
+		border-left: 0;
+		border-top: 1px solid var(--border);
+		max-height: 38vh;
+	}
+
+	.loom-keys {
+		display: none;
+	}
+}
+
+/*
+ * Shared compact brand lockup used by the web and Electron titlebars.
+ * The source PNG has large transparent margins, so the mark is optically
+ * cropped here instead of letting each surface compensate independently.
+ */
+.oppulence-compact-lockup {
+	align-items: center;
+	display: inline-flex;
+	gap: 8px;
+}
+
+/*
+ * The mark is square and fills its box. The previous rules framed a narrow
+ * 14x20 window onto an oversized, negatively-offset image to crop the old
+ * feather's tall silhouette; applied to the square four-tile mark that window
+ * sliced off the right-hand tiles.
+ */
+.oppulence-compact-lockup__mark {
+	display: block;
+	flex: 0 0 auto;
+	height: 20px;
+	position: relative;
+	width: 20px;
+}
+
+.oppulence-compact-lockup__mark-image {
+	border-radius: 0;
+	height: 20px;
+	max-width: none;
+	width: 20px;
+}
+
+.oppulence-compact-lockup__wordmark {
+	color: var(--foreground);
+	font-family: var(--font-geist-sans, "Geist Variable"), ui-sans-serif, sans-serif;
+	font-size: 19px;
+	font-weight: 600;
+	letter-spacing: -0.035em;
+	line-height: 1;
+}
+
+/*
+ * The Electron titlebar is only 48px tall, so it uses the same lockup at a
+ * denser optical size. The web header keeps the roomier default above.
+ */
+.oppulence-compact-lockup--desktop {
+	gap: 6px;
+}
+
+.oppulence-compact-lockup--desktop .oppulence-compact-lockup__mark {
+	height: 16px;
+	width: 16px;
+}
+
+.oppulence-compact-lockup--desktop .oppulence-compact-lockup__mark-image {
+	height: 16px;
+	width: 16px;
+}
+
+.oppulence-compact-lockup--desktop .oppulence-compact-lockup__wordmark {
+	font-size: 14px;
+	line-height: 14px;
+}
+
+@media (max-width: 900px) {
+	.settings-overview-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.settings-page {
+		padding: 32px 24px 72px;
+	}
+}
+
+@media (max-width: 720px) {
+	.settings-overview-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.settings-choice-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.settings-page {
+		padding: 28px 18px 56px;
+	}
+
+	.settings-page-title {
+		font-size: 1.75rem;
+	}
+
+	.settings-row {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 12px;
+	}
+}
+
+/*
+ * Authenticated product shell viewport rules live in
+ * app/(product)/product-sim-theme.css (Sim.ai tokens + 80% transform scale on shell).
+ */

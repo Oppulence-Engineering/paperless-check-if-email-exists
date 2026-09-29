@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 **Id** | **int32** |  | [required]
 **JobId** | **int32** |  | [required]
 **Name** | **string** |  | [required]
-**PolicyId** | Pointer to **NullableInt64** |  | [optional]
+**SourceKey** | Pointer to **NullableString** |  | [optional]
 **Status** | **string** |  | [required]
 **Summary** | [**ListSummary**](ListSummary.md) |  | [required]
 **TotalRows** | **int32** |  | [required]
@@ -150,41 +150,41 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetPolicyId
+### GetSourceKey
 
-`func (o *ListDetailResponse) GetPolicyId() int64`
+`func (o *ListDetailResponse) GetSourceKey() string`
 
-GetPolicyId returns the PolicyId field if non-nil, zero value otherwise.
+GetSourceKey returns the SourceKey field if non-nil, zero value otherwise.
 
-### GetPolicyIdOk
+### GetSourceKeyOk
 
-`func (o *ListDetailResponse) GetPolicyIdOk() (*int64, bool)`
+`func (o *ListDetailResponse) GetSourceKeyOk() (*string, bool)`
 
-GetPolicyIdOk returns a tuple with the PolicyId field if it's non-nil, zero value otherwise
+GetSourceKeyOk returns a tuple with the SourceKey field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetPolicyId
+### SetSourceKey
 
-`func (o *ListDetailResponse) SetPolicyId(v int64)`
+`func (o *ListDetailResponse) SetSourceKey(v string)`
 
-SetPolicyId sets PolicyId field to given value.
+SetSourceKey sets SourceKey field to given value.
 
-### HasPolicyId
+### HasSourceKey
 
-`func (o *ListDetailResponse) HasPolicyId() bool`
+`func (o *ListDetailResponse) HasSourceKey() bool`
 
-HasPolicyId returns a boolean if a field has been set.
+HasSourceKey returns a boolean if a field has been set.
 
-### SetPolicyIdNil
+### SetSourceKeyNil
 
-`func (o *ListDetailResponse) SetPolicyIdNil()`
+`func (o *ListDetailResponse) SetSourceKeyNil()`
 
- SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+ SetSourceKeyNil sets the value for SourceKey to be an explicit nil
 
-### UnsetPolicyId
-`func (o *ListDetailResponse) UnsetPolicyId()`
+### UnsetSourceKey
+`func (o *ListDetailResponse) UnsetSourceKey()`
 
-UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
+UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
 
 ### GetStatus
 

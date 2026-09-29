@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -111,6 +111,12 @@ type AccountAPIService service
 type AccountAPICreateTenantApiKeyRequest struct {
 	ctx context.Context
 	ApiService AccountAPI
+	createApiKeyRequest *CreateApiKeyRequest
+}
+
+func (r AccountAPICreateTenantApiKeyRequest) CreateApiKeyRequest(createApiKeyRequest CreateApiKeyRequest) AccountAPICreateTenantApiKeyRequest {
+	r.createApiKeyRequest = &createApiKeyRequest
+	return r
 }
 
 func (r AccountAPICreateTenantApiKeyRequest) Execute() (*http.Response, error) {
@@ -150,9 +156,12 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.createApiKeyRequest == nil {
+		return nil, reportError("createApiKeyRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -161,13 +170,15 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.createApiKeyRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -204,6 +215,14 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -267,7 +286,7 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -310,6 +329,14 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -369,7 +396,7 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -412,6 +439,14 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -475,7 +510,7 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -518,6 +553,14 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -528,6 +571,12 @@ type AccountAPIUpdateTenantApiKeyRequest struct {
 	ctx context.Context
 	ApiService AccountAPI
 	keyId string
+	updateApiKeyRequest *UpdateApiKeyRequest
+}
+
+func (r AccountAPIUpdateTenantApiKeyRequest) UpdateApiKeyRequest(updateApiKeyRequest UpdateApiKeyRequest) AccountAPIUpdateTenantApiKeyRequest {
+	r.updateApiKeyRequest = &updateApiKeyRequest
+	return r
 }
 
 func (r AccountAPIUpdateTenantApiKeyRequest) Execute() (*http.Response, error) {
@@ -570,9 +619,12 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.updateApiKeyRequest == nil {
+		return nil, reportError("updateApiKeyRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -581,13 +633,15 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.updateApiKeyRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -624,6 +678,14 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -683,7 +745,7 @@ func (a *AccountAPIService) V1MeExecute(r AccountAPIV1MeRequest) (*http.Response
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -726,6 +788,14 @@ func (a *AccountAPIService) V1MeExecute(r AccountAPIV1MeRequest) (*http.Response
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 

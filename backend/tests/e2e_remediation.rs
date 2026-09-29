@@ -59,7 +59,7 @@ mod tests {
 		.await;
 
 		sqlx::query(
-			"INSERT INTO v1_suppression_entries (tenant_id, email, reason) VALUES ($1, $2, 'manual'::suppression_reason)",
+			"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, $2, 'manual'::suppression_reason)",
 		)
 		.bind(tenant_id)
 		.bind("suppressed@example.com")
@@ -169,11 +169,14 @@ mod tests {
 			created.body()
 		);
 		let body: serde_json::Value = serde_json::from_slice(created.body()).unwrap();
-		assert_eq!(body["summary_counts"]["fixed"], 1);
-		assert_eq!(body["summary_counts"]["safe"], 1);
-		assert_eq!(body["summary_counts"]["review"], 1);
-		assert_eq!(body["summary_counts"]["drop"], 2);
-		let plan_id = body["plan_id"].as_i64().unwrap();
+		// Case-normalized user@Example.COM is fixed. A role account that is
+		// still safe_to_send stays safe; invalid syntax and the active
+		// suppression are dropped.
+		assert_eq!(body["summary_counts"]["fixed"], 1, "{body}");
+		assert_eq!(body["summary_counts"]["safe"], 2, "{body}");
+		assert_eq!(body["summary_counts"]["review"], 0, "{body}");
+		assert_eq!(body["summary_counts"]["drop"], 2, "{body}");
+		let plan_id = body["id"].as_i64().unwrap();
 
 		let repeated = request()
 			.path(&format!("/v1/lists/{}/remediation-plan", list_id))
@@ -182,9 +185,14 @@ mod tests {
 			.json(&serde_json::json!({}))
 			.reply(&routes)
 			.await;
-		assert_eq!(repeated.status(), StatusCode::OK, "{:?}", repeated.body());
+		assert_eq!(
+			repeated.status(),
+			StatusCode::CREATED,
+			"{:?}",
+			repeated.body()
+		);
 		let repeated_body: serde_json::Value = serde_json::from_slice(repeated.body()).unwrap();
-		assert_eq!(repeated_body["plan_id"], plan_id);
+		assert_eq!(repeated_body["id"], plan_id);
 
 		let fetched = request()
 			.path(&format!("/v1/lists/{}/remediation-plan", list_id))
@@ -194,12 +202,26 @@ mod tests {
 			.await;
 		assert_eq!(fetched.status(), StatusCode::OK, "{:?}", fetched.body());
 		let fetched_body: serde_json::Value = serde_json::from_slice(fetched.body()).unwrap();
-		assert_eq!(fetched_body["plan_id"], plan_id);
+		assert_eq!(fetched_body["id"], plan_id);
+
+		let export = request()
+			.path(&format!("/v1/lists/{}/remediation-exports", list_id))
+			.method("POST")
+			.header("Authorization", format!("Bearer {}", key))
+			.json(&serde_json::json!({
+				"plan_id": plan_id,
+				"partitions": ["safe_to_send"]
+			}))
+			.reply(&routes)
+			.await;
+		assert_eq!(export.status(), StatusCode::CREATED, "{:?}", export.body());
+		let export_body: serde_json::Value = serde_json::from_slice(export.body()).unwrap();
+		let export_id = export_body["id"].as_i64().unwrap();
 
 		let download = request()
 			.path(&format!(
-				"/v1/lists/{}/remediation-plan/{}/download?partition=combined_clean",
-				list_id, plan_id
+				"/v1/lists/{}/remediation-exports/{}/download",
+				list_id, export_id
 			))
 			.method("GET")
 			.header("Authorization", format!("Bearer {}", key))
@@ -207,10 +229,10 @@ mod tests {
 			.await;
 		assert_eq!(download.status(), StatusCode::OK, "{:?}", download.body());
 		let csv = String::from_utf8(download.body().to_vec()).unwrap();
-		assert!(csv.contains("_reacher_classification"));
+		assert!(csv.contains("remediation_classification"));
 		assert!(csv.contains("user@example.com"));
 		assert!(csv.contains("good@example.com"));
-		assert!(!csv.contains("billing@example.com"));
+		assert!(csv.contains("billing@example.com"));
 		assert!(!csv.contains("suppressed@example.com"));
 		assert!(!csv.contains("bad,"));
 	}
@@ -233,6 +255,23 @@ mod tests {
 			serde_json::json!({"0": {"email": "pending@example.com"}}),
 		)
 		.await;
+		insert_scored_task(
+			db.pool(),
+			job_id,
+			Some(tenant_id),
+			"pending@example.com",
+			Some(serde_json::json!({"list_id": list_id, "row_index": 0, "email_column": "email"})),
+			None,
+			"running",
+			None,
+			None,
+			None,
+			None,
+			None,
+			Some("pending@example.com"),
+			false,
+		)
+		.await;
 
 		let config = build_test_config(ConfigProfile::PseudoWorker, Some(db.db_url()), None).await;
 		let routes = create_routes(config);
@@ -245,7 +284,7 @@ mod tests {
 			.await;
 		assert_eq!(
 			rejected.status(),
-			StatusCode::CONFLICT,
+			StatusCode::BAD_REQUEST,
 			"{:?}",
 			rejected.body()
 		);

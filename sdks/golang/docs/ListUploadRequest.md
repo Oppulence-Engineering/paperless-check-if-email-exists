@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **EmailColumn** | Pointer to **NullableString** |  | [optional]
 **File** | ***os.File** |  | [required]
 **Name** | Pointer to **NullableString** |  | [optional]
-**PolicyId** | Pointer to **NullableInt64** |  | [optional]
+**SourceKey** | Pointer to **NullableString** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. | [optional]
 
 ## Methods
 
@@ -120,40 +120,40 @@ HasName returns a boolean if a field has been set.
 
 UnsetName ensures that no value is present for Name, not even an explicit nil
 
-### GetPolicyId
+### GetSourceKey
 
-`func (o *ListUploadRequest) GetPolicyId() int64`
+`func (o *ListUploadRequest) GetSourceKey() string`
 
-GetPolicyId returns the PolicyId field if non-nil, zero value otherwise.
+GetSourceKey returns the SourceKey field if non-nil, zero value otherwise.
 
-### GetPolicyIdOk
+### GetSourceKeyOk
 
-`func (o *ListUploadRequest) GetPolicyIdOk() (*int64, bool)`
+`func (o *ListUploadRequest) GetSourceKeyOk() (*string, bool)`
 
-GetPolicyIdOk returns a tuple with the PolicyId field if it's non-nil, zero value otherwise
+GetSourceKeyOk returns a tuple with the SourceKey field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetPolicyId
+### SetSourceKey
 
-`func (o *ListUploadRequest) SetPolicyId(v int64)`
+`func (o *ListUploadRequest) SetSourceKey(v string)`
 
-SetPolicyId sets PolicyId field to given value.
+SetSourceKey sets SourceKey field to given value.
 
-### HasPolicyId
+### HasSourceKey
 
-`func (o *ListUploadRequest) HasPolicyId() bool`
+`func (o *ListUploadRequest) HasSourceKey() bool`
 
-HasPolicyId returns a boolean if a field has been set.
+HasSourceKey returns a boolean if a field has been set.
 
-### SetPolicyIdNil
+### SetSourceKeyNil
 
-`func (o *ListUploadRequest) SetPolicyIdNil()`
+`func (o *ListUploadRequest) SetSourceKeyNil()`
 
- SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+ SetSourceKeyNil sets the value for SourceKey to be an explicit nil
 
-### UnsetPolicyId
-`func (o *ListUploadRequest) UnsetPolicyId()`
+### UnsetSourceKey
+`func (o *ListUploadRequest) UnsetSourceKey()`
 
-UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
+UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

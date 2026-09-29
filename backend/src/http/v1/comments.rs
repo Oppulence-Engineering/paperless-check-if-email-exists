@@ -10,7 +10,7 @@ use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct CreateCommentRequest {
 	job_id: Option<i32>,
 	list_id: Option<i32>,
@@ -267,6 +267,7 @@ async fn delete_handler(
 	post,
 	path = "/v1/comments",
 	tag = "Comments",
+	request_body = CreateCommentRequest,
 	responses((status = 201, description = "Comment created"))
 )]
 pub fn v1_create_comment(

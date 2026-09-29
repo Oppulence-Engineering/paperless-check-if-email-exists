@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests
         working-directory: sdks/typescript
-        run: npm test || true  # Allow tests to fail during initial setup
+        run: npm test
 
       - name: Upload TypeScript SDK artifact
         uses: actions/upload-artifact@v4
@@ -93,11 +93,14 @@ jobs:
 
       - name: Tidy Go modules
         working-directory: sdks/golang
-        run: go mod tidy
+        run: |
+          go mod edit -module=github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4
+          go mod tidy
+          test "$(go list -m)" = "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4"
 
       - name: Run Go tests
         working-directory: sdks/golang
-        run: go test ./... || true  # Allow tests to fail during initial setup
+        run: go test ./...
 
       - name: Upload Go SDK artifact
         uses: actions/upload-artifact@v4

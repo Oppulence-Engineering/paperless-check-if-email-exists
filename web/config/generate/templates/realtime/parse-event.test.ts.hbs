@@ -1,0 +1,18 @@
+import { describe, expect, it } from "vitest";
+
+{{#if hasMsw}}import { {{mswMock}} } from "{{mswImport}}";
+{{/if}}
+import { {{orvalSchema}} } from "{{orvalImport}}";
+
+import { parse{{pascalName}}Event } from "./parse-{{name}}";
+
+describe("parse{{pascalName}}Event", () => {
+  it("parses JSON through the Orval schema", () => {
+    const payload = {{orvalSchema}}.parse({{#if hasMsw}}{{mswMock}}(){{else}}{}{{/if}});
+    expect(parse{{pascalName}}Event(new MessageEvent("message", { data: JSON.stringify(payload) }))).toEqual(payload);
+  });
+
+  it("rejects non-JSON messages", () => {
+    expect(() => parse{{pascalName}}Event(new MessageEvent("message", { data: "not-json" }))).toThrow(/valid JSON/);
+  });
+});

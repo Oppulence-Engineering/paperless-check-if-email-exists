@@ -1,0 +1,191 @@
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
+import oppulenceWeb from "@oppulence/eslint-plugin-web";
+import tseslint from "typescript-eslint";
+
+import componentArchitecture from "./config/architecture/component-baseline.json" with { type: "json" };
+
+const typedFiles = [
+	"app/(product)/**/*.{ts,tsx}",
+	"lib/api/**/*.{ts,tsx}",
+	"lib/storage/**/*.{ts,tsx}",
+	"quality/**/*.{ts,tsx}",
+	"scripts/**/*.{ts,tsx}",
+];
+
+const legacyTypedFiles = [
+	"scripts/capture-marketing-screenshots.ts",
+	"scripts/seed-demo-workspace.ts",
+];
+
+// These are known migration seams in the pre-App-Router dashboard. New files
+// receive no exception; deleting an entry is the completion criterion for each
+// slice of the migration.
+const legacy = {
+	productClientEntries: [],
+	unvalidatedJson: [
+		"app/api/download/route.ts",
+		"app/api/openapi/route.ts",
+		"app/plan-response/page.tsx",
+		"components/features/agents/agent-configuration-form/agent-configuration-form.tsx",
+		"components/features/agents/agents-view/agents-view.tsx",
+		"components/features/settings/app-settings/app-settings.tsx",
+		"components/features/dashboard/app-shell/app-shell.tsx",
+		"lib/actions/actions.ts",
+		"lib/auth/client.ts",
+		"lib/workflows/cloud-workflows.ts",
+		"lib/revenue/revenue.ts",
+		"scripts/capture-marketing-screenshots.ts",
+	],
+	directFetch: [
+		"app/plan-response/page.tsx",
+		"components/ai-elements/prompt-input.tsx",
+		"lib/auth/client.ts",
+		"lib/auth/dashboard-fetch.ts",
+		"lib/auth/proxy.ts",
+		"scripts/capture-marketing-screenshots.ts",
+		"scripts/run-lighthouse.mjs",
+		"scripts/sample-jwks-backend.mjs",
+	],
+	asyncIntervals: ["components/features/workflows/cloud-workflows-view/cloud-workflows-view.tsx"],
+	browserStorage: [
+		"components/features/settings/app-settings/app-settings.tsx",
+		"components/features/dashboard/app-shell/app-shell.tsx",
+		"components/features/revenue/revenue-panel/revenue-panel.tsx",
+		"components/features/revenue/relationship-graph/relationship-graph.tsx",
+		"lib/console/console-prefs.ts",
+	],
+	sensitiveStorage: [],
+	fetchWithoutSignal: [
+		"app/plan-response/page.tsx",
+		"components/ai-elements/prompt-input.tsx",
+		"scripts/capture-marketing-screenshots.ts",
+	],
+	sensitiveConsole: [
+		"components/features/dashboard/app-shell/app-shell.tsx",
+		"components/ai-elements/prompt-input.tsx",
+		"scripts/capture-marketing-screenshots.ts",
+		"scripts/seed-demo-workspace.ts",
+	],
+};
+
+const reactCompilerRulesAsWarn = {
+	"react-hooks/set-state-in-effect": "warn",
+	"react-hooks/refs": "warn",
+	"react-hooks/immutability": "warn",
+	"react-hooks/purity": "warn",
+	"react-hooks/static-components": "warn",
+	"react-hooks/preserve-manual-memoization": "warn",
+	"react-hooks/exhaustive-deps": "warn",
+};
+
+const config = [
+	{
+		ignores: [
+			"node_modules/**",
+			".next/**",
+			// Fumadocs regenerates this directory during installation; lint the
+			// source config and authored MDX instead of generated adapter code.
+			".source/**",
+			"out/**",
+			"build/**",
+			"coverage/**",
+			"lib/api/generated/**",
+			".check-email-contracts-*/**",
+			"vendor/**",
+			"sim-port/**",
+			"next-env.d.ts",
+		],
+	},
+	...nextCoreWebVitals,
+	...nextTypescript,
+	...tseslint.config({
+		files: typedFiles,
+		extends: [...tseslint.configs.strictTypeChecked],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	}),
+	...tseslint.config({
+		files: legacyTypedFiles,
+		extends: [tseslint.configs.disableTypeChecked],
+	}),
+	...tseslint.config({
+		files: [
+			"app/**/*.test.{ts,tsx}",
+			"app/**/*.stories.{ts,tsx}",
+			"components/**/*.test.{ts,tsx}",
+			"hooks/**/*.test.{ts,tsx}",
+			"lib/**/*.test.{ts,tsx}",
+		],
+		extends: [tseslint.configs.disableTypeChecked],
+	}),
+	{
+		files: ["**/*.{jsx,tsx}"],
+		rules: Object.fromEntries(
+			Object.keys(jsxA11y.flatConfigs.recommended.rules).map((rule) => [rule, "warn"]),
+		),
+	},
+	{
+		plugins: { "oppulence-web": oppulenceWeb },
+		rules: {
+			"oppulence-web/product-pages-are-server": [
+				"error",
+				{ allowFiles: legacy.productClientEntries },
+			],
+			"oppulence-web/require-server-auth-layout": [
+				"error",
+				{ allowFiles: legacy.productClientEntries },
+			],
+			"oppulence-web/require-server-only": "error",
+			"oppulence-web/no-unvalidated-json": ["error", { allowFiles: legacy.unvalidatedJson }],
+			"oppulence-web/no-direct-api-fetch": [
+				"error",
+				{ allowFiles: legacy.directFetch, allowPaths: ["app/v1/"] },
+			],
+			"oppulence-web/no-async-setinterval": ["error", { allowFiles: legacy.asyncIntervals }],
+			"oppulence-web/no-raw-browser-storage": ["error", { allowFiles: legacy.browserStorage }],
+			"oppulence-web/no-sensitive-browser-storage": [
+				"error",
+				{ allowFiles: legacy.sensitiveStorage },
+			],
+			"oppulence-web/no-upstream-html-proxy": "error",
+			"oppulence-web/require-safe-proxy-headers": "error",
+			"oppulence-web/require-abort-signal": ["error", { allowFiles: legacy.fetchWithoutSignal }],
+			"oppulence-web/require-api-route-zod": [
+				"error",
+				{
+					allowFiles: ["app/api/auth/[...all]/route.ts", "app/api/reference/route.ts"],
+				},
+			],
+			"oppulence-web/no-raw-upstream-errors": "error",
+			"oppulence-web/no-sensitive-console": ["error", { allowFiles: legacy.sensitiveConsole }],
+			"oppulence-web/no-client-server-imports": "error",
+			"oppulence-web/standardized-component-location": [
+				"error",
+				{
+					allowFiles: componentArchitecture.legacyFiles,
+					allowPaths: [
+						...componentArchitecture.standardPaths,
+						...componentArchitecture.managedPaths,
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ["quality/eslint-plugin.test.ts"],
+		rules: Object.fromEntries(
+			Object.keys(oppulenceWeb.rules).map((rule) => [`oppulence-web/${rule}`, "off"]),
+		),
+	},
+	{
+		rules: reactCompilerRulesAsWarn,
+	},
+];
+
+export default config;

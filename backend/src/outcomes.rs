@@ -409,22 +409,19 @@ async fn add_to_suppression(
 	canonical_email: &str,
 	reason: &str,
 ) -> bool {
-	let result = sqlx::query(
-		r#"
-		INSERT INTO v1_suppression_entries (tenant_id, email, reason, source)
-		VALUES ($1, $2, $3::suppression_reason, 'outcome_feedback')
-		ON CONFLICT (tenant_id, email) DO NOTHING
-		"#,
+	let result = crate::suppression::insert_active_suppression(
+		pg_pool,
+		tenant_id,
+		canonical_email,
+		reason,
+		"outcome_feedback",
+		"outcome",
+		"outcome_ingest",
 	)
-	.bind(tenant_id)
-	.bind(canonical_email)
-	.bind(reason)
-	.execute(pg_pool)
 	.await;
 
 	match result {
-		Ok(r) if r.rows_affected() > 0 => true,
-		Ok(_) => false,
+		Ok(inserted) => inserted,
 		Err(e) => {
 			tracing::warn!(
 				target: LOG_TARGET,

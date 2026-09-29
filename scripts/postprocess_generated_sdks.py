@@ -11,6 +11,16 @@ SPEC_PATH = ROOT / "backend" / "openapi.json"
 GO_SDK_DIR = ROOT / "sdks" / "golang"
 TS_DOCS_DIR = ROOT / "sdks" / "typescript" / "src" / "docs"
 GO_DOCS_DIR = GO_SDK_DIR / "docs"
+OBSOLETE_OUTCOME_FILES = (
+    GO_SDK_DIR / "docs" / "Request.md",
+    GO_SDK_DIR / "docs" / "Response.md",
+    GO_SDK_DIR / "model_request.go",
+    GO_SDK_DIR / "model_response.go",
+    ROOT / "sdks" / "typescript" / "src" / "docs" / "Request.md",
+    ROOT / "sdks" / "typescript" / "src" / "docs" / "Response.md",
+    ROOT / "sdks" / "typescript" / "src" / "models" / "request.ts",
+    ROOT / "sdks" / "typescript" / "src" / "models" / "response.ts",
+)
 
 
 def load_schemas() -> Dict[str, Dict[str, Any]]:
@@ -591,11 +601,61 @@ def normalize_typescript_readme() -> None:
     write_if_changed(readme_path, text)
 
 
+def normalize_generated_whitespace() -> None:
+    generated_roots = (ROOT / "sdks" / "typescript" / "src", GO_SDK_DIR)
+    supported_suffixes = {".go", ".json", ".md", ".ts", ".yaml", ".yml"}
+    for generated_root in generated_roots:
+        if not generated_root.exists():
+            continue
+        for path in generated_root.rglob("*"):
+            if not path.is_file() or path.suffix not in supported_suffixes:
+                continue
+            lines = [line.rstrip() for line in path.read_text().splitlines()]
+            write_if_changed(path, "\n".join(lines).rstrip() + "\n")
+
+
+def remove_obsolete_outcome_files() -> None:
+    for path in OBSOLETE_OUTCOME_FILES:
+        if path.exists():
+            path.unlink()
+
+
+def fix_typescript_library_build() -> None:
+    sdk = ROOT / "sdks" / "typescript" / "src"
+    base = sdk / "base.ts"
+    write_if_changed(
+        base,
+        replace_or_raise(
+            base.read_text(),
+            'BASE_PATH = "http://localhost"',
+            'BASE_PATH = ""',
+            file=base,
+            label="same-origin SDK default",
+        ),
+    )
+    tsconfig = sdk / "tsconfig.json"
+    config = json.loads(tsconfig.read_text())
+    config["exclude"] = ["dist", "node_modules", "**/*.test.ts"]
+    write_if_changed(tsconfig, json.dumps(config, indent=2) + "\n")
+
+    common = sdk / "common.ts"
+    content = common.read_text().replace(
+        "configuration?: Configuration) {\n    return <T = unknown, R = AxiosResponse<T>>",
+        "configuration?: Configuration): <T = unknown, R = AxiosResponse<T>>(axios?: AxiosInstance, basePath?: string) => Promise<R> {\n    return <T = unknown, R = AxiosResponse<T>>",
+    ).replace(
+        "return axios.request<T, R>(axiosRequestArgs);",
+        "return axios.request<T, R>(axiosRequestArgs) as Promise<R>;",
+    )
+    write_if_changed(common, content)
+
+
 def main() -> None:
+    remove_obsolete_outcome_files()
     normalize_go_models()
     normalize_go_docs()
     normalize_typescript_docs()
     normalize_typescript_readme()
+    fix_typescript_library_build()
     normalize_generated_whitespace()
 
 

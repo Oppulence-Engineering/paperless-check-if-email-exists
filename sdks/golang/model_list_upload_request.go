@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -26,7 +26,8 @@ type ListUploadRequest struct {
 	EmailColumn NullableString `json:"email_column,omitempty"`
 	File *os.File `json:"file"`
 	Name NullableString `json:"name,omitempty"`
-	PolicyId NullableInt64 `json:"policy_id,omitempty"`
+	// Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+	SourceKey NullableString `json:"source_key,omitempty"`
 }
 
 type _ListUploadRequest ListUploadRequest
@@ -157,46 +158,46 @@ func (o *ListUploadRequest) UnsetName() {
 	o.Name.Unset()
 }
 
-// GetPolicyId returns the PolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ListUploadRequest) GetPolicyId() int64 {
-	if o == nil || IsNil(o.PolicyId.Get()) {
-		var ret int64
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListUploadRequest) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
 		return ret
 	}
-	return *o.PolicyId.Get()
+	return *o.SourceKey.Get()
 }
 
-// GetPolicyIdOk returns a tuple with the PolicyId field value if set, nil otherwise
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ListUploadRequest) GetPolicyIdOk() (*int64, bool) {
+func (o *ListUploadRequest) GetSourceKeyOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.PolicyId.Get(), o.PolicyId.IsSet()
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
 }
 
-// HasPolicyId returns a boolean if a field has been set.
-func (o *ListUploadRequest) HasPolicyId() bool {
-	if o != nil && o.PolicyId.IsSet() {
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListUploadRequest) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetPolicyId gets a reference to the given NullableInt64 and assigns it to the PolicyId field.
-func (o *ListUploadRequest) SetPolicyId(v int64) {
-	o.PolicyId.Set(&v)
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListUploadRequest) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
 }
-// SetPolicyIdNil sets the value for PolicyId to be an explicit nil
-func (o *ListUploadRequest) SetPolicyIdNil() {
-	o.PolicyId.Set(nil)
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListUploadRequest) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
 }
 
-// UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
-func (o *ListUploadRequest) UnsetPolicyId() {
-	o.PolicyId.Unset()
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListUploadRequest) UnsetSourceKey() {
+	o.SourceKey.Unset()
 }
 
 func (o ListUploadRequest) MarshalJSON() ([]byte, error) {
@@ -216,8 +217,8 @@ func (o ListUploadRequest) ToMap() (map[string]interface{}, error) {
 	if o.Name.IsSet() {
 		toSerialize["name"] = o.Name.Get()
 	}
-	if o.PolicyId.IsSet() {
-		toSerialize["policy_id"] = o.PolicyId.Get()
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
 	}
 	return toSerialize, nil
 }

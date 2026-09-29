@@ -112,6 +112,8 @@ mod tests {
 				canonical_email: None,
 				bounce_risk: None,
 				bounce_risk_signals: None,
+				recommendation: None,
+				policy_evaluation: None,
 			},
 		};
 

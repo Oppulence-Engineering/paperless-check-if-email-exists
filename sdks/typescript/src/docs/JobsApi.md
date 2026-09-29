@@ -1,6 +1,6 @@
 # JobsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -9,6 +9,8 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1GetBulkJobProgress**](#v1getbulkjobprogress) | **GET** /v1/bulk/{job_id} | GET /v1/bulk/{job_id}|
 |[**v1GetBulkJobResults**](#v1getbulkjobresults) | **GET** /v1/bulk/{job_id}/results | GET /v1/bulk/{job_id}/results|
 |[**v1GetJobEvents**](#v1getjobevents) | **GET** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events|
+|[**v1GetJobFailureCenter**](#v1getjobfailurecenter) | **GET** /v1/jobs/{job_id}/failure-center | Get job failure center|
+|[**v1GetJobFailureReport**](#v1getjobfailurereport) | **GET** /v1/jobs/{job_id}/failure-report | Download job failure report|
 |[**v1GetJobResults**](#v1getjobresults) | **GET** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results|
 |[**v1GetJobStatus**](#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}|
 |[**v1JobApprovalChecklist**](#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval|
@@ -56,13 +58,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job cancellation accepted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -110,13 +113,14 @@ const { status, data } = await apiInstance.v1DownloadJobResults(
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/x-ndjson, text/csv
+ - **Accept**: application/x-ndjson, text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job result download stream |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -161,13 +165,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -228,6 +233,7 @@ const { status, data } = await apiInstance.v1GetBulkJobResults(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job results |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -278,13 +284,116 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job events |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetJobFailureCenter**
+> { [key: string]: any; } v1GetJobFailureCenter()
+
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; // (default to undefined)
+
+const { status, data } = await apiInstance.v1GetJobFailureCenter(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+**{ [key: string]: any; }**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Job failure center |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetJobFailureReport**
+> File v1GetJobFailureReport()
+
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; // (default to undefined)
+
+const { status, data } = await apiInstance.v1GetJobFailureReport(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+**File**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/x-ndjson, text/csv, application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Job failure report stream |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -345,6 +454,7 @@ const { status, data } = await apiInstance.v1GetJobResults(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job result page |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -389,13 +499,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Bulk job progress summary |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -447,6 +558,59 @@ const { status, data } = await apiInstance.v1JobApprovalChecklist(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Pre-send approval checklist |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1JobLatency**
+> v1JobLatency()
+
+Returns verification latency analytics for a job (p50, p95, p99, avg, min, max).
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let jobId: number; //Bulk job identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1JobLatency(
+    jobId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **jobId** | [**number**] | Bulk job identifier | defaults to undefined|
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Latency analytics |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -549,5 +713,6 @@ const { status, data } = await apiInstance.v1RetryJob(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Retry initiated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

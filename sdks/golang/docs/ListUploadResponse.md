@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **EmailColumn** | **string** |  | [required]
 **JobId** | **int32** |  | [required]
 **ListId** | **int32** |  | [required]
+**SourceKey** | Pointer to **NullableString** |  | [optional]
 **TotalRows** | **int32** |  | [required]
 
 ## Methods
@@ -87,6 +88,42 @@ and a boolean to check if the value has been set.
 
 SetListId sets ListId field to given value.
 
+
+### GetSourceKey
+
+`func (o *ListUploadResponse) GetSourceKey() string`
+
+GetSourceKey returns the SourceKey field if non-nil, zero value otherwise.
+
+### GetSourceKeyOk
+
+`func (o *ListUploadResponse) GetSourceKeyOk() (*string, bool)`
+
+GetSourceKeyOk returns a tuple with the SourceKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSourceKey
+
+`func (o *ListUploadResponse) SetSourceKey(v string)`
+
+SetSourceKey sets SourceKey field to given value.
+
+### HasSourceKey
+
+`func (o *ListUploadResponse) HasSourceKey() bool`
+
+HasSourceKey returns a boolean if a field has been set.
+
+### SetSourceKeyNil
+
+`func (o *ListUploadResponse) SetSourceKeyNil()`
+
+ SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+
+### UnsetSourceKey
+`func (o *ListUploadResponse) UnsetSourceKey()`
+
+UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
 
 ### GetTotalRows
 

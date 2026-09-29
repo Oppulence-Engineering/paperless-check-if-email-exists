@@ -12,10 +12,12 @@ Name | Type | Description | Notes
 **is_reachable** | [**Reachable**](Reachable.md) |  | [required]
 **misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
 **mx** | [**CheckEmailOutputMx**](CheckEmailOutputMx.md) |  | [required]
+**policy_evaluation** | **any** |  | [optional]
 **provider** | [**Provider**](Provider.md) |  | [optional]
 **provider_confidence** | [**ProviderConfidence**](ProviderConfidence.md) |  | [optional]
 **provider_rejection_reason** | [**ProviderRejectionReason**](ProviderRejectionReason.md) |  | [optional]
 **provider_rules_applied** | **boolean** |  | [required]
+**recommendation** | **any** |  | [optional]
 **score** | [**EmailScore**](EmailScore.md) |  | [required]
 **smtp** | [**CheckEmailOutputSmtp**](CheckEmailOutputSmtp.md) |  | [required]
 **syntax** | [**SyntaxDetails**](SyntaxDetails.md) |  | [required]
@@ -32,10 +34,12 @@ const instance: CheckEmailOutput = {
     is_reachable: {} as any,
     misc: {} as any,
     mx: {} as any,
+    policy_evaluation: {} as any,
     provider: {} as any,
     provider_confidence: {} as any,
     provider_rejection_reason: {} as any,
     provider_rules_applied: true,
+    recommendation: {} as any,
     score: {} as any,
     smtp: {} as any,
     syntax: {} as any,

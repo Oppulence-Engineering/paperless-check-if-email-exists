@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -25,6 +25,7 @@ type ListUploadResponse struct {
 	EmailColumn string `json:"email_column"`
 	JobId int32 `json:"job_id"`
 	ListId int32 `json:"list_id"`
+	SourceKey NullableString `json:"source_key,omitempty"`
 	TotalRows int32 `json:"total_rows"`
 }
 
@@ -123,6 +124,48 @@ func (o *ListUploadResponse) SetListId(v int32) {
 	o.ListId = v
 }
 
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListUploadResponse) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceKey.Get()
+}
+
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListUploadResponse) GetSourceKeyOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
+}
+
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListUploadResponse) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListUploadResponse) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
+}
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListUploadResponse) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
+}
+
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListUploadResponse) UnsetSourceKey() {
+	o.SourceKey.Unset()
+}
+
 // GetTotalRows returns the TotalRows field value
 func (o *ListUploadResponse) GetTotalRows() int32 {
 	if o == nil {
@@ -160,6 +203,9 @@ func (o ListUploadResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["email_column"] = o.EmailColumn
 	toSerialize["job_id"] = o.JobId
 	toSerialize["list_id"] = o.ListId
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
+	}
 	toSerialize["total_rows"] = o.TotalRows
 	return toSerialize, nil
 }

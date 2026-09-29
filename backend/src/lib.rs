@@ -18,6 +18,7 @@
 
 pub mod bounce_risk;
 pub mod config;
+pub mod decision;
 pub mod delayed_recheck;
 pub mod finder;
 pub mod http;
@@ -30,6 +31,7 @@ pub mod reverification;
 pub mod sandbox;
 pub mod scoring;
 pub mod storage;
+pub mod suppression;
 pub mod tenant;
 pub mod throttle;
 pub mod worker;

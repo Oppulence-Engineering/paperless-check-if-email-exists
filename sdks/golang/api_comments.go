@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -64,6 +64,12 @@ type CommentsAPIService service
 type CommentsAPIV1CreateCommentRequest struct {
 	ctx context.Context
 	ApiService CommentsAPI
+	createCommentRequest *CreateCommentRequest
+}
+
+func (r CommentsAPIV1CreateCommentRequest) CreateCommentRequest(createCommentRequest CreateCommentRequest) CommentsAPIV1CreateCommentRequest {
+	r.createCommentRequest = &createCommentRequest
+	return r
 }
 
 func (r CommentsAPIV1CreateCommentRequest) Execute() (*http.Response, error) {
@@ -101,9 +107,12 @@ func (a *CommentsAPIService) V1CreateCommentExecute(r CommentsAPIV1CreateComment
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.createCommentRequest == nil {
+		return nil, reportError("createCommentRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -112,13 +121,15 @@ func (a *CommentsAPIService) V1CreateCommentExecute(r CommentsAPIV1CreateComment
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = r.createCommentRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -155,6 +166,14 @@ func (a *CommentsAPIService) V1CreateCommentExecute(r CommentsAPIV1CreateComment
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -216,7 +235,7 @@ func (a *CommentsAPIService) V1DeleteCommentExecute(r CommentsAPIV1DeleteComment
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -259,6 +278,14 @@ func (a *CommentsAPIService) V1DeleteCommentExecute(r CommentsAPIV1DeleteComment
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -352,7 +379,7 @@ func (a *CommentsAPIService) V1ListCommentsExecute(r CommentsAPIV1ListCommentsRe
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -395,6 +422,14 @@ func (a *CommentsAPIService) V1ListCommentsExecute(r CommentsAPIV1ListCommentsRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 

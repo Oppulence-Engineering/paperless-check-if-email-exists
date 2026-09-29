@@ -1,5 +1,5 @@
 use crate::config::BackendConfig;
-use crate::http::check_header;
+use crate::http::check_admin_header;
 use crate::http::ReacherResponseError;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
@@ -418,7 +418,7 @@ pub fn create_tenant(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants")
 		.and(warp::post())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(create_handler)
@@ -439,7 +439,7 @@ pub fn list_tenants(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants")
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::query::<ListQuery>())
 		.and_then(list_handler)
@@ -461,7 +461,7 @@ pub fn get_tenant(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String)
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(get_handler)
 		.with(warp::log(LOG_TARGET))
@@ -482,7 +482,7 @@ pub fn update_tenant(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String)
 		.and(warp::put())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(update_handler)
@@ -504,7 +504,7 @@ pub fn delete_tenant(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String)
 		.and(warp::delete())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(delete_handler)
 		.with(warp::log(LOG_TARGET))

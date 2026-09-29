@@ -1340,7 +1340,12 @@ mod list_intelligence_api_tests {
 		assert_eq!(changed.status(), StatusCode::OK);
 		let (headers, rows) = csv_records(changed.body());
 		let email_idx = headers.iter().position(|h| h == "email").unwrap();
-		let policy_idx = headers.iter().position(|h| h == "policy_decision").unwrap();
+		// Score-policy labels live in score_policy_decision. policy_decision is
+		// the persisted decision-engine column and is empty for this fixture.
+		let policy_idx = headers
+			.iter()
+			.position(|h| h == "score_policy_decision")
+			.unwrap();
 		let change_idx = headers.iter().position(|h| h == "change_type").unwrap();
 		assert_eq!(rows.len(), 2);
 		assert!(rows.iter().any(|row| {

@@ -1,6 +1,6 @@
 # \AccountAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 ## CreateTenantApiKey
 
-> CreateTenantApiKey(ctx).Execute()
+> CreateTenantApiKey(ctx).CreateApiKeyRequest(createApiKeyRequest).Execute()
 
 POST /v1/me/api-keys
 
@@ -34,10 +34,11 @@ import (
 )
 
 func main() {
+	createApiKeyRequest := *openapiclient.NewCreateApiKeyRequest() // CreateApiKeyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.CreateTenantApiKey(context.Background()).Execute()
+	r, err := apiClient.AccountAPI.CreateTenantApiKey(context.Background()).CreateApiKeyRequest(createApiKeyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.CreateTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -47,12 +48,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiCreateTenantApiKeyRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createApiKeyRequest** | [**CreateApiKeyRequest**](CreateApiKeyRequest.md) |  |
 
 ### Return type
 
@@ -64,8 +69,8 @@ Other parameters are passed through a pointer to a apiCreateTenantApiKeyRequest 
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -133,7 +138,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -192,7 +197,7 @@ Other parameters are passed through a pointer to a apiListTenantApiKeysRequest s
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -260,7 +265,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -269,7 +274,7 @@ Name | Type | Description  | Notes
 
 ## UpdateTenantApiKey
 
-> UpdateTenantApiKey(ctx, keyId).Execute()
+> UpdateTenantApiKey(ctx, keyId).UpdateApiKeyRequest(updateApiKeyRequest).Execute()
 
 PATCH /v1/me/api-keys/{key_id}
 
@@ -289,10 +294,11 @@ import (
 
 func main() {
 	keyId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // string | API key identifier
+	updateApiKeyRequest := *openapiclient.NewUpdateApiKeyRequest() // UpdateApiKeyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.UpdateTenantApiKey(context.Background(), keyId).Execute()
+	r, err := apiClient.AccountAPI.UpdateTenantApiKey(context.Background(), keyId).UpdateApiKeyRequest(updateApiKeyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.UpdateTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -316,6 +322,7 @@ Other parameters are passed through a pointer to a apiUpdateTenantApiKeyRequest 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **updateApiKeyRequest** | [**UpdateApiKeyRequest**](UpdateApiKeyRequest.md) |  |
 
 ### Return type
 
@@ -327,8 +334,8 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -387,7 +394,7 @@ Other parameters are passed through a pointer to a apiV1MeRequest struct via the
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

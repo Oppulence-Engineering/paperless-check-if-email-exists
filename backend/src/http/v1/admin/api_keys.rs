@@ -1,5 +1,5 @@
 use crate::config::BackendConfig;
-use crate::http::check_header;
+use crate::http::check_admin_header;
 use crate::http::ReacherResponseError;
 use crate::tenant::auth::generate_api_key;
 use check_if_email_exists::LOG_TARGET;
@@ -462,7 +462,7 @@ pub fn create_api_key(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys")
 		.and(warp::post())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(create_handler)
@@ -483,7 +483,7 @@ pub fn list_all_api_keys(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "api-keys")
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::query::<ListAllApiKeysQuery>())
 		.and_then(list_all_handler)
@@ -505,7 +505,7 @@ pub fn list_api_keys(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys")
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(list_handler)
 		.with(warp::log(LOG_TARGET))
@@ -529,7 +529,7 @@ pub fn get_api_key(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys" / String)
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(get_handler)
 		.with(warp::log(LOG_TARGET))
@@ -553,7 +553,7 @@ pub fn update_api_key(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys" / String)
 		.and(warp::patch())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(update_handler)
@@ -578,7 +578,7 @@ pub fn revoke_api_key(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys" / String)
 		.and(warp::delete())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(revoke_handler)
 		.with(warp::log(LOG_TARGET))
@@ -602,7 +602,7 @@ pub fn reactivate_api_key(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "api-keys" / String / "reactivate")
 		.and(warp::post())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(reactivate_handler)
 		.with(warp::log(LOG_TARGET))

@@ -1,9 +1,11 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext, SignalBundle};
 use crate::config::BackendConfig;
+use crate::decision::engine::{evaluate as evaluate_decision, DecisionInput};
+use crate::decision::types::{PolicyEvaluation, PolicyMode, Recommendation};
 use crate::scoring::{
-	compute_freshness_at, compute_score, compute_score_with_context, provider_reputation_context,
-	DomainSignalContext, EmailScore, PatternContext, ScoreInsights, ScoringContext,
-	TenantHistoryContext,
+	catch_all_severity, compute_freshness_at, compute_score, compute_score_with_context,
+	provider_reputation_context, DomainSignalContext, EmailScore, PatternContext, ScoreInsights,
+	ScoringContext, TenantHistoryContext,
 };
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
 use chrono::{DateTime, Utc};
@@ -54,33 +56,30 @@ pub fn scored_json_with_score_and_insights(
 		}
 	}
 
-	// Add catch-all severity tier (#30)
-	if let Some(obj) = score.as_object_mut() {
-		if let Some(signals) = obj.get("signals").and_then(|s| s.as_object()) {
-			if signals
-				.get("smtp_is_catch_all")
-				.and_then(|v| v.as_bool())
-				.unwrap_or(false)
-			{
-				let is_free = signals
-					.get("is_free_provider")
-					.and_then(|v| v.as_bool())
-					.unwrap_or(false);
-				let tier = insights
-					.and_then(|insights| insights.catch_all.as_ref())
-					.and_then(|catch_all| serde_json::to_value(&catch_all.severity).ok())
-					.and_then(|value| value.as_str().map(ToOwned::to_owned))
-					.unwrap_or_else(|| {
-						let tier = if is_free { "low" } else { "high" };
-						tier.to_string()
-					});
-				obj.insert("catch_all_severity".into(), Value::String(tier.to_string()));
-			}
+	// Add catch-all severity tier (#30). The same tier drives the score
+	// penalty and safe_to_send in `compute_score`.
+	if let Some(tier) = catch_all_severity(&email_score.signals) {
+		if let Some(obj) = score.as_object_mut() {
+			obj.insert(
+				"catch_all_severity".into(),
+				Value::String(tier.as_str().to_string()),
+			);
 		}
 	}
 
 	if let Some(insights) = insights {
 		inject_score_insights(&mut score, insights)?;
+		// Contextual insights can soften or raise the two-tier catch-all grade.
+		if let Some(catch_all) = &insights.catch_all {
+			if let Some(obj) = score.as_object_mut() {
+				let tier = match catch_all.severity {
+					crate::scoring::InsightCatchAllSeverity::Low => "low",
+					crate::scoring::InsightCatchAllSeverity::Medium => "medium",
+					crate::scoring::InsightCatchAllSeverity::High => "high",
+				};
+				obj.insert("catch_all_severity".into(), Value::String(tier.to_string()));
+			}
+		}
 	}
 
 	match &mut scored {
@@ -172,6 +171,8 @@ pub struct PreparedVerificationResponse {
 	pub canonical_email: Option<String>,
 	pub bounce_risk: Option<BounceRiskAssessment>,
 	pub bounce_risk_signals: Option<Value>,
+	pub recommendation: Option<Recommendation>,
+	pub policy_evaluation: Option<PolicyEvaluation>,
 }
 
 impl Serialize for PreparedVerificationResponse {
@@ -302,6 +303,44 @@ pub async fn prepare_verification_response(
 		(None, None)
 	};
 
+	let evaluated_at = Utc::now();
+	// ponytail: Read the tenant default per check; carry it in task context if DB load grows.
+	let policy_mode = if let (Some(tenant_id), Some(pool)) =
+		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))
+	{
+		let configured: String =
+			sqlx::query_scalar("SELECT default_policy_mode FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(pool)
+				.await?;
+		serde_json::from_value(serde_json::Value::String(configured))?
+	} else {
+		PolicyMode::Deliverability
+	};
+	let decision_input = DecisionInput {
+		score: &email_score,
+		completed_at,
+		evaluated_at,
+		policy_mode,
+		policy_profile_key: None,
+		domain_suggestion: output.syntax.suggestion.as_deref(),
+		suggested_email: output.syntax.suggestion.clone(),
+		bounce_risk: bounce_risk.as_ref(),
+		active_suppression: false,
+		previous_hard_bounce: false,
+	};
+	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);
+	if let Some(result_obj) = value.as_object_mut() {
+		result_obj.insert(
+			"recommendation".into(),
+			serde_json::to_value(&recommendation)?,
+		);
+		result_obj.insert(
+			"policy_evaluation".into(),
+			serde_json::to_value(&policy_evaluation)?,
+		);
+	}
+
 	let body = serde_json::to_vec(&value)?;
 
 	Ok(PreparedVerificationResponse {
@@ -311,6 +350,8 @@ pub async fn prepare_verification_response(
 		canonical_email,
 		bounce_risk,
 		bounce_risk_signals,
+		recommendation: Some(recommendation),
+		policy_evaluation: Some(policy_evaluation),
 	})
 }
 
@@ -529,7 +570,7 @@ fn plausible_name_part(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::scoring::{CatchAllScore, CatchAllSeverity, ConfidenceLevel};
+	use crate::scoring::{CatchAllScore, ConfidenceLevel, InsightCatchAllSeverity};
 	use check_if_email_exists::{
 		smtp::SmtpDetails, syntax::SyntaxDetails, CheckEmailOutput, Reachable,
 	};
@@ -601,6 +642,60 @@ mod tests {
 	}
 
 	#[test]
+	fn wire_response_never_contradicts_itself_on_catch_all() {
+		// The serialised response carries the tier and safe_to_send side by
+		// side. A client that reads either one must reach the same conclusion,
+		// so "high" and safe_to_send=true must never appear together.
+		for (is_b2c, is_role_account, has_full_inbox) in [
+			(true, false, false),
+			(false, false, false),
+			(true, true, false),
+			(true, false, true),
+			(false, true, false),
+		] {
+			let mut output = CheckEmailOutput {
+				input: "user@company.com".to_string(),
+				is_reachable: Reachable::Safe,
+				smtp: Ok(SmtpDetails {
+					can_connect_smtp: true,
+					has_full_inbox,
+					is_catch_all: true,
+					is_deliverable: true,
+					is_disabled: false,
+				}),
+				misc: Ok(check_if_email_exists::misc::MiscDetails {
+					is_b2c,
+					is_role_account,
+					..Default::default()
+				}),
+				..Default::default()
+			};
+			output.syntax.is_valid_syntax = true;
+
+			let value = scored_json(&output).unwrap();
+			let score = value.get("score").unwrap();
+			let tier = score.get("catch_all_severity").and_then(|v| v.as_str());
+			let safe = score
+				.get("safe_to_send")
+				.and_then(|v| v.as_bool())
+				.expect("safe_to_send is required by the schema");
+
+			assert!(
+				tier.is_some(),
+				"every catch-all result must carry a tier: b2c={}",
+				is_b2c
+			);
+			if tier == Some("high") {
+				assert!(
+					!safe,
+					"high tier reported safe_to_send=true: b2c={} role={} full={}",
+					is_b2c, is_role_account, has_full_inbox
+				);
+			}
+		}
+	}
+
+	#[test]
 	fn no_catch_all_severity_when_not_catch_all() {
 		let output = CheckEmailOutput::default();
 		let value = scored_json(&output).unwrap();
@@ -626,7 +721,7 @@ mod tests {
 			confidence_level: ConfidenceLevel::Medium,
 			confidence_factors: vec!["pattern:first.last:verified_matches".to_string()],
 			catch_all: Some(CatchAllScore {
-				severity: CatchAllSeverity::Low,
+				severity: InsightCatchAllSeverity::Low,
 				confidence: 72,
 				factors: vec!["pattern:first.last:verified_matches".to_string()],
 			}),
@@ -679,5 +774,18 @@ mod tests {
 			.await
 			.unwrap();
 		assert!(response.json.get("bounce_risk").is_none());
+	}
+
+	#[tokio::test]
+	async fn prepared_response_includes_recommendation_and_policy_evaluation() {
+		let config = BackendConfig::empty();
+		let output = CheckEmailOutput::default();
+		let response = prepare_verification_response(&config, &output, None, Utc::now(), false)
+			.await
+			.unwrap();
+		assert!(response.json.get("recommendation").is_some());
+		assert!(response.json.get("policy_evaluation").is_some());
+		assert!(response.recommendation.is_some());
+		assert!(response.policy_evaluation.is_some());
 	}
 }

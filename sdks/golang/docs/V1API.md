@@ -1,6 +1,6 @@
 # \V1API
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -14,12 +14,16 @@ Method | HTTP request | Description
 [**V1DeleteList**](V1API.md#V1DeleteList) | **Delete** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
 [**V1DeleteSuppression**](V1API.md#V1DeleteSuppression) | **Delete** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 [**V1DownloadList**](V1API.md#V1DownloadList) | **Get** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
+[**V1ExportSuppressions**](V1API.md#V1ExportSuppressions) | **Get** /v1/suppressions/export | Export suppressions
 [**V1FindEmail**](V1API.md#V1FindEmail) | **Post** /v1/find_email | POST /v1/find_email
 [**V1GetFindEmail**](V1API.md#V1GetFindEmail) | **Get** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+[**V1ImportSuppressions**](V1API.md#V1ImportSuppressions) | **Post** /v1/suppressions/import | Import suppressions
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
+[**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
+[**V1SourceQuality**](V1API.md#V1SourceQuality) | **Get** /v1/sources/quality | List source quality
 
 
 
@@ -157,7 +161,7 @@ Name | Type | Description  | Notes
 
 ## V1CheckEmailWithOnboard
 
-> V1CheckEmailWithOnboard(ctx).Execute()
+> V1CheckEmailWithOnboard(ctx).OnboardRequest(onboardRequest).Execute()
 
 POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
 
@@ -174,10 +178,11 @@ import (
 )
 
 func main() {
+	onboardRequest := *openapiclient.NewOnboardRequest("ContactEmail_example", "EmailToVerify_example", "TenantName_example") // OnboardRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).Execute()
+	r, err := apiClient.V1API.V1CheckEmailWithOnboard(context.Background()).OnboardRequest(onboardRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CheckEmailWithOnboard``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -187,12 +192,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CheckEmailWithOnboardRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **onboardRequest** | [**OnboardRequest**](OnboardRequest.md) |  |
 
 ### Return type
 
@@ -200,12 +209,12 @@ Other parameters are passed through a pointer to a apiV1CheckEmailWithOnboardReq
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -342,7 +351,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateBulkJob
 
-> V1CreateBulkJob(ctx).IdempotencyKey(idempotencyKey).Execute()
+> BulkCreateResponse V1CreateBulkJob(ctx).BulkCreateRequest(bulkCreateRequest).IdempotencyKey(idempotencyKey).Execute()
 
 Create the v1 bulk endpoint.
 
@@ -361,15 +370,18 @@ import (
 )
 
 func main() {
+	bulkCreateRequest := *openapiclient.NewBulkCreateRequest([]string{"Input_example"}) // BulkCreateRequest |
 	idempotencyKey := "idempotencyKey_example" // string | Optional idempotency key (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.V1API.V1CreateBulkJob(context.Background()).IdempotencyKey(idempotencyKey).Execute()
+	resp, r, err := apiClient.V1API.V1CreateBulkJob(context.Background()).BulkCreateRequest(bulkCreateRequest).IdempotencyKey(idempotencyKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateBulkJob``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1CreateBulkJob`: BulkCreateResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1CreateBulkJob`: %v\n", resp)
 }
 ```
 
@@ -384,11 +396,12 @@ Other parameters are passed through a pointer to a apiV1CreateBulkJobRequest str
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **bulkCreateRequest** | [**BulkCreateRequest**](BulkCreateRequest.md) |  |
  **idempotencyKey** | **string** | Optional idempotency key |
 
 ### Return type
 
- (empty response body)
+[**BulkCreateResponse**](BulkCreateResponse.md)
 
 ### Authorization
 
@@ -396,8 +409,8 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -406,7 +419,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateList
 
-> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).Execute()
+> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
 
 POST /v1/lists
 
@@ -426,11 +439,11 @@ func main() {
 	file := os.NewFile(1234, "some_file") // *os.File |
 	emailColumn := "emailColumn_example" // string |  (optional)
 	name := "name_example" // string |  (optional)
-	policyId := int64(789) // int64 |  (optional)
+	sourceKey := "sourceKey_example" // string | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).Execute()
+	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -454,7 +467,7 @@ Name | Type | Description  | Notes
  **file** | ***os.File** |  |
  **emailColumn** | **string** |  |
  **name** | **string** |  |
- **policyId** | **int64** |  |
+ **sourceKey** | **string** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. |
 
 ### Return type
 
@@ -612,7 +625,7 @@ Name | Type | Description  | Notes
 
 ## V1DownloadList
 
-> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
+> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).Execute()
 
 GET /v1/lists/{list_id}/download
 
@@ -632,12 +645,10 @@ func main() {
 	listId := int32(56) // int32 | List identifier
 	filter := "filter_example" // string |  (optional)
 	format := "format_example" // string |  (optional)
-	segmentId := int64(789) // int64 |  (optional)
-	changedSinceListId := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
+	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1DownloadList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -665,8 +676,6 @@ Name | Type | Description  | Notes
 
  **filter** | **string** |  |
  **format** | **string** |  |
- **segmentId** | **int64** |  |
- **changedSinceListId** | **int32** |  |
 
 ### Return type
 
@@ -679,7 +688,66 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: text/csv
+- **Accept**: text/csv, application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ExportSuppressions
+
+> *os.File V1ExportSuppressions(ctx).Execute()
+
+Export suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ExportSuppressions(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ExportSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ExportSuppressions`: *os.File
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ExportSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ExportSuppressionsRequest struct via the builder pattern
+
+
+### Return type
+
+[***os.File**](*os.File.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: text/csv, application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -886,6 +954,70 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1ImportSuppressions
+
+> map[string]interface{} V1ImportSuppressions(ctx).RequestBody(requestBody).Execute()
+
+Import suppressions
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	requestBody := map[string]interface{}{"key": interface{}(123)} // map[string]interface{} |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ImportSuppressions(context.Background()).RequestBody(requestBody).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ImportSuppressions``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ImportSuppressions`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ImportSuppressions`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ImportSuppressionsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **requestBody** | **map[string]interface{}** |  |
+
+### Return type
+
+**map[string]interface{}**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1ListLists
 
 > ListListResponse V1ListLists(ctx).Limit(limit).Offset(offset).Execute()
@@ -952,9 +1084,77 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1ListSuppressionEvents
+
+> map[string]interface{} V1ListSuppressionEvents(ctx, id).Execute()
+
+List suppression events
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	id := int32(56) // int32 |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ListSuppressionEvents(context.Background(), id).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListSuppressionEvents``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListSuppressionEvents`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ListSuppressionEvents`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **int32** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListSuppressionEventsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**map[string]interface{}**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1ListSuppressions
 
-> SuppressionListResponse V1ListSuppressions(ctx).Limit(limit).Offset(offset).Reason(reason).Execute()
+> SuppressionListResponse V1ListSuppressions(ctx).Limit(limit).Offset(offset).Reason(reason).Status(status).SourceType(sourceType).SourceRef(sourceRef).IncludeExpired(includeExpired).Execute()
 
 GET /v1/suppressions
 
@@ -974,10 +1174,14 @@ func main() {
 	limit := int64(789) // int64 |  (optional)
 	offset := int64(789) // int64 |  (optional)
 	reason := "reason_example" // string |  (optional)
+	status := "status_example" // string |  (optional)
+	sourceType := "sourceType_example" // string |  (optional)
+	sourceRef := "sourceRef_example" // string |  (optional)
+	includeExpired := true // bool |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1ListSuppressions(context.Background()).Limit(limit).Offset(offset).Reason(reason).Execute()
+	resp, r, err := apiClient.V1API.V1ListSuppressions(context.Background()).Limit(limit).Offset(offset).Reason(reason).Status(status).SourceType(sourceType).SourceRef(sourceRef).IncludeExpired(includeExpired).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListSuppressions``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1001,6 +1205,10 @@ Name | Type | Description  | Notes
  **limit** | **int64** |  |
  **offset** | **int64** |  |
  **reason** | **string** |  |
+ **status** | **string** |  |
+ **sourceType** | **string** |  |
+ **sourceRef** | **string** |  |
+ **includeExpired** | **bool** |  |
 
 ### Return type
 
@@ -1064,6 +1272,65 @@ Other parameters are passed through a pointer to a apiV1ReverificationStatusRequ
 ### Return type
 
 [**ReverificationStatusResponse**](ReverificationStatusResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1SourceQuality
+
+> map[string]interface{} V1SourceQuality(ctx).Execute()
+
+List source quality
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SourceQuality``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1SourceQuality`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SourceQuality`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1SourceQualityRequest struct via the builder pattern
+
+
+### Return type
+
+**map[string]interface{}**
 
 ### Authorization
 

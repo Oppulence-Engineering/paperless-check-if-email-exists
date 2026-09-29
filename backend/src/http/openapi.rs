@@ -67,9 +67,6 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::quality::v1_list_quality,
 		crate::http::v1::lists::download::v1_download_list,
-		crate::http::v1::lists::remediation::v1_create_remediation_plan,
-		crate::http::v1::lists::remediation::v1_get_remediation_plan,
-		crate::http::v1::lists::remediation::v1_download_remediation_plan,
 		crate::http::v1::lists::diff::v1_diff_lists,
 		crate::http::v1::lists::delete::v1_delete_list,
 		crate::http::v1::saved_segments::v1_create_saved_segment,
@@ -85,6 +82,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::pipelines::v1_pause_pipeline,
 		crate::http::v1::pipelines::v1_resume_pipeline,
 		crate::http::v1::pipelines::v1_trigger_pipeline,
+		crate::http::v1::pipelines::v1_push_pipeline,
 		crate::http::v1::pipelines::v1_list_pipeline_runs,
 		crate::http::v1::pipelines::v1_get_pipeline_run,
 		crate::http::v1::reputation::check::v1_check_reputation,
@@ -102,6 +100,16 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::comments::v1_list_comments,
 		crate::http::v1::comments::v1_delete_comment,
 		crate::http::v1::me::v1_me,
+		crate::http::v1::outcomes::v1_ingest_outcomes,
+		crate::http::v1::outcomes::v1_list_outcomes,
+		crate::http::v1::campaign_outcomes::v1_post_outcomes,
+		crate::http::v1::campaign_outcomes::v1_upload_outcomes,
+		crate::http::v1::campaign_outcomes::v1_list_outcomes,
+		crate::http::v1::provider_outcomes::v1_list_provider_endpoints,
+		crate::http::v1::provider_outcomes::v1_create_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_update_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_delete_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_ingest_provider_outcomes,
 		account_api_keys::get_api_key,
 		account_api_keys::list_api_keys,
 		account_api_keys::create_api_key,
@@ -138,9 +146,6 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::outcome_policies::v1_get_outcome_policy,
 		crate::http::v1::outcome_policies::v1_update_outcome_policy,
 		crate::http::v1::outcome_policies::v1_delete_outcome_policy,
-		crate::http::v1::outcomes::v1_post_outcomes,
-		crate::http::v1::outcomes::v1_upload_outcomes,
-		crate::http::v1::outcomes::v1_list_outcomes,
 		tenant_domains::v1_list_tenant_domains,
 		tenant_domains::v1_create_tenant_domain,
 		tenant_domains::v1_get_tenant_domain,
@@ -168,7 +173,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		(name = "Events", description = "Advanced audit log endpoints"),
 		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
 		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
-		(name = "Outcomes", description = "Campaign outcome ingestion (delivered, bounce, complaint, engagement) for the feedback loop"),
+		(name = "Outcomes", description = "Normalized provider outcomes, suppression feedback, authenticated provider adapters, and campaign outcome ingestion"),
 	)
 )]
 struct BackendApiDoc;
@@ -179,7 +184,45 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 		generated.get("paths").and_then(Value::as_object),
 	) {
 		for (path, value) in generated_paths {
-			base_paths.insert(path.clone(), value.clone());
+			let mut merged = value.clone();
+			if let Some(existing) = base_paths.get(path) {
+				for method in ["get", "post", "put", "patch", "delete"] {
+					if let (Some(source), Some(target)) = (
+						existing.get(method).and_then(Value::as_object),
+						merged.get_mut(method).and_then(Value::as_object_mut),
+					) {
+						for field in ["operationId", "security"] {
+							if let Some(value) = source.get(field) {
+								target.insert(field.to_string(), value.clone());
+							}
+						}
+						for field in ["requestBody", "parameters"] {
+							if !target.contains_key(field) {
+								if let Some(value) = source.get(field) {
+									target.insert(field.to_string(), value.clone());
+								}
+							}
+						}
+						if let (Some(source_responses), Some(target_responses)) = (
+							source.get("responses").and_then(Value::as_object),
+							target.get_mut("responses").and_then(Value::as_object_mut),
+						) {
+							for (status, response) in source_responses {
+								if let Some(content) = response.get("content") {
+									target_responses
+										.entry(status.clone())
+										.or_insert_with(|| json!({}))
+										.as_object_mut()
+										.expect("response object")
+										.entry("content")
+										.or_insert_with(|| content.clone());
+								}
+							}
+						}
+					}
+				}
+			}
+			base_paths.insert(path.clone(), merged);
 		}
 	}
 
@@ -399,6 +442,247 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 			.expect("responses object")
 			.insert(status.to_string(), response);
 	}
+}
+
+fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: Value) {
+	let path_item = paths_mut(spec)
+		.entry(path.to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("path item object");
+	for field in ["operationId", "security", "requestBody", "parameters"] {
+		if let Some(value) = path_item
+			.get(method)
+			.and_then(|existing| existing.get(field))
+			.cloned()
+		{
+			operation
+				.as_object_mut()
+				.expect("operation object")
+				.entry(field)
+				.or_insert(value);
+		}
+	}
+	path_item.insert(method.to_string(), operation);
+}
+
+#[cfg(test)]
+mod operation_id_tests {
+	use serde_json::json;
+	use std::collections::HashSet;
+
+	#[test]
+	fn every_operation_has_a_unique_id() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut ids = HashSet::new();
+		for (path, path_item) in spec["paths"].as_object().expect("paths") {
+			for (method, operation) in path_item.as_object().expect("path item") {
+				if !["get", "post", "put", "patch", "delete"].contains(&method.as_str()) {
+					continue;
+				}
+				let id = operation["operationId"]
+					.as_str()
+					.unwrap_or_else(|| panic!("missing operationId: {} {}", method, path));
+				assert!(ids.insert(id), "duplicate operationId: {}", id);
+			}
+		}
+	}
+
+	#[test]
+	fn operation_security_matches_its_audience() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(spec["paths"]["/healthz"]["get"]["security"], json!([]));
+		assert_eq!(
+			spec["paths"]["/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}"]
+				["post"]["security"],
+			json!([])
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["security"],
+			json!([{ "AdminSecret": [] }])
+		);
+		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
+		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
+	}
+
+	#[test]
+	fn admin_contract_keeps_request_and_response_schemas() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["post"]["requestBody"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminCreateTenantRequest"
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["responses"]["200"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminTenantList"
+		);
+	}
+
+	#[test]
+	fn json_write_routes_expose_their_request_bodies() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, method, schema) in [
+			("/v1/comments", "post", "CreateCommentRequest"),
+			("/v1/me/api-keys", "post", "CreateApiKeyRequest"),
+			("/v1/me/api-keys/{key_id}", "patch", "UpdateApiKeyRequest"),
+			("/v1/me/domains", "post", "CreateTenantDomainRequest"),
+			(
+				"/v1/me/domains/{domain}",
+				"patch",
+				"UpdateTenantDomainRequest",
+			),
+			("/v1/check-email-with-onboard", "post", "OnboardRequest"),
+		] {
+			assert_eq!(
+				spec["paths"][path][method]["requestBody"]["content"]["application/json"]["schema"]
+					["$ref"],
+				format!("#/components/schemas/{schema}"),
+				"{method} {path}"
+			);
+		}
+	}
+
+	#[test]
+	fn admin_job_queries_keep_their_parameters() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, expected) in [
+			("/v1/admin/jobs/{job_id}/events", &["limit", "offset"][..]),
+			(
+				"/v1/admin/jobs/{job_id}/results",
+				&["limit", "offset", "state"][..],
+			),
+			(
+				"/v1/admin/tenants/{tenant_id}/jobs",
+				&["status", "limit", "offset"][..],
+			),
+		] {
+			let names: Vec<_> = spec["paths"][path]["get"]["parameters"]
+				.as_array()
+				.expect("parameters")
+				.iter()
+				.filter(|parameter| parameter["in"] == "query")
+				.map(|parameter| parameter["name"].as_str().expect("parameter name"))
+				.collect();
+			assert_eq!(names, expected, "{path}");
+		}
+	}
+
+	#[test]
+	fn v1_default_errors_have_descriptions() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, item) in spec["paths"].as_object().expect("paths") {
+			if !path.starts_with("/v1/") {
+				continue;
+			}
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(operation) = item.get(method) {
+					assert!(
+						operation["responses"]["default"]["description"].is_string(),
+						"{method} {path}"
+					);
+				}
+			}
+		}
+	}
+}
+
+fn generic_object_schema() -> Value {
+	json!({
+		"type": "object",
+		"additionalProperties": true
+	})
+}
+
+fn generic_json_operation(tag: &str, summary: &str, description: &str) -> Value {
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}
+		}
+	})
+}
+
+fn generic_json_post_operation(tag: &str, summary: &str, description: &str) -> Value {
+	let mut operation = generic_json_operation(tag, summary, description);
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"requestBody".to_string(),
+			json!({
+				"required": true,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}),
+		);
+	}
+	operation
+}
+
+fn with_path_parameters(mut operation: Value, parameters: &[(&str, &str)]) -> Value {
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"parameters".to_string(),
+			Value::Array(
+				parameters
+					.iter()
+					.map(|(name, format)| {
+						json!({
+							"name": name,
+							"in": "path",
+							"required": true,
+							"schema": {
+								"type": "integer",
+								"format": format
+							}
+						})
+					})
+					.collect(),
+			),
+		);
+	}
+	operation
+}
+
+fn download_operation(
+	tag: &str,
+	summary: &str,
+	description: &str,
+	content_types: &[&str],
+) -> Value {
+	let mut content = Map::new();
+	for content_type in content_types {
+		content.insert(
+			(*content_type).to_string(),
+			json!({
+				"schema": {
+					"type": "string",
+					"format": "binary"
+				}
+			}),
+		);
+	}
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": content
+			}
+		}
+	})
 }
 
 fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
@@ -854,7 +1138,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 					"type": "array",
 					"items": { "type": "string" }
 				},
-				"catch_all_severity": { "$ref": "#/components/schemas/CatchAllSeverity" },
+				"catch_all_severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send." },
 				"catch_all": { "$ref": "#/components/schemas/CatchAllScore" },
 				"partial_confidence": { "$ref": "#/components/schemas/PartialConfidence" }
 			},
@@ -1011,9 +1295,11 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"original_filename": { "type": "string" },
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
-				"email_column": { "type": "string" }
+				"email_column": { "type": "string" },
+				"created_at": { "type": "string", "format": "date-time" },
+				"completed_at": { "type": "string", "format": "date-time", "nullable": true }
 			},
-			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column"]
+			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column", "created_at", "completed_at"]
 		}),
 	);
 	insert_schema(
@@ -1349,6 +1635,47 @@ fn add_phase_two_schemas(spec: &mut Value) {
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
+	insert_schema(
+		spec,
+		"BulkCreateRequest",
+		json!({
+			"type": "object",
+			"properties": {
+				"input": {
+					"type": "array",
+					"items": { "type": "string", "format": "email" }
+				},
+				"webhook": {
+					"type": "object",
+					"nullable": true,
+					"additionalProperties": true
+				},
+				"source_key": {
+					"type": "string",
+					"nullable": true,
+					"description": "Optional source key used for source quality analytics."
+				},
+				"source": {
+					"type": "string",
+					"nullable": true,
+					"description": "Alias for source_key."
+				}
+			},
+			"required": ["input"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"BulkCreateResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"job_id": { "type": "integer", "format": "int32" },
+				"source_key": { "type": "string", "nullable": true }
+			},
+			"required": ["job_id"]
+		}),
+	);
 	set_request_body(
 		spec,
 		"/v0/check_email",
@@ -1378,6 +1705,21 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("CheckEmailOutput", "Email verification result"),
+	);
+	set_request_body(
+		spec,
+		"/v1/bulk",
+		"post",
+		"application/json",
+		"BulkCreateRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v1/bulk",
+		"post",
+		"200",
+		json_response("BulkCreateResponse", "Bulk job created"),
 	);
 
 	set_response(
@@ -1485,12 +1827,74 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		binary_response("Cleaned list CSV download", "text/csv"),
 	);
-	set_response(
+	set_schema_property(
 		spec,
-		"/v1/lists/{list_id}/remediation-plan/{plan_id}/download",
+		"ListUploadRequest",
+		"source_key",
+		json!({
+			"type": "string",
+			"nullable": true,
+			"description": "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor."
+		}),
+	);
+	set_schema_property(
+		spec,
+		"ListUploadResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListItem",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListDetailResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
+		"post",
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
 		"get",
-		"200",
-		binary_response("Remediation CSV download", "text/csv"),
+		with_path_parameters(
+			generic_json_operation("Lists", "Get remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports",
+		"post",
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation export", "Remediation export"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+		"get",
+		with_path_parameters(
+			download_operation(
+				"Lists",
+				"Download remediation export",
+				"Remediation export CSV",
+				&["text/csv"],
+			),
+			&[("list_id", "int32"), ("export_id", "int64")],
+		),
 	);
 
 	set_request_body(
@@ -1544,6 +1948,74 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"delete",
 		"200",
 		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"reason_detail",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_type",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_ref",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"expires_at",
+		json!({ "type": "string", "format": "date-time", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"metadata",
+		generic_object_schema(),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"updated",
+		json!({ "type": "integer", "format": "int64" }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"entry_ids",
+		json!({ "type": "array", "items": { "type": "integer", "format": "int32" } }),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		generic_json_post_operation("v1", "Import suppressions", "Suppression entries imported"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/export",
+		"get",
+		download_operation(
+			"v1",
+			"Export suppressions",
+			"Suppression export CSV",
+			&["text/csv"],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/suppressions/{id}/events",
+		"get",
+		with_path_parameters(
+			generic_json_operation("v1", "List suppression events", "Suppression event list"),
+			&[("id", "int32")],
+		),
 	);
 	set_response(
 		spec,
@@ -1606,6 +2078,35 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"get",
 		"200",
 		json_response("ApprovalChecklistResponse", "Pre-send approval checklist"),
+	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-center",
+		"get",
+		with_path_parameters(
+			generic_json_operation("Jobs", "Get job failure center", "Job failure center"),
+			&[("job_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-report",
+		"get",
+		with_path_parameters(
+			download_operation(
+				"Jobs",
+				"Download job failure report",
+				"Job failure report stream",
+				&["text/csv", "application/x-ndjson"],
+			),
+			&[("job_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/sources/quality",
+		"get",
+		generic_json_operation("v1", "List source quality", "Source quality analytics"),
 	);
 	set_response(
 		spec,
@@ -1778,9 +2279,53 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 		serde_json::to_value(BackendApiDoc::openapi()).map_err(ReacherResponseError::from)?;
 
 	merge_openapi(&mut spec, generated_spec);
+	// These generic names were emitted by an earlier outcomes contract. Keeping
+	// them in the self-hosted base spec produces stale SDK models indefinitely.
+	for stale_schema in ["Request", "Response"] {
+		schemas_mut(&mut spec).remove(stale_schema);
+	}
 	normalize_nullable_types(&mut spec);
 	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
+	insert_schema(
+		&mut spec,
+		"ErrorEnvelope",
+		json!({
+			"type": "object",
+			"required": ["error"],
+			"properties": { "error": { "type": "string" } }
+		}),
+	);
+	for (path, item) in paths_mut(&mut spec).iter_mut() {
+		if !path.starts_with("/v1/") {
+			continue;
+		}
+		if let Some(item) = item.as_object_mut() {
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(responses) = item
+					.get_mut(method)
+					.and_then(|operation| operation.get_mut("responses"))
+					.and_then(Value::as_object_mut)
+				{
+					let default = responses.entry("default").or_insert_with(|| json!({
+						"description": "Request error",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+					}));
+					default
+						.as_object_mut()
+						.expect("default response object")
+						.entry("description")
+						.or_insert_with(|| json!("Request error"));
+				}
+			}
+		}
+	}
+	if let Some(info) = spec.get_mut("info").and_then(Value::as_object_mut) {
+		info.insert(
+			"version".to_string(),
+			Value::String(env!("CARGO_PKG_VERSION").to_string()),
+		);
+	}
 	Ok(spec)
 }
 

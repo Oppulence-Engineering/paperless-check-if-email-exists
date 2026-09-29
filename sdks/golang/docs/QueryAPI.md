@@ -1,6 +1,6 @@
 # \QueryAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## V1QueryResults
 
-> V1QueryResults(ctx).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).Execute()
+> V1QueryResults(ctx).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
 
 GET /v1/query
 
@@ -38,10 +38,13 @@ func main() {
 	jobId := int32(56) // int32 |  (optional)
 	since := "since_example" // string |  (optional)
 	until := "until_example" // string |  (optional)
+	recommendationAction := "recommendationAction_example" // string |  (optional)
+	policyMode := "policyMode_example" // string |  (optional)
+	policyDecision := "policyDecision_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.QueryAPI.V1QueryResults(context.Background()).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).Execute()
+	r, err := apiClient.QueryAPI.V1QueryResults(context.Background()).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `QueryAPI.V1QueryResults``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -69,6 +72,9 @@ Name | Type | Description  | Notes
  **jobId** | **int32** |  |
  **since** | **string** |  |
  **until** | **string** |  |
+ **recommendationAction** | **string** |  |
+ **policyMode** | **string** |  |
+ **policyDecision** | **string** |  |
 
 ### Return type
 
@@ -81,7 +87,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

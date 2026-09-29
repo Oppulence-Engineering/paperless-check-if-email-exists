@@ -1,0 +1,13 @@
+{
+	"productPages": ["app/(product)/app/page.tsx", "app/(product)/app/settings/page.tsx"],
+	"queryHooks": [],
+	"legacyFetchers": [],
+	"ungeneratedUnits": [
+		"app/(product)/app/page.tsx",
+		"app/(product)/app/settings/page.tsx",
+		"components/features/account/delete-account-row/delete-account-row.tsx",
+		"components/features/dashboard/product-dashboard-client/product-dashboard-client.tsx",
+		"components/features/sim-product/sim-product-frame/sim-product-frame.tsx",
+		"stores/browser-session/store.ts"
+	]
+}

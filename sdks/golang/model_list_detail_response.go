@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -27,7 +27,7 @@ type ListDetailResponse struct {
 	Id int32 `json:"id"`
 	JobId int32 `json:"job_id"`
 	Name string `json:"name"`
-	PolicyId NullableInt64 `json:"policy_id,omitempty"`
+	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	Summary ListSummary `json:"summary"`
 	TotalRows int32 `json:"total_rows"`
@@ -198,46 +198,46 @@ func (o *ListDetailResponse) SetName(v string) {
 	o.Name = v
 }
 
-// GetPolicyId returns the PolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ListDetailResponse) GetPolicyId() int64 {
-	if o == nil || IsNil(o.PolicyId.Get()) {
-		var ret int64
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
 		return ret
 	}
-	return *o.PolicyId.Get()
+	return *o.SourceKey.Get()
 }
 
-// GetPolicyIdOk returns a tuple with the PolicyId field value if set, nil otherwise
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ListDetailResponse) GetPolicyIdOk() (*int64, bool) {
+func (o *ListDetailResponse) GetSourceKeyOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.PolicyId.Get(), o.PolicyId.IsSet()
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
 }
 
-// HasPolicyId returns a boolean if a field has been set.
-func (o *ListDetailResponse) HasPolicyId() bool {
-	if o != nil && o.PolicyId.IsSet() {
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetPolicyId gets a reference to the given NullableInt64 and assigns it to the PolicyId field.
-func (o *ListDetailResponse) SetPolicyId(v int64) {
-	o.PolicyId.Set(&v)
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListDetailResponse) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
 }
-// SetPolicyIdNil sets the value for PolicyId to be an explicit nil
-func (o *ListDetailResponse) SetPolicyIdNil() {
-	o.PolicyId.Set(nil)
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListDetailResponse) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
 }
 
-// UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
-func (o *ListDetailResponse) UnsetPolicyId() {
-	o.PolicyId.Unset()
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListDetailResponse) UnsetSourceKey() {
+	o.SourceKey.Unset()
 }
 
 // GetStatus returns the Status field value
@@ -371,8 +371,8 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["job_id"] = o.JobId
 	toSerialize["name"] = o.Name
-	if o.PolicyId.IsSet() {
-		toSerialize["policy_id"] = o.PolicyId.Get()
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
 	}
 	toSerialize["status"] = o.Status
 	toSerialize["summary"] = o.Summary

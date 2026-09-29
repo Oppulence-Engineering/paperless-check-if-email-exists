@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 735" role="img" aria-labelledby="title description">
+  <title id="title">Email verification workspace preview</title>
+  <desc id="description">A sample email check with syntax, DNS, MX, and mailbox signals.</desc>
+  <rect width="1280" height="735" fill="#f8f8f6"/>
+  <rect x="0" y="0" width="242" height="735" fill="#efefeb"/>
+  <text x="32" y="55" fill="#202520" font-family="Arial,sans-serif" font-size="21" font-weight="700">Check If Email Exists</text>
+  <rect x="21" y="97" width="199" height="39" rx="6" fill="#dedfd8"/>
+  <text x="38" y="123" fill="#202520" font-family="Arial,sans-serif" font-size="15">Overview</text>
+  <text x="38" y="174" fill="#5b625a" font-family="Arial,sans-serif" font-size="15">Check email</text>
+  <text x="38" y="217" fill="#5b625a" font-family="Arial,sans-serif" font-size="15">Lists</text>
+  <text x="38" y="260" fill="#5b625a" font-family="Arial,sans-serif" font-size="15">History</text>
+  <text x="281" y="67" fill="#70786e" font-family="Arial,sans-serif" font-size="14">WORKSPACE / EMAIL CHECK</text>
+  <text x="281" y="122" fill="#202520" font-family="Arial,sans-serif" font-size="32" font-weight="700">Verify an address</text>
+  <text x="281" y="157" fill="#5b625a" font-family="Arial,sans-serif" font-size="16">Inspect email signals without sending a message.</text>
+  <rect x="281" y="192" width="760" height="55" rx="7" fill="#fff" stroke="#d3d8ce"/>
+  <text x="299" y="227" fill="#283028" font-family="Arial,sans-serif" font-size="17">hello@example.com</text>
+  <rect x="1057" y="192" width="169" height="55" rx="7" fill="#263b2c"/>
+  <text x="1103" y="227" fill="#fff" font-family="Arial,sans-serif" font-size="16">Check</text>
+  <rect x="281" y="285" width="945" height="362" rx="10" fill="#fff" stroke="#d9ded6"/>
+  <text x="312" y="328" fill="#202520" font-family="Arial,sans-serif" font-size="20" font-weight="700">Verification result</text>
+  <rect x="1047" y="300" width="145" height="34" rx="17" fill="#e6f2e8"/>
+  <text x="1085" y="322" fill="#2c6b39" font-family="Arial,sans-serif" font-size="14">Sample</text>
+  <line x1="312" y1="358" x2="1194" y2="358" stroke="#e7eae4"/>
+  <text x="312" y="400" fill="#202520" font-family="Arial,sans-serif" font-size="17">Syntax</text>
+  <text x="1010" y="400" fill="#3b7446" font-family="Arial,sans-serif" font-size="16">Valid format</text>
+  <line x1="312" y1="423" x2="1194" y2="423" stroke="#e7eae4"/>
+  <text x="312" y="464" fill="#202520" font-family="Arial,sans-serif" font-size="17">Domain and DNS</text>
+  <text x="1010" y="464" fill="#3b7446" font-family="Arial,sans-serif" font-size="16">Records found</text>
+  <line x1="312" y1="487" x2="1194" y2="487" stroke="#e7eae4"/>
+  <text x="312" y="528" fill="#202520" font-family="Arial,sans-serif" font-size="17">Mail servers</text>
+  <text x="1010" y="528" fill="#3b7446" font-family="Arial,sans-serif" font-size="16">MX available</text>
+  <line x1="312" y1="551" x2="1194" y2="551" stroke="#e7eae4"/>
+  <text x="312" y="592" fill="#202520" font-family="Arial,sans-serif" font-size="17">Mailbox signal</text>
+  <text x="1010" y="592" fill="#6d7067" font-family="Arial,sans-serif" font-size="16">Review result</text>
+  <text x="281" y="685" fill="#888e85" font-family="Arial,sans-serif" font-size="13">Illustrative preview — results depend on the address and mail server.</text>
+</svg>

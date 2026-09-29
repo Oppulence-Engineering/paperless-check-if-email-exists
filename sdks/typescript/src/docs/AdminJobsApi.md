@@ -1,6 +1,6 @@
 # AdminJobsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -46,18 +46,19 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Admin job details |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -78,9 +79,13 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let jobId: number; //Job identifier (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.getJobEvents(
-    jobId
+    jobId,
+    limit,
+    offset
 );
 ```
 
@@ -89,6 +94,8 @@ const { status, data } = await apiInstance.getJobEvents(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **jobId** | [**number**] | Job identifier | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -97,18 +104,19 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job event list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -129,9 +137,15 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let jobId: number; //Job identifier (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+let state: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.getJobResults(
-    jobId
+    jobId,
+    limit,
+    offset,
+    state
 );
 ```
 
@@ -140,6 +154,9 @@ const { status, data } = await apiInstance.getJobResults(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **jobId** | [**number**] | Job identifier | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+| **state** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -148,18 +165,19 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Job result list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -179,11 +197,27 @@ import {
 const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
-const { status, data } = await apiInstance.listJobs();
+let status: string; // (optional) (default to undefined)
+let tenantId: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.listJobs(
+    status,
+    tenantId,
+    limit,
+    offset
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **tenantId** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -192,18 +226,19 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Admin job list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -224,9 +259,15 @@ const configuration = new Configuration();
 const apiInstance = new AdminJobsApi(configuration);
 
 let tenantId: string; //Tenant identifier (default to undefined)
+let status: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.listTenantJobs(
-    tenantId
+    tenantId,
+    status,
+    limit,
+    offset
 );
 ```
 
@@ -235,6 +276,9 @@ const { status, data } = await apiInstance.listTenantJobs(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **tenantId** | [**string**] | Tenant identifier | defaults to undefined|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -243,17 +287,18 @@ void (empty response body)
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant job list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

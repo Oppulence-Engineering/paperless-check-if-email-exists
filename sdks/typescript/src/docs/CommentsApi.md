@@ -1,6 +1,6 @@
 # CommentsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -9,7 +9,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1ListComments**](#v1listcomments) | **GET** /v1/comments | GET /v1/comments|
 
 # **v1CreateComment**
-> v1CreateComment()
+> v1CreateComment(createCommentRequest)
 
 
 ### Example
@@ -17,17 +17,25 @@ All URIs are relative to *https://api.reacher.email*
 ```typescript
 import {
     CommentsApi,
-    Configuration
+    Configuration,
+    CreateCommentRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CommentsApi(configuration);
 
-const { status, data } = await apiInstance.v1CreateComment();
+let createCommentRequest: CreateCommentRequest; //
+
+const { status, data } = await apiInstance.v1CreateComment(
+    createCommentRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createCommentRequest** | **CreateCommentRequest**|  | |
 
 
 ### Return type
@@ -40,14 +48,15 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Comment created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -91,13 +100,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Comment deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -150,12 +160,13 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Comments list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

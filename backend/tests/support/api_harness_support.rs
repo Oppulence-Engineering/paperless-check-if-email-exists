@@ -45,6 +45,8 @@ enum PathProfile {
 	ListQuality,
 	ListDownload,
 	ListRemediationPlan,
+	ListRemediationExportCreate,
+	ListRemediationExportDownload,
 	ListRemediationDownload,
 	ListDelete,
 	ListDiff,
@@ -54,8 +56,13 @@ enum PathProfile {
 	PipelinePause,
 	PipelineResume,
 	PipelineTrigger,
+	PipelinePush,
 	PipelineRuns,
 	PipelineRunGet,
+	ProviderEndpointPatch,
+	ProviderEndpointDelete,
+	ProviderInbound,
+	SuppressionEvents,
 	SuppressionDelete,
 	CommentDelete,
 	JobGet,
@@ -67,6 +74,8 @@ enum PathProfile {
 	JobRetryCancelled,
 	JobApproval,
 	JobLatency,
+	JobFailureCenter,
+	JobFailureReport,
 	JobCancelCompleted,
 	EmailHistory,
 	AlertPatch,
@@ -118,8 +127,14 @@ enum BodyProfile {
 	JsonPipelinePatch,
 	JsonPipelineTrigger,
 	JsonPipelineTriggerConflict,
+	JsonPipelinePush,
+	JsonProviderEndpointCreate,
+	JsonProviderEndpointPatch,
+	JsonProviderInbound,
 	JsonReputationCheck,
 	JsonSuppressionsAdd,
+	JsonRemediationExportCreate,
+	JsonOutcomesIngest,
 	JsonV1BulkCreate,
 	JsonCommentsCreate,
 	JsonCommentsEmpty,
@@ -143,7 +158,7 @@ enum BodyProfile {
 	JsonScorePolicyPatch,
 	JsonOutcomePolicyCreate,
 	JsonOutcomePolicyPatch,
-	JsonOutcomesIngest,
+	JsonCampaignOutcomesIngest,
 	MultipartOutcomesUpload,
 	JsonSavedSegmentCreate,
 	JsonSavedSegmentPatch,
@@ -187,9 +202,14 @@ pub struct HarnessFixtures {
 	pipeline_pause: i64,
 	pipeline_resume: i64,
 	pipeline_trigger: i64,
+	pipeline_push: i64,
 	pipeline_delete: i64,
 	pipeline_active_conflict: i64,
 	pipeline_run: i64,
+	provider_endpoint_patch: Uuid,
+	provider_endpoint_delete: Uuid,
+	provider_endpoint_inbound: Uuid,
+	remediation_export: i64,
 	suppression_id: i32,
 	comment_delete_id: i64,
 	alert_id: i64,
@@ -692,30 +712,22 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		false,
 	)
 	.await;
+	sqlx::query("UPDATE v1_task_result SET source_key = 'harness-source' WHERE job_id = $1")
+		.bind(list_job)
+		.execute(pool)
+		.await
+		.expect("tag list source quality tasks failed");
 
 	let remediation_plan: i64 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_remediation_plans (
-			tenant_id,
-			list_id,
-			effective_job_id,
-			rule_version,
-			options,
-			options_hash,
-			result_state_digest,
-			status,
-			summary_counts,
-			completed_at
+			tenant_id, list_id, job_id, status, rule_version, options,
+			result_state_digest, summary_counts, completed_at
 		)
 		VALUES (
-			$1,
-			$2,
-			$3,
-			'harness_seed',
-			'{}'::jsonb,
-			'harness_options',
-			'harness_digest',
-			'completed',
+			$1, $2, $3, 'completed', 'remediation_v1',
+			'{"allow_partial":false,"apply_domain_typos":true,"normalize_emails":true,"deduplicate":true,"drop_suppressed":true}'::jsonb,
+			'harness-seed',
 			'{"fixed":0,"safe":1,"review":1,"drop":1}'::jsonb,
 			NOW()
 		)
@@ -728,59 +740,47 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	.fetch_one(pool)
 	.await
 	.expect("insert remediation plan failed");
-	for (row_number, classification, rule_id, confidence, before, after) in [
-		(
-			0,
-			"safe",
-			"safe_to_send",
-			"high",
-			serde_json::json!({"email": "good@example.com", "name": "Good"}),
-			serde_json::json!({"email": "good@example.com", "name": "Good"}),
-		),
-		(
-			1,
-			"review",
-			"catch_all",
-			"medium",
-			serde_json::json!({"email": "risky@example.com", "name": "Risky"}),
-			serde_json::json!({"email": "risky@example.com", "name": "Risky"}),
-		),
-		(
-			2,
-			"drop",
-			"invalid_recipient",
-			"high",
-			serde_json::json!({"email": "bad@example.com", "name": "Bad"}),
-			serde_json::json!({"email": "bad@example.com", "name": "Bad"}),
-		),
+
+	for (row_index, classification, email) in [
+		(0, "safe", "good@example.com"),
+		(1, "review", "risky@example.com"),
+		(2, "drop", "bad@example.com"),
 	] {
+		let row = serde_json::json!({"email": email, "name": "Harness"});
 		sqlx::query(
 			r#"
 			INSERT INTO v1_remediation_rows (
-				tenant_id,
-				plan_id,
-				row_number,
-				classification,
-				rule_id,
-				confidence,
-				before,
-				after
+				plan_id, tenant_id, list_id, row_index, classification, rule_id,
+				confidence, original_email, effective_email, before, after, reasons
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			VALUES ($1, $2, $3, $4, $5, 'harness_seed', 'high', $6, $6, $7, $7, '[]'::jsonb)
 			"#,
 		)
-		.bind(tenant.tenant_id)
 		.bind(remediation_plan)
-		.bind(row_number)
+		.bind(tenant.tenant_id)
+		.bind(list_main)
+		.bind(row_index)
 		.bind(classification)
-		.bind(rule_id)
-		.bind(confidence)
-		.bind(before)
-		.bind(after)
+		.bind(email)
+		.bind(&row)
 		.execute(pool)
 		.await
 		.expect("insert remediation row failed");
 	}
+
+	let remediation_export: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_remediation_exports (tenant_id, plan_id, partitions, format)
+		VALUES ($1, $2, $3, 'csv')
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(remediation_plan)
+	.bind(vec!["safe_to_send".to_string()])
+	.fetch_one(pool)
+	.await
+	.expect("insert remediation export failed");
 
 	let list_delete_job = insert_job(pool, Some(tenant.tenant_id), 1, "completed").await;
 	let list_delete = insert_list(
@@ -853,6 +853,17 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		source.clone(),
 	)
 	.await;
+	let pipeline_push = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Push",
+		serde_json::json!({
+			"type": "push",
+			"token_id": "harness-token-id",
+			"accepted_format": "json"
+		}),
+	)
+	.await;
 	let pipeline_active_conflict = insert_pipeline(
 		pool,
 		tenant.tenant_id,
@@ -917,6 +928,29 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		Some(list_main),
 	)
 	.await;
+
+	let provider_endpoint_patch = Uuid::parse_str("22222222-2222-4222-8222-222222222221")
+		.expect("valid provider endpoint UUID");
+	let provider_endpoint_delete = Uuid::parse_str("22222222-2222-4222-8222-222222222222")
+		.expect("valid provider endpoint UUID");
+	let provider_endpoint_inbound = Uuid::parse_str("22222222-2222-4222-8222-222222222223")
+		.expect("valid provider endpoint UUID");
+	for (id, label) in [
+		(provider_endpoint_patch, "Harness Patch"),
+		(provider_endpoint_delete, "Harness Delete"),
+		(provider_endpoint_inbound, "Harness Inbound"),
+	] {
+		sqlx::query(
+			"INSERT INTO v1_provider_endpoints (id, tenant_id, provider, label, status, delivery_token_hash, provider_config, allowed_ips) VALUES ($1, $2, 'postmark', $3, 'active', $4, '{}'::jsonb, '{}')",
+		)
+		.bind(id)
+		.bind(tenant.tenant_id)
+		.bind(label)
+		.bind("c56fdc11770ecd8117b413923b08863ffa0a234046fe61623ac2e24eac4231f4")
+		.execute(pool)
+		.await
+		.expect("insert provider endpoint fixture");
+	}
 
 	let suppression_id =
 		insert_suppression(pool, tenant.tenant_id, "suppressed@example.com", "manual").await;
@@ -1122,9 +1156,14 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		pipeline_pause,
 		pipeline_resume,
 		pipeline_trigger,
+		pipeline_push,
 		pipeline_delete,
 		pipeline_active_conflict,
 		pipeline_run,
+		provider_endpoint_patch,
+		provider_endpoint_delete,
+		provider_endpoint_inbound,
+		remediation_export,
 		suppression_id,
 		comment_delete_id,
 		alert_id,
@@ -1240,9 +1279,14 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 		pipeline_pause: 0,
 		pipeline_resume: 0,
 		pipeline_trigger: 0,
+		pipeline_push: 0,
 		pipeline_delete: 0,
 		pipeline_active_conflict: 0,
 		pipeline_run,
+		provider_endpoint_patch: Uuid::nil(),
+		provider_endpoint_delete: Uuid::nil(),
+		provider_endpoint_inbound: Uuid::nil(),
+		remediation_export: 0,
 		suppression_id: 0,
 		comment_delete_id,
 		alert_id: 0,
@@ -1436,16 +1480,6 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			Expectation::Json(&["list_id", "quality_grade", "categories"])
 		),
 		case!(
-			"GET",
-			"/v1/lists/{list_id}/download",
-			ConfigProfile::PseudoWorker,
-			AuthProfile::BearerFull,
-			PathProfile::ListDownload,
-			BodyProfile::None,
-			200,
-			Expectation::Csv
-		),
-		case!(
 			"POST",
 			"/v1/lists/{list_id}/remediation-plan",
 			ConfigProfile::PseudoWorker,
@@ -1453,7 +1487,7 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			PathProfile::ListRemediationPlan,
 			BodyProfile::JsonEmptyObject,
 			201,
-			Expectation::Json(&["plan_id", "summary_counts", "status"])
+			Expectation::Json(&["id", "summary_counts", "preview_rows"])
 		),
 		case!(
 			"GET",
@@ -1463,14 +1497,34 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			PathProfile::ListRemediationPlan,
 			BodyProfile::None,
 			200,
-			Expectation::Json(&["plan_id", "summary_counts", "status"])
+			Expectation::Json(&["id", "summary_counts", "preview_rows"])
+		),
+		case!(
+			"POST",
+			"/v1/lists/{list_id}/remediation-exports",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationExportCreate,
+			BodyProfile::JsonRemediationExportCreate,
+			201,
+			Expectation::Json(&["id", "download_url"])
 		),
 		case!(
 			"GET",
-			"/v1/lists/{list_id}/remediation-plan/{plan_id}/download",
+			"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,
-			PathProfile::ListRemediationDownload,
+			PathProfile::ListRemediationExportDownload,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListDownload,
 			BodyProfile::None,
 			200,
 			Expectation::Csv
@@ -1575,6 +1629,16 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			202,
 			Expectation::Json(&["run_id", "status"])
 		),
+		case!(
+			"POST",
+			"/v1/pipelines/{pipeline_id}/push",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelinePush,
+			BodyProfile::JsonPipelinePush,
+			202,
+			Expectation::Json(&["batch_id", "run_id", "status", "accepted_rows", "replayed"])
+		),
 		upgrade_case!(
 			"GET",
 			"/v1/pipelines/{pipeline_id}/runs",
@@ -1636,6 +1700,36 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			Expectation::Json(&["entries", "total"])
 		),
 		case!(
+			"POST",
+			"/v1/suppressions/import",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/import"),
+			BodyProfile::JsonSuppressionsAdd,
+			200,
+			Expectation::Json(&["added", "duplicates", "entry_ids"])
+		),
+		case!(
+			"GET",
+			"/v1/suppressions/export",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/export"),
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"GET",
+			"/v1/suppressions/{id}/events",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SuppressionEvents,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["events", "total"])
+		),
+		case!(
 			"DELETE",
 			"/v1/suppressions/{id}",
 			ConfigProfile::PseudoWorker,
@@ -1674,6 +1768,92 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["results"])
+		),
+		case!(
+			"POST",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::JsonOutcomesIngest,
+			200,
+			Expectation::Json(&["ingested", "auto_suppressed", "ignored"])
+		),
+		case!(
+			"GET",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["outcomes", "limit", "offset"])
+		),
+		case!(
+			"GET",
+			"/v1/provider-endpoints",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/provider-endpoints"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["provider_endpoints"])
+		),
+		case!(
+			"POST",
+			"/v1/provider-endpoints",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/provider-endpoints"),
+			BodyProfile::JsonProviderEndpointCreate,
+			201,
+			Expectation::Json(&["endpoint_id", "provider", "delivery_token", "webhook_path"])
+		),
+		case!(
+			"PATCH",
+			"/v1/provider-endpoints/{endpoint_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ProviderEndpointPatch,
+			BodyProfile::JsonProviderEndpointPatch,
+			200,
+			Expectation::Json(&["endpoint_id", "provider", "label", "status"])
+		),
+		case!(
+			"DELETE",
+			"/v1/provider-endpoints/{endpoint_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ProviderEndpointDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::None,
+			PathProfile::ProviderInbound,
+			BodyProfile::JsonProviderInbound,
+			200,
+			Expectation::Json(&[
+				"receipt_id",
+				"provider",
+				"accepted",
+				"duplicates",
+				"rejected"
+			])
+		),
+		case!(
+			"GET",
+			"/v1/sources/quality",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/sources/quality"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["sources"])
 		),
 		case!(
 			"GET",
@@ -1837,30 +2017,30 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 		),
 		case!(
 			"POST",
-			"/v1/outcomes",
+			"/v1/campaign-outcomes",
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,
-			PathProfile::Literal("/v1/outcomes"),
-			BodyProfile::JsonOutcomesIngest,
+			PathProfile::Literal("/v1/campaign-outcomes"),
+			BodyProfile::JsonCampaignOutcomesIngest,
 			202,
 			Expectation::Json(&["accepted", "rejected", "policy_id"])
 		),
 		case!(
 			"POST",
-			"/v1/outcomes/upload",
+			"/v1/campaign-outcomes/upload",
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,
-			PathProfile::Literal("/v1/outcomes/upload"),
+			PathProfile::Literal("/v1/campaign-outcomes/upload"),
 			BodyProfile::MultipartOutcomesUpload,
 			202,
 			Expectation::Json(&["accepted", "rejected", "policy_id"])
 		),
 		case!(
 			"GET",
-			"/v1/outcomes",
+			"/v1/campaign-outcomes",
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,
-			PathProfile::Literal("/v1/outcomes"),
+			PathProfile::Literal("/v1/campaign-outcomes"),
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["outcomes", "total"])
@@ -2024,6 +2204,26 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["job_id", "avg_duration_ms", "p95_duration_ms"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/failure-center",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobFailureCenter,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "task_states", "failure_report_url"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/failure-report",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobFailureReport,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
 		),
 		upgrade_case!(
 			"GET",
@@ -2430,6 +2630,13 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::ListRemediationPlan => {
 			format!("/v1/lists/{}/remediation-plan", fixtures.list_main)
 		}
+		PathProfile::ListRemediationExportCreate => {
+			format!("/v1/lists/{}/remediation-exports", fixtures.list_main)
+		}
+		PathProfile::ListRemediationExportDownload => format!(
+			"/v1/lists/{}/remediation-exports/{}/download",
+			fixtures.list_main, fixtures.remediation_export
+		),
 		PathProfile::ListRemediationDownload => {
 			format!(
 				"/v1/lists/{}/remediation-plan/{}/download",
@@ -2453,12 +2660,30 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::PipelineTrigger => {
 			format!("/v1/pipelines/{}/trigger", fixtures.pipeline_trigger)
 		}
+		PathProfile::PipelinePush => {
+			format!("/v1/pipelines/{}/push", fixtures.pipeline_push)
+		}
 		PathProfile::PipelineRuns => format!("/v1/pipelines/{}/runs", fixtures.pipeline_main),
 		PathProfile::PipelineRunGet => {
 			format!(
 				"/v1/pipelines/{}/runs/{}",
 				fixtures.pipeline_main, fixtures.pipeline_run
 			)
+		}
+		PathProfile::ProviderEndpointPatch => format!(
+			"/v1/provider-endpoints/{}",
+			fixtures.provider_endpoint_patch
+		),
+		PathProfile::ProviderEndpointDelete => format!(
+			"/v1/provider-endpoints/{}",
+			fixtures.provider_endpoint_delete
+		),
+		PathProfile::ProviderInbound => format!(
+			"/v1/inbound/providers/postmark/{}/harness-token",
+			fixtures.provider_endpoint_inbound
+		),
+		PathProfile::SuppressionEvents => {
+			format!("/v1/suppressions/{}/events", fixtures.suppression_id)
 		}
 		PathProfile::SuppressionDelete => format!("/v1/suppressions/{}", fixtures.suppression_id),
 		PathProfile::CommentDelete => format!("/v1/comments/{}", fixtures.comment_delete_id),
@@ -2473,6 +2698,12 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		}
 		PathProfile::JobApproval => format!("/v1/jobs/{}/approval", fixtures.job_main),
 		PathProfile::JobLatency => format!("/v1/jobs/{}/latency", fixtures.job_main),
+		PathProfile::JobFailureCenter => {
+			format!("/v1/jobs/{}/failure-center", fixtures.job_retry)
+		}
+		PathProfile::JobFailureReport => {
+			format!("/v1/jobs/{}/failure-report", fixtures.job_retry)
+		}
 		PathProfile::JobCancelCompleted => {
 			format!("/v1/jobs/{}/cancel", fixtures.job_main)
 		}
@@ -2692,6 +2923,31 @@ fn apply_body(
 		BodyProfile::JsonPipelineTriggerConflict => builder.json(&serde_json::json!({
 			"reason": "active run conflict"
 		})),
+		BodyProfile::JsonPipelinePush => {
+			builder
+				.header("Idempotency-Key", "harness-push-1")
+				.json(&serde_json::json!({
+					"rows": [{"email": "push-harness@example.com", "lead_id": "lead-1"}],
+					"email_column": "email",
+					"source_key": "harness-push"
+				}))
+		}
+		BodyProfile::JsonProviderEndpointCreate => builder.json(&serde_json::json!({
+			"provider": "postmark",
+			"label": "Harness Created Endpoint",
+			"provider_config": {},
+			"allowed_ips": []
+		})),
+		BodyProfile::JsonProviderEndpointPatch => builder.json(&serde_json::json!({
+			"label": "Harness Patched Endpoint",
+			"status": "paused"
+		})),
+		BodyProfile::JsonProviderInbound => builder.json(&serde_json::json!({
+			"RecordType": "Delivery",
+			"Email": "provider-harness@example.com",
+			"MessageID": "harness-message-1",
+			"ID": "harness-event-1"
+		})),
 		BodyProfile::JsonReputationCheck => builder.json(&serde_json::json!({
 			"domain": "cached.example.com",
 			"force_refresh": false
@@ -2700,8 +2956,23 @@ fn apply_body(
 			"emails": ["new-suppression@example.com"],
 			"reason": "manual"
 		})),
+		BodyProfile::JsonRemediationExportCreate => builder.json(&serde_json::json!({
+			"partitions": ["safe_to_send"],
+			"format": "csv"
+		})),
+		BodyProfile::JsonOutcomesIngest => builder.json(&serde_json::json!({
+			"provider": "harness",
+			"source_key": "harness-source",
+			"outcomes": [{
+				"email": "outcome@example.com",
+				"event_type": "delivered",
+				"campaign_id": "harness-campaign",
+				"metadata": {"event_id": "harness-1"}
+			}]
+		})),
 		BodyProfile::JsonV1BulkCreate => builder.json(&serde_json::json!({
-			"input": ["bulk1@example.com", "bulk2@example.com"]
+			"input": ["bulk1@example.com", "bulk2@example.com"],
+			"source_key": "harness-bulk"
 		})),
 		BodyProfile::JsonCommentsCreate => builder.json(&serde_json::json!({
 			"job_id": fixtures.job_main,
@@ -2785,7 +3056,7 @@ fn apply_body(
 		BodyProfile::JsonOutcomePolicyPatch => builder.json(&serde_json::json!({
 			"name": "Harness Updated Outcome Policy"
 		})),
-		BodyProfile::JsonOutcomesIngest => builder.json(&serde_json::json!({
+		BodyProfile::JsonCampaignOutcomesIngest => builder.json(&serde_json::json!({
 			"outcomes": [{
 				"email": "harness@example.com",
 				"type": "delivered",

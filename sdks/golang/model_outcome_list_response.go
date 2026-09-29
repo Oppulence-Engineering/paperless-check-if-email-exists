@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -22,8 +22,9 @@ var _ MappedNullable = &OutcomeListResponse{}
 
 // OutcomeListResponse struct for OutcomeListResponse
 type OutcomeListResponse struct {
+	Limit int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 	Outcomes []OutcomeView `json:"outcomes"`
-	Total int64 `json:"total"`
 }
 
 type _OutcomeListResponse OutcomeListResponse
@@ -32,10 +33,11 @@ type _OutcomeListResponse OutcomeListResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOutcomeListResponse(outcomes []OutcomeView, total int64) *OutcomeListResponse {
+func NewOutcomeListResponse(limit int64, offset int64, outcomes []OutcomeView) *OutcomeListResponse {
 	this := OutcomeListResponse{}
+	this.Limit = limit
+	this.Offset = offset
 	this.Outcomes = outcomes
-	this.Total = total
 	return &this
 }
 
@@ -45,6 +47,54 @@ func NewOutcomeListResponse(outcomes []OutcomeView, total int64) *OutcomeListRes
 func NewOutcomeListResponseWithDefaults() *OutcomeListResponse {
 	this := OutcomeListResponse{}
 	return &this
+}
+
+// GetLimit returns the Limit field value
+func (o *OutcomeListResponse) GetLimit() int64 {
+	if o == nil {
+		var ret int64
+		return ret
+	}
+
+	return o.Limit
+}
+
+// GetLimitOk returns a tuple with the Limit field value
+// and a boolean to check if the value has been set.
+func (o *OutcomeListResponse) GetLimitOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Limit, true
+}
+
+// SetLimit sets field value
+func (o *OutcomeListResponse) SetLimit(v int64) {
+	o.Limit = v
+}
+
+// GetOffset returns the Offset field value
+func (o *OutcomeListResponse) GetOffset() int64 {
+	if o == nil {
+		var ret int64
+		return ret
+	}
+
+	return o.Offset
+}
+
+// GetOffsetOk returns a tuple with the Offset field value
+// and a boolean to check if the value has been set.
+func (o *OutcomeListResponse) GetOffsetOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Offset, true
+}
+
+// SetOffset sets field value
+func (o *OutcomeListResponse) SetOffset(v int64) {
+	o.Offset = v
 }
 
 // GetOutcomes returns the Outcomes field value
@@ -71,30 +121,6 @@ func (o *OutcomeListResponse) SetOutcomes(v []OutcomeView) {
 	o.Outcomes = v
 }
 
-// GetTotal returns the Total field value
-func (o *OutcomeListResponse) GetTotal() int64 {
-	if o == nil {
-		var ret int64
-		return ret
-	}
-
-	return o.Total
-}
-
-// GetTotalOk returns a tuple with the Total field value
-// and a boolean to check if the value has been set.
-func (o *OutcomeListResponse) GetTotalOk() (*int64, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Total, true
-}
-
-// SetTotal sets field value
-func (o *OutcomeListResponse) SetTotal(v int64) {
-	o.Total = v
-}
-
 func (o OutcomeListResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -105,8 +131,9 @@ func (o OutcomeListResponse) MarshalJSON() ([]byte, error) {
 
 func (o OutcomeListResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["limit"] = o.Limit
+	toSerialize["offset"] = o.Offset
 	toSerialize["outcomes"] = o.Outcomes
-	toSerialize["total"] = o.Total
 	return toSerialize, nil
 }
 
@@ -115,8 +142,9 @@ func (o *OutcomeListResponse) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"limit",
+		"offset",
 		"outcomes",
-		"total",
 	}
 
 	allProperties := make(map[string]interface{})

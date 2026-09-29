@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -96,7 +96,8 @@ type V1API interface {
 	V1CreateBulkJob(ctx context.Context) V1APIV1CreateBulkJobRequest
 
 	// V1CreateBulkJobExecute executes the request
-	V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*http.Response, error)
+	//  @return BulkCreateResponse
+	V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*BulkCreateResponse, *http.Response, error)
 
 	/*
 	V1CreateList POST /v1/lists
@@ -150,6 +151,18 @@ type V1API interface {
 	V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.File, *http.Response, error)
 
 	/*
+	V1ExportSuppressions Export suppressions
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1ExportSuppressionsRequest
+	*/
+	V1ExportSuppressions(ctx context.Context) V1APIV1ExportSuppressionsRequest
+
+	// V1ExportSuppressionsExecute executes the request
+	//  @return *os.File
+	V1ExportSuppressionsExecute(r V1APIV1ExportSuppressionsRequest) (*os.File, *http.Response, error)
+
+	/*
 	V1FindEmail POST /v1/find_email
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -188,6 +201,18 @@ type V1API interface {
 	V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailResponse, *http.Response, error)
 
 	/*
+	V1ImportSuppressions Import suppressions
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1ImportSuppressionsRequest
+	*/
+	V1ImportSuppressions(ctx context.Context) V1APIV1ImportSuppressionsRequest
+
+	// V1ImportSuppressionsExecute executes the request
+	//  @return map[string]interface{}
+	V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (map[string]interface{}, *http.Response, error)
+
+	/*
 	V1ListLists GET /v1/lists
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -198,6 +223,19 @@ type V1API interface {
 	// V1ListListsExecute executes the request
 	//  @return ListListResponse
 	V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListResponse, *http.Response, error)
+
+	/*
+	V1ListSuppressionEvents List suppression events
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return V1APIV1ListSuppressionEventsRequest
+	*/
+	V1ListSuppressionEvents(ctx context.Context, id int32) V1APIV1ListSuppressionEventsRequest
+
+	// V1ListSuppressionEventsExecute executes the request
+	//  @return map[string]interface{}
+	V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 	V1ListSuppressions GET /v1/suppressions
@@ -222,6 +260,18 @@ type V1API interface {
 	// V1ReverificationStatusExecute executes the request
 	//  @return ReverificationStatusResponse
 	V1ReverificationStatusExecute(r V1APIV1ReverificationStatusRequest) (*ReverificationStatusResponse, *http.Response, error)
+
+	/*
+	V1SourceQuality List source quality
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1SourceQualityRequest
+	*/
+	V1SourceQuality(ctx context.Context) V1APIV1SourceQualityRequest
+
+	// V1SourceQualityExecute executes the request
+	//  @return map[string]interface{}
+	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error)
 }
 
 // V1APIService V1API service
@@ -334,6 +384,14 @@ func (a *V1APIService) V1AddSuppressionsExecute(r V1APIV1AddSuppressionsRequest)
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -468,6 +526,14 @@ func (a *V1APIService) V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*CheckEm
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -486,6 +552,12 @@ func (a *V1APIService) V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*CheckEm
 type V1APIV1CheckEmailWithOnboardRequest struct {
 	ctx context.Context
 	ApiService V1API
+	onboardRequest *OnboardRequest
+}
+
+func (r V1APIV1CheckEmailWithOnboardRequest) OnboardRequest(onboardRequest OnboardRequest) V1APIV1CheckEmailWithOnboardRequest {
+	r.onboardRequest = &onboardRequest
+	return r
 }
 
 func (r V1APIV1CheckEmailWithOnboardRequest) Execute() (*http.Response, error) {
@@ -523,9 +595,12 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.onboardRequest == nil {
+		return nil, reportError("onboardRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -534,27 +609,15 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
+	// body params
+	localVarPostBody = r.onboardRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -577,6 +640,14 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
@@ -690,6 +761,14 @@ func (a *V1APIService) V1CheckReputationExecute(r V1APIV1CheckReputationRequest)
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -811,6 +890,14 @@ func (a *V1APIService) V1CheckSuppressionExecute(r V1APIV1CheckSuppressionReques
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -829,7 +916,13 @@ func (a *V1APIService) V1CheckSuppressionExecute(r V1APIV1CheckSuppressionReques
 type V1APIV1CreateBulkJobRequest struct {
 	ctx context.Context
 	ApiService V1API
+	bulkCreateRequest *BulkCreateRequest
 	idempotencyKey *string
+}
+
+func (r V1APIV1CreateBulkJobRequest) BulkCreateRequest(bulkCreateRequest BulkCreateRequest) V1APIV1CreateBulkJobRequest {
+	r.bulkCreateRequest = &bulkCreateRequest
+	return r
 }
 
 // Optional idempotency key
@@ -838,7 +931,7 @@ func (r V1APIV1CreateBulkJobRequest) IdempotencyKey(idempotencyKey string) V1API
 	return r
 }
 
-func (r V1APIV1CreateBulkJobRequest) Execute() (*http.Response, error) {
+func (r V1APIV1CreateBulkJobRequest) Execute() (*BulkCreateResponse, *http.Response, error) {
 	return r.ApiService.V1CreateBulkJobExecute(r)
 }
 
@@ -858,16 +951,18 @@ func (a *V1APIService) V1CreateBulkJob(ctx context.Context) V1APIV1CreateBulkJob
 }
 
 // Execute executes the request
-func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*http.Response, error) {
+//  @return BulkCreateResponse
+func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*BulkCreateResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *BulkCreateResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1CreateBulkJob")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/bulk"
@@ -875,9 +970,12 @@ func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.bulkCreateRequest == nil {
+		return localVarReturnValue, nil, reportError("bulkCreateRequest is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -886,7 +984,7 @@ func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*h
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -896,6 +994,8 @@ func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*h
 	if r.idempotencyKey != nil {
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "Idempotency-Key", r.idempotencyKey, "simple", "")
 	}
+	// body params
+	localVarPostBody = r.bulkCreateRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -912,19 +1012,19 @@ func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*h
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -932,10 +1032,27 @@ func (a *V1APIService) V1CreateBulkJobExecute(r V1APIV1CreateBulkJobRequest) (*h
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type V1APIV1CreateListRequest struct {
@@ -944,7 +1061,7 @@ type V1APIV1CreateListRequest struct {
 	file *os.File
 	emailColumn *string
 	name *string
-	policyId *int64
+	sourceKey *string
 }
 
 func (r V1APIV1CreateListRequest) File(file *os.File) V1APIV1CreateListRequest {
@@ -962,8 +1079,9 @@ func (r V1APIV1CreateListRequest) Name(name string) V1APIV1CreateListRequest {
 	return r
 }
 
-func (r V1APIV1CreateListRequest) PolicyId(policyId int64) V1APIV1CreateListRequest {
-	r.policyId = &policyId
+// Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+func (r V1APIV1CreateListRequest) SourceKey(sourceKey string) V1APIV1CreateListRequest {
+	r.sourceKey = &sourceKey
 	return r
 }
 
@@ -1046,8 +1164,8 @@ func (a *V1APIService) V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUpl
 	if r.name != nil {
 		parameterAddToHeaderOrQuery(localVarFormParams, "name", r.name, "", "")
 	}
-	if r.policyId != nil {
-		parameterAddToHeaderOrQuery(localVarFormParams, "policy_id", r.policyId, "", "")
+	if r.sourceKey != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "source_key", r.sourceKey, "", "")
 	}
 	if r.ctx != nil {
 		// API Key Authentication
@@ -1085,6 +1203,14 @@ func (a *V1APIService) V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUpl
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1200,6 +1326,14 @@ func (a *V1APIService) V1DeleteListExecute(r V1APIV1DeleteListRequest) (*ListDel
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1315,6 +1449,14 @@ func (a *V1APIService) V1DeleteSuppressionExecute(r V1APIV1DeleteSuppressionRequ
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1336,8 +1478,6 @@ type V1APIV1DownloadListRequest struct {
 	listId int32
 	filter *string
 	format *string
-	segmentId *int64
-	changedSinceListId *int32
 }
 
 func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListRequest {
@@ -1347,16 +1487,6 @@ func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListReq
 
 func (r V1APIV1DownloadListRequest) Format(format string) V1APIV1DownloadListRequest {
 	r.format = &format
-	return r
-}
-
-func (r V1APIV1DownloadListRequest) SegmentId(segmentId int64) V1APIV1DownloadListRequest {
-	r.segmentId = &segmentId
-	return r
-}
-
-func (r V1APIV1DownloadListRequest) ChangedSinceListId(changedSinceListId int32) V1APIV1DownloadListRequest {
-	r.changedSinceListId = &changedSinceListId
 	return r
 }
 
@@ -1407,12 +1537,6 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 	if r.format != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "format", r.format, "form", "")
 	}
-	if r.segmentId != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "segment_id", r.segmentId, "form", "")
-	}
-	if r.changedSinceListId != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_since_list_id", r.changedSinceListId, "form", "")
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -1423,7 +1547,7 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"text/csv"}
+	localVarHTTPHeaderAccepts := []string{"text/csv", "application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -1466,6 +1590,133 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ExportSuppressionsRequest struct {
+	ctx context.Context
+	ApiService V1API
+}
+
+func (r V1APIV1ExportSuppressionsRequest) Execute() (*os.File, *http.Response, error) {
+	return r.ApiService.V1ExportSuppressionsExecute(r)
+}
+
+/*
+V1ExportSuppressions Export suppressions
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1ExportSuppressionsRequest
+*/
+func (a *V1APIService) V1ExportSuppressions(ctx context.Context) V1APIV1ExportSuppressionsRequest {
+	return V1APIV1ExportSuppressionsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return *os.File
+func (a *V1APIService) V1ExportSuppressionsExecute(r V1APIV1ExportSuppressionsRequest) (*os.File, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *os.File
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ExportSuppressions")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions/export"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"text/csv", "application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1588,6 +1839,14 @@ func (a *V1APIService) V1FindEmailExecute(r V1APIV1FindEmailRequest) (*FindEmail
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1703,6 +1962,14 @@ func (a *V1APIService) V1GetFindEmailExecute(r V1APIV1GetFindEmailRequest) (*Fin
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1818,6 +2085,144 @@ func (a *V1APIService) V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailRes
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ImportSuppressionsRequest struct {
+	ctx context.Context
+	ApiService V1API
+	requestBody *map[string]interface{}
+}
+
+func (r V1APIV1ImportSuppressionsRequest) RequestBody(requestBody map[string]interface{}) V1APIV1ImportSuppressionsRequest {
+	r.requestBody = &requestBody
+	return r
+}
+
+func (r V1APIV1ImportSuppressionsRequest) Execute() (map[string]interface{}, *http.Response, error) {
+	return r.ApiService.V1ImportSuppressionsExecute(r)
+}
+
+/*
+V1ImportSuppressions Import suppressions
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1ImportSuppressionsRequest
+*/
+func (a *V1APIService) V1ImportSuppressions(ctx context.Context) V1APIV1ImportSuppressionsRequest {
+	return V1APIV1ImportSuppressionsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return map[string]interface{}
+func (a *V1APIService) V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (map[string]interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ImportSuppressions")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions/import"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.requestBody == nil {
+		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.requestBody
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1947,6 +2352,137 @@ func (a *V1APIService) V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListR
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ListSuppressionEventsRequest struct {
+	ctx context.Context
+	ApiService V1API
+	id int32
+}
+
+func (r V1APIV1ListSuppressionEventsRequest) Execute() (map[string]interface{}, *http.Response, error) {
+	return r.ApiService.V1ListSuppressionEventsExecute(r)
+}
+
+/*
+V1ListSuppressionEvents List suppression events
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return V1APIV1ListSuppressionEventsRequest
+*/
+func (a *V1APIService) V1ListSuppressionEvents(ctx context.Context, id int32) V1APIV1ListSuppressionEventsRequest {
+	return V1APIV1ListSuppressionEventsRequest{
+		ApiService: a,
+		ctx: ctx,
+		id: id,
+	}
+}
+
+// Execute executes the request
+//  @return map[string]interface{}
+func (a *V1APIService) V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (map[string]interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ListSuppressionEvents")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/suppressions/{id}/events"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1968,6 +2504,10 @@ type V1APIV1ListSuppressionsRequest struct {
 	limit *int64
 	offset *int64
 	reason *string
+	status *string
+	sourceType *string
+	sourceRef *string
+	includeExpired *bool
 }
 
 func (r V1APIV1ListSuppressionsRequest) Limit(limit int64) V1APIV1ListSuppressionsRequest {
@@ -1982,6 +2522,26 @@ func (r V1APIV1ListSuppressionsRequest) Offset(offset int64) V1APIV1ListSuppress
 
 func (r V1APIV1ListSuppressionsRequest) Reason(reason string) V1APIV1ListSuppressionsRequest {
 	r.reason = &reason
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) Status(status string) V1APIV1ListSuppressionsRequest {
+	r.status = &status
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) SourceType(sourceType string) V1APIV1ListSuppressionsRequest {
+	r.sourceType = &sourceType
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) SourceRef(sourceRef string) V1APIV1ListSuppressionsRequest {
+	r.sourceRef = &sourceRef
+	return r
+}
+
+func (r V1APIV1ListSuppressionsRequest) IncludeExpired(includeExpired bool) V1APIV1ListSuppressionsRequest {
+	r.includeExpired = &includeExpired
 	return r
 }
 
@@ -2031,6 +2591,18 @@ func (a *V1APIService) V1ListSuppressionsExecute(r V1APIV1ListSuppressionsReques
 	}
 	if r.reason != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "reason", r.reason, "form", "")
+	}
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.sourceType != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_type", r.sourceType, "form", "")
+	}
+	if r.sourceRef != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_ref", r.sourceRef, "form", "")
+	}
+	if r.includeExpired != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "include_expired", r.includeExpired, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2085,6 +2657,14 @@ func (a *V1APIService) V1ListSuppressionsExecute(r V1APIV1ListSuppressionsReques
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -2196,6 +2776,133 @@ func (a *V1APIService) V1ReverificationStatusExecute(r V1APIV1ReverificationStat
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1SourceQualityRequest struct {
+	ctx context.Context
+	ApiService V1API
+}
+
+func (r V1APIV1SourceQualityRequest) Execute() (map[string]interface{}, *http.Response, error) {
+	return r.ApiService.V1SourceQualityExecute(r)
+}
+
+/*
+V1SourceQuality List source quality
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1SourceQualityRequest
+*/
+func (a *V1APIService) V1SourceQuality(ctx context.Context) V1APIV1SourceQualityRequest {
+	return V1APIV1SourceQualityRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return map[string]interface{}
+func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1SourceQuality")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/sources/quality"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 

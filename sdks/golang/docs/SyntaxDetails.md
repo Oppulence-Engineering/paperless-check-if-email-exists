@@ -4,15 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Address** | **NullableString** |  | [required]
 **Domain** | **string** | The domain part of the email address. | [required]
 **IsValidSyntax** | **bool** | Indicates if the email address syntax is valid. | [required]
+**NormalizedEmail** | **NullableString** |  | [required]
+**Suggestion** | **NullableString** |  | [required]
 **Username** | **string** | The username part of the email address. | [required]
 
 ## Methods
 
 ### NewSyntaxDetails
 
-`func NewSyntaxDetails(domain string, isValidSyntax bool, username string) *SyntaxDetails`
+`func NewSyntaxDetails(address NullableString, domain string, isValidSyntax bool, normalizedEmail NullableString, suggestion NullableString, username string) *SyntaxDetails`
 
 NewSyntaxDetails instantiates a new SyntaxDetails object
 This constructor will assign default values to properties that have it defined,
@@ -26,6 +29,26 @@ will change when the set of required properties is changed
 NewSyntaxDetailsWithDefaults instantiates a new SyntaxDetails object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetAddress
+
+`func (o *SyntaxDetails) GetAddress() string`
+
+GetAddress returns the Address field if non-nil, zero value otherwise.
+
+### GetAddressOk
+
+`func (o *SyntaxDetails) GetAddressOk() (*string, bool)`
+
+GetAddressOk returns a tuple with the Address field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAddress
+
+`func (o *SyntaxDetails) SetAddress(v string)`
+
+SetAddress sets Address field to given value.
+
 
 ### GetDomain
 
@@ -65,6 +88,46 @@ and a boolean to check if the value has been set.
 `func (o *SyntaxDetails) SetIsValidSyntax(v bool)`
 
 SetIsValidSyntax sets IsValidSyntax field to given value.
+
+
+### GetNormalizedEmail
+
+`func (o *SyntaxDetails) GetNormalizedEmail() string`
+
+GetNormalizedEmail returns the NormalizedEmail field if non-nil, zero value otherwise.
+
+### GetNormalizedEmailOk
+
+`func (o *SyntaxDetails) GetNormalizedEmailOk() (*string, bool)`
+
+GetNormalizedEmailOk returns a tuple with the NormalizedEmail field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetNormalizedEmail
+
+`func (o *SyntaxDetails) SetNormalizedEmail(v string)`
+
+SetNormalizedEmail sets NormalizedEmail field to given value.
+
+
+### GetSuggestion
+
+`func (o *SyntaxDetails) GetSuggestion() string`
+
+GetSuggestion returns the Suggestion field if non-nil, zero value otherwise.
+
+### GetSuggestionOk
+
+`func (o *SyntaxDetails) GetSuggestionOk() (*string, bool)`
+
+GetSuggestionOk returns a tuple with the Suggestion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSuggestion
+
+`func (o *SyntaxDetails) SetSuggestion(v string)`
+
+SetSuggestion sets Suggestion field to given value.
 
 
 ### GetUsername

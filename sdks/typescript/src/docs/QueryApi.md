@@ -1,6 +1,6 @@
 # QueryApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -31,6 +31,9 @@ let safeToSend: boolean; // (optional) (default to undefined)
 let jobId: number; // (optional) (default to undefined)
 let since: string; // (optional) (default to undefined)
 let until: string; // (optional) (default to undefined)
+let recommendationAction: string; // (optional) (default to undefined)
+let policyMode: string; // (optional) (default to undefined)
+let policyDecision: string; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1QueryResults(
     limit,
@@ -41,7 +44,10 @@ const { status, data } = await apiInstance.v1QueryResults(
     safeToSend,
     jobId,
     since,
-    until
+    until,
+    recommendationAction,
+    policyMode,
+    policyDecision
 );
 ```
 
@@ -58,6 +64,9 @@ const { status, data } = await apiInstance.v1QueryResults(
 | **jobId** | [**number**] |  | (optional) defaults to undefined|
 | **since** | [**string**] |  | (optional) defaults to undefined|
 | **until** | [**string**] |  | (optional) defaults to undefined|
+| **recommendationAction** | [**string**] |  | (optional) defaults to undefined|
+| **policyMode** | [**string**] |  | (optional) defaults to undefined|
+| **policyDecision** | [**string**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -71,12 +80,13 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Filtered verification results |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

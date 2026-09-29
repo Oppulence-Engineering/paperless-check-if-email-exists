@@ -1,6 +1,6 @@
 # \TenantAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -80,7 +80,7 @@ Other parameters are passed through a pointer to a apiV1ClearTenantWebhookReques
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -217,7 +217,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateTenantDomain
 
-> V1CreateTenantDomain(ctx).Execute()
+> V1CreateTenantDomain(ctx).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 
 POST /v1/me/domains
 
@@ -236,10 +236,11 @@ import (
 )
 
 func main() {
+	createTenantDomainRequest := *openapiclient.NewCreateTenantDomainRequest("Domain_example") // CreateTenantDomainRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).Execute()
+	r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1CreateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -249,12 +250,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1CreateTenantDomainRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createTenantDomainRequest** | [**CreateTenantDomainRequest**](CreateTenantDomainRequest.md) |  |
 
 ### Return type
 
@@ -266,8 +271,8 @@ Other parameters are passed through a pointer to a apiV1CreateTenantDomainReques
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -467,7 +472,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -671,7 +676,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -680,7 +685,7 @@ Name | Type | Description  | Notes
 
 ## V1GetTenantSettings
 
-> V1GetTenantSettings(ctx).Execute()
+> TenantSettingsResponse V1GetTenantSettings(ctx).Execute()
 
 GET /v1/me/settings
 
@@ -702,11 +707,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1GetTenantSettings(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1GetTenantSettings(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1GetTenantSettings``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1GetTenantSettings`: TenantSettingsResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1GetTenantSettings`: %v\n", resp)
 }
 ```
 
@@ -721,7 +728,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantSettingsRequest
 
 ### Return type
 
- (empty response body)
+[**TenantSettingsResponse**](TenantSettingsResponse.md)
 
 ### Authorization
 
@@ -730,7 +737,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantSettingsRequest
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -739,7 +746,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantSettingsRequest
 
 ## V1GetTenantUsage
 
-> V1GetTenantUsage(ctx).Execute()
+> TenantUsageResponse V1GetTenantUsage(ctx).Execute()
 
 GET /v1/me/usage
 
@@ -761,11 +768,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1GetTenantUsage(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1GetTenantUsage(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1GetTenantUsage``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1GetTenantUsage`: TenantUsageResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1GetTenantUsage`: %v\n", resp)
 }
 ```
 
@@ -780,7 +789,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantUsageRequest st
 
 ### Return type
 
- (empty response body)
+[**TenantUsageResponse**](TenantUsageResponse.md)
 
 ### Authorization
 
@@ -789,7 +798,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantUsageRequest st
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -798,7 +807,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantUsageRequest st
 
 ## V1GetTenantWebhook
 
-> V1GetTenantWebhook(ctx).Execute()
+> TenantWebhookResponse V1GetTenantWebhook(ctx).Execute()
 
 GET /v1/me/webhook
 
@@ -820,11 +829,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1GetTenantWebhook(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1GetTenantWebhook(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1GetTenantWebhook``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1GetTenantWebhook`: TenantWebhookResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1GetTenantWebhook`: %v\n", resp)
 }
 ```
 
@@ -839,7 +850,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantWebhookRequest 
 
 ### Return type
 
- (empty response body)
+[**TenantWebhookResponse**](TenantWebhookResponse.md)
 
 ### Authorization
 
@@ -848,7 +859,7 @@ Other parameters are passed through a pointer to a apiV1GetTenantWebhookRequest 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1039,7 +1050,7 @@ Other parameters are passed through a pointer to a apiV1ListTenantDomainsRequest
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1188,7 +1199,7 @@ Name | Type | Description  | Notes
 
 ## V1UpdateTenantDomain
 
-> V1UpdateTenantDomain(ctx, domain).Execute()
+> V1UpdateTenantDomain(ctx, domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 
 PATCH /v1/me/domains/{domain}
 
@@ -1208,10 +1219,11 @@ import (
 
 func main() {
 	domain := "domain_example" // string | Domain identifier
+	updateTenantDomainRequest := *openapiclient.NewUpdateTenantDomainRequest() // UpdateTenantDomainRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).Execute()
+	r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1235,6 +1247,7 @@ Other parameters are passed through a pointer to a apiV1UpdateTenantDomainReques
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **updateTenantDomainRequest** | [**UpdateTenantDomainRequest**](UpdateTenantDomainRequest.md) |  |
 
 ### Return type
 
@@ -1246,8 +1259,8 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1256,7 +1269,7 @@ Name | Type | Description  | Notes
 
 ## V1UpdateTenantSettings
 
-> V1UpdateTenantSettings(ctx).Execute()
+> TenantSettingsResponse V1UpdateTenantSettings(ctx).UpdateTenantSettingsRequest(updateTenantSettingsRequest).Execute()
 
 PATCH /v1/me/settings
 
@@ -1275,29 +1288,36 @@ import (
 )
 
 func main() {
+	updateTenantSettingsRequest := *openapiclient.NewUpdateTenantSettingsRequest() // UpdateTenantSettingsRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1UpdateTenantSettings(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1UpdateTenantSettings(context.Background()).UpdateTenantSettingsRequest(updateTenantSettingsRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateTenantSettings``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1UpdateTenantSettings`: TenantSettingsResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1UpdateTenantSettings`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1UpdateTenantSettingsRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **updateTenantSettingsRequest** | [**UpdateTenantSettingsRequest**](UpdateTenantSettingsRequest.md) |  |
+
 ### Return type
 
- (empty response body)
+[**TenantSettingsResponse**](TenantSettingsResponse.md)
 
 ### Authorization
 
@@ -1305,8 +1325,8 @@ Other parameters are passed through a pointer to a apiV1UpdateTenantSettingsRequ
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1315,7 +1335,7 @@ Other parameters are passed through a pointer to a apiV1UpdateTenantSettingsRequ
 
 ## V1UpdateTenantWebhook
 
-> V1UpdateTenantWebhook(ctx).Execute()
+> TenantWebhookResponse V1UpdateTenantWebhook(ctx).UpdateWebhookRequest(updateWebhookRequest).Execute()
 
 PATCH /v1/me/webhook
 
@@ -1334,29 +1354,36 @@ import (
 )
 
 func main() {
+	updateWebhookRequest := *openapiclient.NewUpdateWebhookRequest() // UpdateWebhookRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1UpdateTenantWebhook(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1UpdateTenantWebhook(context.Background()).UpdateWebhookRequest(updateWebhookRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateTenantWebhook``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1UpdateTenantWebhook`: TenantWebhookResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1UpdateTenantWebhook`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1UpdateTenantWebhookRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **updateWebhookRequest** | [**UpdateWebhookRequest**](UpdateWebhookRequest.md) |  |
+
 ### Return type
 
- (empty response body)
+[**TenantWebhookResponse**](TenantWebhookResponse.md)
 
 ### Authorization
 
@@ -1364,8 +1391,8 @@ Other parameters are passed through a pointer to a apiV1UpdateTenantWebhookReque
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

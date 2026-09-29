@@ -1,22 +1,17 @@
 # ListsApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**v1CreateRemediationPlan**](#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | POST /v1/lists/{list_id}/remediation-plan|
-|[**v1CreateSavedSegment**](#v1createsavedsegment) | **POST** /v1/segments | POST /v1/segments|
-|[**v1DeleteSavedSegment**](#v1deletesavedsegment) | **DELETE** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}|
-|[**v1DiffLists**](#v1difflists) | **GET** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}|
-|[**v1DownloadRemediationPlan**](#v1downloadremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan/{plan_id}/download | GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download|
-|[**v1GetRemediationPlan**](#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | GET /v1/lists/{list_id}/remediation-plan|
-|[**v1GetSavedSegment**](#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}|
+|[**v1CreateRemediationExport**](#v1createremediationexport) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export|
+|[**v1CreateRemediationPlan**](#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan|
+|[**v1DownloadRemediationExport**](#v1downloadremediationexport) | **GET** /v1/lists/{list_id}/remediation-exports/{export_id}/download | Download remediation export|
+|[**v1GetRemediationPlan**](#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | Get remediation plan|
 |[**v1ListQuality**](#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality|
-|[**v1ListSavedSegments**](#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments|
-|[**v1UpdateSavedSegment**](#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}|
 
-# **v1CreateRemediationPlan**
-> RemediationPlanResponse v1CreateRemediationPlan(remediationOptions)
+# **v1CreateRemediationExport**
+> { [key: string]: any; } v1CreateRemediationExport(requestBody)
 
 
 ### Example
@@ -24,19 +19,72 @@ All URIs are relative to *https://api.reacher.email*
 ```typescript
 import {
     ListsApi,
-    Configuration,
-    RemediationOptions
+    Configuration
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ListsApi(configuration);
 
-let listId: number; //List identifier (default to undefined)
-let remediationOptions: RemediationOptions; //
+let listId: number; // (default to undefined)
+let requestBody: { [key: string]: any; }; //
+
+const { status, data } = await apiInstance.v1CreateRemediationExport(
+    listId,
+    requestBody
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **requestBody** | **{ [key: string]: any; }**|  | |
+| **listId** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+**{ [key: string]: any; }**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Remediation export |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CreateRemediationPlan**
+> { [key: string]: any; } v1CreateRemediationPlan(requestBody)
+
+
+### Example
+
+```typescript
+import {
+    ListsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new ListsApi(configuration);
+
+let listId: number; // (default to undefined)
+let requestBody: { [key: string]: any; }; //
 
 const { status, data } = await apiInstance.v1CreateRemediationPlan(
     listId,
-    remediationOptions
+    requestBody
 );
 ```
 
@@ -44,13 +92,13 @@ const { status, data } = await apiInstance.v1CreateRemediationPlan(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **remediationOptions** | **RemediationOptions**|  | |
-| **listId** | [**number**] | List identifier | defaults to undefined|
+| **requestBody** | **{ [key: string]: any; }**|  | |
+| **listId** | [**number**] |  | defaults to undefined|
 
 
 ### Return type
 
-**RemediationPlanResponse**
+**{ [key: string]: any; }**
 
 ### Authorization
 
@@ -65,65 +113,13 @@ const { status, data } = await apiInstance.v1CreateRemediationPlan(
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-|**200** | Existing remediation plan returned |  -  |
-|**201** | Remediation plan created |  -  |
-|**409** | List is still processing |  -  |
+|**200** | Remediation plan |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **v1CreateSavedSegment**
-> SavedSegmentView v1CreateSavedSegment(createSavedSegmentRequest)
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration,
-    CreateSavedSegmentRequest
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let createSavedSegmentRequest: CreateSavedSegmentRequest; //
-
-const { status, data } = await apiInstance.v1CreateSavedSegment(
-    createSavedSegmentRequest
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **createSavedSegmentRequest** | **CreateSavedSegmentRequest**|  | |
-
-
-### Return type
-
-**SavedSegmentView**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**201** | Saved segment created |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1DeleteSavedSegment**
-> v1DeleteSavedSegment()
+# **v1DownloadRemediationExport**
+> File v1DownloadRemediationExport()
 
 
 ### Example
@@ -137,123 +133,12 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ListsApi(configuration);
 
-let segmentId: number; //Saved segment identifier (default to undefined)
+let listId: number; // (default to undefined)
+let exportId: number; // (default to undefined)
 
-const { status, data } = await apiInstance.v1DeleteSavedSegment(
-    segmentId
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **segmentId** | [**number**] | Saved segment identifier | defaults to undefined|
-
-
-### Return type
-
-void (empty response body)
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: Not defined
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Saved segment deleted |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1DiffLists**
-> ListDiffResponse v1DiffLists()
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let baseListId: number; //Base list identifier (default to undefined)
-let compareListId: number; //Compare list identifier (default to undefined)
-let limit: number; // (optional) (default to undefined)
-let offset: number; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.v1DiffLists(
-    baseListId,
-    compareListId,
-    limit,
-    offset
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **baseListId** | [**number**] | Base list identifier | defaults to undefined|
-| **compareListId** | [**number**] | Compare list identifier | defaults to undefined|
-| **limit** | [**number**] |  | (optional) defaults to undefined|
-| **offset** | [**number**] |  | (optional) defaults to undefined|
-
-
-### Return type
-
-**ListDiffResponse**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | List diff |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1DownloadRemediationPlan**
-> File v1DownloadRemediationPlan()
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let listId: number; //List identifier (default to undefined)
-let planId: number; //Remediation plan identifier (default to undefined)
-let partition: string; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.v1DownloadRemediationPlan(
+const { status, data } = await apiInstance.v1DownloadRemediationExport(
     listId,
-    planId,
-    partition
+    exportId
 );
 ```
 
@@ -261,9 +146,8 @@ const { status, data } = await apiInstance.v1DownloadRemediationPlan(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **listId** | [**number**] | List identifier | defaults to undefined|
-| **planId** | [**number**] | Remediation plan identifier | defaults to undefined|
-| **partition** | [**string**] |  | (optional) defaults to undefined|
+| **listId** | [**number**] |  | defaults to undefined|
+| **exportId** | [**number**] |  | defaults to undefined|
 
 
 ### Return type
@@ -277,18 +161,19 @@ const { status, data } = await apiInstance.v1DownloadRemediationPlan(
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: text/csv
+ - **Accept**: text/csv, application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-|**200** | Remediation CSV download |  -  |
+|**200** | Remediation export CSV |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetRemediationPlan**
-> RemediationPlanResponse v1GetRemediationPlan()
+> { [key: string]: any; } v1GetRemediationPlan()
 
 
 ### Example
@@ -302,12 +187,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new ListsApi(configuration);
 
-let listId: number; //List identifier (default to undefined)
-let planId: number; // (optional) (default to undefined)
+let listId: number; // (default to undefined)
 
 const { status, data } = await apiInstance.v1GetRemediationPlan(
-    listId,
-    planId
+    listId
 );
 ```
 
@@ -315,13 +198,12 @@ const { status, data } = await apiInstance.v1GetRemediationPlan(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **listId** | [**number**] | List identifier | defaults to undefined|
-| **planId** | [**number**] |  | (optional) defaults to undefined|
+| **listId** | [**number**] |  | defaults to undefined|
 
 
 ### Return type
 
-**RemediationPlanResponse**
+**{ [key: string]: any; }**
 
 ### Authorization
 
@@ -337,56 +219,7 @@ const { status, data } = await apiInstance.v1GetRemediationPlan(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Remediation plan |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1GetSavedSegment**
-> SavedSegmentView v1GetSavedSegment()
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let segmentId: number; //Saved segment identifier (default to undefined)
-
-const { status, data } = await apiInstance.v1GetSavedSegment(
-    segmentId
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **segmentId** | [**number**] | Saved segment identifier | defaults to undefined|
-
-
-### Return type
-
-**SavedSegmentView**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Saved segment |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -431,122 +264,13 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List quality benchmark report |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1ListSavedSegments**
-> SavedSegmentListResponse v1ListSavedSegments()
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let scope: string; // (optional) (default to undefined)
-let limit: number; // (optional) (default to undefined)
-let offset: number; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.v1ListSavedSegments(
-    scope,
-    limit,
-    offset
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **scope** | [**string**] |  | (optional) defaults to undefined|
-| **limit** | [**number**] |  | (optional) defaults to undefined|
-| **offset** | [**number**] |  | (optional) defaults to undefined|
-
-
-### Return type
-
-**SavedSegmentListResponse**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Saved segments |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **v1UpdateSavedSegment**
-> SavedSegmentView v1UpdateSavedSegment(updateSavedSegmentRequest)
-
-
-### Example
-
-```typescript
-import {
-    ListsApi,
-    Configuration,
-    UpdateSavedSegmentRequest
-} from '@oppulence/reacher-sdk';
-
-const configuration = new Configuration();
-const apiInstance = new ListsApi(configuration);
-
-let segmentId: number; //Saved segment identifier (default to undefined)
-let updateSavedSegmentRequest: UpdateSavedSegmentRequest; //
-
-const { status, data } = await apiInstance.v1UpdateSavedSegment(
-    segmentId,
-    updateSavedSegmentRequest
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **updateSavedSegmentRequest** | **UpdateSavedSegmentRequest**|  | |
-| **segmentId** | [**number**] | Saved segment identifier | defaults to undefined|
-
-
-### Return type
-
-**SavedSegmentView**
-
-### Authorization
-
-[Authorization](../README.md#Authorization)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | Saved segment updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

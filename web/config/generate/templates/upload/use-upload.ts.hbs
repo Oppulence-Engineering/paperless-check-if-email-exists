@@ -1,0 +1,20 @@
+"use client";
+
+import "client-only";
+
+import { useMutation{{#if hasInvalidate}}, useQueryClient{{/if}} } from "@tanstack/react-query";
+
+import { upload{{pascalName}}, type {{pascalName}}UploadInput } from "@/hooks/uploads/utils/upload-{{name}}";
+{{#if hasInvalidate}}import { {{invalidateKeysName}} } from "@/hooks/queries/utils/{{invalidateName}}-keys";
+{{/if}}
+/** @oppulence-gen kind={{artifactKind}} Mutation hook for the {{title}} descriptor and upload flow. */
+export function use{{pascalName}}() {
+  {{#if hasInvalidate}}const queryClient = useQueryClient();
+  {{/if}}return useMutation({
+    mutationFn: ({{#if hasPathParams}}input: { {{pathParamsSignature}}; upload: {{pascalName}}UploadInput }{{else}}input: {{pascalName}}UploadInput{{/if}}) =>
+      upload{{pascalName}}({{#if hasPathParams}}{{#each pathParams}}input.{{this}}, {{/each}}input.upload{{else}}input{{/if}}),
+{{#if hasInvalidate}}    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: {{invalidateKeysName}}.all });
+    },
+{{/if}}  });
+}

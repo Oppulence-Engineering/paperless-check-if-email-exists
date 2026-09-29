@@ -16,7 +16,7 @@ struct Query {
 	limit: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct HistoryEntry {
 	task_id: i32,
 	job_id: Option<i32>,
@@ -27,6 +27,11 @@ struct HistoryEntry {
 	sub_reason: Option<String>,
 	safe_to_send: Option<bool>,
 	reason_codes: Option<Vec<String>>,
+	recommendation_action: Option<String>,
+	recommendation: Option<serde_json::Value>,
+	policy_mode: Option<String>,
+	policy_decision: Option<String>,
+	policy_evaluation: Option<serde_json::Value>,
 	is_reachable: Option<String>,
 	completed_at: Option<DateTime<Utc>>,
 	previous_task_id: Option<i32>,
@@ -39,7 +44,7 @@ struct HistoryEntry {
 	change_type: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct Response {
 	email: String,
 	history: Vec<HistoryEntry>,
@@ -90,6 +95,11 @@ async fn http_handler(
 			r.sub_reason,
 			r.safe_to_send,
 			r.reason_codes,
+			r.recommendation_action,
+			r.recommendation,
+			r.policy_mode,
+			r.policy_decision,
+			r.policy_evaluation,
 			r.result->>'is_reachable' AS is_reachable,
 			r.completed_at,
 			prev.id AS previous_task_id,
@@ -190,6 +200,11 @@ async fn http_handler(
 				sub_reason: r.get("sub_reason"),
 				safe_to_send: r.get("safe_to_send"),
 				reason_codes: r.get("reason_codes"),
+				recommendation_action: r.get("recommendation_action"),
+				recommendation: r.get("recommendation"),
+				policy_mode: r.get("policy_mode"),
+				policy_decision: r.get("policy_decision"),
+				policy_evaluation: r.get("policy_evaluation"),
 				is_reachable: r.get("is_reachable"),
 				completed_at,
 				previous_task_id: r.get("previous_task_id"),
@@ -224,7 +239,7 @@ async fn http_handler(
 		("email" = String, Path, description = "Email address to look up"),
 		Query
 	),
-	responses((status = 200, description = "Verification history for the email"))
+	responses((status = 200, description = "Verification history for the email", body = inline(Response)))
 )]
 pub fn v1_email_history(
 	config: Arc<BackendConfig>,

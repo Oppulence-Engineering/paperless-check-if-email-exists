@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -13,6 +13,7 @@ package reacher
 
 import (
 	"encoding/json"
+	"time"
 	"bytes"
 	"fmt"
 )
@@ -22,10 +23,13 @@ var _ MappedNullable = &ListItem{}
 
 // ListItem struct for ListItem
 type ListItem struct {
+	CompletedAt NullableTime `json:"completed_at"`
+	CreatedAt time.Time `json:"created_at"`
 	EmailColumn string `json:"email_column"`
 	Id int32 `json:"id"`
 	Name string `json:"name"`
 	OriginalFilename string `json:"original_filename"`
+	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	TotalRows int32 `json:"total_rows"`
 }
@@ -36,8 +40,10 @@ type _ListItem ListItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewListItem(emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32) *ListItem {
+func NewListItem(completedAt NullableTime, createdAt time.Time, emailColumn string, id int32, name string, originalFilename string, status string, totalRows int32) *ListItem {
 	this := ListItem{}
+	this.CompletedAt = completedAt
+	this.CreatedAt = createdAt
 	this.EmailColumn = emailColumn
 	this.Id = id
 	this.Name = name
@@ -53,6 +59,56 @@ func NewListItem(emailColumn string, id int32, name string, originalFilename str
 func NewListItemWithDefaults() *ListItem {
 	this := ListItem{}
 	return &this
+}
+
+// GetCompletedAt returns the CompletedAt field value
+// If the value is explicit nil, the zero value for time.Time will be returned
+func (o *ListItem) GetCompletedAt() time.Time {
+	if o == nil || o.CompletedAt.Get() == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return *o.CompletedAt.Get()
+}
+
+// GetCompletedAtOk returns a tuple with the CompletedAt field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListItem) GetCompletedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.CompletedAt.Get(), o.CompletedAt.IsSet()
+}
+
+// SetCompletedAt sets field value
+func (o *ListItem) SetCompletedAt(v time.Time) {
+	o.CompletedAt.Set(&v)
+}
+
+// GetCreatedAt returns the CreatedAt field value
+func (o *ListItem) GetCreatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value
+// and a boolean to check if the value has been set.
+func (o *ListItem) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CreatedAt, true
+}
+
+// SetCreatedAt sets field value
+func (o *ListItem) SetCreatedAt(v time.Time) {
+	o.CreatedAt = v
 }
 
 // GetEmailColumn returns the EmailColumn field value
@@ -151,6 +207,48 @@ func (o *ListItem) SetOriginalFilename(v string) {
 	o.OriginalFilename = v
 }
 
+// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListItem) GetSourceKey() string {
+	if o == nil || IsNil(o.SourceKey.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceKey.Get()
+}
+
+// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListItem) GetSourceKeyOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceKey.Get(), o.SourceKey.IsSet()
+}
+
+// HasSourceKey returns a boolean if a field has been set.
+func (o *ListItem) HasSourceKey() bool {
+	if o != nil && o.SourceKey.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
+func (o *ListItem) SetSourceKey(v string) {
+	o.SourceKey.Set(&v)
+}
+// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
+func (o *ListItem) SetSourceKeyNil() {
+	o.SourceKey.Set(nil)
+}
+
+// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
+func (o *ListItem) UnsetSourceKey() {
+	o.SourceKey.Unset()
+}
+
 // GetStatus returns the Status field value
 func (o *ListItem) GetStatus() string {
 	if o == nil {
@@ -209,10 +307,15 @@ func (o ListItem) MarshalJSON() ([]byte, error) {
 
 func (o ListItem) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["completed_at"] = o.CompletedAt.Get()
+	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["email_column"] = o.EmailColumn
 	toSerialize["id"] = o.Id
 	toSerialize["name"] = o.Name
 	toSerialize["original_filename"] = o.OriginalFilename
+	if o.SourceKey.IsSet() {
+		toSerialize["source_key"] = o.SourceKey.Get()
+	}
 	toSerialize["status"] = o.Status
 	toSerialize["total_rows"] = o.TotalRows
 	return toSerialize, nil
@@ -223,6 +326,8 @@ func (o *ListItem) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"completed_at",
+		"created_at",
 		"email_column",
 		"id",
 		"name",

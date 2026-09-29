@@ -1,6 +1,8 @@
 pub mod approval_checklist;
 pub mod cancel;
 pub mod download;
+pub mod failure_center;
+pub mod failure_report;
 pub mod get_events;
 pub mod get_results;
 pub mod get_status;

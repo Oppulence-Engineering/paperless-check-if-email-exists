@@ -1,6 +1,6 @@
 # TenantApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -60,13 +60,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook cleared |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -173,7 +174,7 @@ const { status, data } = await apiInstance.v1CreateScorePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CreateTenantDomain**
-> v1CreateTenantDomain()
+> v1CreateTenantDomain(createTenantDomainRequest)
 
 Add a domain for the authenticated tenant.
 
@@ -182,17 +183,25 @@ Add a domain for the authenticated tenant.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    CreateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1CreateTenantDomain();
+let createTenantDomainRequest: CreateTenantDomainRequest; //
+
+const { status, data } = await apiInstance.v1CreateTenantDomain(
+    createTenantDomainRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createTenantDomainRequest** | **CreateTenantDomainRequest**|  | |
 
 
 ### Return type
@@ -205,14 +214,15 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Tenant domain created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -357,13 +367,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -508,18 +519,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain details |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantSettings**
-> v1GetTenantSettings()
+> TenantSettingsResponse v1GetTenantSettings()
 
 Get tenant runtime settings and default operational behavior.
 
@@ -543,7 +555,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantSettingsResponse**
 
 ### Authorization
 
@@ -552,18 +564,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant settings |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantUsage**
-> v1GetTenantUsage()
+> TenantUsageResponse v1GetTenantUsage()
 
 Return current tenant usage and quota summary.
 
@@ -587,7 +600,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantUsageResponse**
 
 ### Authorization
 
@@ -596,18 +609,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant usage summary |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantWebhook**
-> v1GetTenantWebhook()
+> TenantWebhookResponse v1GetTenantWebhook()
 
 Get masked tenant webhook integration state.
 
@@ -631,7 +645,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantWebhookResponse**
 
 ### Authorization
 
@@ -640,13 +654,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook state |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -790,13 +805,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domains list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -909,7 +925,7 @@ const { status, data } = await apiInstance.v1UpdateScorePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantDomain**
-> v1UpdateTenantDomain()
+> v1UpdateTenantDomain(updateTenantDomainRequest)
 
 Update the domain value, status, verification state, or metadata notes.
 
@@ -918,16 +934,19 @@ Update the domain value, status, verification state, or metadata notes.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
 let domain: string; //Domain identifier (default to undefined)
+let updateTenantDomainRequest: UpdateTenantDomainRequest; //
 
 const { status, data } = await apiInstance.v1UpdateTenantDomain(
-    domain
+    domain,
+    updateTenantDomainRequest
 );
 ```
 
@@ -935,6 +954,7 @@ const { status, data } = await apiInstance.v1UpdateTenantDomain(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **updateTenantDomainRequest** | **UpdateTenantDomainRequest**|  | |
 | **domain** | [**string**] | Domain identifier | defaults to undefined|
 
 
@@ -948,19 +968,20 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantSettings**
-> v1UpdateTenantSettings()
+> TenantSettingsResponse v1UpdateTenantSettings(updateTenantSettingsRequest)
 
 Update tenant settings such as retention, default webhook URL, or secret.
 
@@ -969,22 +990,30 @@ Update tenant settings such as retention, default webhook URL, or secret.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateTenantSettingsRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1UpdateTenantSettings();
+let updateTenantSettingsRequest: UpdateTenantSettingsRequest; //
+
+const { status, data } = await apiInstance.v1UpdateTenantSettings(
+    updateTenantSettingsRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateTenantSettingsRequest** | **UpdateTenantSettingsRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**TenantSettingsResponse**
 
 ### Authorization
 
@@ -992,19 +1021,20 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant settings updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantWebhook**
-> v1UpdateTenantWebhook()
+> TenantWebhookResponse v1UpdateTenantWebhook(updateWebhookRequest)
 
 Update tenant webhook URL and signing secret.
 
@@ -1013,22 +1043,30 @@ Update tenant webhook URL and signing secret.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateWebhookRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1UpdateTenantWebhook();
+let updateWebhookRequest: UpdateWebhookRequest; //
+
+const { status, data } = await apiInstance.v1UpdateTenantWebhook(
+    updateWebhookRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateWebhookRequest** | **UpdateWebhookRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**TenantWebhookResponse**
 
 ### Authorization
 
@@ -1036,13 +1074,14 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

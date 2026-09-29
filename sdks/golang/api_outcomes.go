@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -17,6 +17,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -24,7 +25,59 @@ import (
 type OutcomesAPI interface {
 
 	/*
-	V1ListOutcomes Method for V1ListOutcomes
+	V1CreateProviderEndpoint Method for V1CreateProviderEndpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return OutcomesAPIV1CreateProviderEndpointRequest
+	*/
+	V1CreateProviderEndpoint(ctx context.Context) OutcomesAPIV1CreateProviderEndpointRequest
+
+	// V1CreateProviderEndpointExecute executes the request
+	//  @return ProviderEndpointView
+	V1CreateProviderEndpointExecute(r OutcomesAPIV1CreateProviderEndpointRequest) (*ProviderEndpointView, *http.Response, error)
+
+	/*
+	V1DeleteProviderEndpoint Method for V1DeleteProviderEndpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param endpointId Provider endpoint identifier
+	@return OutcomesAPIV1DeleteProviderEndpointRequest
+	*/
+	V1DeleteProviderEndpoint(ctx context.Context, endpointId string) OutcomesAPIV1DeleteProviderEndpointRequest
+
+	// V1DeleteProviderEndpointExecute executes the request
+	//  @return ProviderDeleteResponse
+	V1DeleteProviderEndpointExecute(r OutcomesAPIV1DeleteProviderEndpointRequest) (*ProviderDeleteResponse, *http.Response, error)
+
+	/*
+	V1IngestOutcomes POST /v1/outcomes
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return OutcomesAPIV1IngestOutcomesRequest
+	*/
+	V1IngestOutcomes(ctx context.Context) OutcomesAPIV1IngestOutcomesRequest
+
+	// V1IngestOutcomesExecute executes the request
+	//  @return OutcomeIngestResponse
+	V1IngestOutcomesExecute(r OutcomesAPIV1IngestOutcomesRequest) (*OutcomeIngestResponse, *http.Response, error)
+
+	/*
+	V1IngestProviderOutcomes Method for V1IngestProviderOutcomes
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param provider sendgrid, ses, mailgun, or postmark
+	@param endpointId Provider endpoint identifier
+	@param deliveryToken Secret endpoint delivery token
+	@return OutcomesAPIV1IngestProviderOutcomesRequest
+	*/
+	V1IngestProviderOutcomes(ctx context.Context, provider string, endpointId string, deliveryToken string) OutcomesAPIV1IngestProviderOutcomesRequest
+
+	// V1IngestProviderOutcomesExecute executes the request
+	//  @return InboundOutcomeResponse
+	V1IngestProviderOutcomesExecute(r OutcomesAPIV1IngestProviderOutcomesRequest) (*InboundOutcomeResponse, *http.Response, error)
+
+	/*
+	V1ListOutcomes GET /v1/outcomes
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return OutcomesAPIV1ListOutcomesRequest
@@ -36,62 +89,554 @@ type OutcomesAPI interface {
 	V1ListOutcomesExecute(r OutcomesAPIV1ListOutcomesRequest) (*OutcomeListResponse, *http.Response, error)
 
 	/*
-	V1PostOutcomes Method for V1PostOutcomes
+	V1ListProviderEndpoints Method for V1ListProviderEndpoints
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return OutcomesAPIV1PostOutcomesRequest
+	@return OutcomesAPIV1ListProviderEndpointsRequest
 	*/
-	V1PostOutcomes(ctx context.Context) OutcomesAPIV1PostOutcomesRequest
+	V1ListProviderEndpoints(ctx context.Context) OutcomesAPIV1ListProviderEndpointsRequest
 
-	// V1PostOutcomesExecute executes the request
-	//  @return IngestOutcomesResponse
-	V1PostOutcomesExecute(r OutcomesAPIV1PostOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error)
+	// V1ListProviderEndpointsExecute executes the request
+	//  @return ProviderEndpointListResponse
+	V1ListProviderEndpointsExecute(r OutcomesAPIV1ListProviderEndpointsRequest) (*ProviderEndpointListResponse, *http.Response, error)
 
 	/*
-	V1UploadOutcomes Method for V1UploadOutcomes
+	V1UpdateProviderEndpoint Method for V1UpdateProviderEndpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return OutcomesAPIV1UploadOutcomesRequest
+	@param endpointId Provider endpoint identifier
+	@return OutcomesAPIV1UpdateProviderEndpointRequest
 	*/
-	V1UploadOutcomes(ctx context.Context) OutcomesAPIV1UploadOutcomesRequest
+	V1UpdateProviderEndpoint(ctx context.Context, endpointId string) OutcomesAPIV1UpdateProviderEndpointRequest
 
-	// V1UploadOutcomesExecute executes the request
-	//  @return IngestOutcomesResponse
-	V1UploadOutcomesExecute(r OutcomesAPIV1UploadOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error)
+	// V1UpdateProviderEndpointExecute executes the request
+	//  @return ProviderEndpointView
+	V1UpdateProviderEndpointExecute(r OutcomesAPIV1UpdateProviderEndpointRequest) (*ProviderEndpointView, *http.Response, error)
 }
 
 // OutcomesAPIService OutcomesAPI service
 type OutcomesAPIService service
 
+type OutcomesAPIV1CreateProviderEndpointRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	createProviderEndpointInput *CreateProviderEndpointInput
+}
+
+func (r OutcomesAPIV1CreateProviderEndpointRequest) CreateProviderEndpointInput(createProviderEndpointInput CreateProviderEndpointInput) OutcomesAPIV1CreateProviderEndpointRequest {
+	r.createProviderEndpointInput = &createProviderEndpointInput
+	return r
+}
+
+func (r OutcomesAPIV1CreateProviderEndpointRequest) Execute() (*ProviderEndpointView, *http.Response, error) {
+	return r.ApiService.V1CreateProviderEndpointExecute(r)
+}
+
+/*
+V1CreateProviderEndpoint Method for V1CreateProviderEndpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return OutcomesAPIV1CreateProviderEndpointRequest
+*/
+func (a *OutcomesAPIService) V1CreateProviderEndpoint(ctx context.Context) OutcomesAPIV1CreateProviderEndpointRequest {
+	return OutcomesAPIV1CreateProviderEndpointRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ProviderEndpointView
+func (a *OutcomesAPIService) V1CreateProviderEndpointExecute(r OutcomesAPIV1CreateProviderEndpointRequest) (*ProviderEndpointView, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ProviderEndpointView
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1CreateProviderEndpoint")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/provider-endpoints"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createProviderEndpointInput == nil {
+		return localVarReturnValue, nil, reportError("createProviderEndpointInput is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createProviderEndpointInput
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type OutcomesAPIV1DeleteProviderEndpointRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	endpointId string
+}
+
+func (r OutcomesAPIV1DeleteProviderEndpointRequest) Execute() (*ProviderDeleteResponse, *http.Response, error) {
+	return r.ApiService.V1DeleteProviderEndpointExecute(r)
+}
+
+/*
+V1DeleteProviderEndpoint Method for V1DeleteProviderEndpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param endpointId Provider endpoint identifier
+ @return OutcomesAPIV1DeleteProviderEndpointRequest
+*/
+func (a *OutcomesAPIService) V1DeleteProviderEndpoint(ctx context.Context, endpointId string) OutcomesAPIV1DeleteProviderEndpointRequest {
+	return OutcomesAPIV1DeleteProviderEndpointRequest{
+		ApiService: a,
+		ctx: ctx,
+		endpointId: endpointId,
+	}
+}
+
+// Execute executes the request
+//  @return ProviderDeleteResponse
+func (a *OutcomesAPIService) V1DeleteProviderEndpointExecute(r OutcomesAPIV1DeleteProviderEndpointRequest) (*ProviderDeleteResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ProviderDeleteResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1DeleteProviderEndpoint")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/provider-endpoints/{endpoint_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"endpoint_id"+"}", url.PathEscape(parameterValueToString(r.endpointId, "endpointId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type OutcomesAPIV1IngestOutcomesRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	outcomeIngestRequest *OutcomeIngestRequest
+}
+
+func (r OutcomesAPIV1IngestOutcomesRequest) OutcomeIngestRequest(outcomeIngestRequest OutcomeIngestRequest) OutcomesAPIV1IngestOutcomesRequest {
+	r.outcomeIngestRequest = &outcomeIngestRequest
+	return r
+}
+
+func (r OutcomesAPIV1IngestOutcomesRequest) Execute() (*OutcomeIngestResponse, *http.Response, error) {
+	return r.ApiService.V1IngestOutcomesExecute(r)
+}
+
+/*
+V1IngestOutcomes POST /v1/outcomes
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return OutcomesAPIV1IngestOutcomesRequest
+*/
+func (a *OutcomesAPIService) V1IngestOutcomes(ctx context.Context) OutcomesAPIV1IngestOutcomesRequest {
+	return OutcomesAPIV1IngestOutcomesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return OutcomeIngestResponse
+func (a *OutcomesAPIService) V1IngestOutcomesExecute(r OutcomesAPIV1IngestOutcomesRequest) (*OutcomeIngestResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *OutcomeIngestResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1IngestOutcomes")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/outcomes"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.outcomeIngestRequest == nil {
+		return localVarReturnValue, nil, reportError("outcomeIngestRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.outcomeIngestRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type OutcomesAPIV1IngestProviderOutcomesRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	provider string
+	endpointId string
+	deliveryToken string
+	body *interface{}
+}
+
+func (r OutcomesAPIV1IngestProviderOutcomesRequest) Body(body interface{}) OutcomesAPIV1IngestProviderOutcomesRequest {
+	r.body = &body
+	return r
+}
+
+func (r OutcomesAPIV1IngestProviderOutcomesRequest) Execute() (*InboundOutcomeResponse, *http.Response, error) {
+	return r.ApiService.V1IngestProviderOutcomesExecute(r)
+}
+
+/*
+V1IngestProviderOutcomes Method for V1IngestProviderOutcomes
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param provider sendgrid, ses, mailgun, or postmark
+ @param endpointId Provider endpoint identifier
+ @param deliveryToken Secret endpoint delivery token
+ @return OutcomesAPIV1IngestProviderOutcomesRequest
+*/
+func (a *OutcomesAPIService) V1IngestProviderOutcomes(ctx context.Context, provider string, endpointId string, deliveryToken string) OutcomesAPIV1IngestProviderOutcomesRequest {
+	return OutcomesAPIV1IngestProviderOutcomesRequest{
+		ApiService: a,
+		ctx: ctx,
+		provider: provider,
+		endpointId: endpointId,
+		deliveryToken: deliveryToken,
+	}
+}
+
+// Execute executes the request
+//  @return InboundOutcomeResponse
+func (a *OutcomesAPIService) V1IngestProviderOutcomesExecute(r OutcomesAPIV1IngestProviderOutcomesRequest) (*InboundOutcomeResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *InboundOutcomeResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1IngestProviderOutcomes")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}"
+	localVarPath = strings.Replace(localVarPath, "{"+"provider"+"}", url.PathEscape(parameterValueToString(r.provider, "provider")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"endpoint_id"+"}", url.PathEscape(parameterValueToString(r.endpointId, "endpointId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"delivery_token"+"}", url.PathEscape(parameterValueToString(r.deliveryToken, "deliveryToken")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.body == nil {
+		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.body
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type OutcomesAPIV1ListOutcomesRequest struct {
 	ctx context.Context
 	ApiService OutcomesAPI
-	email *string
-	source *string
-	type_ *string
-	since *time.Time
 	limit *int64
 	offset *int64
-}
-
-func (r OutcomesAPIV1ListOutcomesRequest) Email(email string) OutcomesAPIV1ListOutcomesRequest {
-	r.email = &email
-	return r
-}
-
-func (r OutcomesAPIV1ListOutcomesRequest) Source(source string) OutcomesAPIV1ListOutcomesRequest {
-	r.source = &source
-	return r
-}
-
-func (r OutcomesAPIV1ListOutcomesRequest) Type_(type_ string) OutcomesAPIV1ListOutcomesRequest {
-	r.type_ = &type_
-	return r
-}
-
-func (r OutcomesAPIV1ListOutcomesRequest) Since(since time.Time) OutcomesAPIV1ListOutcomesRequest {
-	r.since = &since
-	return r
+	email *string
+	eventType *string
+	sourceKey *string
+	since *time.Time
 }
 
 func (r OutcomesAPIV1ListOutcomesRequest) Limit(limit int64) OutcomesAPIV1ListOutcomesRequest {
@@ -104,12 +649,32 @@ func (r OutcomesAPIV1ListOutcomesRequest) Offset(offset int64) OutcomesAPIV1List
 	return r
 }
 
+func (r OutcomesAPIV1ListOutcomesRequest) Email(email string) OutcomesAPIV1ListOutcomesRequest {
+	r.email = &email
+	return r
+}
+
+func (r OutcomesAPIV1ListOutcomesRequest) EventType(eventType string) OutcomesAPIV1ListOutcomesRequest {
+	r.eventType = &eventType
+	return r
+}
+
+func (r OutcomesAPIV1ListOutcomesRequest) SourceKey(sourceKey string) OutcomesAPIV1ListOutcomesRequest {
+	r.sourceKey = &sourceKey
+	return r
+}
+
+func (r OutcomesAPIV1ListOutcomesRequest) Since(since time.Time) OutcomesAPIV1ListOutcomesRequest {
+	r.since = &since
+	return r
+}
+
 func (r OutcomesAPIV1ListOutcomesRequest) Execute() (*OutcomeListResponse, *http.Response, error) {
 	return r.ApiService.V1ListOutcomesExecute(r)
 }
 
 /*
-V1ListOutcomes Method for V1ListOutcomes
+V1ListOutcomes GET /v1/outcomes
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return OutcomesAPIV1ListOutcomesRequest
@@ -142,23 +707,23 @@ func (a *OutcomesAPIService) V1ListOutcomesExecute(r OutcomesAPIV1ListOutcomesRe
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	if r.email != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "form", "")
-	}
-	if r.source != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "source", r.source, "form", "")
-	}
-	if r.type_ != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
-	}
-	if r.since != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "since", r.since, "form", "")
-	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	if r.email != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "form", "")
+	}
+	if r.eventType != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "event_type", r.eventType, "form", "")
+	}
+	if r.sourceKey != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_key", r.sourceKey, "form", "")
+	}
+	if r.since != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "since", r.since, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -213,6 +778,14 @@ func (a *OutcomesAPIService) V1ListOutcomesExecute(r OutcomesAPIV1ListOutcomesRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -228,56 +801,179 @@ func (a *OutcomesAPIService) V1ListOutcomesExecute(r OutcomesAPIV1ListOutcomesRe
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type OutcomesAPIV1PostOutcomesRequest struct {
+type OutcomesAPIV1ListProviderEndpointsRequest struct {
 	ctx context.Context
 	ApiService OutcomesAPI
-	ingestOutcomesRequest *IngestOutcomesRequest
 }
 
-func (r OutcomesAPIV1PostOutcomesRequest) IngestOutcomesRequest(ingestOutcomesRequest IngestOutcomesRequest) OutcomesAPIV1PostOutcomesRequest {
-	r.ingestOutcomesRequest = &ingestOutcomesRequest
-	return r
-}
-
-func (r OutcomesAPIV1PostOutcomesRequest) Execute() (*IngestOutcomesResponse, *http.Response, error) {
-	return r.ApiService.V1PostOutcomesExecute(r)
+func (r OutcomesAPIV1ListProviderEndpointsRequest) Execute() (*ProviderEndpointListResponse, *http.Response, error) {
+	return r.ApiService.V1ListProviderEndpointsExecute(r)
 }
 
 /*
-V1PostOutcomes Method for V1PostOutcomes
+V1ListProviderEndpoints Method for V1ListProviderEndpoints
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return OutcomesAPIV1PostOutcomesRequest
+ @return OutcomesAPIV1ListProviderEndpointsRequest
 */
-func (a *OutcomesAPIService) V1PostOutcomes(ctx context.Context) OutcomesAPIV1PostOutcomesRequest {
-	return OutcomesAPIV1PostOutcomesRequest{
+func (a *OutcomesAPIService) V1ListProviderEndpoints(ctx context.Context) OutcomesAPIV1ListProviderEndpointsRequest {
+	return OutcomesAPIV1ListProviderEndpointsRequest{
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//  @return IngestOutcomesResponse
-func (a *OutcomesAPIService) V1PostOutcomesExecute(r OutcomesAPIV1PostOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error) {
+//  @return ProviderEndpointListResponse
+func (a *OutcomesAPIService) V1ListProviderEndpointsExecute(r OutcomesAPIV1ListProviderEndpointsRequest) (*ProviderEndpointListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
+		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *IngestOutcomesResponse
+		localVarReturnValue  *ProviderEndpointListResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1PostOutcomes")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1ListProviderEndpoints")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/v1/outcomes"
+	localVarPath := localBasePath + "/v1/provider-endpoints"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.ingestOutcomesRequest == nil {
-		return localVarReturnValue, nil, reportError("ingestOutcomesRequest is required and must be specified")
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type OutcomesAPIV1UpdateProviderEndpointRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	endpointId string
+	updateProviderEndpointInput *UpdateProviderEndpointInput
+}
+
+func (r OutcomesAPIV1UpdateProviderEndpointRequest) UpdateProviderEndpointInput(updateProviderEndpointInput UpdateProviderEndpointInput) OutcomesAPIV1UpdateProviderEndpointRequest {
+	r.updateProviderEndpointInput = &updateProviderEndpointInput
+	return r
+}
+
+func (r OutcomesAPIV1UpdateProviderEndpointRequest) Execute() (*ProviderEndpointView, *http.Response, error) {
+	return r.ApiService.V1UpdateProviderEndpointExecute(r)
+}
+
+/*
+V1UpdateProviderEndpoint Method for V1UpdateProviderEndpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param endpointId Provider endpoint identifier
+ @return OutcomesAPIV1UpdateProviderEndpointRequest
+*/
+func (a *OutcomesAPIService) V1UpdateProviderEndpoint(ctx context.Context, endpointId string) OutcomesAPIV1UpdateProviderEndpointRequest {
+	return OutcomesAPIV1UpdateProviderEndpointRequest{
+		ApiService: a,
+		ctx: ctx,
+		endpointId: endpointId,
+	}
+}
+
+// Execute executes the request
+//  @return ProviderEndpointView
+func (a *OutcomesAPIService) V1UpdateProviderEndpointExecute(r OutcomesAPIV1UpdateProviderEndpointRequest) (*ProviderEndpointView, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPatch
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ProviderEndpointView
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1UpdateProviderEndpoint")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/provider-endpoints/{endpoint_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"endpoint_id"+"}", url.PathEscape(parameterValueToString(r.endpointId, "endpointId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateProviderEndpointInput == nil {
+		return localVarReturnValue, nil, reportError("updateProviderEndpointInput is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -298,7 +994,7 @@ func (a *OutcomesAPIService) V1PostOutcomesExecute(r OutcomesAPIV1PostOutcomesRe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.ingestOutcomesRequest
+	localVarPostBody = r.updateProviderEndpointInput
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -335,117 +1031,14 @@ func (a *OutcomesAPIService) V1PostOutcomesExecute(r OutcomesAPIV1PostOutcomesRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type OutcomesAPIV1UploadOutcomesRequest struct {
-	ctx context.Context
-	ApiService OutcomesAPI
-}
-
-func (r OutcomesAPIV1UploadOutcomesRequest) Execute() (*IngestOutcomesResponse, *http.Response, error) {
-	return r.ApiService.V1UploadOutcomesExecute(r)
-}
-
-/*
-V1UploadOutcomes Method for V1UploadOutcomes
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return OutcomesAPIV1UploadOutcomesRequest
-*/
-func (a *OutcomesAPIService) V1UploadOutcomes(ctx context.Context) OutcomesAPIV1UploadOutcomesRequest {
-	return OutcomesAPIV1UploadOutcomesRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return IngestOutcomesResponse
-func (a *OutcomesAPIService) V1UploadOutcomesExecute(r OutcomesAPIV1UploadOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *IngestOutcomesResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1UploadOutcomes")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/outcomes/upload"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 

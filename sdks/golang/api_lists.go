@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -25,95 +25,57 @@ import (
 type ListsAPI interface {
 
 	/*
-	V1CreateRemediationPlan POST /v1/lists/{list_id}/remediation-plan
+	V1CreateRemediationExport Create remediation export
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param listId List identifier
+	@param listId
+	@return ListsAPIV1CreateRemediationExportRequest
+	*/
+	V1CreateRemediationExport(ctx context.Context, listId int32) ListsAPIV1CreateRemediationExportRequest
+
+	// V1CreateRemediationExportExecute executes the request
+	//  @return map[string]interface{}
+	V1CreateRemediationExportExecute(r ListsAPIV1CreateRemediationExportRequest) (map[string]interface{}, *http.Response, error)
+
+	/*
+	V1CreateRemediationPlan Create remediation plan
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param listId
 	@return ListsAPIV1CreateRemediationPlanRequest
 	*/
 	V1CreateRemediationPlan(ctx context.Context, listId int32) ListsAPIV1CreateRemediationPlanRequest
 
 	// V1CreateRemediationPlanExecute executes the request
-	//  @return RemediationPlanResponse
-	V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error)
+	//  @return map[string]interface{}
+	V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-	V1CreateSavedSegment POST /v1/segments
+	V1DownloadRemediationExport Download remediation export
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ListsAPIV1CreateSavedSegmentRequest
+	@param listId
+	@param exportId
+	@return ListsAPIV1DownloadRemediationExportRequest
 	*/
-	V1CreateSavedSegment(ctx context.Context) ListsAPIV1CreateSavedSegmentRequest
+	V1DownloadRemediationExport(ctx context.Context, listId int32, exportId int64) ListsAPIV1DownloadRemediationExportRequest
 
-	// V1CreateSavedSegmentExecute executes the request
-	//  @return SavedSegmentView
-	V1CreateSavedSegmentExecute(r ListsAPIV1CreateSavedSegmentRequest) (*SavedSegmentView, *http.Response, error)
-
-	/*
-	V1DeleteSavedSegment DELETE /v1/segments/{segment_id}
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param segmentId Saved segment identifier
-	@return ListsAPIV1DeleteSavedSegmentRequest
-	*/
-	V1DeleteSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1DeleteSavedSegmentRequest
-
-	// V1DeleteSavedSegmentExecute executes the request
-	V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*http.Response, error)
-
-	/*
-	V1DiffLists GET /v1/lists/{base_list_id}/diff/{compare_list_id}
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param baseListId Base list identifier
-	@param compareListId Compare list identifier
-	@return ListsAPIV1DiffListsRequest
-	*/
-	V1DiffLists(ctx context.Context, baseListId int32, compareListId int32) ListsAPIV1DiffListsRequest
-
-	// V1DiffListsExecute executes the request
-	//  @return ListDiffResponse
-	V1DiffListsExecute(r ListsAPIV1DiffListsRequest) (*ListDiffResponse, *http.Response, error)
-
-	/*
-	V1DownloadRemediationPlan GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param listId List identifier
-	@param planId Remediation plan identifier
-	@return ListsAPIV1DownloadRemediationPlanRequest
-	*/
-	V1DownloadRemediationPlan(ctx context.Context, listId int32, planId int64) ListsAPIV1DownloadRemediationPlanRequest
-
-	// V1DownloadRemediationPlanExecute executes the request
+	// V1DownloadRemediationExportExecute executes the request
 	//  @return *os.File
-	V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadRemediationPlanRequest) (*os.File, *http.Response, error)
+	V1DownloadRemediationExportExecute(r ListsAPIV1DownloadRemediationExportRequest) (*os.File, *http.Response, error)
 
 	/*
-	V1GetRemediationPlan GET /v1/lists/{list_id}/remediation-plan
+	V1GetRemediationPlan Get remediation plan
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param listId List identifier
+	@param listId
 	@return ListsAPIV1GetRemediationPlanRequest
 	*/
 	V1GetRemediationPlan(ctx context.Context, listId int32) ListsAPIV1GetRemediationPlanRequest
 
 	// V1GetRemediationPlanExecute executes the request
-	//  @return RemediationPlanResponse
-	V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error)
-
-	/*
-	V1GetSavedSegment GET /v1/segments/{segment_id}
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param segmentId Saved segment identifier
-	@return ListsAPIV1GetSavedSegmentRequest
-	*/
-	V1GetSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1GetSavedSegmentRequest
-
-	// V1GetSavedSegmentExecute executes the request
-	//  @return SavedSegmentView
-	V1GetSavedSegmentExecute(r ListsAPIV1GetSavedSegmentRequest) (*SavedSegmentView, *http.Response, error)
+	//  @return map[string]interface{}
+	V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 	V1ListQuality GET /v1/lists/{list_id}/quality
@@ -128,57 +90,166 @@ type ListsAPI interface {
 
 	// V1ListQualityExecute executes the request
 	V1ListQualityExecute(r ListsAPIV1ListQualityRequest) (*http.Response, error)
-
-	/*
-	V1ListSavedSegments GET /v1/segments
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ListsAPIV1ListSavedSegmentsRequest
-	*/
-	V1ListSavedSegments(ctx context.Context) ListsAPIV1ListSavedSegmentsRequest
-
-	// V1ListSavedSegmentsExecute executes the request
-	//  @return SavedSegmentListResponse
-	V1ListSavedSegmentsExecute(r ListsAPIV1ListSavedSegmentsRequest) (*SavedSegmentListResponse, *http.Response, error)
-
-	/*
-	V1UpdateSavedSegment PATCH /v1/segments/{segment_id}
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param segmentId Saved segment identifier
-	@return ListsAPIV1UpdateSavedSegmentRequest
-	*/
-	V1UpdateSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1UpdateSavedSegmentRequest
-
-	// V1UpdateSavedSegmentExecute executes the request
-	//  @return SavedSegmentView
-	V1UpdateSavedSegmentExecute(r ListsAPIV1UpdateSavedSegmentRequest) (*SavedSegmentView, *http.Response, error)
 }
 
 // ListsAPIService ListsAPI service
 type ListsAPIService service
 
+type ListsAPIV1CreateRemediationExportRequest struct {
+	ctx context.Context
+	ApiService ListsAPI
+	listId int32
+	requestBody *map[string]interface{}
+}
+
+func (r ListsAPIV1CreateRemediationExportRequest) RequestBody(requestBody map[string]interface{}) ListsAPIV1CreateRemediationExportRequest {
+	r.requestBody = &requestBody
+	return r
+}
+
+func (r ListsAPIV1CreateRemediationExportRequest) Execute() (map[string]interface{}, *http.Response, error) {
+	return r.ApiService.V1CreateRemediationExportExecute(r)
+}
+
+/*
+V1CreateRemediationExport Create remediation export
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param listId
+ @return ListsAPIV1CreateRemediationExportRequest
+*/
+func (a *ListsAPIService) V1CreateRemediationExport(ctx context.Context, listId int32) ListsAPIV1CreateRemediationExportRequest {
+	return ListsAPIV1CreateRemediationExportRequest{
+		ApiService: a,
+		ctx: ctx,
+		listId: listId,
+	}
+}
+
+// Execute executes the request
+//  @return map[string]interface{}
+func (a *ListsAPIService) V1CreateRemediationExportExecute(r ListsAPIV1CreateRemediationExportRequest) (map[string]interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1CreateRemediationExport")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-exports"
+	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.requestBody == nil {
+		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.requestBody
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ListsAPIV1CreateRemediationPlanRequest struct {
 	ctx context.Context
 	ApiService ListsAPI
 	listId int32
-	remediationOptions *RemediationOptions
+	requestBody *map[string]interface{}
 }
 
-func (r ListsAPIV1CreateRemediationPlanRequest) RemediationOptions(remediationOptions RemediationOptions) ListsAPIV1CreateRemediationPlanRequest {
-	r.remediationOptions = &remediationOptions
+func (r ListsAPIV1CreateRemediationPlanRequest) RequestBody(requestBody map[string]interface{}) ListsAPIV1CreateRemediationPlanRequest {
+	r.requestBody = &requestBody
 	return r
 }
 
-func (r ListsAPIV1CreateRemediationPlanRequest) Execute() (*RemediationPlanResponse, *http.Response, error) {
+func (r ListsAPIV1CreateRemediationPlanRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.V1CreateRemediationPlanExecute(r)
 }
 
 /*
-V1CreateRemediationPlan POST /v1/lists/{list_id}/remediation-plan
+V1CreateRemediationPlan Create remediation plan
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param listId List identifier
+ @param listId
  @return ListsAPIV1CreateRemediationPlanRequest
 */
 func (a *ListsAPIService) V1CreateRemediationPlan(ctx context.Context, listId int32) ListsAPIV1CreateRemediationPlanRequest {
@@ -190,13 +261,13 @@ func (a *ListsAPIService) V1CreateRemediationPlan(ctx context.Context, listId in
 }
 
 // Execute executes the request
-//  @return RemediationPlanResponse
-func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error) {
+//  @return map[string]interface{}
+func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemediationPlanRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *RemediationPlanResponse
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1CreateRemediationPlan")
@@ -210,8 +281,8 @@ func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemed
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.remediationOptions == nil {
-		return localVarReturnValue, nil, reportError("remediationOptions is required and must be specified")
+	if r.requestBody == nil {
+		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -232,7 +303,7 @@ func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemed
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.remediationOptions
+	localVarPostBody = r.requestBody
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -269,6 +340,14 @@ func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemed
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -284,406 +363,37 @@ func (a *ListsAPIService) V1CreateRemediationPlanExecute(r ListsAPIV1CreateRemed
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ListsAPIV1CreateSavedSegmentRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	createSavedSegmentRequest *CreateSavedSegmentRequest
-}
-
-func (r ListsAPIV1CreateSavedSegmentRequest) CreateSavedSegmentRequest(createSavedSegmentRequest CreateSavedSegmentRequest) ListsAPIV1CreateSavedSegmentRequest {
-	r.createSavedSegmentRequest = &createSavedSegmentRequest
-	return r
-}
-
-func (r ListsAPIV1CreateSavedSegmentRequest) Execute() (*SavedSegmentView, *http.Response, error) {
-	return r.ApiService.V1CreateSavedSegmentExecute(r)
-}
-
-/*
-V1CreateSavedSegment POST /v1/segments
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ListsAPIV1CreateSavedSegmentRequest
-*/
-func (a *ListsAPIService) V1CreateSavedSegment(ctx context.Context) ListsAPIV1CreateSavedSegmentRequest {
-	return ListsAPIV1CreateSavedSegmentRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return SavedSegmentView
-func (a *ListsAPIService) V1CreateSavedSegmentExecute(r ListsAPIV1CreateSavedSegmentRequest) (*SavedSegmentView, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SavedSegmentView
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1CreateSavedSegment")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/segments"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.createSavedSegmentRequest == nil {
-		return localVarReturnValue, nil, reportError("createSavedSegmentRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.createSavedSegmentRequest
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ListsAPIV1DeleteSavedSegmentRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	segmentId int64
-}
-
-func (r ListsAPIV1DeleteSavedSegmentRequest) Execute() (*http.Response, error) {
-	return r.ApiService.V1DeleteSavedSegmentExecute(r)
-}
-
-/*
-V1DeleteSavedSegment DELETE /v1/segments/{segment_id}
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param segmentId Saved segment identifier
- @return ListsAPIV1DeleteSavedSegmentRequest
-*/
-func (a *ListsAPIService) V1DeleteSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1DeleteSavedSegmentRequest {
-	return ListsAPIV1DeleteSavedSegmentRequest{
-		ApiService: a,
-		ctx: ctx,
-		segmentId: segmentId,
-	}
-}
-
-// Execute executes the request
-func (a *ListsAPIService) V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DeleteSavedSegment")
-	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/segments/{segment_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"segment_id"+"}", url.PathEscape(parameterValueToString(r.segmentId, "segmentId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-type ListsAPIV1DiffListsRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	baseListId int32
-	compareListId int32
-	limit *int32
-	offset *int32
-}
-
-func (r ListsAPIV1DiffListsRequest) Limit(limit int32) ListsAPIV1DiffListsRequest {
-	r.limit = &limit
-	return r
-}
-
-func (r ListsAPIV1DiffListsRequest) Offset(offset int32) ListsAPIV1DiffListsRequest {
-	r.offset = &offset
-	return r
-}
-
-func (r ListsAPIV1DiffListsRequest) Execute() (*ListDiffResponse, *http.Response, error) {
-	return r.ApiService.V1DiffListsExecute(r)
-}
-
-/*
-V1DiffLists GET /v1/lists/{base_list_id}/diff/{compare_list_id}
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param baseListId Base list identifier
- @param compareListId Compare list identifier
- @return ListsAPIV1DiffListsRequest
-*/
-func (a *ListsAPIService) V1DiffLists(ctx context.Context, baseListId int32, compareListId int32) ListsAPIV1DiffListsRequest {
-	return ListsAPIV1DiffListsRequest{
-		ApiService: a,
-		ctx: ctx,
-		baseListId: baseListId,
-		compareListId: compareListId,
-	}
-}
-
-// Execute executes the request
-//  @return ListDiffResponse
-func (a *ListsAPIService) V1DiffListsExecute(r ListsAPIV1DiffListsRequest) (*ListDiffResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListDiffResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DiffLists")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/lists/{base_list_id}/diff/{compare_list_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"base_list_id"+"}", url.PathEscape(parameterValueToString(r.baseListId, "baseListId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"compare_list_id"+"}", url.PathEscape(parameterValueToString(r.compareListId, "compareListId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	}
-	if r.offset != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
-	}
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ListsAPIV1DownloadRemediationPlanRequest struct {
+type ListsAPIV1DownloadRemediationExportRequest struct {
 	ctx context.Context
 	ApiService ListsAPI
 	listId int32
-	planId int64
-	partition *string
+	exportId int64
 }
 
-func (r ListsAPIV1DownloadRemediationPlanRequest) Partition(partition string) ListsAPIV1DownloadRemediationPlanRequest {
-	r.partition = &partition
-	return r
-}
-
-func (r ListsAPIV1DownloadRemediationPlanRequest) Execute() (*os.File, *http.Response, error) {
-	return r.ApiService.V1DownloadRemediationPlanExecute(r)
+func (r ListsAPIV1DownloadRemediationExportRequest) Execute() (*os.File, *http.Response, error) {
+	return r.ApiService.V1DownloadRemediationExportExecute(r)
 }
 
 /*
-V1DownloadRemediationPlan GET /v1/lists/{list_id}/remediation-plan/{plan_id}/download
+V1DownloadRemediationExport Download remediation export
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param listId List identifier
- @param planId Remediation plan identifier
- @return ListsAPIV1DownloadRemediationPlanRequest
+ @param listId
+ @param exportId
+ @return ListsAPIV1DownloadRemediationExportRequest
 */
-func (a *ListsAPIService) V1DownloadRemediationPlan(ctx context.Context, listId int32, planId int64) ListsAPIV1DownloadRemediationPlanRequest {
-	return ListsAPIV1DownloadRemediationPlanRequest{
+func (a *ListsAPIService) V1DownloadRemediationExport(ctx context.Context, listId int32, exportId int64) ListsAPIV1DownloadRemediationExportRequest {
+	return ListsAPIV1DownloadRemediationExportRequest{
 		ApiService: a,
 		ctx: ctx,
 		listId: listId,
-		planId: planId,
+		exportId: exportId,
 	}
 }
 
 // Execute executes the request
 //  @return *os.File
-func (a *ListsAPIService) V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadRemediationPlanRequest) (*os.File, *http.Response, error) {
+func (a *ListsAPIService) V1DownloadRemediationExportExecute(r ListsAPIV1DownloadRemediationExportRequest) (*os.File, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -691,22 +401,19 @@ func (a *ListsAPIService) V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadR
 		localVarReturnValue  *os.File
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DownloadRemediationPlan")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DownloadRemediationExport")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-plan/{plan_id}/download"
+	localVarPath := localBasePath + "/v1/lists/{list_id}/remediation-exports/{export_id}/download"
 	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"plan_id"+"}", url.PathEscape(parameterValueToString(r.planId, "planId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"export_id"+"}", url.PathEscape(parameterValueToString(r.exportId, "exportId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	if r.partition != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "partition", r.partition, "form", "")
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -717,7 +424,7 @@ func (a *ListsAPIService) V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadR
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"text/csv"}
+	localVarHTTPHeaderAccepts := []string{"text/csv", "application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -760,6 +467,14 @@ func (a *ListsAPIService) V1DownloadRemediationPlanExecute(r ListsAPIV1DownloadR
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -779,23 +494,17 @@ type ListsAPIV1GetRemediationPlanRequest struct {
 	ctx context.Context
 	ApiService ListsAPI
 	listId int32
-	planId *int64
 }
 
-func (r ListsAPIV1GetRemediationPlanRequest) PlanId(planId int64) ListsAPIV1GetRemediationPlanRequest {
-	r.planId = &planId
-	return r
-}
-
-func (r ListsAPIV1GetRemediationPlanRequest) Execute() (*RemediationPlanResponse, *http.Response, error) {
+func (r ListsAPIV1GetRemediationPlanRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.V1GetRemediationPlanExecute(r)
 }
 
 /*
-V1GetRemediationPlan GET /v1/lists/{list_id}/remediation-plan
+V1GetRemediationPlan Get remediation plan
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param listId List identifier
+ @param listId
  @return ListsAPIV1GetRemediationPlanRequest
 */
 func (a *ListsAPIService) V1GetRemediationPlan(ctx context.Context, listId int32) ListsAPIV1GetRemediationPlanRequest {
@@ -807,13 +516,13 @@ func (a *ListsAPIService) V1GetRemediationPlan(ctx context.Context, listId int32
 }
 
 // Execute executes the request
-//  @return RemediationPlanResponse
-func (a *ListsAPIService) V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (*RemediationPlanResponse, *http.Response, error) {
+//  @return map[string]interface{}
+func (a *ListsAPIService) V1GetRemediationPlanExecute(r ListsAPIV1GetRemediationPlanRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *RemediationPlanResponse
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1GetRemediationPlan")
@@ -828,9 +537,6 @@ func (a *ListsAPIService) V1GetRemediationPlanExecute(r ListsAPIV1GetRemediation
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	if r.planId != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "plan_id", r.planId, "form", "")
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -884,121 +590,14 @@ func (a *ListsAPIService) V1GetRemediationPlanExecute(r ListsAPIV1GetRemediation
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ListsAPIV1GetSavedSegmentRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	segmentId int64
-}
-
-func (r ListsAPIV1GetSavedSegmentRequest) Execute() (*SavedSegmentView, *http.Response, error) {
-	return r.ApiService.V1GetSavedSegmentExecute(r)
-}
-
-/*
-V1GetSavedSegment GET /v1/segments/{segment_id}
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param segmentId Saved segment identifier
- @return ListsAPIV1GetSavedSegmentRequest
-*/
-func (a *ListsAPIService) V1GetSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1GetSavedSegmentRequest {
-	return ListsAPIV1GetSavedSegmentRequest{
-		ApiService: a,
-		ctx: ctx,
-		segmentId: segmentId,
-	}
-}
-
-// Execute executes the request
-//  @return SavedSegmentView
-func (a *ListsAPIService) V1GetSavedSegmentExecute(r ListsAPIV1GetSavedSegmentRequest) (*SavedSegmentView, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SavedSegmentView
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1GetSavedSegment")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/segments/{segment_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"segment_id"+"}", url.PathEscape(parameterValueToString(r.segmentId, "segmentId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1071,7 +670,7 @@ func (a *ListsAPIService) V1ListQualityExecute(r ListsAPIV1ListQualityRequest) (
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -1114,272 +713,16 @@ func (a *ListsAPIService) V1ListQualityExecute(r ListsAPIV1ListQualityRequest) (
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarHTTPResponse, newErr
 	}
 
 	return localVarHTTPResponse, nil
-}
-
-type ListsAPIV1ListSavedSegmentsRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	scope *string
-	limit *int64
-	offset *int64
-}
-
-func (r ListsAPIV1ListSavedSegmentsRequest) Scope(scope string) ListsAPIV1ListSavedSegmentsRequest {
-	r.scope = &scope
-	return r
-}
-
-func (r ListsAPIV1ListSavedSegmentsRequest) Limit(limit int64) ListsAPIV1ListSavedSegmentsRequest {
-	r.limit = &limit
-	return r
-}
-
-func (r ListsAPIV1ListSavedSegmentsRequest) Offset(offset int64) ListsAPIV1ListSavedSegmentsRequest {
-	r.offset = &offset
-	return r
-}
-
-func (r ListsAPIV1ListSavedSegmentsRequest) Execute() (*SavedSegmentListResponse, *http.Response, error) {
-	return r.ApiService.V1ListSavedSegmentsExecute(r)
-}
-
-/*
-V1ListSavedSegments GET /v1/segments
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ListsAPIV1ListSavedSegmentsRequest
-*/
-func (a *ListsAPIService) V1ListSavedSegments(ctx context.Context) ListsAPIV1ListSavedSegmentsRequest {
-	return ListsAPIV1ListSavedSegmentsRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return SavedSegmentListResponse
-func (a *ListsAPIService) V1ListSavedSegmentsExecute(r ListsAPIV1ListSavedSegmentsRequest) (*SavedSegmentListResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SavedSegmentListResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1ListSavedSegments")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/segments"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	if r.scope != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "scope", r.scope, "form", "")
-	}
-	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	}
-	if r.offset != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
-	}
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ListsAPIV1UpdateSavedSegmentRequest struct {
-	ctx context.Context
-	ApiService ListsAPI
-	segmentId int64
-	updateSavedSegmentRequest *UpdateSavedSegmentRequest
-}
-
-func (r ListsAPIV1UpdateSavedSegmentRequest) UpdateSavedSegmentRequest(updateSavedSegmentRequest UpdateSavedSegmentRequest) ListsAPIV1UpdateSavedSegmentRequest {
-	r.updateSavedSegmentRequest = &updateSavedSegmentRequest
-	return r
-}
-
-func (r ListsAPIV1UpdateSavedSegmentRequest) Execute() (*SavedSegmentView, *http.Response, error) {
-	return r.ApiService.V1UpdateSavedSegmentExecute(r)
-}
-
-/*
-V1UpdateSavedSegment PATCH /v1/segments/{segment_id}
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param segmentId Saved segment identifier
- @return ListsAPIV1UpdateSavedSegmentRequest
-*/
-func (a *ListsAPIService) V1UpdateSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1UpdateSavedSegmentRequest {
-	return ListsAPIV1UpdateSavedSegmentRequest{
-		ApiService: a,
-		ctx: ctx,
-		segmentId: segmentId,
-	}
-}
-
-// Execute executes the request
-//  @return SavedSegmentView
-func (a *ListsAPIService) V1UpdateSavedSegmentExecute(r ListsAPIV1UpdateSavedSegmentRequest) (*SavedSegmentView, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SavedSegmentView
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1UpdateSavedSegment")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/segments/{segment_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"segment_id"+"}", url.PathEscape(parameterValueToString(r.segmentId, "segmentId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.updateSavedSegmentRequest == nil {
-		return localVarReturnValue, nil, reportError("updateSavedSegmentRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.updateSavedSegmentRequest
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["Authorization"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
 }

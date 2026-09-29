@@ -104,7 +104,7 @@ async fn test_post_single_outcome_creates_row() -> Result<()> {
 
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes")
+		.path("/v1/campaign-outcomes")
 		.header("authorization", format!("Bearer {}", api_key))
 		.json(&json!({
 			"outcomes": [{
@@ -147,7 +147,7 @@ async fn test_post_batch_outcomes_all_stored() -> Result<()> {
 	}
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes")
+		.path("/v1/campaign-outcomes")
 		.header("authorization", format!("Bearer {}", api_key))
 		.json(&json!({ "outcomes": outcomes }))
 		.reply(&create_routes(Arc::clone(&config)))
@@ -175,7 +175,7 @@ async fn test_post_outcomes_invalid_type_rejected() -> Result<()> {
 
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes")
+		.path("/v1/campaign-outcomes")
 		.header("authorization", format!("Bearer {}", api_key))
 		.json(&json!({
 			"outcomes": [{
@@ -200,7 +200,7 @@ async fn test_post_outcomes_missing_scope_rejected() -> Result<()> {
 
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes")
+		.path("/v1/campaign-outcomes")
 		.header("authorization", format!("Bearer {}", api_key))
 		.json(&json!({
 			"outcomes": [{
@@ -276,7 +276,7 @@ async fn test_csv_upload_happy_path() -> Result<()> {
 
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes/upload")
+		.path("/v1/campaign-outcomes/upload")
 		.header("authorization", format!("Bearer {}", api_key))
 		.header(
 			"content-type",
@@ -314,7 +314,7 @@ async fn test_csv_upload_partial_rejection_keeps_valid_rows() -> Result<()> {
 
 	let response = request()
 		.method("POST")
-		.path("/v1/outcomes/upload")
+		.path("/v1/campaign-outcomes/upload")
 		.header("authorization", format!("Bearer {}", api_key))
 		.header(
 			"content-type",
@@ -842,7 +842,7 @@ async fn test_list_outcomes_filter_by_email() -> Result<()> {
 
 	let response = request()
 		.method("GET")
-		.path("/v1/outcomes?email=a@example.com")
+		.path("/v1/campaign-outcomes?email=a@example.com")
 		.header("authorization", format!("Bearer {}", api_key))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
@@ -870,7 +870,7 @@ async fn test_list_outcomes_filter_by_type_and_source() -> Result<()> {
 
 	let r1 = request()
 		.method("GET")
-		.path("/v1/outcomes?type=hard_bounce")
+		.path("/v1/campaign-outcomes?type=hard_bounce")
 		.header("authorization", format!("Bearer {}", api_key))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
@@ -880,7 +880,7 @@ async fn test_list_outcomes_filter_by_type_and_source() -> Result<()> {
 
 	let r2 = request()
 		.method("GET")
-		.path("/v1/outcomes?source=postmark")
+		.path("/v1/campaign-outcomes?source=postmark")
 		.header("authorization", format!("Bearer {}", api_key))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
@@ -909,7 +909,7 @@ async fn test_list_outcomes_pagination() -> Result<()> {
 
 	let r1 = request()
 		.method("GET")
-		.path("/v1/outcomes?limit=10&offset=0")
+		.path("/v1/campaign-outcomes?limit=10&offset=0")
 		.header("authorization", format!("Bearer {}", api_key))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;
@@ -919,7 +919,7 @@ async fn test_list_outcomes_pagination() -> Result<()> {
 
 	let r2 = request()
 		.method("GET")
-		.path("/v1/outcomes?limit=10&offset=10")
+		.path("/v1/campaign-outcomes?limit=10&offset=10")
 		.header("authorization", format!("Bearer {}", api_key))
 		.reply(&create_routes(Arc::clone(&config)))
 		.await;

@@ -1,6 +1,6 @@
 [package]
 name = "reacher_backend"
-version = "4.1.0"
+version = "4.3.0"
 edition = "2018"
 license = "AGPL-3.0"
 publish = false
@@ -18,11 +18,13 @@ dashmap = "6"
 dotenv = "0.15.0"
 futures = { version = "0.3.30" }
 bytes = "1.9"
+base64 = "0.22"
 hickory-resolver = "0.24.0"
 hex = "0.4"
 hmac = "0.12"
 http = "1.2.0"
 lapin = { version = "2.3.1" }
+ring = "0.17"
 utoipa = { version = "5", features = ["chrono", "uuid"] }
 tokio-executor-trait = { version = "2.1.1" }
 tokio-reactor-trait = { version = "1.1.0" }
@@ -40,6 +42,7 @@ sentry-anyhow = "0.32"
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_urlencoded = "0.7"
 sha2 = "0.10"
 sqlx = { version = "0.7", default-features = false, features = [
     "runtime-tokio-rustls",
@@ -56,7 +59,7 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 toml = "0.8"
 unicode-normalization = "0.1"
-uuid = "1.10"
+uuid = { version = "1.10", features = ["v5"] }
 warp = { version = "0.3", features = ["multipart"] }
 
 [dev-dependencies]
