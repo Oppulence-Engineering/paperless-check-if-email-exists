@@ -24,11 +24,13 @@ use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
+use tokio::time::{timeout, Duration};
 use tracing::{debug, error, info, trace};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
+const RABBITMQ_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Set up the RabbitMQ connection and declare the "check_email" queue.
 ///
@@ -46,9 +48,18 @@ pub async fn setup_rabbit_mq(
 		.with_reactor(tokio_reactor_trait::Tokio)
 		.with_connection_name(backend_name.into());
 
-	let conn = Connection::connect(&config.url, options)
-		.await
-		.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
+	let conn = timeout(
+		RABBITMQ_CONNECT_TIMEOUT,
+		Connection::connect(&config.url, options),
+	)
+	.await
+	.with_context(|| {
+		format!(
+			"Timed out connecting to rabbitmq {} within {:?}",
+			&config.url, RABBITMQ_CONNECT_TIMEOUT
+		)
+	})?
+	.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
 	let channel = conn.create_channel().await?;
 
 	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
@@ -97,19 +108,63 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 	let throttle = config.get_throttle_manager();
 
 	tokio::spawn(async move {
-		let mut consumer = channel
+		let mut consumer = match channel
 			.basic_consume(
 				CHECK_EMAIL_QUEUE,
 				format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).as_str(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
-			.await?;
+			.await
+		{
+			Ok(consumer) => consumer,
+			Err(err) => {
+				error!(
+					target: LOG_TARGET,
+					error = ?err,
+					"Failed to start RabbitMQ consumer"
+				);
+				capture_anyhow(&anyhow::Error::from(err));
+				return Ok::<(), anyhow::Error>(());
+			}
+		};
 
 		// Loop over the incoming messages
 		while let Some(delivery) = consumer.next().await {
-			let delivery = delivery?;
-			let payload = serde_json::from_slice::<CheckEmailTask>(&delivery.data)?;
+			let delivery = match delivery {
+				Ok(delivery) => delivery,
+				Err(err) => {
+					error!(
+						target: LOG_TARGET,
+						error = ?err,
+						"RabbitMQ delivery failed; continuing consumer loop"
+					);
+					capture_anyhow(&anyhow::Error::from(err));
+					continue;
+				}
+			};
+			let payload = match serde_json::from_slice::<CheckEmailTask>(&delivery.data) {
+				Ok(payload) => payload,
+				Err(err) => {
+					error!(
+						target: LOG_TARGET,
+						error = ?err,
+						"Rejecting malformed RabbitMQ message"
+					);
+					capture_anyhow(&anyhow::Error::from(err));
+					if let Err(reject_err) =
+						delivery.reject(BasicRejectOptions { requeue: false }).await
+					{
+						error!(
+							target: LOG_TARGET,
+							error = ?reject_err,
+							"Failed to reject malformed RabbitMQ message"
+						);
+						capture_anyhow(&anyhow::Error::from(reject_err));
+					}
+					continue;
+				}
+			};
 			debug!(target: LOG_TARGET, email=?payload.input.to_email, "Consuming message");
 
 			// Check if we should throttle before fetching the next message

@@ -12,6 +12,29 @@ use crate::http::v1::tenant_domains;
 use crate::http::v1::tenant_settings;
 
 const BASE_OPENAPI: &str = include_str!("../../openapi.json");
+const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
+<html>
+	<head>
+		<title>Reacher API Reference</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			body {
+				margin: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+		<script>
+			Scalar.createApiReference('#app', {
+				url: '/openapi.json',
+			})
+		</script>
+	</body>
+</html>
+"#;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -44,7 +67,13 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::quality::v1_list_quality,
 		crate::http::v1::lists::download::v1_download_list,
+		crate::http::v1::lists::diff::v1_diff_lists,
 		crate::http::v1::lists::delete::v1_delete_list,
+		crate::http::v1::saved_segments::v1_create_saved_segment,
+		crate::http::v1::saved_segments::v1_list_saved_segments,
+		crate::http::v1::saved_segments::v1_get_saved_segment,
+		crate::http::v1::saved_segments::v1_update_saved_segment,
+		crate::http::v1::saved_segments::v1_delete_saved_segment,
 		crate::http::v1::pipelines::v1_create_pipeline,
 		crate::http::v1::pipelines::v1_list_pipelines,
 		crate::http::v1::pipelines::v1_get_pipeline,
@@ -63,6 +92,8 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::reverification::status::v1_reverification_status,
 		crate::http::v1::events::v1_list_events,
+		crate::http::v1::alerts::v1_list_alerts,
+		crate::http::v1::alerts::v1_update_alert,
 		crate::http::v1::email_history::v1_email_history,
 		crate::http::v1::query::v1_query_results,
 		crate::http::v1::comments::v1_create_comment,
@@ -71,6 +102,9 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::me::v1_me,
 		crate::http::v1::outcomes::v1_ingest_outcomes,
 		crate::http::v1::outcomes::v1_list_outcomes,
+		crate::http::v1::campaign_outcomes::v1_post_outcomes,
+		crate::http::v1::campaign_outcomes::v1_upload_outcomes,
+		crate::http::v1::campaign_outcomes::v1_list_outcomes,
 		crate::http::v1::provider_outcomes::v1_list_provider_endpoints,
 		crate::http::v1::provider_outcomes::v1_create_provider_endpoint,
 		crate::http::v1::provider_outcomes::v1_update_provider_endpoint,
@@ -102,6 +136,16 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		tenant_settings::v1_update_tenant_webhook,
 		tenant_settings::v1_clear_tenant_webhook,
 		tenant_settings::v1_get_tenant_usage,
+		crate::http::v1::score_policies::v1_create_score_policy,
+		crate::http::v1::score_policies::v1_list_score_policies,
+		crate::http::v1::score_policies::v1_get_score_policy,
+		crate::http::v1::score_policies::v1_update_score_policy,
+		crate::http::v1::score_policies::v1_delete_score_policy,
+		crate::http::v1::outcome_policies::v1_create_outcome_policy,
+		crate::http::v1::outcome_policies::v1_list_outcome_policies,
+		crate::http::v1::outcome_policies::v1_get_outcome_policy,
+		crate::http::v1::outcome_policies::v1_update_outcome_policy,
+		crate::http::v1::outcome_policies::v1_delete_outcome_policy,
 		tenant_domains::v1_list_tenant_domains,
 		tenant_domains::v1_create_tenant_domain,
 		tenant_domains::v1_get_tenant_domain,
@@ -129,7 +173,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "Events", description = "Advanced audit log endpoints"),
 		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
 		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
-		(name = "Outcomes", description = "Normalized provider outcomes, suppression feedback, and authenticated provider adapters"),
+		(name = "Outcomes", description = "Normalized provider outcomes, suppression feedback, authenticated provider adapters, and campaign outcome ingestion"),
 	)
 )]
 struct BackendApiDoc;
@@ -881,7 +925,22 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"spam_trap",
 				"unknown_deliverability",
 				"free_provider",
-				"possible_typo"
+				"possible_typo",
+				"provider_reputation",
+				"tenant_history_positive",
+				"tenant_history_inconsistent",
+				"catch_all_low_confidence",
+				"catch_all_medium_confidence",
+				"catch_all_high_risk",
+				"partial_confidence",
+				"transient_smtp",
+				"smtp_policy_block",
+				"smtp_timeout",
+				"smtp_network",
+				"smtp_ambiguous",
+				"outcome_hard_bounce",
+				"outcome_complaint",
+				"outcome_engagement"
 			]
 		}),
 	);
@@ -930,6 +989,69 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": ["fresh", "recent", "aging", "stale", "expired"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ConfidenceLevel",
+		json!({
+			"type": "string",
+			"enum": ["high", "medium", "low", "very_low"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllSeverity",
+		json!({
+			"type": "string",
+			"enum": ["low", "medium", "high"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SmtpUncertaintyClass",
+		json!({
+			"type": "string",
+			"enum": [
+				"transient",
+				"policy_block",
+				"timeout",
+				"network",
+				"ambiguous_response",
+				"smtp_unreachable"
+			]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllScore",
+		json!({
+			"type": "object",
+			"properties": {
+				"severity": { "$ref": "#/components/schemas/CatchAllSeverity" },
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["severity", "confidence", "factors"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"PartialConfidence",
+		json!({
+			"type": "object",
+			"properties": {
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"classification": { "$ref": "#/components/schemas/SmtpUncertaintyClass" },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["confidence", "classification", "factors"]
 		}),
 	);
 	insert_schema(
@@ -1010,7 +1132,15 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"freshness": { "$ref": "#/components/schemas/Freshness" },
 				"domain_suggestion": { "type": "string", "description": "Suggested corrected email when a likely domain typo is detected" },
 				"normalized_email": { "type": "string", "description": "Canonical form of the email after alias/plus-address normalization" },
-				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send." }
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"confidence_level": { "$ref": "#/components/schemas/ConfidenceLevel" },
+				"confidence_factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"catch_all_severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send." },
+				"catch_all": { "$ref": "#/components/schemas/CatchAllScore" },
+				"partial_confidence": { "$ref": "#/components/schemas/PartialConfidence" }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),
@@ -1134,7 +1264,8 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"file": { "type": "string", "format": "binary" },
 				"name": { "type": "string", "nullable": true },
-				"email_column": { "type": "string", "nullable": true }
+				"email_column": { "type": "string", "nullable": true },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true }
 			},
 			"required": ["file"]
 		}),
@@ -1211,6 +1342,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"total_rows": { "type": "integer", "format": "int32" },
 				"email_column": { "type": "string" },
 				"summary": { "$ref": "#/components/schemas/ListSummary" },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true },
 				"unique_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"deduplicated_count": { "type": "integer", "format": "int32", "nullable": true }
 			},
@@ -2214,5 +2346,18 @@ pub fn openapi_spec() -> impl Filter<Extract = (impl warp::Reply,), Error = warp
 			build_spec()
 				.map(|v| warp::reply::json(&v))
 				.map_err(|e| warp::reject::custom(e))
+		})
+}
+
+/// Serve Scalar API documentation backed by the runtime OpenAPI document.
+pub fn scalar_docs() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone
+{
+	warp::path("docs")
+		.or(warp::path("scalar"))
+		.unify()
+		.and(warp::path::end())
+		.and(warp::get())
+		.map(|| {
+			warp::reply::with_header(SCALAR_DOCS_HTML, "Content-Type", "text/html; charset=utf-8")
 		})
 }

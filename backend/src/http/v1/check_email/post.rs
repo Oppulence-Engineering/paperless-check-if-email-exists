@@ -24,11 +24,11 @@ use warp::http::header::CONTENT_TYPE;
 use warp::Filter;
 
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::shared::check_email::handle_check_email;
 use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 use warp::Reply;
 
 /// The main endpoint handler — delegates to shared check_email logic.
@@ -38,6 +38,8 @@ async fn http_handler(
 	idempotency_key: Option<String>,
 	body: Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::VERIFY)?;
+
 	let request_body = body.clone();
 	let body: CheckEmailRequest =
 		serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;

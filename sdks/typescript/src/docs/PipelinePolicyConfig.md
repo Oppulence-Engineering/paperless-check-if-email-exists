@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **missed_run_window_hours** | **number** |  | [optional]
+**policy_id** | **number** |  | [optional]
 
 ## Example
 
@@ -14,6 +15,7 @@ import { PipelinePolicyConfig } from '@oppulence/reacher-sdk';
 
 const instance: PipelinePolicyConfig = {
     missed_run_window_hours: 24,
+    policy_id: 0,
 };
 ```
 

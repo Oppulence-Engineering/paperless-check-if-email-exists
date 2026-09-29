@@ -88,6 +88,7 @@ fn with_pg_pool(
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
@@ -176,6 +177,8 @@ async fn webhook_handler(
 }
 
 async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	let limit = tenant_ctx.monthly_email_limit;
 	let quota_unlimited = limit.is_none() || limit.unwrap_or(0) <= 0;
 	let quota_remaining = match limit {

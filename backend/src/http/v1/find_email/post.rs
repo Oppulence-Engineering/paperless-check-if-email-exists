@@ -6,15 +6,18 @@ use crate::finder::{precheck_domain, require_tenant_id};
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, CheckEmailRequest, ReacherResponseError};
-use crate::tenant::context::TenantContext;
-use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
+use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
+use crate::tenant::quota::{
+	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
+};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use check_if_email_exists::LOG_TARGET;
 use lapin::BasicProperties;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
+use tracing::warn;
 use warp::http::StatusCode;
 use warp::Filter;
 
@@ -43,6 +46,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::FIND)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let normalized_first = normalize_name(&body.first_name);
 	let normalized_last = normalize_name(&body.last_name);
@@ -183,6 +188,7 @@ async fn http_handler(
 		candidates.sort_by(|a, b| pattern_priority(&b.pattern).cmp(&pattern_priority(&a.pattern)));
 	}
 
+	let mut published_task_ids = Vec::new();
 	for candidate in candidates {
 		let priority = if use_waterfall {
 			pattern_priority(&candidate.pattern)
@@ -247,15 +253,34 @@ async fn http_handler(
 				task_db_id: Some(task_row_id),
 			}),
 		};
-		publish_task(
-			config
-				.must_worker_config()
-				.map_err(ReacherResponseError::from)?
-				.channel,
-			task,
-			properties.clone(),
-		)
-		.await?;
+		let channel = match config.must_worker_config() {
+			Ok(worker_config) => worker_config.channel,
+			Err(err) => {
+				cleanup_finder_publish_failure(
+					&pg_pool,
+					Some(tenant_id),
+					bulk_job_id,
+					finder_job_id,
+					total_records,
+					&published_task_ids,
+				)
+				.await;
+				return Err(ReacherResponseError::from(err).into());
+			}
+		};
+		if let Err(err) = publish_task(channel, task, properties.clone()).await {
+			cleanup_finder_publish_failure(
+				&pg_pool,
+				Some(tenant_id),
+				bulk_job_id,
+				finder_job_id,
+				total_records,
+				&published_task_ids,
+			)
+			.await;
+			return Err(err.into());
+		}
+		published_task_ids.push(task_row_id);
 	}
 
 	sqlx::query(
@@ -275,6 +300,60 @@ async fn http_handler(
 		}),
 		StatusCode::ACCEPTED,
 	))
+}
+
+async fn cleanup_finder_publish_failure(
+	pg_pool: &PgPool,
+	tenant_id: Option<uuid::Uuid>,
+	bulk_job_id: i32,
+	finder_job_id: i32,
+	reserved_count: i32,
+	published_task_ids: &[i32],
+) {
+	let refund_count = reserved_count.saturating_sub(published_task_ids.len() as i32);
+	if refund_count > 0 {
+		let _ = release_reserved_usage(Some(pg_pool), tenant_id, refund_count).await;
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(bulk_job_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = bulk_job_id, error = ?err, "Failed to mark finder bulk job failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_finder_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(finder_job_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, finder_job_id = finder_job_id, error = ?err, "Failed to mark finder job failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		r#"
+		UPDATE v1_task_result
+		SET task_state = 'failed'::task_state,
+		    error = COALESCE(error, 'publish_failed'),
+		    completed_at = COALESCE(completed_at, NOW()),
+		    updated_at = NOW()
+		WHERE job_id = $1
+		  AND task_state = 'queued'::task_state
+		  AND NOT (id = ANY($2::INTEGER[]))
+		"#,
+	)
+	.bind(bulk_job_id)
+	.bind(published_task_ids)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = bulk_job_id, error = ?err, "Failed to mark finder tasks failed after publish failure");
+	}
 }
 
 /// POST /v1/find_email

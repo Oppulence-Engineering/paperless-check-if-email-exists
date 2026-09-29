@@ -16,7 +16,9 @@
 
 pub mod account_api_keys;
 pub mod admin;
+pub mod alerts;
 pub mod bulk;
+pub mod campaign_outcomes;
 pub mod check_email;
 pub mod comments;
 pub mod email_history;
@@ -26,12 +28,15 @@ pub mod jobs;
 pub mod lists;
 pub mod me;
 pub mod onboard;
+pub mod outcome_policies;
 pub mod outcomes;
 pub mod pipelines;
 pub mod provider_outcomes;
 pub mod query;
 pub mod reputation;
 pub mod reverification;
+pub mod saved_segments;
+pub mod score_policies;
 pub mod source_quality;
 pub mod suppressions;
 pub mod tenant_domains;
