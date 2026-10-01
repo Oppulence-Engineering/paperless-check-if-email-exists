@@ -78,6 +78,8 @@ async fn worker_reports_broker_loss_and_can_restart() {
 	);
 
 	broker.start().await.unwrap();
+	let port = broker.get_host_port_ipv4(5672).await.unwrap();
+	let url = format!("amqp://guest:guest@127.0.0.1:{port}/%2f?heartbeat=2");
 	let config = connect(&url).await;
 	let worker = tokio::spawn(run_worker(config.clone()));
 	wait_for_consumer(&config).await;
