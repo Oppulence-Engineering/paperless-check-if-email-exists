@@ -707,11 +707,11 @@ Refer to `backend/backend_config.toml` for the canonical schema and to `docs/sel
 ## Containerization & Compose Stack
 
 - `rabbitmq/docker-compose.yaml` defines a reproducible stack containing RabbitMQ, Postgres and two backend workers (mapped to `8080`/`8081`). Each worker reads from the same queue but advertises a unique `RCH__BACKEND_NAME` for logging clarity.
-- The compose file consumes `.env`, so sensitive material never lives inside version control. Update the file to point at `ghcr.io/oppulence-engineering/check-if-email-exists-backend:latest` once the image is published, or keep using `reacherhq/backend:beta` while upstream tags catch up.
+- The compose file consumes `.env`, so sensitive material never lives inside version control. Use the published `ghcr.io/oppulence-engineering/check-if-email-exists-backend:sha-<commit>` image, or its digest, for a worker patch. The Helm chart defaults to the existing `v4.2.0` release; upgrades must explicitly select the new image.
 
 ## CI/CD & Release Flow
 
-- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds the backend image with `docker/build-push-action`, pushes it to GHCR, then defers Helm deployment to the reusable workflow (`deploy-helm-direct-template.yml`). Tagging a release (`v*.*.*`) automatically publishes the image and rolls out the chart to the `paperless` namespace.
+- **Backend maintenance releases**: `.github/workflows/deploy_backend.yml` publishes a SHA-tagged backend image on `release/4.2` pushes and version tags. These events do not deploy. Manual dispatch defaults to `build-only`; select `production` and one region to deploy through `deploy-helm-direct-template.yml`. Verify readiness and consumer recovery in that region before dispatching the next. This branch preserves the backend-only API on port 8080; full-stack staging remains managed from master/develop.
 - **CLI release pipeline**: `.github/workflows/deploy_cli.yml` builds the CLI binaries, signs them, and attaches artifacts to GitHub releases. Update this workflow when the CLI requires new targets or toolchains.
 - **Reusable Helm template**: `.github/workflows/deploy-helm-direct-template.yml` constructs kubeconfig material straight from GitHub secrets (`HELM_DIRECT_*`). Any service in the org can inherit it by pointing `uses:` to the template and passing chart metadata plus image overrides.
 - **Secret overrides**: The same template now accepts newline-delimited `secret_env_overrides` so deployments inject `config.secretEnv.*` values (e.g., `RCH__PROXY__PORT`) straight from GitHub Secrets without duplicating scripts across repos.
