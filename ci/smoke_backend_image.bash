@@ -116,3 +116,39 @@ paths = openapi["paths"]
 for required in ("/healthz", "/readyz", "/openapi.json", "/v1/check_email", "/v1/me"):
     assert required in paths, (required, sorted(paths.keys())[:10])
 PY
+
+echo "Verifying the container exits when its broker is lost"
+docker stop "${RABBITMQ_NAME}" >/dev/null
+for _ in $(seq 1 30); do
+  if [ "$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}")" = false ]; then
+    break
+  fi
+  sleep 1
+done
+test "$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}")" = false
+test "$(docker inspect --format '{{.State.ExitCode}}' "${CONTAINER_NAME}")" -ne 0
+
+echo "Verifying the same image recovers after a supervisor restart"
+docker start "${RABBITMQ_NAME}" >/dev/null
+for _ in $(seq 1 60); do
+  if docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null
+docker start "${CONTAINER_NAME}" >/dev/null
+for _ in $(seq 1 60); do
+  if curl --silent --fail "${BASE_URL}/readyz" >/dev/null; then
+    break
+  fi
+  sleep 1
+done
+curl --silent --fail "${BASE_URL}/readyz" | python3 -c '
+import json,sys
+result = json.load(sys.stdin)
+assert result["status"] == "ok"
+assert result["checks"]["rabbitmq"]["status"] == "ok"
+'
+docker exec "${RABBITMQ_NAME}" rabbitmqctl -q list_queues name consumers \
+  | awk '$1 == "check_email" && $2 == 1 { found=1 } END { if (!found) exit 1 }'
