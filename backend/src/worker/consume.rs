@@ -18,17 +18,19 @@ use super::do_work::{do_check_email_work, CheckEmailTask, TaskError};
 use super::single_shot::send_single_shot_reply;
 use crate::config::{BackendConfig, RabbitMQConfig};
 use crate::worker::do_work::CheckEmailJobId;
-use anyhow::Context;
+use anyhow::{bail, Context};
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProperties};
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
+use tokio::time::{timeout, Duration};
 use tracing::{debug, error, info, trace};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
+const RABBITMQ_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Set up the RabbitMQ connection and declare the "check_email" queue.
 ///
@@ -46,9 +48,18 @@ pub async fn setup_rabbit_mq(
 		.with_reactor(tokio_reactor_trait::Tokio)
 		.with_connection_name(backend_name.into());
 
-	let conn = Connection::connect(&config.url, options)
-		.await
-		.with_context(|| format!("Connecting to rabbitmq {}", &config.url))?;
+	let conn = timeout(
+		RABBITMQ_CONNECT_TIMEOUT,
+		Connection::connect(&config.url, options),
+	)
+	.await
+	.with_context(|| {
+		format!(
+			"Timed out connecting to rabbitmq within {:?}",
+			RABBITMQ_CONNECT_TIMEOUT
+		)
+	})?
+	.context("Connecting to rabbitmq")?;
 	let channel = conn.create_channel().await?;
 
 	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
@@ -84,7 +95,7 @@ pub async fn setup_rabbit_mq(
 	Ok(channel)
 }
 
-/// Start the worker to consume messages from the queue.
+/// Consume messages until the worker fails, allowing the process supervisor to restart it.
 pub async fn run_worker(config: Arc<BackendConfig>) -> Result<(), anyhow::Error> {
 	consume_check_email(config).await
 }
@@ -96,118 +107,160 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 	let channel = worker_config.channel;
 	let throttle = config.get_throttle_manager();
 
-	tokio::spawn(async move {
-		let mut consumer = channel
-			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).as_str(),
-				BasicConsumeOptions::default(),
-				FieldTable::default(),
-			)
-			.await?;
-
-		// Loop over the incoming messages
-		while let Some(delivery) = consumer.next().await {
-			let delivery = delivery?;
-			let payload = serde_json::from_slice::<CheckEmailTask>(&delivery.data)?;
-			debug!(target: LOG_TARGET, email=?payload.input.to_email, "Consuming message");
-
-			// Check if we should throttle before fetching the next message
-			if let Some(throttle_result) = throttle.check_throttle().await {
-				// This line below will log every time the worker fetches from
-				// RabbitMQ. It's noisy
-				trace!(target: LOG_TARGET, wait=?throttle_result.delay, email=?payload.input.to_email, "Too many requests {}, throttling", throttle_result.limit_type);
-
-				// For single-shot tasks, we return an error early, so that the user knows they need to retry.
-				match payload.job_id {
-					CheckEmailJobId::SingleShot => {
-						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Rejecting single-shot email because of throttling");
-						delivery
-							.reject(BasicRejectOptions { requeue: false })
-							.await?;
-
-						send_single_shot_reply(
-							Arc::clone(&channel),
-							&delivery,
-							&Err(TaskError::Throttle(throttle_result)),
-						)
-						.await?;
-					}
-					CheckEmailJobId::Bulk(_) => {
-						// Put back the message into the same queue, so that other
-						// workers can pick it up.
-						delivery
-							.reject(BasicRejectOptions { requeue: true })
-							.await?;
-						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Requeued message because of throttling");
-					}
-				}
-
-				continue;
-			}
-
-			// Check if the job has been cancelled before processing
-			if let CheckEmailJobId::Bulk(job_id) = &payload.job_id {
-				if let Some(pool) = config_clone.get_pg_pool() {
-					let job_status = sqlx::query_scalar!(
-						r#"SELECT status as "status: String" FROM v1_bulk_job WHERE id = $1"#,
-						*job_id
-					)
-					.fetch_optional(&pool)
-					.await;
-
-					if let Ok(Some(status)) = job_status {
-						if status == "cancelling" || status == "cancelled" {
-							debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
-							delivery.ack(BasicAckOptions::default()).await?;
-
-							// Mark task as cancelled if we have its DB id
-							if let Some(task_db_id) =
-								payload.metadata.as_ref().and_then(|m| m.task_db_id)
-							{
-								let _ = sqlx::query!(
-									"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
-									task_db_id,
-								)
-								.execute(&pool)
-								.await;
-							}
-
-							continue;
-						}
-					}
-				}
-			}
-
-			let config_clone2 = Arc::clone(&config_clone);
-			let channel_clone2 = Arc::clone(&channel);
-
-			info!(
+	let mut consumer = match channel
+		.basic_consume(
+			CHECK_EMAIL_QUEUE,
+			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).as_str(),
+			BasicConsumeOptions::default(),
+			FieldTable::default(),
+		)
+		.await
+	{
+		Ok(consumer) => consumer,
+		Err(err) => {
+			error!(
 				target: LOG_TARGET,
-				email=payload.input.to_email,
-				job_id=?payload.job_id,
-				"Starting task"
+				error = ?err,
+				"Failed to start RabbitMQ consumer"
 			);
-			tokio::spawn(async move {
-				if let Err(e) =
-					do_check_email_work(&payload, delivery, channel_clone2, config_clone2).await
+			return Err(err).context("Starting RabbitMQ consumer");
+		}
+	};
+
+	// Loop over the incoming messages
+	while let Some(delivery) = consumer.next().await {
+		let delivery = match delivery {
+			Ok(delivery) => delivery,
+			Err(err) => {
+				error!(
+					target: LOG_TARGET,
+					error = ?err,
+					"RabbitMQ consumer failed"
+				);
+				return Err(err).context("Consuming RabbitMQ delivery");
+			}
+		};
+		let payload = match serde_json::from_slice::<CheckEmailTask>(&delivery.data) {
+			Ok(payload) => payload,
+			Err(err) => {
+				error!(
+					target: LOG_TARGET,
+					error = ?err,
+					"Rejecting malformed RabbitMQ message"
+				);
+				capture_anyhow(&anyhow::Error::from(err));
+				if let Err(reject_err) =
+					delivery.reject(BasicRejectOptions { requeue: false }).await
 				{
 					error!(
 						target: LOG_TARGET,
-						email=payload.input.to_email,
-						error=?e,
-						"Error processing message"
+						error = ?reject_err,
+						"Failed to reject malformed RabbitMQ message"
 					);
-					capture_anyhow(&e);
+					capture_anyhow(&anyhow::Error::from(reject_err));
 				}
-			});
+				continue;
+			}
+		};
+		debug!(target: LOG_TARGET, email=?payload.input.to_email, "Consuming message");
 
-			// Increment throttle counters once we spawn the task
-			throttle.increment_counters().await;
+		// Check if we should throttle before fetching the next message
+		if let Some(throttle_result) = throttle.check_throttle().await {
+			// This line below will log every time the worker fetches from
+			// RabbitMQ. It's noisy
+			trace!(target: LOG_TARGET, wait=?throttle_result.delay, email=?payload.input.to_email, "Too many requests {}, throttling", throttle_result.limit_type);
+
+			// For single-shot tasks, we return an error early, so that the user knows they need to retry.
+			match payload.job_id {
+				CheckEmailJobId::SingleShot => {
+					debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Rejecting single-shot email because of throttling");
+					delivery
+						.reject(BasicRejectOptions { requeue: false })
+						.await?;
+
+					if let Err(error) = send_single_shot_reply(
+						Arc::clone(&channel),
+						&delivery,
+						&Err(TaskError::Throttle(throttle_result)),
+					)
+					.await
+					{
+						error!(target: LOG_TARGET, error=?error, "Failed to send throttle reply");
+						capture_anyhow(&error);
+					}
+				}
+				CheckEmailJobId::Bulk(_) => {
+					// Put back the message into the same queue, so that other
+					// workers can pick it up.
+					delivery
+						.reject(BasicRejectOptions { requeue: true })
+						.await?;
+					debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Requeued message because of throttling");
+				}
+			}
+
+			continue;
 		}
 
-		Ok::<(), anyhow::Error>(())
-	});
+		// Check if the job has been cancelled before processing
+		if let CheckEmailJobId::Bulk(job_id) = &payload.job_id {
+			if let Some(pool) = config_clone.get_pg_pool() {
+				let job_status = sqlx::query_scalar!(
+					r#"SELECT status as "status: String" FROM v1_bulk_job WHERE id = $1"#,
+					*job_id
+				)
+				.fetch_optional(&pool)
+				.await;
 
-	Ok(())
+				if let Ok(Some(status)) = job_status {
+					if status == "cancelling" || status == "cancelled" {
+						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
+						delivery.ack(BasicAckOptions::default()).await?;
+
+						// Mark task as cancelled if we have its DB id
+						if let Some(task_db_id) =
+							payload.metadata.as_ref().and_then(|m| m.task_db_id)
+						{
+							let _ = sqlx::query!(
+								"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
+								task_db_id,
+							)
+							.execute(&pool)
+							.await;
+						}
+
+						continue;
+					}
+				}
+			}
+		}
+
+		let config_clone2 = Arc::clone(&config_clone);
+		let channel_clone2 = Arc::clone(&channel);
+
+		info!(
+			target: LOG_TARGET,
+			email=payload.input.to_email,
+			job_id=?payload.job_id,
+			"Starting task"
+		);
+		tokio::spawn(async move {
+			if let Err(e) =
+				do_check_email_work(&payload, delivery, channel_clone2, config_clone2).await
+			{
+				error!(
+					target: LOG_TARGET,
+					email=payload.input.to_email,
+					error=?e,
+					"Error processing message"
+				);
+				capture_anyhow(&e);
+			}
+		});
+
+		// Increment throttle counters once we spawn the task
+		throttle.increment_counters().await;
+	}
+
+	bail!("RabbitMQ consumer ended unexpectedly")
 }

@@ -52,6 +52,7 @@ livenessProbe:
     path: /healthz
     port: web
 readinessProbe:
+  timeoutSeconds: 5
   httpGet:
     path: /readyz
     port: web
