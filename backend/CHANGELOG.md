@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-01)
+
+
+### Features
+
+* add email intelligence pipelines and outcomes ([b1cc368](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b1cc3684ca799904a5079451ebe349a916efcb48))
+* add email intelligence pipelines and provider outcomes ([760f654](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/760f6546336b77f510d0a2d8215b21d3dc87e993))
+* ship combined app and tenant API ([#51](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/51)) ([a013bfb](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/a013bfb8f6709777848d5e1fe91c63c648bc86ea))
+
+
+### Bug Fixes
+
+* allow slower JWKS fetch on cold start ([4ce65b8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4ce65b84de8e28f52c329d6a647baccc323e3cb7))
+* restart Paperless when its RabbitMQ consumer fails ([#61](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/61)) ([36270bd](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/36270bdeab6e1c989a51d3891bacc76e9641a8a3))
+* unblock worker image releases and prevent throttle panics ([#63](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/63)) ([129ee33](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/129ee33ec55421c0cea929af963307c41da35148))
+
 ## [4.1.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.0.0...v4.1.0) (2026-03-21)
 
 
