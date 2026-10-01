@@ -12,6 +12,25 @@ env:
   SQLX_OFFLINE: true
 
 jobs:
+  deployment-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: azure/setup-helm@bf6a7d304bc2fdb57e0331155b7ebf2c504acf0a # v4
+        with:
+          version: v4.1.1
+      - name: Validate default and staging replica counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          chart=helm/check-if-email-exists
+          helm lint "$chart" --strict
+          for values in values.yaml values.staging.yaml; do
+            helm template check-if-email-exists "$chart" -f "$chart/$values" \
+              --show-only templates/deployment.yaml \
+              | awk '/^  replicas:/ { found=1; if ($2 < 1) exit 1 } END { if (!found) exit 1 }'
+          done
+
   web:
     runs-on: ubuntu-latest
     steps:
