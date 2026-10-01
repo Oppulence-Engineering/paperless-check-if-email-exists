@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - master
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -13,10 +14,11 @@ on:
         required: true
         type: choice
         options:
+          - build-only
           - staging
           - production
           - all
-        default: staging
+        default: build-only
 
 # Publish the web, API, and worker as one image.
 permissions:
@@ -123,7 +125,7 @@ jobs:
     secrets: inherit
 
   deploy-staging:
-    if: ${{ github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all')) }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all')) }}
     name: "Staging – ${{ matrix.cluster }}"
     needs: docker
     strategy:
