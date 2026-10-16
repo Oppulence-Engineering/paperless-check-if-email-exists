@@ -19,8 +19,8 @@ export function SimHero() {
 			id="hero"
 		>
 			<p className="sr-only">
-				Check If Email Exists checks email addresses without sending a message. Clean lists before a
-				campaign, suppress bounces from your email platform, and keep lists clean over time.
+				Verifier checks email addresses without sending a message. Clean lists before a campaign,
+				suppress bounces from your email platform, and keep lists clean over time.
 			</p>
 
 			<div className={HOME_INSET}>

@@ -13,11 +13,11 @@ export function LegalLayoutClient({ children }: { children: React.ReactNode }) {
 	return (
 		<div
 			className={cn(
-				"sm-site sim-marketing-site relative flex flex-col marketing-polar app-vh-shell overflow-hidden",
+				"sm-site sim-marketing-site dark relative flex flex-col marketing-polar app-vh-shell overflow-hidden",
 			)}
 		>
 			<MarketingEffects />
-			<SimLandingShell showClosingCta={false} variant="subpage">
+			<SimLandingShell showClosingCta={false} variant="editorial">
 				{children}
 			</SimLandingShell>
 		</div>

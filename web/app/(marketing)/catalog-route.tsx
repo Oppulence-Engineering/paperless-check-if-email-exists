@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import type { CapabilityPage } from "./catalog";
 import { allCapabilityPages, getCapabilityPage } from "./catalog";
-import { CapabilityTemplate } from "./capability-page";
+import { EditorialCapabilityPage } from "./editorial/capability";
 import { marketingMetadata } from "./metadata";
 
 export function catalogStaticParams(kind: CapabilityPage["kind"]) {
@@ -38,7 +38,7 @@ export async function CatalogSlugPage({
 	cacheLife("days");
 	const page = getCapabilityPage(kind, slug);
 	if (!page) notFound();
-	return <CapabilityTemplate page={page} />;
+	return <EditorialCapabilityPage page={page} />;
 }
 
 /**

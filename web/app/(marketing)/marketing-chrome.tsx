@@ -77,7 +77,7 @@ export function InlineLogo({
 					)}
 					style={header ? { fontFamily: "var(--font-marketing-display)" } : undefined}
 				>
-					Check If Email Exists
+					Verifier
 				</MarketingSpan>
 			) : null}
 		</Badge>

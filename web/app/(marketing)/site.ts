@@ -3,7 +3,7 @@ import type { LinkItem } from "./marketing-data";
 /** Public origin used for canonical URLs, sitemap, and structured data. */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export const SITE_NAME = "Check If Email Exists";
+export const SITE_NAME = "Verifier";
 
 export const ORGANIZATION_NAME = "Oppulence Engineering";
 

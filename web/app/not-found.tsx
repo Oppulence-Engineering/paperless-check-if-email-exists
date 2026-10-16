@@ -1,13 +1,19 @@
-import Link from "next/link";
+import { marketingFontVariables } from "@/lib/fonts";
 
+import { EditorialNotFound } from "./(marketing)/editorial/pages";
+import { MarketingLayoutClient } from "./(marketing)/marketing-layout-client";
+
+import "./(marketing)/marketing-sim-theme.css";
+import "./(marketing)/marketing-subpages.css";
+import "./(marketing)/editorial/editorial.css";
+
+/** Unmatched URLs get the public site shell, so visitors keep the header and footer. */
 export default function NotFound() {
 	return (
-		<main className="mx-auto max-w-xl px-6 py-24">
-			<h1 className="text-3xl font-semibold">Page not found</h1>
-			<p className="mt-4">This page does not exist.</p>
-			<Link className="mt-6 inline-block underline" href="/">
-				Go home
-			</Link>
-		</main>
+		<div className={marketingFontVariables}>
+			<MarketingLayoutClient>
+				<EditorialNotFound />
+			</MarketingLayoutClient>
+		</div>
 	);
 }

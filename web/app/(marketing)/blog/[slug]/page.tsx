@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 			path: `/blog/${slug}`,
 		});
 	}
-	return { title: "Page not found — Check If Email Exists" };
+	return { title: "Page not found — Verifier" };
 }
 
 async function renderBlogSlug(slug: string) {

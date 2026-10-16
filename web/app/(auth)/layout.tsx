@@ -5,6 +5,7 @@ import { marketingFontVariables } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 import "@/app/(marketing)/sim-landing/sim-landing.css";
+import "./auth-theme.css";
 
 // The authenticated redirect must resolve before any login UI is streamed.
 export const instant = false;
@@ -12,7 +13,7 @@ export const instant = false;
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,
-	themeColor: "#fefefe",
+	themeColor: "#090909",
 };
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -21,8 +22,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 	}
 
 	return (
-		<div className={cn("sim-landing-root min-h-svh", marketingFontVariables)} data-auth-route>
-			{children}
+		<div className="dark">
+			<div className={cn("sim-landing-root min-h-svh", marketingFontVariables)} data-auth-route>
+				{children}
+			</div>
 		</div>
 	);
 }

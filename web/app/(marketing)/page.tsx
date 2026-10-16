@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cacheLife } from "next/cache";
 
 import { homepageFaqs } from "./catalog";
-import { SimLandingPage } from "./sim-landing/landing-page";
+import { EditorialHome } from "./editorial/home";
 import { JsonLd } from "./marketing-primitives";
 import { faqJsonLd } from "./metadata";
 import { ORGANIZATION_NAME, SITE_NAME, SITE_URL } from "./site";
@@ -75,7 +75,7 @@ export default async function Page() {
 				type="application/ld+json"
 			/>
 			<JsonLd data={faqJsonLd(homepageFaqs)} />
-			<SimLandingPage />
+			<EditorialHome />
 		</>
 	);
 }

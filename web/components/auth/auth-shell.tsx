@@ -43,7 +43,7 @@ export function AuthShell({
 	mode,
 	error,
 	returnTo,
-	brandName = "Check If Email Exists",
+	brandName = "Verifier",
 	googleEnabled = false,
 	logoUrl = "/check-email-logo.svg",
 	microsoftEnabled = false,
@@ -253,7 +253,7 @@ export function AuthShell({
 					</form>
 
 					<Button
-						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] text-[15px] font-medium"
+						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] bg-transparent text-[15px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
 						disabled={pending}
 						onClick={() => void signInWithPasskey()}
 						type="button"
@@ -262,7 +262,7 @@ export function AuthShell({
 					</Button>
 
 					<Button
-						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] text-[15px] font-medium"
+						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] bg-transparent text-[15px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
 						disabled={pending}
 						onClick={() => void signInWithSso()}
 						type="button"

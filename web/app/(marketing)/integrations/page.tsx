@@ -1,7 +1,7 @@
 import { cacheLife } from "next/cache";
 
-import { indexCopy, integrationPages } from "../catalog";
-import { SimCatalogHub } from "../sim-landing/subpages/sim-catalog-hub";
+import { indexCopy } from "../catalog";
+import { HubPage } from "../editorial/hub-page";
 import { marketingMetadata } from "../metadata";
 
 export const metadata = marketingMetadata({
@@ -14,17 +14,5 @@ export default async function IntegrationsIndexPage() {
 	"use cache";
 	cacheLife("days");
 
-	return (
-		<SimCatalogHub
-			description={indexCopy.integrations.description}
-			eyebrow="[integrations]"
-			heading={indexCopy.integrations.title}
-			items={integrationPages.map((page) => ({
-				href: page.path,
-				title: page.eyebrow,
-				body: page.description,
-			}))}
-			listHeading="First-party connectors"
-		/>
-	);
+	return <HubPage kind="integration" />;
 }

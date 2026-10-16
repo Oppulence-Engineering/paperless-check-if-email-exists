@@ -9,7 +9,7 @@ import {
 	isBlogCategory,
 } from "@/lib/content/editorial";
 
-import { SimBlogIndexPage } from "../../../sim-landing/subpages/sim-blog-index-page";
+import { EditorialBlogIndex } from "../../../editorial/blog";
 import { marketingMetadata } from "../../../metadata";
 
 export function generateStaticParams() {
@@ -18,10 +18,10 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
 	const { category } = await params;
-	if (!isBlogCategory(category)) return { title: "Page not found — Check If Email Exists" };
+	if (!isBlogCategory(category)) return { title: "Page not found — Verifier" };
 	return marketingMetadata({
 		title: `${category} notes`,
-		description: `Check If Email Exists notes in the ${category} category.`,
+		description: `Verifier notes in the ${category} category.`,
 		path: `/blog/category/${category}`,
 	});
 }
@@ -33,18 +33,11 @@ async function renderBlogCategory(category: string) {
 	const posts = blogPostsInCategory(category);
 
 	return (
-		<SimBlogIndexPage
-			categories={blogCategories.map((item) => ({
-				label: item,
-				href: `/blog/category/${item}`,
-			}))}
-			description={
-				posts.length === 0
-					? "No published notes in this category yet."
-					: `${posts.length} published note${posts.length === 1 ? "" : "s"}.`
-			}
-			eyebrow={`[blog / ${category}]`}
-			listHeading={`${category} notes`}
+		<EditorialBlogIndex
+			activeCategory={category}
+			categories={blogCategories
+				.filter((item) => blogPostsInCategory(item).length > 0)
+				.map((item) => ({ label: item, href: `/blog/category/${item}` }))}
 			posts={posts.map((post) => {
 				const slug = blogPostSlug(post);
 				return {
@@ -56,7 +49,8 @@ async function renderBlogCategory(category: string) {
 					date: post.date,
 				};
 			})}
-			title={category}
+			subtitle={`Notes about ${category}.`}
+			title="Blog."
 		/>
 	);
 }

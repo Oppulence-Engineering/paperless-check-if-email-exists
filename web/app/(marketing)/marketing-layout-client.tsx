@@ -20,12 +20,12 @@ export function MarketingLayoutClient({ children }: { children: ReactNode }) {
 	return (
 		<div
 			className={cn(
-				"sm-site sim-marketing-site relative flex flex-col marketing-polar app-vh-shell overflow-hidden",
+				"sm-site sim-marketing-site dark relative flex flex-col marketing-polar app-vh-shell overflow-hidden",
 				isHome && "sim-home-site",
 			)}
 		>
 			<MarketingEffects />
-			<SimLandingShell variant={isHome ? "home" : "subpage"}>{children}</SimLandingShell>
+			<SimLandingShell variant="editorial">{children}</SimLandingShell>
 		</div>
 	);
 }

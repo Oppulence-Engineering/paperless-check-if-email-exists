@@ -1,17 +1,14 @@
-import {
-	SimChangelogPage,
-	type SimChangelogEntry,
-} from "../sim-landing/subpages/sim-changelog-page";
+import { EditorialChangelog, type ChangelogEntry } from "../editorial/pages";
 import { marketingMetadata } from "../metadata";
 
 export const metadata = marketingMetadata({
 	title: "Changelog",
-	description: "What changed in Check If Email Exists.",
+	description: "What changed in Verifier.",
 	path: "/changelog",
 });
 
 /** User-facing changes, newest first. Each entry maps to a merged pull request. */
-const entries: SimChangelogEntry[] = [
+const entries: ChangelogEntry[] = [
 	{
 		version: "Scoring",
 		date: "2026-09-24",
@@ -51,5 +48,5 @@ const entries: SimChangelogEntry[] = [
 ];
 
 export default function ChangelogPage() {
-	return <SimChangelogPage entries={entries} repoLabel="Check If Email Exists" />;
+	return <EditorialChangelog entries={entries} />;
 }

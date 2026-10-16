@@ -2,6 +2,8 @@ import { marketingFontVariables } from "@/lib/fonts";
 
 import { MarketingLayoutClient } from "./marketing-layout-client";
 
+import "./editorial/editorial.css";
+
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,

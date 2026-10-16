@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
-import { SimLegalDocumentPage } from "@/app/(marketing)/sim-landing/legal/sim-legal-document-page";
+import { EditorialLegalDocument } from "@/app/(marketing)/editorial/legal";
 import type { LegalSection } from "@/components/legal/types";
 
 export const metadata: Metadata = {
-	title: "Privacy overview — Check If Email Exists",
+	title: "Privacy overview — Verifier",
 	description:
-		"This product-specific overview describes the data used by Check If Email Exists. A final privacy policy requires legal review before production publication.",
+		"This product-specific overview describes the data used by Verifier. A final privacy policy requires legal review before production publication.",
 	robots: { index: false, follow: false },
 };
 
@@ -42,11 +42,11 @@ export default async function LegalPage() {
 	"use cache";
 	cacheLife("weeks");
 	return (
-		<SimLegalDocumentPage
+		<EditorialLegalDocument
 			eyebrow="[legal]"
 			contactEmail="privacy@oppulence.io"
 			effective="Pending legal review"
-			intro="This product-specific overview describes the data used by Check If Email Exists. A final privacy policy requires legal review before production publication."
+			intro="This product-specific overview describes the data used by Verifier. A final privacy policy requires legal review before production publication."
 			lastUpdated="September 22, 2026"
 			related={[
 				{ label: "Terms information", href: "/terms" },

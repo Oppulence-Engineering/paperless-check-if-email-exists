@@ -660,27 +660,31 @@ export const useCasePages: CapabilityPage[] = [
 	}),
 ];
 
-function espPage(slug: string, name: string, events: string, checked: boolean): CapabilityPage {
-	return page("integration", slug, {
+type EspSetup = {
+	slug: string;
+	name: string;
+	/** The suppressed events, in the platform's own words. */
+	events: string;
+	description: string;
+	howItWorks: string;
+	/** Setup steps in Verifier and in the platform, with the platform's own menu names. */
+	workflow: string[];
+	verification: { question: string; answer: string };
+};
+
+function espPage(setup: EspSetup): CapabilityPage {
+	const { name, events } = setup;
+	return page("integration", setup.slug, {
 		eyebrow: name,
 		title: `Send ${name} events back to your suppression list`,
-		description: `Point a ${name} webhook at your workspace. ${events} update your suppression list.`,
+		description: setup.description,
 		lede: `Close the loop between ${name} and your list checks.`,
 		problem: {
-			title: `Bounces stay inside ${name}`,
-			body: "When a bounce is only recorded in the email platform, the address comes back with the next import.",
+			title: `Delivery problems stay inside ${name}`,
+			body: "When an event is only recorded in the email platform, the address comes back with the next import.",
 		},
-		howItWorks: {
-			title: "A private webhook for each endpoint",
-			body: checked
-				? `Create a delivery endpoint, and paste its private URL into ${name}. Each event is signature-checked before it is recorded.`
-				: `Create a delivery endpoint, and paste its private URL into ${name}. Each event is matched to the address and recorded.`,
-		},
-		workflow: [
-			"Create a delivery endpoint in your workspace.",
-			`Add the private URL to your ${name} webhook settings.`,
-			"Bounces, complaints, and unsubscribes update your suppressions.",
-		],
+		howItWorks: { title: "A private URL for each endpoint", body: setup.howItWorks },
+		workflow: setup.workflow,
 		capabilities: [
 			{
 				title: "One suppression list",
@@ -693,16 +697,20 @@ function espPage(slug: string, name: string, events: string, checked: boolean): 
 		],
 		examples: [
 			{
-				title: "Stop repeat bounces",
-				body: "An address that bounced is suppressed before the next campaign.",
+				title: "Stop repeat problems",
+				body: "A suppressed address goes to the drop file when you clean your next list.",
+			},
+			{
+				title: "More than one sending tool",
+				body: `A ${name} bounce also stops the address in lists from your CRM and other tools.`,
 			},
 		],
 		faqs: [
 			{
 				question: "Which events are recorded?",
-				answer:
-					"Deliveries, bounces, complaints, unsubscribes, opens, and clicks. Bounces, complaints, and unsubscribes are suppressed.",
+				answer: `The event mapping on this page shows what is recorded. ${events} go on the suppression list.`,
 			},
+			setup.verification,
 		],
 		related: [
 			{ label: "Delivery feedback", href: "/features/delivery-feedback" },
@@ -713,10 +721,83 @@ function espPage(slug: string, name: string, events: string, checked: boolean): 
 }
 
 export const integrationPages: CapabilityPage[] = [
-	espPage("sendgrid", "SendGrid", "Bounces, spam reports, and unsubscribes", true),
-	espPage("mailgun", "Mailgun", "Bounces, complaints, and unsubscribes", true),
-	espPage("postmark", "Postmark", "Bounces, spam complaints, and unsubscribes", false),
-	espPage("amazon-ses", "Amazon SES", "Bounces and complaints", true),
+	espPage({
+		slug: "sendgrid",
+		name: "SendGrid",
+		events: "Bounces, spam reports, and unsubscribes",
+		description:
+			"Point the SendGrid Event Webhook at your workspace. Bounces, spam reports, and unsubscribes update your suppression list.",
+		howItWorks:
+			"Turn on the signed Event Webhook in SendGrid. Verifier checks each request with your SendGrid verification key and a timestamp window.",
+		workflow: [
+			"In SendGrid, open Settings > Mail Settings > Event Webhooks, and turn on signature verification. Copy the verification key.",
+			"In Verifier, open Outcomes, and add a SendGrid endpoint with that key. Copy its private URL.",
+			"In SendGrid, paste the URL as the Post URL. Select the bounce, spam report, and unsubscribe events.",
+		],
+		verification: {
+			question: "How do you know an event came from SendGrid?",
+			answer:
+				"SendGrid signs each request. Verifier checks the signature with the verification key that you added to the endpoint. A request with a bad signature or an old timestamp is rejected.",
+		},
+	}),
+	espPage({
+		slug: "mailgun",
+		name: "Mailgun",
+		events: "Permanent failures, complaints, and unsubscribes",
+		description:
+			"Point your Mailgun webhooks at your workspace. Permanent failures, complaints, and unsubscribes update your suppression list.",
+		howItWorks:
+			"Mailgun signs each webhook with your signing key. Verifier checks the signature and the timestamp before it records the event.",
+		workflow: [
+			"In Mailgun, open Sending > Webhooks, and copy the HTTP webhook signing key.",
+			"In Verifier, open Outcomes, and add a Mailgun endpoint with that key. Copy its private URL.",
+			"In Mailgun, add the URL for the Permanent Failure, Spam Complaints, and Unsubscribes events.",
+		],
+		verification: {
+			question: "Is a temporary failure suppressed?",
+			answer:
+				"No. Only a failure with severity permanent is recorded as a bounce. A temporary failure is not added to the suppression list.",
+		},
+	}),
+	espPage({
+		slug: "postmark",
+		name: "Postmark",
+		events: "Bounces, spam complaints, and unsubscribes",
+		description:
+			"Point a Postmark webhook at your workspace. Bounces, spam complaints, and unsubscribes update your suppression list.",
+		howItWorks:
+			"Postmark does not sign webhooks. The private URL carries a secret token, and you can limit the endpoint to a list of IP addresses through the API.",
+		workflow: [
+			"In Verifier, open Outcomes, and add a Postmark endpoint. Copy its private URL.",
+			"In Postmark, open your server, then the message stream, then Webhooks > Add webhook.",
+			"Paste the URL. Select Bounce, Spam Complaint, and Subscription Change.",
+		],
+		verification: {
+			question: "Which subscription changes are suppressed?",
+			answer:
+				"A SubscriptionChange event with SuppressSending set to true is recorded as an unsubscribe. A change that turns sending back on is not.",
+		},
+	}),
+	espPage({
+		slug: "amazon-ses",
+		name: "Amazon SES",
+		events: "Bounces and complaints",
+		description:
+			"Subscribe your workspace to the Amazon SNS topic for your SES notifications. Bounces and complaints update your suppression list.",
+		howItWorks:
+			"Amazon SES sends bounce and complaint notifications to an SNS topic. Verifier checks the SNS signature and accepts only the topic ARNs that you set.",
+		workflow: [
+			"In Amazon SNS, create a topic, and copy its topic ARN.",
+			"In Verifier, open Outcomes, and add an Amazon SES endpoint with that topic ARN. Copy its private URL.",
+			"In Amazon SNS, add an HTTPS subscription to the URL. Verifier confirms the subscription.",
+			"In Amazon SES, open your verified identity, then Notifications. Send bounce and complaint feedback to the topic.",
+		],
+		verification: {
+			question: "Do I need to confirm the SNS subscription?",
+			answer:
+				"No. Verifier checks the signature of the confirmation message from Amazon SNS and confirms the subscription.",
+		},
+	}),
 	page("integration", "csv", {
 		eyebrow: "CSV import and export",
 		title: "Bring lists from any tool",
