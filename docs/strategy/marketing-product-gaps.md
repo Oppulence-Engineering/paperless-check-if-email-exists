@@ -42,7 +42,7 @@ Goal for this week: everything we market is available to a customer as soon as t
 | --- | --- | --- | --- |
 | G10 | Mailgun bounces | Current Mailgun webhooks report a bounce as `failed` with `severity: permanent`. The backend maps the legacy `bounced` event only. The public page now lists complaints and unsubscribes only. | Done. Bounces are back on the Mailgun page. |
 | G11 | Postmark complaints and unsubscribes | Postmark sends `SpamComplaint` and `SubscriptionChange`. The backend does not map them. The public page now lists bounces only. | Done. The Postmark page lists both events. |
-| G12 | SDK version | npm has `@oppulence/reacher-sdk` 4.0.0; the repo is at 4.3.0. The publish step failed for v4.1.0 and v4.2.0: the package names the repository by its old name, and npm provenance rejects that. The npm token is also from December 2025. | Fixed in code: correct repository URL, and npm 11.6.2 for trusted publishing. The owner must add the trusted publisher on npmjs.com (or renew `NPM_TOKEN`). The next release then publishes 4.3.0. |
+| G12 | SDK version | npm had `@oppulence/reacher-sdk` 4.0.0; the repo is at 4.3.0. The publish step failed for v4.1.0 and v4.2.0: the package named the repository by its old name, and npm provenance rejected that. | Done. 4.3.0 is `latest` on npm since 2026-10-16, published by the GitHub Actions trusted publisher (OIDC) with provenance. |
 | G13 | Quality-gate threshold | The approval checklist read a `tenants.settings` column that does not exist and dropped the error, so it always used 90 and 70. Settings had no control. The sending-platforms page says "threshold set by you". | Done. Two threshold columns with a database check, fields in `PATCH /v1/me/settings`, and inputs in Settings → Verification. |
 
 ## Second audit (2026-10-16)
@@ -74,13 +74,13 @@ Done on 2026-10-16:
 - Live Stripe products and monthly prices: Verifier Starter `price_1URB8AJ5a5YKQUvYA0SsEw8c` ($49) and Verifier Professional `price_1URB9UJ5a5YKQUvYW1AHWiSM` ($149), lookup keys `verifier_starter_monthly` and `verifier_professional_monthly`, tax code SaaS business use.
 - GitHub secrets `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PROFESSIONAL` (live) and `STRIPE_PRICE_STARTER_STAGING`, `STRIPE_PRICE_PROFESSIONAL_STAGING` (test).
 - Customer portal, live and test: customers can switch between the two Verifier plans only, with prorated charges invoiced at once. Other products are not affected. Tested in test mode: Starter → Professional.
-- npm trusted publisher for `@oppulence/reacher-sdk` (repository `Oppulence-Engineering/paperless-check-if-email-exists`, workflow `sdk-generate.yml`). It is pending validation: a publish through it must run before 2026-10-18 13:30 UTC.
+- npm trusted publisher for `@oppulence/reacher-sdk` (repository `Oppulence-Engineering/paperless-check-if-email-exists`, workflow `sdk-generate.yml`), validated by the 4.3.0 publish.
 
 Still open:
 
 1. **Production sign-in (G18).** Done on 2026-10-16. `https://verifier.playbookmedia.io` serves the app from all three clusters (ingress, cert-manager certificate, Cloudflare CNAME to `oppulence.app`). Production has its own `BETTER_AUTH_SECRET` and `SCIM_CREDENTIAL_HASH_SECRET`; only the Resend settings are shared with staging. The deploy also needed `--server-side=true` for Helm and the database CA for the auth migration.
-2. **Stripe secret keys.** Set `STRIPE_SECRET_KEY` (live) and `STRIPE_SECRET_KEY_STAGING` (test) with `gh secret set <NAME>`, and paste the key when asked. Until then, billing stays off and the plan card says so.
-3. **Stripe webhooks.** Add an endpoint at `https://verifier.playbookmedia.io/api/auth/stripe/webhook` in live mode and one at `<BETTER_AUTH_URL_STAGING>/api/auth/stripe/webhook` in test mode, with the events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Put each signing secret in `STRIPE_WEBHOOK_SECRET` and `STRIPE_WEBHOOK_SECRET_STAGING`.
+2. **Stripe secret keys.** Live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set, and production billing is on. Staging has no test keys (`STRIPE_SECRET_KEY_STAGING`, `STRIPE_WEBHOOK_SECRET_STAGING`), so billing stays off on staging.
+3. **Stripe webhooks.** The live endpoint exists for `https://verifier.playbookmedia.io/api/auth/stripe/webhook` (the four subscription events). A test-mode endpoint for staging is still open.
 4. **Auth migration.** Apply `config/auth/migrations/0007_stripe_billing.sql`.
 5. **Enterprise.** Add a row to `auth.subscription` with plan `enterprise` and status `active` after a contract.
 
