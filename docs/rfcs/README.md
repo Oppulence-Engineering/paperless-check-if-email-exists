@@ -29,3 +29,25 @@ This directory contains engineering RFCs for the next ten backend/API-first prod
 10. [0001 Native Provider Webhooks and Outcome Adapters](0001-native-provider-webhooks-and-outcome-adapters.md)
 
 This order favors customer-visible list hygiene value first, operational safety second, and external webhook dependencies last.
+
+## Data RFCs (Hunter.io Parity)
+
+These RFCs add finder, search, and enrichment features on top of the Parallel Web Systems API. They serve our buyer: teams that already have a list and send email to it (see `docs/strategy/company-focus.md`). RFC 0015 defines the shared foundations. The four feature RFCs build on it.
+
+| RFC | Title | Status | Summary |
+|---|---|---|---|
+| [0015](0015-data-platform-foundations.md) | Data Platform Foundations | Draft | Parallel client, durable data jobs, data credits, spend guardrails, public web store, privacy controls, Legal Review, test and UI foundations. |
+| [0011](0011-email-finder-parity.md) | Email Finder Parity And List Repair | Draft | Find addresses from web sources, learned domain patterns, and tenant outcomes, with calibrated confidence. Repair whole lists. |
+| [0012](0012-domain-search.md) | Domain Search | Draft | List the people and generic addresses at any domain, with sources, verification, departures, and export. |
+| [0013](0013-discover-company-and-people-search.md) | Discover: Company And People Search | Draft | Natural-language and filter search, lookalikes from list data, a sensitive-condition guard, and export. |
+| [0014](0014-person-and-company-enrichment.md) | Person And Company Enrichment, And Job-Change Monitoring | Draft | Work data with citations, a high-precision job-change signal, and a scheduled monitor for lists. |
+
+Recommended build order:
+
+1. [0015 Data Platform Foundations](0015-data-platform-foundations.md): all data RFCs need it. Start the Legal Review on day one.
+2. [0011 Email Finder Parity And List Repair](0011-email-finder-parity.md): fills the store and gives list repair to our buyer.
+3. [0014 Person And Company Enrichment](0014-person-and-company-enrichment.md): the strongest fit with our buyer. Build RFC 0012 milestones D2 (title taxonomy) and D3 (departures) at the start of this step, because RFC 0014 uses them.
+4. [0012 Domain Search](0012-domain-search.md): the remaining milestones.
+5. [0013 Discover](0013-discover-company-and-people-search.md): the weakest fit with our buyer and the highest cost.
+
+Each data RFC has a Definition Of Done with end-to-end tests, live staging targets, and a Hunter benchmark. The RFC 0015 Legal Review is a release gate for all of them.
