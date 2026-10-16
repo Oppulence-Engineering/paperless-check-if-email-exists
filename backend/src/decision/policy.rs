@@ -2,7 +2,7 @@ use crate::bounce_risk::{BounceRiskAssessment, BounceRiskCategory};
 use crate::decision::types::{
 	DecisionReason, DecisionSeverity, PolicyDecision, PolicyEvaluation, PolicyMode,
 };
-use crate::scoring::{EmailCategory, EmailScore, SubReason};
+use crate::scoring::{catch_all_severity, CatchAllSeverity, EmailCategory, EmailScore, SubReason};
 use chrono::{DateTime, Utc};
 
 pub const POLICY_ENGINE_VERSION: &str = "policy_v1";
@@ -136,6 +136,15 @@ fn evaluate_deliverability(
 			"Deliverability mode blocks high bounce-risk rows from automatic send.",
 		));
 		return PolicyDecision::Review;
+	}
+	// A low-tier catch-all reaches Send through safe_to_send. Say so, so the
+	// decision trail never hides that the mailbox was not proven to exist.
+	if catch_all_severity(&input.score.signals) == Some(CatchAllSeverity::Low) {
+		reasons.push(reason(
+			"catch_all_low_tier_allowed",
+			DecisionSeverity::Info,
+			"Catch-all domain graded low tier, so deliverability mode allows the send.",
+		));
 	}
 	PolicyDecision::Send
 }
@@ -334,6 +343,76 @@ mod tests {
 		let score = base_score();
 		let policy = evaluate_policy(&input(&score, PolicyMode::Deliverability));
 		assert_eq!(policy.decision, PolicyDecision::Send);
+	}
+
+	/// A catch-all score as `compute_score` would build it for the given tier.
+	fn catch_all_score(is_free_provider: bool) -> EmailScore {
+		let mut score = base_score();
+		score.signals.smtp_is_catch_all = true;
+		score.signals.is_free_provider = is_free_provider;
+		score.score = if is_free_provider { 90 } else { 85 };
+		score.sub_reason = SubReason::CatchAll;
+		score.safe_to_send = catch_all_severity(&score.signals) != Some(CatchAllSeverity::High);
+		score
+	}
+
+	#[test]
+	fn catch_all_tier_changes_the_decision_per_policy_mode() {
+		let low = catch_all_score(true);
+		let high = catch_all_score(false);
+
+		// Deliverability is the default mode. The low tier now sends; the high
+		// tier still goes to review.
+		assert_eq!(
+			evaluate_policy(&input(&low, PolicyMode::Deliverability)).decision,
+			PolicyDecision::Send
+		);
+		assert_eq!(
+			evaluate_policy(&input(&high, PolicyMode::Deliverability)).decision,
+			PolicyDecision::Review
+		);
+
+		// Enterprise strict keeps its own catch-all veto, so neither tier sends.
+		for score in [&low, &high] {
+			assert_eq!(
+				evaluate_policy(&input(score, PolicyMode::EnterpriseStrict)).decision,
+				PolicyDecision::Review,
+				"enterprise strict must refuse every catch-all tier"
+			);
+		}
+
+		// Signup protection reviews any catch-all, whatever the tier.
+		for score in [&low, &high] {
+			assert_eq!(
+				evaluate_policy(&input(score, PolicyMode::SignupProtection)).decision,
+				PolicyDecision::Review,
+				"signup protection must review every catch-all tier"
+			);
+		}
+	}
+
+	#[test]
+	fn low_tier_send_is_never_silent() {
+		// A send that only happened because of the tier must say so.
+		let low = catch_all_score(true);
+		let policy = evaluate_policy(&input(&low, PolicyMode::Deliverability));
+		assert_eq!(policy.decision, PolicyDecision::Send);
+		assert!(
+			policy
+				.reasons
+				.iter()
+				.any(|r| r.code == "catch_all_low_tier_allowed"),
+			"expected the low-tier reason, got {:?}",
+			policy.reasons.iter().map(|r| &r.code).collect::<Vec<_>>()
+		);
+
+		// A clean row must not carry that reason.
+		let clean = base_score();
+		let policy = evaluate_policy(&input(&clean, PolicyMode::Deliverability));
+		assert!(policy
+			.reasons
+			.iter()
+			.all(|r| r.code != "catch_all_low_tier_allowed"));
 	}
 
 	#[test]

@@ -1,6 +1,6 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskCategory};
 use crate::decision::types::{DecisionReason, DecisionSeverity};
-use crate::scoring::EmailScore;
+use crate::scoring::{catch_all_severity, CatchAllSeverity, EmailScore};
 use serde_json::json;
 
 pub struct ExplanationInput<'a> {
@@ -15,18 +15,26 @@ pub fn collect_explanations(input: &ExplanationInput<'_>) -> Vec<DecisionReason>
 	let mut reasons = Vec::new();
 	let signals = &input.score.signals;
 
-	if signals.smtp_is_catch_all {
+	// The tier comes from `scoring::catch_all_severity`, the same function that
+	// drives the score penalty and safe_to_send. Keep the code names keyed on
+	// the domain type, which is what they describe, and carry the tier as
+	// evidence.
+	if let Some(tier) = catch_all_severity(signals) {
 		reasons.push(reason(
 			if signals.is_free_provider {
 				"catch_all_domain"
 			} else {
 				"catch_all_corporate_domain"
 			},
-			DecisionSeverity::Warning,
+			match tier {
+				CatchAllSeverity::Low => DecisionSeverity::Info,
+				CatchAllSeverity::High => DecisionSeverity::Warning,
+			},
 			"Domain accepts catch-all mail and may produce false positives.",
 			json!({
 				"is_catch_all": true,
 				"is_free_provider": signals.is_free_provider,
+				"severity_tier": tier.as_str(),
 			}),
 		));
 	}
@@ -187,6 +195,35 @@ mod tests {
 		let reasons = collect_explanations(&input(&score));
 		assert!(code_exists(&reasons, "catch_all_corporate_domain"));
 		assert_eq!(reasons[0].evidence["is_catch_all"], true);
+		assert_eq!(reasons[0].evidence["severity_tier"], "high");
+		assert_eq!(reasons[0].severity, DecisionSeverity::Warning);
+	}
+
+	#[test]
+	fn catch_all_explanation_severity_follows_the_tier() {
+		// A low-tier catch-all passes safe_to_send, so warning-level noise
+		// about it would contradict the decision. It stays informational.
+		let mut score = base_score();
+		score.signals.smtp_is_catch_all = true;
+		score.signals.is_free_provider = true;
+		let reasons = collect_explanations(&input(&score));
+		assert!(code_exists(&reasons, "catch_all_domain"));
+		assert_eq!(reasons[0].evidence["severity_tier"], "low");
+		assert_eq!(reasons[0].severity, DecisionSeverity::Info);
+
+		// One more bad signal and the same domain explains as a warning.
+		score.signals.is_role_account = true;
+		let reasons = collect_explanations(&input(&score));
+		assert_eq!(reasons[0].evidence["severity_tier"], "high");
+		assert_eq!(reasons[0].severity, DecisionSeverity::Warning);
+	}
+
+	#[test]
+	fn no_catch_all_explanation_without_the_signal() {
+		let score = base_score();
+		let reasons = collect_explanations(&input(&score));
+		assert!(!code_exists(&reasons, "catch_all_domain"));
+		assert!(!code_exists(&reasons, "catch_all_corporate_domain"));
 	}
 
 	#[test]

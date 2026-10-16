@@ -1145,7 +1145,7 @@
 						"type": "integer"
 					},
 					"catch_all_severity": {
-						"description": "Severity tier for catch-all domains (low=free provider, high=corporate)",
+						"description": "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
 						"enum": ["low", "high"],
 						"type": "string"
 					},
