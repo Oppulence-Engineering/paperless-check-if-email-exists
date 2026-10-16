@@ -78,9 +78,9 @@ Done on 2026-10-16:
 
 Still open:
 
-1. **Production auth secrets (G18).** Production has no `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM`, or `SCIM_CREDENTIAL_HASH_SECRET`. Only staging has them. Without them nobody can sign in on production.
-2. **Stripe secret keys.** Set `STRIPE_SECRET_KEY` (live) and `STRIPE_SECRET_KEY_STAGING` (test) with `gh secret set <NAME>`, and paste the key when asked.
-3. **Stripe webhooks.** Add an endpoint at `<BETTER_AUTH_URL>/api/auth/stripe/webhook` in live mode and one at `<BETTER_AUTH_URL_STAGING>/api/auth/stripe/webhook` in test mode, with the events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Put each signing secret in `STRIPE_WEBHOOK_SECRET` and `STRIPE_WEBHOOK_SECRET_STAGING`.
+1. **Production sign-in (G18).** Fixed in the deploy on 2026-10-16: the production web app has an ingress at `verifier.playbookmedia.io` with a cert-manager certificate, `BETTER_AUTH_URL` is set, and production uses the staging auth secret, SCIM hash secret, and Resend settings. Deploys had failed since 2026-10-16 because Helm rejected `--force-conflicts` without `--server-side=true`. The owner must add the DNS record in Cloudflare (`playbookmedia.io`): CNAME `verifier` → `oppulence.app`, proxied, as the other apps use.
+2. **Stripe secret keys.** Set `STRIPE_SECRET_KEY` (live) and `STRIPE_SECRET_KEY_STAGING` (test) with `gh secret set <NAME>`, and paste the key when asked. Until then, billing stays off and the plan card says so.
+3. **Stripe webhooks.** Add an endpoint at `https://verifier.playbookmedia.io/api/auth/stripe/webhook` in live mode and one at `<BETTER_AUTH_URL_STAGING>/api/auth/stripe/webhook` in test mode, with the events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Put each signing secret in `STRIPE_WEBHOOK_SECRET` and `STRIPE_WEBHOOK_SECRET_STAGING`.
 4. **Auth migration.** Apply `config/auth/migrations/0007_stripe_billing.sql`.
 5. **Enterprise.** Add a row to `auth.subscription` with plan `enterprise` and status `active` after a contract.
 
