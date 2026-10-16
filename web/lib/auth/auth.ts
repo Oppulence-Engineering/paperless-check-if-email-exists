@@ -724,7 +724,9 @@ export const auth = betterAuth({
 			storeOTP: "hashed",
 			expiresIn: 10 * 60,
 			allowedAttempts: 5,
-			generateOTP: localE2EOtp ? () => localE2EOtp : undefined,
+			// The plugin spreads these options over its defaults, so an undefined
+			// generateOTP would replace the default generator and break every code.
+			...(localE2EOtp ? { generateOTP: () => localE2EOtp } : {}),
 			sendVerificationOTP: async ({ email, otp, type }) => {
 				if (localE2EOtp) return;
 				const stepUp = type === "email-verification";
