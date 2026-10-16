@@ -60,7 +60,7 @@ Goal for this week: everything we market is available to a customer as soon as t
 | --- | --- | --- | --- |
 | G19 | Sign-in codes failed in production | Outside e2e mode the email OTP plugin got `generateOTP: undefined`, which replaced its default generator, so every code request returned 500. | Done. `generateOTP` is passed only in e2e mode, with a guard test. On production, a code request returns 200 and the form moves to the code step. |
 | G20 | Canonical and sitemap URLs pointed at localhost | The image was built without `NEXT_PUBLIC_SITE_URL`, so canonical links, Open Graph URLs, and the sitemap used `http://localhost:3000`. | Done. The image builds with `https://verifier.playbookmedia.io`. All 40 sitemap pages return 200. |
-| G21 | Sign-in emails not delivered in production | A code request returns 200 and shows the code step, but no email arrives. Better Auth sends the email in the background and only logs a failure. The log now names the cause: Resend answers `validation_error: API key is invalid`. Production uses the staging key through the deploy fallback. The stored key has the correct form (`re_` prefix, no spaces or quotes), so Resend has revoked or deleted it. | Open: the owner must set a valid Resend key (see below). The log change is done and deployed. |
+| G21 | Sign-in emails not delivered in production | A code request returns 200 and shows the code step, but no email arrives. Better Auth sends the email in the background and only logs a failure. The log now names the cause: Resend answers `validation_error: API key is invalid`. The GitHub key was revoked. Production and staging now read the key from Infisical (`/frontend/apps/sim`, synced into `paperless-sim-app-secrets`), but Resend also rejects that key. The lead scraper uses the same key. | Open: the owner puts a valid Resend key in Infisical (see below). The log change and the Infisical wiring are done and deployed. |
 
 ## Product features the site did not market
 
@@ -92,7 +92,7 @@ Also done on 2026-10-16:
 
 Still open, and blocks sign-in:
 
-1. **Resend key (G21).** Create a Resend API key with sending access in the Resend account that owns the sender domain. Run `gh secret set RESEND_API_KEY -R Oppulence-Engineering/paperless-check-if-email-exists` and paste the key. Production now sends from `team@outboundconsole.com`; to use a Verifier address, also set `RESEND_FROM` to a sender on a verified domain. Then deploy and request a code.
+1. **Resend key (G21).** In Infisical, set `RESEND_API_KEY` at `/frontend/apps/sim` (prod) to a valid Resend key with sending access. Its Resend account must have `outboundconsole.com` verified, because production sends from `team@outboundconsole.com`. The operator syncs the key within a minute. Then restart the `check-if-email-exists` deployment in the three clusters and request a code.
 
 Still open, and not a marketing gap:
 
