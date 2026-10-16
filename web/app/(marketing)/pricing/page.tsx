@@ -5,7 +5,8 @@ import { marketingMetadata } from "../metadata";
 
 export const metadata = marketingMetadata({
 	title: "Pricing",
-	description: "Ways to run the email verification web workspace, bulk jobs, and self-hosted API.",
+	description:
+		"Start free. Starter is $49 a month and Professional is $149 a month. Every plan includes scores, suppressions, and delivery feedback.",
 	path: "/pricing",
 });
 

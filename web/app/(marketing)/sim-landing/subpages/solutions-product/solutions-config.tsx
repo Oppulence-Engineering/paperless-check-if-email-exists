@@ -102,7 +102,7 @@ export function capabilityToSolutionsConfig(page: CapabilityPage): SolutionsProd
 	};
 }
 
-/** Map `/web` and `/self-hosting` to Sim product module pages. */
+/** Map `/web` to the Sim product module page. */
 export function platformToSolutionsConfig(page: PlatformPage): SolutionsProductPageConfig {
 	const heroProduct: ProductPreviewKey = "web";
 	const [first, second, third] = page.sections;

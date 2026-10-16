@@ -27,7 +27,7 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Processing and retention",
 		body: [
-			"Our servers run the checks and the background jobs. You choose how many days results are kept. If you self-host, you control these services and their retention.",
+			"Our servers run the checks and the background jobs. You choose how many days results are kept.",
 		],
 	},
 	{

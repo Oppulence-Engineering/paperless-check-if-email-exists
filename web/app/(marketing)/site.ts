@@ -152,7 +152,6 @@ export const footerGroups: { title: string; items: NavLink[] }[] = [
 			{ label: "Guides", href: "/guides" },
 			{ label: "Blog", href: "/blog" },
 			{ label: "Security", href: "/security" },
-			{ label: "Self-hosting", href: "/self-hosting" },
 		],
 	},
 	{

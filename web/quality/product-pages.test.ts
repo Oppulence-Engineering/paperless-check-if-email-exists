@@ -4,8 +4,8 @@ import { getPlatformPage, platformPages } from "@/app/(marketing)/marketing-data
 import { footerGroups } from "@/app/(marketing)/site";
 
 describe("product surfaces", () => {
-	it("publishes the web workspace and the self-hosting page", () => {
-		expect(platformPages.map((page) => page.slug)).toEqual(["web", "self-hosting"]);
+	it("publishes the web workspace page", () => {
+		expect(platformPages.map((page) => page.slug)).toEqual(["web"]);
 	});
 
 	it("keeps installer links off the product surfaces", () => {

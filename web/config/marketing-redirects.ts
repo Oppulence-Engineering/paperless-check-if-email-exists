@@ -7,8 +7,8 @@ export type MarketingRedirect = { source: string; destination: string; permanent
 
 const moved: Record<string, string> = {
 	// Platform pages.
-	"/desktop": "/self-hosting",
-	"/download": "/self-hosting",
+	"/desktop": "/product",
+	"/download": "/product",
 	"/voice-app": "/features/list-cleaning",
 	"/products": "/product",
 
@@ -19,7 +19,7 @@ const moved: Record<string, string> = {
 	"/features/governed-actions": "/features/api",
 	"/features/meeting-capture": "/features/single-checks",
 	"/features/live-notes": "/features/risk-scoring",
-	"/features/local-vault": "/self-hosting",
+	"/features/local-vault": "/security",
 	"/features/agents": "/features/reverification",
 
 	// Use cases.
@@ -37,9 +37,9 @@ const moved: Record<string, string> = {
 
 	// Guides.
 	"/guides/desktop-vs-web": "/guides/reading-results",
-	"/guides/what-stays-on-device": "/self-hosting",
+	"/guides/what-stays-on-device": "/security",
 	"/guides/approval-before-send": "/guides/reading-results",
-	"/guides/install-oppulence": "/self-hosting",
+	"/guides/install-oppulence": "/product",
 
 	// Removed sections.
 	"/answers": "/guides",

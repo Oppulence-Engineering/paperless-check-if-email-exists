@@ -11,8 +11,7 @@ import { SimSubpageFaqSection } from "./sim-subpage-faq";
 const faqs = [
 	{
 		question: "Where is my data stored?",
-		answer:
-			"In our hosted service, with access limited to your organization. If your data must stay on your own servers, you can self-host.",
+		answer: "In our hosted service. Access is limited to your organization.",
 	},
 	{
 		question: "Does the browser receive server credentials?",
@@ -60,9 +59,9 @@ const trustLinks = [
 		body: "Report a vulnerability through the security channel.",
 	},
 	{
-		title: "Self-hosting",
-		href: "/self-hosting",
-		body: "Run it on your own servers.",
+		title: "Delivery feedback",
+		href: "/features/delivery-feedback",
+		body: "How delivery events reach your workspace.",
 	},
 ] as const;
 

@@ -1456,8 +1456,6 @@ export type PlatformPage = {
 	cta?: { label: string; href: string };
 };
 
-const SOURCE_URL = "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists";
-
 export const platformPages: PlatformPage[] = [
 	{
 		slug: "web",
@@ -1497,45 +1495,6 @@ export const platformPages: PlatformPage[] = [
 			{ term: "API", detail: "REST API with Go and TypeScript SDKs on Professional plans." },
 		],
 		cta: { label: "Start free", href: "/sign-up" },
-	},
-	{
-		slug: "self-hosting",
-		name: "Self-hosting",
-		eyebrow: "Self-hosting",
-		title: "Run it on your own infrastructure",
-		lede: "The source code is public. Run the web workspace and the verification service where your data must stay.",
-		summary: "Self-host the web workspace, the API, and the verification worker.",
-		screenshot: "/marketing/email-check-preview.svg",
-		screenshotAlt: "Sample email check result",
-		download: false,
-		sections: [
-			{
-				title: "What you run",
-				body: "One container image runs the web workspace, the REST API, and the verification worker. It connects to your own PostgreSQL database and RabbitMQ queue.",
-				bullets: ["One container image", "PostgreSQL", "RabbitMQ"],
-				screenshot: "/marketing/email-check-preview.svg",
-				alt: "Sample email check result",
-			},
-			{
-				title: "Your data stays with you",
-				body: "Accounts, lists, results, and history are stored in your database, on servers you control.",
-				bullets: ["Your database", "Your network", "Your backups"],
-				screenshot: "/marketing/email-check-preview.svg",
-				alt: "Sample list results",
-			},
-			{
-				title: "Open source",
-				body: "The source code is available under the AGPL-3.0 license. Read the license in the repository before you use it in a commercial product.",
-				bullets: ["Public repository", "AGPL-3.0", "Setup guide in the README"],
-				screenshot: "/marketing/email-check-preview.svg",
-				alt: "Sample email check result",
-			},
-		],
-		specs: [
-			{ term: "Source", detail: SOURCE_URL },
-			{ term: "License", detail: "AGPL-3.0. See the license files in the repository." },
-		],
-		cta: { label: "View the source", href: SOURCE_URL },
 	},
 ];
 

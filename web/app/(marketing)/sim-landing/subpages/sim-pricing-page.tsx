@@ -34,8 +34,8 @@ const faqs = [
 		answer: "Professional and Enterprise.",
 	},
 	{
-		question: "Can I run it on my own servers?",
-		answer: "Yes. The source code is public. See the self-hosting page for what you need.",
+		question: "Do you offer volume pricing?",
+		answer: "Yes. Contact us about the Enterprise plan.",
 	},
 ] as const;
 

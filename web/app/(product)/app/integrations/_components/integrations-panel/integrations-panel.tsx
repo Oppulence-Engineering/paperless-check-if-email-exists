@@ -100,8 +100,7 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 				<CardContent className="space-y-3">
 					<p>
 						The legacy onboarding check creates a tenant and API key without authentication. The
-						hosted app blocks this endpoint; use the app sign-up flow for new workspaces. For a
-						self-hosted migration, keep the endpoint private and apply signup abuse controls.
+						hosted app blocks this endpoint; use the app sign-up flow for new workspaces.
 					</p>
 					<ol className="list-decimal space-y-1 pl-5">
 						<li>Create the workspace through the hosted sign-up flow.</li>
@@ -152,10 +151,7 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 					<CardTitle>Legacy v0 migration</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
-					<p>
-						The hosted shared app uses workspace-scoped v1 keys. Legacy v0 routes and their global
-						secret belong to self-hosted installations.
-					</p>
+					<p>The hosted app uses workspace-scoped v1 keys. Legacy v0 routes are not available.</p>
 					<ol className="list-decimal space-y-1 pl-5">
 						<li>Inventory each v0 check and bulk caller in the old installation.</li>
 						<li>

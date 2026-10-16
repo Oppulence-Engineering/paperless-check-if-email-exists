@@ -18,9 +18,9 @@ const channels = [
 		href: "/guides",
 	},
 	{
-		title: "Self-hosting",
-		body: "Run the product on your own servers. Setup steps are in the source repository.",
-		href: "/self-hosting",
+		title: "Integrations",
+		body: "Connect your email platform. Each integration page has the setup steps.",
+		href: "/integrations",
 	},
 	{
 		title: "Security reports",
@@ -96,8 +96,8 @@ export function SimContactPage() {
 					Find the right place to ask.
 				</h1>
 				<p className="max-w-[46ch] text-pretty text-[var(--text-body)] text-lg leading-[1.5] max-sm:text-base">
-					Start with the guides or source code. For product questions, email the team. Use the
-					security channel for vulnerability reports.
+					Start with the guides. For product questions, email the team. Use the security channel for
+					vulnerability reports.
 				</p>
 			</div>
 

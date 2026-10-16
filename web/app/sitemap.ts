@@ -13,7 +13,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 		"/",
 		"/product",
 		"/web",
-		"/self-hosting",
 		"/features",
 		"/use-cases",
 		"/integrations",
