@@ -10,6 +10,7 @@ import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { AuthLedgerPreview } from "@/components/auth/auth-ledger-preview";
 import { authClient } from "@/lib/auth/auth-client";
+import { safeReturnTo } from "@/lib/auth/return-to";
 
 /** Multi-color Google "G". Explicit fills, so button color rules don't tint it. */
 function GoogleLogo() {
@@ -38,6 +39,16 @@ function GoogleLogo() {
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
 	sign_in_unavailable: "Sign-in is temporarily unavailable. Please try again.",
 };
+
+/**
+ * The return path from the address bar, read when the form is used. The page's
+ * loading fallback renders before the search params arrive, so a form submitted
+ * then would otherwise lose the path.
+ */
+function destination(fallback: string): string {
+	const raw = new URLSearchParams(window.location.search).get("return_to");
+	return raw ? safeReturnTo(raw) : fallback;
+}
 
 export function AuthShell({
 	mode,
@@ -79,7 +90,7 @@ export function AuthShell({
 		setClientError(undefined);
 		const result = await authClient.signIn.social({
 			provider,
-			callbackURL: returnTo,
+			callbackURL: destination(returnTo),
 		});
 		if (result.error) {
 			setClientError(result.error.message || "Sign-in is temporarily unavailable.");
@@ -102,7 +113,7 @@ export function AuthShell({
 			setPending(false);
 			return;
 		}
-		if (otpSent) window.location.assign(returnTo);
+		if (otpSent) window.location.assign(destination(returnTo));
 		else {
 			setOtpSent(true);
 			setPending(false);
@@ -118,7 +129,7 @@ export function AuthShell({
 			setPending(false);
 			return;
 		}
-		window.location.assign(returnTo);
+		window.location.assign(destination(returnTo));
 	}
 
 	async function signInWithSso() {
@@ -130,7 +141,7 @@ export function AuthShell({
 		setClientError(undefined);
 		const result = await authClient.signIn.sso({
 			email,
-			callbackURL: returnTo,
+			callbackURL: destination(returnTo),
 		});
 		if (result.error) {
 			setClientError(result.error.message || "SSO sign-in failed.");

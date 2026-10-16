@@ -21,7 +21,7 @@ Goal for this week: everything we market is available to a customer as soon as t
 
 | ID | Gap | What we market | What the product did before the fix | Status | Fix |
 | --- | --- | --- | --- | --- | --- |
-| G1 | No payment | Paid plans Starter ($49), Professional ($149), Enterprise | No checkout, no subscription, no billing portal. Paid-plan buttons open sign-up only. `/billing/success` and `/billing/cancel` are placeholders. | Done (needs Stripe keys) | Stripe through `@better-auth/stripe`. Checkout, signed webhook, billing portal, and a Plan card in Settings → Usage. Billing stays off until the Stripe keys are set. The Starter and Professional buttons on the pricing page sign up, then open the plan card with that plan chosen. |
+| G1 | No payment | Paid plans Starter ($49), Professional ($149), Enterprise | No checkout, no subscription, no billing portal. Paid-plan buttons open sign-up only. `/billing/success` and `/billing/cancel` are placeholders. | Done | Stripe through `@better-auth/stripe`. Checkout, signed webhook, billing portal, and a Plan card in Settings → Usage. Billing stays off until the Stripe keys are set. The Starter and Professional buttons on the pricing page sign up, then open the plan card with that plan chosen. Tested end to end in Stripe test mode on 2026-10-16: checkout, webhook, plan and allowance in the app and the backend, billing portal, and cancel back to Free. |
 | G2 | Check allowance not set | Free 100, Starter 4,000, Professional 12,000 checks each month | A new workspace is created with `plan_tier = free` and `monthly_email_limit = NULL`, which the backend treats as unlimited (`backend/src/tenant/jwt.rs`, `backend/src/tenant/quota.rs`). | Done | The backend JWT carries the plan. The backend sets the plan and allowance on each request. An Enterprise limit set by hand is kept. |
 | G3 | Plan names disagree | Professional | The web app uses `pro`; the backend uses `professional`. A Professional workspace reads as Free in the web app (`web/lib/entitlements`). The session never carries the plan, so every workspace reads as Free. | Done | One name, `professional`. The session reads the plan from the Stripe subscription. |
 | G4 | Seat limit not enforced | Free 3, Starter 10, Professional 50 seats, Enterprise unlimited | The invite screen checks seats, but with the wrong plan (G3). The server has no member limit. | Done | Better Auth `membershipLimit` uses the plan's seat limit. |
@@ -69,7 +69,7 @@ Every check path counts against the plan allowance: single checks, lists, bulk j
 
 ## What the owner must do
 
-1. Create two monthly prices in Stripe (test mode first): Starter $49 and Professional $149.
+1. Create the two monthly prices in Stripe live mode: Starter $49 and Professional $149. Test mode already has them (lookup keys `verifier_starter_monthly` and `verifier_professional_monthly`).
 2. Set these values in the web environment and in the deploy secrets:
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET`
@@ -78,6 +78,8 @@ Every check path counts against the plan allowance: single checks, lists, bulk j
 3. Add a Stripe webhook to `<BETTER_AUTH_URL>/api/auth/stripe/webhook`. For a local test, run `stripe listen --forward-to localhost:3000/api/auth/stripe/webhook`.
 4. Apply the auth migration `config/auth/migrations/0007_stripe_billing.sql`.
 5. For Enterprise, add a row to `auth.subscription` with plan `enterprise` and status `active`.
+6. Save a customer portal configuration in Stripe live mode (Settings > Billing > Customer portal). Test mode works today.
+7. For G12: add a trusted publisher for `@oppulence/reacher-sdk` on npmjs.com (repository `Oppulence-Engineering/paperless-check-if-email-exists`, workflow `sdk-generate.yml`), or replace the `NPM_TOKEN` secret. The next release then publishes the SDK.
 
 ## Plan for this week
 
