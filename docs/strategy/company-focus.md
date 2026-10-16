@@ -29,7 +29,6 @@ Our buyer is a team that **already has the addresses** and **sends email to them
 2. **We grade catch-all domains.** Other tools mark catch-all as "risky" and stop. We give a severity tier now, and we will give a measured bounce rate.
 3. **We keep lists clean over time.** Suppressions, scheduled reverification, pipelines, and list quality scores work after the first check.
 4. **We give one decision for each address.** The score, the reason codes, and the policy modes (strict, balanced, aggressive) give a clear "safe to send" result.
-5. **Customers can self-host.** Teams with strict data rules keep all data in their own database.
 
 ## How we differ from Hunter.io
 
@@ -39,7 +38,6 @@ Our buyer is a team that **already has the addresses** and **sends email to them
 | Email check | Add-on, 0.5 credit | Core product |
 | Catch-all | Confidence score based on web sources | Severity tier now, measured bounce rate next |
 | Delivery feedback | Only from its own sending tool | From the customer's ESP |
-| Data location | Hunter cloud only | Our cloud or self-hosted |
 
 ## Priorities: next two quarters
 

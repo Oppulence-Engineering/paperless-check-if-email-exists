@@ -53,7 +53,6 @@ Single lookups stay available on the finder page and in the API.
 | Explanation | Source list | Sources, method, factors, and alternatives |
 | List workflow | Bulk finder from a CSV | List repair inside the remediation plan, with before and after values and export |
 | SMTP load | Not disclosed | At most 3 checks for each lookup, and 1.5 or fewer on average |
-| Deployment | Hunter cloud only | Our cloud or self-hosted |
 
 ## Goals
 
