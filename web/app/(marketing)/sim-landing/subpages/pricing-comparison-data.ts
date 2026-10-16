@@ -1,9 +1,11 @@
-/** Cell values for the three access paths — mirrors sim.ai comparison transpose. */
+/** Cell values for the four plans — mirrors sim.ai comparison transpose. */
 export type PricingCellValue = boolean | string;
+
+export type PricingColumn = 0 | 1 | 2 | 3;
 
 export type PricingComparisonRow = {
 	label: string;
-	values: [PricingCellValue, PricingCellValue, PricingCellValue];
+	values: [PricingCellValue, PricingCellValue, PricingCellValue, PricingCellValue];
 };
 
 export type PricingComparisonSection = {
@@ -12,37 +14,46 @@ export type PricingComparisonSection = {
 	rows: PricingComparisonRow[];
 };
 
-/** Web · Bulk · Self-hosted API — one shared row order, transposed per card. */
+/** Free · Starter · Professional · Enterprise — one shared row order, transposed per card. */
 export const PRICING_COMPARISON_SECTIONS: PricingComparisonSection[] = [
 	{
+		key: "usage",
+		title: "Usage",
+		rows: [
+			{ label: "Checks each month", values: ["100", "4,000", "12,000", "Custom"] },
+			{ label: "Team seats", values: ["3", "10", "50", "Unlimited"] },
+		],
+	},
+	{
 		key: "checks",
-		title: "Verification",
+		title: "Checking",
 		rows: [
-			{ label: "Syntax, DNS, and MX signals", values: [true, true, true] },
-			{ label: "Mailbox result details", values: [true, true, true] },
+			{ label: "Single checks and CSV lists", values: [true, true, true, true] },
+			{ label: "Scores and reason codes", values: [true, true, true, true] },
+			{ label: "Catch-all grading", values: [true, true, true, true] },
 		],
 	},
 	{
-		key: "workflow",
-		title: "Workflow",
+		key: "hygiene",
+		title: "Keeping lists clean",
 		rows: [
-			{ label: "Single checks", values: [true, true, true] },
-			{ label: "CSV list jobs", values: [false, true, true] },
-			{ label: "History", values: [true, true, true] },
+			{ label: "Suppression list", values: [true, true, true, true] },
+			{ label: "Delivery feedback", values: [true, true, true, true] },
+			{ label: "Scheduled re-checks", values: [true, true, true, true] },
 		],
 	},
 	{
-		key: "deployment",
-		title: "Deployment",
+		key: "team",
+		title: "API and team",
 		rows: [
-			{ label: "Rust API", values: [false, false, true] },
-			{ label: "Own PostgreSQL and RabbitMQ", values: [false, false, true] },
+			{ label: "REST API and SDKs", values: [false, false, true, true] },
+			{ label: "SCIM provisioning", values: [false, false, false, true] },
 		],
 	},
 ];
 
 /** Transpose shared comparison sections into one plan column for {@link SimPricingCard}. */
-export function pricingSectionsForColumn(columnIndex: 0 | 1 | 2) {
+export function pricingSectionsForColumn(columnIndex: PricingColumn) {
 	return PRICING_COMPARISON_SECTIONS.map((section) => ({
 		key: section.key,
 		title: section.title,

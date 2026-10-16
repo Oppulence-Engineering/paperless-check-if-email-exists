@@ -46,10 +46,13 @@ describe("editorial content collections", () => {
 	});
 
 	it("keeps the published pricing names and amounts", () => {
-		expect(pricingPlans.map((plan) => `${plan.name}:${plan.price}`)).toEqual([
-			"Web workspace:Source available",
-			"Bulk lists:Source available",
-			"Self-hosted API:Your infrastructure",
+		expect(pricingPlans.map((plan) => `${plan.name}:${plan.price}${plan.period}`)).toEqual([
+			"Free:$0/month",
+			"Starter:$49/month",
+			"Professional:$149/month",
+			"Enterprise:Custom",
 		]);
+		// No self-serve checkout exists yet, so paid plans must not promise one.
+		for (const plan of pricingPlans.slice(1)) expect(plan.ctaHref).toBe("/contact");
 	});
 });

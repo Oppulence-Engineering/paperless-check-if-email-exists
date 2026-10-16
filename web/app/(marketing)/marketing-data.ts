@@ -1381,34 +1381,48 @@ export const productPage: MarketingPage = {
 	ctaHref: "/sign-up",
 };
 
+/**
+ * Public plans (set 2026-10-16). Paid plans link to Contact until self-serve
+ * billing exists. Check allowances are per month; seats follow the plan
+ * entitlements in lib/entitlements.
+ */
 export const pricingPlans = [
 	{
-		name: "Web workspace",
-		price: "Source available",
-		period: "",
-		description: "Run individual checks and review history in a browser.",
-		features: ["Single checks", "History", "Organizations"],
-		ctaLabel: "Open workspace",
+		name: "Free",
+		price: "$0",
+		period: "/month",
+		note: "100 checks a month",
+		description: "Try checks and clean a small list.",
+		ctaLabel: "Start free",
 		ctaHref: "/sign-up",
 	},
 	{
-		name: "Bulk lists",
-		price: "Source available",
-		period: "",
-		description: "Upload CSV lists and monitor verification jobs.",
-		features: ["CSV import", "Job results", "List history"],
+		name: "Starter",
+		price: "$49",
+		period: "/month",
+		note: "4,000 checks a month",
+		description: "For teams that clean lists before each campaign.",
 		recommended: true,
-		ctaLabel: "Start checking",
-		ctaHref: "/sign-up",
+		ctaLabel: "Choose Starter",
+		ctaHref: "/contact",
 	},
 	{
-		name: "Self-hosted API",
-		price: "Your infrastructure",
+		name: "Professional",
+		price: "$149",
+		period: "/month",
+		note: "12,000 checks a month",
+		description: "For teams that check at signup and send at volume.",
+		ctaLabel: "Choose Professional",
+		ctaHref: "/contact",
+	},
+	{
+		name: "Enterprise",
+		price: "Custom",
 		period: "",
-		description: "Run the Rust API, worker, and web app in your environment.",
-		features: ["Rust API", "Generated SDKs", "Combined container"],
-		ctaLabel: "Run locally",
-		ctaHref: "/download",
+		note: "Volume pricing",
+		description: "For high volume, account provisioning, and custom terms.",
+		ctaLabel: "Contact us",
+		ctaHref: "/contact",
 	},
 ];
 
