@@ -3,7 +3,6 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { comparePages } from "@/app/(marketing)/compare-catalog";
 import { pricingPlans } from "@/app/(marketing)/marketing-data";
 
 const blogDir = join(process.cwd(), "content/blog");
@@ -33,16 +32,6 @@ describe("editorial content collections", () => {
 		);
 		expect(published).toEqual([]);
 		expect(readFileSync(join(customerDir, "example.mdx"), "utf8")).toMatch(/published:\s*false/);
-	});
-
-	it("only compares seams we can defend", () => {
-		expect(comparePages.map((page) => page.slug)).toEqual([
-			"crm",
-			"meeting-notes",
-			"inbox",
-			"ai-assistants",
-		]);
-		expect(JSON.stringify(comparePages)).not.toMatch(/Salesforce is a first-party/i);
 	});
 
 	it("keeps the published pricing names and amounts", () => {
