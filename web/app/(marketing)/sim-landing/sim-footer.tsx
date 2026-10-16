@@ -53,11 +53,7 @@ export function SimFooter() {
 					itemType="https://schema.org/SiteNavigationElement"
 				>
 					<div className="flex flex-col items-start gap-5 max-lg:col-span-full max-lg:mb-2">
-						<Link
-							aria-label="Check If Email Exists home"
-							className="flex h-[18px] items-center"
-							href="/"
-						>
+						<Link aria-label="Verifier home" className="flex h-[18px] items-center" href="/">
 							<InlineLogo header />
 						</Link>
 						<SimThemeToggle />
@@ -71,7 +67,7 @@ export function SimFooter() {
 				<SimFooterWordmark />
 
 				<p className="mt-16 text-sm text-[var(--text-secondary)]">
-					© 2026 Oppulence Engineering · Check If Email Exists
+					© 2026 Oppulence Engineering · Verifier
 				</p>
 			</div>
 		</footer>

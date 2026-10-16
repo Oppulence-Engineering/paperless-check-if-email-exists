@@ -3148,6 +3148,14 @@
 			},
 			"TenantSettingsResponse": {
 				"properties": {
+					"approval_excellent_threshold": {
+						"format": "double",
+						"type": "number"
+					},
+					"approval_good_threshold": {
+						"format": "double",
+						"type": "number"
+					},
 					"default_policy_mode": {
 						"type": "string"
 					},
@@ -3189,7 +3197,9 @@
 					"used_this_period",
 					"period_reset_at",
 					"result_retention_days",
-					"default_policy_mode"
+					"default_policy_mode",
+					"approval_excellent_threshold",
+					"approval_good_threshold"
 				],
 				"type": "object"
 			},
@@ -3407,6 +3417,26 @@
 				},
 				"type": "object"
 			},
+			"UpdateReverificationRequest": {
+				"description": "Turns scheduled re-checks on or off for the workspace and sets how old a\nresult may get before it is checked again.",
+				"properties": {
+					"batch_size": {
+						"description": "Addresses re-checked in each run (1 to 1,000).",
+						"format": "int32",
+						"type": "integer"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"staleness_days": {
+						"description": "Re-check results older than this many days (1 to 365).",
+						"format": "int32",
+						"type": "integer"
+					}
+				},
+				"required": ["enabled", "staleness_days"],
+				"type": "object"
+			},
 			"UpdateTenantDomainRequest": {
 				"properties": {
 					"domain": {
@@ -3430,6 +3460,18 @@
 			},
 			"UpdateTenantSettingsRequest": {
 				"properties": {
+					"approval_excellent_threshold": {
+						"description": "Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.",
+						"format": "double",
+						"nullable": true,
+						"type": "number"
+					},
+					"approval_good_threshold": {
+						"description": "Safe-to-send percentage for a good list. Must be below the excellent threshold.",
+						"format": "double",
+						"nullable": true,
+						"type": "number"
+					},
 					"default_policy_mode": {
 						"nullable": true,
 						"type": "string"
@@ -8363,6 +8405,48 @@
 					}
 				},
 				"summary": "POST /v1/reputation/check",
+				"tags": ["v1"]
+			}
+		},
+		"/v1/reverification": {
+			"put": {
+				"operationId": "v1_update_reverification",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateReverificationRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ReverificationStatusResponse"
+								}
+							}
+						},
+						"description": "Reverification schedule status"
+					},
+					"400": {
+						"description": "Invalid schedule"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
+				"summary": "PUT /v1/reverification",
 				"tags": ["v1"]
 			}
 		},

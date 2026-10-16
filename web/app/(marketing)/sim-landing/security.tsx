@@ -48,8 +48,8 @@ export function SimSecurity() {
 					</h2>
 					<div className="flex w-[min(28rem,40%)] flex-col items-start max-xl:w-full">
 						<p className={cn("max-w-[34ch] text-pretty text-[var(--text-body)]", HOME_TYPE.lead)}>
-							Use organization access controls and, when needed, run the open-source stack on
-							infrastructure you control.
+							Lists, results, and API keys stay inside your organization. You choose how long
+							results are kept.
 						</p>
 						<SimCtaLink className="mt-5" href="/security" variant="outline">
 							Security overview

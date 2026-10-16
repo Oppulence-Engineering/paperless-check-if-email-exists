@@ -565,7 +565,7 @@ export function FooterWordmarkLoop({ className }: { className?: string }) {
 							x="50"
 							y="50.5"
 						>
-							Check Email
+							Verifier
 						</text>
 					</g>
 				</g>

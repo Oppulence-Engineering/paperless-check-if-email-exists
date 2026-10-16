@@ -10,10 +10,10 @@ import type { ProductPreviewKey } from "./product-previews";
 import { ProductStagePreview } from "./product-stage-preview";
 
 const PRODUCTS = [
-	{ id: "register" as const, label: "Single check", href: "/features/commitment-register" },
-	{ id: "web" as const, label: "Web", href: "/web" },
-	{ id: "desktop" as const, label: "Self-host", href: "/desktop" },
-	{ id: "voice" as const, label: "Bulk lists", href: "/voice-app" },
+	{ id: "register" as const, label: "Single checks", href: "/features/single-checks" },
+	{ id: "voice" as const, label: "List cleaning", href: "/features/list-cleaning" },
+	{ id: "web" as const, label: "Web workspace", href: "/web" },
+	{ id: "govern" as const, label: "API", href: "/features/api" },
 ] as const;
 
 type ExplorerProductId = (typeof PRODUCTS)[number]["id"];

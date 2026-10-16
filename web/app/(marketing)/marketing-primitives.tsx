@@ -156,7 +156,7 @@ export function MarketingCta({
 	title,
 	body,
 	primary = { href: "/sign-up", label: "Start for free" },
-	secondary = { href: "/download", label: "Download desktop" },
+	secondary = { href: "/pricing", label: "See pricing" },
 }: {
 	title: string;
 	body?: string;

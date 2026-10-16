@@ -4,28 +4,28 @@ import { EdgeFade } from "./edge-fade";
 
 const blocks = [
 	{
-		title: "Enter an address",
-		body: "Check one address or upload a list.",
+		title: "Upload a list",
+		body: "Or check one address.",
 		x: "left-[5px] top-[185px]",
 	},
 	{
-		title: "Run the check",
-		body: "Inspect syntax, DNS, and MX.",
+		title: "Check every address",
+		body: "Format, domain, and mailbox.",
 		x: "left-[325px] top-[75px]",
 		selected: true,
 	},
 	{
-		title: "Review results",
-		body: "See mailbox signals and uncertainty.",
+		title: "Send safely",
+		body: "Keep, fix, or suppress each row.",
 		x: "left-[645px] top-[165px]",
 	},
 ] as const;
 
-/** Sim `MobileHeroWorkflow` geometry with Oppulence commitment steps and shared edge fades. */
+/** Sim `MobileHeroWorkflow` geometry with the three list-cleaning steps and shared edge fades. */
 export function SimMobileHeroPreview() {
 	return (
 		<div
-			aria-label="Email verification workflow: enter an address, run the check, review results"
+			aria-label="Email verification workflow: upload a list, check every address, send safely"
 			className="relative isolate mt-12 h-[300px] w-[calc(100%+56px)] overflow-hidden max-lg:-mx-7 max-lg:md:-mx-8 max-lg:md:w-[calc(100%+64px)] lg:hidden"
 			role="img"
 		>

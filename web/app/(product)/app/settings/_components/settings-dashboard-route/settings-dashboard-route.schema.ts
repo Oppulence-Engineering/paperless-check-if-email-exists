@@ -15,6 +15,8 @@ export const SettingsDashboardRoutePropsSchema = z.object({
 	userId: z.string().min(1),
 	userName: z.string(),
 	userEmail: z.email(),
+	/** A paid plan picked on the pricing page, passed to the plan card. */
+	chosenPlan: z.enum(["starter", "professional"]).optional(),
 });
 
 export type SettingsDashboardRoutePropsFields = z.infer<typeof SettingsDashboardRoutePropsSchema>;

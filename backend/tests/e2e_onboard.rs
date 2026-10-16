@@ -71,7 +71,7 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_onboard_returned_key_works_for_auth() {
-		let _db = TestDb::start().await;
+		let db = TestDb::start().await;
 		let config = cfg().await;
 		let routes = create_routes(Arc::clone(&config));
 
@@ -91,19 +91,28 @@ mod tests {
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		let api_key = body["api_key"]["key"].as_str().unwrap().to_string();
 
-		// Use the returned key to call /v1/check_email
-		let check_resp = request()
-			.path("/v1/check_email")
-			.method("POST")
-			.header("Authorization", format!("Bearer {}", api_key))
-			.json(&serde_json::json!({"to_email": "x@y"}))
-			.reply(&routes)
-			.await;
+		let check = || {
+			request()
+				.path("/v1/check_email")
+				.method("POST")
+				.header("Authorization", format!("Bearer {}", api_key))
+				.json(&serde_json::json!({"to_email": "x@y"}))
+				.reply(&routes)
+		};
 
+		// Onboarding creates a Free workspace, and API keys need Professional.
+		assert_eq!(check().await.status(), StatusCode::FORBIDDEN);
+
+		let tenant_id = body["tenant"]["id"].as_str().unwrap();
+		sqlx::query("UPDATE tenants SET plan_tier = 'professional' WHERE id = $1::uuid")
+			.bind(tenant_id)
+			.execute(db.pool())
+			.await
+			.unwrap();
 		assert_eq!(
-			check_resp.status(),
+			check().await.status(),
 			StatusCode::OK,
-			"API key from onboard should work"
+			"API key from onboard should work on Professional"
 		);
 	}
 

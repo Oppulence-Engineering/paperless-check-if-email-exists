@@ -6,7 +6,7 @@ describe("EntitlementsSchema", () => {
 	it("parses the generated domain props", () => {
 		expect(
 			EntitlementsSchema.safeParse({
-				plan: "pro",
+				plan: "professional",
 				active: true,
 				seats: { used: 2, limit: 50 },
 			}).success,

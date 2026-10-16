@@ -364,7 +364,7 @@ mod tenant_self_tests {
 	}
 
 	async fn create_tenant_key(pool: &sqlx::PgPool) -> (uuid::Uuid, String) {
-		let tid: uuid::Uuid = sqlx::query("INSERT INTO tenants (name,slug,contact_email,monthly_email_limit,used_this_period) VALUES ('Self','self-test-nm','s@t.com',1000,10) RETURNING id")
+		let tid: uuid::Uuid = sqlx::query("INSERT INTO tenants (name,slug,contact_email,plan_tier,monthly_email_limit,used_this_period) VALUES ('Self','self-test-nm','s@t.com','professional',1000,10) RETURNING id")
 			.fetch_one(pool).await.unwrap().get("id");
 		let (key, prefix, hash) = generate_api_key();
 		sqlx::query("INSERT INTO api_keys (tenant_id,key_prefix,key_hash,name,status) VALUES ($1,$2,$3,'test','active')")

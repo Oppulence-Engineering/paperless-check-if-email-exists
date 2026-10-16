@@ -8,20 +8,19 @@ import { SIM_SURFACE_CARD } from "./sim-surface-card";
 
 const channels = [
 	{
+		title: "Plans and pricing",
+		body: "Email hello@oppulence.io with the plan you want and the number of checks you need each month.",
+		href: "mailto:hello@oppulence.io?subject=Plan%20request",
+	},
+	{
 		title: "Product questions",
-		body: "Read the guides and API documentation before you get in touch.",
-		href: null,
+		body: "Read the guides first. Then email hello@oppulence.io.",
+		href: "/guides",
 	},
 	{
-		title: "Source code",
-		body: "Browse the repository for setup instructions and implementation details.",
-		href: "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists",
-		external: true,
-	},
-	{
-		title: "Email",
-		body: "Contact hello@oppulence.io for product questions.",
-		href: "mailto:hello@oppulence.io",
+		title: "Integrations",
+		body: "Connect your email platform. Each integration page has the setup steps.",
+		href: "/integrations",
 	},
 	{
 		title: "Security reports",
@@ -97,8 +96,8 @@ export function SimContactPage() {
 					Find the right place to ask.
 				</h1>
 				<p className="max-w-[46ch] text-pretty text-[var(--text-body)] text-lg leading-[1.5] max-sm:text-base">
-					Start with the guides or source code. For product questions, email the team. Use the
-					security channel for vulnerability reports.
+					Start with the guides. For product questions, email the team. Use the security channel for
+					vulnerability reports.
 				</p>
 			</div>
 

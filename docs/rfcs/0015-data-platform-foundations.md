@@ -411,7 +411,7 @@ weights_version = "credit_weights_v1"   # section 16.2
 planning_cost_usd = 0.010               # section 16.2
 ```
 
-Tenant flags in tenant settings: `finder_v2`, `list_repair`, `domain_search`, `discover`, `enrich`, `enrich_monitor`. All are off by default. Self-hosted users bring their own Parallel key.
+Tenant flags in tenant settings: `finder_v2`, `list_repair`, `domain_search`, `discover`, `enrich`, `enrich_monitor`. All are off by default. We do not support self-hosting.
 
 ### 16. Pricing For An 85% Gross Margin (Set 2026-10-16)
 

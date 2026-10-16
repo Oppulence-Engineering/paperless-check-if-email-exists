@@ -131,7 +131,7 @@ export function ProductDashboardClient({
 								className="size-6 object-contain"
 								src={brand?.logoUrl || "/check-email-logo.svg"}
 							/>
-							<span className="truncate">{brand?.name || "Check If Email Exists"}</span>
+							<span className="truncate">{brand?.name || "Verifier"}</span>
 						</Link>
 					</header>
 					<div className="min-h-0 flex-1 md:px-2.5 md:pb-2.5">

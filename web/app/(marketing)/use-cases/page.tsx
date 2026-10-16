@@ -1,7 +1,7 @@
 import { cacheLife } from "next/cache";
 
-import { indexCopy, useCasePages } from "../catalog";
-import { SimCatalogHub } from "../sim-landing/subpages/sim-catalog-hub";
+import { indexCopy } from "../catalog";
+import { HubPage } from "../editorial/hub-page";
 import { marketingMetadata } from "../metadata";
 
 export const metadata = marketingMetadata({
@@ -14,17 +14,5 @@ export default async function UseCasesIndexPage() {
 	"use cache";
 	cacheLife("days");
 
-	return (
-		<SimCatalogHub
-			description={indexCopy.useCases.description}
-			eyebrow="[use cases]"
-			heading={indexCopy.useCases.title}
-			items={useCasePages.map((page) => ({
-				href: page.path,
-				title: page.eyebrow,
-				body: page.description,
-			}))}
-			listHeading="All use cases"
-		/>
-	);
+	return <HubPage kind="use-case" />;
 }

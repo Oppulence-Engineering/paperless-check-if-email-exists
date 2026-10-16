@@ -59,6 +59,22 @@ struct Claims {
 	org_role: String,
 	session_id: String,
 	email: String,
+	/// The workspace plan from billing. Older tokens have none; then the tenant keeps its plan.
+	#[serde(default)]
+	plan: Option<String>,
+}
+
+/// Plan tier and monthly check allowance for a plan name in the backend token.
+/// The web app sells the same numbers (web/lib/billing/plans.ts). Enterprise
+/// has no allowance here: an operator sets it by contract. Unknown names give None.
+pub fn plan_allowance(plan: &str) -> Option<(&'static str, Option<i32>)> {
+	match plan {
+		"free" => Some(("free", Some(100))),
+		"starter" => Some(("starter", Some(4_000))),
+		"professional" => Some(("professional", Some(12_000))),
+		"enterprise" => Some(("enterprise", None)),
+		_ => None,
+	}
 }
 
 fn verify(token: &str, jwks: &Jwks, config: &JwtAuthConfig) -> Result<Claims> {
@@ -159,15 +175,13 @@ pub async fn resolve_from_jwt(
 		bail!("Organization role cannot call this operation");
 	}
 	let tenant_id = Uuid::new_v5(&Uuid::NAMESPACE_OID, claims.org_id.as_bytes());
-	sqlx::query(
-		"INSERT INTO tenants (id, name, slug, contact_email) VALUES ($1, $2, $3, $4) \
-		 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name",
+	sync_tenant_from_claims(
+		pool,
+		tenant_id,
+		&claims.org_name,
+		&claims.email,
+		claims.plan.as_deref(),
 	)
-	.bind(tenant_id)
-	.bind(&claims.org_name)
-	.bind(format!("auth-{}", tenant_id))
-	.bind(&claims.email)
-	.execute(pool)
 	.await?;
 	let mut context = resolve_tenant_context_by_id(pool, tenant_id).await?;
 	context.scopes = if role_is_admin(&claims.org_role) {
@@ -183,6 +197,46 @@ pub async fn resolve_from_jwt(
 	Ok(context)
 }
 
+/// Creates or updates the tenant for a workspace from the session token.
+///
+/// The plan claim is the billing truth: it sets the tier and the monthly
+/// allowance. Without a known plan, both stay as they are. An Enterprise
+/// allowance is set by an operator, so it is never overwritten. A Free claim
+/// does not downgrade a paid tier that did not come from billing, such as a
+/// tier an operator set through the admin API.
+pub async fn sync_tenant_from_claims(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	org_name: &str,
+	email: &str,
+	plan: Option<&str>,
+) -> Result<()> {
+	let allowance = plan.and_then(plan_allowance);
+	sqlx::query(
+		"INSERT INTO tenants (id, name, slug, contact_email, plan_tier, plan_name, monthly_email_limit, plan_from_billing) \
+		 VALUES ($1, $2, $3, $4, COALESCE($5::plan_tier, 'free'), COALESCE($5, 'free'), $6, COALESCE($5, 'free') <> 'free') \
+		 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, \
+		 plan_tier = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_tier ELSE EXCLUDED.plan_tier END, \
+		 plan_name = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_name ELSE EXCLUDED.plan_name END, \
+		 monthly_email_limit = CASE \
+		   WHEN $5 IS NULL OR $5 = 'enterprise' OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.monthly_email_limit ELSE EXCLUDED.monthly_email_limit END, \
+		 plan_from_billing = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_from_billing ELSE EXCLUDED.plan_from_billing END",
+	)
+	.bind(tenant_id)
+	.bind(org_name)
+	.bind(format!("auth-{}", tenant_id))
+	.bind(email)
+	.bind(allowance.map(|(tier, _)| tier))
+	.bind(allowance.and_then(|(_, limit)| limit))
+	.execute(pool)
+	.await?;
+	Ok(())
+}
+
 #[cfg(test)]
 mod tests {
 	use super::{route_allowed, verify, Jwk, Jwks};
@@ -192,6 +246,19 @@ mod tests {
 	use ring::signature::{Ed25519KeyPair, KeyPair};
 	use serde_json::json;
 	use std::time::{SystemTime, UNIX_EPOCH};
+
+	#[test]
+	fn plan_claim_sets_the_published_allowance() {
+		use super::plan_allowance;
+		assert_eq!(plan_allowance("free"), Some(("free", Some(100))));
+		assert_eq!(plan_allowance("starter"), Some(("starter", Some(4_000))));
+		assert_eq!(
+			plan_allowance("professional"),
+			Some(("professional", Some(12_000)))
+		);
+		assert_eq!(plan_allowance("enterprise"), Some(("enterprise", None)));
+		assert_eq!(plan_allowance("pro"), None);
+	}
 
 	#[test]
 	fn member_cannot_manage_credentials_or_cross_into_admin() {

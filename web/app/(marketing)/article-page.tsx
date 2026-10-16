@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { SimEditorialArticle } from "./sim-landing/subpages/sim-editorial-article";
+import { EditorialArticleView } from "./editorial/blog";
 
 export function EditorialArticle({
 	title,
@@ -26,7 +26,7 @@ export function EditorialArticle({
 	crumbs?: { name: string; path: string }[];
 }) {
 	return (
-		<SimEditorialArticle
+		<EditorialArticleView
 			category={category}
 			categoryHref={categoryHref}
 			crumbs={crumbs}
@@ -38,6 +38,6 @@ export function EditorialArticle({
 			title={title}
 		>
 			{children}
-		</SimEditorialArticle>
+		</EditorialArticleView>
 	);
 }

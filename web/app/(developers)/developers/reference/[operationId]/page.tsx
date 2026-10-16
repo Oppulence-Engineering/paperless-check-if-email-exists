@@ -27,7 +27,7 @@ function accessText(operation: PortalOperation): string {
 		case "admin":
 			return "Private platform operator API. Requires x-reacher-secret on the internal backend and explicit operator authorization. Workspace API keys cannot call this route.";
 		case "legacy":
-			return "Legacy self-hosted v0 API. Requires x-reacher-secret. The shared app host does not route v0; migrate to the equivalent v1 operation.";
+			return "Legacy v0 API. It is not available on the hosted service. Use the equivalent v1 operation.";
 		case "callback":
 			return "Provider-to-server delivery. The provider sends its delivery token in the URL and its configured signature. Do not call this from a browser or expose the token in client code.";
 		case "onboarding":

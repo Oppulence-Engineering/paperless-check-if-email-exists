@@ -10,45 +10,44 @@ import { SimSubpageFaqSection } from "./sim-subpage-faq";
 
 const faqs = [
 	{
-		question: "Where is verification history stored?",
-		answer:
-			"The application uses the configured PostgreSQL database. Self-hosted operators control their own database and retention.",
+		question: "Where is my data stored?",
+		answer: "In our hosted service. Access is limited to your organization.",
 	},
 	{
-		question: "Does the browser receive backend credentials?",
+		question: "Does the browser receive server credentials?",
 		answer:
-			"No. The web app keeps the backend JWT server-side and sends browser traffic through the same-origin API route.",
+			"No. Requests from the browser go through our own servers, and server credentials never reach the browser.",
 	},
 	{
 		question: "Does a check send an email?",
-		answer: "No. Verification checks available signals without sending a message to the recipient.",
+		answer: "No. A check never delivers a message to the recipient.",
 	},
 ] as const;
 
 const rows = [
 	{
 		title: "Organization scope",
-		body: "Checks, lists, history, and backend requests are scoped to the signed-in organization.",
+		body: "Lists, results, history, and API keys belong to your organization. Other organizations cannot see them.",
 	},
 	{
-		title: "Server-side backend access",
-		body: "The Next.js route sends a short-lived JWT to the Rust API. The browser uses its Better Auth session.",
+		title: "No credentials in the browser",
+		body: "The browser never receives the credentials our servers use to talk to each other.",
 	},
 	{
-		title: "Self-hosted data",
-		body: "Run the web app, Rust API, and worker in your environment with PostgreSQL and RabbitMQ.",
+		title: "Scoped API keys",
+		body: "Give each API key only the access it needs, and revoke it at any time.",
 	},
 	{
-		title: "Verification limits",
-		body: "Some mail servers hide mailbox status or accept all addresses. Review uncertain outcomes.",
+		title: "Signed webhooks",
+		body: "Webhooks we send are signed with your secret. Delivery events from SendGrid, Mailgun, and Amazon SES are signature-checked.",
 	},
 	{
-		title: "No outbound message",
-		body: "A verification check does not send an email to the recipient.",
+		title: "Retention you choose",
+		body: "Choose how many days results are kept in your workspace.",
 	},
 	{
-		title: "Documented API",
-		body: "The API contract and generated SDKs live in this repository for review.",
+		title: "No email sent",
+		body: "A check never delivers a message to the recipient.",
 	},
 ] as const;
 
@@ -60,9 +59,9 @@ const trustLinks = [
 		body: "Report a vulnerability through the security channel.",
 	},
 	{
-		title: "Self-hosting guide",
-		href: "/guides/what-stays-on-device",
-		body: "Understand where your data lives.",
+		title: "Delivery feedback",
+		href: "/features/delivery-feedback",
+		body: "How delivery events reach your workspace.",
 	},
 ] as const;
 
@@ -89,16 +88,16 @@ export function SimSecurityPage() {
 							className={cn("max-w-[16ch] text-balance text-[var(--text-primary)]", HOME_TYPE.h2)}
 							id="security-page-heading"
 						>
-							Workspace access and verification data.
+							How we protect your lists.
 						</h1>
 					</div>
 					<div className="flex w-[min(28rem,40%)] flex-col items-start max-xl:w-full">
 						<p className={cn("max-w-[40ch] text-pretty text-[var(--text-body)]", HOME_TYPE.lead)}>
-							The web app keeps backend credentials server-side and scopes requests to your
-							organization. Read <Link href="/privacy">Privacy</Link> and{" "}
+							Your lists and results stay inside your organization, and server credentials stay on
+							our servers. Read <Link href="/privacy">Privacy</Link> and{" "}
 							<Link href="/responsible-disclosure">responsible disclosure</Link>.
 						</p>
-						<SimCtaLink className="mt-5" href="/guides/approval-before-send" variant="outline">
+						<SimCtaLink className="mt-5" href="/guides/reading-results" variant="outline">
 							How results work
 						</SimCtaLink>
 					</div>

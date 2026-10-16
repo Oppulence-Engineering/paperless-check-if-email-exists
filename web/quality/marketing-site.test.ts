@@ -25,7 +25,7 @@ describe("public site", () => {
 		const index = read("../app/(marketing)/blog/page.tsx");
 		const config = read("../config/fumadocs/source.config.ts");
 		expect(layout).toContain("MarketingLayoutClient");
-		expect(index).toContain("SimBlogIndexPage");
+		expect(index).toContain("EditorialBlogIndex");
 		expect(config).toContain('dir: "content/blog"');
 	});
 });

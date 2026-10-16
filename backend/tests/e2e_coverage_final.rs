@@ -55,7 +55,7 @@ mod coverage_final {
 
 	async fn make_tenant_key(pool: &sqlx::PgPool, slug: &str) -> (uuid::Uuid, String) {
 		let tid: uuid::Uuid = sqlx::query(&format!(
-			"INSERT INTO tenants (name,slug,contact_email,monthly_email_limit,used_this_period,default_webhook_url) VALUES ('{}','{}','{}@t.com',5000,100,'https://hook.example.com') RETURNING id",
+			"INSERT INTO tenants (name,slug,contact_email,plan_tier,monthly_email_limit,used_this_period,default_webhook_url) VALUES ('{}','{}','{}@t.com','professional',5000,100,'https://hook.example.com') RETURNING id",
 			slug, slug, slug
 		)).fetch_one(pool).await.unwrap().get("id");
 		let (key, prefix, hash) = generate_api_key();

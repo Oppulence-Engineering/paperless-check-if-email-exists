@@ -26,7 +26,7 @@ struct Response {
 	emails_requeued: Option<i32>,
 }
 
-async fn http_handler(
+pub(super) async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
@@ -70,7 +70,7 @@ async fn http_handler(
 }
 
 /// Pool-only filter that doesn't require worker mode.
-fn with_pg_pool(
+pub(super) fn with_pg_pool(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
 	warp::any().and_then(move || {

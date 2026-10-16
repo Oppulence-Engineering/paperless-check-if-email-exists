@@ -125,6 +125,7 @@ export * from './trigger-pipeline-response';
 export * from './update-api-key-request';
 export * from './update-pipeline-input';
 export * from './update-provider-endpoint-input';
+export * from './update-reverification-request';
 export * from './update-tenant-domain-request';
 export * from './update-tenant-settings-request';
 export * from './update-webhook-request';

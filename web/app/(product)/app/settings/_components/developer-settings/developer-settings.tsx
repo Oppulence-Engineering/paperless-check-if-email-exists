@@ -2,7 +2,9 @@
 
 import "client-only";
 
+import { useEntitlements } from "@/components/auth/auth-gate";
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
+import { denial } from "@/lib/entitlements/entitlements";
 
 import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
@@ -105,6 +107,8 @@ export function DeveloperSettings({
 				ListTenantApiKeys200Response.parse((await sdk.listTenantApiKeys({ signal })).data),
 			),
 	});
+	// The published plans include the API on Professional and Enterprise only.
+	const apiDenial = denial(useEntitlements(), "api_access");
 	const create = useMutation({
 		mutationFn: async (body: z.infer<typeof CreateApiKeySchema>) =>
 			CreatedApiKeySchema.parse(
@@ -409,104 +413,113 @@ export function DeveloperSettings({
 								</p>
 							</div>
 						</div>
-						<div className="settings-panel p-5">
-							<form className="space-y-5" onSubmit={(event) => void submit(event)}>
-								<div className="space-y-2">
-									<Label htmlFor="api-key-name">Key name</Label>
-									<Input
-										id="api-key-name"
-										maxLength={80}
-										onChange={(event) => {
-											setName(event.target.value);
-										}}
-										placeholder="Production integration"
-										required
-										value={name}
-									/>
-								</div>
-								<fieldset className="space-y-2">
-									<legend className="text-sm font-medium">Scopes</legend>
-									<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-										{scopeOptions.map(([scope, label]) => (
-											<Label
-												className="flex items-center gap-2 text-sm"
-												htmlFor={`api-key-scope-${scope}`}
-												key={scope}
-											>
-												<Checkbox
-													aria-label={label}
-													checked={scopes.includes(scope)}
-													id={`api-key-scope-${scope}`}
-													onCheckedChange={(checked) => {
-														setScopes((current) =>
-															checked === true
-																? [...current, scope]
-																: current.filter((item) => item !== scope),
-														);
-													}}
-												/>
-												{label}
-											</Label>
-										))}
+						{apiDenial ? (
+							<div className="settings-panel space-y-2 p-5 text-sm">
+								<p>API keys come with the Professional and Enterprise plans.</p>
+								<Link className="underline underline-offset-2" href="/app/settings?settings=usage">
+									See plans in Usage
+								</Link>
+							</div>
+						) : (
+							<div className="settings-panel p-5">
+								<form className="space-y-5" onSubmit={(event) => void submit(event)}>
+									<div className="space-y-2">
+										<Label htmlFor="api-key-name">Key name</Label>
+										<Input
+											id="api-key-name"
+											maxLength={80}
+											onChange={(event) => {
+												setName(event.target.value);
+											}}
+											placeholder="Production integration"
+											required
+											value={name}
+										/>
 									</div>
-								</fieldset>
-								<div className="space-y-2">
-									<Label htmlFor="api-key-lifetime">Expires after</Label>
-									<Select
-										onValueChange={(value) => {
-											setLifetimeDays(Number(value));
-										}}
-										value={String(lifetimeDays)}
-									>
-										<SelectTrigger className="w-full" id="api-key-lifetime">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="30">30 days</SelectItem>
-											<SelectItem value="90">90 days</SelectItem>
-											<SelectItem value="365">1 year</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-								<Button disabled={create.isPending || Boolean(revealedKey)} type="submit">
-									{create.isPending ? "Creating…" : "Create API key"}
-								</Button>
-							</form>
-							{revealedKey ? (
-								<div className="mt-5 space-y-2 border-t pt-5" role="status">
-									<Label htmlFor="new-api-key">New API key — copy it now</Label>
-									<div className="flex gap-2">
-										<Input id="new-api-key" readOnly value={revealedKey} />
-										<Button
-											onClick={() =>
-												void navigator.clipboard.writeText(revealedKey).then(
-													() => {
-														setCopied(true);
-													},
-													() => {
-														setError("Could not copy the key.");
-													},
-												)
-											}
-											type="button"
-											variant="outline"
+									<fieldset className="space-y-2">
+										<legend className="text-sm font-medium">Scopes</legend>
+										<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+											{scopeOptions.map(([scope, label]) => (
+												<Label
+													className="flex items-center gap-2 text-sm"
+													htmlFor={`api-key-scope-${scope}`}
+													key={scope}
+												>
+													<Checkbox
+														aria-label={label}
+														checked={scopes.includes(scope)}
+														id={`api-key-scope-${scope}`}
+														onCheckedChange={(checked) => {
+															setScopes((current) =>
+																checked === true
+																	? [...current, scope]
+																	: current.filter((item) => item !== scope),
+															);
+														}}
+													/>
+													{label}
+												</Label>
+											))}
+										</div>
+									</fieldset>
+									<div className="space-y-2">
+										<Label htmlFor="api-key-lifetime">Expires after</Label>
+										<Select
+											onValueChange={(value) => {
+												setLifetimeDays(Number(value));
+											}}
+											value={String(lifetimeDays)}
 										>
-											{copied ? "Copied" : "Copy key"}
+											<SelectTrigger className="w-full" id="api-key-lifetime">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="30">30 days</SelectItem>
+												<SelectItem value="90">90 days</SelectItem>
+												<SelectItem value="365">1 year</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+									<Button disabled={create.isPending || Boolean(revealedKey)} type="submit">
+										{create.isPending ? "Creating…" : "Create API key"}
+									</Button>
+								</form>
+								{revealedKey ? (
+									<div className="mt-5 space-y-2 border-t pt-5" role="status">
+										<Label htmlFor="new-api-key">New API key — copy it now</Label>
+										<div className="flex gap-2">
+											<Input id="new-api-key" readOnly value={revealedKey} />
+											<Button
+												onClick={() =>
+													void navigator.clipboard.writeText(revealedKey).then(
+														() => {
+															setCopied(true);
+														},
+														() => {
+															setError("Could not copy the key.");
+														},
+													)
+												}
+												type="button"
+												variant="outline"
+											>
+												{copied ? "Copied" : "Copy key"}
+											</Button>
+										</div>
+										<Button
+											onClick={() => {
+												setRevealedKey(null);
+											}}
+											size="sm"
+											type="button"
+											variant="ghost"
+										>
+											Done
 										</Button>
 									</div>
-									<Button
-										onClick={() => {
-											setRevealedKey(null);
-										}}
-										size="sm"
-										type="button"
-										variant="ghost"
-									>
-										Done
-									</Button>
-								</div>
-							) : null}
-						</div>
+								) : null}
+							</div>
+						)}
 					</section>
 				</>
 			)}

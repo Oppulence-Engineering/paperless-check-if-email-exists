@@ -29,13 +29,13 @@ export function SimTopBar() {
 				itemType="https://schema.org/SiteNavigationElement"
 			>
 				<Link
-					aria-label="Check If Email Exists home"
+					aria-label="Verifier home"
 					className="relative z-10 flex h-[30px] shrink-0 items-center"
 					href="/"
 					itemProp="url"
 				>
 					<span className="sr-only" itemProp="name">
-						Check If Email Exists
+						Verifier
 					</span>
 					<InlineLogo header />
 				</Link>

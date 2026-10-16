@@ -39,6 +39,8 @@ struct Response {
 	ready_to_send: bool,
 }
 
+/// Safe-to-send percentages for the excellent and good grades when the workspace sets none.
+pub(crate) const DEFAULT_THRESHOLDS: (f64, f64) = (90.0, 70.0);
 async fn http_handler(
 	job_id: i32,
 	tenant_ctx: TenantContext,
@@ -46,39 +48,20 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::BULK)?;
 
-	// Load custom thresholds from tenant settings if configured
-	let custom_thresholds: Option<(f64, f64)> = if let Some(tid) = tenant_ctx.tenant_id {
-		sqlx::query_scalar::<_, Option<serde_json::Value>>(
-			"SELECT settings FROM tenants WHERE id = $1",
+	// Custom thresholds from tenant settings. The database keeps them valid.
+	let custom_thresholds: Option<(f64, f64)> = match tenant_ctx.tenant_id {
+		Some(tid) => sqlx::query_as::<_, (Option<f64>, Option<f64>)>(
+			"SELECT approval_excellent_threshold, approval_good_threshold FROM tenants WHERE id = $1",
 		)
 		.bind(tid)
 		.fetch_optional(&pg_pool)
 		.await
-		.ok()
-		.flatten()
-		.flatten()
-		.and_then(|settings| {
-			let excellent = settings
-				.get("approval_excellent_threshold")
-				.and_then(|v| v.as_f64());
-			let good = settings
-				.get("approval_good_threshold")
-				.and_then(|v| v.as_f64());
-			match (excellent, good) {
-				(Some(e), Some(g))
-					if (0.0..=100.0).contains(&e) && (0.0..=100.0).contains(&g) && e > g =>
-				{
-					Some((e, g))
-				}
-				_ => None,
-			}
-		})
-	} else {
-		None
+		.map_err(ReacherResponseError::from)?
+		.and_then(|(excellent, good)| excellent.zip(good)),
+		None => None,
 	};
 
-	let excellent_threshold = custom_thresholds.map(|(e, _)| e).unwrap_or(90.0);
-	let good_threshold = custom_thresholds.map(|(_, g)| g).unwrap_or(70.0);
+	let (excellent_threshold, good_threshold) = custom_thresholds.unwrap_or(DEFAULT_THRESHOLDS);
 
 	let job = sqlx::query(
 		"SELECT id, total_records, status::TEXT as status FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)",

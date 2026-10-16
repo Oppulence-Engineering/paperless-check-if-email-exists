@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
-import { SimBillingStatusPage } from "../../sim-landing/subpages/sim-billing-status-page";
+import { EditorialBillingStatus } from "../../editorial/pages";
 import { SITE_URL } from "../../site";
 
-const TITLE = "Billing status — Check If Email Exists";
+const TITLE = "Billing status — Verifier";
 const DESCRIPTION = "Return to the email verification workspace.";
 
 export const metadata: Metadata = {
@@ -24,15 +24,13 @@ export default async function BillingCancelRoute() {
 	cacheLife("days");
 
 	return (
-		<SimBillingStatusPage
+		<EditorialBillingStatus
 			actions={[
 				{ href: "/pricing", label: "See the plans" },
 				{ href: "/app", label: "Go to the app", variant: "outline" },
 			]}
-			description="This route is retained from the public template. Hosted checkout is not configured in this application."
-			noteBody="Use the workspace or review the repository's deployment options."
-			noteTitle="Next steps"
-			title="Return to the workspace"
+			lede="Your plan is the same as before. Open the app to continue, or contact us about a plan."
+			title="No changes were made"
 		/>
 	);
 }

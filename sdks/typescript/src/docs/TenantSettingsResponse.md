@@ -5,6 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**approval_excellent_threshold** | **number** |  | [required]
+**approval_good_threshold** | **number** |  | [required]
 **default_policy_mode** | **string** |  | [required]
 **default_webhook_url** | **string** |  | [optional]
 **monthly_email_limit** | **number** |  | [optional]
@@ -21,6 +23,8 @@ Name | Type | Description | Notes
 import { TenantSettingsResponse } from '@oppulence/reacher-sdk';
 
 const instance: TenantSettingsResponse = {
+    approval_excellent_threshold: 0,
+    approval_good_threshold: 0,
     default_policy_mode: 'example',
     default_webhook_url: 'example',
     monthly_email_limit: 0,

@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { cn } from "@/lib/sim/cn";
 
 import {
@@ -38,7 +36,7 @@ export function SimChangelogPage({
 		<div className="bg-[var(--bg)] pb-16 max-sm:pb-12">
 			<div className={cn(LANDING_CONTENT_WIDTH, LANDING_GUTTER)}>
 				<SimSubpageHero
-					description={`Published release notes for ${repoLabel}. The list is empty until release entries are connected.`}
+					description={`Product changes in ${repoLabel}, newest first.`}
 					eyebrow="[changelog]"
 					title="What changed in email verification."
 					titleId="changelog-heading"
@@ -51,11 +49,7 @@ export function SimChangelogPage({
 				<section className="px-6 py-10">
 					{entries.length === 0 ? (
 						<p className="max-w-[60ch] text-[15px] text-[var(--text-body)] leading-[1.55]">
-							No release notes are available to show right now. You can still{" "}
-							<Link className="underline-offset-4 hover:underline" href="/download">
-								run the source locally
-							</Link>{" "}
-							from this repository.
+							No changes to show yet.
 						</p>
 					) : (
 						<ol className="flex flex-col gap-6">

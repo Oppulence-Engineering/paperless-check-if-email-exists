@@ -125,7 +125,7 @@ tenant_json="$(curl --silent --show-error --fail-with-body \
   --request POST "${BACKEND_URL}/v1/admin/tenants" \
   --header 'Content-Type: application/json' \
   --header 'x-reacher-secret: smoke-only-backend-secret' \
-  --data '{"name":"Smoke tenant","slug":"smoke-tenant","contact_email":"smoke@example.test"}')"
+  --data '{"name":"Smoke tenant","slug":"smoke-tenant","contact_email":"smoke@example.test","plan_tier":"professional"}')"
 tenant_id="$(printf '%s' "$tenant_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
 key_json="$(curl --silent --show-error --fail-with-body \
   --request POST "${BACKEND_URL}/v1/admin/tenants/${tenant_id}/api-keys" \

@@ -20,6 +20,17 @@ pub enum PlanTier {
 	Enterprise,
 }
 
+impl PlanTier {
+	/// The published plans sell the REST API on Professional and Enterprise only.
+	pub fn includes_api(&self) -> bool {
+		matches!(self, PlanTier::Professional | PlanTier::Enterprise)
+	}
+}
+
+/// The message a caller sees when their plan does not include the API.
+pub const API_PLAN_REQUIRED: &str =
+	"API access needs the Professional or Enterprise plan. Upgrade in Settings > Usage.";
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "api_key_status", rename_all = "lowercase")]
 pub enum ApiKeyStatus {

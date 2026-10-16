@@ -6,7 +6,7 @@ import { FeaturesRailCard } from "./features-rail-card";
 import { SimFeaturesRailLoop } from "./features-rail-loop";
 import { HOME_INSET, HOME_TYPE, LANDING_CONTENT_WIDTH, LANDING_GUTTER } from "./tokens";
 
-/** Sim `Features` + infinite `FeaturesRail` with Oppulence feature cards. */
+/** Sim `Features` + infinite `FeaturesRail` with product feature cards. */
 export function SimFeaturesRail() {
 	const features = featurePages.slice(0, 4);
 
@@ -25,7 +25,7 @@ export function SimFeaturesRail() {
 						)}
 						id="features-heading"
 					>
-						The tools behind each check.
+						From one address to every list you send.
 					</h2>
 					<p className="mb-8 hidden text-[13px] text-[var(--text-secondary)] max-sm:block">
 						Swipe to explore

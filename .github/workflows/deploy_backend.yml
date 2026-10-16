@@ -99,6 +99,7 @@ jobs:
       service_name: check-if-email-exists
       service_path: .
       chart_repository: ./helm/check-if-email-exists
+      values_file: ./helm/check-if-email-exists/values.production.yaml
       namespace: paperless-production
       create_namespace: true
       image_repository: ghcr.io/oppulence-engineering/check-if-email-exists
@@ -120,6 +121,10 @@ jobs:
         RCH__HEADER_SECRET=$RCH__HEADER_SECRET
         PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS
         RCH__SENTRY_DSN=$HELM_SENTRY_DSN
+        STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+        STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+        STRIPE_PRICE_STARTER=$STRIPE_PRICE_STARTER
+        STRIPE_PRICE_PROFESSIONAL=$STRIPE_PRICE_PROFESSIONAL
     secrets: inherit
 
   deploy-staging:
@@ -162,4 +167,8 @@ jobs:
         RCH__HEADER_SECRET=$RCH__HEADER_SECRET
         PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS_STAGING
         RCH__SENTRY_DSN=$HELM_SENTRY_DSN
+        STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY_STAGING
+        STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET_STAGING
+        STRIPE_PRICE_STARTER=$STRIPE_PRICE_STARTER_STAGING
+        STRIPE_PRICE_PROFESSIONAL=$STRIPE_PRICE_PROFESSIONAL_STAGING
     secrets: inherit

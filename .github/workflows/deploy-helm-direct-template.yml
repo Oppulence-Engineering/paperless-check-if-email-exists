@@ -181,15 +181,26 @@ jobs:
           HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          # The auth and SCIM secrets sign, encrypt, and hash credentials, so production has its
+          # own and never falls back to staging. Both environments read the Resend key from Infisical
+          # (values.production.yaml, values.staging.yaml), which overrides the values below.
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || secrets.RESEND_API_KEY_STAGING }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM || secrets.RESEND_FROM_STAGING }}
           BETTER_AUTH_URL_STAGING: ${{ secrets.BETTER_AUTH_URL_STAGING }}
           BETTER_AUTH_SECRET_STAGING: ${{ secrets.BETTER_AUTH_SECRET_STAGING }}
           SCIM_CREDENTIAL_HASH_SECRET_STAGING: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
           RESEND_API_KEY_STAGING: ${{ secrets.RESEND_API_KEY_STAGING }}
           RESEND_FROM_STAGING: ${{ secrets.RESEND_FROM_STAGING }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_SECRET_KEY_STAGING: ${{ secrets.STRIPE_SECRET_KEY_STAGING }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_WEBHOOK_SECRET_STAGING: ${{ secrets.STRIPE_WEBHOOK_SECRET_STAGING }}
+          STRIPE_PRICE_STARTER: ${{ secrets.STRIPE_PRICE_STARTER }}
+          STRIPE_PRICE_STARTER_STAGING: ${{ secrets.STRIPE_PRICE_STARTER_STAGING }}
+          STRIPE_PRICE_PROFESSIONAL: ${{ secrets.STRIPE_PRICE_PROFESSIONAL }}
+          STRIPE_PRICE_PROFESSIONAL_STAGING: ${{ secrets.STRIPE_PRICE_PROFESSIONAL_STAGING }}
           RCH__PROXY__HOST: ${{ secrets.RCH__PROXY__HOST }}
           RCH__PROXY__PORT: ${{ secrets.RCH__PROXY__PORT }}
           RCH__PROXY__USERNAME: ${{ secrets.RCH__PROXY__USERNAME }}
@@ -218,7 +229,7 @@ jobs:
               exit 1
             fi
           done
-          HELM_ARGS=(upgrade --install "${{ inputs.service_name }}" "${{ inputs.chart_repository }}" -n "${{ inputs.namespace }}" --wait --force-conflicts)
+          HELM_ARGS=(upgrade --install "${{ inputs.service_name }}" "${{ inputs.chart_repository }}" -n "${{ inputs.namespace }}" --wait --server-side=true --force-conflicts)
 
           if [ "${{ inputs.create_namespace }}" = "true" ]; then
             HELM_ARGS+=(--create-namespace)

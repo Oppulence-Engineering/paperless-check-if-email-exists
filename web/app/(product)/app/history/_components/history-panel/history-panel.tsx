@@ -3,6 +3,8 @@
 import "client-only";
 
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
@@ -11,16 +13,25 @@ import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { useV1EmailHistory } from "@/hooks/queries/use-v1-email-history";
+import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
 import { type HistoryPanelPropsFields } from "./history-panel.schema";
 
 export type HistoryPanelProps = HistoryPanelPropsFields & ComponentPropsWithoutRef<"section">;
+
+const outcomesApi = new OutcomesApi(new Configuration({ basePath: "/api/backend" }));
 
 /** @oppulence-gen kind=component; owned by `history-panel.lit.ts`. */
 export function HistoryPanel({ className, ...props }: HistoryPanelProps) {
 	const [input, setInput] = useState("");
 	const [email, setEmail] = useState("");
 	const history = useV1EmailHistory(email, { limit: 50 });
+	// Delivery events from the email platform, next to the check results.
+	const events = useQuery({
+		queryKey: workflowQueryKey("history-outcomes", email),
+		enabled: Boolean(email),
+		queryFn: async () => (await outcomesApi.v1ListOutcomes({ email, limit: 50 })).data,
+	});
 
 	function submit(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -97,6 +108,36 @@ export function HistoryPanel({ className, ...props }: HistoryPanelProps) {
 														: "Pending timestamp"}
 												</p>
 											</div>
+										</li>
+									))}
+								</ol>
+							)
+						) : null}
+						<h2 className="mt-8 text-sm font-medium">Delivery events</h2>
+						{events.isPending ? <p role="status">Loading delivery events…</p> : null}
+						{events.isError ? (
+							<p className="text-sm text-muted-foreground">
+								Delivery events are visible to owners and admins.
+							</p>
+						) : null}
+						{events.data ? (
+							events.data.outcomes.length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									No delivery events for this address.
+								</p>
+							) : (
+								<ol className="mt-2 divide-y divide-border">
+									{events.data.outcomes.map((event) => (
+										<li
+											className="grid gap-1 py-3 text-sm sm:grid-cols-[1fr_auto]"
+											key={`${event.event_type}-${event.occurred_at}-${event.provider}`}
+										>
+											<span className="capitalize">
+												{event.event_type} · {event.provider}
+											</span>
+											<span className="text-muted-foreground">
+												{new Date(event.occurred_at).toLocaleString()}
+											</span>
 										</li>
 									))}
 								</ol>

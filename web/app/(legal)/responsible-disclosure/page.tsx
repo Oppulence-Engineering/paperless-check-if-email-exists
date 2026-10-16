@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
-import { SimLegalDocumentPage } from "@/app/(marketing)/sim-landing/legal/sim-legal-document-page";
+import { EditorialLegalDocument } from "@/app/(marketing)/editorial/legal";
 import type { LegalSection } from "@/components/legal/types";
 
 export const metadata: Metadata = {
-	title: "Responsible disclosure — Check If Email Exists",
+	title: "Responsible disclosure — Verifier",
 	description:
-		"Report security issues affecting Check If Email Exists or its deployment to the security contact below.",
+		"Report security issues affecting Verifier or its deployment to the security contact below.",
 	robots: { index: false, follow: false },
 };
 
@@ -27,7 +27,7 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Product components",
 		body: [
-			"Reports may concern the web application, Better Auth session flow, organization boundaries, Rust API, worker, or deployment configuration.",
+			"Reports may concern the web application, sign-in and sessions, organization boundaries, the API, background processing, or deployment configuration.",
 		],
 	},
 	{
@@ -42,11 +42,11 @@ export default async function LegalPage() {
 	"use cache";
 	cacheLife("weeks");
 	return (
-		<SimLegalDocumentPage
+		<EditorialLegalDocument
 			eyebrow="[legal]"
 			contactEmail="security@oppulence.io"
 			effective="Pending legal review"
-			intro="Report security issues affecting Check If Email Exists or its deployment to the security contact below."
+			intro="Report security issues affecting Verifier or its deployment to the security contact below."
 			lastUpdated="September 22, 2026"
 			related={[
 				{ label: "Privacy overview", href: "/privacy" },

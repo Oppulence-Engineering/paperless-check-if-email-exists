@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
-import { SimLegalDocumentPage } from "@/app/(marketing)/sim-landing/legal/sim-legal-document-page";
+import { EditorialLegalDocument } from "@/app/(marketing)/editorial/legal";
 import type { LegalSection } from "@/components/legal/types";
 
 export const metadata: Metadata = {
-	title: "Terms information — Check If Email Exists",
+	title: "Terms information — Verifier",
 	description:
-		"This page describes the Check If Email Exists application while product terms are prepared for legal review.",
+		"This page describes the Verifier application while product terms are prepared for legal review.",
 	robots: { index: false, follow: false },
 };
 
@@ -15,19 +15,13 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Product scope",
 		body: [
-			"Check If Email Exists provides email verification through a web application, Rust API, worker, and SDKs. It checks signals without sending an email to the recipient.",
+			"Verifier provides email verification through a web application, an API, and SDKs. It checks signals without sending an email to the recipient.",
 		],
 	},
 	{
 		heading: "Result limits",
 		body: [
 			"Mail servers may hide mailbox status, accept all addresses, or reject verification probes. A result is evidence for review, not a guarantee of delivery.",
-		],
-	},
-	{
-		heading: "Self-hosting",
-		body: [
-			"The source is available in this repository. Review the repository licenses and deployment instructions before use. Self-hosted operators manage their own infrastructure and data.",
 		],
 	},
 	{
@@ -42,11 +36,11 @@ export default async function LegalPage() {
 	"use cache";
 	cacheLife("weeks");
 	return (
-		<SimLegalDocumentPage
+		<EditorialLegalDocument
 			eyebrow="[legal]"
 			contactEmail="legal@oppulence.io"
 			effective="Pending legal review"
-			intro="This page describes the Check If Email Exists application while product terms are prepared for legal review."
+			intro="This page describes the Verifier application while product terms are prepared for legal review."
 			lastUpdated="September 22, 2026"
 			related={[
 				{ label: "Privacy overview", href: "/privacy" },

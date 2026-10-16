@@ -1,0 +1,280 @@
+/*
+ * Public-site theme: the polar.sh marketing theme (dark only).
+ * Palette, surfaces, and radius come from polar.sh (polarsource/polar,
+ * Apache-2.0): polar-950 page, polar-900/800 surfaces, polar-700 hairlines,
+ * white headings, polar-400 text, Polar blue-600 accent.
+ * The marketing and legal shells carry the `dark` class, so these values
+ * apply on every public page.
+ */
+.sim-landing-root {
+	--ed-bg: #090909;
+	--ed-subtle: #111111;
+	--ed-panel: #181818;
+	--ed-ink: #ffffff;
+	--ed-ink-strong: #ffffff;
+	--ed-body: #d9d9d9;
+	--ed-muted: #858585;
+	--ed-faint: #757575;
+	--ed-line: #212121;
+	--ed-line-soft: rgb(33 33 33 / 0.7);
+	--ed-accent: #3080ff;
+	--ed-accent-soft: rgb(21 93 252 / 0.16);
+	--ed-good: #4ade80;
+	--ed-good-soft: rgb(74 222 128 / 0.1);
+	--ed-warn: #fbbf24;
+	--ed-warn-soft: rgb(251 191 36 / 0.1);
+	--ed-bad: #f87171;
+	--ed-bad-soft: rgb(248 113 113 / 0.1);
+	--ed-header-glass: rgb(9 9 9 / 0.8);
+	--ed-fig: #9db8ff;
+	--ed-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.8);
+	background: var(--ed-bg);
+	color: var(--ed-muted);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* The page behind the scroll port matches the Polar page color. */
+html:has(.sim-marketing-site.dark),
+body:has(.sim-marketing-site.dark) {
+	background: #090909;
+	color-scheme: dark;
+}
+
+/* Public pages render at full size, like polar.sh; the 0.8 zoom is for the product app. */
+body:has(.sim-marketing-site.dark) {
+	--app-zoom: 1;
+	--app-vh: 100svh;
+}
+
+.sm-site.sim-marketing-site.marketing-polar.dark {
+	--background: #090909;
+	--foreground: #ffffff;
+	--border: #212121;
+	--card: #111111;
+	--card-foreground: #ffffff;
+	--muted-foreground: #858585;
+	background: #090909;
+	color-scheme: dark;
+}
+
+/*
+ * Type: one sans family at regular weights, optical sizing on, near-zero
+ * tracking. Headings often continue in a muted second tone.
+ * Kept in the components layer so Tailwind utilities can still override.
+ */
+@layer components {
+	.ed-display {
+		font-family:
+			var(--font-marketing-sans),
+			Inter,
+			-apple-system,
+			"Segoe UI",
+			sans-serif;
+		font-weight: 400;
+		font-optical-sizing: auto;
+		letter-spacing: -0.012em;
+		text-wrap: balance;
+	}
+
+	.ed-mono {
+		font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+	}
+
+	.ed-sans {
+		font-family:
+			var(--font-marketing-sans),
+			Inter,
+			-apple-system,
+			"Segoe UI",
+			Roboto,
+			Arial,
+			sans-serif;
+		font-optical-sizing: auto;
+		letter-spacing: 0.006em;
+	}
+}
+
+/* Long-form prose for blog posts. */
+@layer components {
+	.ed-prose {
+		font-family: var(--font-marketing-sans), Inter, sans-serif;
+		font-weight: 450;
+		font-size: 16px;
+		line-height: 1.7;
+		color: var(--ed-body);
+	}
+
+	.ed-prose h2 {
+		margin: 2.5rem 0 0.75rem;
+		font-size: 24px;
+		line-height: 1.3;
+		font-weight: 450;
+		color: var(--ed-ink);
+	}
+
+	.ed-prose h3 {
+		margin: 2rem 0 0.5rem;
+		font-size: 19px;
+		line-height: 1.35;
+		font-weight: 500;
+		color: var(--ed-ink);
+	}
+
+	.ed-prose p,
+	.ed-prose ul,
+	.ed-prose ol {
+		margin: 0 0 1.1rem;
+	}
+
+	.ed-prose ul {
+		list-style: disc;
+		padding-left: 1.25rem;
+	}
+
+	.ed-prose ol {
+		list-style: decimal;
+		padding-left: 1.25rem;
+	}
+
+	.ed-prose a {
+		color: var(--ed-accent);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.ed-prose code {
+		font-family: var(--font-geist-mono), ui-monospace, monospace;
+		font-size: 0.9em;
+		background: var(--ed-panel);
+		border-radius: 6px;
+		padding: 0.1em 0.35em;
+	}
+
+	.ed-prose pre {
+		margin: 0 0 1.25rem;
+		overflow-x: auto;
+		border-radius: 12px;
+		border: 1px solid #212121;
+		background: #111111;
+		color: #e5e7eb;
+		padding: 1rem 1.25rem;
+	}
+
+	.ed-prose pre code {
+		background: transparent;
+		padding: 0;
+	}
+
+	.ed-prose strong {
+		color: var(--ed-ink);
+		font-weight: 550;
+	}
+}
+
+/* Legal section blocks render with the shared sans and the editorial colors. */
+@layer components {
+	.ed-legal {
+		font-family: var(--font-marketing-sans), Inter, sans-serif;
+		--text-primary: var(--ed-ink);
+		--text-secondary: var(--ed-body);
+		--text-body: var(--ed-body);
+		--text-muted: var(--ed-muted);
+		--border: var(--ed-line);
+	}
+}
+
+/* The platform marquee on the home page. */
+@keyframes ed-marquee {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+.ed-marquee {
+	animation: ed-marquee 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ed-marquee {
+		animation: none;
+	}
+}
+
+/*
+ * Figure plates, drawn like the plates on playbookmedia.io: plain black
+ * ground, hairline frame, mono labels, hatch fills, and thin strokes.
+ */
+.ed-sheet {
+	border: 1px solid rgb(255 255 255 / 0.12);
+	background-color: #090909;
+}
+
+.ed-fig-label {
+	font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 10.5px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.ed-hatch {
+	background-image: repeating-linear-gradient(
+		135deg,
+		rgb(255 255 255 / 0.4) 0 1px,
+		transparent 1px 5px
+	);
+}
+
+.ed-hatch-fine {
+	background-image: repeating-linear-gradient(
+		45deg,
+		rgb(255 255 255 / 0.22) 0 1px,
+		transparent 1px 3px
+	);
+}
+
+/* A marker that runs along a connector, left to right. */
+@keyframes ed-travel {
+	from {
+		left: 0%;
+	}
+	to {
+		left: 100%;
+	}
+}
+
+.ed-travel {
+	animation: ed-travel 2.8s linear infinite;
+}
+
+@keyframes ed-travel-y {
+	from {
+		top: 0%;
+	}
+	to {
+		top: 100%;
+	}
+}
+
+.ed-travel-y {
+	animation: ed-travel-y 1.6s linear infinite;
+}
+
+@keyframes ed-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.ed-spin {
+	animation: ed-spin 14s linear infinite;
+	transform-box: view-box;
+	transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ed-travel,
+	.ed-travel-y,
+	.ed-spin {
+		animation: none;
+	}
+}
