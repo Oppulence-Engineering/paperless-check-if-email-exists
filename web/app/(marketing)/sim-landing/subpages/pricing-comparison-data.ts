@@ -29,6 +29,7 @@ export const PRICING_COMPARISON_SECTIONS: PricingComparisonSection[] = [
 		title: "Checking",
 		rows: [
 			{ label: "Single checks and CSV lists", values: [true, true, true, true] },
+			{ label: "Find email", values: [true, true, true, true] },
 			{ label: "Scores and reason codes", values: [true, true, true, true] },
 			{ label: "Catch-all grading", values: [true, true, true, true] },
 		],

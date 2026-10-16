@@ -23,6 +23,7 @@ import {
 	CsvFigure,
 	EventTimelineFigure,
 	FeedbackFlow,
+	FinderFigure,
 	GateFigure,
 	ListSortDemo,
 	ProviderFigure,
@@ -71,6 +72,7 @@ function Plate({ title, children }: { title: string; children: ReactNode }) {
 /** The figure beside each page title. */
 const HERO_FIGURES: Record<string, () => ReactNode> = {
 	"/features/single-checks": () => <CheckPipeline fig="1" />,
+	"/features/find-email": () => <FinderFigure />,
 	"/features/list-cleaning": () => (
 		<Plate title="One file, four actions">
 			<ListSortDemo />

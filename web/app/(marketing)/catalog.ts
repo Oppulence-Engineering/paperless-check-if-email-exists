@@ -125,6 +125,67 @@ export const featurePages: CapabilityPage[] = [
 			startFree,
 		],
 	}),
+	page("feature", "find-email", {
+		eyebrow: "Find email",
+		title: "Find a work address from a name and a domain",
+		description:
+			"Enter a first name, a last name, and a company domain. We check the likely addresses and show the best match with a confidence level.",
+		lede: "No email is sent to the person. Each address we try counts as one check.",
+		problem: {
+			title: "A guessed address costs a bounce",
+			body: "Teams guess first.last@ and send. A wrong guess bounces, and each bounce hurts your sender reputation.",
+		},
+		howItWorks: {
+			title: "Up to 13 patterns, one check each",
+			body: "We build up to 13 addresses from the name, such as first.last and flast. We check the domain's mail servers first, then each address, and rank the results.",
+		},
+		workflow: [
+			"Enter a first name, a last name, and a company domain.",
+			"We check the domain, then each likely address.",
+			"Use the best match, or review the other results.",
+		],
+		capabilities: [
+			{
+				title: "A confidence you can read",
+				body: "The best match comes with its score and a confidence of high or medium. A catch-all domain accepts every address, so the result says so and the confidence stays at medium.",
+			},
+			{
+				title: "No checks used on dead domains",
+				body: "If the domain has no mail server, the search stops and uses no checks.",
+			},
+		],
+		examples: [
+			{
+				title: "Reach a contact you met",
+				body: "Find the work address of someone you met at an event, and check it before you write.",
+			},
+			{
+				title: "Complete a CRM record",
+				body: "Fill in a missing address for a known contact at a company you work with.",
+			},
+		],
+		faqs: [
+			{
+				question: "How many checks does a search use?",
+				answer:
+					"One check for each address it tries, up to 13. If the domain has no mail server, the search uses none.",
+			},
+			{
+				question: "Does a search send an email?",
+				answer: "No. Each address is checked like a single check, and no message is delivered.",
+			},
+			{
+				question: "Can I email any address that I find?",
+				answer:
+					"Only people you have a lawful reason to contact. Privacy and anti-spam laws, such as GDPR and CAN-SPAM, apply to the messages you send.",
+			},
+		],
+		related: [
+			{ label: "Single checks", href: "/features/single-checks" },
+			{ label: "Scores and reasons", href: "/features/risk-scoring" },
+			startFree,
+		],
+	}),
 	page("feature", "list-cleaning", {
 		eyebrow: "List cleaning",
 		title: "Clean a list before your next campaign",

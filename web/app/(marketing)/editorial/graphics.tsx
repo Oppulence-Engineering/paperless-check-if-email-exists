@@ -1982,3 +1982,76 @@ export function GateFigure() {
 		</Sheet>
 	);
 }
+
+/* ------------------------------------------------------------------ */
+/* Find email                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Five of the 13 patterns for a fictional person; only first.last exists. */
+const FINDER_ROWS: [string, Kind, number][] = [
+	["ada.lovelace@acme.io", "valid", 100],
+	["alovelace@acme.io", "invalid", 0],
+	["a.lovelace@acme.io", "invalid", 0],
+	["adalovelace@acme.io", "invalid", 0],
+	["ada@acme.io", "invalid", 0],
+];
+
+/** Find email: a name and a domain in, the likely addresses checked, the best match marked. */
+export function FinderFigure() {
+	const ref = useRef<HTMLDivElement>(null);
+	const tick = useTicker(ref, FINDER_ROWS.length + 4, 420, FINDER_ROWS.length + 2);
+	const shown = Math.min(tick, FINDER_ROWS.length);
+	const done = tick > FINDER_ROWS.length;
+	return (
+		<div ref={ref}>
+			<Sheet
+				caption="Sample search · fictional person · 5 of 13 patterns shown"
+				fig="1"
+				title="Find email · POST /v1/find_email"
+			>
+				<div className="flex flex-col p-4 sm:p-5">
+					<Block label="1.1 Search">
+						<dl className="ed-mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[12px]">
+							<dt className="text-[#757575]">name</dt>
+							<dd className="text-[#fafafa]">Ada Lovelace</dd>
+							<dt className="text-[#757575]">domain</dt>
+							<dd className="text-[#fafafa]">acme.io · mail server found</dd>
+						</dl>
+					</Block>
+					<Connector vertical />
+					<Block label="1.2 Addresses checked">
+						<ul className="ed-mono space-y-1.5 text-[12px]">
+							{FINDER_ROWS.map(([email, kind, score], index) => (
+								<li
+									className={cn(
+										"flex items-center justify-between gap-3 transition-opacity duration-300",
+										index < shown ? "opacity-100" : "opacity-20",
+									)}
+									key={email}
+								>
+									<span className="flex min-w-0 items-center gap-2">
+										<Marker kind={kind} />
+										<span className="truncate text-[#fafafa]">{email}</span>
+									</span>
+									<span className="text-[#757575] tabular-nums">{score}</span>
+								</li>
+							))}
+						</ul>
+					</Block>
+					<Connector vertical />
+					<Block label="1.3 Best match">
+						<p
+							className={cn(
+								"ed-mono text-[12.5px] transition-opacity duration-300",
+								done ? "opacity-100" : "opacity-20",
+							)}
+						>
+							<span className="text-[var(--ed-fig)]">ada.lovelace@acme.io</span>
+							<span className="text-[#757575]"> · first.last · confidence high</span>
+						</p>
+					</Block>
+				</div>
+			</Sheet>
+		</div>
+	);
+}

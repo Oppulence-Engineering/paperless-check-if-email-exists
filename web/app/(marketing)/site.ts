@@ -57,6 +57,11 @@ export const headerNav: NavGroup[] = [
 				description: "A clear answer for one address.",
 			},
 			{
+				label: "Find email",
+				href: "/features/find-email",
+				description: "A work address from a name and a domain.",
+			},
+			{
 				label: "List cleaning",
 				href: "/features/list-cleaning",
 				description: "Clean a CSV before your next campaign.",

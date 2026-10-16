@@ -152,6 +152,33 @@ export const PAGE_FACTS: Record<string, PageFacts> = {
 		],
 		reference: RESULT_FIELDS,
 	},
+	"/features/find-email": {
+		specs: [
+			["Input", "First name, last name, domain"],
+			["Tries", "Up to 13 address patterns"],
+			["Result", "Best match with a confidence"],
+			["Uses", "One check per address tried"],
+		],
+		reference: {
+			title: "The patterns we try, for Ada Lovelace at acme.io",
+			columns: ["Pattern", "Address"],
+			rows: [
+				["first.last", "ada.lovelace@acme.io"],
+				["flast", "alovelace@acme.io"],
+				["f.last", "a.lovelace@acme.io"],
+				["firstlast", "adalovelace@acme.io"],
+				["first_last", "ada_lovelace@acme.io"],
+				["first-last", "ada-lovelace@acme.io"],
+				["first", "ada@acme.io"],
+				["last", "lovelace@acme.io"],
+				["first.l", "ada.l@acme.io"],
+				["firstl", "adal@acme.io"],
+				["last.first", "lovelace.ada@acme.io"],
+				["lastf", "lovelacea@acme.io"],
+				["f_last", "a_lovelace@acme.io"],
+			],
+		},
+	},
 	"/features/list-cleaning": {
 		specs: [
 			["Input", "CSV, one address per row"],
@@ -379,6 +406,18 @@ export const PAGE_COMPARE: Record<string, Compare> = {
 			"Each address gets a verdict before the first send.",
 			"A likely domain typo comes back as possible_typo.",
 			"Reason codes name catch-all, role, and disposable addresses.",
+		],
+	},
+	"/features/find-email": {
+		without: [
+			"Teams guess first.last@ and hope it delivers.",
+			"A wrong guess bounces and hurts your sender reputation.",
+			"Each person tries patterns by hand.",
+		],
+		with: [
+			"Up to 13 likely addresses are checked for you.",
+			"Only a match with a confidence of high or medium is suggested.",
+			"The same search works in the app and through the API.",
 		],
 	},
 	"/features/list-cleaning": {
@@ -704,6 +743,45 @@ export const PAGE_SAMPLES: Record<string, Sample> = {
 }`,
 			},
 			{ label: "Response", lang: "json", code: RISKY_RESULT },
+		],
+	},
+	"/features/find-email": {
+		title: "One search",
+		caption: "13 addresses tried, 13 checks used · fields trimmed",
+		panes: [
+			{
+				label: "POST /v1/find_email",
+				lang: "json",
+				code: `{
+  "first_name": "Ada",
+  "last_name": "Lovelace",
+  "domain": "acme.io"
+}`,
+			},
+			{
+				label: "Response",
+				lang: "json",
+				code: `{
+  "job_id": 812,
+  "status": "running",
+  "candidates_checked": 13
+}`,
+			},
+			{
+				label: "GET /v1/find_email/812",
+				lang: "json",
+				code: `{
+  "status": "completed",
+  "domain_has_mx": true,
+  "domain_is_catch_all": false,
+  "best_match": {
+    "email": "ada.lovelace@acme.io",
+    "score": 100,
+    "confidence": "high",
+    "pattern": "first.last"
+  }
+}`,
+			},
 		],
 	},
 	"/features/list-cleaning": LIST_SAMPLE,
