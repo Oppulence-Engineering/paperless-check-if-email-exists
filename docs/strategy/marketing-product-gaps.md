@@ -42,8 +42,17 @@ Goal for this week: everything we market is available to a customer as soon as t
 | --- | --- | --- | --- |
 | G10 | Mailgun bounces | Current Mailgun webhooks report a bounce as `failed` with `severity: permanent`. The backend maps the legacy `bounced` event only. The public page now lists complaints and unsubscribes only. | Done. Bounces are back on the Mailgun page. |
 | G11 | Postmark complaints and unsubscribes | Postmark sends `SpamComplaint` and `SubscriptionChange`. The backend does not map them. The public page now lists bounces only. | Done. The Postmark page lists both events. |
-| G12 | SDK version | npm has `@oppulence/reacher-sdk` 4.0.0; the repo is at 4.3.0. | Open. Needs an npm publish by the owner. |
+| G12 | SDK version | npm has `@oppulence/reacher-sdk` 4.0.0; the repo is at 4.3.0. The publish step failed for v4.1.0 and v4.2.0: the package names the repository by its old name, and npm provenance rejects that. The npm token is also from December 2025. | Fixed in code: correct repository URL, and npm 11.6.2 for trusted publishing. The owner must add the trusted publisher on npmjs.com (or renew `NPM_TOKEN`). The next release then publishes 4.3.0. |
 | G13 | Quality-gate threshold | The approval checklist read a `tenants.settings` column that does not exist and dropped the error, so it always used 90 and 70. Settings had no control. The sending-platforms page says "threshold set by you". | Done. Two threshold columns with a database check, fields in `PATCH /v1/me/settings`, and inputs in Settings → Verification. |
+
+## Second audit (2026-10-16)
+
+| ID | Gap | Detail | Fix |
+| --- | --- | --- | --- |
+| G14 | SCIM not limited by plan | The pricing table sells SCIM on Enterprise only. Any workspace could create SCIM credentials. | Done. The SCIM route creates or rotates credentials on Enterprise only, and Settings shows the plan. |
+| G15 | Policy per job | The scores page said "choose a policy for the job". The policy is a workspace setting. | Done. The copy now says the workspace policy is set in Settings. |
+| G16 | API-only paths on every plan | The outcomes API and pipeline push need an API key, which is Professional and Enterprise only. The pages did not say so. | Done. The copy names the plans. Provider webhooks and the in-app event form work on every plan. |
+| G17 | "Hold" a bad upload | The home page said a bad upload is held. The product marks it "Review before sending" and does not block the export. | Done. The copy says "mark". |
 
 ## Product features we do not market
 

@@ -149,6 +149,11 @@ jobs:
           npm install
           npm run build
 
+      # npm 11.5.1 or later publishes through npm trusted publishing (OIDC),
+      # so no long-lived token is needed. NPM_TOKEN stays as a fallback.
+      - name: Use an npm that supports trusted publishing
+        run: npm install -g npm@11.6.2
+
       - name: Publish to npm
         working-directory: sdks/typescript
         env:

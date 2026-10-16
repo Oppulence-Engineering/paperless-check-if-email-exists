@@ -358,7 +358,7 @@ function ListQuality() {
 				<div className="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
 					<div>
 						<Heading
-							body="Every list gets a quality score and every row gets a reason. Hold a bad upload for review before it reaches your email platform."
+							body="Every list gets a quality score and every row gets a reason. Mark a bad upload for review before it reaches your email platform."
 							eyebrow="List quality"
 							id="quality-heading"
 							muted="before you send it."

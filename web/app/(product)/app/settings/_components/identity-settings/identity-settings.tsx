@@ -232,6 +232,8 @@ export function IdentitySettings({
 		},
 		"invite_members",
 	);
+	// The published plans include SCIM on Enterprise only.
+	const scimDenial = denial(entitlements, "enterprise_identity");
 	const [passkeys, setPasskeys] = useState<z.infer<typeof IdentityPasskeyListSchema>>([]);
 	const [sessions, setSessions] = useState<z.infer<typeof IdentitySessionListSchema>["sessions"]>(
 		[],
@@ -1201,8 +1203,17 @@ export function IdentitySettings({
 						description="Tokens are shown once. Rotation issues a replacement, then revokes prior credentials."
 						visible={showEnterprise}
 					>
+						{scimDenial ? (
+							<p className="text-sm">
+								SCIM provisioning comes with the Enterprise plan.{" "}
+								<Link className="underline underline-offset-2" href="/contact">
+									Contact us
+								</Link>
+							</p>
+						) : null}
 						<form
 							className="flex gap-2"
+							hidden={scimDenial !== null}
 							onSubmit={(event) => {
 								event.preventDefault();
 								const form = new FormData(event.currentTarget);

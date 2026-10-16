@@ -206,7 +206,7 @@ export const featurePages: CapabilityPage[] = [
 			},
 			{
 				title: "Policies that match the send",
-				body: "Choose a policy for the job: growth, deliverability, or signup protection. The same signals give a decision that fits.",
+				body: "Set the policy for your workspace in Settings: growth, deliverability, or signup protection. The same signals give a decision that fits.",
 			},
 		],
 		examples: [
@@ -254,7 +254,7 @@ export const featurePages: CapabilityPage[] = [
 			},
 			{
 				title: "Any other platform",
-				body: "Send delivery events from any tool through the outcomes API.",
+				body: "Send delivery events from any tool through the outcomes API on Professional and Enterprise. On every plan, you can add an event in the app.",
 			},
 		],
 		examples: [
@@ -350,7 +350,7 @@ export const featurePages: CapabilityPage[] = [
 		capabilities: [
 			{
 				title: "Pipelines for new contacts",
-				body: "Send new contacts to a pipeline, and each one is checked before it reaches your email platform.",
+				body: "Push new contacts to a pipeline through the API, and each one is checked before it reaches your email platform. The API comes with Professional and Enterprise.",
 			},
 			{
 				title: "Results delivered to you",
@@ -585,7 +585,7 @@ export const useCasePages: CapabilityPage[] = [
 		capabilities: [
 			{
 				title: "Signup protection policy",
-				body: "Use the signup protection policy to turn the signals into a clear decision.",
+				body: "Set signup protection as your workspace policy, and each result comes with a clear decision.",
 			},
 			{
 				title: "Typo hints",

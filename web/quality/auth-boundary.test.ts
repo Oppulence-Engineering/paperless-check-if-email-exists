@@ -66,6 +66,10 @@ describe("authentication and BFF boundaries", () => {
 		expect(adminRoute).toContain("hasValidStepUp");
 		expect(adminRoute).toContain('"cache-control": "no-store"');
 		expect(adminRoute).toContain("decommissionSCIMManagedConnection");
+		// SCIM is sold on Enterprise only: the plan check runs before any credential is issued.
+		const planCheck = adminRoute.indexOf('"enterprise_identity"');
+		expect(planCheck).toBeGreaterThan(-1);
+		expect(planCheck).toBeLessThan(adminRoute.indexOf("auth.api.createSCIMManagedConnection"));
 		expect(runtime).not.toContain("providerOwnership:");
 		expect(cli).not.toContain("providerOwnership:");
 	});

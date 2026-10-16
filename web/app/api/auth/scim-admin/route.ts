@@ -11,6 +11,8 @@ import { identityAudit } from "@/lib/auth/identity-audit";
 import { publicOrigin } from "@/lib/auth/origin";
 import { getAuthorizedSession } from "@/lib/auth/session";
 import { hasValidStepUp } from "@/lib/auth/step-up";
+import { workspacePlan } from "@/lib/billing/workspace-plan";
+import { can, entitlementsFor } from "@/lib/entitlements/entitlements";
 import { isSameOriginBrowserRequest } from "@/lib/bff/same-origin-request";
 
 const MAX_BODY_BYTES = 16 * 1024;
@@ -131,6 +133,16 @@ export async function POST(request: NextRequest) {
 	const actorId = session.user.id;
 	const expiresAt = new Date(Date.now() + CREDENTIAL_TTL_MS);
 	let targetId = "connectionId" in body.data ? body.data.connectionId : body.data.providerId;
+	// The published plans include SCIM on Enterprise only, so only Enterprise gets new credentials.
+	if (
+		(body.data.action === "create" || body.data.action === "rotate") &&
+		!can(entitlementsFor(await workspacePlan(organizationId)), "enterprise_identity")
+	) {
+		return NextResponse.json(
+			{ error: "SCIM provisioning comes with the Enterprise plan.", code: "plan_required" },
+			{ status: 403 },
+		);
+	}
 
 	try {
 		if (body.data.action === "create") {
