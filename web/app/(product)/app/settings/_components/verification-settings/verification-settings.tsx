@@ -89,6 +89,7 @@ export function VerificationSettings({
 	organizationId,
 	organizationRole,
 	scope = "all",
+	chosenPlan,
 	...props
 }: VerificationSettingsProps) {
 	const queryClient = useQueryClient();
@@ -335,6 +336,7 @@ export function VerificationSettings({
 							<BillingPlan
 								billingEnabled={billingEnabled}
 								canManage={canManage}
+								chosen={chosenPlan}
 								error={billingError}
 								onManage={() =>
 									void billingRedirect(() =>

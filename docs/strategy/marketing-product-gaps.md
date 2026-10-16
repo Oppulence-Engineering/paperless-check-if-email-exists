@@ -21,7 +21,7 @@ Goal for this week: everything we market is available to a customer as soon as t
 
 | ID | Gap | What we market | What the product did before the fix | Status | Fix |
 | --- | --- | --- | --- | --- | --- |
-| G1 | No payment | Paid plans Starter ($49), Professional ($149), Enterprise | No checkout, no subscription, no billing portal. Paid-plan buttons open sign-up only. `/billing/success` and `/billing/cancel` are placeholders. | Done (needs Stripe keys) | Stripe through `@better-auth/stripe`. Checkout, signed webhook, billing portal, and a Plan card in Settings → Usage. Billing stays off until the Stripe keys are set. |
+| G1 | No payment | Paid plans Starter ($49), Professional ($149), Enterprise | No checkout, no subscription, no billing portal. Paid-plan buttons open sign-up only. `/billing/success` and `/billing/cancel` are placeholders. | Done (needs Stripe keys) | Stripe through `@better-auth/stripe`. Checkout, signed webhook, billing portal, and a Plan card in Settings → Usage. Billing stays off until the Stripe keys are set. The Starter and Professional buttons on the pricing page sign up, then open the plan card with that plan chosen. |
 | G2 | Check allowance not set | Free 100, Starter 4,000, Professional 12,000 checks each month | A new workspace is created with `plan_tier = free` and `monthly_email_limit = NULL`, which the backend treats as unlimited (`backend/src/tenant/jwt.rs`, `backend/src/tenant/quota.rs`). | Done | The backend JWT carries the plan. The backend sets the plan and allowance on each request. An Enterprise limit set by hand is kept. |
 | G3 | Plan names disagree | Professional | The web app uses `pro`; the backend uses `professional`. A Professional workspace reads as Free in the web app (`web/lib/entitlements`). The session never carries the plan, so every workspace reads as Free. | Done | One name, `professional`. The session reads the plan from the Stripe subscription. |
 | G4 | Seat limit not enforced | Free 3, Starter 10, Professional 50 seats, Enterprise unlimited | The invite screen checks seats, but with the wrong plan (G3). The server has no member limit. | Done | Better Auth `membershipLimit` uses the plan's seat limit. |
@@ -54,9 +54,18 @@ Goal for this week: everything we market is available to a customer as soon as t
 | G16 | API-only paths on every plan | The outcomes API and pipeline push need an API key, which is Professional and Enterprise only. The pages did not say so. | Done. The copy names the plans. Provider webhooks and the in-app event form work on every plan. |
 | G17 | "Hold" a bad upload | The home page said a bad upload is held. The product marks it "Review before sending" and does not block the export. | Done. The copy says "mark". |
 
-## Product features we do not market
+## Product features the site did not market
 
-These work in the app but are not on the public site: Find email, Domains, Pipelines (scheduled verification of a saved list or push source), Analytics (result explorer, domain reputation), Comments, and the API explorer. Decide which to market; none blocks this week's goal.
+| Feature | Decision |
+| --- | --- |
+| Pipelines | Marketed on Ongoing re-checks. Push needs the API, so the page names Professional and Enterprise. |
+| Comments | Marketed on Team workspace. |
+| Analytics | Source quality is on Marketing operations. The result explorer and the domain reputation check (8 blocklists, SPF, DMARC) are now on Marketing operations and Email marketing. |
+| API explorer | A tool for API users. The developer docs cover the API. |
+| Domains | Workspace administration. It makes no promise to a customer. |
+| Find email | Not marketed. The site sells verification. A tool that finds a person's work address has privacy rules (for example, GDPR), so the owner must approve it before it is marketed. Its checks count against the plan allowance. |
+
+Every check path counts against the plan allowance: single checks, lists, bulk jobs, retries, re-checks, pipelines, and Find email.
 
 ## What the owner must do
 

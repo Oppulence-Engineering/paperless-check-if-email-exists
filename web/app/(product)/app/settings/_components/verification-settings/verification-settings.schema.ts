@@ -12,6 +12,8 @@ export const VerificationSettingsPropsSchema = z.object({
 	organizationId: z.string().min(1),
 	organizationRole: z.string().min(1),
 	scope: z.enum(["all", "verification", "usage", "webhook"]).optional(),
+	/** A paid plan picked on the pricing page. */
+	chosenPlan: z.enum(["starter", "professional"]).optional(),
 });
 
 export type VerificationSettingsPropsFields = z.infer<typeof VerificationSettingsPropsSchema>;

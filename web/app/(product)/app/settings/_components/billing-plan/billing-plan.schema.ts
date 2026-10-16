@@ -19,6 +19,8 @@ export const BillingPlanPropsSchema = z.object({
 	canManage: z.boolean(),
 	pending: z.boolean().optional(),
 	error: z.string().optional(),
+	/** The paid plan picked on the pricing page, shown first and marked. */
+	chosen: z.enum(["starter", "professional"]).optional(),
 });
 
 export type BillingPlanPropsFields = z.infer<typeof BillingPlanPropsSchema>;

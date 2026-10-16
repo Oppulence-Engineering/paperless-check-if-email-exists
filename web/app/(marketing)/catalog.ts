@@ -497,6 +497,10 @@ export const useCasePages: CapabilityPage[] = [
 				title: "Fewer repeat bounces",
 				body: "Bounced addresses are suppressed before they come back in the next import.",
 			},
+			{
+				title: "Domain reputation",
+				body: "Check a domain against 8 blocklists, such as Spamhaus ZEN, and read its SPF and DMARC records.",
+			},
 		],
 		examples: [
 			{
@@ -543,6 +547,10 @@ export const useCasePages: CapabilityPage[] = [
 			{
 				title: "Re-checks on a schedule",
 				body: "Keep the database fresh without a manual project every quarter.",
+			},
+			{
+				title: "Result explorer",
+				body: "Filter every result by category and by the safe-to-send flag in Analytics.",
 			},
 		],
 		examples: [

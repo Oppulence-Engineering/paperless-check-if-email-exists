@@ -51,6 +51,7 @@ export function BillingPlan({
 	canManage,
 	pending = false,
 	error,
+	chosen,
 	onUpgrade,
 	onManage,
 	className,
@@ -88,8 +89,17 @@ export function BillingPlan({
 					{upgrades.length > 0 ? (
 						<ul className="divide-y divide-border border-y border-border">
 							{upgrades.map((option) => (
-								<li className="flex items-center justify-between gap-4 py-3" key={option}>
+								<li
+									className={cn(
+										"flex items-center justify-between gap-4 py-3",
+										option === chosen && "-mx-3 bg-primary/5 px-3",
+									)}
+									key={option}
+								>
 									<span>
+										{option === chosen ? (
+											<span className="block text-xs text-primary">The plan you picked</span>
+										) : null}
 										<span className="block font-medium">
 											{PLAN_NAME[option]} · ${MONTHLY_PRICE_USD[option]} a month
 										</span>

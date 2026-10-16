@@ -22,6 +22,15 @@ describe("BillingPlan", () => {
 		expect(onUpgrade).toHaveBeenCalledWith("professional");
 	});
 
+	it("marks the plan picked on the pricing page", () => {
+		render(<BillingPlan billingEnabled canManage chosen="professional" plan="free" />);
+
+		expect(screen.getByText("The plan you picked")).toBeInTheDocument();
+		expect(screen.getByText("The plan you picked").closest("li")).toHaveTextContent(
+			"Professional · $149 a month",
+		);
+	});
+
 	it("lets a paid workspace open the billing portal", () => {
 		const onManage = vi.fn();
 		render(<BillingPlan billingEnabled canManage onManage={onManage} plan="starter" />);

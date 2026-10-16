@@ -41,12 +41,18 @@ describe("editorial content collections", () => {
 			"Professional:$149/month",
 			"Enterprise:Custom",
 		]);
-		// Onboarding is self-serve, but no checkout exists yet: paid plans start
-		// free through sign-up and must not promise a purchase.
-		for (const plan of pricingPlans.slice(1, 3)) {
-			expect(plan.ctaHref).toBe("/sign-up");
-			expect(plan.ctaLabel).toBe("Start free");
-		}
+		// Onboarding is self-serve: a paid plan signs up, then lands on the plan
+		// card with that plan chosen, where checkout starts.
+		expect(pricingPlans.slice(1, 3).map((plan) => [plan.ctaLabel, plan.ctaHref])).toEqual([
+			[
+				"Choose Starter",
+				"/sign-up?return_to=%2Fapp%2Fsettings%3Fsettings%3Dusage%26plan%3Dstarter",
+			],
+			[
+				"Choose Professional",
+				"/sign-up?return_to=%2Fapp%2Fsettings%3Fsettings%3Dusage%26plan%3Dprofessional",
+			],
+		]);
 		expect(pricingPlans[3].ctaHref).toBe("/contact");
 	});
 });

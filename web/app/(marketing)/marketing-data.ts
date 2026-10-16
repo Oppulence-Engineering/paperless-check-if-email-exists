@@ -1,3 +1,5 @@
+import { signUpForPlan } from "@/lib/billing/plans";
+
 export type LinkItem = {
 	label: string;
 	href: string;
@@ -41,9 +43,9 @@ export const productPage: MarketingPage = {
 
 /**
  * Public plans (set 2026-10-16). Onboarding is self-serve: Starter and
- * Professional start on the free plan through sign-up until self-serve billing
- * exists, and only Enterprise links to Contact for custom terms. Check allowances are per month; seats follow the plan
- * entitlements in lib/entitlements.
+ * Professional sign up, then land on the plan card with the plan chosen, where
+ * checkout starts. Only Enterprise links to Contact for custom terms. Check
+ * allowances are per month; seats follow the plan entitlements in lib/entitlements.
  */
 export const pricingPlans = [
 	{
@@ -62,8 +64,8 @@ export const pricingPlans = [
 		note: "4,000 checks a month",
 		description: "For teams that clean lists before each campaign.",
 		recommended: true,
-		ctaLabel: "Start free",
-		ctaHref: "/sign-up",
+		ctaLabel: "Choose Starter",
+		ctaHref: signUpForPlan("starter"),
 	},
 	{
 		name: "Professional",
@@ -71,8 +73,8 @@ export const pricingPlans = [
 		period: "/month",
 		note: "12,000 checks a month",
 		description: "For teams that check at signup and send at volume.",
-		ctaLabel: "Start free",
-		ctaHref: "/sign-up",
+		ctaLabel: "Choose Professional",
+		ctaHref: signUpForPlan("professional"),
 	},
 	{
 		name: "Enterprise",

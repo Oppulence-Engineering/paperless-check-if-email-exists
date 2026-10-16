@@ -52,6 +52,7 @@ export function SettingsDashboardRoute({
 	userId,
 	userName,
 	userEmail,
+	chosenPlan,
 	...props
 }: SettingsDashboardRouteProps) {
 	const current = settingsSectionFromParam(section);
@@ -127,6 +128,7 @@ export function SettingsDashboardRoute({
 				) : null}
 				{verificationScope ? (
 					<VerificationSettings
+						chosenPlan={chosenPlan}
 						organizationId={organizationId}
 						organizationRole={organizationRole}
 						scope={verificationScope}
