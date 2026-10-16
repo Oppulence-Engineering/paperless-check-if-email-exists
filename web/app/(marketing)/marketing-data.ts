@@ -1359,6 +1359,28 @@ export function getMarketingPage(path: string) {
 	return marketingPages.find((entry) => entry.path === path);
 }
 
+/** Content for `/product`. */
+export const productPage: MarketingPage = {
+	path: "product",
+	eyebrow: "Email verification",
+	title: "Know which addresses are safe to send to",
+	description:
+		"Check one address or a whole list. Each address gets a category, a score, and the reasons, and bounces from your email platform keep your suppression list current.",
+	category: "product",
+	bullets: [
+		"Check one address or upload a CSV list.",
+		"See the category, the score, the safe-to-send flag, and the reason codes.",
+		"Suppress bounces and complaints from SendGrid, Mailgun, Postmark, or Amazon SES.",
+	],
+	proof: [
+		"No email is sent during a check.",
+		"Some mail servers hide whether a mailbox exists. We say so in the result.",
+		"Your lists and results stay in your workspace.",
+	],
+	ctaLabel: "Start free",
+	ctaHref: "/sign-up",
+};
+
 export const pricingPlans = [
 	{
 		name: "Web workspace",

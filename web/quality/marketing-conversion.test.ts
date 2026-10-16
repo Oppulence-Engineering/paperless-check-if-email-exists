@@ -15,6 +15,7 @@ describe("public conversion", () => {
 	it("shows an email verification offer with self-service entry points", () => {
 		expect(hero).toContain("Check email addresses");
 		expect(hero).toContain("before you send.");
+		expect(hero).toContain("protect your sender reputation");
 		expect(navigation).toContain('href="/sign-up"');
 		expect(navigation).toContain('href="/sign-in"');
 	});

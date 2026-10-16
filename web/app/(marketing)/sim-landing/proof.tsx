@@ -1,9 +1,10 @@
 import {
-	BriefcaseIcon,
-	CalendarDotsIcon,
-	ChartLineIcon,
 	EnvelopeIcon,
-	HeadsetIcon,
+	GlobeIcon,
+	PlugsConnectedIcon,
+	SealCheckIcon,
+	TrayIcon,
+	WarningCircleIcon,
 } from "@/lib/icons";
 
 import { cn } from "@/lib/sim/cn";
@@ -11,18 +12,19 @@ import { cn } from "@/lib/sim/cn";
 import { HOME_INSET, LANDING_CONTENT_WIDTH, LANDING_GUTTER } from "./tokens";
 
 const sources = [
-	{ label: "Syntax", icon: EnvelopeIcon },
-	{ label: "DNS", icon: CalendarDotsIcon },
-	{ label: "MX records", icon: HeadsetIcon },
-	{ label: "Mailbox", icon: BriefcaseIcon },
-	{ label: "CSV lists", icon: ChartLineIcon },
+	{ label: "Address format", icon: EnvelopeIcon },
+	{ label: "Domain and MX", icon: GlobeIcon },
+	{ label: "Mailbox", icon: TrayIcon },
+	{ label: "Catch-all grading", icon: WarningCircleIcon },
+	{ label: "Safe to send", icon: SealCheckIcon },
+	{ label: "Delivery feedback", icon: PlugsConnectedIcon },
 ] as const;
 
 /** Sim `Proof` — connector row in the homepage inset. */
 export function SimProof() {
 	return (
 		<section
-			aria-label="Verification signals and workflows"
+			aria-label="What each check covers"
 			className={cn(LANDING_CONTENT_WIDTH, LANDING_GUTTER)}
 			id="proof"
 		>

@@ -2,8 +2,8 @@ export type ProductDemoBeatId = "read" | "confirm" | "watch";
 
 export const PRODUCT_DEMO_BEATS: Readonly<Record<ProductDemoBeatId, string>> = {
 	read: "Check one address.",
-	confirm: "Review the signals.",
-	watch: "Clean a whole list.",
+	confirm: "See why it is risky.",
+	watch: "Clean the whole list.",
 };
 
 export const PRODUCT_DEMO_FRAMES: Readonly<
@@ -11,15 +11,15 @@ export const PRODUCT_DEMO_FRAMES: Readonly<
 > = {
 	read: {
 		src: "/marketing/email-check-preview.svg",
-		alt: "Email verification result preview",
+		alt: "Sample email check result",
 	},
 	confirm: {
 		src: "/marketing/email-check-preview.svg",
-		alt: "Email verification signals preview",
+		alt: "Sample result with reason codes",
 	},
 	watch: {
 		src: "/marketing/email-check-preview.svg",
-		alt: "Bulk list verification preview",
+		alt: "Sample list results",
 	},
 };
 
