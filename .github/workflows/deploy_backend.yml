@@ -46,7 +46,6 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=tag
-            type=raw,value=latest
             type=raw,value=sha-${{ github.sha }}
 
       - name: Build smoke image
