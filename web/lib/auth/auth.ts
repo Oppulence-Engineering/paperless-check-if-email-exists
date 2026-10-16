@@ -262,7 +262,8 @@ async function sendEmail(input: { to: string; subject: string; text: string }) {
 		...input,
 	});
 	// Resend's error name and message hold no secrets and name the cause, such as an unverified sender domain.
-	if (error) throw new Error(`Authentication email delivery failed: ${error.name}: ${error.message}`);
+	if (error)
+		throw new Error(`Authentication email delivery failed: ${error.name}: ${error.message}`);
 }
 
 function bodyIdentifier(body: unknown): string | null {
