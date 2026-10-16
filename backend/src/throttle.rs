@@ -137,7 +137,8 @@ impl Throttle {
 		if let Some(max_per_second) = config.max_requests_per_second {
 			if self.requests_per_second >= max_per_second {
 				return Some(ThrottleResult {
-					delay: Duration::from_secs(1) - now.duration_since(self.last_reset_second),
+					delay: Duration::from_secs(1)
+						.saturating_sub(now.duration_since(self.last_reset_second)),
 					limit_type: ThrottleLimit::PerSecond,
 				});
 			}
@@ -146,7 +147,8 @@ impl Throttle {
 		if let Some(max_per_minute) = config.max_requests_per_minute {
 			if self.requests_per_minute >= max_per_minute {
 				return Some(ThrottleResult {
-					delay: Duration::from_secs(60) - now.duration_since(self.last_reset_minute),
+					delay: Duration::from_secs(60)
+						.saturating_sub(now.duration_since(self.last_reset_minute)),
 					limit_type: ThrottleLimit::PerMinute,
 				});
 			}
@@ -155,7 +157,8 @@ impl Throttle {
 		if let Some(max_per_hour) = config.max_requests_per_hour {
 			if self.requests_per_hour >= max_per_hour {
 				return Some(ThrottleResult {
-					delay: Duration::from_secs(3600) - now.duration_since(self.last_reset_hour),
+					delay: Duration::from_secs(3600)
+						.saturating_sub(now.duration_since(self.last_reset_hour)),
 					limit_type: ThrottleLimit::PerHour,
 				});
 			}
@@ -164,7 +167,8 @@ impl Throttle {
 		if let Some(max_per_day) = config.max_requests_per_day {
 			if self.requests_per_day >= max_per_day {
 				return Some(ThrottleResult {
-					delay: Duration::from_secs(86400) - now.duration_since(self.last_reset_day),
+					delay: Duration::from_secs(86400)
+						.saturating_sub(now.duration_since(self.last_reset_day)),
 					limit_type: ThrottleLimit::PerDay,
 				});
 			}
@@ -203,6 +207,42 @@ impl ThrottleManager {
 mod tests {
 	use super::*;
 	use tokio::time::{sleep, Duration};
+
+	#[test]
+	fn expired_throttle_windows_have_no_remaining_delay() {
+		// A window can expire between reset_if_needed and should_throttle.
+		let expired = Instant::now() - Duration::from_secs(86401);
+		let throttle = Throttle {
+			requests_per_second: 1,
+			requests_per_minute: 1,
+			requests_per_hour: 1,
+			requests_per_day: 1,
+			last_reset_second: expired,
+			last_reset_minute: expired,
+			last_reset_hour: expired,
+			last_reset_day: expired,
+		};
+		for limit in [
+			ThrottleLimit::PerSecond,
+			ThrottleLimit::PerMinute,
+			ThrottleLimit::PerHour,
+			ThrottleLimit::PerDay,
+		] {
+			let config = ThrottleConfig {
+				max_requests_per_second: (limit == ThrottleLimit::PerSecond).then_some(1),
+				max_requests_per_minute: (limit == ThrottleLimit::PerMinute).then_some(1),
+				max_requests_per_hour: (limit == ThrottleLimit::PerHour).then_some(1),
+				max_requests_per_day: (limit == ThrottleLimit::PerDay).then_some(1),
+			};
+			assert_eq!(
+				throttle.should_throttle(&config),
+				Some(ThrottleResult {
+					delay: Duration::ZERO,
+					limit_type: limit
+				})
+			);
+		}
+	}
 
 	#[tokio::test]
 	async fn test_throttle_limits() {

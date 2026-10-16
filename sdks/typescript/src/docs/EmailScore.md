@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **age_days** | **number** |  | [optional]
-**catch_all_severity** | **string** | Severity tier for catch-all domains (low&#x3D;free provider, high&#x3D;corporate) | [optional]
+**catch_all_severity** | **string** | Severity tier for catch-all domains. low&#x3D;free provider with no other negative signal; high&#x3D;corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send. | [optional]
 **category** | [**EmailCategory**](EmailCategory.md) |  | [required]
 **domain_suggestion** | **string** | Suggested corrected email when a likely domain typo is detected | [optional]
 **freshness** | [**Freshness**](Freshness.md) |  | [optional]

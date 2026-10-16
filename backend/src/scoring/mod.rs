@@ -85,16 +85,20 @@ pub fn catch_all_severity(signals: &ScoringSignals) -> Option<CatchAllSeverity> 
 		return None;
 	}
 
-	let aggravated = signals.is_role_account
-		|| signals.is_spam_trap_domain
-		|| signals.is_disposable
-		|| signals.smtp_has_full_inbox
-		|| signals.has_domain_suggestion
-		|| !signals.smtp_can_connect
-		|| !signals.has_mx_records
-		|| matches!(signals.reachable, Reachable::Unknown);
+	let otherwise_clean = signals.valid_syntax
+		&& matches!(signals.reachable, Reachable::Safe)
+		&& signals.has_mx_records
+		&& !signals.smtp_error
+		&& signals.smtp_can_connect
+		&& signals.smtp_is_deliverable
+		&& !signals.smtp_is_disabled
+		&& !signals.smtp_has_full_inbox
+		&& !signals.is_disposable
+		&& !signals.is_role_account
+		&& !signals.is_spam_trap_domain
+		&& !signals.has_domain_suggestion;
 
-	if signals.is_free_provider && !aggravated {
+	if signals.is_free_provider && otherwise_clean {
 		Some(CatchAllSeverity::Low)
 	} else {
 		Some(CatchAllSeverity::High)
@@ -610,7 +614,13 @@ mod tests {
 		// Each signal below, on its own, must be enough to lose the Low tier.
 		// If someone adds a negative signal to ScoringSignals and forgets to
 		// list it in catch_all_severity, add the case here and this fails.
-		let mutators: [(&str, SignalMutator); 8] = [
+		let mutators: [(&str, SignalMutator); 13] = [
+			("valid_syntax", |s| s.valid_syntax = false),
+			("reachable_risky", |s| s.reachable = Reachable::Risky),
+			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
+			("smtp_error", |s| s.smtp_error = true),
+			("smtp_is_deliverable", |s| s.smtp_is_deliverable = false),
+			("smtp_is_disabled", |s| s.smtp_is_disabled = true),
 			("is_role_account", |s| s.is_role_account = true),
 			("is_spam_trap_domain", |s| s.is_spam_trap_domain = true),
 			("is_disposable", |s| s.is_disposable = true),
@@ -618,7 +628,6 @@ mod tests {
 			("has_domain_suggestion", |s| s.has_domain_suggestion = true),
 			("smtp_can_connect", |s| s.smtp_can_connect = false),
 			("has_mx_records", |s| s.has_mx_records = false),
-			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
 		];
 
 		for (name, mutate) in mutators {
@@ -724,7 +733,7 @@ mod tests {
 			is_disabled: false,
 		});
 		let score = compute_score(&output);
-		// catch-all emails are never safe to send regardless of category
+		// Corporate catch-all emails are never safe to send regardless of category.
 		assert!(!score.safe_to_send);
 	}
 

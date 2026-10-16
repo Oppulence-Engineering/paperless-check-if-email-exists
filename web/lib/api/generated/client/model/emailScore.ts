@@ -16,7 +16,7 @@ import type { SubReason } from "./subReason";
 
 export interface EmailScore {
   age_days?: number;
-  /** Severity tier for catch-all domains (low=free provider, high=corporate) */
+  /** Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send. */
   catch_all_severity?: EmailScoreCatchAllSeverity;
   category: EmailCategory;
   /** Suggested corrected email when a likely domain typo is detected */

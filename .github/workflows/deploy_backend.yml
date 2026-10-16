@@ -13,10 +13,11 @@ on:
         required: true
         type: choice
         options:
+          - build-only
           - staging
           - production
           - all
-        default: staging
+        default: build-only
 
 # Publish the web, API, and worker as one image.
 permissions:
@@ -44,7 +45,6 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=tag
-            type=raw,value=latest
             type=raw,value=sha-${{ github.sha }}
 
       - name: Build smoke image

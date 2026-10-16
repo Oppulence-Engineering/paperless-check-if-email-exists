@@ -4,6 +4,16 @@ replicaCount: 1
 autoscaling:
   enabled: false
 
+# Staging was reserving 512Mi on each of three clusters (1.5 Gi) while using
+# about 0.5 Gi; production only needs 0.1 Gi. 256Mi per pod reserves 768Mi
+# across the three clusters, and the 512Mi limit still covers a pod that
+# spikes to the observed 0.5 Gi. CPU stays inherited from values.yaml.
+resources:
+  requests:
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
 config:
   env:
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
