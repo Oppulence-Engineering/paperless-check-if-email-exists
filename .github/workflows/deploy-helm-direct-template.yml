@@ -181,10 +181,11 @@ jobs:
           HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          # Production shares these values with staging unless its own secret is set.
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || secrets.BETTER_AUTH_SECRET_STAGING }}
+          SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET || secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || secrets.RESEND_API_KEY_STAGING }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM || secrets.RESEND_FROM_STAGING }}
           BETTER_AUTH_URL_STAGING: ${{ secrets.BETTER_AUTH_URL_STAGING }}
           BETTER_AUTH_SECRET_STAGING: ${{ secrets.BETTER_AUTH_SECRET_STAGING }}
           SCIM_CREDENTIAL_HASH_SECRET_STAGING: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
@@ -226,7 +227,7 @@ jobs:
               exit 1
             fi
           done
-          HELM_ARGS=(upgrade --install "${{ inputs.service_name }}" "${{ inputs.chart_repository }}" -n "${{ inputs.namespace }}" --wait --force-conflicts)
+          HELM_ARGS=(upgrade --install "${{ inputs.service_name }}" "${{ inputs.chart_repository }}" -n "${{ inputs.namespace }}" --wait --server-side=true --force-conflicts)
 
           if [ "${{ inputs.create_namespace }}" = "true" ]; then
             HELM_ARGS+=(--create-namespace)

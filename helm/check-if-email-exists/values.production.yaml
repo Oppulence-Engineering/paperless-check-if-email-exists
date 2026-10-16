@@ -1,0 +1,20 @@
+# Production overrides: the public web app at verifier.playbookmedia.io.
+# cert-manager issues the certificate through the Cloudflare DNS-01 solver,
+# so each of the three clusters gets a certificate for the same host.
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    # Better Auth session cookies are large; the default buffer returns 502.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+  hosts:
+    - host: verifier.playbookmedia.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - verifier.playbookmedia.io
+      secretName: verifier-playbookmedia-io-tls
