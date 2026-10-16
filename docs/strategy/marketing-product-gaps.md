@@ -24,7 +24,7 @@ Goal for this week: everything we market is available to a customer as soon as t
 | G1 | No payment | Paid plans Starter ($49), Professional ($149), Enterprise | No checkout, no subscription, no billing portal. Paid-plan buttons open sign-up only. `/billing/success` and `/billing/cancel` are placeholders. | Done | Stripe through `@better-auth/stripe`. Checkout, signed webhook, billing portal, and a Plan card in Settings → Usage. Billing stays off until the Stripe keys are set. The Starter and Professional buttons on the pricing page sign up, then open the plan card with that plan chosen. Tested end to end in Stripe test mode on 2026-10-16: checkout, webhook, plan and allowance in the app and the backend, billing portal, and cancel back to Free. |
 | G2 | Check allowance not set | Free 100, Starter 4,000, Professional 12,000 checks each month | A new workspace is created with `plan_tier = free` and `monthly_email_limit = NULL`, which the backend treats as unlimited (`backend/src/tenant/jwt.rs`, `backend/src/tenant/quota.rs`). | Done | The backend JWT carries the plan. The backend sets the plan and allowance on each request. An Enterprise limit set by hand is kept. |
 | G3 | Plan names disagree | Professional | The web app uses `pro`; the backend uses `professional`. A Professional workspace reads as Free in the web app (`web/lib/entitlements`). The session never carries the plan, so every workspace reads as Free. | Done | One name, `professional`. The session reads the plan from the Stripe subscription. |
-| G4 | Seat limit not enforced | Free 3, Starter 10, Professional 50 seats, Enterprise unlimited | The invite screen checks seats, but with the wrong plan (G3). The server has no member limit. | Done | Better Auth `membershipLimit` uses the plan's seat limit. |
+| G4 | Seat limit not enforced | Free 3, Starter 10, Professional 50 seats, Enterprise unlimited | The invite screen checks seats, but with the wrong plan (G3). The server has no member limit. | Done | Better Auth `membershipLimit` uses the plan's seat limit. Tested live: Free accepts the 2nd and 3rd member and refuses the 4th; after an upgrade to Starter, the 4th member joins. |
 | G5 | API access not limited by plan | REST API and SDKs on Professional and Enterprise | Any workspace can create API keys and call the API. | Done | API keys and API-key calls return 403 below Professional. The app's own calls work on every plan. |
 
 ## P1: marketed features that a customer cannot use
@@ -75,25 +75,28 @@ Every check path counts against the plan allowance: single checks, lists, bulk j
    - `STRIPE_WEBHOOK_SECRET`
    - `STRIPE_PRICE_STARTER`
    - `STRIPE_PRICE_PROFESSIONAL`
-3. Add a Stripe webhook to `<BETTER_AUTH_URL>/api/auth/stripe/webhook`. For a local test, run `stripe listen --forward-to localhost:3000/api/auth/stripe/webhook`.
+3. Add a Stripe webhook to `<BETTER_AUTH_URL>/api/auth/stripe/webhook`. For a local test, run `stripe listen --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted --forward-to localhost:3000/api/auth/stripe/webhook`.
 4. Apply the auth migration `config/auth/migrations/0007_stripe_billing.sql`.
 5. For Enterprise, add a row to `auth.subscription` with plan `enterprise` and status `active`.
 6. Save a customer portal configuration in Stripe live mode (Settings > Billing > Customer portal). Test mode works today.
 7. For G12: add a trusted publisher for `@oppulence/reacher-sdk` on npmjs.com (repository `Oppulence-Engineering/paperless-check-if-email-exists`, workflow `sdk-generate.yml`), or replace the `NPM_TOKEN` secret. The next release then publishes the SDK.
 
-## Plan for this week
+## Status
 
-| Day | Work | Gaps |
-| --- | --- | --- |
-| 1 | One plan model. Allowance and seats from the plan. Plan in the session. | G2, G3, G4 |
-| 1 | API access by plan. | G5 |
-| 2 | Re-check controls. SES topic ARN and SNS confirmation. Export files. History events. | G6, G7, G8, G9 |
-| 2–3 | Payment: checkout, webhook, billing portal, Upgrade on Usage, billing result pages. | G1 |
-| 3 | Mailgun and Postmark event mapping. Quality-gate threshold. | G10, G11, G13 |
-| 4 | End-to-end test: sign up, pay in test mode, use each paid feature. | All |
+Every gap above is closed in code and tested. G12 waits for one owner step (item 7 above); the code fix is in place.
+
+End-to-end checks on 2026-10-16, local stack, Stripe test mode:
+
+1. Pricing → Choose Starter → sign-up → plan card with Starter marked.
+2. Checkout with a Stripe test card → back to Settings → subscription `starter active`.
+3. Plan card and backend: Starter, 4,000 checks, 10 seats.
+4. Billing portal opens.
+5. Cancel → Free, 100 checks, 3 seats, in the app and the backend.
+6. Seats: Free refuses the 4th member; Starter accepts it.
+7. API keys: blocked on Free with a plan message; available on Professional.
 
 ## Decisions
 
 1. **Payment provider.** Decided: Stripe. Stripe does not collect sales tax for us. Turn on Stripe Tax if we must collect it.
-2. **Enterprise checkout.** Recommended: no self-serve checkout for Enterprise. Set the plan by hand after a contract.
-3. **API on Starter.** Recommended: keep the published rule (Professional and Enterprise only).
+2. **Enterprise checkout.** Applied: no self-serve checkout for Enterprise. Set the plan by hand after a contract.
+3. **API on Starter.** Applied: the published rule (Professional and Enterprise only).

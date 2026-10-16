@@ -20,7 +20,7 @@ export type PaidPlan = keyof typeof MONTHLY_PRICE_USD;
 export const PAID_PLANS = Object.keys(MONTHLY_PRICE_USD) as PaidPlan[];
 
 /** The plan card URL with a plan chosen, for example from the pricing page. */
-export function planChoicePath(plan: PaidPlan): string {
+function planChoicePath(plan: PaidPlan): string {
 	return `/app/settings?settings=usage&plan=${plan}`;
 }
 
