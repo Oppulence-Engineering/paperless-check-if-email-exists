@@ -30,7 +30,7 @@ import { identityAudit } from "@/lib/auth/identity-audit";
 import { createScimOptions, scimWorkspaceForToken } from "@/lib/auth/scim";
 import { BrandAssetURLSchema, HexColorSchema, PublicURLSchema } from "@/lib/auth/schemas";
 import { hasValidStepUp } from "@/lib/auth/step-up";
-import { syncTenantPlan } from "@/lib/billing/tenant-sync";
+import { syncTenantPlan } from "@/lib/bff/tenant-sync";
 import { workspacePlan } from "@/lib/billing/workspace-plan";
 import { can, entitlementsFor, seatLimit } from "@/lib/entitlements/entitlements";
 
@@ -261,7 +261,8 @@ async function sendEmail(input: { to: string; subject: string; text: string }) {
 		from: config.resendFrom,
 		...input,
 	});
-	if (error) throw new Error("Authentication email delivery failed");
+	// Resend's error name and message hold no secrets and name the cause, such as an unverified sender domain.
+	if (error) throw new Error(`Authentication email delivery failed: ${error.name}: ${error.message}`);
 }
 
 function bodyIdentifier(body: unknown): string | null {

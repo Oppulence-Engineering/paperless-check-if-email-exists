@@ -44,6 +44,7 @@ export async function syncTenantPlan(organizationId: string): Promise<void> {
 					: { plan_tier: plan, monthly_email_limit: MONTHLY_CHECKS[plan] },
 			),
 			cache: "no-store",
+			signal: AbortSignal.timeout(10_000),
 		},
 	);
 	// A workspace that never called the backend has no tenant yet; its first request sets the plan.
