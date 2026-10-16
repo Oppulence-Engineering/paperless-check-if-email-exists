@@ -18,3 +18,9 @@ ingress:
     - hosts:
         - verifier.playbookmedia.io
       secretName: verifier-playbookmedia-io-tls
+
+# The auth migration connects with Node. DigitalOcean signs every managed
+# database in this account with the same CA, which the image includes.
+config:
+  env:
+    NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
