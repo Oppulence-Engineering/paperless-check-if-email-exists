@@ -182,8 +182,8 @@ jobs:
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
           # The auth and SCIM secrets sign, encrypt, and hash credentials, so production has its
-          # own and never falls back to staging. Resend settings are shared unless production
-          # sets its own.
+          # own and never falls back to staging. Production reads its Resend key from Infisical
+          # (values.production.yaml), which overrides the value below.
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || secrets.RESEND_API_KEY_STAGING }}

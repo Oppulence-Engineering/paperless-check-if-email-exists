@@ -24,3 +24,14 @@ ingress:
 config:
   env:
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
+
+# The Resend key comes from Infisical (/frontend/apps/sim, prod). The Infisical
+# operator syncs it into this secret in each cluster. An env entry overrides the
+# key of the same name in the app secret.
+# ponytail: shares the Outbound Console key; give Verifier its own Infisical path if it needs its own Resend account.
+extraEnv:
+  - name: RESEND_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: paperless-sim-app-secrets
+        key: RESEND_API_KEY
