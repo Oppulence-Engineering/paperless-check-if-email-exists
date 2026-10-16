@@ -10,7 +10,7 @@ import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { AuthLedgerPreview } from "@/components/auth/auth-ledger-preview";
 import { authClient } from "@/lib/auth/auth-client";
-import { safeReturnTo } from "@/lib/auth/return-to";
+import { authCallbackPath } from "@/lib/auth/return-to";
 
 /** Multi-color Google "G". Explicit fills, so button color rules don't tint it. */
 function GoogleLogo() {
@@ -41,13 +41,18 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 /**
- * The return path from the address bar, read when the form is used. The page's
- * loading fallback renders before the search params arrive, so a form submitted
- * then would otherwise lose the path.
+ * The page's loading fallback renders with the default "/app" before the
+ * search params arrive. A form used then reads the address bar with the same
+ * rule as the page, so a chosen plan or an invitation is kept. A path that the
+ * server resolved is used as it is.
  */
 function destination(fallback: string): string {
-	const raw = new URLSearchParams(window.location.search).get("return_to");
-	return raw ? safeReturnTo(raw) : fallback;
+	if (fallback !== "/app") return fallback;
+	const params = new URLSearchParams(window.location.search);
+	return authCallbackPath({
+		invitation: params.get("invitation"),
+		return_to: params.get("return_to"),
+	});
 }
 
 export function AuthShell({

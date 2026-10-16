@@ -8,3 +8,17 @@ export function safeReturnTo(raw: string | null | undefined): string {
 		return "/app";
 	}
 }
+
+/**
+ * Where to go after authentication: the invitation acceptance page when the
+ * link carries an invitation, else the safe return path.
+ */
+export function authCallbackPath(params: {
+	invitation?: string | null;
+	return_to?: string | null;
+}): string {
+	const returnTo = safeReturnTo(params.return_to);
+	return params.invitation
+		? `/app/invitations/accept?${new URLSearchParams({ invitation: params.invitation, return_to: returnTo }).toString()}`
+		: returnTo;
+}

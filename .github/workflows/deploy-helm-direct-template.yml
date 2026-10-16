@@ -181,9 +181,11 @@ jobs:
           HELM_READ_REPLICA_URL: ${{ steps.replica.outputs.url }}
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-          # Production shares these values with staging unless its own secret is set.
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || secrets.BETTER_AUTH_SECRET_STAGING }}
-          SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET || secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
+          # The auth and SCIM secrets sign, encrypt, and hash credentials, so production has its
+          # own and never falls back to staging. Resend settings are shared unless production
+          # sets its own.
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || secrets.RESEND_API_KEY_STAGING }}
           RESEND_FROM: ${{ secrets.RESEND_FROM || secrets.RESEND_FROM_STAGING }}
           BETTER_AUTH_URL_STAGING: ${{ secrets.BETTER_AUTH_URL_STAGING }}

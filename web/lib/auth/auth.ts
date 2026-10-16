@@ -27,11 +27,12 @@ import {
 	authUsers,
 } from "@/lib/auth/database";
 import { identityAudit } from "@/lib/auth/identity-audit";
-import { createScimOptions } from "@/lib/auth/scim";
+import { createScimOptions, scimWorkspaceForToken } from "@/lib/auth/scim";
 import { BrandAssetURLSchema, HexColorSchema, PublicURLSchema } from "@/lib/auth/schemas";
 import { hasValidStepUp } from "@/lib/auth/step-up";
+import { syncTenantPlan } from "@/lib/billing/tenant-sync";
 import { workspacePlan } from "@/lib/billing/workspace-plan";
-import { seatLimit } from "@/lib/entitlements/entitlements";
+import { can, entitlementsFor, seatLimit } from "@/lib/entitlements/entitlements";
 
 function defaultWorkspaceName(user: { name: string; email: string }): string {
 	return user.name.trim() || user.email.split("@")[0] || "Workspace";
@@ -207,6 +208,11 @@ function billingPlugins() {
 					if (!membership) return false;
 					return action === "list-subscription" || BILLING_ROLES.has(membership.role);
 				},
+				// API keys read the plan from the backend tenant, so every billing change is pushed there.
+				onSubscriptionComplete: ({ subscription }) => syncTenantPlan(subscription.referenceId),
+				onSubscriptionUpdate: ({ subscription }) => syncTenantPlan(subscription.referenceId),
+				onSubscriptionCancel: ({ subscription }) => syncTenantPlan(subscription.referenceId),
+				onSubscriptionDeleted: ({ subscription }) => syncTenantPlan(subscription.referenceId),
 			},
 		}),
 	];
@@ -440,6 +446,20 @@ export const auth = betterAuth({
 				!validBackendTokenProof(ctx.headers?.get("x-backend-token-request") ?? null)
 			) {
 				throw new APIError("NOT_FOUND");
+			}
+			// SCIM is sold on Enterprise only: a credential stops working when the plan ends.
+			if (ctx.path.startsWith("/scim/v2/")) {
+				const organizationId = await scimWorkspaceForToken(
+					ctx.headers?.get("authorization") ?? null,
+				);
+				if (
+					organizationId &&
+					!can(entitlementsFor(await workspacePlan(organizationId)), "enterprise_identity")
+				) {
+					throw new APIError("FORBIDDEN", {
+						message: "SCIM provisioning comes with the Enterprise plan.",
+					});
+				}
 			}
 			if (!ctx.request || !adminMutationPaths.has(ctx.path)) return;
 			const authSession = await getAuthoritativeSessionFromCtx(ctx);

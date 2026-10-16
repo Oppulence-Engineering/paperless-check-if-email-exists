@@ -175,27 +175,13 @@ pub async fn resolve_from_jwt(
 		bail!("Organization role cannot call this operation");
 	}
 	let tenant_id = Uuid::new_v5(&Uuid::NAMESPACE_OID, claims.org_id.as_bytes());
-	let allowance = claims.plan.as_deref().and_then(plan_allowance);
-	// The plan in the token is the billing truth: keep the tier and the monthly
-	// allowance in step with it. Without a known plan, leave both as they are.
-	// An Enterprise allowance is set by an operator, so it is never overwritten.
-	sqlx::query(
-		"INSERT INTO tenants (id, name, slug, contact_email, plan_tier, plan_name, monthly_email_limit) \
-		 VALUES ($1, $2, $3, $4, COALESCE($5::plan_tier, 'free'), COALESCE($5, 'free'), $6) \
-		 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, \
-		 plan_tier = CASE WHEN $5 IS NULL THEN tenants.plan_tier ELSE EXCLUDED.plan_tier END, \
-		 plan_name = CASE WHEN $5 IS NULL THEN tenants.plan_name ELSE EXCLUDED.plan_name END, \
-		 monthly_email_limit = CASE \
-		   WHEN $5 IS NULL OR $5 = 'enterprise' THEN tenants.monthly_email_limit \
-		   ELSE EXCLUDED.monthly_email_limit END",
+	sync_tenant_from_claims(
+		pool,
+		tenant_id,
+		&claims.org_name,
+		&claims.email,
+		claims.plan.as_deref(),
 	)
-	.bind(tenant_id)
-	.bind(&claims.org_name)
-	.bind(format!("auth-{}", tenant_id))
-	.bind(&claims.email)
-	.bind(allowance.map(|(tier, _)| tier))
-	.bind(allowance.and_then(|(_, limit)| limit))
-	.execute(pool)
 	.await?;
 	let mut context = resolve_tenant_context_by_id(pool, tenant_id).await?;
 	context.scopes = if role_is_admin(&claims.org_role) {
@@ -209,6 +195,46 @@ pub async fn resolve_from_jwt(
 		]
 	};
 	Ok(context)
+}
+
+/// Creates or updates the tenant for a workspace from the session token.
+///
+/// The plan claim is the billing truth: it sets the tier and the monthly
+/// allowance. Without a known plan, both stay as they are. An Enterprise
+/// allowance is set by an operator, so it is never overwritten. A Free claim
+/// does not downgrade a paid tier that did not come from billing, such as a
+/// tier an operator set through the admin API.
+pub async fn sync_tenant_from_claims(
+	pool: &PgPool,
+	tenant_id: Uuid,
+	org_name: &str,
+	email: &str,
+	plan: Option<&str>,
+) -> Result<()> {
+	let allowance = plan.and_then(plan_allowance);
+	sqlx::query(
+		"INSERT INTO tenants (id, name, slug, contact_email, plan_tier, plan_name, monthly_email_limit, plan_from_billing) \
+		 VALUES ($1, $2, $3, $4, COALESCE($5::plan_tier, 'free'), COALESCE($5, 'free'), $6, COALESCE($5, 'free') <> 'free') \
+		 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, \
+		 plan_tier = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_tier ELSE EXCLUDED.plan_tier END, \
+		 plan_name = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_name ELSE EXCLUDED.plan_name END, \
+		 monthly_email_limit = CASE \
+		   WHEN $5 IS NULL OR $5 = 'enterprise' OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.monthly_email_limit ELSE EXCLUDED.monthly_email_limit END, \
+		 plan_from_billing = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
+		   THEN tenants.plan_from_billing ELSE EXCLUDED.plan_from_billing END",
+	)
+	.bind(tenant_id)
+	.bind(org_name)
+	.bind(format!("auth-{}", tenant_id))
+	.bind(email)
+	.bind(allowance.map(|(tier, _)| tier))
+	.bind(allowance.and_then(|(_, limit)| limit))
+	.execute(pool)
+	.await?;
+	Ok(())
 }
 
 #[cfg(test)]

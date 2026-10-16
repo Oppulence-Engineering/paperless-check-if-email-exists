@@ -82,6 +82,10 @@ config:
     RCH__HTTP_PORT: "8081"
     BACKEND_JWT_AUDIENCE: check-if-email-exists-api
     RCH__WORKER__ENABLE: "true"
+    # The re-check and pipeline schedulers claim due rows atomically, so
+    # running them in every cluster does not run a schedule twice.
+    RCH__REVERIFICATION__ENABLE: "true"
+    RCH__PIPELINES__ENABLE: "true"
     RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: "8640000"
     RCH__WEBDRIVER_ADDR: http://localhost:9515
   secretEnv:
