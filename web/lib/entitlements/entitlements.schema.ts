@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 
 /** Plans this deployment sells. Rename them; the matrix below follows. */
-export const PlanSchema = z.enum(["free", "starter", "pro", "enterprise"]);
+export const PlanSchema = z.enum(["free", "starter", "professional", "enterprise"]);
 
 export type Plan = z.infer<typeof PlanSchema>;
 

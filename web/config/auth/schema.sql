@@ -1,4 +1,4 @@
-create table "user" ("id" text not null primary key, "name" text not null, "email" text not null unique, "emailVerified" boolean not null, "image" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null, "role" text, "banned" boolean, "banReason" text, "banExpires" timestamptz, "twoFactorEnabled" boolean, "legacyWorkosUserId" text unique);
+create table "user" ("id" text not null primary key, "name" text not null, "email" text not null unique, "emailVerified" boolean not null, "image" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null, "role" text, "banned" boolean, "banReason" text, "banExpires" timestamptz, "twoFactorEnabled" boolean, "stripeCustomerId" text, "legacyWorkosUserId" text unique);
 
 create table "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user" ("id") on delete cascade, "activeOrganizationId" text, "impersonatedBy" text, "authenticationMethod" text, "stepUpVerifiedAt" timestamptz, "stepUpMethod" text, "stepUpPurpose" text, "ssoProviderId" text, "ssoOrganizationId" text);
 
@@ -6,7 +6,7 @@ create table "account" ("id" text not null primary key, "accountId" text not nul
 
 create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
 
-create table "organization" ("id" text not null primary key, "name" text not null, "slug" text not null unique, "logo" text, "createdAt" timestamptz not null, "metadata" text, "legacyWorkosOrganizationId" text unique, "requireSso" boolean, "requireAdminStepUp" boolean, "maxSessionAgeSeconds" integer, "idleTimeoutSeconds" integer, "brandName" text, "brandLogoUrl" text, "brandWordmarkUrl" text, "brandFaviconUrl" text, "brandPrimaryColor" text, "brandAccentColor" text, "supportEmail" text, "documentationUrl" text, "termsUrl" text, "privacyUrl" text, "archivedAt" timestamptz, "archivedBy" text);
+create table "organization" ("id" text not null primary key, "name" text not null, "slug" text not null unique, "logo" text, "createdAt" timestamptz not null, "metadata" text, "legacyWorkosOrganizationId" text unique, "requireSso" boolean, "requireAdminStepUp" boolean, "maxSessionAgeSeconds" integer, "idleTimeoutSeconds" integer, "brandName" text, "brandLogoUrl" text, "brandWordmarkUrl" text, "brandFaviconUrl" text, "brandPrimaryColor" text, "brandAccentColor" text, "supportEmail" text, "documentationUrl" text, "termsUrl" text, "privacyUrl" text, "archivedAt" timestamptz, "archivedBy" text, "stripeCustomerId" text);
 
 create table "member" ("id" text not null primary key, "organizationId" text not null references "organization" ("id") on delete cascade, "userId" text not null references "user" ("id") on delete cascade, "role" text not null, "createdAt" timestamptz not null);
 
@@ -244,3 +244,7 @@ $$;
 create trigger identity_audit_event_append_only
 before update or delete on "identity_audit_event"
 for each row execute function reject_identity_audit_mutation();
+
+create table "subscription" ("id" text not null primary key, "plan" text not null, "referenceId" text not null, "stripeCustomerId" text, "stripeSubscriptionId" text, "status" text not null, "periodStart" timestamptz, "periodEnd" timestamptz, "trialStart" timestamptz, "trialEnd" timestamptz, "cancelAtPeriodEnd" boolean, "cancelAt" timestamptz, "canceledAt" timestamptz, "endedAt" timestamptz, "seats" integer, "billingInterval" text, "stripeScheduleId" text);
+
+create index "subscription_referenceId_idx" on "subscription" ("referenceId");

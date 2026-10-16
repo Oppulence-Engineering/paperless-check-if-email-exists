@@ -5,10 +5,12 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { passkey } from "@better-auth/passkey";
 import { scim as scimPlugin } from "@better-auth/scim";
 import { sso } from "@better-auth/sso";
+import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, getAuthoritativeSessionFromCtx } from "better-auth/api";
 import { admin, emailOTP, jwt, organization, twoFactor } from "better-auth/plugins";
 import { Resend } from "resend";
+import Stripe from "stripe";
 import { z } from "zod";
 
 import { and, asc, eq, gt, ilike, isNull, sql } from "drizzle-orm";
@@ -28,6 +30,8 @@ import { identityAudit } from "@/lib/auth/identity-audit";
 import { createScimOptions } from "@/lib/auth/scim";
 import { BrandAssetURLSchema, HexColorSchema, PublicURLSchema } from "@/lib/auth/schemas";
 import { hasValidStepUp } from "@/lib/auth/step-up";
+import { workspacePlan } from "@/lib/billing/workspace-plan";
+import { seatLimit } from "@/lib/entitlements/entitlements";
 
 function defaultWorkspaceName(user: { name: string; email: string }): string {
 	return user.name.trim() || user.email.split("@")[0] || "Workspace";
@@ -175,6 +179,37 @@ async function activeMembership(userId: string, organizationId?: string) {
 		.orderBy(asc(authMembers.createdAt))
 		.limit(1);
 	return result[0] ?? null;
+}
+
+/** Roles that may buy a plan or open the billing portal for a workspace. */
+const BILLING_ROLES = new Set(["owner", "admin"]);
+
+/**
+ * Stripe billing for Starter and Professional: one subscription per
+ * workspace, bought by its owners and admins. Off when Stripe is not
+ * configured; Enterprise is set by hand after a contract.
+ */
+function billingPlugins() {
+	if (!config.stripe) return [];
+	return [
+		stripe({
+			stripeClient: new Stripe(config.stripe.secretKey),
+			stripeWebhookSecret: config.stripe.webhookSecret,
+			organization: { enabled: true },
+			subscription: {
+				enabled: true,
+				plans: [
+					{ name: "starter", priceId: config.stripe.starterPriceId },
+					{ name: "professional", priceId: config.stripe.professionalPriceId },
+				],
+				authorizeReference: async ({ user, referenceId, action }) => {
+					const membership = await activeMembership(user.id, referenceId);
+					if (!membership) return false;
+					return action === "list-subscription" || BILLING_ROLES.has(membership.role);
+				},
+			},
+		}),
+	];
 }
 
 async function sessionStepUpGrant(sessionId: string) {
@@ -541,6 +576,9 @@ export const auth = betterAuth({
 		admin(),
 		organization({
 			creatorRole: "owner",
+			// Seats follow the workspace's plan; an uncapped plan has no limit.
+			membershipLimit: async (_user, workspace) =>
+				seatLimit((await workspacePlan(workspace.id)).plan) ?? Number.MAX_SAFE_INTEGER,
 			requireEmailVerificationOnInvitation: true,
 			sendInvitationEmail: async ({ id, email, organization: invitedOrganization }) => {
 				const url = new URL("/sign-in", config.betterAuthUrl);
@@ -672,7 +710,7 @@ export const auth = betterAuth({
 				const stepUp = type === "email-verification";
 				await sendEmail({
 					to: email,
-					subject: `Your ${process.env.BRAND_NAME || "Check If Email Exists"} ${stepUp ? "verification" : "sign-in"} code`,
+					subject: `Your ${process.env.BRAND_NAME || "Verifier"} ${stepUp ? "verification" : "sign-in"} code`,
 					text: `Your ${stepUp ? "verification" : "sign-in"} code is ${otp}. It expires in 10 minutes.`,
 				});
 			},
@@ -690,7 +728,7 @@ export const auth = betterAuth({
 			},
 		}),
 		twoFactor({
-			issuer: process.env.BRAND_NAME || "Check If Email Exists",
+			issuer: process.env.BRAND_NAME || "Verifier",
 			allowPasswordless: true,
 			twoFactorCookieMaxAge: 15 * 60,
 		}),
@@ -732,10 +770,13 @@ export const auth = betterAuth({
 						.from(authUsers)
 						.where(eq(authUsers.id, user.id))
 						.limit(1);
+					const { plan } = await workspacePlan(membership.organizationId);
 					return {
 						org_id: membership.organizationId,
 						org_role: membership.role,
 						org_name: membership.organizationName,
+						// The backend sets the workspace's tier and monthly allowance from this claim.
+						plan,
 						session_id: session.id,
 						email: user.email,
 						email_verified: user.emailVerified,
@@ -754,5 +795,6 @@ export const auth = betterAuth({
 				},
 			},
 		}),
+		...billingPlugins(),
 	],
 });

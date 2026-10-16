@@ -18,6 +18,18 @@ import { cn } from "@oppulence/ui/lib/utils";
 import { type ListDetailPanelPropsFields } from "./list-detail-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `list-detail-panel.lit.ts`. */
+/** Remediation export files the backend can build (backend/src/http/v1/lists/remediation.rs). */
+const EXPORT_PARTITIONS = {
+	safe_to_send: "Send-ready (safe and fixed)",
+	safe: "Safe",
+	fixed: "Fixed",
+	review: "Review",
+	drop: "Drop",
+	all: "All rows",
+} as const;
+
+type ExportPartition = keyof typeof EXPORT_PARTITIONS;
+
 export type ListDetailPanelProps = ListDetailPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
 const config = new Configuration({ basePath: "/api/backend" });
@@ -71,7 +83,8 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 	const client = useQueryClient();
 	const [comment, setComment] = useState("");
 	const [notice, setNotice] = useState("");
-	const [exportId, setExportId] = useState<number>();
+	const [partition, setPartition] = useState<ExportPartition>("safe_to_send");
+	const [exportIds, setExportIds] = useState<Partial<Record<ExportPartition, number>>>({});
 	const key = ["list-detail", listId];
 	function selectedListId(): number {
 		if (!listId) throw new Error("Select a list first.");
@@ -115,18 +128,20 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 		},
 	});
 	const createExport = useMutation({
-		mutationFn: async () =>
-			z.object({ id: z.number() }).parse(
+		mutationFn: async (selected: ExportPartition) => ({
+			selected,
+			id: z.object({ id: z.number() }).parse(
 				(
 					await listsApi.v1CreateRemediationExport({
 						listId: selectedListId(),
-						requestBody: { plan_id: plan.data?.id, partitions: ["safe_to_send"], format: "csv" },
+						requestBody: { plan_id: plan.data?.id, partitions: [selected], format: "csv" },
 					})
 				).data,
-			),
-		onSuccess: (data) => {
-			setExportId(data.id);
-			setNotice("Safe-to-send export is ready.");
+			).id,
+		}),
+		onSuccess: ({ selected, id }) => {
+			setExportIds((current) => ({ ...current, [selected]: id }));
+			setNotice(`${EXPORT_PARTITIONS[selected]} file is ready.`);
 		},
 	});
 	const addComment = useMutation({
@@ -158,13 +173,13 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 		},
 	});
 	const downloadFile = useMutation({
-		mutationFn: async (kind: "cleaned" | "safe") => {
+		mutationFn: async (kind: "cleaned" | ExportPartition) => {
 			const id = selectedListId();
 			const response =
 				kind === "cleaned"
 					? await v1Api.v1DownloadList({ listId: id, format: "csv" }, { responseType: "blob" })
 					: await listsApi.v1DownloadRemediationExport(
-							{ listId: id, exportId: exportId ?? 0 },
+							{ listId: id, exportId: exportIds[kind] ?? 0 },
 							{ responseType: "blob" },
 						);
 			download(response.data, `list-${String(id)}-${kind}.csv`);
@@ -279,27 +294,46 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 											</table>
 										</div>
 									) : null}
-									<Button
-										type="button"
-										disabled={createExport.isPending}
-										onClick={() => {
-											createExport.mutate();
-										}}
-									>
-										Prepare safe-to-send CSV
-									</Button>
-									{exportId ? (
+									<div className="flex flex-wrap items-end gap-2">
+										<div className="space-y-1">
+											<Label htmlFor="export-partition">Export file</Label>
+											<select
+												className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+												id="export-partition"
+												onChange={(event) => {
+													setPartition(event.target.value as ExportPartition);
+												}}
+												value={partition}
+											>
+												{Object.entries(EXPORT_PARTITIONS).map(([value, label]) => (
+													<option key={value} value={value}>
+														{label}
+													</option>
+												))}
+											</select>
+										</div>
 										<Button
 											type="button"
-											variant="outline"
-											disabled={downloadFile.isPending}
+											disabled={createExport.isPending}
 											onClick={() => {
-												downloadFile.mutate("safe");
+												createExport.mutate(partition);
 											}}
 										>
-											Download safe-to-send CSV
+											Prepare CSV
 										</Button>
-									) : null}
+										{exportIds[partition] ? (
+											<Button
+												type="button"
+												variant="outline"
+												disabled={downloadFile.isPending}
+												onClick={() => {
+													downloadFile.mutate(partition);
+												}}
+											>
+												Download {EXPORT_PARTITIONS[partition].toLowerCase()} CSV
+											</Button>
+										) : null}
+									</div>
 								</>
 							) : (
 								<Button

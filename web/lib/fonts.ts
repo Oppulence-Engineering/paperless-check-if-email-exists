@@ -62,4 +62,16 @@ export const fontVariables = cn(
 	fontDisplay.variable,
 );
 
-export const marketingFontVariables = marketingMono.variable;
+/**
+ * Public-site sans: variable Inter with optical sizes, so large headings use
+ * the display cut and body text can sit at weight 450.
+ */
+const marketingSans = Inter({
+	variable: "--font-marketing-sans",
+	subsets: ["latin"],
+	axes: ["opsz"],
+	display: "swap",
+	preload: false,
+});
+
+export const marketingFontVariables = cn(marketingMono.variable, marketingSans.variable);

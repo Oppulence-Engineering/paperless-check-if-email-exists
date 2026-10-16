@@ -38,6 +38,9 @@ import {
 	V1UpdateTenantWebhook200Response,
 	V1UpdateTenantWebhookBody,
 } from "@/lib/api/generated/zod/tenant/tenant";
+import { useAuthSession, useEntitlements } from "@/components/auth/auth-gate";
+import { authClient } from "@/lib/auth/auth-client";
+import { BillingPlan } from "../billing-plan/billing-plan";
 import { type VerificationSettingsPropsFields } from "./verification-settings.schema";
 
 /** @oppulence-gen kind=component */
@@ -93,6 +96,20 @@ export function VerificationSettings({
 		.split(",")
 		.some((role) => ["owner", "admin"].includes(role.trim()));
 	const showUsage = scope === "all" || scope === "usage";
+	const { plan } = useEntitlements();
+	const billingEnabled = useAuthSession().billing?.enabled ?? false;
+	const [billingError, setBillingError] = useState<string>();
+	const [billingPending, setBillingPending] = useState(false);
+	// Checkout and the billing portal redirect to Stripe; an error keeps the person here.
+	async function billingRedirect(run: () => Promise<{ error?: { message?: string } | null }>) {
+		setBillingPending(true);
+		setBillingError(undefined);
+		const result = await run();
+		if (result.error) {
+			setBillingError(result.error.message || "Billing is unavailable. Try again.");
+			setBillingPending(false);
+		}
+	}
 	const showDefaults = scope === "all" || scope === "verification";
 	const showWebhook = scope === "all" || scope === "webhook";
 	const heading = {
@@ -129,6 +146,25 @@ export function VerificationSettings({
 		enabled: showDefaults,
 		queryFn: async () => reverificationSchema.parse((await v1Api.v1ReverificationStatus()).data),
 	});
+	const saveReverification = useMutation({
+		mutationFn: async (body: { enabled: boolean; staleness_days: number; batch_size: number }) =>
+			reverificationSchema.parse(
+				(await v1Api.v1UpdateReverification({ updateReverificationRequest: body })).data,
+			),
+		onSuccess: (data) => {
+			queryClient.setQueryData(workflowQueryKey("reverification-status", organizationId), data);
+			setNotice(data.enabled ? "Scheduled re-checks are on." : "Scheduled re-checks are off.");
+		},
+	});
+	function submitReverification(event: SyntheticEvent<HTMLFormElement>) {
+		event.preventDefault();
+		const form = new FormData(event.currentTarget);
+		saveReverification.mutate({
+			enabled: form.get("reverification-enabled") === "on",
+			staleness_days: Number(field(form, "staleness")),
+			batch_size: Number(field(form, "batch")),
+		});
+	}
 	const saveSettings = useMutation({
 		mutationFn: async (body: z.input<typeof V1UpdateTenantSettingsBody>) =>
 			V1UpdateTenantSettings200Response.parse(
@@ -190,6 +226,8 @@ export function VerificationSettings({
 				saveSettings.mutateAsync({
 					result_retention_days: Number(field(form, "retention")),
 					default_policy_mode: field(form, "policy"),
+					approval_excellent_threshold: Number(field(form, "excellent")),
+					approval_good_threshold: Number(field(form, "good")),
 				}),
 			"Verification settings saved.",
 		);
@@ -286,6 +324,43 @@ export function VerificationSettings({
 							) : null}
 						</CardContent>
 					</Card>
+					<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
+						<CardHeader className="gap-1.5 px-5">
+							<CardTitle className="text-sm">Plan</CardTitle>
+							<CardDescription className="text-xs">
+								Change the plan or manage payment for this workspace.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="px-5">
+							<BillingPlan
+								billingEnabled={billingEnabled}
+								canManage={canManage}
+								error={billingError}
+								onManage={() =>
+									void billingRedirect(() =>
+										authClient.subscription.billingPortal({
+											referenceId: organizationId,
+											customerType: "organization",
+											returnUrl: "/app/settings?settings=usage",
+										}),
+									)
+								}
+								onUpgrade={(next) =>
+									void billingRedirect(() =>
+										authClient.subscription.upgrade({
+											plan: next,
+											referenceId: organizationId,
+											customerType: "organization",
+											successUrl: "/app/settings?settings=usage&billing=success",
+											cancelUrl: "/app/settings?settings=usage",
+										}),
+									)
+								}
+								pending={billingPending}
+								plan={plan}
+							/>
+						</CardContent>
+					</Card>
 				</>
 			) : null}
 			{canManage && showDefaults ? (
@@ -313,9 +388,12 @@ export function VerificationSettings({
 						) : settings.data ? (
 							<form
 								className="grid gap-4 sm:grid-cols-2"
-								key={[settings.data.result_retention_days, settings.data.default_policy_mode].join(
-									":",
-								)}
+								key={[
+									settings.data.result_retention_days,
+									settings.data.default_policy_mode,
+									settings.data.approval_excellent_threshold,
+									settings.data.approval_good_threshold,
+								].join(":")}
 								onSubmit={(event) => void submitSettings(event)}
 							>
 								<div className="space-y-2">
@@ -345,6 +423,35 @@ export function VerificationSettings({
 										</SelectContent>
 									</Select>
 								</div>
+								<div className="space-y-2">
+									<Label htmlFor="approval-excellent">Excellent list (% safe to send)</Label>
+									<Input
+										id="approval-excellent"
+										name="excellent"
+										type="number"
+										min={0}
+										max={100}
+										step={0.1}
+										defaultValue={settings.data.approval_excellent_threshold}
+										required
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="approval-good">Good list (% safe to send)</Label>
+									<Input
+										id="approval-good"
+										name="good"
+										type="number"
+										min={0}
+										max={100}
+										step={0.1}
+										defaultValue={settings.data.approval_good_threshold}
+										required
+									/>
+									<p className="text-muted-foreground text-xs">
+										A job below this value is not ready to send.
+									</p>
+								</div>
 								<Button
 									className="sm:col-span-2 sm:justify-self-start"
 									disabled={busy}
@@ -373,14 +480,67 @@ export function VerificationSettings({
 						{reverification.data ? (
 							<>
 								<p>{reverification.data.enabled ? "Enabled" : "Disabled"}</p>
-								{reverification.data.staleness_days ? (
-									<p>Staleness threshold: {reverification.data.staleness_days} days</p>
-								) : null}
 								{reverification.data.next_run_at ? (
 									<p>Next run: {new Date(reverification.data.next_run_at).toLocaleString()}</p>
 								) : null}
 								{reverification.data.emails_requeued != null ? (
 									<p>Addresses requeued: {reverification.data.emails_requeued}</p>
+								) : null}
+								{canManage ? (
+									<form
+										className="grid gap-4 pt-2 sm:grid-cols-3"
+										key={[
+											reverification.data.enabled,
+											reverification.data.staleness_days,
+											reverification.data.batch_size,
+										].join(":")}
+										onSubmit={submitReverification}
+									>
+										<label className="flex items-center gap-2 sm:col-span-3">
+											<input
+												defaultChecked={reverification.data.enabled}
+												name="reverification-enabled"
+												type="checkbox"
+											/>
+											Re-check results on a schedule
+										</label>
+										<div className="space-y-2">
+											<Label htmlFor="reverification-staleness">Re-check after (days)</Label>
+											<Input
+												defaultValue={reverification.data.staleness_days ?? 30}
+												id="reverification-staleness"
+												max={365}
+												min={1}
+												name="staleness"
+												required
+												type="number"
+											/>
+										</div>
+										<div className="space-y-2">
+											<Label htmlFor="reverification-batch">Addresses per run</Label>
+											<Input
+												defaultValue={reverification.data.batch_size ?? 100}
+												id="reverification-batch"
+												max={1000}
+												min={1}
+												name="batch"
+												required
+												type="number"
+											/>
+										</div>
+										<div className="flex items-end">
+											<Button disabled={saveReverification.isPending} type="submit">
+												Save re-check schedule
+											</Button>
+										</div>
+										{saveReverification.isError ? (
+											<p className="sm:col-span-3" role="alert">
+												{requestError(saveReverification.error)}
+											</p>
+										) : null}
+									</form>
+								) : reverification.data.staleness_days ? (
+									<p>Staleness threshold: {reverification.data.staleness_days} days</p>
 								) : null}
 							</>
 						) : null}

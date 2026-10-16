@@ -142,6 +142,7 @@ export * from "./triggerPipelineResponse";
 export * from "./updateApiKeyRequest";
 export * from "./updatePipelineInput";
 export * from "./updateProviderEndpointInput";
+export * from "./updateReverificationRequest";
 export * from "./updateTenantDomainRequest";
 export * from "./updateTenantSettingsRequest";
 export * from "./updateWebhookRequest";

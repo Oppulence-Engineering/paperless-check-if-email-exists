@@ -22,6 +22,18 @@
 export interface TenantSettingsResponse {
     /**
      *
+     * @type {number}
+     * @memberof TenantSettingsResponse
+     */
+    'approval_excellent_threshold': number;
+    /**
+     *
+     * @type {number}
+     * @memberof TenantSettingsResponse
+     */
+    'approval_good_threshold': number;
+    /**
+     *
      * @type {string}
      * @memberof TenantSettingsResponse
      */

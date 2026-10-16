@@ -3474,6 +3474,33 @@ paths:
       summary: POST /v1/reputation/check
       tags:
       - v1
+  /v1/reverification:
+    put:
+      operationId: v1_update_reverification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReverificationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReverificationStatusResponse"
+          description: Reverification schedule status
+        "400":
+          description: Invalid schedule
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: PUT /v1/reverification
+      tags:
+      - v1
   /v1/reverification/status:
     get:
       operationId: v1_reverification_status
@@ -7284,14 +7311,22 @@ components:
       example:
         period_reset_at: period_reset_at
         tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        result_retention_days: 6
+        approval_good_threshold: 6.027456183070403
+        result_retention_days: 5
+        approval_excellent_threshold: 0.8008281904610115
         default_policy_mode: default_policy_mode
         name: name
-        used_this_period: 1
-        monthly_email_limit: 0
+        used_this_period: 5
+        monthly_email_limit: 1
         default_webhook_url: default_webhook_url
         slug: slug
       properties:
+        approval_excellent_threshold:
+          format: double
+          type: number
+        approval_good_threshold:
+          format: double
+          type: number
         default_policy_mode:
           type: string
         default_webhook_url:
@@ -7317,6 +7352,8 @@ components:
           format: int32
           type: integer
       required:
+      - approval_excellent_threshold
+      - approval_good_threshold
       - default_policy_mode
       - name
       - period_reset_at
@@ -7507,6 +7544,29 @@ components:
           nullable: true
           type: string
       type: object
+    UpdateReverificationRequest:
+      description: |-
+        Turns scheduled re-checks on or off for the workspace and sets how old a
+        result may get before it is checked again.
+      example:
+        staleness_days: 6
+        batch_size: 0
+        enabled: true
+      properties:
+        batch_size:
+          description: "Addresses re-checked in each run (1 to 1,000)."
+          format: int32
+          type: integer
+        enabled:
+          type: boolean
+        staleness_days:
+          description: Re-check results older than this many days (1 to 365).
+          format: int32
+          type: integer
+      required:
+      - enabled
+      - staleness_days
+      type: object
     UpdateTenantDomainRequest:
       example:
         is_active: true
@@ -7530,10 +7590,24 @@ components:
     UpdateTenantSettingsRequest:
       example:
         webhook_signing_secret: webhook_signing_secret
-        result_retention_days: 0
+        approval_good_threshold: 6.027456183070403
+        result_retention_days: 1
+        approval_excellent_threshold: 0.8008281904610115
         default_policy_mode: default_policy_mode
         default_webhook_url: default_webhook_url
       properties:
+        approval_excellent_threshold:
+          description: Safe-to-send percentage for an excellent list. Set it with
+            `approval_good_threshold`.
+          format: double
+          nullable: true
+          type: number
+        approval_good_threshold:
+          description: Safe-to-send percentage for a good list. Must be below the
+            excellent threshold.
+          format: double
+          nullable: true
+          type: number
         default_policy_mode:
           nullable: true
           type: string

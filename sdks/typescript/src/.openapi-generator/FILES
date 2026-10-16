@@ -161,6 +161,7 @@ docs/TriggerPipelineResponse.md
 docs/UpdateApiKeyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateProviderEndpointInput.md
+docs/UpdateReverificationRequest.md
 docs/UpdateTenantDomainRequest.md
 docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
@@ -301,6 +302,7 @@ models/trigger-pipeline-response.ts
 models/update-api-key-request.ts
 models/update-pipeline-input.ts
 models/update-provider-endpoint-input.ts
+models/update-reverification-request.ts
 models/update-tenant-domain-request.ts
 models/update-tenant-settings-request.ts
 models/update-webhook-request.ts

@@ -22,6 +22,8 @@ var _ MappedNullable = &TenantSettingsResponse{}
 
 // TenantSettingsResponse struct for TenantSettingsResponse
 type TenantSettingsResponse struct {
+	ApprovalExcellentThreshold float64 `json:"approval_excellent_threshold"`
+	ApprovalGoodThreshold float64 `json:"approval_good_threshold"`
 	DefaultPolicyMode string `json:"default_policy_mode"`
 	DefaultWebhookUrl NullableString `json:"default_webhook_url,omitempty"`
 	MonthlyEmailLimit NullableInt32 `json:"monthly_email_limit,omitempty"`
@@ -39,8 +41,10 @@ type _TenantSettingsResponse TenantSettingsResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantSettingsResponse(defaultPolicyMode string, name string, periodResetAt string, resultRetentionDays int32, slug string, tenantId string, usedThisPeriod int32) *TenantSettingsResponse {
+func NewTenantSettingsResponse(approvalExcellentThreshold float64, approvalGoodThreshold float64, defaultPolicyMode string, name string, periodResetAt string, resultRetentionDays int32, slug string, tenantId string, usedThisPeriod int32) *TenantSettingsResponse {
 	this := TenantSettingsResponse{}
+	this.ApprovalExcellentThreshold = approvalExcellentThreshold
+	this.ApprovalGoodThreshold = approvalGoodThreshold
 	this.DefaultPolicyMode = defaultPolicyMode
 	this.Name = name
 	this.PeriodResetAt = periodResetAt
@@ -57,6 +61,54 @@ func NewTenantSettingsResponse(defaultPolicyMode string, name string, periodRese
 func NewTenantSettingsResponseWithDefaults() *TenantSettingsResponse {
 	this := TenantSettingsResponse{}
 	return &this
+}
+
+// GetApprovalExcellentThreshold returns the ApprovalExcellentThreshold field value
+func (o *TenantSettingsResponse) GetApprovalExcellentThreshold() float64 {
+	if o == nil {
+		var ret float64
+		return ret
+	}
+
+	return o.ApprovalExcellentThreshold
+}
+
+// GetApprovalExcellentThresholdOk returns a tuple with the ApprovalExcellentThreshold field value
+// and a boolean to check if the value has been set.
+func (o *TenantSettingsResponse) GetApprovalExcellentThresholdOk() (*float64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.ApprovalExcellentThreshold, true
+}
+
+// SetApprovalExcellentThreshold sets field value
+func (o *TenantSettingsResponse) SetApprovalExcellentThreshold(v float64) {
+	o.ApprovalExcellentThreshold = v
+}
+
+// GetApprovalGoodThreshold returns the ApprovalGoodThreshold field value
+func (o *TenantSettingsResponse) GetApprovalGoodThreshold() float64 {
+	if o == nil {
+		var ret float64
+		return ret
+	}
+
+	return o.ApprovalGoodThreshold
+}
+
+// GetApprovalGoodThresholdOk returns a tuple with the ApprovalGoodThreshold field value
+// and a boolean to check if the value has been set.
+func (o *TenantSettingsResponse) GetApprovalGoodThresholdOk() (*float64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.ApprovalGoodThreshold, true
+}
+
+// SetApprovalGoodThreshold sets field value
+func (o *TenantSettingsResponse) SetApprovalGoodThreshold(v float64) {
+	o.ApprovalGoodThreshold = v
 }
 
 // GetDefaultPolicyMode returns the DefaultPolicyMode field value
@@ -321,6 +373,8 @@ func (o TenantSettingsResponse) MarshalJSON() ([]byte, error) {
 
 func (o TenantSettingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["approval_excellent_threshold"] = o.ApprovalExcellentThreshold
+	toSerialize["approval_good_threshold"] = o.ApprovalGoodThreshold
 	toSerialize["default_policy_mode"] = o.DefaultPolicyMode
 	if o.DefaultWebhookUrl.IsSet() {
 		toSerialize["default_webhook_url"] = o.DefaultWebhookUrl.Get()
@@ -342,6 +396,8 @@ func (o *TenantSettingsResponse) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"approval_excellent_threshold",
+		"approval_good_threshold",
 		"default_policy_mode",
 		"name",
 		"period_reset_at",

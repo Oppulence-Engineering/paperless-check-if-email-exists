@@ -24,6 +24,7 @@ All URIs are relative to *http://localhost*
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
 |[**v1SourceQuality**](#v1sourcequality) | **GET** /v1/sources/quality | List source quality|
+|[**v1UpdateReverification**](#v1updatereverification) | **PUT** /v1/reverification | PUT /v1/reverification|
 
 # **v1AddSuppressions**
 > AddSuppressionsResponse v1AddSuppressions(addSuppressionsRequest)
@@ -1070,6 +1071,59 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Source quality analytics |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1UpdateReverification**
+> ReverificationStatusResponse v1UpdateReverification(updateReverificationRequest)
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration,
+    UpdateReverificationRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let updateReverificationRequest: UpdateReverificationRequest; //
+
+const { status, data } = await apiInstance.v1UpdateReverification(
+    updateReverificationRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateReverificationRequest** | **UpdateReverificationRequest**|  | |
+
+
+### Return type
+
+**ReverificationStatusResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Reverification schedule status |  -  |
+|**400** | Invalid schedule |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -53,7 +53,7 @@ function familyFor(path: string): Family | undefined {
 			"/v1/emails/",
 			"/v1/find_email",
 			"/v1/reputation/",
-			"/v1/reverification/",
+			"/v1/reverification",
 		].some((prefix) => path.startsWith(prefix))
 	)
 		return "Verification and finder";
@@ -98,8 +98,8 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 				return { href: "/app/finder", label: "Open finder" };
 			if (operation.path.startsWith("/v1/emails/"))
 				return { href: "/app/history", label: "Open history" };
-			if (operation.path.startsWith("/v1/reverification/"))
-				return { href: "/app/settings?settings=verification", label: "Open reverification status" };
+			if (operation.path.startsWith("/v1/reverification"))
+				return { href: "/app/settings?settings=verification", label: "Open re-check settings" };
 			if (operation.path.startsWith("/v1/reputation/"))
 				return { href: "/app/analytics", label: "Open domain reputation" };
 			return { href: "/app/check", label: "Open verification" };

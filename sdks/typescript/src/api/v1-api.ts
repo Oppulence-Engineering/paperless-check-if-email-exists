@@ -63,6 +63,8 @@ import type { SuppressionCheckResponse } from '../models';
 import type { SuppressionDeleteResponse } from '../models';
 // @ts-ignore
 import type { SuppressionListResponse } from '../models';
+// @ts-ignore
+import type { UpdateReverificationRequest } from '../models';
 /**
  * V1Api - axios parameter creator
  * @export
@@ -888,6 +890,45 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
                 options: localVarRequestOptions,
             };
         },
+        /**
+         *
+         * @summary PUT /v1/reverification
+         * @param {UpdateReverificationRequest} updateReverificationRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateReverification: async (updateReverificationRequest: UpdateReverificationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'updateReverificationRequest' is not null or undefined
+            assertParamExists('v1UpdateReverification', 'updateReverificationRequest', updateReverificationRequest)
+            const localVarPath = `/v1/reverification`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateReverificationRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1169,6 +1210,19 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1SourceQuality']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         *
+         * @summary PUT /v1/reverification
+         * @param {UpdateReverificationRequest} updateReverificationRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UpdateReverification(updateReverificationRequest: UpdateReverificationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ReverificationStatusResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateReverification(updateReverificationRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1UpdateReverification']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -1376,6 +1430,16 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         v1SourceQuality(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
             return localVarFp.v1SourceQuality(options).then((request) => request(axios, basePath));
         },
+        /**
+         *
+         * @summary PUT /v1/reverification
+         * @param {V1ApiV1UpdateReverificationRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateReverification(requestParameters: V1ApiV1UpdateReverificationRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReverificationStatusResponse> {
+            return localVarFp.v1UpdateReverification(requestParameters.updateReverificationRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -1581,6 +1645,16 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1SourceQuality(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+
+    /**
+     *
+     * @summary PUT /v1/reverification
+     * @param {V1ApiV1UpdateReverificationRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1UpdateReverification(requestParameters: V1ApiV1UpdateReverificationRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReverificationStatusResponse>;
 
 }
 
@@ -1921,6 +1995,20 @@ export interface V1ApiV1ListSuppressionsRequest {
 }
 
 /**
+ * Request parameters for v1UpdateReverification operation in V1Api.
+ * @export
+ * @interface V1ApiV1UpdateReverificationRequest
+ */
+export interface V1ApiV1UpdateReverificationRequest {
+    /**
+     *
+     * @type {UpdateReverificationRequest}
+     * @memberof V1ApiV1UpdateReverification
+     */
+    readonly updateReverificationRequest: UpdateReverificationRequest
+}
+
+/**
  * V1Api - object-oriented interface
  * @export
  * @class V1Api
@@ -2162,5 +2250,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1SourceQuality(options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1SourceQuality(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary PUT /v1/reverification
+     * @param {V1ApiV1UpdateReverificationRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1UpdateReverification(requestParameters: V1ApiV1UpdateReverificationRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1UpdateReverification(requestParameters.updateReverificationRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }

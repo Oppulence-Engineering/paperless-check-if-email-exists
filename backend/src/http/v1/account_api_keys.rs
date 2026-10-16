@@ -194,6 +194,13 @@ async fn create_handler(
 	pg_pool: PgPool,
 	body: CreateApiKeyRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	if !tenant_ctx.plan_tier.includes_api() {
+		return Err(ReacherResponseError::new(
+			StatusCode::FORBIDDEN,
+			crate::tenant::models::API_PLAN_REQUIRED,
+		)
+		.into());
+	}
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let name = body.name.unwrap_or_else(|| "Default".to_string());

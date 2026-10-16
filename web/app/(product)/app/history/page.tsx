@@ -13,7 +13,7 @@ import HistoryLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Verification history | Check If Email Exists",
+	title: "Verification history | Verifier",
 	description: "Look up earlier checks",
 };
 

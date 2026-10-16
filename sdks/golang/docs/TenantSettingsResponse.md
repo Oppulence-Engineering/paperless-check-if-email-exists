@@ -4,6 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ApprovalExcellentThreshold** | **float64** |  | [required]
+**ApprovalGoodThreshold** | **float64** |  | [required]
 **DefaultPolicyMode** | **string** |  | [required]
 **DefaultWebhookUrl** | Pointer to **NullableString** |  | [optional]
 **MonthlyEmailLimit** | Pointer to **NullableInt32** |  | [optional]
@@ -18,7 +20,7 @@ Name | Type | Description | Notes
 
 ### NewTenantSettingsResponse
 
-`func NewTenantSettingsResponse(defaultPolicyMode string, name string, periodResetAt string, resultRetentionDays int32, slug string, tenantId string, usedThisPeriod int32) *TenantSettingsResponse`
+`func NewTenantSettingsResponse(approvalExcellentThreshold float64, approvalGoodThreshold float64, defaultPolicyMode string, name string, periodResetAt string, resultRetentionDays int32, slug string, tenantId string, usedThisPeriod int32) *TenantSettingsResponse`
 
 NewTenantSettingsResponse instantiates a new TenantSettingsResponse object
 This constructor will assign default values to properties that have it defined,
@@ -32,6 +34,46 @@ will change when the set of required properties is changed
 NewTenantSettingsResponseWithDefaults instantiates a new TenantSettingsResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetApprovalExcellentThreshold
+
+`func (o *TenantSettingsResponse) GetApprovalExcellentThreshold() float64`
+
+GetApprovalExcellentThreshold returns the ApprovalExcellentThreshold field if non-nil, zero value otherwise.
+
+### GetApprovalExcellentThresholdOk
+
+`func (o *TenantSettingsResponse) GetApprovalExcellentThresholdOk() (*float64, bool)`
+
+GetApprovalExcellentThresholdOk returns a tuple with the ApprovalExcellentThreshold field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetApprovalExcellentThreshold
+
+`func (o *TenantSettingsResponse) SetApprovalExcellentThreshold(v float64)`
+
+SetApprovalExcellentThreshold sets ApprovalExcellentThreshold field to given value.
+
+
+### GetApprovalGoodThreshold
+
+`func (o *TenantSettingsResponse) GetApprovalGoodThreshold() float64`
+
+GetApprovalGoodThreshold returns the ApprovalGoodThreshold field if non-nil, zero value otherwise.
+
+### GetApprovalGoodThresholdOk
+
+`func (o *TenantSettingsResponse) GetApprovalGoodThresholdOk() (*float64, bool)`
+
+GetApprovalGoodThresholdOk returns a tuple with the ApprovalGoodThreshold field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetApprovalGoodThreshold
+
+`func (o *TenantSettingsResponse) SetApprovalGoodThreshold(v float64)`
+
+SetApprovalGoodThreshold sets ApprovalGoodThreshold field to given value.
+
 
 ### GetDefaultPolicyMode
 

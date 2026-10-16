@@ -626,7 +626,7 @@ pub async fn insert_tenant(
 	used: i32,
 ) -> Uuid {
 	let row = sqlx::query(
-		"INSERT INTO tenants (name, slug, contact_email, plan_tier, status, monthly_email_limit, used_this_period) VALUES ($1, $2, $3, 'starter', 'active', $4, $5) RETURNING id",
+		"INSERT INTO tenants (name, slug, contact_email, plan_tier, status, monthly_email_limit, used_this_period) VALUES ($1, $2, $3, 'professional', 'active', $4, $5) RETURNING id",
 	)
 	.bind(format!("Tenant {}", slug))
 	.bind(slug)

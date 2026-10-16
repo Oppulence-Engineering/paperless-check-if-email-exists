@@ -2,6 +2,7 @@
 
 import { Toaster } from "@oppulence/ui/components/sonner";
 import { ThemeProvider } from "next-themes";
+import { usePathname } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Suspense, type ReactNode } from "react";
 
@@ -18,8 +19,16 @@ export function AppProviders({
 	children: ReactNode;
 	devToolsEnabled: boolean;
 }) {
+	// The signed-in app uses the polar.sh dark theme, like the public site and sign-in.
+	const forcedTheme = usePathname()?.startsWith("/app") ? "dark" : undefined;
 	return (
-		<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+		<ThemeProvider
+			attribute="class"
+			defaultTheme="system"
+			disableTransitionOnChange
+			enableSystem
+			forcedTheme={forcedTheme}
+		>
 			{/*
         Nuqs reads searchParams. Next.js Cache Components requires that
         request-time API behind a Suspense boundary so the root layout can

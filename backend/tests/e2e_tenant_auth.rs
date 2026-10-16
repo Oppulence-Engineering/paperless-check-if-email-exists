@@ -29,7 +29,7 @@ mod tests {
 		assert_eq!(ctx.tenant_id, Some(tenant_id));
 		assert_eq!(ctx.api_key_id, Some(api_key_id));
 		assert_eq!(ctx.tenant_name, "Tenant valid-auth");
-		assert_eq!(ctx.plan_tier, PlanTier::Starter);
+		assert_eq!(ctx.plan_tier, PlanTier::Professional);
 		assert_eq!(ctx.status, TenantStatus::Active);
 		assert!(!ctx.is_legacy);
 		assert_eq!(ctx.monthly_email_limit, Some(10_000));

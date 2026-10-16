@@ -24,6 +24,7 @@ Method | HTTP request | Description
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
 [**V1SourceQuality**](V1API.md#V1SourceQuality) | **Get** /v1/sources/quality | List source quality
+[**V1UpdateReverification**](V1API.md#V1UpdateReverification) | **Put** /v1/reverification | PUT /v1/reverification
 
 
 
@@ -1339,6 +1340,70 @@ Other parameters are passed through a pointer to a apiV1SourceQualityRequest str
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1UpdateReverification
+
+> ReverificationStatusResponse V1UpdateReverification(ctx).UpdateReverificationRequest(updateReverificationRequest).Execute()
+
+PUT /v1/reverification
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	updateReverificationRequest := *openapiclient.NewUpdateReverificationRequest(false, int32(123)) // UpdateReverificationRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1UpdateReverification(context.Background()).UpdateReverificationRequest(updateReverificationRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1UpdateReverification``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1UpdateReverification`: ReverificationStatusResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1UpdateReverification`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1UpdateReverificationRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **updateReverificationRequest** | [**UpdateReverificationRequest**](UpdateReverificationRequest.md) |  |
+
+### Return type
+
+[**ReverificationStatusResponse**](ReverificationStatusResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

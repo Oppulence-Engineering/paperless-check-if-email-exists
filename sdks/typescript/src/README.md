@@ -156,6 +156,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
 *V1Api* | [**v1SourceQuality**](docs/V1Api.md#v1sourcequality) | **GET** /v1/sources/quality | List source quality
+*V1Api* | [**v1UpdateReverification**](docs/V1Api.md#v1updatereverification) | **PUT** /v1/reverification | PUT /v1/reverification
 *VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
 
 
@@ -288,6 +289,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [UpdateApiKeyRequest](docs/UpdateApiKeyRequest.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
  - [UpdateProviderEndpointInput](docs/UpdateProviderEndpointInput.md)
+ - [UpdateReverificationRequest](docs/UpdateReverificationRequest.md)
  - [UpdateTenantDomainRequest](docs/UpdateTenantDomainRequest.md)
  - [UpdateTenantSettingsRequest](docs/UpdateTenantSettingsRequest.md)
  - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)

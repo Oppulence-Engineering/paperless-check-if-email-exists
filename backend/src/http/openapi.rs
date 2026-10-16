@@ -62,6 +62,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::suppressions::check::v1_check_suppression,
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::reverification::status::v1_reverification_status,
+		crate::http::v1::reverification::update::v1_update_reverification,
 		crate::http::v1::events::v1_list_events,
 		crate::http::v1::email_history::v1_email_history,
 		crate::http::v1::query::v1_query_results,
@@ -1980,6 +1981,16 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		spec,
 		"/v1/reverification/status",
 		"get",
+		"200",
+		json_response(
+			"ReverificationStatusResponse",
+			"Reverification schedule status",
+		),
+	);
+	set_response(
+		spec,
+		"/v1/reverification",
+		"put",
 		"200",
 		json_response(
 			"ReverificationStatusResponse",

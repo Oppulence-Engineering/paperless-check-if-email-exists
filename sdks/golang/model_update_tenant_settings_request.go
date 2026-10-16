@@ -20,6 +20,10 @@ var _ MappedNullable = &UpdateTenantSettingsRequest{}
 
 // UpdateTenantSettingsRequest struct for UpdateTenantSettingsRequest
 type UpdateTenantSettingsRequest struct {
+	// Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.
+	ApprovalExcellentThreshold NullableFloat64 `json:"approval_excellent_threshold,omitempty"`
+	// Safe-to-send percentage for a good list. Must be below the excellent threshold.
+	ApprovalGoodThreshold NullableFloat64 `json:"approval_good_threshold,omitempty"`
 	DefaultPolicyMode NullableString `json:"default_policy_mode,omitempty"`
 	DefaultWebhookUrl NullableString `json:"default_webhook_url,omitempty"`
 	ResultRetentionDays NullableInt32 `json:"result_retention_days,omitempty"`
@@ -41,6 +45,90 @@ func NewUpdateTenantSettingsRequest() *UpdateTenantSettingsRequest {
 func NewUpdateTenantSettingsRequestWithDefaults() *UpdateTenantSettingsRequest {
 	this := UpdateTenantSettingsRequest{}
 	return &this
+}
+
+// GetApprovalExcellentThreshold returns the ApprovalExcellentThreshold field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *UpdateTenantSettingsRequest) GetApprovalExcellentThreshold() float64 {
+	if o == nil || IsNil(o.ApprovalExcellentThreshold.Get()) {
+		var ret float64
+		return ret
+	}
+	return *o.ApprovalExcellentThreshold.Get()
+}
+
+// GetApprovalExcellentThresholdOk returns a tuple with the ApprovalExcellentThreshold field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *UpdateTenantSettingsRequest) GetApprovalExcellentThresholdOk() (*float64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ApprovalExcellentThreshold.Get(), o.ApprovalExcellentThreshold.IsSet()
+}
+
+// HasApprovalExcellentThreshold returns a boolean if a field has been set.
+func (o *UpdateTenantSettingsRequest) HasApprovalExcellentThreshold() bool {
+	if o != nil && o.ApprovalExcellentThreshold.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetApprovalExcellentThreshold gets a reference to the given NullableFloat64 and assigns it to the ApprovalExcellentThreshold field.
+func (o *UpdateTenantSettingsRequest) SetApprovalExcellentThreshold(v float64) {
+	o.ApprovalExcellentThreshold.Set(&v)
+}
+// SetApprovalExcellentThresholdNil sets the value for ApprovalExcellentThreshold to be an explicit nil
+func (o *UpdateTenantSettingsRequest) SetApprovalExcellentThresholdNil() {
+	o.ApprovalExcellentThreshold.Set(nil)
+}
+
+// UnsetApprovalExcellentThreshold ensures that no value is present for ApprovalExcellentThreshold, not even an explicit nil
+func (o *UpdateTenantSettingsRequest) UnsetApprovalExcellentThreshold() {
+	o.ApprovalExcellentThreshold.Unset()
+}
+
+// GetApprovalGoodThreshold returns the ApprovalGoodThreshold field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *UpdateTenantSettingsRequest) GetApprovalGoodThreshold() float64 {
+	if o == nil || IsNil(o.ApprovalGoodThreshold.Get()) {
+		var ret float64
+		return ret
+	}
+	return *o.ApprovalGoodThreshold.Get()
+}
+
+// GetApprovalGoodThresholdOk returns a tuple with the ApprovalGoodThreshold field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *UpdateTenantSettingsRequest) GetApprovalGoodThresholdOk() (*float64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ApprovalGoodThreshold.Get(), o.ApprovalGoodThreshold.IsSet()
+}
+
+// HasApprovalGoodThreshold returns a boolean if a field has been set.
+func (o *UpdateTenantSettingsRequest) HasApprovalGoodThreshold() bool {
+	if o != nil && o.ApprovalGoodThreshold.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetApprovalGoodThreshold gets a reference to the given NullableFloat64 and assigns it to the ApprovalGoodThreshold field.
+func (o *UpdateTenantSettingsRequest) SetApprovalGoodThreshold(v float64) {
+	o.ApprovalGoodThreshold.Set(&v)
+}
+// SetApprovalGoodThresholdNil sets the value for ApprovalGoodThreshold to be an explicit nil
+func (o *UpdateTenantSettingsRequest) SetApprovalGoodThresholdNil() {
+	o.ApprovalGoodThreshold.Set(nil)
+}
+
+// UnsetApprovalGoodThreshold ensures that no value is present for ApprovalGoodThreshold, not even an explicit nil
+func (o *UpdateTenantSettingsRequest) UnsetApprovalGoodThreshold() {
+	o.ApprovalGoodThreshold.Unset()
 }
 
 // GetDefaultPolicyMode returns the DefaultPolicyMode field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -221,6 +309,12 @@ func (o UpdateTenantSettingsRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateTenantSettingsRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.ApprovalExcellentThreshold.IsSet() {
+		toSerialize["approval_excellent_threshold"] = o.ApprovalExcellentThreshold.Get()
+	}
+	if o.ApprovalGoodThreshold.IsSet() {
+		toSerialize["approval_good_threshold"] = o.ApprovalGoodThreshold.Get()
+	}
 	if o.DefaultPolicyMode.IsSet() {
 		toSerialize["default_policy_mode"] = o.DefaultPolicyMode.Get()
 	}

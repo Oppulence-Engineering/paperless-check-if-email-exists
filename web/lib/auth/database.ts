@@ -129,6 +129,20 @@ export const authDatabase =
 	globalDatabase.betterAuthDatabase ??
 	new Kysely<unknown>({ dialect: new PostgresDialect({ pool: authPool }) });
 
+/** Stripe subscriptions, one row per workspace subscription (`@better-auth/stripe`). */
+export const authSubscriptions = schema.table("subscription", {
+	id: text("id").primaryKey(),
+	plan: text("plan").notNull(),
+	referenceId: text("referenceId").notNull(),
+	stripeCustomerId: text("stripeCustomerId"),
+	stripeSubscriptionId: text("stripeSubscriptionId"),
+	status: text("status").notNull(),
+	periodStart: date("periodStart"),
+	periodEnd: date("periodEnd"),
+	cancelAtPeriodEnd: boolean("cancelAtPeriodEnd"),
+	seats: integer("seats"),
+});
+
 export const authDb = drizzle(authPool, {
 	schema: {
 		authInvitations,
@@ -136,6 +150,7 @@ export const authDb = drizzle(authPool, {
 		authOrganizations,
 		authSessions,
 		authSsoProviders,
+		authSubscriptions,
 		authUsers,
 		identityAuditEvents,
 		scimGroupRoleMappings,

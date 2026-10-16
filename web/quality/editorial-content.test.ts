@@ -41,7 +41,12 @@ describe("editorial content collections", () => {
 			"Professional:$149/month",
 			"Enterprise:Custom",
 		]);
-		// No self-serve checkout exists yet, so paid plans must not promise one.
-		for (const plan of pricingPlans.slice(1)) expect(plan.ctaHref).toBe("/contact");
+		// Onboarding is self-serve, but no checkout exists yet: paid plans start
+		// free through sign-up and must not promise a purchase.
+		for (const plan of pricingPlans.slice(1, 3)) {
+			expect(plan.ctaHref).toBe("/sign-up");
+			expect(plan.ctaLabel).toBe("Start free");
+		}
+		expect(pricingPlans[3].ctaHref).toBe("/contact");
 	});
 });

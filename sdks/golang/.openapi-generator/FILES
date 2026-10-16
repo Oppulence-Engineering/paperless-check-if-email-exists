@@ -160,6 +160,7 @@ docs/TriggerPipelineResponse.md
 docs/UpdateApiKeyRequest.md
 docs/UpdatePipelineInput.md
 docs/UpdateProviderEndpointInput.md
+docs/UpdateReverificationRequest.md
 docs/UpdateTenantDomainRequest.md
 docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
@@ -299,6 +300,7 @@ model_trigger_pipeline_response.go
 model_update_api_key_request.go
 model_update_pipeline_input.go
 model_update_provider_endpoint_input.go
+model_update_reverification_request.go
 model_update_tenant_domain_request.go
 model_update_tenant_settings_request.go
 model_update_webhook_request.go

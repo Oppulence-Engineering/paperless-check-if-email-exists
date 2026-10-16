@@ -50,6 +50,7 @@ import {
   getV1ListSuppressionsResponseMock,
   getV1ReverificationStatusResponseMock,
   getV1SourceQualityResponseMock,
+  getV1UpdateReverificationResponseMock,
 } from "./v1.faker";
 
 export {
@@ -63,6 +64,7 @@ export {
   getV1GetListResponseMock,
   getV1DownloadListResponseMock,
   getV1CheckReputationResponseMock,
+  getV1UpdateReverificationResponseMock,
   getV1ReverificationStatusResponseMock,
   getV1SourceQualityResponseMock,
   getV1ListSuppressionsResponseMock,
@@ -340,6 +342,31 @@ export const getV1CheckReputationMockHandler = (
   );
 };
 
+export const getV1UpdateReverificationMockHandler = (
+  overrideResponse?:
+    | ReverificationStatusResponse
+    | ((
+        info: Parameters<Parameters<typeof http.put>[1]>[0],
+      ) =>
+        Promise<ReverificationStatusResponse> | ReverificationStatusResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.put(
+    "*/v1/reverification",
+    async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateReverificationResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getV1ReverificationStatusMockHandler = (
   overrideResponse?:
     | ReverificationStatusResponse
@@ -573,6 +600,7 @@ export const getV1Mock = () => [
   getV1GetListMockHandler(),
   getV1DownloadListMockHandler(),
   getV1CheckReputationMockHandler(),
+  getV1UpdateReverificationMockHandler(),
   getV1ReverificationStatusMockHandler(),
   getV1SourceQualityMockHandler(),
   getV1ListSuppressionsMockHandler(),

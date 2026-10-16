@@ -18,7 +18,7 @@ body:has([data-product-shell]) {
 
 html.dark body:has([data-product-shell]),
 .dark body:has([data-product-shell]) {
-	background: var(--bg, #1b1b1b);
+	background: #090909;
 	color-scheme: dark;
 }
 
@@ -179,4 +179,35 @@ html:has([data-product-shell]) {
 	line-height: 1.08 !important;
 	letter-spacing: -0.04em !important;
 	color: var(--text-primary);
+}
+
+/*
+ * polar.sh dark palette for the signed-in app, the same values as the public
+ * site and sign-in: polar-950 page, polar-900/800 surfaces, polar-700 lines.
+ * `/app` forces the dark theme, so these replace the Sim dark tokens.
+ */
+.dark [data-product-shell].sim-product-shell.sim-landing-root {
+	--bg: #090909;
+	--surface-1: #0d0d0d;
+	--surface-2: #111111;
+	--surface-3: #181818;
+	--surface-4: #1d1d1d;
+	--surface-5: #262626;
+	--surface-6: #2e2e2e;
+	--surface-7: #3a3a3a;
+	--surface-hover: #181818;
+	--surface-active: #212121;
+	--text-primary: #ffffff;
+	--text-secondary: #d9d9d9;
+	--text-tertiary: #adadad;
+	--text-body: #d9d9d9;
+	--text-muted: #858585;
+	--text-subtle: #757575;
+	--text-icon: #9e9e9e;
+	--text-icon-muted: #757575;
+	--text-inverse: #090909;
+	--border: #212121;
+	--scrollbar-thumb-color: #2e2e2e;
+	--scrollbar-thumb-hover-color: #3a3a3a;
+	-webkit-font-smoothing: antialiased;
 }

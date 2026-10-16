@@ -30,6 +30,7 @@ import type {
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionListResponse,
+  UpdateReverificationRequest,
   V1CheckSuppressionParams,
   V1DownloadListParams,
   V1ImportSuppressions200,
@@ -652,6 +653,64 @@ export const v1CheckReputation = async (
     status: res.status,
     headers: res.headers,
   } as v1CheckReputationResponse;
+};
+
+export type v1UpdateReverificationResponse200 = {
+  data: ReverificationStatusResponse;
+  status: 200;
+};
+
+export type v1UpdateReverificationResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type v1UpdateReverificationResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200 | 400>;
+};
+
+export type v1UpdateReverificationResponseSuccess =
+  v1UpdateReverificationResponse200 & {
+    headers: Headers;
+  };
+export type v1UpdateReverificationResponseError = (
+  v1UpdateReverificationResponse400 | v1UpdateReverificationResponseDefault
+) & {
+  headers: Headers;
+};
+
+export type v1UpdateReverificationResponse =
+  v1UpdateReverificationResponseSuccess | v1UpdateReverificationResponseError;
+
+export const getV1UpdateReverificationUrl = () => {
+  return `/v1/reverification`;
+};
+
+/**
+ * @summary PUT /v1/reverification
+ */
+export const v1UpdateReverification = async (
+  updateReverificationRequest: UpdateReverificationRequest,
+  options?: RequestInit,
+): Promise<v1UpdateReverificationResponse> => {
+  const res = await fetch(getV1UpdateReverificationUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateReverificationRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UpdateReverificationResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UpdateReverificationResponse;
 };
 
 export type v1ReverificationStatusResponse200 = {

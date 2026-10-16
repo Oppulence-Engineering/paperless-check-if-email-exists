@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const hero = readFileSync(
-	new URL("../app/(marketing)/sim-landing/hero.tsx", import.meta.url),
+	new URL("../app/(marketing)/editorial/home.tsx", import.meta.url),
 	"utf8",
 );
 const navigation = readFileSync(
-	new URL("../app/(marketing)/sim-landing/top-bar.tsx", import.meta.url),
+	new URL("../app/(marketing)/editorial/header.tsx", import.meta.url),
 	"utf8",
 );
 const config = readFileSync(new URL("../next.config.ts", import.meta.url), "utf8");

@@ -49,6 +49,8 @@ const ViewerResponseSchema = z.object({
 			status: z.string().nullable().optional(),
 			trialExpiresAt: z.string().nullable().optional(),
 			usage: z.unknown().optional(),
+			/** True when this deployment can sell plans through Stripe. */
+			enabled: z.boolean().optional(),
 		})
 		.passthrough(),
 });
