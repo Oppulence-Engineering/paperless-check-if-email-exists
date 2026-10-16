@@ -78,7 +78,7 @@ Done on 2026-10-16:
 
 Still open:
 
-1. **Production sign-in (G18).** Fixed in the deploy on 2026-10-16: the production web app has an ingress at `verifier.playbookmedia.io` with a cert-manager certificate, `BETTER_AUTH_URL` is set, and production uses the staging auth secret, SCIM hash secret, and Resend settings. Deploys had failed since 2026-10-16 because Helm rejected `--force-conflicts` without `--server-side=true`. The owner must add the DNS record in Cloudflare (`playbookmedia.io`): CNAME `verifier` → `oppulence.app`, proxied, as the other apps use.
+1. **Production sign-in (G18).** Done on 2026-10-16. `https://verifier.playbookmedia.io` serves the app from all three clusters (ingress, cert-manager certificate, Cloudflare CNAME to `oppulence.app`). Production has its own `BETTER_AUTH_SECRET` and `SCIM_CREDENTIAL_HASH_SECRET`; only the Resend settings are shared with staging. The deploy also needed `--server-side=true` for Helm and the database CA for the auth migration.
 2. **Stripe secret keys.** Set `STRIPE_SECRET_KEY` (live) and `STRIPE_SECRET_KEY_STAGING` (test) with `gh secret set <NAME>`, and paste the key when asked. Until then, billing stays off and the plan card says so.
 3. **Stripe webhooks.** Add an endpoint at `https://verifier.playbookmedia.io/api/auth/stripe/webhook` in live mode and one at `<BETTER_AUTH_URL_STAGING>/api/auth/stripe/webhook` in test mode, with the events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Put each signing secret in `STRIPE_WEBHOOK_SECRET` and `STRIPE_WEBHOOK_SECRET_STAGING`.
 4. **Auth migration.** Apply `config/auth/migrations/0007_stripe_billing.sql`.
