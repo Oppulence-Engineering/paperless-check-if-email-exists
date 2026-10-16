@@ -27,7 +27,7 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Product components",
 		body: [
-			"Reports may concern the web application, Better Auth session flow, organization boundaries, Rust API, worker, or deployment configuration.",
+			"Reports may concern the web application, sign-in and sessions, organization boundaries, the API, background processing, or deployment configuration.",
 		],
 	},
 	{

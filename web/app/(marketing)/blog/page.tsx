@@ -8,7 +8,7 @@ import { marketingMetadata } from "../metadata";
 export const metadata = marketingMetadata({
 	title: "Blog",
 	description:
-		"Guides and product notes about email verification, list hygiene, and running the open-source application.",
+		"Guides and product notes about email verification, list hygiene, and sender reputation.",
 	path: "/blog",
 });
 

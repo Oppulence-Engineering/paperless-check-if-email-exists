@@ -15,7 +15,7 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Product scope",
 		body: [
-			"Check If Email Exists provides email verification through a web application, Rust API, worker, and SDKs. It checks signals without sending an email to the recipient.",
+			"Check If Email Exists provides email verification through a web application, an API, and SDKs. It checks signals without sending an email to the recipient.",
 		],
 	},
 	{
@@ -27,7 +27,7 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Self-hosting",
 		body: [
-			"The source is available in this repository. Review the repository licenses and deployment instructions before use. Self-hosted operators manage their own infrastructure and data.",
+			"The source code is public. Review its licenses and deployment instructions before use. Self-hosted operators manage their own infrastructure and data.",
 		],
 	},
 	{

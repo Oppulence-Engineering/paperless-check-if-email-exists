@@ -15,19 +15,19 @@ const SECTIONS: LegalSection[] = [
 	{
 		heading: "Account and workspace data",
 		body: [
-			"The web application uses Better Auth for sign-in and stores account, organization, and membership data in PostgreSQL.",
+			"We store account, organization, and membership data in our database to sign you in and manage your workspace.",
 		],
 	},
 	{
 		heading: "Verification data",
 		body: [
-			"The application stores submitted addresses, results, list jobs, and history in the configured PostgreSQL database. Results may contain syntax, DNS, MX, and mailbox signals.",
+			"We store the addresses you submit, their results, list jobs, and history in our database. Results may contain format, domain, mail server, and mailbox signals.",
 		],
 	},
 	{
-		heading: "Service infrastructure",
+		heading: "Processing and retention",
 		body: [
-			"The Rust API and worker process checks. RabbitMQ carries background jobs. Operators who self-host control these services and their retention settings.",
+			"Our servers run the checks and the background jobs. You choose how many days results are kept. If you self-host, you control these services and their retention.",
 		],
 	},
 	{

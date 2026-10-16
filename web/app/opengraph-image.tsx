@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Oppulence — the commitment ledger that survives kickoff";
+export const alt = "Check If Email Exists — check email addresses before you send";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,20 +33,20 @@ export default function OpenGraphImage() {
 						width: 56,
 					}}
 				>
-					O
+					@
 				</span>
-				Oppulence
+				Check If Email Exists
 			</div>
 			<div style={{ display: "flex", flexDirection: "column", maxWidth: 980 }}>
 				<div style={{ color: "#a1a1aa", display: "flex", fontSize: 24, marginBottom: 24 }}>
-					THE COMMITMENT LEDGER
+					EMAIL VERIFICATION
 				</div>
 				<div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.08 }}>
-					Business promises, with the proof behind them.
+					Check email addresses before you send.
 				</div>
 			</div>
 			<div style={{ color: "#d4d4d8", display: "flex", fontSize: 24 }}>
-				Evidence in. Human approval. Accountable action.
+				Clean lists. Suppress bounces. Protect your sender reputation.
 			</div>
 		</div>,
 		size,
