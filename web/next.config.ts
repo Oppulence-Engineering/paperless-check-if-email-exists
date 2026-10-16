@@ -3,6 +3,7 @@ import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 import path from "path";
 import uiPackage from "./vendor/oppulence/ui/package.json" with { type: "json" };
+import { marketingRedirects } from "./config/marketing-redirects";
 import { isDevelopment } from "./lib/environment";
 
 const repoRoot = __dirname;
@@ -117,6 +118,9 @@ const nextConfig: NextConfig = {
 	allowedDevOrigins: ["127.0.0.1"],
 	async headers() {
 		return [{ source: "/:path*", headers: securityHeaders }];
+	},
+	async redirects() {
+		return marketingRedirects;
 	},
 	webpack(config) {
 		config.resolve.alias = {

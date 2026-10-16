@@ -1,4 +1,3 @@
-import { comparePages } from "./compare-catalog";
 import type { LinkItem } from "./marketing-data";
 
 /** Public origin used for canonical URLs, sitemap, and structured data. */
@@ -27,80 +26,70 @@ export type NavGroup = {
 export const headerNav: NavGroup[] = [
 	{
 		label: "Product",
-		href: "/products",
-		description: "Check one address, clean a list, or use the API.",
+		href: "/product",
+		description: "Check addresses, clean lists, and keep them clean.",
 		items: [
 			{
 				label: "Email verification",
 				href: "/product",
-				description: "Syntax, mail servers, mailbox signals, and a clear result.",
+				description: "Know which addresses are safe to send to.",
 			},
 			{
 				label: "Web workspace",
 				href: "/web",
-				description: "Checks, lists, and history in a shared workspace.",
+				description: "Lists, results, and history for your team.",
 			},
 			{
-				label: "Self-hosting",
-				href: "/desktop",
-				description: "Run the web application and Rust API in one image.",
-			},
-			{
-				label: "Bulk lists",
-				href: "/voice-app",
-				description: "Upload CSV lists and review verification jobs.",
-			},
-			{
-				label: "Run locally",
-				href: "/download",
-				description: "Build the open-source stack from this repository.",
+				label: "Integrations",
+				href: "/integrations",
+				description: "Delivery feedback from your email platform.",
 			},
 		],
 	},
 	{
 		label: "Features",
 		href: "/features",
-		description: "Signals, list cleaning, and team workflows.",
+		description: "From one address to every list you send.",
 		items: [
 			{
 				label: "Single checks",
-				href: "/features/commitment-register",
-				description: "Review address syntax, MX, and mailbox reachability.",
-			},
-			{
-				label: "Workspace overview",
-				href: "/features/account-mission-control",
-				description: "Keep checks and lists under one organization.",
+				href: "/features/single-checks",
+				description: "A clear answer for one address.",
 			},
 			{
 				label: "List cleaning",
-				href: "/features/attention-queue",
-				description: "Upload a CSV and inspect each result.",
+				href: "/features/list-cleaning",
+				description: "Clean a CSV before your next campaign.",
 			},
 			{
-				label: "API access",
-				href: "/features/governed-actions",
-				description: "Use scoped credentials and backend authorization.",
+				label: "Scores and reasons",
+				href: "/features/risk-scoring",
+				description: "See why an address is risky.",
 			},
 			{
-				label: "Syntax and MX",
-				href: "/features/meeting-capture",
-				description: "Catch malformed addresses and missing mail servers.",
+				label: "Delivery feedback",
+				href: "/features/delivery-feedback",
+				description: "Suppress what actually bounced.",
 			},
 			{
-				label: "Mailbox signals",
-				href: "/features/live-notes",
-				description: "See SMTP and delivery signals with each check.",
+				label: "Suppression list",
+				href: "/features/suppressions",
+				description: "One list of addresses to never send to.",
 			},
 			{
-				label: "Data ownership",
-				href: "/features/local-vault",
-				description: "Store verification history in your own database.",
+				label: "Ongoing re-checks",
+				href: "/features/reverification",
+				description: "Keep lists clean as they age.",
 			},
 			{
-				label: "Pipelines",
-				href: "/features/agents",
-				description: "Schedule and monitor recurring verification work.",
+				label: "API and SDKs",
+				href: "/features/api",
+				description: "Checks inside your own product.",
+			},
+			{
+				label: "Team workspace",
+				href: "/features/workspace",
+				description: "Shared lists, history, and settings.",
 			},
 		],
 	},
@@ -109,24 +98,24 @@ export const headerNav: NavGroup[] = [
 		href: "/use-cases",
 		items: [
 			{
-				label: "Solo senders",
-				href: "/use-cases/founder-operator",
-				description: "Check an address before an important message.",
+				label: "Email marketing",
+				href: "/use-cases/email-marketing",
+				description: "Protect your sender reputation.",
 			},
 			{
-				label: "Sales teams",
-				href: "/use-cases/account-management",
-				description: "Keep contact lists cleaner across a shared workspace.",
+				label: "Marketing operations",
+				href: "/use-cases/marketing-operations",
+				description: "Clean CRM and event exports.",
 			},
 			{
-				label: "List hygiene",
-				href: "/use-cases/meetings",
-				description: "Review CSV addresses before a campaign.",
+				label: "Signup forms",
+				href: "/use-cases/signup-forms",
+				description: "Stop bad addresses at signup.",
 			},
 			{
-				label: "Research",
-				href: "/use-cases/research",
-				description: "Use verification evidence to prioritize follow-up.",
+				label: "Platforms and agencies",
+				href: "/use-cases/sending-platforms",
+				description: "Check lists for the senders you serve.",
 			},
 		],
 	},
@@ -141,64 +130,30 @@ export const footerGroups: { title: string; items: NavLink[] }[] = [
 	{
 		title: "Product",
 		items: [
-			{ label: "Products", href: "/products" },
 			{ label: "Email verification", href: "/product" },
 			{ label: "Web workspace", href: "/web" },
-			{ label: "Self-hosting", href: "/desktop" },
-			{ label: "Bulk lists", href: "/voice-app" },
 			{ label: "Pricing", href: "/pricing" },
-			{ label: "Run locally", href: "/download" },
+			{ label: "Integrations", href: "/integrations" },
+			{ label: "Changelog", href: "/changelog" },
 		],
 	},
 	{
 		title: "Features",
-		items: [
-			{ label: "Single checks", href: "/features/commitment-register" },
-			{ label: "Workspace overview", href: "/features/account-mission-control" },
-			{ label: "List cleaning", href: "/features/attention-queue" },
-			{ label: "API access", href: "/features/governed-actions" },
-			{ label: "Syntax and MX", href: "/features/meeting-capture" },
-			{ label: "Mailbox signals", href: "/features/live-notes" },
-			{ label: "Data ownership", href: "/features/local-vault" },
-			{ label: "Pipelines", href: "/features/agents" },
-		],
+		items: headerNav[1].items.map(({ label, href }) => ({ label, href })),
 	},
 	{
 		title: "Use cases",
-		items: [
-			{ label: "Solo senders", href: "/use-cases/founder-operator" },
-			{ label: "Sales teams", href: "/use-cases/account-management" },
-			{ label: "List hygiene", href: "/use-cases/meetings" },
-			{ label: "Research", href: "/use-cases/research" },
-		],
+		items: headerNav[2].items.map(({ label, href }) => ({ label, href })),
 	},
 	{
 		title: "Resources",
 		items: [
 			{ label: "Resource hub", href: "/resources" },
 			{ label: "Guides", href: "/guides" },
-			{ label: "Changelog", href: "/changelog" },
-			{ label: "Integrations", href: "/integrations" },
-			{ label: "Security", href: "/security" },
-			{ label: "Compare", href: "/compare" },
-			{ label: "Answer hub", href: "/answers" },
 			{ label: "Blog", href: "/blog" },
-			{ label: "Customers", href: "/customers" },
+			{ label: "Security", href: "/security" },
+			{ label: "Self-hosting", href: "/self-hosting" },
 		],
-	},
-	{
-		title: "Compare",
-		items: comparePages.map((page) => ({
-			label:
-				page.slug === "crm"
-					? "CRM"
-					: page.slug === "meeting-notes"
-						? "Meeting notes"
-						: page.slug === "inbox"
-							? "Inbox"
-							: "AI assistants",
-			href: page.path,
-		})),
 	},
 	{
 		title: "Company",
@@ -207,59 +162,9 @@ export const footerGroups: { title: string; items: NavLink[] }[] = [
 			{ label: "Privacy", href: "/privacy" },
 			{ label: "Terms", href: "/terms" },
 			{ label: "Responsible disclosure", href: "/responsible-disclosure" },
-			{
-				label: "Source code",
-				href: "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists",
-				external: true,
-			},
 		],
 	},
 ];
-
-/** Dedicated marketing routes that live outside the catch-all slug table. */
-export const dedicatedMarketingPaths = [
-	"product",
-	"products",
-	"web",
-	"desktop",
-	"voice-app",
-	"download",
-	"security",
-	"changelog",
-	"contact",
-	"resources",
-	"features",
-	"features/commitment-register",
-	"features/account-mission-control",
-	"features/attention-queue",
-	"features/governed-actions",
-	"features/meeting-capture",
-	"features/live-notes",
-	"features/local-vault",
-	"features/agents",
-	"use-cases",
-	"use-cases/founder-operator",
-	"use-cases/account-management",
-	"use-cases/meetings",
-	"use-cases/research",
-	"integrations",
-	"integrations/gmail",
-	"integrations/calendar",
-	"integrations/slack",
-	"integrations/hubspot",
-	"integrations/mcp",
-	"guides",
-	"guides/desktop-vs-web",
-	"guides/what-stays-on-device",
-	"guides/approval-before-send",
-	"guides/install-oppulence",
-	"pricing",
-	"blog",
-	"customers",
-	"compare",
-	"answers",
-	...comparePages.map((page) => page.path.slice(1)),
-] as const;
 
 export function absoluteUrl(path = ""): string {
 	if (!path || path === "/") return SITE_URL;

@@ -13,60 +13,6 @@ function slugify(value: string) {
 		.replace(/^-|-$/g, "");
 }
 
-const CAPABILITY_HERO: Partial<Record<string, ProductPreviewKey>> = {
-	"commitment-register": "register",
-	"account-mission-control": "account",
-	"attention-queue": "web",
-	"governed-actions": "govern",
-	"meeting-capture": "voice",
-	"live-notes": "desktop",
-	"local-vault": "desktop",
-	agents: "desktop",
-	"founder-operator": "web",
-	"account-management": "account",
-	meetings: "voice",
-	research: "account",
-	gmail: "register",
-	calendar: "web",
-	slack: "govern",
-	hubspot: "account",
-	mcp: "desktop",
-};
-
-/** Interactive showcase preview per capability slug. */
-const CAPABILITY_SHOWCASE: Partial<Record<string, ProductPreviewKey | "register-interactive">> = {
-	"commitment-register": "register-interactive",
-	"governed-actions": "govern",
-	"meeting-capture": "voice",
-	"live-notes": "desktop",
-	"attention-queue": "web",
-	"account-mission-control": "account",
-	gmail: "register",
-	slack: "govern",
-	hubspot: "account",
-};
-
-/** Two-up feature grid previews per slug — distinct pairs where possible. */
-const CAPABILITY_GRID: Partial<Record<string, [ProductPreviewKey, ProductPreviewKey]>> = {
-	"commitment-register": ["register", "account"],
-	"governed-actions": ["govern", "register"],
-	"meeting-capture": ["voice", "desktop"],
-	"live-notes": ["desktop", "register"],
-	"attention-queue": ["web", "account"],
-	"account-mission-control": ["account", "web"],
-	gmail: ["register", "govern"],
-	calendar: ["web", "register"],
-	slack: ["govern", "web"],
-	hubspot: ["account", "register"],
-	mcp: ["desktop", "govern"],
-};
-
-const PLATFORM_HERO: Record<string, ProductPreviewKey> = {
-	web: "web",
-	desktop: "desktop",
-	"voice-app": "voice",
-};
-
 function modulePreview(
 	product: ProductPreviewKey | "register-interactive",
 	layout: "menu" | "stage" = "menu",
@@ -94,15 +40,11 @@ function featureBlock(
 
 /** Map catalog pages to Sim `/knowledge` or `/tables` product layout with live previews. */
 export function capabilityToSolutionsConfig(page: CapabilityPage): SolutionsProductPageConfig {
-	const heroProduct = CAPABILITY_HERO[page.slug] ?? "register";
+	const heroProduct: ProductPreviewKey = "overview";
 	const secondary = page.capabilities[0] ?? page.examples[0];
 	const tertiary = page.capabilities[1] ?? page.examples[1] ?? page.capabilities[0];
-	const [gridA, gridB] = CAPABILITY_GRID[page.slug] ?? [
-		heroProduct === "register" ? "account" : "govern",
-		heroProduct === "voice" ? "desktop" : "web",
-	];
-
-	const showcaseProduct = CAPABILITY_SHOWCASE[page.slug] ?? heroProduct;
+	const [gridA, gridB]: [ProductPreviewKey, ProductPreviewKey] = ["web", "account"];
+	const showcaseProduct = heroProduct;
 
 	return {
 		module: page.eyebrow,
@@ -160,17 +102,11 @@ export function capabilityToSolutionsConfig(page: CapabilityPage): SolutionsProd
 	};
 }
 
-/** Map `/web`, `/desktop`, and `/voice-app` to Sim product module pages. */
+/** Map `/web` and `/self-hosting` to Sim product module pages. */
 export function platformToSolutionsConfig(page: PlatformPage): SolutionsProductPageConfig {
-	const heroProduct = PLATFORM_HERO[page.slug] ?? "web";
+	const heroProduct: ProductPreviewKey = "web";
 	const [first, second, third] = page.sections;
-
-	const featureProducts: Record<string, [ProductPreviewKey, ProductPreviewKey]> = {
-		web: ["web", "account"],
-		desktop: ["desktop", "account"],
-		"voice-app": ["voice", "desktop"],
-	};
-	const [gridA, gridB] = featureProducts[page.slug] ?? ["web", "govern"];
+	const [gridA, gridB]: [ProductPreviewKey, ProductPreviewKey] = ["web", "account"];
 
 	return {
 		module: page.name.replace(/^Oppulence /, ""),
@@ -209,9 +145,7 @@ export function platformToSolutionsConfig(page: PlatformPage): SolutionsProductP
 						third.title,
 						third.body,
 						gridB,
-						page.download
-							? { label: "Download", href: "/download" }
-							: { label: "Open dashboard", href: "/app" },
+						page.cta ?? { label: "Open the app", href: "/app" },
 					)
 				: featureBlock(
 						"also",
@@ -219,51 +153,8 @@ export function platformToSolutionsConfig(page: PlatformPage): SolutionsProductP
 						page.specs[1]?.term ?? "Runs on",
 						page.specs[1]?.detail ?? page.summary,
 						gridB,
-						{ label: "All products", href: "/products" },
+						{ label: "Email verification", href: "/product" },
 					),
-		],
-	};
-}
-
-/** Map `/products` suite hub to sim.ai platform module rhythm with live previews. */
-export function productsSuiteToSolutionsConfig(): SolutionsProductPageConfig {
-	return {
-		module: "Products",
-		path: "/products",
-		seoDescription: "Check one email address, clean CSV lists, or use the self-hosted Rust API.",
-		hero: {
-			eyebrow: "Products",
-			heading: "One check, a whole list, or an API call.",
-			description:
-				"Use the browser for individual checks and CSV lists. Use the Rust API in your own workflow.",
-			summary: "The web workspace, list jobs, and API report syntax, DNS, MX, and mailbox signals.",
-			visual: <ProductHeroPreview product="overview" />,
-		},
-		features: [
-			{
-				id: "explore",
-				label: "Workflows",
-				title: "Verification where you need it.",
-				description:
-					"Switch between individual checks, the web workspace, self-hosting, and bulk lists.",
-				visual: <PlatformExplorer />,
-			},
-			featureBlock(
-				"web",
-				"Web app",
-				"Web workspace",
-				"Check addresses and review lists and history in a browser.",
-				"web",
-				{ label: "Open web app", href: "/web" },
-			),
-			featureBlock(
-				"desktop",
-				"Self-hosting",
-				"Your infrastructure",
-				"Run the combined web application and Rust API with PostgreSQL and RabbitMQ.",
-				"desktop",
-				{ label: "Open desktop app", href: "/desktop" },
-			),
 		],
 	};
 }
@@ -284,26 +175,27 @@ export function productToSolutionsConfig(page: MarketingPage): SolutionsProductP
 		features: [
 			{
 				id: "explore",
-				label: "Explore the workspace",
-				title: "Check, review, and keep history.",
-				description: "Explore individual checks, CSV jobs, the web workspace, and the API.",
+				label: "One product, four ways in",
+				title: "Check one address, clean a list, or call the API.",
+				description:
+					"Use the web workspace for checks and lists, or the API inside your own product.",
 				visual: <PlatformExplorer />,
 			},
 			featureBlock(
+				"scores",
+				"Scores and reasons",
+				"Know why an address is risky.",
+				"Each result has a category, a score from 0 to 100, a safe-to-send flag, and reason codes.",
 				"register",
-				"Verification details",
-				"The signals behind each result.",
-				"Review syntax, DNS, MX, and mailbox signals before using an address.",
-				"register",
-				{ label: "Explore single checks", href: "/features/commitment-register" },
+				{ label: "Explore scores and reasons", href: "/features/risk-scoring" },
 			),
 			featureBlock(
+				"feedback",
+				"Delivery feedback",
+				"Suppress what actually bounced.",
+				"Connect SendGrid, Mailgun, Postmark, or Amazon SES, and keep one suppression list.",
 				"govern",
-				"Bulk verification",
-				"Clean a list before outreach.",
-				"Upload a CSV and review the verification result for each address.",
-				"govern",
-				{ label: "Explore list cleaning", href: "/features/attention-queue" },
+				{ label: "Explore delivery feedback", href: "/features/delivery-feedback" },
 			),
 		],
 	};

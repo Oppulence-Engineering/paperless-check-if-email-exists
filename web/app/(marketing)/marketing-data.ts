@@ -1416,223 +1416,92 @@ export type PlatformPage = {
 		alt: string;
 	}[];
 	specs: { term: string; detail: string }[];
+	/** Call to action for the last feature block. Defaults to opening the app. */
+	cta?: { label: string; href: string };
 };
 
-const originalPlatformPages: PlatformPage[] = [
+const SOURCE_URL = "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists";
+
+export const platformPages: PlatformPage[] = [
 	{
 		slug: "web",
-		name: "Oppulence Web",
-		eyebrow: "Oppulence Web",
-		title: "The whole book of business, in a browser tab.",
-		lede: "Open it Monday morning and the accounts that moved over the weekend are already at the top, with the reason why and a draft reply waiting. Nothing to install, and it keeps working when your laptop is shut.",
-		summary:
-			"Runs in the cloud. Best for managers, shared queues, and anyone who lives in a browser.",
-		screenshot: "/marketing/relationship-web-list.png",
-		screenshotAlt:
-			"Oppulence Web account mission control listing Beta Corp, Acme, and Northstar Labs with health and next actions",
-		download: false,
-		sections: [
-			{
-				title: "The list you actually work from.",
-				body: "Every account you own, sorted by which ones need a person today. Each row says what changed, when it changed, and how much is riding on it.",
-				bullets: [
-					"Ranked by what moved, not by last touch date",
-					"Filter to your patch, your team, or the whole book",
-					"Click any account for the full history behind it",
-				],
-				screenshot: "/marketing/relationship-web-list.png",
-				alt: "Ranked account list in Oppulence Web",
-			},
-			{
-				title: "Open an account and see the receipts.",
-				body: "The promises, the objections, who has gone quiet, who just joined the thread. Every claim links back to the email or meeting it came from, so you can check before you act.",
-				bullets: [
-					"One timeline across email, calendar, Slack, and CRM",
-					"Commitments in both directions, with dates",
-					"Anything stale or missing is labelled, not hidden",
-				],
-				screenshot: "/marketing/relationship-web-detail.png",
-				alt: "Account detail view with linked source evidence",
-			},
-			{
-				title: "It keeps watching while you sleep.",
-				body: "Background runs in the cloud notice replies, meetings, and money changes as they land, so Monday's list is already right before you open it.",
-				bullets: [
-					"Scheduled and event-driven runs",
-					"No machine to leave switched on",
-					"Same history the desktop app sees",
-				],
-				screenshot: "/marketing/desktop-background-tasks.png",
-				alt: "Background task runs keeping account state current",
-			},
-		],
-		specs: [
-			{ term: "Runs on", detail: "Any modern browser. Nothing to install." },
-			{ term: "Sign in with", detail: "Google, through your existing work account." },
-			{ term: "Best for", detail: "Shared queues, managers, and reviewing a whole book." },
-			{ term: "Works offline", detail: "No. Use the desktop app if you need local access." },
-		],
-	},
-	{
-		slug: "desktop",
-		name: "Oppulence Desktop",
-		eyebrow: "Oppulence Desktop",
-		title: "It sits next to the work instead of in another tab.",
-		lede: "Same accounts, same history, except it is right there while you write the email, sit in the meeting, or dig through a doc. Some things never leave your machine, which matters more than people admit.",
-		summary: "A native Mac, Windows, and Linux app. Best for the person doing the work all day.",
-		screenshot: "/marketing/desktop-home.png",
-		screenshotAlt: "Oppulence Desktop home view",
-		download: true,
-		sections: [
-			{
-				title: "Ask about an account without leaving what you are doing.",
-				body: "Pull up who this person is, what you last promised them, and what they pushed back on, without hunting through six months of thread.",
-				bullets: [
-					"Full account history, one keystroke away",
-					"Answers cite the message they came from",
-					"Works against the same state as the web app",
-				],
-				screenshot: "/marketing/desktop-chat.png",
-				alt: "Oppulence Desktop conversational view over account history",
-			},
-			{
-				title: "Walk into the call already briefed.",
-				body: "Before a meeting you get the account as it stands: what you last promised, what they objected to, who has gone quiet. Afterwards, what was agreed becomes part of the history instead of a note you meant to write.",
-				bullets: [
-					"A brief built from the account, not a template",
-					"Commitments captured as commitments, with dates",
-					"Pairs with Oppulence Voice for the transcript itself",
-				],
-				screenshot: "/marketing/desktop-email.png",
-				alt: "Oppulence Desktop showing customer threads flagged as important with the assistant alongside",
-			},
-			{
-				title: "Your own notes count as evidence too.",
-				body: "The doc you keep on a key account, the thing a colleague told you in passing. Local knowledge feeds the same picture, and stays yours.",
-				bullets: [
-					"Local files searched alongside connected sources",
-					"You choose what syncs and what stays put",
-					"Corrections you make beat whatever it inferred",
-				],
-				screenshot: "/marketing/desktop-knowledge.png",
-				alt: "Local knowledge and notes in Oppulence Desktop",
-			},
-		],
-		specs: [
-			{ term: "Runs on", detail: "macOS (Apple silicon and Intel), Windows, and Linux." },
-			{ term: "Install size", detail: "Signed installer. DMG, EXE, DEB, or RPM." },
-			{ term: "Offline", detail: "Local notes, capture, and search work without a connection." },
-			{ term: "Updates", detail: "Ships with the app. You do not have to chase releases." },
-		],
-	},
-	{
-		slug: "voice-app",
-		name: "Oppulence Voice",
-		eyebrow: "Oppulence Voice",
-		title: "Talk instead of typing. It lands where your cursor is.",
-		lede: "Hit a hotkey, say the thing, and the words appear in whatever app you are in \u2014 the email, the CRM box, the doc. It also sits in your meetings and writes them down. Transcription can run entirely on your machine, so the audio never leaves.",
-		summary: "A standalone dictation and meeting app for macOS, Windows, and Linux.",
-		screenshot: "/marketing/voice-transcription.png",
-		screenshotAlt:
-			"Oppulence Voice speech-to-text settings offering cloud, bring-your-own-key, local on-device, and self-hosted engines",
-		download: true,
-		sections: [
-			{
-				title: "Dictate into any app on your machine.",
-				body: "One global hotkey. Speak, and the cleaned-up text is pasted at your cursor, whether that is Gmail, HubSpot, Slack, or a terminal. Roughly three times faster than typing it out, and you stop losing the thought halfway through.",
-				bullets: [
-					"Works in any application, not just ours",
-					"Filler words and false starts cleaned up automatically",
-					"A second hotkey dictates in one language and pastes another",
-				],
-				screenshot: "/marketing/voice-hotkeys.png",
-				alt: "Oppulence Voice hotkey settings for dictation, the voice agent, translation, and meeting mode",
-			},
-			{
-				title: "It writes down your meetings.",
-				body: "Zoom, Teams, and FaceTime calls are detected automatically. You get a live transcript with speakers labelled, and afterwards a set of notes instead of a memory of what was said.",
-				bullets: [
-					"Speaker labelling that runs on your device",
-					"Google, Microsoft, and Apple calendar integration",
-					"Import an existing recording, or a YouTube link, and get a transcript",
-				],
-				screenshot: "/marketing/voice-integrations.png",
-				alt: "Oppulence Voice integrations connecting Google Calendar, the API, MCP, and the CLI",
-			},
-			{
-				title: "It learns your customers\u2019 names.",
-				body: "Every account list is full of words no general model has heard: company names, product codenames, the acronym your team invented last quarter. Add them once and they stop coming out garbled.",
-				bullets: [
-					"Names, tools, and acronyms it should always get right",
-					"Snippets expand a phrase into boilerplate you type constantly",
-					"Import a list instead of adding them one by one",
-				],
-				screenshot: "/marketing/voice-dictionary.png",
-				alt: "The Oppulence Voice dictionary holding customer names and acronyms",
-			},
-			{
-				title: "The audio can stay on your laptop.",
-				body: "Run transcription locally with Whisper or Parakeet and nothing is uploaded, which matters when the call was about someone\u2019s contract. Or use a cloud model when you would rather have the speed. Your choice, per machine.",
-				bullets: [
-					"Local speech-to-text with GPU acceleration",
-					"No telemetry and no data collection",
-					"Open source, so you can go read what it does",
-				],
-				screenshot: "/marketing/voice-transcription.png",
-				alt: "Choosing between cloud and fully local on-device transcription",
-			},
-		],
-		specs: [
-			{ term: "Runs on", detail: "macOS (Apple silicon and Intel), Windows, and Linux." },
-			{ term: "Transcription", detail: "Local Whisper or Parakeet, or a cloud model. You pick." },
-			{ term: "Works with", detail: "Any app on your machine, via a global hotkey." },
-			{ term: "Source", detail: "Open source, built on OpenWhispr." },
-		],
-	},
-];
-
-export const platformPages: PlatformPage[] = originalPlatformPages.map((page) => {
-	const name =
-		page.slug === "web" ? "Web workspace" : page.slug === "desktop" ? "Self-hosting" : "Bulk lists";
-	const summary =
-		page.slug === "web"
-			? "Check addresses and review lists in your browser."
-			: page.slug === "desktop"
-				? "Run the web application, Rust API, and worker on infrastructure you control."
-				: "Upload CSV lists and inspect bulk verification jobs.";
-	return {
-		...page,
-		name,
-		eyebrow: name,
-		title: name,
-		lede: summary,
-		summary,
+		name: "Web workspace",
+		eyebrow: "Web workspace",
+		title: "Your team's workspace for clean lists",
+		lede: "Check addresses, clean lists, and review history in your browser. There is nothing to install.",
+		summary: "Check addresses and clean lists in your browser.",
 		screenshot: "/marketing/email-check-preview.svg",
-		screenshotAlt: "Illustrative email verification workspace",
+		screenshotAlt: "Sample email check result",
 		download: false,
 		sections: [
 			{
 				title: "Check an address",
-				body: "Inspect syntax, DNS, MX, and mailbox signals without sending a message.",
-				bullets: ["One address at a time", "Detailed result", "No email sent"],
+				body: "Get the category, the score, and the reasons in seconds. No email is sent.",
+				bullets: ["Category and score", "Reason codes", "History for each address"],
 				screenshot: "/marketing/email-check-preview.svg",
-				alt: "Email check preview",
+				alt: "Sample email check result",
 			},
 			{
 				title: "Clean a list",
-				body: "Upload a CSV and review verification results in a job.",
-				bullets: ["CSV upload", "Per-address results", "Job history"],
+				body: "Upload a CSV, review the fix plan, and export clean files for your email platform.",
+				bullets: ["CSV upload", "List quality score", "Keep, fix, review, or suppress"],
 				screenshot: "/marketing/email-check-preview.svg",
-				alt: "List verification preview",
+				alt: "Sample list results",
+			},
+			{
+				title: "Keep it clean",
+				body: "Suppress bounces from your email platform, and re-check old addresses on a schedule.",
+				bullets: ["Delivery feedback", "Suppression list", "Scheduled re-checks"],
+				screenshot: "/marketing/email-check-preview.svg",
+				alt: "Sample suppression list",
 			},
 		],
 		specs: [
-			{ term: "Web", detail: "Better Auth workspace with organization access." },
-			{ term: "API", detail: "Rust backend with generated SDKs." },
-			{ term: "Hosting", detail: "Combined app image with external PostgreSQL and RabbitMQ." },
+			{ term: "Team", detail: "Organizations, invitations, and per-user sign-in." },
+			{ term: "API", detail: "REST API with Go and TypeScript SDKs on Professional plans." },
 		],
-	};
-});
+		cta: { label: "Start free", href: "/sign-up" },
+	},
+	{
+		slug: "self-hosting",
+		name: "Self-hosting",
+		eyebrow: "Self-hosting",
+		title: "Run it on your own infrastructure",
+		lede: "The source code is public. Run the web workspace and the verification service where your data must stay.",
+		summary: "Self-host the web workspace, the API, and the verification worker.",
+		screenshot: "/marketing/email-check-preview.svg",
+		screenshotAlt: "Sample email check result",
+		download: false,
+		sections: [
+			{
+				title: "What you run",
+				body: "One container image runs the web workspace, the REST API, and the verification worker. It connects to your own PostgreSQL database and RabbitMQ queue.",
+				bullets: ["One container image", "PostgreSQL", "RabbitMQ"],
+				screenshot: "/marketing/email-check-preview.svg",
+				alt: "Sample email check result",
+			},
+			{
+				title: "Your data stays with you",
+				body: "Accounts, lists, results, and history are stored in your database, on servers you control.",
+				bullets: ["Your database", "Your network", "Your backups"],
+				screenshot: "/marketing/email-check-preview.svg",
+				alt: "Sample list results",
+			},
+			{
+				title: "Open source",
+				body: "The source code is available under the AGPL-3.0 license. Read the license in the repository before you use it in a commercial product.",
+				bullets: ["Public repository", "AGPL-3.0", "Setup guide in the README"],
+				screenshot: "/marketing/email-check-preview.svg",
+				alt: "Sample email check result",
+			},
+		],
+		specs: [
+			{ term: "Source", detail: SOURCE_URL },
+			{ term: "License", detail: "AGPL-3.0. See the license files in the repository." },
+		],
+		cta: { label: "View the source", href: SOURCE_URL },
+	},
+];
 
 export function getPlatformPage(slug: string) {
 	return platformPages.find((page) => page.slug === slug);

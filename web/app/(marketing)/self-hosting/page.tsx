@@ -5,15 +5,16 @@ import { SimPlatformPage } from "../sim-landing/subpages/sim-platform-page";
 import { getPlatformPage } from "../marketing-data";
 import { marketingMetadata } from "../metadata";
 
-const page = getPlatformPage("voice-app");
+const page = getPlatformPage("self-hosting");
 
 export const metadata = marketingMetadata({
-	title: "Bulk lists",
-	description: page?.lede ?? "Upload and verify CSV lists.",
-	path: "/voice-app",
+	title: "Self-hosting",
+	description:
+		page?.lede ?? "Run the web workspace and verification service on your infrastructure.",
+	path: "/self-hosting",
 });
 
-export default async function BulkListsPage() {
+export default async function SelfHostingPage() {
 	"use cache";
 	cacheLife("days");
 	if (!page) notFound();

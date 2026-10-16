@@ -15,12 +15,11 @@ import { cn } from "@/lib/utils";
  * without importing the layout that mounts that shell.
  */
 const mobileNavLinks = [
-	{ label: "Products", href: "/products" },
+	{ label: "Product", href: "/product" },
 	{ label: "Features", href: "/features" },
 	{ label: "Use cases", href: "/use-cases" },
-	{ label: "How it works", href: "/product" },
+	{ label: "Integrations", href: "/integrations" },
 	{ label: "Pricing", href: "/pricing" },
-	{ label: "Download", href: "/download" },
 	{ label: "Resources", href: "/resources" },
 	{ label: "Security", href: "/security" },
 ];
