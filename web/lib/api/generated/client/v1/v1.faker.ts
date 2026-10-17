@@ -719,6 +719,34 @@ export const getV1CheckReputationResponseMock = (
   ...overrideResponse,
 });
 
+export const getV1UpdateReverificationResponseMock = (
+  overrideResponse: Partial<Extract<ReverificationStatusResponse, object>> = {},
+): ReverificationStatusResponse => ({
+  batch_size: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  emails_requeued: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  enabled: faker.datatype.boolean(),
+  last_job_id: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  last_run_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  next_run_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  staleness_days: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  ...overrideResponse,
+});
+
 export const getV1ReverificationStatusResponseMock = (
   overrideResponse: Partial<Extract<ReverificationStatusResponse, object>> = {},
 ): ReverificationStatusResponse => ({

@@ -18,21 +18,23 @@ interface HonestMetric {
 
 const METRICS: HonestMetric[] = [
 	{
-		value: 5,
-		description: "signal groups in a result: syntax, domain, mail server, mailbox, and risk.",
+		value: 4,
+		description:
+			"result categories: valid, risky, invalid, and unknown, each with a score and reasons.",
 	},
 	{
-		value: 2,
-		description: "ways to work: check one address or upload a list.",
+		value: 4,
+		description:
+			"email platforms that report bounces back: SendGrid, Mailgun, Postmark, and Amazon SES.",
 	},
 	{
 		value: 0,
 		suffix: "",
-		description: "messages sent to an address just to run a verification check.",
+		description: "emails sent to an address to run a check.",
 	},
 ];
 
-/** Sim `AgentMomentumMetrics` with honest Oppulence product constraints instead of invented stats. */
+/** Sim `AgentMomentumMetrics` with honest product facts instead of invented stats. */
 function SimHonestMetrics() {
 	const listRef = useRef<HTMLDListElement>(null);
 	const hasAnimatedRef = useRef(false);
@@ -140,42 +142,42 @@ function SimHonestMetrics() {
 
 const explainTerms = [
 	{
-		chip: "What was entered",
-		title: "Address",
-		body: "An address can look valid while its domain or mailbox cannot receive mail.",
+		chip: "Before you send",
+		title: "Check",
+		body: "Check one address or a whole list. Each address gets a category, a score, and the reasons.",
 	},
 	{
-		chip: "What the servers say",
-		title: "Signals",
-		body: "Syntax, DNS, MX, and SMTP checks explain what the verifier could observe.",
+		chip: "When you send",
+		title: "Clean",
+		body: "Send only to addresses that are safe to send. Export the rest to fix, review, or suppress.",
 	},
 	{
-		chip: "What to do next",
-		title: "Result",
-		body: "A score and reason codes help you decide whether to keep, review, or remove an address.",
+		chip: "After you send",
+		title: "Learn",
+		body: "Bounces and complaints from your email platform update your suppression list.",
 	},
 ] as const;
 
 const problemRows = [
 	{
 		title: "The address looked right",
-		body: "A typo or missing mail server can still make delivery impossible.",
+		body: "A typo, a closed mailbox, or a domain with no mail server still bounces.",
 	},
 	{
 		title: "The list aged quietly",
-		body: "A contact file collected over time can contain addresses that need another review.",
+		body: "People change jobs and mailboxes close. A list that was clean in January is not clean in June.",
 	},
 	{
-		title: "A label alone is not enough",
-		body: "Keep the underlying signals and reason codes with the result.",
+		title: "The domain accepted everything",
+		body: "Catch-all domains accept every address, then bounce later. We grade the risk instead of guessing.",
 	},
 	{
-		title: "One-off checks get lost",
-		body: "A shared workspace keeps lists and verification history together.",
+		title: "The bounce came back",
+		body: "Without one suppression list, last month's bounces return with the next import.",
 	},
 ] as const;
 
-/** Sim `AgentMomentum` with honest Oppulence metrics instead of invented stats. */
+/** Sim `AgentMomentum` with honest product facts instead of invented stats. */
 export function SimAgentMomentum() {
 	return (
 		<section
@@ -192,8 +194,8 @@ export function SimAgentMomentum() {
 			>
 				<div className="pt-8 pr-12 max-sm:pt-6 max-lg:pr-0">
 					<p className="max-w-[40rem] text-pretty text-[30px] leading-[1.3] tracking-[-0.015em] text-[var(--text-primary)] max-sm:text-[22px] max-xl:text-[26px]">
-						Check an address before you send. Keep the result and the signals that explain it in one
-						workspace.
+						Find the addresses that will bounce before your email platform does, and stop the
+						bounces from coming back.
 					</p>
 				</div>
 				<SimHonestMetrics />
@@ -202,7 +204,7 @@ export function SimAgentMomentum() {
 	);
 }
 
-/** Oppulence-specific problem editorial — quiet Sim-style dividers, no card chrome. */
+/** Problem editorial — quiet Sim-style dividers, no card chrome. */
 export function SimProblemEditorial() {
 	return (
 		<section
@@ -215,11 +217,11 @@ export function SimProblemEditorial() {
 		>
 			<div className={cn(HOME_INSET, "py-16 max-sm:py-10")}>
 				<h2 className={cn("max-w-[20ch] text-balance text-[var(--text-primary)]", HOME_TYPE.h2)}>
-					A valid-looking address can still fail when you send.
+					Bounces do not stay in one campaign.
 				</h2>
 				<p className={cn("mt-6 max-w-[42ch] text-pretty text-[var(--text-body)]", HOME_TYPE.lead)}>
-					A typo, missing MX record, disposable domain, or mailbox response can change the result.
-					Check If Email Exists makes those signals visible before you rely on the address.
+					Mailbox providers watch your bounce and complaint rates. When they rise, your next
+					campaign goes to spam, and your email platform may pause your account.
 				</p>
 
 				<dl className="mt-12 border-t border-[var(--border)]">

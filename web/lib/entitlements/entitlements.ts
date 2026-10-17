@@ -20,7 +20,7 @@ import {
  */
 
 /** Ordered weakest to strongest; a plan inherits everything below it. */
-const PLAN_ORDER: Plan[] = ["free", "starter", "pro", "enterprise"];
+const PLAN_ORDER: Plan[] = ["free", "starter", "professional", "enterprise"];
 
 /** The lowest plan that buys each feature. This is the policy. */
 const REQUIRES: Record<Feature, Plan> = {
@@ -28,15 +28,15 @@ const REQUIRES: Record<Feature, Plan> = {
 	connect_sources: "free",
 	invite_members: "free",
 	enterprise_identity: "enterprise",
-	api_access: "pro",
-	audit_export: "pro",
+	api_access: "professional",
+	audit_export: "professional",
 };
 
 /** Seats each plan includes. null means uncapped. */
 const SEATS: Record<Plan, number | null> = {
 	free: 3,
 	starter: 10,
-	pro: 50,
+	professional: 50,
 	enterprise: null,
 };
 

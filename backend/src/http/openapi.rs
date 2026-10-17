@@ -91,6 +91,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v1::suppressions::check::v1_check_suppression,
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::reverification::status::v1_reverification_status,
+		crate::http::v1::reverification::update::v1_update_reverification,
 		crate::http::v1::events::v1_list_events,
 		crate::http::v1::alerts::v1_list_alerts,
 		crate::http::v1::alerts::v1_update_alert,
@@ -2112,6 +2113,16 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		spec,
 		"/v1/reverification/status",
 		"get",
+		"200",
+		json_response(
+			"ReverificationStatusResponse",
+			"Reverification schedule status",
+		),
+	);
+	set_response(
+		spec,
+		"/v1/reverification",
+		"put",
 		"200",
 		json_response(
 			"ReverificationStatusResponse",

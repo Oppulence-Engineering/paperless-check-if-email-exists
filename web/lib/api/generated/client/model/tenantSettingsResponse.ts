@@ -9,6 +9,8 @@
  */
 
 export interface TenantSettingsResponse {
+  approval_excellent_threshold: number;
+  approval_good_threshold: number;
   default_policy_mode: string;
   /** @nullable */
   default_webhook_url?: string | null;

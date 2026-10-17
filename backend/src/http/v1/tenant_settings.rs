@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::v1::jobs::approval_checklist::DEFAULT_THRESHOLDS;
 use crate::http::ReacherResponseError;
 use crate::http::{check_scope, resolve_tenant};
 use crate::pipelines::validate_webhook_url;
@@ -20,6 +21,10 @@ struct UpdateTenantSettingsRequest {
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
 	pub default_policy_mode: Option<String>,
+	/// Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.
+	pub approval_excellent_threshold: Option<f64>,
+	/// Safe-to-send percentage for a good list. Must be below the excellent threshold.
+	pub approval_good_threshold: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -48,6 +53,8 @@ struct TenantSettingsResponse {
 	pub result_retention_days: i32,
 	pub default_webhook_url: Option<String>,
 	pub default_policy_mode: String,
+	pub approval_excellent_threshold: f64,
+	pub approval_good_threshold: f64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -107,6 +114,10 @@ fn validate_webhook_setting(value: &Option<Option<String>>) -> Result<(), warp::
 }
 
 fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
+	let thresholds = row
+		.get::<Option<f64>, _>("approval_excellent_threshold")
+		.zip(row.get::<Option<f64>, _>("approval_good_threshold"))
+		.unwrap_or(DEFAULT_THRESHOLDS);
 	TenantSettingsResponse {
 		tenant_id: row.get("id"),
 		name: row.get("name"),
@@ -117,6 +128,8 @@ fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
 		result_retention_days: row.get("result_retention_days"),
 		default_webhook_url: row.get("default_webhook_url"),
 		default_policy_mode: row.get("default_policy_mode"),
+		approval_excellent_threshold: thresholds.0,
+		approval_good_threshold: thresholds.1,
 	}
 }
 
@@ -142,7 +155,7 @@ async fn settings_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let row = sqlx::query(
-		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode \
+		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode, approval_excellent_threshold, approval_good_threshold \
 		 FROM tenants WHERE id = $1",
 	)
 	.bind(tenant_id)
@@ -217,6 +230,8 @@ async fn update_settings_handler(
 		&& body.webhook_signing_secret.is_none()
 		&& body.result_retention_days.is_none()
 		&& body.default_policy_mode.is_none()
+		&& body.approval_excellent_threshold.is_none()
+		&& body.approval_good_threshold.is_none()
 	{
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -238,6 +253,10 @@ async fn update_settings_handler(
 		validate_policy_mode(mode)?;
 	}
 	validate_webhook_setting(&body.default_webhook_url)?;
+	let thresholds = validate_thresholds(
+		body.approval_excellent_threshold,
+		body.approval_good_threshold,
+	)?;
 
 	let mut sets = Vec::new();
 	let mut idx = 2u32;
@@ -256,11 +275,19 @@ async fn update_settings_handler(
 	}
 	if body.default_policy_mode.is_some() {
 		sets.push(format!("default_policy_mode = ${}", idx));
+		idx += 1;
+	}
+	if thresholds.is_some() {
+		sets.push(format!(
+			"approval_excellent_threshold = ${}, approval_good_threshold = ${}",
+			idx,
+			idx + 1
+		));
 	}
 
 	let sql = format!(
 		"UPDATE tenants SET {} WHERE id = $1 \
-		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode",
+		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode, approval_excellent_threshold, approval_good_threshold",
 		sets.join(", ")
 	);
 
@@ -277,6 +304,9 @@ async fn update_settings_handler(
 	if let Some(v) = body.default_policy_mode {
 		query = query.bind(v);
 	}
+	if let Some((excellent, good)) = thresholds {
+		query = query.bind(excellent).bind(good);
+	}
 
 	let row = query
 		.fetch_optional(&pg_pool)
@@ -291,6 +321,24 @@ async fn update_settings_handler(
 	};
 
 	Ok(warp::reply::json(&row_to_settings(&row)))
+}
+
+/// Both thresholds are set together, from 0 to 100, with excellent above good.
+fn validate_thresholds(
+	excellent: Option<f64>,
+	good: Option<f64>,
+) -> Result<Option<(f64, f64)>, warp::Rejection> {
+	match (excellent, good) {
+		(None, None) => Ok(None),
+		(Some(e), Some(g)) if (0.0..=100.0).contains(&e) && (0.0..=100.0).contains(&g) && e > g => {
+			Ok(Some((e, g)))
+		}
+		_ => Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Set approval_excellent_threshold and approval_good_threshold together, from 0 to 100, with excellent above good",
+		)
+		.into()),
+	}
 }
 
 fn validate_policy_mode(mode: &str) -> Result<(), warp::Rejection> {
@@ -537,5 +585,18 @@ mod tests {
 		assert!(ensure_tenant_id(context.clone()).is_err());
 		context.scopes = vec![scope::SETTINGS.into()];
 		assert_eq!(ensure_tenant_id(context).unwrap(), Uuid::nil());
+	}
+
+	#[test]
+	fn thresholds_are_set_together_and_in_order() {
+		assert_eq!(validate_thresholds(None, None).unwrap(), None);
+		assert_eq!(
+			validate_thresholds(Some(85.0), Some(60.0)).unwrap(),
+			Some((85.0, 60.0))
+		);
+		assert!(validate_thresholds(Some(85.0), None).is_err());
+		assert!(validate_thresholds(Some(60.0), Some(60.0)).is_err());
+		assert!(validate_thresholds(Some(101.0), Some(60.0)).is_err());
+		assert!(validate_thresholds(Some(50.0), Some(-1.0)).is_err());
 	}
 }

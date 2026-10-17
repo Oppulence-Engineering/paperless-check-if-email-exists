@@ -38,19 +38,19 @@ interface PlatformSuiteCard {
 
 const cards: PlatformSuiteCard[] = [
 	{
-		href: "/features/commitment-register",
+		href: "/features/single-checks",
 		headingId: "platform-find",
 		name: "Check one address",
-		description: "Review syntax, DNS, MX records, and mailbox signals in one result.",
+		description: "Get a category, a score, and the reasons in seconds.",
 		tone: "dark",
 		src: "/marketing/email-check-preview.svg",
 		Mark: IsoIntegrateIllustration,
 	},
 	{
-		href: "/features/governed-actions",
+		href: "/features/list-cleaning",
 		headingId: "platform-gate",
 		name: "Clean a list",
-		description: "Upload a CSV and inspect the verification result for each address.",
+		description: "Upload a CSV, and export the rows to keep, fix, review, or suppress.",
 		tone: "mid",
 		src: "/marketing/email-check-preview.svg",
 		Mark: IsoMonitorIllustration,

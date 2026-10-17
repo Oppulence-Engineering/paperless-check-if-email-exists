@@ -3,7 +3,7 @@
   <desc id="description">A sample email check with syntax, DNS, MX, and mailbox signals.</desc>
   <rect width="1280" height="735" fill="#f8f8f6"/>
   <rect x="0" y="0" width="242" height="735" fill="#efefeb"/>
-  <text x="32" y="55" fill="#202520" font-family="Arial,sans-serif" font-size="21" font-weight="700">Check If Email Exists</text>
+  <text x="32" y="55" fill="#202520" font-family="Arial,sans-serif" font-size="21" font-weight="700">Verifier</text>
   <rect x="21" y="97" width="199" height="39" rx="6" fill="#dedfd8"/>
   <text x="38" y="123" fill="#202520" font-family="Arial,sans-serif" font-size="15">Overview</text>
   <text x="38" y="174" fill="#5b625a" font-family="Arial,sans-serif" font-size="15">Check email</text>

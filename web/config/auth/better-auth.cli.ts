@@ -1,10 +1,12 @@
 import { passkey } from "@better-auth/passkey";
 import { scim } from "@better-auth/scim";
 import { sso } from "@better-auth/sso";
+import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { admin, emailOTP, jwt, organization, twoFactor } from "better-auth/plugins";
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
+import Stripe from "stripe";
 import { z } from "zod";
 
 import { BrandAssetURLSchema, HexColorSchema, PublicURLSchema } from "../../lib/auth/schemas";
@@ -213,5 +215,11 @@ export const auth = betterAuth({
 			},
 		}),
 		jwt(),
+		stripe({
+			stripeClient: new Stripe("sk_test_schema_generation"),
+			stripeWebhookSecret: "whsec_schema_generation",
+			organization: { enabled: true },
+			subscription: { enabled: true, plans: [] },
+		}),
 	],
 });

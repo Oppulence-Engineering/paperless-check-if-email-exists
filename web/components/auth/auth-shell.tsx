@@ -10,6 +10,7 @@ import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { AuthLedgerPreview } from "@/components/auth/auth-ledger-preview";
 import { authClient } from "@/lib/auth/auth-client";
+import { authCallbackPath } from "@/lib/auth/return-to";
 
 /** Multi-color Google "G". Explicit fills, so button color rules don't tint it. */
 function GoogleLogo() {
@@ -39,11 +40,26 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 	sign_in_unavailable: "Sign-in is temporarily unavailable. Please try again.",
 };
 
+/**
+ * The page's loading fallback renders with the default "/app" before the
+ * search params arrive. A form used then reads the address bar with the same
+ * rule as the page, so a chosen plan or an invitation is kept. A path that the
+ * server resolved is used as it is.
+ */
+function destination(fallback: string): string {
+	if (fallback !== "/app") return fallback;
+	const params = new URLSearchParams(window.location.search);
+	return authCallbackPath({
+		invitation: params.get("invitation"),
+		return_to: params.get("return_to"),
+	});
+}
+
 export function AuthShell({
 	mode,
 	error,
 	returnTo,
-	brandName = "Check If Email Exists",
+	brandName = "Verifier",
 	googleEnabled = false,
 	logoUrl = "/check-email-logo.svg",
 	microsoftEnabled = false,
@@ -79,7 +95,7 @@ export function AuthShell({
 		setClientError(undefined);
 		const result = await authClient.signIn.social({
 			provider,
-			callbackURL: returnTo,
+			callbackURL: destination(returnTo),
 		});
 		if (result.error) {
 			setClientError(result.error.message || "Sign-in is temporarily unavailable.");
@@ -102,7 +118,7 @@ export function AuthShell({
 			setPending(false);
 			return;
 		}
-		if (otpSent) window.location.assign(returnTo);
+		if (otpSent) window.location.assign(destination(returnTo));
 		else {
 			setOtpSent(true);
 			setPending(false);
@@ -118,7 +134,7 @@ export function AuthShell({
 			setPending(false);
 			return;
 		}
-		window.location.assign(returnTo);
+		window.location.assign(destination(returnTo));
 	}
 
 	async function signInWithSso() {
@@ -130,7 +146,7 @@ export function AuthShell({
 		setClientError(undefined);
 		const result = await authClient.signIn.sso({
 			email,
-			callbackURL: returnTo,
+			callbackURL: destination(returnTo),
 		});
 		if (result.error) {
 			setClientError(result.error.message || "SSO sign-in failed.");
@@ -253,7 +269,7 @@ export function AuthShell({
 					</form>
 
 					<Button
-						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] text-[15px] font-medium"
+						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] bg-transparent text-[15px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
 						disabled={pending}
 						onClick={() => void signInWithPasskey()}
 						type="button"
@@ -262,7 +278,7 @@ export function AuthShell({
 					</Button>
 
 					<Button
-						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] text-[15px] font-medium"
+						className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-[var(--border)] bg-transparent text-[15px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
 						disabled={pending}
 						onClick={() => void signInWithSso()}
 						type="button"

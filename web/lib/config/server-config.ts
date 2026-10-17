@@ -37,7 +37,7 @@ function rawConfig() {
 		siteUrl: text("NEXT_PUBLIC_SITE_URL"),
 		platformAdminEmails: list("PLATFORM_ADMIN_EMAILS").map((entry) => entry.toLowerCase()),
 		brand: {
-			name: text("BRAND_NAME", "Check If Email Exists"),
+			name: text("BRAND_NAME", "Verifier"),
 			logoUrl: text("BRAND_LOGO_URL"),
 			wordmarkUrl: text("BRAND_WORDMARK_URL"),
 			faviconUrl: text("BRAND_FAVICON_URL"),

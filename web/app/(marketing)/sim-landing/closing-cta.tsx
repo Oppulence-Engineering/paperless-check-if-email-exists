@@ -6,7 +6,7 @@ import { SimHeroCta } from "./primitives";
 import { HOME_TYPE, LANDING_CONTENT_WIDTH, LANDING_GUTTER } from "./tokens";
 
 /** One shared closing statement, with a deliberate line break between sentences. */
-const CTA_HEADLINE = ["Check an address.", "Know the signals."] as const;
+const CTA_HEADLINE = ["Clean your next list.", "Protect your reputation."] as const;
 
 /**
  * Painted pre-footer CTA for the Oppulence homepage, mounted once by {@link SimLandingShell}.

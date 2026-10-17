@@ -42,6 +42,15 @@ const RuntimeConfigSchema = z
 		microsoft: z
 			.object({ clientId: z.string().min(1), clientSecret: z.string().min(1) })
 			.optional(),
+		/** Stripe billing. Absent means billing is off and every workspace stays on its current plan. */
+		stripe: z
+			.object({
+				secretKey: z.string().min(1),
+				webhookSecret: z.string().min(1),
+				starterPriceId: z.string().min(1),
+				professionalPriceId: z.string().min(1),
+			})
+			.optional(),
 		isProduction: z.boolean(),
 	})
 	.superRefine((config, context) => {
@@ -135,9 +144,7 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 			process.env.DATABASE_URL ||
 			(isProduction ? "" : "postgres://postgres:postgres@localhost:25432/reacher"),
 		resendApiKey: process.env.RESEND_API_KEY || "",
-		resendFrom:
-			process.env.RESEND_FROM ||
-			(isProduction ? "" : "Check If Email Exists <noreply@example.com>"),
+		resendFrom: process.env.RESEND_FROM || (isProduction ? "" : "Verifier <noreply@example.com>"),
 		registrationMode: process.env.REGISTRATION_MODE || "open",
 		trustedOrigins: (process.env.TRUSTED_PUBLIC_ORIGINS || betterAuthUrl)
 			.split(",")
@@ -153,6 +160,15 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 			process.env.MICROSOFT_CLIENT_ID,
 			process.env.MICROSOFT_CLIENT_SECRET,
 		),
+		// Billing turns on only with a secret key; then every Stripe value is required.
+		stripe: process.env.STRIPE_SECRET_KEY
+			? {
+					secretKey: process.env.STRIPE_SECRET_KEY,
+					webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+					starterPriceId: process.env.STRIPE_PRICE_STARTER ?? "",
+					professionalPriceId: process.env.STRIPE_PRICE_PROFESSIONAL ?? "",
+				}
+			: undefined,
 		isProduction,
 	});
 }

@@ -89,6 +89,8 @@ export const V1UpdateTenantDomainDefaultResponse = zod.strictObject({
  * @summary GET /v1/me/settings
  */
 export const V1GetTenantSettings200Response = zod.strictObject({
+  approval_excellent_threshold: zod.number(),
+  approval_good_threshold: zod.number(),
   default_policy_mode: zod.string(),
   default_webhook_url: zod.string().nullish(),
   monthly_email_limit: zod.int().nullish(),
@@ -109,6 +111,18 @@ export const V1GetTenantSettingsDefaultResponse = zod.strictObject({
  * @summary PATCH /v1/me/settings
  */
 export const V1UpdateTenantSettingsBody = zod.strictObject({
+  approval_excellent_threshold: zod
+    .number()
+    .nullish()
+    .describe(
+      "Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.",
+    ),
+  approval_good_threshold: zod
+    .number()
+    .nullish()
+    .describe(
+      "Safe-to-send percentage for a good list. Must be below the excellent threshold.",
+    ),
   default_policy_mode: zod.string().nullish(),
   default_webhook_url: zod.string().nullish(),
   result_retention_days: zod.int().nullish(),
@@ -116,6 +130,8 @@ export const V1UpdateTenantSettingsBody = zod.strictObject({
 });
 
 export const V1UpdateTenantSettings200Response = zod.strictObject({
+  approval_excellent_threshold: zod.number(),
+  approval_good_threshold: zod.number(),
   default_policy_mode: zod.string(),
   default_webhook_url: zod.string().nullish(),
   monthly_email_limit: zod.int().nullish(),

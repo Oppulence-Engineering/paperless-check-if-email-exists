@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SCIMOptions, SCIMProjectedRoleGrant } from "@better-auth/scim";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { authDb, scimGroupRoleMappings } from "@/lib/auth/database";
 import { ScimInputSchema, type ScimInput } from "./scim.schema";
@@ -100,4 +100,24 @@ export function createScimOptions(input: ScimInput): SCIMOptions {
 		},
 		compatibility: { microsoftEntra: { acceptLegacyGroupSchema: true } },
 	};
+}
+
+const MANAGED_CREDENTIAL = /^Bearer\s+(ba_scim_credential_[A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+$/i;
+
+/**
+ * The workspace a managed SCIM bearer token belongs to, read from its
+ * credential id. The SCIM plugin still verifies the token itself; this lookup
+ * only lets the caller check the workspace plan first.
+ */
+export async function scimWorkspaceForToken(authorization: string | null): Promise<string | null> {
+	const credentialId = authorization?.match(MANAGED_CREDENTIAL)?.[1];
+	if (!credentialId) return null;
+	const result = await authDb.execute<{ provisioningDomainId: string }>(sql`
+		select connection."provisioningDomainId"
+		from "scimManagedCredential" credential
+		join "scimManagedConnection" connection on connection."id" = credential."connectionRecordId"
+		where credential."credentialId" = ${credentialId}
+		limit 1
+	`);
+	return result.rows[0]?.provisioningDomainId ?? null;
 }

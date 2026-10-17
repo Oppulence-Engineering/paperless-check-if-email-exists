@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { branding } from "@/lib/auth/branding";
 import { getAuthRuntimeConfig } from "@/lib/auth/config";
-import { safeReturnTo } from "@/lib/auth/origin";
+import { authCallbackPath } from "@/lib/auth/return-to";
 import { createMetadata } from "@/lib/metadata";
 
 export const metadata = createMetadata({
@@ -18,13 +18,7 @@ async function SignInContent({ searchParams }: { searchParams: SignInSearchParam
 	const params = await searchParams;
 	const brand = await branding();
 	const authConfig = getAuthRuntimeConfig();
-	const returnTo = safeReturnTo(params.return_to);
-	const callback = params.invitation
-		? `/app/invitations/accept?${new URLSearchParams({
-				invitation: params.invitation,
-				return_to: returnTo,
-			})}`
-		: returnTo;
+	const callback = authCallbackPath(params);
 	return (
 		<AuthShell
 			brandName={brand.name}

@@ -62,8 +62,8 @@ curl --fail-with-body -X POST "$API_BASE_URL/v1/check_email" \\
 						through a workspace key.
 					</li>
 					<li>
-						Legacy <code>/v0/*</code> uses a global secret in self-hosted installations; it is not
-						routed on the shared app host.
+						Legacy <code>/v0/*</code> routes are not available on the hosted service. Use the v1
+						equivalents.
 					</li>
 				</ul>
 			</DocsBody>

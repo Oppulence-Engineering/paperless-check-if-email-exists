@@ -9,21 +9,21 @@ import {
 	seatsAvailable,
 } from "./entitlements";
 
-const pro = entitlementsFor({ plan: "pro", status: "active", memberCount: 2 });
+const pro = entitlementsFor({ plan: "professional", status: "active", memberCount: 2 });
 const free = entitlementsFor({ plan: "free", status: "active", memberCount: 1 });
 
 describe("entitlementsFor", () => {
 	it("reads whatever the backend sent without trusting it", () => {
-		expect(planFromValue("PRO")).toBe("pro");
+		expect(planFromValue("PROFESSIONAL")).toBe("professional");
 		expect(planFromValue("gold")).toBe("free");
 		expect(planFromValue(undefined)).toBe("free");
 		expect(planFromValue(7)).toBe("free");
 	});
 
 	it("treats a stated payment failure as inactive and silence as active", () => {
-		expect(entitlementsFor({ plan: "pro", status: "past_due" }).active).toBe(false);
-		expect(entitlementsFor({ plan: "pro", status: "canceled" }).active).toBe(false);
-		expect(entitlementsFor({ plan: "pro", status: null }).active).toBe(true);
+		expect(entitlementsFor({ plan: "professional", status: "past_due" }).active).toBe(false);
+		expect(entitlementsFor({ plan: "professional", status: "canceled" }).active).toBe(false);
+		expect(entitlementsFor({ plan: "professional", status: null }).active).toBe(true);
 	});
 
 	it("carries the seat allowance of the plan", () => {
@@ -60,11 +60,11 @@ describe("denial", () => {
 			reason: "plan",
 			requiredPlan: "starter",
 		});
-		expect(denial(free, "api_access")?.requiredPlan).toBe("pro");
+		expect(denial(free, "api_access")?.requiredPlan).toBe("professional");
 	});
 
 	it("separates a lapsed subscription from a plan that is simply too small", () => {
-		const lapsed = entitlementsFor({ plan: "pro", status: "canceled" });
+		const lapsed = entitlementsFor({ plan: "professional", status: "canceled" });
 		expect(denial(lapsed, "api_access")?.reason).toBe("inactive");
 	});
 

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cacheLife } from "next/cache";
 
 import { homepageFaqs } from "./catalog";
-import { SimLandingPage } from "./sim-landing/landing-page";
+import { EditorialHome } from "./editorial/home";
 import { JsonLd } from "./marketing-primitives";
 import { faqJsonLd } from "./metadata";
 import { ORGANIZATION_NAME, SITE_NAME, SITE_URL } from "./site";
@@ -10,7 +10,7 @@ import { createMetadata } from "@/lib/metadata";
 
 const TITLE = "Check email addresses before you send";
 const DESCRIPTION =
-	"Check address syntax, mail servers, and mailbox signals. Review results and clean lists in one workspace.";
+	"Find invalid and risky email addresses before they bounce. Clean lists, suppress bounces from your email platform, and protect your sender reputation.";
 
 export const metadata: Metadata = createMetadata({
 	title: TITLE,
@@ -75,7 +75,7 @@ export default async function Page() {
 				type="application/ld+json"
 			/>
 			<JsonLd data={faqJsonLd(homepageFaqs)} />
-			<SimLandingPage />
+			<EditorialHome />
 		</>
 	);
 }

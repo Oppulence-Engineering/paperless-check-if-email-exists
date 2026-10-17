@@ -19,8 +19,8 @@ export function SimHero() {
 			id="hero"
 		>
 			<p className="sr-only">
-				Check If Email Exists verifies email addresses without sending a message. Check one address
-				or upload a CSV list, then review syntax, DNS, MX, and mailbox signals.
+				Verifier checks email addresses without sending a message. Clean lists before a campaign,
+				suppress bounces from your email platform, and keep lists clean over time.
 			</p>
 
 			<div className={HOME_INSET}>
@@ -28,13 +28,13 @@ export function SimHero() {
 					<div className="flex min-w-0 flex-col items-start gap-6">
 						<Link
 							className="inline-flex h-8 max-w-full items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-2)] pr-3 pl-2 text-[13px] duration-150 hover:bg-[var(--surface-3)]"
-							href="/use-cases/account-management"
+							href="/use-cases/email-marketing"
 						>
 							<span className="h-4 shrink-0 rounded-full bg-transparent px-1.5 font-medium text-[10px] uppercase leading-none tracking-[0.06em] text-[var(--text-secondary)]">
-								Email checks
+								For senders
 							</span>
 							<span className="truncate font-medium text-[var(--text-primary)]">
-								Before your next campaign
+								Clean lists before your next campaign
 							</span>
 						</Link>
 
@@ -53,8 +53,8 @@ export function SimHero() {
 
 					<div className="flex min-w-0 flex-col items-start gap-8 max-[1400px]:max-w-[640px]">
 						<p className="max-w-[44ch] text-pretty font-normal text-[18px] leading-[1.5] text-[var(--text-body)] max-sm:text-[16px]">
-							Check syntax, DNS, MX records, and mailbox signals without sending an email. Review
-							one address or clean a CSV list in your workspace.
+							Find invalid and risky addresses before they bounce. Clean whole lists, suppress what
+							bounced, and protect your sender reputation.
 						</p>
 						<div className="max-sm:w-full">
 							<SimHeroCta size="display" />

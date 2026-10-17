@@ -50,12 +50,11 @@ export function OutcomesPanel({ className, ...props }: OutcomesPanelProps) {
 					? { signing_key: signatureConfig.trim() }
 					: provider === "sendgrid"
 						? { public_key_pem: signatureConfig.trim() }
-						: {};
-			if (
-				!label.trim() ||
-				((provider === "mailgun" || provider === "sendgrid") && !signatureConfig.trim())
-			)
-				throw new Error("Enter a label and provider verification key.");
+						: provider === "ses"
+							? { topic_arns: [signatureConfig.trim()] }
+							: {};
+			if (!label.trim() || (provider !== "postmark" && !signatureConfig.trim()))
+				throw new Error("Enter a label and the provider verification value.");
 			return (
 				await api.v1CreateProviderEndpoint({
 					createProviderEndpointInput: {
@@ -267,8 +266,8 @@ export function OutcomesPanel({ className, ...props }: OutcomesPanelProps) {
 									</p>
 									<p className="text-sm text-muted-foreground">
 										Signature configuration:{" "}
-										{item.provider === "postmark" || item.provider === "ses"
-											? "provider-managed"
+										{item.provider === "postmark"
+											? "not signed by Postmark; private URL and IP allow list"
 											: item.provider_configured
 												? "present"
 												: "missing"}{" "}
@@ -282,7 +281,7 @@ export function OutcomesPanel({ className, ...props }: OutcomesPanelProps) {
 												update.isPending ||
 												(item.status !== "active" &&
 													!item.provider_configured &&
-													(item.provider === "mailgun" || item.provider === "sendgrid"))
+													item.provider !== "postmark")
 											}
 											onClick={() => {
 												update.mutate({
@@ -381,12 +380,14 @@ export function OutcomesPanel({ className, ...props }: OutcomesPanelProps) {
 								<option value="ses">Amazon SES</option>
 							</select>
 						</div>
-						{provider === "mailgun" || provider === "sendgrid" ? (
+						{provider !== "postmark" ? (
 							<div className="sm:col-span-2">
 								<Label htmlFor="endpoint-verification">
 									{provider === "mailgun"
 										? "Mailgun signing key"
-										: "SendGrid public verification key (PEM)"}
+										: provider === "ses"
+											? "Amazon SNS topic ARN"
+											: "SendGrid public verification key (PEM)"}
 								</Label>
 								<Input
 									id="endpoint-verification"

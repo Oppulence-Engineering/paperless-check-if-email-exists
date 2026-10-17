@@ -18,6 +18,8 @@ import type {
 export const getV1GetTenantSettingsResponseMock = (
   overrideResponse: Partial<Extract<TenantSettingsResponse, object>> = {},
 ): TenantSettingsResponse => ({
+  approval_excellent_threshold: faker.number.float({ fractionDigits: 2 }),
+  approval_good_threshold: faker.number.float({ fractionDigits: 2 }),
   default_policy_mode: faker.string.alpha({ length: { min: 10, max: 20 } }),
   default_webhook_url: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
@@ -42,6 +44,8 @@ export const getV1GetTenantSettingsResponseMock = (
 export const getV1UpdateTenantSettingsResponseMock = (
   overrideResponse: Partial<Extract<TenantSettingsResponse, object>> = {},
 ): TenantSettingsResponse => ({
+  approval_excellent_threshold: faker.number.float({ fractionDigits: 2 }),
+  approval_good_threshold: faker.number.float({ fractionDigits: 2 }),
   default_policy_mode: faker.string.alpha({ length: { min: 10, max: 20 } }),
   default_webhook_url: faker.helpers.arrayElement([
     faker.helpers.arrayElement([

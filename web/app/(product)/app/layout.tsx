@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { listUserWorkspaces, requireSession } from "@/lib/auth/session";
 import { branding } from "@/lib/auth/branding";
+import { getAuthRuntimeConfig } from "@/lib/auth/config";
+import { workspacePlan } from "@/lib/billing/workspace-plan";
 
 import "../../product-theme.css";
 import "../product-sim-theme.css";
@@ -14,9 +16,10 @@ export const instant = false;
 
 export default async function ProductLayout({ children }: { children: ReactNode }) {
 	const session = await requireSession("/app");
-	const [brand, workspaces] = await Promise.all([
+	const [brand, workspaces, billing] = await Promise.all([
 		branding({ organizationId: session.membership.organizationId }),
 		listUserWorkspaces(session.user.id),
+		workspacePlan(session.membership.organizationId),
 	]);
 	const initialSession = {
 		authenticated: true as const,
@@ -30,6 +33,7 @@ export default async function ProductLayout({ children }: { children: ReactNode 
 			role: session.membership.role,
 			permissions: [],
 		},
+		billing: { ...billing, enabled: Boolean(getAuthRuntimeConfig().stripe) },
 		expiresAt: Math.floor(session.session.expiresAt.getTime() / 1_000),
 	};
 

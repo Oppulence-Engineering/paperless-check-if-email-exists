@@ -29,7 +29,7 @@ mod tests {
 		assert_eq!(ctx.tenant_id, Some(tenant_id));
 		assert_eq!(ctx.api_key_id, Some(api_key_id));
 		assert_eq!(ctx.tenant_name, "Tenant valid-auth");
-		assert_eq!(ctx.plan_tier, PlanTier::Starter);
+		assert_eq!(ctx.plan_tier, PlanTier::Professional);
 		assert_eq!(ctx.status, TenantStatus::Active);
 		assert!(!ctx.is_legacy);
 		assert_eq!(ctx.monthly_email_limit, Some(10_000));
@@ -302,5 +302,43 @@ mod tests {
 			hash1.chars().all(|c| c.is_ascii_hexdigit()),
 			"hash should be valid hex"
 		);
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn plan_claim_keeps_an_operator_tier_and_follows_billing() {
+		use reacher_backend::tenant::jwt::sync_tenant_from_claims;
+		let db = TestDb::start().await;
+		let pool = db.pool();
+		// insert_tenant creates a Professional tenant, as an operator would.
+		let tenant_id = insert_tenant(pool, "operator-tier", Some(12_000), 0).await;
+		let plan = || async {
+			let row = sqlx::query(
+				"SELECT plan_tier::TEXT AS tier, monthly_email_limit FROM tenants WHERE id = $1",
+			)
+			.bind(tenant_id)
+			.fetch_one(pool)
+			.await
+			.unwrap();
+			(
+				row.get::<String, _>("tier"),
+				row.get::<Option<i32>, _>("monthly_email_limit"),
+			)
+		};
+		let sync = |claim: Option<&'static str>| {
+			sync_tenant_from_claims(pool, tenant_id, "Org", "owner@example.com", claim)
+		};
+
+		sync(Some("free")).await.unwrap();
+		assert_eq!(plan().await, ("professional".into(), Some(12_000)));
+
+		sync(Some("starter")).await.unwrap();
+		assert_eq!(plan().await, ("starter".into(), Some(4_000)));
+
+		sync(Some("free")).await.unwrap();
+		assert_eq!(plan().await, ("free".into(), Some(100)));
+
+		sync(None).await.unwrap();
+		assert_eq!(plan().await, ("free".into(), Some(100)));
 	}
 }

@@ -1,7 +1,7 @@
 import { cacheLife } from "next/cache";
 
-import { featurePages, indexCopy } from "../catalog";
-import { SimCatalogHub } from "../sim-landing/subpages/sim-catalog-hub";
+import { indexCopy } from "../catalog";
+import { HubPage } from "../editorial/hub-page";
 import { marketingMetadata } from "../metadata";
 
 export const metadata = marketingMetadata({
@@ -14,17 +14,5 @@ export default async function FeaturesIndexPage() {
 	"use cache";
 	cacheLife("days");
 
-	return (
-		<SimCatalogHub
-			description={indexCopy.features.description}
-			eyebrow="[features]"
-			heading={indexCopy.features.title}
-			items={featurePages.map((page) => ({
-				href: page.path,
-				title: page.eyebrow,
-				body: page.description,
-			}))}
-			listHeading="All features"
-		/>
-	);
+	return <HubPage kind="feature" />;
 }

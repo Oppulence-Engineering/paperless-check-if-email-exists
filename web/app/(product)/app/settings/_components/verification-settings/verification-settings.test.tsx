@@ -7,6 +7,14 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { VerificationSettings } from "./verification-settings";
 
+vi.mock("@/components/auth/auth-gate", () => ({
+	useAuthSession: () => ({ billing: { plan: "free", enabled: false } }),
+	useEntitlements: () => ({ plan: "free", active: true, seats: { used: 1, limit: 3 } }),
+}));
+vi.mock("@/lib/auth/auth-client", () => ({
+	authClient: { subscription: { upgrade: vi.fn(), billingPortal: vi.fn() } },
+}));
+
 beforeEach(() => {
 	vi.spyOn(V1Api.prototype, "v1ReverificationStatus").mockResolvedValue({
 		data: { enabled: false },
@@ -43,6 +51,8 @@ it("saves the shadcn policy selection and a webhook URL without replacing the si
 			result_retention_days: 30,
 			default_webhook_url: "https://old.example/webhook",
 			default_policy_mode: "deliverability",
+			approval_excellent_threshold: 90,
+			approval_good_threshold: 70,
 		},
 	} as never);
 	vi.spyOn(TenantApi.prototype, "v1GetTenantWebhook").mockResolvedValue({
@@ -64,6 +74,8 @@ it("saves the shadcn policy selection and a webhook URL without replacing the si
 			result_retention_days: 30,
 			default_webhook_url: "https://old.example/webhook",
 			default_policy_mode: "deliverability",
+			approval_excellent_threshold: 90,
+			approval_good_threshold: 70,
 		},
 	} as never);
 	const update = vi.spyOn(TenantApi.prototype, "v1UpdateTenantWebhook").mockResolvedValue({
@@ -90,6 +102,8 @@ it("saves the shadcn policy selection and a webhook URL without replacing the si
 			updateTenantSettingsRequest: {
 				result_retention_days: 30,
 				default_policy_mode: "deliverability",
+				approval_excellent_threshold: 90,
+				approval_good_threshold: 70,
 			},
 		}),
 	);

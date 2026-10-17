@@ -214,6 +214,12 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 							if let Some(pool) = config.get_pg_pool() {
 								match resolve_from_api_key(&pool, token, &config.throttle).await {
 									Ok(ctx) => {
+										if !ctx.plan_tier.includes_api() {
+											return Err(warp::reject::custom(ReacherResponseError::new(
+												StatusCode::FORBIDDEN,
+												crate::tenant::models::API_PLAN_REQUIRED,
+											)));
+										}
 										check_route_scope(&ctx, path.as_str())?;
 										debug!(target: LOG_TARGET, tenant=?ctx.tenant_name, "Resolved tenant from API key");
 										return Ok(ctx);

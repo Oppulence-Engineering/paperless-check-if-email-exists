@@ -9,6 +9,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DeveloperSettings } from "./developer-settings";
 
+vi.mock("@/components/auth/auth-gate", () => ({
+	useEntitlements: () => ({ plan: "professional", active: true, seats: { used: 1, limit: 50 } }),
+}));
+
 const tenantId = "3e205baa-5595-4c28-9f2b-9ae3e9e98e66";
 const keyId = "19c80f2e-e82d-4c97-b4cf-28aebc50a79e";
 

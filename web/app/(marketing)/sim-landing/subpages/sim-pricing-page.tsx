@@ -16,35 +16,47 @@ import { SIM_SURFACE_CARD } from "./sim-surface-card";
 
 const faqs = [
 	{
-		question: "Is there a published hosted price?",
+		question: "What counts as a check?",
 		answer:
-			"No hosted subscription price is configured in this repository. The source code is available under the repository license.",
+			"Each address you check counts as one check, in the app or through the API. A list with 1,000 addresses uses 1,000 checks. Re-checks count too.",
 	},
 	{
-		question: "What does self-hosting require?",
+		question: "What happens when I run out of checks?",
 		answer:
-			"The combined application image uses external PostgreSQL and RabbitMQ. You pay for and manage your own infrastructure.",
+			"New checks stop until your checks reset at the start of the next period. Contact us to move to a larger plan.",
 	},
 	{
-		question: "Can I use the API?",
-		answer: "Yes. The Rust backend exposes an API and this repository includes generated SDKs.",
+		question: "Do unused checks roll over?",
+		answer: "No. Your checks reset at the start of each period.",
+	},
+	{
+		question: "Which plans include the API?",
+		answer: "Professional and Enterprise.",
+	},
+	{
+		question: "Do you offer volume pricing?",
+		answer: "Yes. Contact us about the Enterprise plan.",
 	},
 ] as const;
 
-const TRUST_CHIPS = ["Open source", "Web and API", "Self-hosted option"] as const;
+const TRUST_CHIPS = [
+	"No email sent during checks",
+	"Free plan available",
+	"Every plan includes delivery feedback",
+] as const;
 
-const UPGRADE_STEPS = [
+const COUNT_STEPS = [
 	{
-		title: "Start in the web workspace",
-		body: "Check one address and review its signals.",
+		title: "One address, one check",
+		body: "Each address you check uses one check from your monthly allowance.",
 	},
 	{
-		title: "Use bulk lists for CSV data",
-		body: "Review per-address results in a verification job.",
+		title: "Lists count per address",
+		body: "A CSV with 1,000 addresses uses 1,000 checks. Duplicates in the same file count once.",
 	},
 	{
-		title: "Deploy the API in your environment",
-		body: "Build the container and connect PostgreSQL and RabbitMQ.",
+		title: "Re-checks count too",
+		body: "Scheduled re-checks use checks from the same allowance.",
 	},
 ] as const;
 
@@ -52,9 +64,10 @@ const SECTIONS_BY_COLUMN = [
 	pricingSectionsForColumn(0),
 	pricingSectionsForColumn(1),
 	pricingSectionsForColumn(2),
+	pricingSectionsForColumn(3),
 ] as const;
 
-/** Sim `/pricing` board — three self-contained spec sheets with Oppulence tiers. */
+/** Sim `/pricing` board — one self-contained spec sheet for each plan. */
 export function SimPricingPage() {
 	return (
 		<>
@@ -77,14 +90,15 @@ export function SimPricingPage() {
 							className="max-w-[24ch] text-balance text-[30px] text-[var(--text-primary)] leading-[1.05] tracking-[-0.02em] max-sm:text-[26px] lg:text-[36px]"
 							id="pricing-heading"
 						>
-							Ways to run email verification
+							Simple pricing for clean lists
 						</h1>
 						<p className="sr-only">
-							The source includes a web workspace, bulk jobs, and a self-hosted API.
+							Free, Starter at $49 a month, Professional at $149 a month, and custom Enterprise
+							plans.
 						</p>
 						<p className="max-w-[52ch] text-pretty text-[var(--text-body)] text-base leading-[1.55]">
-							This repository does not configure hosted billing. Choose the workflow you need and
-							review the repository license and infrastructure requirements before deployment.
+							Start free. Move up when you send more. Every plan includes scores, reason codes,
+							suppressions, and delivery feedback.
 						</p>
 						<div className="flex flex-wrap items-center justify-center gap-2 pt-1">
 							{TRUST_CHIPS.map((chip) => (
@@ -95,7 +109,7 @@ export function SimPricingPage() {
 						</div>
 					</div>
 
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 						{pricingPlans.map((plan, index) => (
 							<SimPricingCard
 								badge={plan.recommended ? "Recommended" : undefined}
@@ -108,7 +122,7 @@ export function SimPricingPage() {
 								key={plan.name}
 								name={plan.name}
 								price={plan.period ? `${plan.price}${plan.period}` : plan.price}
-								priceSubtext="See repository license"
+								priceSubtext={plan.note}
 								sections={SECTIONS_BY_COLUMN[index]}
 							/>
 						))}
@@ -118,28 +132,24 @@ export function SimPricingPage() {
 						<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start">
 							<div className="flex flex-col gap-4">
 								<h2 className="max-w-[16ch] text-balance text-[28px] text-[var(--text-primary)] leading-[1.08] tracking-[-0.02em] max-sm:text-[24px] lg:text-[32px]">
-									Start with the workflow you need.
+									How checks are counted.
 								</h2>
 								<p className="max-w-[46ch] text-[15px] text-[var(--text-secondary)] leading-[1.55]">
-									Run the app locally or deploy the combined image. See{" "}
-									<Link className="underline-offset-4 hover:underline" href="/download">
-										download
-									</Link>{" "}
-									and{" "}
+									Every plan counts addresses, not files or jobs. See{" "}
 									<Link
 										className="underline-offset-4 hover:underline"
-										href="/guides/desktop-vs-web"
+										href="/guides/reading-results"
 									>
-										which surface to use
-									</Link>
-									.
+										how to read results
+									</Link>{" "}
+									before your first list.
 								</p>
 								<SimCtaLink href="/sign-up" variant="outline" withArrow>
-									Start checking
+									Start free
 								</SimCtaLink>
 							</div>
 							<ol className="flex flex-col gap-3">
-								{UPGRADE_STEPS.map((step, index) => (
+								{COUNT_STEPS.map((step, index) => (
 									<li className={cn(SIM_SURFACE_CARD, "flex gap-4 p-5")} key={step.title}>
 										<span
 											aria-hidden="true"
@@ -163,8 +173,8 @@ export function SimPricingPage() {
 
 					<SimSubpageFaqSection
 						faqs={[...faqs]}
-						heading="How access works"
-						lede="Hosted subscription pricing is not configured in this repository."
+						heading="Questions about pricing"
+						lede="Prices are in US dollars, per month."
 					/>
 				</section>
 			</main>

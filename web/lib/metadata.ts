@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
-const SITE_NAME = "Check If Email Exists";
+const SITE_NAME = "Verifier";
 const SITE_URL = "http://localhost:3000";
 
 const DEFAULT_SOCIAL_IMAGE = {
 	url: "/opengraph-image",
 	width: 1200,
 	height: 630,
-	alt: "Check If Email Exists — Email verification",
+	alt: "Verifier — Email verification",
 } as const;
 const DEFAULT_ICON = "/check-email-logo.svg";
 

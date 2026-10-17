@@ -4,6 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ApprovalExcellentThreshold** | Pointer to **NullableFloat64** | Safe-to-send percentage for an excellent list. Set it with &#x60;approval_good_threshold&#x60;. | [optional]
+**ApprovalGoodThreshold** | Pointer to **NullableFloat64** | Safe-to-send percentage for a good list. Must be below the excellent threshold. | [optional]
 **DefaultPolicyMode** | Pointer to **NullableString** |  | [optional]
 **DefaultWebhookUrl** | Pointer to **NullableString** |  | [optional]
 **ResultRetentionDays** | Pointer to **NullableInt32** |  | [optional]
@@ -27,6 +29,78 @@ will change when the set of required properties is changed
 NewUpdateTenantSettingsRequestWithDefaults instantiates a new UpdateTenantSettingsRequest object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetApprovalExcellentThreshold
+
+`func (o *UpdateTenantSettingsRequest) GetApprovalExcellentThreshold() float64`
+
+GetApprovalExcellentThreshold returns the ApprovalExcellentThreshold field if non-nil, zero value otherwise.
+
+### GetApprovalExcellentThresholdOk
+
+`func (o *UpdateTenantSettingsRequest) GetApprovalExcellentThresholdOk() (*float64, bool)`
+
+GetApprovalExcellentThresholdOk returns a tuple with the ApprovalExcellentThreshold field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetApprovalExcellentThreshold
+
+`func (o *UpdateTenantSettingsRequest) SetApprovalExcellentThreshold(v float64)`
+
+SetApprovalExcellentThreshold sets ApprovalExcellentThreshold field to given value.
+
+### HasApprovalExcellentThreshold
+
+`func (o *UpdateTenantSettingsRequest) HasApprovalExcellentThreshold() bool`
+
+HasApprovalExcellentThreshold returns a boolean if a field has been set.
+
+### SetApprovalExcellentThresholdNil
+
+`func (o *UpdateTenantSettingsRequest) SetApprovalExcellentThresholdNil()`
+
+ SetApprovalExcellentThresholdNil sets the value for ApprovalExcellentThreshold to be an explicit nil
+
+### UnsetApprovalExcellentThreshold
+`func (o *UpdateTenantSettingsRequest) UnsetApprovalExcellentThreshold()`
+
+UnsetApprovalExcellentThreshold ensures that no value is present for ApprovalExcellentThreshold, not even an explicit nil
+
+### GetApprovalGoodThreshold
+
+`func (o *UpdateTenantSettingsRequest) GetApprovalGoodThreshold() float64`
+
+GetApprovalGoodThreshold returns the ApprovalGoodThreshold field if non-nil, zero value otherwise.
+
+### GetApprovalGoodThresholdOk
+
+`func (o *UpdateTenantSettingsRequest) GetApprovalGoodThresholdOk() (*float64, bool)`
+
+GetApprovalGoodThresholdOk returns a tuple with the ApprovalGoodThreshold field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetApprovalGoodThreshold
+
+`func (o *UpdateTenantSettingsRequest) SetApprovalGoodThreshold(v float64)`
+
+SetApprovalGoodThreshold sets ApprovalGoodThreshold field to given value.
+
+### HasApprovalGoodThreshold
+
+`func (o *UpdateTenantSettingsRequest) HasApprovalGoodThreshold() bool`
+
+HasApprovalGoodThreshold returns a boolean if a field has been set.
+
+### SetApprovalGoodThresholdNil
+
+`func (o *UpdateTenantSettingsRequest) SetApprovalGoodThresholdNil()`
+
+ SetApprovalGoodThresholdNil sets the value for ApprovalGoodThreshold to be an explicit nil
+
+### UnsetApprovalGoodThreshold
+`func (o *UpdateTenantSettingsRequest) UnsetApprovalGoodThreshold()`
+
+UnsetApprovalGoodThreshold ensures that no value is present for ApprovalGoodThreshold, not even an explicit nil
 
 ### GetDefaultPolicyMode
 

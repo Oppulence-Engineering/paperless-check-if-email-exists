@@ -1179,6 +1179,40 @@ export const V1CheckReputationDefaultResponse = zod.strictObject({
 });
 
 /**
+ * @summary PUT /v1/reverification
+ */
+export const V1UpdateReverificationBody = zod
+  .strictObject({
+    batch_size: zod
+      .int()
+      .optional()
+      .describe("Addresses re-checked in each run (1 to 1,000)."),
+    enabled: zod.boolean(),
+    staleness_days: zod
+      .int()
+      .describe("Re-check results older than this many days (1 to 365)."),
+  })
+  .describe(
+    "Turns scheduled re-checks on or off for the workspace and sets how old a\nresult may get before it is checked again.",
+  );
+
+export const V1UpdateReverification200Response = zod.strictObject({
+  batch_size: zod.int().optional(),
+  emails_requeued: zod.int().optional(),
+  enabled: zod.boolean(),
+  last_job_id: zod.int().nullish(),
+  last_run_at: zod.iso.datetime({ offset: true }).nullish(),
+  next_run_at: zod.iso.datetime({ offset: true }).nullish(),
+  staleness_days: zod.int().optional(),
+});
+
+export const V1UpdateReverification400Response = zod.unknown();
+
+export const V1UpdateReverificationDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
  * @summary GET /v1/reverification/status
  */
 export const V1ReverificationStatus200Response = zod.strictObject({

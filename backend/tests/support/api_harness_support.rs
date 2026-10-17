@@ -139,6 +139,7 @@ enum BodyProfile {
 	JsonCommentsCreate,
 	JsonCommentsEmpty,
 	JsonMeSettingsPatch,
+	JsonReverificationUpdate,
 	JsonMeWebhookPatch,
 	JsonMeDomainCreate,
 	JsonMeDomainCreateDuplicate,
@@ -1214,6 +1215,12 @@ pub async fn build_runtime(db_url: &str, amqp_url: &str) -> HarnessRuntime {
 
 pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 	let tenant_id = Uuid::parse_str(UPGRADE_TENANT_ID).expect("valid upgrade tenant id");
+	// API keys need the Professional plan; the v4.1.0 seed predates that rule.
+	sqlx::query("UPDATE tenants SET plan_tier = 'professional' WHERE id = $1")
+		.bind(tenant_id)
+		.execute(pool)
+		.await
+		.expect("set upgrade tenant plan");
 	let tenant = insert_keys_for_existing_tenant(pool, tenant_id).await;
 	let comment_delete_id = insert_comment(
 		pool,
@@ -1862,6 +1869,16 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			AuthProfile::BearerFull,
 			PathProfile::Literal("/v1/reverification/status"),
 			BodyProfile::None,
+			200,
+			Expectation::Json(&["enabled"])
+		),
+		case!(
+			"PUT",
+			"/v1/reverification",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/reverification"),
+			BodyProfile::JsonReverificationUpdate,
 			200,
 			Expectation::Json(&["enabled"])
 		),
@@ -3011,6 +3028,10 @@ fn apply_body(
 		})),
 		BodyProfile::JsonMeApiKeyPatch => builder.json(&serde_json::json!({
 			"name": "Updated Harness Key"
+		})),
+		BodyProfile::JsonReverificationUpdate => builder.json(&serde_json::json!({
+			"enabled": true,
+			"staleness_days": 30
 		})),
 		BodyProfile::JsonEmptyObject => builder.json(&serde_json::json!({})),
 		BodyProfile::MalformedJson => builder.header("content-type", "application/json").body("{"),

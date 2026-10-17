@@ -27,33 +27,33 @@ interface Control {
 
 const controls: Control[] = [
 	{
-		title: "No message sent",
-		description: "Verification checks signals without sending an email to the recipient.",
+		title: "No email sent",
+		description: "A check never delivers a message to the recipient.",
 		Mark: ApprovalMark,
 	},
 	{
-		title: "Signals with each result",
-		description: "Review syntax, DNS, MX, and mailbox details with the outcome.",
+		title: "Reasons with every result",
+		description: "A category, a score, a safe-to-send flag, and the reason codes behind them.",
 		Mark: SourceMark,
 	},
 	{
-		title: "Self-hosted option",
-		description: "Run the open-source web app and Rust API on your own infrastructure.",
+		title: "Delivery feedback",
+		description: "Bounces and complaints from your email platform update your suppressions.",
 		Mark: LocalMark,
 	},
 	{
-		title: "Organization access",
-		description: "Keep checks, lists, and history in your team workspace.",
+		title: "One suppression list",
+		description: "Import it, export it, and check it before each send.",
 		Mark: SyncMark,
 	},
 	{
-		title: "API and SDKs",
-		description: "Use the documented backend API and generated clients in your workflow.",
+		title: "Re-checks on a schedule",
+		description: "Old addresses are checked again before they bounce.",
 		Mark: KeysMark,
 	},
 	{
-		title: "Bulk jobs",
-		description: "Upload CSV lists and monitor verification jobs.",
+		title: "API and SDKs",
+		description: "Add real-time checks to your signup forms.",
 		Mark: SelfHostMark,
 	},
 ];

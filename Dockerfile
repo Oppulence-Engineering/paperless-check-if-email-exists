@@ -25,7 +25,11 @@ RUN pnpm install --frozen-lockfile
 FROM web-deps AS web-build
 WORKDIR /src/web
 COPY web ./
-ENV NEXT_TELEMETRY_DISABLED=1
+# Canonical, Open Graph, and sitemap URLs are fixed at build time. One image
+# serves staging and production, and only production is public.
+ARG NEXT_PUBLIC_SITE_URL=https://verifier.playbookmedia.io
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 RUN pnpm build
 
 FROM --platform=linux/amd64 node:24-alpine

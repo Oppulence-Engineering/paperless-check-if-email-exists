@@ -1,0 +1,30 @@
+/*
+ * Sign-in and sign-up use the polar.sh dark palette of the public site:
+ * polar-950 page, polar-900/800 surfaces, polar-700 hairlines, white text.
+ * The layout wraps the page in `.dark`, so these values replace the Sim dark
+ * tokens on `.sim-landing-root`.
+ */
+.dark .sim-landing-root[data-auth-route] {
+	--bg: #090909;
+	--surface-1: #0d0d0d;
+	--surface-2: #111111;
+	--surface-3: #181818;
+	--surface-4: #1d1d1d;
+	--surface-hover: #181818;
+	--surface-active: #212121;
+	--text-primary: #ffffff;
+	--text-secondary: #d9d9d9;
+	--text-tertiary: #adadad;
+	--text-body: #d9d9d9;
+	--text-muted: #858585;
+	--text-subtle: #757575;
+	--text-inverse: #090909;
+	--border: #212121;
+	-webkit-font-smoothing: antialiased;
+}
+
+html:has([data-auth-route]),
+body:has([data-auth-route]) {
+	background: #090909;
+	color-scheme: dark;
+}

@@ -21,6 +21,18 @@
  */
 export interface UpdateTenantSettingsRequest {
     /**
+     * Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.
+     * @type {number}
+     * @memberof UpdateTenantSettingsRequest
+     */
+    'approval_excellent_threshold'?: number | null;
+    /**
+     * Safe-to-send percentage for a good list. Must be below the excellent threshold.
+     * @type {number}
+     * @memberof UpdateTenantSettingsRequest
+     */
+    'approval_good_threshold'?: number | null;
+    /**
      *
      * @type {string}
      * @memberof UpdateTenantSettingsRequest

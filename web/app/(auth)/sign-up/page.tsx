@@ -8,7 +8,7 @@ import { createMetadata } from "@/lib/metadata";
 
 export const metadata = createMetadata({
 	title: "Create a workspace",
-	description: "Start a Check If Email Exists workspace with passwordless authentication.",
+	description: "Start a Verifier workspace with passwordless authentication.",
 	robots: { index: false, follow: false },
 });
 

@@ -324,6 +324,12 @@ api_routes!(
 		"/v1/reverification/status",
 		|config| crate::http::v1::reverification::status::v1_reverification_status(config)
 	),
+	(
+		route_v1_reverification_update,
+		"PUT",
+		"/v1/reverification",
+		|config| crate::http::v1::reverification::update::v1_update_reverification(config)
+	),
 	(route_v1_events, "GET", "/v1/events", |config| {
 		crate::http::v1::events::v1_list_events(config)
 	}),

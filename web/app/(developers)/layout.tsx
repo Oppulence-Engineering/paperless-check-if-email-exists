@@ -29,7 +29,7 @@ export default function DeveloperLayout({ children }: { children: ReactNode }) {
 		<RootProvider>
 			<DocsLayout
 				tree={tree}
-				nav={{ title: "Check If Email Exists · Developers", url: "/developers" }}
+				nav={{ title: "Verifier · Developers", url: "/developers" }}
 				links={[
 					{ text: "Workspace", url: "/app" },
 					{ text: "OpenAPI JSON", url: "/openapi.json" },

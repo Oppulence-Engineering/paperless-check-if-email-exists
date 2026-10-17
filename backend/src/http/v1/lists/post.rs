@@ -625,4 +625,16 @@ mod tests {
 		assert_eq!(normalize_source_key(Some(" ")), None);
 		assert_eq!(normalize_source_key(None), None);
 	}
+
+	#[test]
+	fn row_limit_follows_the_plan() {
+		let mut context =
+			TenantContext::legacy(crate::config::ThrottleConfig::new_without_throttle());
+		context.plan_tier = PlanTier::Free;
+		assert!(enforce_row_limit(&context, 1_000).is_ok());
+		assert!(enforce_row_limit(&context, 1_001).is_err());
+		context.plan_tier = PlanTier::Professional;
+		assert!(enforce_row_limit(&context, 50_000).is_ok());
+		assert!(enforce_row_limit(&context, 50_001).is_err());
+	}
 }

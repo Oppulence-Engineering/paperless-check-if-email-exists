@@ -55,6 +55,13 @@ describe("authentication and BFF boundaries", () => {
 		expect(isSsoSessionForOrganization("email-otp", "org-1", "org-1")).toBe(false);
 	});
 
+	it("keeps the default sign-in code generator outside e2e mode", () => {
+		const runtime = readFileSync(resolve(appRoot, "lib/auth/auth.ts"), "utf8");
+		// emailOTP spreads options over its defaults: an undefined generateOTP breaks sign-in.
+		expect(runtime).not.toMatch(/generateOTP:[^,\n]*:\s*undefined/);
+		expect(runtime).toContain("...(localE2EOtp ? { generateOTP: () => localE2EOtp } : {})");
+	});
+
 	it("uses the Better Auth 1.7 managed SCIM catalog", () => {
 		const runtime = readFileSync(resolve(appRoot, "lib/auth/auth.ts"), "utf8");
 		const cli = readFileSync(resolve(appRoot, "config/auth/better-auth.cli.ts"), "utf8");
@@ -66,6 +73,10 @@ describe("authentication and BFF boundaries", () => {
 		expect(adminRoute).toContain("hasValidStepUp");
 		expect(adminRoute).toContain('"cache-control": "no-store"');
 		expect(adminRoute).toContain("decommissionSCIMManagedConnection");
+		// SCIM is sold on Enterprise only: the plan check runs before any credential is issued.
+		const planCheck = adminRoute.indexOf('"enterprise_identity"');
+		expect(planCheck).toBeGreaterThan(-1);
+		expect(planCheck).toBeLessThan(adminRoute.indexOf("auth.api.createSCIMManagedConnection"));
 		expect(runtime).not.toContain("providerOwnership:");
 		expect(cli).not.toContain("providerOwnership:");
 	});

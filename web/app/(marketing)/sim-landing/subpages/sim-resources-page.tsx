@@ -16,37 +16,22 @@ const extraLinks: SimCatalogHubItem[] = [
 	{
 		href: "/changelog",
 		title: "Changelog",
-		body: "Published product updates when release notes are available.",
+		body: "What changed in the product.",
 	},
 	{
 		href: "/security",
 		title: "Security",
-		body: "Workspace access, backend credentials, and verification data.",
+		body: "How we protect your lists and results.",
 	},
 	{
 		href: "/integrations",
 		title: "Integrations",
-		body: "CSV imports, API use, and existing contact exports.",
+		body: "Delivery feedback from SendGrid, Mailgun, Postmark, and Amazon SES.",
 	},
 	{
 		href: "/blog",
 		title: "Blog",
 		body: "Guides on email verification and list hygiene.",
-	},
-	{
-		href: "/customers",
-		title: "Customers",
-		body: "A published-story index. Empty until a real write-up is approved.",
-	},
-	{
-		href: "/compare",
-		title: "Compare",
-		body: "How verification fits beside other tools.",
-	},
-	{
-		href: "/answers",
-		title: "Answer hub",
-		body: "Retained public URLs and current product guidance.",
 	},
 ];
 

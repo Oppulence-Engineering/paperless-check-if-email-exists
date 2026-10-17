@@ -481,6 +481,43 @@ fn verify_sendgrid(config: &Value, headers: &HeaderMap, raw: &[u8]) -> Result<()
 	Ok(())
 }
 
+/// True for an https URL on an Amazon SNS host, the only place SNS links point to.
+fn is_sns_url(url: &reqwest::Url) -> bool {
+	let host = url.host_str().unwrap_or_default();
+	url.scheme() == "https"
+		&& url.port_or_known_default() == Some(443)
+		&& url.username().is_empty()
+		&& url.password().is_none()
+		&& (host == "sns.amazonaws.com"
+			|| (host.starts_with("sns.")
+				&& (host.ends_with(".amazonaws.com") || host.ends_with(".amazonaws.com.cn"))))
+}
+
+/// Visits the SubscribeURL of a verified SNS SubscriptionConfirmation.
+async fn confirm_sns_subscription(body: &Value) -> Result<(), String> {
+	let url = body
+		.get("SubscribeURL")
+		.and_then(Value::as_str)
+		.ok_or("SNS SubscribeURL is missing")?;
+	let url = reqwest::Url::parse(url).map_err(|_| "SNS SubscribeURL is invalid")?;
+	if !is_sns_url(&url) {
+		return Err("SNS SubscribeURL is not trusted".to_string());
+	}
+	let response = reqwest::Client::builder()
+		.timeout(Duration::from_secs(5))
+		.redirect(reqwest::redirect::Policy::none())
+		.build()
+		.map_err(|_| "Unable to initialize SNS client")?
+		.get(url)
+		.send()
+		.await
+		.map_err(|_| "Unable to confirm the SNS subscription")?;
+	if !response.status().is_success() {
+		return Err("SNS rejected the subscription confirmation".to_string());
+	}
+	Ok(())
+}
+
 async fn verify_ses(config: &Value, body: &Value) -> Result<(), String> {
 	let settings = config_settings(config);
 	let topic = body
@@ -499,16 +536,7 @@ async fn verify_ses(config: &Value, body: &Value) -> Result<(), String> {
 		.and_then(Value::as_str)
 		.ok_or("SES SigningCertURL is missing")?;
 	let parsed = reqwest::Url::parse(cert_url).map_err(|_| "SES SigningCertURL is invalid")?;
-	let host = parsed.host_str().unwrap_or_default();
-	if parsed.scheme() != "https"
-		|| parsed.port_or_known_default() != Some(443)
-		|| !parsed.username().is_empty()
-		|| parsed.password().is_some()
-		|| !(host == "sns.amazonaws.com"
-			|| (host.starts_with("sns.")
-				&& (host.ends_with(".amazonaws.com") || host.ends_with(".amazonaws.com.cn"))))
-		|| !parsed.path().ends_with(".pem")
-	{
+	if !is_sns_url(&parsed) || !parsed.path().ends_with(".pem") {
 		return Err("SES SigningCertURL is not trusted".to_string());
 	}
 	let client = reqwest::Client::builder()
@@ -765,13 +793,36 @@ fn normalize_sendgrid(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) ->
 		.collect()
 }
 
+/// Mailgun reports a bounce as `failed` with `severity: permanent`; a
+/// temporary failure is retried by Mailgun, so it is not recorded.
+fn mailgun_event_type(event: &Value) -> Option<String> {
+	let name = event.get("event").and_then(Value::as_str)?;
+	if name == "failed" {
+		return (event.get("severity").and_then(Value::as_str) == Some("permanent"))
+			.then(|| "bounced".to_string());
+	}
+	normalize_event_type(name)
+}
+
+/// Postmark names a spam complaint `SpamComplaint` and an unsubscribe a
+/// `SubscriptionChange` that suppresses sending.
+fn postmark_event_type(body: &Value) -> Option<String> {
+	let name = body
+		.get("RecordType")
+		.or_else(|| body.get("Type"))
+		.and_then(Value::as_str)?;
+	match name {
+		"SpamComplaint" => Some("complained".to_string()),
+		"SubscriptionChange" => (body.get("SuppressSending").and_then(Value::as_bool)
+			== Some(true))
+		.then(|| "unsubscribed".to_string()),
+		_ => normalize_event_type(name),
+	}
+}
+
 fn normalize_mailgun(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<OutcomeInput> {
 	let event = body.get("event-data").unwrap_or(body);
-	let Some(event_type) = event
-		.get("event")
-		.and_then(Value::as_str)
-		.and_then(normalize_event_type)
-	else {
+	let Some(event_type) = mailgun_event_type(event) else {
 		return Vec::new();
 	};
 	let recipient = event
@@ -802,12 +853,7 @@ fn normalize_mailgun(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> 
 }
 
 fn normalize_postmark(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<OutcomeInput> {
-	let event_name = body
-		.get("RecordType")
-		.or_else(|| body.get("Type"))
-		.and_then(Value::as_str)
-		.unwrap_or_default();
-	let Some(event_type) = normalize_event_type(event_name) else {
+	let Some(event_type) = postmark_event_type(body) else {
 		return Vec::new();
 	};
 	let email = body
@@ -962,6 +1008,28 @@ async fn inbound_handler(
 	.execute(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
+	// SNS sends one SubscriptionConfirmation when the topic subscribes this URL.
+	// Its signature and topic are checked above, so confirm it, even while the
+	// endpoint is paused; otherwise SNS never delivers notifications.
+	if provider == "ses"
+		&& validation_error.is_none()
+		&& body_json.get("Type").and_then(Value::as_str) == Some("SubscriptionConfirmation")
+	{
+		confirm_sns_subscription(&body_json)
+			.await
+			.map_err(|error| ReacherResponseError::new(StatusCode::BAD_GATEWAY, error))?;
+		return Ok(warp::reply::with_status(
+			warp::reply::json(&InboundOutcomeResponse {
+				receipt_id,
+				provider,
+				accepted: 0,
+				duplicates: 0,
+				unmatched: 0,
+				rejected: 0,
+			}),
+			StatusCode::OK,
+		));
+	}
 	if endpoint.status == "paused" {
 		return Ok(warp::reply::with_status(
 			warp::reply::json(&InboundOutcomeResponse {
@@ -1180,6 +1248,55 @@ pub fn v1_ingest_provider_outcomes(
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn maps_mailgun_failures_and_postmark_record_types() {
+		use serde_json::json;
+		assert_eq!(
+			mailgun_event_type(&json!({"event": "failed", "severity": "permanent"})).as_deref(),
+			Some("bounced")
+		);
+		assert_eq!(
+			mailgun_event_type(&json!({"event": "failed", "severity": "temporary"})),
+			None
+		);
+		assert_eq!(
+			mailgun_event_type(&json!({"event": "complained"})).as_deref(),
+			Some("complained")
+		);
+		assert_eq!(
+			postmark_event_type(&json!({"RecordType": "SpamComplaint"})).as_deref(),
+			Some("complained")
+		);
+		assert_eq!(
+			postmark_event_type(
+				&json!({"RecordType": "SubscriptionChange", "SuppressSending": true})
+			)
+			.as_deref(),
+			Some("unsubscribed")
+		);
+		assert_eq!(
+			postmark_event_type(
+				&json!({"RecordType": "SubscriptionChange", "SuppressSending": false})
+			),
+			None
+		);
+		assert_eq!(
+			postmark_event_type(&json!({"RecordType": "Bounce"})).as_deref(),
+			Some("bounced")
+		);
+	}
+
+	#[test]
+	fn only_amazon_sns_urls_are_trusted() {
+		let trusted = |url: &str| is_sns_url(&reqwest::Url::parse(url).unwrap());
+		assert!(trusted(
+			"https://sns.us-east-1.amazonaws.com/?Action=ConfirmSubscription"
+		));
+		assert!(!trusted("http://sns.us-east-1.amazonaws.com/"));
+		assert!(!trusted("https://sns.us-east-1.amazonaws.com.evil.test/"));
+		assert!(!trusted("https://user@sns.us-east-1.amazonaws.com/"));
+	}
 
 	#[test]
 	fn normalizes_provider_event_names() {

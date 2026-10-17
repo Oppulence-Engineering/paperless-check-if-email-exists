@@ -272,6 +272,18 @@ type V1API interface {
 	// V1SourceQualityExecute executes the request
 	//  @return map[string]interface{}
 	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error)
+
+	/*
+	V1UpdateReverification PUT /v1/reverification
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1UpdateReverificationRequest
+	*/
+	V1UpdateReverification(ctx context.Context) V1APIV1UpdateReverificationRequest
+
+	// V1UpdateReverificationExecute executes the request
+	//  @return ReverificationStatusResponse
+	V1UpdateReverificationExecute(r V1APIV1UpdateReverificationRequest) (*ReverificationStatusResponse, *http.Response, error)
 }
 
 // V1APIService V1API service
@@ -2859,6 +2871,136 @@ func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (ma
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1UpdateReverificationRequest struct {
+	ctx context.Context
+	ApiService V1API
+	updateReverificationRequest *UpdateReverificationRequest
+}
+
+func (r V1APIV1UpdateReverificationRequest) UpdateReverificationRequest(updateReverificationRequest UpdateReverificationRequest) V1APIV1UpdateReverificationRequest {
+	r.updateReverificationRequest = &updateReverificationRequest
+	return r
+}
+
+func (r V1APIV1UpdateReverificationRequest) Execute() (*ReverificationStatusResponse, *http.Response, error) {
+	return r.ApiService.V1UpdateReverificationExecute(r)
+}
+
+/*
+V1UpdateReverification PUT /v1/reverification
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1UpdateReverificationRequest
+*/
+func (a *V1APIService) V1UpdateReverification(ctx context.Context) V1APIV1UpdateReverificationRequest {
+	return V1APIV1UpdateReverificationRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ReverificationStatusResponse
+func (a *V1APIService) V1UpdateReverificationExecute(r V1APIV1UpdateReverificationRequest) (*ReverificationStatusResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ReverificationStatusResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1UpdateReverification")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/reverification"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateReverificationRequest == nil {
+		return localVarReturnValue, nil, reportError("updateReverificationRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateReverificationRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
