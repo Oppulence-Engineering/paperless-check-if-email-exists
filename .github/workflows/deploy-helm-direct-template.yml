@@ -182,16 +182,15 @@ jobs:
           HELM_RABBIT_URL: ${{ secrets.HELM_RABBIT_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
           # The auth and SCIM secrets sign, encrypt, and hash credentials, so production has its
-          # own and never falls back to staging. Both environments read the Resend key from Infisical
-          # (values.production.yaml, values.staging.yaml), which overrides the values below.
+          # own and never falls back to staging. Both environments read the Resend key only from
+          # Infisical (extraEnv in values.production.yaml and values.staging.yaml), so no GitHub
+          # secret holds it.
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           SCIM_CREDENTIAL_HASH_SECRET: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || secrets.RESEND_API_KEY_STAGING }}
           RESEND_FROM: ${{ secrets.RESEND_FROM || secrets.RESEND_FROM_STAGING }}
           BETTER_AUTH_URL_STAGING: ${{ secrets.BETTER_AUTH_URL_STAGING }}
           BETTER_AUTH_SECRET_STAGING: ${{ secrets.BETTER_AUTH_SECRET_STAGING }}
           SCIM_CREDENTIAL_HASH_SECRET_STAGING: ${{ secrets.SCIM_CREDENTIAL_HASH_SECRET_STAGING }}
-          RESEND_API_KEY_STAGING: ${{ secrets.RESEND_API_KEY_STAGING }}
           RESEND_FROM_STAGING: ${{ secrets.RESEND_FROM_STAGING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_SECRET_KEY_STAGING: ${{ secrets.STRIPE_SECRET_KEY_STAGING }}
@@ -222,7 +221,7 @@ jobs:
               exit 1
             fi
           done
-          for key in BETTER_AUTH_URL BETTER_AUTH_SECRET SCIM_CREDENTIAL_HASH_SECRET RESEND_API_KEY RESEND_FROM; do
+          for key in BETTER_AUTH_URL BETTER_AUTH_SECRET SCIM_CREDENTIAL_HASH_SECRET RESEND_FROM; do
             required="${key}${WEB_SECRET_SUFFIX}"
             if [ -z "${!required:-}" ]; then
               echo "Missing required deployment secret: $required"
