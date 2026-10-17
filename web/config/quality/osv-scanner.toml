@@ -1,1 +1,9 @@
-# No ignored vulnerabilities. Add only time-bounded, documented mitigations.
+# Add only time-bounded, documented mitigations.
+
+# braces has no fixed release (3.0.3 is the latest). Only development tools
+# pull it (eslint-config-next, plop); the app does not ship it. The attack needs
+# an attacker to supply the brace pattern, and these tools read only our files.
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2027-01-17T00:00:00Z
+reason = "No fixed braces release; dev-only tooling reads only repository files."
