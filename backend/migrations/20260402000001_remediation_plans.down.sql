@@ -1,3 +1,3 @@
-DROP TABLE IF EXISTS v1_remediation_exports;
-DROP TABLE IF EXISTS v1_remediation_rows;
-DROP TABLE IF EXISTS v1_remediation_plans;
+-- 20260402000001 does nothing, so its revert does nothing. The tables belong
+-- to 20260630000002.
+SELECT 1;

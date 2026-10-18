@@ -446,7 +446,9 @@ fn rewrite_database_name(url: &str, database_name: &str) -> String {
 	}
 }
 
-fn materialize_release_migrations(fixture: MigrationFixture) -> Result<PathBuf, String> {
+/// Copies the head migrations whose version prefix passes `keep` into a new
+/// temporary directory.
+fn materialize_migrations(keep: impl Fn(&str) -> bool) -> Result<PathBuf, String> {
 	let migrations_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("migrations");
 	let temp_dir = std::env::temp_dir().join(format!(
 		"reacher-release-migrations-{}",
@@ -458,8 +460,6 @@ fn materialize_release_migrations(fixture: MigrationFixture) -> Result<PathBuf, 
 			temp_dir.display()
 		)
 	})?;
-	let max_prefix = fixture_max_migration(fixture);
-
 	for entry in fs::read_dir(&migrations_dir).map_err(|err| {
 		format!(
 			"failed to read migrations dir {}: {err}",
@@ -473,7 +473,7 @@ fn materialize_release_migrations(fixture: MigrationFixture) -> Result<PathBuf, 
 			|| file_name
 				.strip_suffix(".up.sql")
 				.or_else(|| file_name.strip_suffix(".down.sql"))
-				.map(|prefix| prefix <= max_prefix)
+				.map(&keep)
 				.unwrap_or(false);
 		if keep {
 			fs::copy(entry.path(), temp_dir.join(file_name.as_ref())).map_err(|err| {
@@ -572,6 +572,21 @@ async fn drop_scratch_database(admin_db_url: &str, db_name: &str) -> Result<(), 
 }
 
 pub async fn restore_migration_fixture_to_head(fixture: MigrationFixture) -> UpgradedScratchDb {
+	let max_prefix = fixture_max_migration(fixture);
+	migrate_scratch_db_to_head(
+		|prefix| prefix <= max_prefix,
+		Some(fixture_seed_path(fixture)),
+	)
+	.await
+}
+
+/// Runs the head migrations that pass `keep` on a new scratch database,
+/// applies the optional seed, and then runs every head migration. This is the
+/// path of a deployed database that gets a new release.
+pub async fn migrate_scratch_db_to_head(
+	keep: impl Fn(&str) -> bool,
+	seed: Option<PathBuf>,
+) -> UpgradedScratchDb {
 	let base_db_url = ensure_test_db_url().await;
 	let admin_db_url = rewrite_database_name(&base_db_url, "postgres");
 	let db_name = format!("reacher_upgrade_{}", Uuid::new_v4().simple());
@@ -593,7 +608,7 @@ pub async fn restore_migration_fixture_to_head(fixture: MigrationFixture) -> Upg
 		.await
 		.expect("connect scratch database");
 	let release_migrations_dir =
-		materialize_release_migrations(fixture).expect("materialize release migrations");
+		materialize_migrations(keep).expect("materialize release migrations");
 	let release_migrator = Migrator::new(release_migrations_dir.as_path())
 		.await
 		.expect("load release migrator");
@@ -603,9 +618,11 @@ pub async fn restore_migration_fixture_to_head(fixture: MigrationFixture) -> Upg
 		.expect("run release migrations");
 	let _ = fs::remove_dir_all(&release_migrations_dir);
 
-	apply_sql_fixture(&pool, &fixture_seed_path(fixture))
-		.await
-		.expect("apply upgrade fixture seed");
+	if let Some(seed) = seed {
+		apply_sql_fixture(&pool, &seed)
+			.await
+			.expect("apply upgrade fixture seed");
+	}
 	sqlx::migrate!("./migrations")
 		.run(&pool)
 		.await
