@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import {
 	Sheet,
 	SheetContent,
@@ -205,9 +206,9 @@ export function DeleteAccountRow({ email }: { email: string }) {
 										</p>
 									) : codeSent ? (
 										<div className="mt-3 flex flex-col gap-2">
-											<label className="text-sm font-medium" htmlFor="delete-account-code">
+											<Label className="text-sm font-medium" htmlFor="delete-account-code">
 												Verification code
-											</label>
+											</Label>
 											<div className="flex gap-2">
 												<Input
 													autoComplete="one-time-code"
@@ -248,8 +249,8 @@ export function DeleteAccountRow({ email }: { email: string }) {
 										</Button>
 									)}
 								</div>
-								<label
-									className="flex flex-col gap-2 text-sm font-medium"
+								<Label
+									className="flex-col items-stretch gap-2"
 									htmlFor="delete-account-confirmation"
 								>
 									Type DELETE to confirm
@@ -259,7 +260,7 @@ export function DeleteAccountRow({ email }: { email: string }) {
 										onChange={(event) => setConfirmation(event.target.value)}
 										value={confirmation}
 									/>
-								</label>
+								</Label>
 								{error ? (
 									<p className="text-sm text-destructive" role="alert">
 										{error}

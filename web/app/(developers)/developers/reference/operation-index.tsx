@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import type { Family, PortalOperation } from "@/lib/developer-portal/operations";
 
 import { DocsSection, bodyClassName, cardSurface } from "../docs-kit";
@@ -27,9 +28,9 @@ export function OperationIndex({
 	return (
 		<>
 			<div className="space-y-2">
-				<label className="text-sm font-medium text-neutral-300" htmlFor="api-operation-search">
+				<Label className="text-sm font-medium text-neutral-300" htmlFor="api-operation-search">
 					Find an operation
-				</label>
+				</Label>
 				<Input
 					id="api-operation-search"
 					type="search"

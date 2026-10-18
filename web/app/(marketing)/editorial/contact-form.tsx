@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 
 import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
 import { ctaClassName } from "@/components/platform/landing/cta-link";
 import { MUTED } from "@/components/platform/landing/primitives";
@@ -14,7 +15,7 @@ export const CONTACT_EMAIL = "hello@oppulence.io";
 const FIELD =
 	"h-11 w-full rounded-xl border border-white/10 bg-[#090909] px-4 text-[15px] text-white placeholder:text-[#858585] focus:border-white/30 focus:outline-none md:text-[15px] dark:bg-[#090909]";
 
-const LABEL = "mb-2 block text-[13px] text-white/85";
+const LABEL = "mb-2 block text-[13px] leading-normal font-normal text-white/85";
 
 /**
  * Contact form without a backend: submitting opens the visitor's email app
@@ -35,9 +36,9 @@ export function ContactForm({ className }: { className?: string }) {
 		<form className={cn("grid w-full gap-4", className)} onSubmit={onSubmit}>
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<label className={LABEL} htmlFor="contact-first">
+					<Label className={LABEL} htmlFor="contact-first">
 						First name
-					</label>
+					</Label>
 					<Input
 						autoComplete="given-name"
 						className={FIELD}
@@ -48,9 +49,9 @@ export function ContactForm({ className }: { className?: string }) {
 					/>
 				</div>
 				<div>
-					<label className={LABEL} htmlFor="contact-last">
+					<Label className={LABEL} htmlFor="contact-last">
 						Last name
-					</label>
+					</Label>
 					<Input
 						autoComplete="family-name"
 						className={FIELD}
@@ -61,9 +62,9 @@ export function ContactForm({ className }: { className?: string }) {
 				</div>
 			</div>
 			<div>
-				<label className={LABEL} htmlFor="contact-email">
+				<Label className={LABEL} htmlFor="contact-email">
 					Work email
-				</label>
+				</Label>
 				<Input
 					autoComplete="email"
 					className={FIELD}
@@ -75,9 +76,9 @@ export function ContactForm({ className }: { className?: string }) {
 				/>
 			</div>
 			<div>
-				<label className={LABEL} htmlFor="contact-details">
+				<Label className={LABEL} htmlFor="contact-details">
 					Question
-				</label>
+				</Label>
 				<Textarea
 					className={cn(FIELD, "h-28 resize-none py-3")}
 					id="contact-details"

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import { PageHero } from "@/components/platform/landing/blocks";
 import { MONO, MUTED, Section } from "@/components/platform/landing/primitives";
 import { ArrowUpRight, MagnifyingGlass } from "@/lib/icons";
@@ -87,7 +88,7 @@ export function CatalogHub({
 							))}
 						</ul>
 					</nav>
-					<label className="relative w-full lg:w-[320px]">
+					<Label className="relative w-full font-normal lg:w-[320px]">
 						<span className="sr-only">Search {active.label.toLowerCase()}</span>
 						<MagnifyingGlass
 							aria-hidden="true"
@@ -100,7 +101,7 @@ export function CatalogHub({
 							type="search"
 							value={query}
 						/>
-					</label>
+					</Label>
 				</div>
 
 				{visible.length === 0 ? (
