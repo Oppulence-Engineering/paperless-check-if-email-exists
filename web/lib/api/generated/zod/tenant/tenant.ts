@@ -15,7 +15,7 @@ import * as zod from "zod";
  */
 export const V1ListTenantDomains200Response = zod.unknown();
 
-export const V1ListTenantDomainsDefaultResponse = zod.strictObject({
+export const V1ListTenantDomainsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -31,7 +31,7 @@ export const V1CreateTenantDomainBody = zod.strictObject({
 
 export const V1CreateTenantDomain201Response = zod.unknown();
 
-export const V1CreateTenantDomainDefaultResponse = zod.strictObject({
+export const V1CreateTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -45,7 +45,7 @@ export const V1DeleteTenantDomainParams = zod.object({
 
 export const V1DeleteTenantDomain200Response = zod.unknown();
 
-export const V1DeleteTenantDomainDefaultResponse = zod.strictObject({
+export const V1DeleteTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -59,7 +59,7 @@ export const V1GetTenantDomainParams = zod.object({
 
 export const V1GetTenantDomain200Response = zod.unknown();
 
-export const V1GetTenantDomainDefaultResponse = zod.strictObject({
+export const V1GetTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -80,7 +80,7 @@ export const V1UpdateTenantDomainBody = zod.strictObject({
 
 export const V1UpdateTenantDomain200Response = zod.unknown();
 
-export const V1UpdateTenantDomainDefaultResponse = zod.strictObject({
+export const V1UpdateTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -88,7 +88,7 @@ export const V1UpdateTenantDomainDefaultResponse = zod.strictObject({
  * Get tenant runtime settings and default operational behavior.
  * @summary GET /v1/me/settings
  */
-export const V1GetTenantSettings200Response = zod.strictObject({
+export const V1GetTenantSettings200Response = zod.object({
   approval_excellent_threshold: zod.number(),
   approval_good_threshold: zod.number(),
   default_policy_mode: zod.string(),
@@ -102,7 +102,7 @@ export const V1GetTenantSettings200Response = zod.strictObject({
   used_this_period: zod.int(),
 });
 
-export const V1GetTenantSettingsDefaultResponse = zod.strictObject({
+export const V1GetTenantSettingsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -129,7 +129,7 @@ export const V1UpdateTenantSettingsBody = zod.strictObject({
   webhook_signing_secret: zod.string().nullish(),
 });
 
-export const V1UpdateTenantSettings200Response = zod.strictObject({
+export const V1UpdateTenantSettings200Response = zod.object({
   approval_excellent_threshold: zod.number(),
   approval_good_threshold: zod.number(),
   default_policy_mode: zod.string(),
@@ -143,7 +143,7 @@ export const V1UpdateTenantSettings200Response = zod.strictObject({
   used_this_period: zod.int(),
 });
 
-export const V1UpdateTenantSettingsDefaultResponse = zod.strictObject({
+export const V1UpdateTenantSettingsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -151,7 +151,7 @@ export const V1UpdateTenantSettingsDefaultResponse = zod.strictObject({
  * Return current tenant usage and quota summary.
  * @summary GET /v1/me/usage
  */
-export const V1GetTenantUsage200Response = zod.strictObject({
+export const V1GetTenantUsage200Response = zod.object({
   monthly_email_limit: zod.int().nullish(),
   period_reset_at: zod.string(),
   plan_tier: zod.string(),
@@ -162,7 +162,7 @@ export const V1GetTenantUsage200Response = zod.strictObject({
   used_this_period: zod.int(),
 });
 
-export const V1GetTenantUsageDefaultResponse = zod.strictObject({
+export const V1GetTenantUsageDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -172,7 +172,7 @@ export const V1GetTenantUsageDefaultResponse = zod.strictObject({
  */
 export const V1ClearTenantWebhook200Response = zod.unknown();
 
-export const V1ClearTenantWebhookDefaultResponse = zod.strictObject({
+export const V1ClearTenantWebhookDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -180,14 +180,14 @@ export const V1ClearTenantWebhookDefaultResponse = zod.strictObject({
  * Get masked tenant webhook integration state.
  * @summary GET /v1/me/webhook
  */
-export const V1GetTenantWebhook200Response = zod.strictObject({
+export const V1GetTenantWebhook200Response = zod.object({
   default_webhook_url: zod.string().nullish(),
   tenant_id: zod.uuid(),
   tenant_name: zod.string(),
   webhook_signing_secret_configured: zod.boolean(),
 });
 
-export const V1GetTenantWebhookDefaultResponse = zod.strictObject({
+export const V1GetTenantWebhookDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -200,14 +200,14 @@ export const V1UpdateTenantWebhookBody = zod.strictObject({
   webhook_signing_secret: zod.string().nullish(),
 });
 
-export const V1UpdateTenantWebhook200Response = zod.strictObject({
+export const V1UpdateTenantWebhook200Response = zod.object({
   default_webhook_url: zod.string().nullish(),
   tenant_id: zod.uuid(),
   tenant_name: zod.string(),
   webhook_signing_secret_configured: zod.boolean(),
 });
 
-export const V1UpdateTenantWebhookDefaultResponse = zod.strictObject({
+export const V1UpdateTenantWebhookDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -216,9 +216,9 @@ export const V1ListOutcomePoliciesQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListOutcomePolicies200Response = zod.strictObject({
+export const V1ListOutcomePolicies200Response = zod.object({
   policies: zod.array(
-    zod.strictObject({
+    zod.object({
       created_at: zod.iso.datetime({ offset: true }),
       id: zod.int(),
       is_default: zod.boolean(),
@@ -230,7 +230,7 @@ export const V1ListOutcomePolicies200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListOutcomePoliciesDefaultResponse = zod.strictObject({
+export const V1ListOutcomePoliciesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -240,7 +240,7 @@ export const V1CreateOutcomePolicyBody = zod.strictObject({
   rules: zod.unknown().optional(),
 });
 
-export const V1CreateOutcomePolicy201Response = zod.strictObject({
+export const V1CreateOutcomePolicy201Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -249,7 +249,7 @@ export const V1CreateOutcomePolicy201Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1CreateOutcomePolicyDefaultResponse = zod.strictObject({
+export const V1CreateOutcomePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -259,7 +259,7 @@ export const V1DeleteOutcomePolicyParams = zod.object({
 
 export const V1DeleteOutcomePolicy200Response = zod.unknown();
 
-export const V1DeleteOutcomePolicyDefaultResponse = zod.strictObject({
+export const V1DeleteOutcomePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -267,7 +267,7 @@ export const V1GetOutcomePolicyParams = zod.object({
   policy_id: zod.coerce.number().int().describe("Outcome policy identifier"),
 });
 
-export const V1GetOutcomePolicy200Response = zod.strictObject({
+export const V1GetOutcomePolicy200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -276,7 +276,7 @@ export const V1GetOutcomePolicy200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1GetOutcomePolicyDefaultResponse = zod.strictObject({
+export const V1GetOutcomePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -290,7 +290,7 @@ export const V1UpdateOutcomePolicyBody = zod.strictObject({
   rules: zod.unknown().optional(),
 });
 
-export const V1UpdateOutcomePolicy200Response = zod.strictObject({
+export const V1UpdateOutcomePolicy200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -299,7 +299,7 @@ export const V1UpdateOutcomePolicy200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1UpdateOutcomePolicyDefaultResponse = zod.strictObject({
+export const V1UpdateOutcomePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -311,9 +311,9 @@ export const V1ListScorePoliciesQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListScorePolicies200Response = zod.strictObject({
+export const V1ListScorePolicies200Response = zod.object({
   policies: zod.array(
-    zod.strictObject({
+    zod.object({
       created_at: zod.iso.datetime({ offset: true }),
       id: zod.int(),
       is_default: zod.boolean(),
@@ -325,7 +325,7 @@ export const V1ListScorePolicies200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListScorePoliciesDefaultResponse = zod.strictObject({
+export const V1ListScorePoliciesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -338,7 +338,7 @@ export const V1CreateScorePolicyBody = zod.strictObject({
   rules: zod.unknown().optional(),
 });
 
-export const V1CreateScorePolicy201Response = zod.strictObject({
+export const V1CreateScorePolicy201Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -347,7 +347,7 @@ export const V1CreateScorePolicy201Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1CreateScorePolicyDefaultResponse = zod.strictObject({
+export const V1CreateScorePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -360,7 +360,7 @@ export const V1DeleteScorePolicyParams = zod.object({
 
 export const V1DeleteScorePolicy200Response = zod.unknown();
 
-export const V1DeleteScorePolicyDefaultResponse = zod.strictObject({
+export const V1DeleteScorePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -371,7 +371,7 @@ export const V1GetScorePolicyParams = zod.object({
   policy_id: zod.coerce.number().int().describe("Score policy identifier"),
 });
 
-export const V1GetScorePolicy200Response = zod.strictObject({
+export const V1GetScorePolicy200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -380,7 +380,7 @@ export const V1GetScorePolicy200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1GetScorePolicyDefaultResponse = zod.strictObject({
+export const V1GetScorePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -397,7 +397,7 @@ export const V1UpdateScorePolicyBody = zod.strictObject({
   rules: zod.unknown().optional(),
 });
 
-export const V1UpdateScorePolicy200Response = zod.strictObject({
+export const V1UpdateScorePolicy200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   id: zod.int(),
   is_default: zod.boolean(),
@@ -406,6 +406,6 @@ export const V1UpdateScorePolicy200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1UpdateScorePolicyDefaultResponse = zod.strictObject({
+export const V1UpdateScorePolicyDefaultResponse = zod.object({
   error: zod.string(),
 });

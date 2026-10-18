@@ -29,11 +29,11 @@ export const V1DiffListsQueryParams = zod.object({
   offset: zod.coerce.number().int().min(v1DiffListsQueryOffsetMin).optional(),
 });
 
-export const V1DiffLists200Response = zod.strictObject({
-  added: zod.strictObject({
+export const V1DiffLists200Response = zod.object({
+  added: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -49,10 +49,10 @@ export const V1DiffLists200Response = zod.strictObject({
   }),
   base_list_id: zod.int(),
   compare_list_id: zod.int(),
-  degraded: zod.strictObject({
+  degraded: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -66,10 +66,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  improved: zod.strictObject({
+  improved: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -83,10 +83,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  newly_invalid: zod.strictObject({
+  newly_invalid: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -100,10 +100,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  newly_risky: zod.strictObject({
+  newly_risky: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -117,10 +117,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  newly_safe: zod.strictObject({
+  newly_safe: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -134,10 +134,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  removed: zod.strictObject({
+  removed: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -151,10 +151,10 @@ export const V1DiffLists200Response = zod.strictObject({
       }),
     ),
   }),
-  unchanged: zod.strictObject({
+  unchanged: zod.object({
     count: zod.int(),
     rows: zod.array(
-      zod.strictObject({
+      zod.object({
         base_category: zod.string().nullish(),
         base_row_index: zod.int().nullish(),
         base_score: zod.int().nullish(),
@@ -170,7 +170,7 @@ export const V1DiffLists200Response = zod.strictObject({
   }),
 });
 
-export const V1DiffListsDefaultResponse = zod.strictObject({
+export const V1DiffListsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -184,7 +184,7 @@ export const V1ListQualityParams = zod.object({
 
 export const V1ListQuality200Response = zod.unknown();
 
-export const V1ListQualityDefaultResponse = zod.strictObject({
+export const V1ListQualityDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -205,7 +205,7 @@ export const V1CreateRemediationExport200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1CreateRemediationExportDefaultResponse = zod.strictObject({
+export const V1CreateRemediationExportDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -219,7 +219,7 @@ export const V1DownloadRemediationExportParams = zod.object({
 
 export const V1DownloadRemediationExport200Response = zod.unknown();
 
-export const V1DownloadRemediationExportDefaultResponse = zod.strictObject({
+export const V1DownloadRemediationExportDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -235,7 +235,7 @@ export const V1GetRemediationPlan200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1GetRemediationPlanDefaultResponse = zod.strictObject({
+export const V1GetRemediationPlanDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -256,7 +256,7 @@ export const V1CreateRemediationPlan200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1CreateRemediationPlanDefaultResponse = zod.strictObject({
+export const V1CreateRemediationPlanDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -269,9 +269,9 @@ export const V1ListSavedSegmentsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListSavedSegments200Response = zod.strictObject({
+export const V1ListSavedSegments200Response = zod.object({
   segments: zod.array(
-    zod.strictObject({
+    zod.object({
       created_at: zod.iso.datetime({ offset: true }),
       filter: zod.unknown(),
       id: zod.int(),
@@ -283,7 +283,7 @@ export const V1ListSavedSegments200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListSavedSegmentsDefaultResponse = zod.strictObject({
+export const V1ListSavedSegmentsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -296,7 +296,7 @@ export const V1CreateSavedSegmentBody = zod.strictObject({
   scope: zod.string().optional(),
 });
 
-export const V1CreateSavedSegment201Response = zod.strictObject({
+export const V1CreateSavedSegment201Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   filter: zod.unknown(),
   id: zod.int(),
@@ -305,7 +305,7 @@ export const V1CreateSavedSegment201Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1CreateSavedSegmentDefaultResponse = zod.strictObject({
+export const V1CreateSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -318,7 +318,7 @@ export const V1DeleteSavedSegmentParams = zod.object({
 
 export const V1DeleteSavedSegment200Response = zod.unknown();
 
-export const V1DeleteSavedSegmentDefaultResponse = zod.strictObject({
+export const V1DeleteSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -329,7 +329,7 @@ export const V1GetSavedSegmentParams = zod.object({
   segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
 });
 
-export const V1GetSavedSegment200Response = zod.strictObject({
+export const V1GetSavedSegment200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   filter: zod.unknown(),
   id: zod.int(),
@@ -338,7 +338,7 @@ export const V1GetSavedSegment200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1GetSavedSegmentDefaultResponse = zod.strictObject({
+export const V1GetSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -355,7 +355,7 @@ export const V1UpdateSavedSegmentBody = zod.strictObject({
   scope: zod.string().nullish(),
 });
 
-export const V1UpdateSavedSegment200Response = zod.strictObject({
+export const V1UpdateSavedSegment200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
   filter: zod.unknown(),
   id: zod.int(),
@@ -364,6 +364,6 @@ export const V1UpdateSavedSegment200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1UpdateSavedSegmentDefaultResponse = zod.strictObject({
+export const V1UpdateSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
 });

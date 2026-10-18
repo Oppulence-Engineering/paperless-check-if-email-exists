@@ -19,9 +19,9 @@ export const V1ListAlertsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListAlerts200Response = zod.strictObject({
+export const V1ListAlerts200Response = zod.object({
   alerts: zod.array(
-    zod.strictObject({
+    zod.object({
       body: zod.string().nullish(),
       canonical_email: zod.string(),
       change_event_id: zod.int().nullish(),
@@ -37,7 +37,7 @@ export const V1ListAlerts200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListAlertsDefaultResponse = zod.strictObject({
+export const V1ListAlertsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -52,7 +52,7 @@ export const V1UpdateAlertBody = zod.strictObject({
   status: zod.string(),
 });
 
-export const V1UpdateAlert200Response = zod.strictObject({
+export const V1UpdateAlert200Response = zod.object({
   body: zod.string().nullish(),
   canonical_email: zod.string(),
   change_event_id: zod.int().nullish(),
@@ -65,7 +65,7 @@ export const V1UpdateAlert200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1UpdateAlertDefaultResponse = zod.strictObject({
+export const V1UpdateAlertDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -81,10 +81,10 @@ export const V1EmailHistoryQueryParams = zod.object({
   limit: zod.coerce.number().int().optional(),
 });
 
-export const V1EmailHistory200Response = zod.strictObject({
+export const V1EmailHistory200Response = zod.object({
   email: zod.string(),
   history: zod.array(
-    zod.strictObject({
+    zod.object({
       category: zod.string().nullish(),
       change_type: zod.string().nullish(),
       completed_at: zod.iso.datetime({ offset: true }).nullish(),
@@ -114,6 +114,6 @@ export const V1EmailHistory200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1EmailHistoryDefaultResponse = zod.strictObject({
+export const V1EmailHistoryDefaultResponse = zod.object({
   error: zod.string(),
 });

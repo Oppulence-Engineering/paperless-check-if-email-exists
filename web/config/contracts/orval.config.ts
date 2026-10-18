@@ -38,7 +38,9 @@ export default defineConfig({
 			formatter: "prettier",
 			override: {
 				zod: {
-					strict: { body: true, response: true },
+					// Responses ignore unknown keys: a new backend field must not break a
+					// page. Request bodies stay strict, so the app sends only known fields.
+					strict: { body: true, response: false },
 					generate: { body: true, response: true, query: true, param: true, header: true },
 					generateEachHttpStatus: true,
 					version: 4,
