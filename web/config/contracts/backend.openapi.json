@@ -1275,6 +1275,10 @@
 							"id": "zw4ccbvwsoh6q"
 						}
 					},
+					"reacher_version": {
+						"description": "The version of the backend that performed the verification, e.g. \"4.3.0\".",
+						"type": "string"
+					},
 					"smtp": {
 						"$ref": "#/components/schemas/DebugDetailsSmtp"
 					},

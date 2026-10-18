@@ -27,6 +27,8 @@ type DebugDetails struct {
 	Duration Duration `json:"duration"`
 	// The timestamp when the email verification ended.
 	EndTime string `json:"end_time"`
+	// The version of the backend that performed the verification, e.g. \"4.3.0\".
+	ReacherVersion *string `json:"reacher_version,omitempty"`
 	Smtp DebugDetailsSmtp `json:"smtp"`
 	// The timestamp when the email verification started.
 	StartTime string `json:"start_time"`
@@ -128,6 +130,38 @@ func (o *DebugDetails) SetEndTime(v string) {
 	o.EndTime = v
 }
 
+// GetReacherVersion returns the ReacherVersion field value if set, zero value otherwise.
+func (o *DebugDetails) GetReacherVersion() string {
+	if o == nil || IsNil(o.ReacherVersion) {
+		var ret string
+		return ret
+	}
+	return *o.ReacherVersion
+}
+
+// GetReacherVersionOk returns a tuple with the ReacherVersion field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DebugDetails) GetReacherVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.ReacherVersion) {
+		return nil, false
+	}
+	return o.ReacherVersion, true
+}
+
+// HasReacherVersion returns a boolean if a field has been set.
+func (o *DebugDetails) HasReacherVersion() bool {
+	if o != nil && !IsNil(o.ReacherVersion) {
+		return true
+	}
+
+	return false
+}
+
+// SetReacherVersion gets a reference to the given string and assigns it to the ReacherVersion field.
+func (o *DebugDetails) SetReacherVersion(v string) {
+	o.ReacherVersion = &v
+}
+
 // GetSmtp returns the Smtp field value
 func (o *DebugDetails) GetSmtp() DebugDetailsSmtp {
 	if o == nil {
@@ -189,6 +223,9 @@ func (o DebugDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize["backend_name"] = o.BackendName
 	toSerialize["duration"] = o.Duration
 	toSerialize["end_time"] = o.EndTime
+	if !IsNil(o.ReacherVersion) {
+		toSerialize["reacher_version"] = o.ReacherVersion
+	}
 	toSerialize["smtp"] = o.Smtp
 	toSerialize["start_time"] = o.StartTime
 	return toSerialize, nil

@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **BackendName** | **string** | The name of the backend that performed the verification. | [required]
 **Duration** | [**Duration**](Duration.md) |  | [required]
 **EndTime** | **string** | The timestamp when the email verification ended. | [required]
+**ReacherVersion** | Pointer to **string** | The version of the backend that performed the verification, e.g. \&quot;4.3.0\&quot;. | [optional]
 **Smtp** | [**DebugDetailsSmtp**](DebugDetailsSmtp.md) |  | [required]
 **StartTime** | **string** | The timestamp when the email verification started. | [required]
 
@@ -88,6 +89,31 @@ and a boolean to check if the value has been set.
 
 SetEndTime sets EndTime field to given value.
 
+
+### GetReacherVersion
+
+`func (o *DebugDetails) GetReacherVersion() string`
+
+GetReacherVersion returns the ReacherVersion field if non-nil, zero value otherwise.
+
+### GetReacherVersionOk
+
+`func (o *DebugDetails) GetReacherVersionOk() (*string, bool)`
+
+GetReacherVersionOk returns a tuple with the ReacherVersion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetReacherVersion
+
+`func (o *DebugDetails) SetReacherVersion(v string)`
+
+SetReacherVersion sets ReacherVersion field to given value.
+
+### HasReacherVersion
+
+`func (o *DebugDetails) HasReacherVersion() bool`
+
+HasReacherVersion returns a boolean if a field has been set.
 
 ### GetSmtp
 

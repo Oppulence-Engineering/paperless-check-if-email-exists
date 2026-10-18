@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use crate::bounce_risk::BounceRiskService;
 use crate::storage::{postgres::PostgresStorage, StorageAdapter};
 use crate::throttle::ThrottleManager;
@@ -92,9 +76,6 @@ pub struct BackendConfig {
 	#[serde(default = "default_db_max_connections")]
 	pub db_max_connections: u32,
 
-	/// Whether to enable the Commercial License Trial. Setting this to true
-	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
-
 	/// Throttle configuration for all requests
 	pub throttle: ThrottleConfig,
 
@@ -152,7 +133,6 @@ impl BackendConfig {
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),
 			db_max_connections: default_db_max_connections(),
-			commercial_license_trial: None,
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
 			pipelines: PipelinesConfig::default(),
@@ -586,12 +566,6 @@ pub struct PostgresConfig {
 	#[serde(default)]
 	pub read_replica_url: Option<String>,
 	pub extra: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct CommercialLicenseTrialConfig {
-	pub api_token: String,
-	pub url: String,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the

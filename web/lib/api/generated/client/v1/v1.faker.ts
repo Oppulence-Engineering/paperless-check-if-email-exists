@@ -163,6 +163,10 @@ export const getV1CheckEmailResponseMock = (
         secs: faker.number.float({ fractionDigits: 2 }),
       },
       end_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reacher_version: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
       smtp: {
         verif_method: faker.helpers.arrayElement([
           {
@@ -532,6 +536,10 @@ export const getV1GetFindEmailResponseMock = (
                 secs: faker.number.float({ fractionDigits: 2 }),
               },
               end_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+              reacher_version: faker.helpers.arrayElement([
+                faker.string.alpha({ length: { min: 10, max: 20 } }),
+                undefined,
+              ]),
               smtp: {
                 verif_method: faker.helpers.arrayElement([
                   {

@@ -1,24 +1,23 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! Parse the SMTP responses to get information about the email address.
 
 use super::error::SmtpError;
 use crate::EmailAddress;
 use async_smtp::error::Error as AsyncSmtpError;
+
+/// is_greylisted checks for SMTP responses meaning that the server
+/// temporarily deferred the recipient because of greylisting. These responses
+/// often also contain "recipient address rejected", so they must be checked
+/// before `is_invalid`, otherwise a valid mailbox would be flagged as invalid.
+pub fn is_greylisted(e: &str) -> bool {
+	// 450 4.2.0 <EMAIL>: Recipient address rejected: Greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html
+	// 450 4.7.1 <EMAIL>: Recipient address rejected: Greylisting in action, please come back later
+	// 450 4.7.1 Greylisted for 38 seconds
+	e.contains("greylist")
+		|| e.contains("graylist")
+		|| e.contains("grey-list")
+		|| e.contains("gray-list")
+		|| e.contains("postgrey")
+}
 
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
 /// i.e. that the mailbox doesn't exist.
@@ -108,6 +107,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("unable to verify user")
 	// permanent: 5.1.1 Utilisateur inconnu (on @sante.fr)
 	|| e.contains("utilisateur inconnu")
+	// transient: 4.4.4 Mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. (on Microsoft 365 tenants without Exchange Online, e.g. @biked.com)
+	|| e.contains("no mail-enabled subscriptions")
 	// permanent: 5.1.1
 	|| e.contains("permanent: 5.1.1")
 	// permanent: 5.7.1
@@ -120,12 +121,14 @@ pub fn is_full_inbox(e: &str) -> bool {
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
 	|| e.contains("mailbox full")
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
-	|| e.contains("quote exceeded")
+	|| e.contains("quota exceeded")
 	|| e.contains("over quota")
 	// 550 user has too many messages on the server
 	|| e.contains("too many messages")
 	// transient: 4.2.2 The recipient's inbox is out of storage space. Please direct the; 4.2.2 recipient to; 4.2.2  https://support.google.com/mail/?p=OverQuotaTemp 41be03b00d2f7-801d5c00011si4287631a12.311 - gsmtp (on @gmail.com)
 	|| e.contains("out of storage space")
+	// permanent: Requested mail action aborted: exceeded storage allocation (on @gmx.de)
+	|| e.contains("exceeded storage allocation")
 }
 
 /// Check if the email account has been disabled or blocked by the email
@@ -241,7 +244,7 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_invalid};
+	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -268,6 +271,41 @@ mod tests {
 			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
 			&email
 		));
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1666
+		let msg = "transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. attr5 [sj5pepf000001cc.namprd05.prod.outlook.com 2026-10-13t12:16:22.797z 08df2669f6c8e25d]";
+		assert!(!is_greylisted(msg));
+		assert!(is_invalid(msg, &email));
+	}
+
+	#[test]
+	fn test_is_greylisted() {
+		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		// https://github.com/reacherhq/check-if-email-exists/issues/1658
+		for msg in [
+			"transient: 4.2.0 <foo@bar.baz>: recipient address rejected: greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html",
+			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisting in action, please come back later",
+			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisted for 38 seconds",
+		] {
+			assert!(is_greylisted(msg), "{}", msg);
+			// Greylisting messages would otherwise be flagged as invalid,
+			// which is why `is_greylisted` must be checked first.
+			assert!(is_invalid(msg, &email), "{}", msg);
+		}
+
+		assert!(!is_greylisted(
+			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown"
+		));
+	}
+
+	#[test]
+	fn test_is_full_inbox() {
+		// https://github.com/reacherhq/check-if-email-exists/issues/1464
+		assert!(is_full_inbox(
+			"permanent: requested mail action aborted: exceeded storage allocation"
+		));
+		assert!(is_full_inbox("permanent: 5.2.2 quota exceeded"));
 	}
 
 	#[test]
