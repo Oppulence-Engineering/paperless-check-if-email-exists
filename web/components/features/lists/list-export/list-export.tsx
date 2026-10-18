@@ -9,7 +9,14 @@ import { Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Label } from "@oppulence/ui/components/label";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
@@ -142,45 +149,48 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 			>
 				<Group>
 					<Row label={<Label htmlFor={`clean-filter-${String(listId)}`}>Rows to include</Label>}>
-						<NativeSelect
-							className={SELECT_CLASS}
-							id={`clean-filter-${String(listId)}`}
-							onChange={(event) => {
-								setFilter(event.target.value);
+						<Select
+							onValueChange={(value) => {
+								setFilter(fromSelect(value));
 							}}
-							value={filter}
+							value={filter || ALL}
 						>
-							<NativeSelectOption value="">All rows</NativeSelectOption>
-							{category.values.map((value) => (
-								<NativeSelectOption key={value} value={value}>
-									{category.label(value)} only
-								</NativeSelectOption>
-							))}
-							<NativeSelectOption value="newly_invalid">
-								Newly invalid since an earlier list
-							</NativeSelectOption>
-						</NativeSelect>
+							<SelectTrigger className={SELECT_CLASS} id={`clean-filter-${String(listId)}`}>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={ALL}>All rows</SelectItem>
+								{category.values.map((value) => (
+									<SelectItem key={value} value={value}>
+										{category.label(value)} only
+									</SelectItem>
+								))}
+								<SelectItem value="newly_invalid">Newly invalid since an earlier list</SelectItem>
+							</SelectContent>
+						</Select>
 					</Row>
 					{filter === "newly_invalid" ? (
 						<Row
 							description="Only completed lists can be the baseline."
 							label={<Label htmlFor={`clean-base-${String(listId)}`}>Earlier list</Label>}
 						>
-							<NativeSelect
-								className={SELECT_CLASS}
-								id={`clean-base-${String(listId)}`}
-								onChange={(event) => {
-									setBaseListId(event.target.value);
+							<Select
+								onValueChange={(value) => {
+									setBaseListId(value);
 								}}
 								value={baseListId}
 							>
-								<NativeSelectOption value="">Choose a list</NativeSelectOption>
-								{earlierLists.map((list) => (
-									<NativeSelectOption key={list.id} value={list.id}>
-										{list.name}
-									</NativeSelectOption>
-								))}
-							</NativeSelect>
+								<SelectTrigger className={SELECT_CLASS} id={`clean-base-${String(listId)}`}>
+									<SelectValue placeholder="Choose a list" />
+								</SelectTrigger>
+								<SelectContent>
+									{earlierLists.map((list) => (
+										<SelectItem key={list.id} value={String(list.id)}>
+											{list.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</Row>
 					) : null}
 					<Row>
@@ -309,20 +319,23 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 						<Row
 							label={<Label htmlFor={`export-partition-${String(listId)}`}>Rows to export</Label>}
 						>
-							<NativeSelect
-								className={SELECT_CLASS}
-								id={`export-partition-${String(listId)}`}
-								onChange={(event) => {
-									setPartition(event.target.value as keyof typeof PARTITIONS);
+							<Select
+								onValueChange={(value) => {
+									setPartition(value as keyof typeof PARTITIONS);
 								}}
 								value={partition}
 							>
-								{Object.entries(PARTITIONS).map(([value, label]) => (
-									<NativeSelectOption key={value} value={value}>
-										{label}
-									</NativeSelectOption>
-								))}
-							</NativeSelect>
+								<SelectTrigger className={SELECT_CLASS} id={`export-partition-${String(listId)}`}>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.entries(PARTITIONS).map(([value, label]) => (
+										<SelectItem key={value} value={value}>
+											{label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</Row>
 						<Row>
 							<div className="flex justify-end">

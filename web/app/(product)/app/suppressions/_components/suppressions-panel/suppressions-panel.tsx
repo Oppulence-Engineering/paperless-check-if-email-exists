@@ -19,7 +19,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { SuppressionAudit } from "@/components/features/deliverability/suppression-audit/suppression-audit";
 import { SuppressionForm } from "@/components/features/deliverability/suppression-form/suppression-form";
@@ -187,61 +194,70 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-status">
 								Status
 							</Label>
-							<NativeSelect
-								className={SELECT_CLASS}
-								id="suppression-filter-status"
+							<Select
 								value={filters.status}
-								onChange={(event) => {
-									filter({ status: event.target.value });
+								onValueChange={(value) => {
+									filter({ status: value });
 								}}
 							>
-								{suppressionStatus.values.map((value) => (
-									<NativeSelectOption key={value} value={value}>
-										{suppressionStatus.label(value)}
-									</NativeSelectOption>
-								))}
-								<NativeSelectOption value="all">All statuses</NativeSelectOption>
-							</NativeSelect>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-status">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{suppressionStatus.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionStatus.label(value)}
+										</SelectItem>
+									))}
+									<SelectItem value="all">All statuses</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-reason">
 								Reason
 							</Label>
-							<NativeSelect
-								className={SELECT_CLASS}
-								id="suppression-filter-reason"
-								value={filters.reason}
-								onChange={(event) => {
-									filter({ reason: event.target.value });
+							<Select
+								value={filters.reason || ALL}
+								onValueChange={(value) => {
+									filter({ reason: fromSelect(value) });
 								}}
 							>
-								<NativeSelectOption value="">All reasons</NativeSelectOption>
-								{suppressionReason.values.map((value) => (
-									<NativeSelectOption key={value} value={value}>
-										{suppressionReason.label(value)}
-									</NativeSelectOption>
-								))}
-							</NativeSelect>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-reason">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={ALL}>All reasons</SelectItem>
+									{suppressionReason.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionReason.label(value)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-source">
 								Source
 							</Label>
-							<NativeSelect
-								className={SELECT_CLASS}
-								id="suppression-filter-source"
-								value={filters.sourceType}
-								onChange={(event) => {
-									filter({ sourceType: event.target.value });
+							<Select
+								value={filters.sourceType || ALL}
+								onValueChange={(value) => {
+									filter({ sourceType: fromSelect(value) });
 								}}
 							>
-								<NativeSelectOption value="">All sources</NativeSelectOption>
-								{suppressionSource.values.map((value) => (
-									<NativeSelectOption key={value} value={value}>
-										{suppressionSource.label(value)}
-									</NativeSelectOption>
-								))}
-							</NativeSelect>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-source">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={ALL}>All sources</SelectItem>
+									{suppressionSource.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionSource.label(value)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 						<Label
 							className="flex h-10 items-center gap-2 text-sm text-neutral-300"

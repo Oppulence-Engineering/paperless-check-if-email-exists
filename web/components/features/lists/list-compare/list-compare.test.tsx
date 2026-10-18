@@ -8,6 +8,7 @@ import { ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ListCompare } from "./list-compare";
+import { chooseOption } from "@/quality/test-support/select";
 
 const empty = { count: 0, rows: [] };
 
@@ -67,8 +68,7 @@ describe("ListCompare", () => {
 				<ListCompare listId={3} />
 			</QueryClientProvider>,
 		);
-		await screen.findByRole("option", { name: "Spring" });
-		fireEvent.change(screen.getByLabelText("Compare with"), { target: { value: "2" } });
+		await chooseOption("Compare with", "Spring");
 		await waitFor(() =>
 			expect(diff).toHaveBeenCalledWith({ baseListId: 2, compareListId: 3, limit: 50 }),
 		);

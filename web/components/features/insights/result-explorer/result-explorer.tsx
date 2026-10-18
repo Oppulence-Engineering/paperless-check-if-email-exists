@@ -17,7 +17,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -148,39 +155,44 @@ export function ResultExplorer({
 					<Label className={FIELD_LABEL} htmlFor="explorer-category">
 						Category
 					</Label>
-					<NativeSelect
-						className={FILTER_CLASS}
-						id="explorer-category"
-						onChange={(event) => {
-							set({ category: event.target.value || undefined });
+					<Select
+						onValueChange={(value) => {
+							set({ category: fromSelect(value) || undefined });
 						}}
-						value={filters.category ?? ""}
+						value={filters.category ?? ALL}
 					>
-						<NativeSelectOption value="">All</NativeSelectOption>
-						{category.values.map((value) => (
-							<NativeSelectOption key={value} value={value}>
-								{category.label(value)}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
+						<SelectTrigger className={FILTER_CLASS} id="explorer-category">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All</SelectItem>
+							{category.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{category.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex w-full flex-col gap-1.5 sm:w-36">
 					<Label className={FIELD_LABEL} htmlFor="explorer-safe">
 						Safe to send
 					</Label>
-					<NativeSelect
-						className={FILTER_CLASS}
-						id="explorer-safe"
-						onChange={(event) => {
-							const value = event.target.value;
-							set({ safeToSend: value ? value === "yes" : undefined });
+					<Select
+						onValueChange={(value) => {
+							set({ safeToSend: value === ALL ? undefined : value === "yes" });
 						}}
-						value={filters.safeToSend === undefined ? "" : filters.safeToSend ? "yes" : "no"}
+						value={filters.safeToSend === undefined ? ALL : filters.safeToSend ? "yes" : "no"}
 					>
-						<NativeSelectOption value="">Any</NativeSelectOption>
-						<NativeSelectOption value="yes">Yes</NativeSelectOption>
-						<NativeSelectOption value="no">No</NativeSelectOption>
-					</NativeSelect>
+						<SelectTrigger className={FILTER_CLASS} id="explorer-safe">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>Any</SelectItem>
+							<SelectItem value="yes">Yes</SelectItem>
+							<SelectItem value="no">No</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
 				<Button
 					className="h-10 rounded-lg"

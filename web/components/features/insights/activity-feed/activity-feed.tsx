@@ -10,7 +10,14 @@ import Link from "next/link";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -85,7 +92,8 @@ export function ActivityFeed({ className, ...props }: ActivityFeedProps) {
 	function apply(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
 		const form = new FormData(event.currentTarget);
-		const text = (key: string) => String(form.get(key) ?? "").trim() || undefined;
+		// fromSelect turns the "Any" select item back into an empty value.
+		const text = (key: string) => fromSelect(String(form.get(key) ?? "").trim()) || undefined;
 		const job = text("job_id");
 		const jobId = job === undefined ? undefined : Number(job);
 		if (jobId !== undefined && !(Number.isSafeInteger(jobId) && jobId > 0)) {
@@ -114,19 +122,19 @@ export function ActivityFeed({ className, ...props }: ActivityFeedProps) {
 					<Label className={FIELD_LABEL} htmlFor="activity-event-type">
 						Event type
 					</Label>
-					<NativeSelect
-						className={FILTER_CLASS}
-						defaultValue=""
-						id="activity-event-type"
-						name="event_type"
-					>
-						<NativeSelectOption value="">All events</NativeSelectOption>
-						{jobEventType.values.map((value) => (
-							<NativeSelectOption key={value} value={value}>
-								{jobEventType.label(value)}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
+					<Select defaultValue={ALL} name="event_type">
+						<SelectTrigger className={FILTER_CLASS} id="activity-event-type">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All events</SelectItem>
+							{jobEventType.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{jobEventType.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="activity-actor">

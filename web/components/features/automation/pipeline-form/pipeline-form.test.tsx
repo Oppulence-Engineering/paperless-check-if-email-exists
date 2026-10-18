@@ -86,12 +86,12 @@ describe("PipelineForm", () => {
 
 	it("offers only the list and push sources and hides the schedule for push", () => {
 		renderForm();
-		const source = screen.getByLabelText("Source");
-		expect([...source.querySelectorAll("option")].map((option) => option.value)).toEqual([
-			"list_snapshot",
-			"push",
+		fireEvent.click(screen.getByLabelText("Source"));
+		expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+			"Saved list",
+			"Push API",
 		]);
-		fireEvent.change(source, { target: { value: "push" } });
+		fireEvent.click(screen.getByRole("option", { name: "Push API" }));
 		expect(screen.getByLabelText("Push token ID")).toBeInTheDocument();
 		expect(screen.queryByLabelText("Cron schedule")).not.toBeInTheDocument();
 	});

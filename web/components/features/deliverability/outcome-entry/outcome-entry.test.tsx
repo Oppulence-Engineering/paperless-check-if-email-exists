@@ -8,6 +8,7 @@ import { OutcomesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OutcomeEntry } from "./outcome-entry";
+import { chooseOption } from "@/quality/test-support/select";
 
 describe("OutcomeEntry", () => {
 	afterEach(() => {
@@ -27,7 +28,7 @@ describe("OutcomeEntry", () => {
 		);
 
 		fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@example.com" } });
-		fireEvent.change(screen.getByLabelText("Event"), { target: { value: "bounced" } });
+		await chooseOption("Event", "Bounced");
 		fireEvent.change(screen.getByLabelText("Occurred at"), {
 			target: { value: "2026-10-01T10:30" },
 		});

@@ -10,7 +10,13 @@ import { dashboardRequest, redirectBrowserIfUnauthorized } from "@/lib/auth/dash
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { Textarea } from "@oppulence/ui/components/textarea";
 import { cn } from "@oppulence/ui/lib/utils";
 
@@ -141,28 +147,27 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 					className="flex-col items-stretch gap-1.5 text-neutral-400"
 				>
 					Operation
-					<NativeSelect
-						id={`${formId}-operation`}
-						className="h-10 rounded-lg"
+					<Select
 						value={id}
-						onChange={(event) => {
-							setId(event.target.value);
+						onValueChange={(value) => {
+							setId(value);
 							setValues({});
 							setQuery("");
-							setBody(
-								event.target.value === "v1_check_email"
-									? '{"to_email":"person@example.com"}'
-									: "{}",
-							);
+							setBody(value === "v1_check_email" ? '{"to_email":"person@example.com"}' : "{}");
 							mutation.reset();
 						}}
 					>
-						{operations.map((operation) => (
-							<NativeSelectOption key={operation.id} value={operation.id}>
-								{operation.method} {operation.path}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
+						<SelectTrigger id={`${formId}-operation`} className="h-10 rounded-lg">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{operations.map((operation) => (
+								<SelectItem key={operation.id} value={operation.id}>
+									{operation.method} {operation.path}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</Label>
 				{selected ? (
 					<>

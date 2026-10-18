@@ -12,6 +12,14 @@ globalThis.ResizeObserver = class {
 	disconnect() {}
 };
 
+// Radix Select scrolls to the chosen item and captures the pointer. jsdom has neither
+// API, and Node-environment tests have no Element at all.
+if (typeof Element !== "undefined") {
+	Element.prototype.scrollIntoView = () => undefined;
+	Element.prototype.hasPointerCapture = () => false;
+	Element.prototype.releasePointerCapture = () => undefined;
+}
+
 // next/image relies on Next's runtime loader. Component tests only need the
 // resulting accessible image contract, so render a native image deterministically.
 // Next 16 cache helpers only run inside the App Router. Unit tests call the

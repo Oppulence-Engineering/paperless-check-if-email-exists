@@ -10,7 +10,13 @@ import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
@@ -193,18 +199,18 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				<Label className={LABEL_CLASS} htmlFor={`${id}-reason`}>
 					Reason
 				</Label>
-				<NativeSelect
-					className={SELECT_CLASS}
-					defaultValue="manual"
-					id={`${id}-reason`}
-					name="reason"
-				>
-					{suppressionReason.values.map((value) => (
-						<NativeSelectOption key={value} value={value}>
-							{suppressionReason.label(value)}
-						</NativeSelectOption>
-					))}
-				</NativeSelect>
+				<Select defaultValue="manual" name="reason">
+					<SelectTrigger className={SELECT_CLASS} id={`${id}-reason`}>
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{suppressionReason.values.map((value) => (
+							<SelectItem key={value} value={value}>
+								{suppressionReason.label(value)}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 			<div className="flex flex-col gap-1.5">
 				<Label className={LABEL_CLASS} htmlFor={`${id}-detail`}>

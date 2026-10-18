@@ -11,7 +11,13 @@ import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -205,21 +211,24 @@ export function OutcomePolicyForm({
 							<Label className={FIELD_LABEL} htmlFor={`rule-${event}`}>
 								{label}
 							</Label>
-							<NativeSelect
-								className={FILTER_CLASS}
-								id={`rule-${event}`}
-								onChange={(change) => {
+							<Select
+								onValueChange={(value) => {
 									// The options come from the ruleAction labels.
-									setRule(event, { action: change.target.value as OutcomeRule["action"] });
+									setRule(event, { action: value as OutcomeRule["action"] });
 								}}
 								value={rule.action}
 							>
-								{ruleAction.values.map((value) => (
-									<NativeSelectOption key={value} value={value}>
-										{ruleAction.label(value)}
-									</NativeSelectOption>
-								))}
-							</NativeSelect>
+								<SelectTrigger className={FILTER_CLASS} id={`rule-${event}`}>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{ruleAction.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{ruleAction.label(value)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 							{rule.action === "suppress_after" ? (
 								<div className="flex flex-wrap items-center gap-2">
 									<Input

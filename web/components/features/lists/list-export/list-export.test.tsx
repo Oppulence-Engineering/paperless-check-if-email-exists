@@ -8,6 +8,7 @@ import { ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ListExport } from "./list-export";
+import { chooseOption } from "@/quality/test-support/select";
 
 vi.mock("@/lib/downloads", () => ({ saveFile: vi.fn() }));
 
@@ -74,7 +75,7 @@ describe("ListExport", () => {
 		expect(await screen.findByText("The address is a duplicate.")).toBeInTheDocument();
 		expect(screen.getByText("Duplicate email")).toBeInTheDocument();
 
-		fireEvent.change(screen.getByLabelText("Rows to export"), { target: { value: "drop" } });
+		await chooseOption("Rows to export", "Drop");
 		fireEvent.click(screen.getByRole("button", { name: "Download export" }));
 		await waitFor(() => expect(download).toHaveBeenCalled());
 		expect(createExport).toHaveBeenCalledWith({
@@ -112,12 +113,9 @@ describe("ListExport", () => {
 				<ListExport listId={3} />
 			</QueryClientProvider>,
 		);
-		fireEvent.change(screen.getByLabelText("Rows to include"), {
-			target: { value: "newly_invalid" },
-		});
+		await chooseOption("Rows to include", "Newly invalid since an earlier list");
 		expect(screen.getByRole("button", { name: "Download cleaned CSV" })).toBeDisabled();
-		await screen.findByRole("option", { name: "Spring" });
-		fireEvent.change(screen.getByLabelText("Earlier list"), { target: { value: "2" } });
+		await chooseOption("Earlier list", "Spring");
 		fireEvent.click(screen.getByRole("button", { name: "Download cleaned CSV" }));
 		await waitFor(() =>
 			expect(download).toHaveBeenCalledWith(

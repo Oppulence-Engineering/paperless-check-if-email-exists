@@ -6,13 +6,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ResultFilters } from "./result-filters";
+import { chooseOption } from "@/quality/test-support/select";
+import { recommendation } from "@/lib/verification/labels";
 
 describe("ResultFilters", () => {
 	afterEach(() => {
 		cleanup();
 	});
 
-	it("keeps the quick filters and applies the other filters", () => {
+	it("keeps the quick filters and applies the other filters", async () => {
 		const onApply = vi.fn();
 		render(<ResultFilters filters={{ category: "valid", minScore: 10 }} onApply={onApply} />);
 
@@ -21,11 +23,9 @@ describe("ResultFilters", () => {
 		fireEvent.change(screen.getByLabelText("Highest score"), { target: { value: "80" } });
 		fireEvent.change(screen.getByLabelText("Job ID"), { target: { value: "18" } });
 		fireEvent.change(screen.getByLabelText("Checked from"), { target: { value: "2026-10-01" } });
-		fireEvent.change(screen.getByLabelText("Recommendation"), {
-			target: { value: "fix_then_send" },
-		});
-		fireEvent.change(screen.getByLabelText("Policy mode"), { target: { value: "growth" } });
-		fireEvent.change(screen.getByLabelText("Policy decision"), { target: { value: "drop" } });
+		await chooseOption("Recommendation", recommendation.label("fix_then_send"));
+		await chooseOption("Policy mode", "Growth");
+		await chooseOption("Policy decision", "Drop");
 		fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
 
 		expect(onApply).toHaveBeenCalledWith({

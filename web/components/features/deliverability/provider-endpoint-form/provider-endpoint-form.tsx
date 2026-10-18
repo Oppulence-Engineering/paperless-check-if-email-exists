@@ -10,7 +10,13 @@ import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -208,21 +214,24 @@ export function ProviderEndpointForm({
 						<Label className={FIELD_LABEL} htmlFor="endpoint-provider">
 							Provider
 						</Label>
-						<NativeSelect
-							className={FILTER_CLASS}
-							id="endpoint-provider"
-							onChange={(event) => {
-								setProvider(event.target.value as Provider);
+						<Select
+							onValueChange={(value) => {
+								setProvider(value as Provider);
 								setSignatureConfig("");
 							}}
 							value={provider}
 						>
-							{Object.entries(PROVIDERS).map(([value, name]) => (
-								<NativeSelectOption key={value} value={value}>
-									{name}
-								</NativeSelectOption>
-							))}
-						</NativeSelect>
+							<SelectTrigger className={FILTER_CLASS} id="endpoint-provider">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{Object.entries(PROVIDERS).map(([value, name]) => (
+									<SelectItem key={value} value={value}>
+										{name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				)}
 				{!endpoint && provider !== "postmark" ? (

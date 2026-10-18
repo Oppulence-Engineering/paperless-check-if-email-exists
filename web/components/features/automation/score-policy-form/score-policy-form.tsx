@@ -12,7 +12,14 @@ import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -269,18 +276,21 @@ export function ScorePolicyForm({ className, onSaved, policy, ...props }: ScoreP
 								<Label className={FIELD_LABEL} htmlFor={`${id}-safe`}>
 									{prefix}Safe to send
 								</Label>
-								<NativeSelect
-									className={FILTER_CLASS}
-									id={`${id}-safe`}
-									onChange={(event) => {
-										setDraft(decision, { safe: event.target.value });
+								<Select
+									onValueChange={(value) => {
+										setDraft(decision, { safe: fromSelect(value) });
 									}}
-									value={draft.safe}
+									value={draft.safe || ALL}
 								>
-									<NativeSelectOption value="">Any</NativeSelectOption>
-									<NativeSelectOption value="true">Safe to send</NativeSelectOption>
-									<NativeSelectOption value="false">Not safe to send</NativeSelectOption>
-								</NativeSelect>
+									<SelectTrigger className={FILTER_CLASS} id={`${id}-safe`}>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={ALL}>Any</SelectItem>
+										<SelectItem value="true">Safe to send</SelectItem>
+										<SelectItem value="false">Not safe to send</SelectItem>
+									</SelectContent>
+								</Select>
 							</div>
 							<div className="flex flex-col gap-1.5">
 								<Label className={FIELD_LABEL} htmlFor={`${id}-reasons`}>

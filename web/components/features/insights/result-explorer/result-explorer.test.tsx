@@ -12,6 +12,7 @@ import { SAMPLE_CHECK_RESULT } from "@/lib/verification/check-result";
 
 import { describeFilters, ResultExplorer } from "./result-explorer";
 import { type ExplorerFilters } from "./result-explorer.schema";
+import { chooseOption } from "@/quality/test-support/select";
 
 function row(id: number, extra: Record<string, unknown> = {}) {
 	return {
@@ -94,13 +95,13 @@ describe("ResultExplorer", () => {
 			expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 })),
 		);
 
-		fireEvent.change(screen.getByLabelText("Category"), { target: { value: "valid" } });
+		await chooseOption("Category", "Valid");
 		await waitFor(() =>
 			expect(query).toHaveBeenLastCalledWith(
 				expect.objectContaining({ offset: 0, category: "valid" }),
 			),
 		);
-		fireEvent.change(screen.getByLabelText("Safe to send"), { target: { value: "no" } });
+		await chooseOption("Safe to send", "No");
 		await waitFor(() =>
 			expect(query).toHaveBeenLastCalledWith(
 				expect.objectContaining({ category: "valid", safeToSend: false }),

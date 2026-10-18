@@ -15,7 +15,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -80,20 +87,23 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Row state
 					</Label>
-					<NativeSelect
-						className={SELECT_CLASS}
-						id={`rows-state-${String(jobId)}`}
-						onChange={(event) => {
-							setState(event.target.value);
+					<Select
+						onValueChange={(value) => {
+							setState(value);
 						}}
 						value={state}
 					>
-						{taskState.values.map((value) => (
-							<NativeSelectOption key={value} value={value}>
-								{taskState.label(value)}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
+						<SelectTrigger className={SELECT_CLASS} id={`rows-state-${String(jobId)}`}>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{taskState.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{taskState.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label
@@ -102,21 +112,24 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Category
 					</Label>
-					<NativeSelect
-						className={SELECT_CLASS}
-						id={`rows-category-${String(jobId)}`}
-						onChange={(event) => {
-							setFilter(event.target.value);
+					<Select
+						onValueChange={(value) => {
+							setFilter(fromSelect(value));
 						}}
-						value={filter}
+						value={filter || ALL}
 					>
-						<NativeSelectOption value="">All categories</NativeSelectOption>
-						{category.values.map((value) => (
-							<NativeSelectOption key={value} value={value}>
-								{category.label(value)}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
+						<SelectTrigger className={SELECT_CLASS} id={`rows-category-${String(jobId)}`}>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All categories</SelectItem>
+							{category.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{category.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 			</div>
 			{pages.isError ? (

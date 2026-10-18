@@ -7,7 +7,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Configuration, PipelinesApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
-import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -95,20 +102,22 @@ export function PipelineList({ className, selectedId, onOpen, ...props }: Pipeli
 				</p>
 			) : null}
 			{empty ? null : (
-				<NativeSelect
-					aria-label="Pipeline status"
-					className={cn(FILTER_CLASS, "sm:w-48")}
-					onChange={(event) => {
-						const value = event.target.value;
+				<Select
+					onValueChange={(value) => {
 						setStatus(value === "active" || value === "paused" ? value : "");
 						setOffset(0);
 					}}
-					value={status}
+					value={status || ALL}
 				>
-					<NativeSelectOption value="">All statuses</NativeSelectOption>
-					<NativeSelectOption value="active">Active</NativeSelectOption>
-					<NativeSelectOption value="paused">Paused</NativeSelectOption>
-				</NativeSelect>
+					<SelectTrigger aria-label="Pipeline status" className={cn(FILTER_CLASS, "sm:w-48")}>
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value={ALL}>All statuses</SelectItem>
+						<SelectItem value="active">Active</SelectItem>
+						<SelectItem value="paused">Paused</SelectItem>
+					</SelectContent>
+				</Select>
 			)}
 			{empty ? (
 				<EmptyState
