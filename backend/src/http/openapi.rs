@@ -1360,6 +1360,17 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["score", "category", "confidence", "action", "model_version", "scored_at", "risk_factors"]
 		}),
 	);
+	// core::DebugDetails sends the version that ran the check (upstream
+	// 0.11.10). Results stored before it do not have it, so it is optional.
+	set_schema_property(
+		spec,
+		"DebugDetails",
+		"reacher_version",
+		json!({
+			"type": "string",
+			"description": "The version of the backend that performed the verification, e.g. \"4.3.0\"."
+		}),
+	);
 	// Matches core::smtp::SmtpDebugVerifMethod. The Smtp variant also sends the
 	// host and the SMTP settings; strict clients reject the result without them.
 	insert_schema(
@@ -3223,6 +3234,13 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 		info.insert(
 			"version".to_string(),
 			Value::String(env!("CARGO_PKG_VERSION").to_string()),
+		);
+		info.insert(
+			"license".to_string(),
+			json!({
+				"name": "MIT",
+				"url": "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/LICENSE.md"
+			}),
 		);
 	}
 	Ok(spec)

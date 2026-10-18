@@ -16,6 +16,8 @@ export interface DebugDetails {
   duration: Duration;
   /** The timestamp when the email verification ended. */
   end_time: string;
+  /** The version of the backend that performed the verification, e.g. "4.3.0". */
+  reacher_version?: string;
   smtp: DebugDetailsSmtp;
   /** The timestamp when the email verification started. */
   start_time: string;

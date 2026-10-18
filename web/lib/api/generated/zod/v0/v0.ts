@@ -202,6 +202,12 @@ export const PostCheckEmail200Response = zod
         end_time: zod
           .string()
           .describe("The timestamp when the email verification ended."),
+        reacher_version: zod
+          .string()
+          .optional()
+          .describe(
+            'The version of the backend that performed the verification, e.g. \"4.3.0\".',
+          ),
         smtp: zod
           .object({
             verif_method: zod

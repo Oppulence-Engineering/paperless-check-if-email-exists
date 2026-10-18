@@ -20,7 +20,6 @@ use crate::http::ReacherResponseError;
 use crate::scoring::response::{
 	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
 };
-use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
@@ -288,10 +287,6 @@ async fn handle_without_worker(
 			&prepared,
 			storage.get_extra(),
 		)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared))
 		.await
 		.map_err(ReacherResponseError::from)?;
 

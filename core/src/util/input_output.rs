@@ -1,19 +1,3 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use crate::misc::{MiscDetails, MiscError};
 use crate::mx::{MxDetails, MxError};
 use crate::provider::{Provider, ProviderConfidence, ProviderRejectionReason};
@@ -194,6 +178,9 @@ pub enum Reachable {
 pub struct DebugDetails {
 	/// Identifier for the service currently running Reacher.
 	pub backend_name: String,
+	/// Version of Reacher that performed the verification.
+	#[serde(default)]
+	pub reacher_version: String,
 	/// The time when the email verification started.
 	pub start_time: DateTime<Utc>,
 	/// The time when the email verification ended.
@@ -212,6 +199,7 @@ impl Default for DebugDetails {
 			duration: Duration::default(),
 			smtp: SmtpDebug::default(),
 			backend_name: "backend-dev".into(),
+			reacher_version: crate::CARGO_PKG_VERSION.into(),
 		}
 	}
 }
@@ -385,5 +373,19 @@ mod tests {
 		assert!(!actual.contains(r#""provider":null"#));
 		assert!(!actual.contains(r#""provider_rejection_reason":null"#));
 		assert!(!actual.contains(r#""provider_confidence":null"#));
+	}
+
+	#[test]
+	fn should_serialize_reacher_version() {
+		let actual = serde_json::to_value(DebugDetails::default()).unwrap();
+		assert_eq!(actual["reacher_version"], crate::CARGO_PKG_VERSION);
+	}
+
+	#[test]
+	fn should_deserialize_without_reacher_version() {
+		let mut value = serde_json::to_value(DebugDetails::default()).unwrap();
+		value.as_object_mut().unwrap().remove("reacher_version");
+		let debug: DebugDetails = serde_json::from_value(value).unwrap();
+		assert_eq!(debug.reacher_version, "");
 	}
 }

@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! Helper functions to send events to Sentry.
 //!
 //! This module also contains functions that check if the error's given by
@@ -23,13 +7,11 @@
 use crate::misc::MiscError;
 use crate::mx::MxError;
 use crate::LOG_TARGET;
-use crate::{smtp::SmtpError, CheckEmailOutput};
+use crate::{smtp::SmtpError, CheckEmailOutput, CARGO_PKG_VERSION};
 use async_smtp::error::Error as AsyncSmtpError;
 use sentry::protocol::{Event, Exception, Level, Values};
 use thiserror::Error;
 use tracing::{debug, info};
-
-const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Setup Sentry.
 pub fn setup_sentry(sentry_dsn: &str) -> sentry::ClientInitGuard {
@@ -82,7 +64,7 @@ fn error(err: SentryError, result: &CheckEmailOutput, backend_name: &str) {
 		},
 		level: Level::Error,
 		environment: Some("production".into()),
-		release: Some(format!("v{}", CARGO_PKG_VERSION).into()),
+		release: Some(format!("v{CARGO_PKG_VERSION}").into()),
 		message: Some(format!("{result:#?}")),
 		server_name: Some(backend_name.to_string().into()),
 		transaction: Some(format!("check_email:{}", result.syntax.domain)),

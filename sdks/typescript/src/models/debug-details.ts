@@ -45,6 +45,12 @@ export interface DebugDetails {
      */
     'end_time': string;
     /**
+     * The version of the backend that performed the verification, e.g. \"4.3.0\".
+     * @type {string}
+     * @memberof DebugDetails
+     */
+    'reacher_version'?: string;
+    /**
      *
      * @type {DebugDetailsSmtp}
      * @memberof DebugDetails

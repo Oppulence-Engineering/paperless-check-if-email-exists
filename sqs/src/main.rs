@@ -1,23 +1,6 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use reacher_backend::config::{load_config, BackendConfig};
 use reacher_backend::http::CheckEmailRequest;
-use reacher_backend::storage::commercial_license_trial::send_to_reacher;
 use reacher_backend::worker::do_work::{
 	check_email_and_send_result_with_config, CheckEmailJobId, CheckEmailTask, TaskWebhook,
 };
@@ -168,30 +151,18 @@ async fn process_sqs_message(
 	}
 
 	// TODO:
-	// - Refactor storing the result and sending to Reacher, it's duplicated
-	// code from the backend.
+	// - Refactor storing the result, it's duplicated code from the backend.
 	// - Add throttling, again using backend code.
 	match &worker_output {
 		Ok(success) => {
 			storage
 				.store_prepared(task, success, storage.get_extra())
 				.await?;
-
-			// If we're in the Commercial License Trial, we also store the
-			// result by sending it to back to Reacher.
-			send_to_reacher(backend_config.clone(), &task.input.to_email, Ok(success)).await?;
 		}
 		Err(error) => {
 			storage
 				.store_error(task, error, storage.get_extra())
 				.await?;
-
-			send_to_reacher::<reacher_backend::scoring::response::PreparedCheckEmailSuccess>(
-				backend_config.clone(),
-				&task.input.to_email,
-				Err(error),
-			)
-			.await?;
 
 			if error.is_retryable() {
 				return Err(

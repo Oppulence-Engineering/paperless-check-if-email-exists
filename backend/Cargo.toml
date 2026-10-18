@@ -2,7 +2,7 @@
 name = "reacher_backend"
 version = "4.3.0"
 edition = "2018"
-license = "AGPL-3.0"
+license = "MIT"
 publish = false
 
 [dependencies]
@@ -45,7 +45,7 @@ serde_json = "1.0"
 serde_urlencoded = "0.7"
 percent-encoding = "2.3"
 sha2 = "0.10"
-sqlx = { version = "0.7", default-features = false, features = [
+sqlx = { version = "0.8", default-features = false, features = [
     "runtime-tokio-rustls",
     "postgres",
     "uuid",
@@ -53,7 +53,7 @@ sqlx = { version = "0.7", default-features = false, features = [
     "json",
     "migrate",
 ] }
-sqlxmq = "0.5"
+sqlxmq = "0.6"
 thiserror = "2.0"
 tokio = { version = "1.40", features = ["macros"] }
 tracing = "0.1.40"
