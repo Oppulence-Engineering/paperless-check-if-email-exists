@@ -74,6 +74,7 @@
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@radix-ui/react-use-controllable-state": "^1.2.2",
+		"@scalar/api-reference-react": "0.9.77",
 		"@shadcn/react": "^0.2.1",
 		"@sim/emcn": "file:./vendor/sim/emcn",
 		"@sim/utils": "file:./vendor/sim/utils",
@@ -195,7 +196,8 @@
 			"seroval": "1.6.3",
 			"smol-toml": "1.9.0",
 			"source-map-js": "1.2.2",
-			"@modelcontextprotocol/sdk": "1.31.0"
+			"@modelcontextprotocol/sdk": "1.31.0",
+			"@ai-sdk/provider-utils@4": "4.0.33"
 		}
 	},
 	"msw": {
