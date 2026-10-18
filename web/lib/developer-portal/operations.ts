@@ -110,7 +110,7 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 			if (operation.path.startsWith("/v1/reverification"))
 				return { href: "/app/settings?settings=verification", label: "Open re-check settings" };
 			if (operation.path.startsWith("/v1/reputation/"))
-				return { href: "/app/analytics", label: "Open domain reputation" };
+				return { href: "/app/domains", label: "Open sender domains" };
 			if (operation.path.startsWith("/v1/alerts")) return { href: "/app", label: "Open alerts" };
 			return { href: "/app/check", label: "Open verification" };
 		case "Bulk and observability":
