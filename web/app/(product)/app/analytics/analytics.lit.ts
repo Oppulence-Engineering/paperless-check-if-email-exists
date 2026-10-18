@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=page
- * Analytics — Explore verification results, activity, source quality, and domain reputation
+ * Analytics — Explore verification results, saved segments, job activity, and source quality
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const AnalyticsLit = AnalyticsLitSchema.parse({
 	domain: "analytics",
 	owner: "page",
 	client: true,
-	summary: "Explore verification results, activity, source quality, and domain reputation",
+	summary: "Explore verification results, saved segments, job activity, and source quality",
 	schemas: ["app/(product)/app/analytics/search-params.ts"],
 	files: [
 		"app/(product)/app/analytics/analytics.lit.ts",

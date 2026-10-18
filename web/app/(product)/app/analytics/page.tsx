@@ -14,7 +14,7 @@ import AnalyticsLoading from "./loading";
  */
 export const metadata = {
 	title: "Analytics - Oppulence",
-	description: "Explore verification results, activity, source quality, and domain reputation",
+	description: "Explore verification results, saved segments, job activity, and source quality",
 };
 
 type AnalyticsPageProps = {
