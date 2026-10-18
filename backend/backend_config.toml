@@ -15,6 +15,12 @@ http_host = "127.0.0.1"
 # Env variable: RCH__HTTP_PORT
 http_port = 8080
 
+# The most connections that each Postgres pool of the backend opens. Staging
+# and production share a small Postgres cluster, so keep this value low.
+#
+# Env variable: RCH__DB_MAX_CONNECTIONS
+db_max_connections = 5
+
 # Name to use during the EHLO/HELO command in the SMTP conversation.
 # Ideally, this should match the reverse DNS of the server's IP address.
 #

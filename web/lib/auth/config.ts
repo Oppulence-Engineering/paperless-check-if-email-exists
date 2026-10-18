@@ -31,6 +31,8 @@ const RuntimeConfigSchema = z
 		betterAuthSecret: z.string().min(32),
 		scimCredentialHashSecret: z.string().min(32),
 		databaseUrl: z.string().min(1),
+		// The shared Postgres cluster allows about 47 connections for all pods.
+		databasePoolMax: z.coerce.number().int().min(1).max(50),
 		resendApiKey: z.string(),
 		resendFrom: z
 			.string()
@@ -143,6 +145,7 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 		databaseUrl:
 			process.env.DATABASE_URL ||
 			(isProduction ? "" : "postgres://postgres:postgres@localhost:25432/reacher"),
+		databasePoolMax: process.env.DATABASE_POOL_MAX || 5,
 		resendApiKey: process.env.RESEND_API_KEY || "",
 		resendFrom: process.env.RESEND_FROM || (isProduction ? "" : "Verifier <noreply@example.com>"),
 		registrationMode: process.env.REGISTRATION_MODE || "open",
