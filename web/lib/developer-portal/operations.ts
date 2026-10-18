@@ -315,21 +315,6 @@ function componentExists(ref: string): boolean {
 	return spec.components[section]?.[name] !== undefined;
 }
 
-/**
- * Drops discriminator mappings to schemas that the contract does not define.
- * The backend contract maps PipelineSource to `PipelineSource_oneOf_*` names,
- * but its variants are inline. Returns a copy; the contract does not change.
- */
-function withoutDanglingMappings(component: unknown): unknown {
-	const discriminator = (component as { discriminator?: { mapping?: Record<string, string> } })
-		.discriminator;
-	if (!discriminator?.mapping) return component;
-	const mapping = Object.fromEntries(
-		Object.entries(discriminator.mapping).filter(([, ref]) => componentExists(ref)),
-	);
-	return { ...(component as object), discriminator: { ...discriminator, mapping } };
-}
-
 /** Keeps only the components that the paths reach, so admin models stay out. */
 function reachableComponents(paths: unknown): Record<string, Record<string, unknown>> {
 	const kept: Record<string, Record<string, unknown>> = {};
@@ -341,7 +326,7 @@ function reachableComponents(paths: unknown): Record<string, Record<string, unkn
 		seen.add(ref);
 		if (!componentExists(ref)) continue;
 		const [section, name] = ref.replace("#/components/", "").split("/");
-		const component = withoutDanglingMappings(spec.components[section][name]);
+		const component = spec.components[section][name];
 		kept[section] = { ...kept[section], [name]: component };
 		pending.push(...referencesIn(component, new Set()));
 	}
