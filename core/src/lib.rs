@@ -309,10 +309,10 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		.min_by_key(|a| a.preference())
+		.min_by_key(|a| a.preference)
 		.expect("There should be at least one MX record after filtering.");
 	let host = mx_records;
-	let mx_host = host.exchange().to_string();
+	let mx_host = host.exchange.to_string();
 
 	if detected_provider.is_none() {
 		detected_provider = detect_provider(&my_syntax.domain, Some(&mx_host));
@@ -353,7 +353,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.address
 			.as_ref()
 			.expect("We already checked that the email has valid format. qed."),
-		host.exchange(),
+		&host.exchange,
 		my_syntax.domain.as_ref(),
 		input,
 	)

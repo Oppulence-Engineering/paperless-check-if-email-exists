@@ -1007,13 +1007,13 @@ mod tests {
 	use super::*;
 	use check_if_email_exists::{
 		misc::MiscDetails,
-		mx::MxDetails,
+		mx::{MxDetails, MxLookup},
 		provider::{Provider, ProviderConfidence, ProviderRejectionReason},
 		smtp::SmtpDetails,
 		syntax::SyntaxDetails,
 	};
 	use hickory_resolver::{
-		lookup::{Lookup, MxLookup},
+		lookup::Lookup,
 		proto::op::Query,
 		proto::rr::{rdata::MX, Name, RData, RecordType},
 	};

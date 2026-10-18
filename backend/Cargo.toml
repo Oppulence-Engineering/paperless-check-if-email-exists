@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0"
-async-smtp = { version = "0.9.1", features = ["runtime-tokio"] }
+async-smtp = { version = "0.10", features = ["runtime-tokio"] }
 check-if-email-exists = { path = "../core", features = ["sentry"] }
 config = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
@@ -19,7 +19,7 @@ dotenv = "0.15.0"
 futures = { version = "0.3.30" }
 bytes = "1.9"
 base64 = "0.23"
-hickory-resolver = "0.24.0"
+hickory-resolver = "0.26"
 hex = "0.4"
 hmac = "0.13"
 http = "1.2.0"
@@ -29,10 +29,10 @@ utoipa = { version = "6", features = ["chrono", "uuid"] }
 tokio-executor-trait = { version = "2.1.1" }
 tokio-reactor-trait = { version = "1.1.0" }
 openssl = { version = "0.10.69", features = ["vendored"] }
-reqwest = { version = "0.12.15", default-features = false, features = [
+reqwest = { version = "0.13", default-features = false, features = [
     "json",
     "multipart",
-    "rustls-tls",
+    "rustls",
 ] }
 sentry = { version = "0.49", default-features = false, features = [
     "reqwest",
