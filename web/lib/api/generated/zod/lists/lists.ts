@@ -269,14 +269,49 @@ export const V1ListSavedSegmentsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
+export const v1ListSavedSegments200ResponseSegmentsItemFilterFreshnessDaysMaxMin = 0;
+
+export const v1ListSavedSegments200ResponseSegmentsItemFilterScoreMaxMin = 0;
+export const v1ListSavedSegments200ResponseSegmentsItemFilterScoreMaxMax = 100;
+
+export const v1ListSavedSegments200ResponseSegmentsItemFilterScoreMinMin = 0;
+export const v1ListSavedSegments200ResponseSegmentsItemFilterScoreMinMax = 100;
+
 export const V1ListSavedSegments200Response = zod.object({
   segments: zod.array(
     zod.object({
       created_at: zod.iso.datetime({ offset: true }),
-      filter: zod.unknown(),
+      filter: zod.object({
+        category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+        change_type: zod
+          .union([zod.string(), zod.array(zod.string())])
+          .optional(),
+        freshness_days_max: zod
+          .int()
+          .min(
+            v1ListSavedSegments200ResponseSegmentsItemFilterFreshnessDaysMaxMin,
+          )
+          .optional(),
+        is_catch_all: zod.boolean().optional(),
+        is_disposable: zod.boolean().optional(),
+        is_role_account: zod.boolean().optional(),
+        policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+        reason_codes_any: zod.array(zod.string()).optional(),
+        safe_to_send: zod.boolean().optional(),
+        score_max: zod
+          .int()
+          .min(v1ListSavedSegments200ResponseSegmentsItemFilterScoreMaxMin)
+          .max(v1ListSavedSegments200ResponseSegmentsItemFilterScoreMaxMax)
+          .optional(),
+        score_min: zod
+          .int()
+          .min(v1ListSavedSegments200ResponseSegmentsItemFilterScoreMinMin)
+          .max(v1ListSavedSegments200ResponseSegmentsItemFilterScoreMinMax)
+          .optional(),
+      }),
       id: zod.int(),
       name: zod.string(),
-      scope: zod.string(),
+      scope: zod.enum(["lists", "tenant"]),
       updated_at: zod.iso.datetime({ offset: true }),
     }),
   ),
@@ -290,18 +325,84 @@ export const V1ListSavedSegmentsDefaultResponse = zod.object({
 /**
  * @summary POST /v1/segments
  */
+export const v1CreateSavedSegmentBodyFilterFreshnessDaysMaxMin = 0;
+
+export const v1CreateSavedSegmentBodyFilterScoreMaxMin = 0;
+export const v1CreateSavedSegmentBodyFilterScoreMaxMax = 100;
+
+export const v1CreateSavedSegmentBodyFilterScoreMinMin = 0;
+export const v1CreateSavedSegmentBodyFilterScoreMinMax = 100;
+
 export const V1CreateSavedSegmentBody = zod.strictObject({
-  filter: zod.unknown().optional(),
+  filter: zod
+    .strictObject({
+      category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+      change_type: zod
+        .union([zod.string(), zod.array(zod.string())])
+        .optional(),
+      freshness_days_max: zod
+        .int()
+        .min(v1CreateSavedSegmentBodyFilterFreshnessDaysMaxMin)
+        .optional(),
+      is_catch_all: zod.boolean().optional(),
+      is_disposable: zod.boolean().optional(),
+      is_role_account: zod.boolean().optional(),
+      policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+      reason_codes_any: zod.array(zod.string()).optional(),
+      safe_to_send: zod.boolean().optional(),
+      score_max: zod
+        .int()
+        .min(v1CreateSavedSegmentBodyFilterScoreMaxMin)
+        .max(v1CreateSavedSegmentBodyFilterScoreMaxMax)
+        .optional(),
+      score_min: zod
+        .int()
+        .min(v1CreateSavedSegmentBodyFilterScoreMinMin)
+        .max(v1CreateSavedSegmentBodyFilterScoreMinMax)
+        .optional(),
+    })
+    .optional(),
   name: zod.string(),
-  scope: zod.string().optional(),
+  scope: zod.enum(["lists", "tenant"]).optional(),
 });
+
+export const v1CreateSavedSegment201ResponseFilterFreshnessDaysMaxMin = 0;
+
+export const v1CreateSavedSegment201ResponseFilterScoreMaxMin = 0;
+export const v1CreateSavedSegment201ResponseFilterScoreMaxMax = 100;
+
+export const v1CreateSavedSegment201ResponseFilterScoreMinMin = 0;
+export const v1CreateSavedSegment201ResponseFilterScoreMinMax = 100;
 
 export const V1CreateSavedSegment201Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  filter: zod.unknown(),
+  filter: zod.object({
+    category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    change_type: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    freshness_days_max: zod
+      .int()
+      .min(v1CreateSavedSegment201ResponseFilterFreshnessDaysMaxMin)
+      .optional(),
+    is_catch_all: zod.boolean().optional(),
+    is_disposable: zod.boolean().optional(),
+    is_role_account: zod.boolean().optional(),
+    policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+    reason_codes_any: zod.array(zod.string()).optional(),
+    safe_to_send: zod.boolean().optional(),
+    score_max: zod
+      .int()
+      .min(v1CreateSavedSegment201ResponseFilterScoreMaxMin)
+      .max(v1CreateSavedSegment201ResponseFilterScoreMaxMax)
+      .optional(),
+    score_min: zod
+      .int()
+      .min(v1CreateSavedSegment201ResponseFilterScoreMinMin)
+      .max(v1CreateSavedSegment201ResponseFilterScoreMinMax)
+      .optional(),
+  }),
   id: zod.int(),
   name: zod.string(),
-  scope: zod.string(),
+  scope: zod.enum(["lists", "tenant"]),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -316,7 +417,9 @@ export const V1DeleteSavedSegmentParams = zod.object({
   segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
 });
 
-export const V1DeleteSavedSegment200Response = zod.unknown();
+export const V1DeleteSavedSegment200Response = zod.object({
+  deleted: zod.boolean(),
+});
 
 export const V1DeleteSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
@@ -329,12 +432,43 @@ export const V1GetSavedSegmentParams = zod.object({
   segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
 });
 
+export const v1GetSavedSegment200ResponseFilterFreshnessDaysMaxMin = 0;
+
+export const v1GetSavedSegment200ResponseFilterScoreMaxMin = 0;
+export const v1GetSavedSegment200ResponseFilterScoreMaxMax = 100;
+
+export const v1GetSavedSegment200ResponseFilterScoreMinMin = 0;
+export const v1GetSavedSegment200ResponseFilterScoreMinMax = 100;
+
 export const V1GetSavedSegment200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  filter: zod.unknown(),
+  filter: zod.object({
+    category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    change_type: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    freshness_days_max: zod
+      .int()
+      .min(v1GetSavedSegment200ResponseFilterFreshnessDaysMaxMin)
+      .optional(),
+    is_catch_all: zod.boolean().optional(),
+    is_disposable: zod.boolean().optional(),
+    is_role_account: zod.boolean().optional(),
+    policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+    reason_codes_any: zod.array(zod.string()).optional(),
+    safe_to_send: zod.boolean().optional(),
+    score_max: zod
+      .int()
+      .min(v1GetSavedSegment200ResponseFilterScoreMaxMin)
+      .max(v1GetSavedSegment200ResponseFilterScoreMaxMax)
+      .optional(),
+    score_min: zod
+      .int()
+      .min(v1GetSavedSegment200ResponseFilterScoreMinMin)
+      .max(v1GetSavedSegment200ResponseFilterScoreMinMax)
+      .optional(),
+  }),
   id: zod.int(),
   name: zod.string(),
-  scope: zod.string(),
+  scope: zod.enum(["lists", "tenant"]),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -349,18 +483,84 @@ export const V1UpdateSavedSegmentParams = zod.object({
   segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
 });
 
+export const v1UpdateSavedSegmentBodyFilterFreshnessDaysMaxMin = 0;
+
+export const v1UpdateSavedSegmentBodyFilterScoreMaxMin = 0;
+export const v1UpdateSavedSegmentBodyFilterScoreMaxMax = 100;
+
+export const v1UpdateSavedSegmentBodyFilterScoreMinMin = 0;
+export const v1UpdateSavedSegmentBodyFilterScoreMinMax = 100;
+
 export const V1UpdateSavedSegmentBody = zod.strictObject({
-  filter: zod.unknown().optional(),
+  filter: zod
+    .strictObject({
+      category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+      change_type: zod
+        .union([zod.string(), zod.array(zod.string())])
+        .optional(),
+      freshness_days_max: zod
+        .int()
+        .min(v1UpdateSavedSegmentBodyFilterFreshnessDaysMaxMin)
+        .optional(),
+      is_catch_all: zod.boolean().optional(),
+      is_disposable: zod.boolean().optional(),
+      is_role_account: zod.boolean().optional(),
+      policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+      reason_codes_any: zod.array(zod.string()).optional(),
+      safe_to_send: zod.boolean().optional(),
+      score_max: zod
+        .int()
+        .min(v1UpdateSavedSegmentBodyFilterScoreMaxMin)
+        .max(v1UpdateSavedSegmentBodyFilterScoreMaxMax)
+        .optional(),
+      score_min: zod
+        .int()
+        .min(v1UpdateSavedSegmentBodyFilterScoreMinMin)
+        .max(v1UpdateSavedSegmentBodyFilterScoreMinMax)
+        .optional(),
+    })
+    .optional(),
   name: zod.string().nullish(),
-  scope: zod.string().nullish(),
+  scope: zod.union([zod.enum(["lists", "tenant"]), zod.null()]).optional(),
 });
+
+export const v1UpdateSavedSegment200ResponseFilterFreshnessDaysMaxMin = 0;
+
+export const v1UpdateSavedSegment200ResponseFilterScoreMaxMin = 0;
+export const v1UpdateSavedSegment200ResponseFilterScoreMaxMax = 100;
+
+export const v1UpdateSavedSegment200ResponseFilterScoreMinMin = 0;
+export const v1UpdateSavedSegment200ResponseFilterScoreMinMax = 100;
 
 export const V1UpdateSavedSegment200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  filter: zod.unknown(),
+  filter: zod.object({
+    category: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    change_type: zod.union([zod.string(), zod.array(zod.string())]).optional(),
+    freshness_days_max: zod
+      .int()
+      .min(v1UpdateSavedSegment200ResponseFilterFreshnessDaysMaxMin)
+      .optional(),
+    is_catch_all: zod.boolean().optional(),
+    is_disposable: zod.boolean().optional(),
+    is_role_account: zod.boolean().optional(),
+    policy_decision: zod.enum(["send", "review", "suppress"]).optional(),
+    reason_codes_any: zod.array(zod.string()).optional(),
+    safe_to_send: zod.boolean().optional(),
+    score_max: zod
+      .int()
+      .min(v1UpdateSavedSegment200ResponseFilterScoreMaxMin)
+      .max(v1UpdateSavedSegment200ResponseFilterScoreMaxMax)
+      .optional(),
+    score_min: zod
+      .int()
+      .min(v1UpdateSavedSegment200ResponseFilterScoreMinMin)
+      .max(v1UpdateSavedSegment200ResponseFilterScoreMinMax)
+      .optional(),
+  }),
   id: zod.int(),
   name: zod.string(),
-  scope: zod.string(),
+  scope: zod.enum(["lists", "tenant"]),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 

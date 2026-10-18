@@ -1509,6 +1509,10 @@ paths:
         style: form
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventList"
           description: Audit log events
         default:
           content:
@@ -2388,6 +2392,10 @@ paths:
       operationId: listTenantApiKeys
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantApiKeyList"
           description: API key list
         default:
           content:
@@ -2409,6 +2417,10 @@ paths:
         required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantCreatedApiKey"
           description: API key created
         default:
           content:
@@ -2435,6 +2447,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantApiKeyRevokeResponse"
           description: API key revoked
         default:
           content:
@@ -2460,6 +2476,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantApiKey"
           description: API key details
         default:
           content:
@@ -2491,6 +2511,10 @@ paths:
         required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantApiKey"
           description: API key updated
         default:
           content:
@@ -3851,6 +3875,10 @@ paths:
         style: form
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResultList"
           description: Filtered verification results
         default:
           content:
@@ -4007,6 +4035,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePolicyDeleteResponse"
           description: Score policy deleted
         default:
           content:
@@ -4161,6 +4193,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSegmentDeleteResponse"
           description: Saved segment deleted
         default:
           content:
@@ -4236,13 +4272,36 @@ paths:
   /v1/sources/quality:
     get:
       operationId: v1_source_quality
+      parameters:
+      - explode: true
+        in: query
+        name: source_key
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: min_records
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
       responses:
         "200":
           content:
             application/json:
               schema:
-                additionalProperties: true
-                type: object
+                $ref: "#/components/schemas/SourceQualityResponse"
           description: Source quality analytics
         default:
           content:
@@ -5226,6 +5285,77 @@ components:
       - spam_trap_count
       - suppressed_count
       type: object
+    AuditEvent:
+      example:
+        actor: actor
+        event_type: event_type
+        job_id: 6
+        created_at: 2000-01-23T04:56:07.000+00:00
+        task_id: 1
+        event_data:
+          key: ""
+        id: 0
+      properties:
+        actor:
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        event_data:
+          additionalProperties: true
+          nullable: true
+          type: object
+        event_type:
+          type: string
+        id:
+          format: int64
+          type: integer
+        job_id:
+          format: int32
+          type: integer
+        task_id:
+          format: int32
+          nullable: true
+          type: integer
+      required:
+      - created_at
+      - event_type
+      - id
+      - job_id
+      type: object
+    AuditEventList:
+      example:
+        total: 5
+        events:
+        - actor: actor
+          event_type: event_type
+          job_id: 6
+          created_at: 2000-01-23T04:56:07.000+00:00
+          task_id: 1
+          event_data:
+            key: ""
+          id: 0
+        - actor: actor
+          event_type: event_type
+          job_id: 6
+          created_at: 2000-01-23T04:56:07.000+00:00
+          task_id: 1
+          event_data:
+            key: ""
+          id: 0
+      properties:
+        events:
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - events
+      - total
+      type: object
     BlacklistResult:
       example:
         listed: true
@@ -6115,29 +6245,47 @@ components:
       type: object
     CreateSavedSegmentRequest:
       example:
-        filter: ""
-        scope: scope
+        filter:
+          reason_codes_any:
+          - reason_codes_any
+          - reason_codes_any
+          is_catch_all: true
+          policy_decision: send
+          change_type: null
+          freshness_days_max: 0
+          is_role_account: true
+          category: SegmentFilter_category
+          is_disposable: true
+          score_max: 60
+          safe_to_send: true
+          score_min: 14
+        scope: lists
         name: name
       properties:
-        filter: {}
+        filter:
+          $ref: "#/components/schemas/SegmentFilter"
         name:
           type: string
         scope:
-          type: string
+          $ref: "#/components/schemas/SegmentScope"
       required:
       - name
       type: object
     CreateScorePolicyRequest:
       example:
         name: name
-        rules: ""
+        rules:
+          review: ""
+          suppress: ""
+          send: ""
         is_default: true
       properties:
         is_default:
           type: boolean
         name:
           type: string
-        rules: {}
+        rules:
+          $ref: "#/components/schemas/ScorePolicyRules"
       required:
       - name
       type: object
@@ -8352,6 +8500,10 @@ components:
     PipelineRunStats:
       additionalProperties: true
       properties:
+        accepted_rows:
+          format: int32
+          nullable: true
+          type: integer
         billed_emails:
           format: int32
           nullable: true
@@ -8359,10 +8511,6 @@ components:
         changed_only_export:
           nullable: true
           type: boolean
-        completed_tasks:
-          format: int32
-          nullable: true
-          type: integer
         delta_mode:
           nullable: true
           type: boolean
@@ -8370,19 +8518,11 @@ components:
           format: int32
           nullable: true
           type: integer
-        invalid:
+        job_id:
           format: int32
           nullable: true
           type: integer
-        published_tasks:
-          format: int32
-          nullable: true
-          type: integer
-        queued_emails:
-          format: int32
-          nullable: true
-          type: integer
-        risky:
+        list_id:
           format: int32
           nullable: true
           type: integer
@@ -8408,17 +8548,33 @@ components:
           format: int32
           nullable: true
           type: integer
+        total_failed:
+          format: int64
+          nullable: true
+          type: integer
+        total_invalid:
+          format: int64
+          nullable: true
+          type: integer
+        total_processed:
+          format: int64
+          nullable: true
+          type: integer
+        total_risky:
+          format: int64
+          nullable: true
+          type: integer
+        total_unknown:
+          format: int64
+          nullable: true
+          type: integer
+        total_valid:
+          format: int64
+          nullable: true
+          type: integer
         trigger_reason:
           nullable: true
           type: string
-        unknown:
-          format: int32
-          nullable: true
-          type: integer
-        valid:
-          format: int32
-          nullable: true
-          type: integer
       type: object
     PipelineRunStatus:
       enum:
@@ -8524,7 +8680,10 @@ components:
           nullable: true
           type: string
         source_snapshot:
-          $ref: "#/components/schemas/PipelineSource"
+          additionalProperties: true
+          description: The source that the run used. Its shape depends on the source
+            type and the run state.
+          type: object
         started_at:
           format: date-time
           nullable: true
@@ -8846,6 +9005,144 @@ components:
       - run_id
       - status
       type: object
+    QueryResultList:
+      example:
+        total: 5
+        results:
+        - policy_mode: policy_mode
+          created_at: 2000-01-23T04:56:07.000+00:00
+          recommendation:
+            key: ""
+          task_state: task_state
+          policy_evaluation:
+            key: ""
+          safe_to_send: true
+          sub_reason: sub_reason
+          recommendation_action: recommendation_action
+          reason_codes:
+          - reason_codes
+          - reason_codes
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          score: 1
+          job_id: 6
+          policy_decision: policy_decision
+          id: 0
+          category: category
+          email: email
+        - policy_mode: policy_mode
+          created_at: 2000-01-23T04:56:07.000+00:00
+          recommendation:
+            key: ""
+          task_state: task_state
+          policy_evaluation:
+            key: ""
+          safe_to_send: true
+          sub_reason: sub_reason
+          recommendation_action: recommendation_action
+          reason_codes:
+          - reason_codes
+          - reason_codes
+          completed_at: 2000-01-23T04:56:07.000+00:00
+          score: 1
+          job_id: 6
+          policy_decision: policy_decision
+          id: 0
+          category: category
+          email: email
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/QueryResultRow"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - results
+      - total
+      type: object
+    QueryResultRow:
+      example:
+        policy_mode: policy_mode
+        created_at: 2000-01-23T04:56:07.000+00:00
+        recommendation:
+          key: ""
+        task_state: task_state
+        policy_evaluation:
+          key: ""
+        safe_to_send: true
+        sub_reason: sub_reason
+        recommendation_action: recommendation_action
+        reason_codes:
+        - reason_codes
+        - reason_codes
+        completed_at: 2000-01-23T04:56:07.000+00:00
+        score: 1
+        job_id: 6
+        policy_decision: policy_decision
+        id: 0
+        category: category
+        email: email
+      properties:
+        category:
+          nullable: true
+          type: string
+        completed_at:
+          format: date-time
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        email:
+          nullable: true
+          type: string
+        id:
+          format: int32
+          type: integer
+        job_id:
+          format: int32
+          nullable: true
+          type: integer
+        policy_decision:
+          nullable: true
+          type: string
+        policy_evaluation:
+          additionalProperties: true
+          nullable: true
+          type: object
+        policy_mode:
+          nullable: true
+          type: string
+        reason_codes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        recommendation:
+          additionalProperties: true
+          nullable: true
+          type: object
+        recommendation_action:
+          nullable: true
+          type: string
+        safe_to_send:
+          nullable: true
+          type: boolean
+        score:
+          format: int32
+          nullable: true
+          type: integer
+        sub_reason:
+          nullable: true
+          type: string
+        task_state:
+          type: string
+      required:
+      - created_at
+      - id
+      - task_state
+      type: object
     Reachable:
       description: "An enumeration describing the confidence level that the recipient\
         \ address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our\
@@ -9054,22 +9351,57 @@ components:
       - direction
       - signal
       type: object
+    SavedSegmentDeleteResponse:
+      example:
+        deleted: true
+      properties:
+        deleted:
+          type: boolean
+      required:
+      - deleted
+      type: object
     SavedSegmentListResponse:
       example:
-        total: 6
+        total: 5
         segments:
-        - filter: ""
+        - filter:
+            reason_codes_any:
+            - reason_codes_any
+            - reason_codes_any
+            is_catch_all: true
+            policy_decision: send
+            change_type: null
+            freshness_days_max: 0
+            is_role_account: true
+            category: SegmentFilter_category
+            is_disposable: true
+            score_max: 60
+            safe_to_send: true
+            score_min: 14
           updated_at: 2000-01-23T04:56:07.000+00:00
-          scope: scope
+          scope: lists
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
-          id: 0
-        - filter: ""
+          id: 5
+        - filter:
+            reason_codes_any:
+            - reason_codes_any
+            - reason_codes_any
+            is_catch_all: true
+            policy_decision: send
+            change_type: null
+            freshness_days_max: 0
+            is_role_account: true
+            category: SegmentFilter_category
+            is_disposable: true
+            score_max: 60
+            safe_to_send: true
+            score_min: 14
           updated_at: 2000-01-23T04:56:07.000+00:00
-          scope: scope
+          scope: lists
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
-          id: 0
+          id: 5
       properties:
         segments:
           items:
@@ -9084,24 +9416,38 @@ components:
       type: object
     SavedSegmentView:
       example:
-        filter: ""
+        filter:
+          reason_codes_any:
+          - reason_codes_any
+          - reason_codes_any
+          is_catch_all: true
+          policy_decision: send
+          change_type: null
+          freshness_days_max: 0
+          is_role_account: true
+          category: SegmentFilter_category
+          is_disposable: true
+          score_max: 60
+          safe_to_send: true
+          score_min: 14
         updated_at: 2000-01-23T04:56:07.000+00:00
-        scope: scope
+        scope: lists
         name: name
         created_at: 2000-01-23T04:56:07.000+00:00
-        id: 0
+        id: 5
       properties:
         created_at:
           format: date-time
           type: string
-        filter: {}
+        filter:
+          $ref: "#/components/schemas/SegmentFilter"
         id:
           format: int64
           type: integer
         name:
           type: string
         scope:
-          type: string
+          $ref: "#/components/schemas/SegmentScope"
         updated_at:
           format: date-time
           type: string
@@ -9113,6 +9459,40 @@ components:
       - scope
       - updated_at
       type: object
+    ScorePolicyCondition:
+      additionalProperties: false
+      properties:
+        category:
+          items:
+            type: string
+          nullable: true
+          type: array
+        reason_codes_any:
+          items:
+            type: string
+          nullable: true
+          type: array
+        safe_to_send:
+          nullable: true
+          type: boolean
+        score_max:
+          format: int32
+          nullable: true
+          type: integer
+        score_min:
+          format: int32
+          nullable: true
+          type: integer
+      type: object
+    ScorePolicyDeleteResponse:
+      example:
+        deleted: true
+      properties:
+        deleted:
+          type: boolean
+      required:
+      - deleted
+      type: object
     ScorePolicyListResponse:
       example:
         total: 6
@@ -9120,13 +9500,19 @@ components:
         - updated_at: 2000-01-23T04:56:07.000+00:00
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
-          rules: ""
+          rules:
+            review: ""
+            suppress: ""
+            send: ""
           id: 0
           is_default: true
         - updated_at: 2000-01-23T04:56:07.000+00:00
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
-          rules: ""
+          rules:
+            review: ""
+            suppress: ""
+            send: ""
           id: 0
           is_default: true
       properties:
@@ -9141,12 +9527,35 @@ components:
       - policies
       - total
       type: object
+    ScorePolicyRules:
+      additionalProperties: false
+      example:
+        review: ""
+        suppress: ""
+        send: ""
+      properties:
+        review:
+          allOf:
+          - $ref: "#/components/schemas/ScorePolicyCondition"
+          nullable: true
+        send:
+          allOf:
+          - $ref: "#/components/schemas/ScorePolicyCondition"
+          nullable: true
+        suppress:
+          allOf:
+          - $ref: "#/components/schemas/ScorePolicyCondition"
+          nullable: true
+      type: object
     ScorePolicyView:
       example:
         updated_at: 2000-01-23T04:56:07.000+00:00
         name: name
         created_at: 2000-01-23T04:56:07.000+00:00
-        rules: ""
+        rules:
+          review: ""
+          suppress: ""
+          send: ""
         id: 0
         is_default: true
       properties:
@@ -9160,7 +9569,8 @@ components:
           type: boolean
         name:
           type: string
-        rules: {}
+        rules:
+          $ref: "#/components/schemas/ScorePolicyRules"
         updated_at:
           format: date-time
           type: string
@@ -9233,6 +9643,65 @@ components:
       - smtp_is_disabled
       - valid_syntax
       type: object
+    SegmentFilter:
+      additionalProperties: false
+      example:
+        reason_codes_any:
+        - reason_codes_any
+        - reason_codes_any
+        is_catch_all: true
+        policy_decision: send
+        change_type: null
+        freshness_days_max: 0
+        is_role_account: true
+        category: SegmentFilter_category
+        is_disposable: true
+        score_max: 60
+        safe_to_send: true
+        score_min: 14
+      properties:
+        category:
+          $ref: "#/components/schemas/SegmentFilter_category"
+        change_type:
+          $ref: "#/components/schemas/SegmentFilter_category"
+        freshness_days_max:
+          format: int32
+          minimum: 0
+          type: integer
+        is_catch_all:
+          type: boolean
+        is_disposable:
+          type: boolean
+        is_role_account:
+          type: boolean
+        policy_decision:
+          enum:
+          - send
+          - review
+          - suppress
+          type: string
+        reason_codes_any:
+          items:
+            type: string
+          type: array
+        safe_to_send:
+          type: boolean
+        score_max:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        score_min:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+      type: object
+    SegmentScope:
+      enum:
+      - lists
+      - tenant
+      type: string
     SmtpDetails:
       description: Results from SMTP connection attempts to the mail server.
       example:
@@ -9274,6 +9743,201 @@ components:
       - ambiguous_response
       - smtp_unreachable
       type: string
+    SourceQualityResponse:
+      example:
+        sources:
+        - risky_pct: 1.0246457001441578
+          clicked_count: 6
+          quality_grade: quality_grade
+          opened_count: 3
+          negative_outcome_pct: 9.301444243932576
+          review_count: 7
+          outcome_count: 2
+          suppress_count: 1
+          delivered_count: 5
+          total_records: 4
+          unsafe_recommendation_pct: 9.965781217890562
+          summary: summary
+          unsubscribed_count: 9
+          processed_records: 4
+          valid_count: 6
+          send_count: 6
+          invalid_pct: 7.061401241503109
+          bounced_count: 0
+          complained_count: 1
+          send_with_caution_count: 7
+          risky_count: 1
+          safe_to_send_count: 1
+          drop_count: 5
+          invalid_count: 2
+          source_key: source_key
+          unknown_count: 5
+        - risky_pct: 1.0246457001441578
+          clicked_count: 6
+          quality_grade: quality_grade
+          opened_count: 3
+          negative_outcome_pct: 9.301444243932576
+          review_count: 7
+          outcome_count: 2
+          suppress_count: 1
+          delivered_count: 5
+          total_records: 4
+          unsafe_recommendation_pct: 9.965781217890562
+          summary: summary
+          unsubscribed_count: 9
+          processed_records: 4
+          valid_count: 6
+          send_count: 6
+          invalid_pct: 7.061401241503109
+          bounced_count: 0
+          complained_count: 1
+          send_with_caution_count: 7
+          risky_count: 1
+          safe_to_send_count: 1
+          drop_count: 5
+          invalid_count: 2
+          source_key: source_key
+          unknown_count: 5
+      properties:
+        sources:
+          items:
+            $ref: "#/components/schemas/SourceQualityRow"
+          type: array
+      required:
+      - sources
+      type: object
+    SourceQualityRow:
+      example:
+        risky_pct: 1.0246457001441578
+        clicked_count: 6
+        quality_grade: quality_grade
+        opened_count: 3
+        negative_outcome_pct: 9.301444243932576
+        review_count: 7
+        outcome_count: 2
+        suppress_count: 1
+        delivered_count: 5
+        total_records: 4
+        unsafe_recommendation_pct: 9.965781217890562
+        summary: summary
+        unsubscribed_count: 9
+        processed_records: 4
+        valid_count: 6
+        send_count: 6
+        invalid_pct: 7.061401241503109
+        bounced_count: 0
+        complained_count: 1
+        send_with_caution_count: 7
+        risky_count: 1
+        safe_to_send_count: 1
+        drop_count: 5
+        invalid_count: 2
+        source_key: source_key
+        unknown_count: 5
+      properties:
+        bounced_count:
+          format: int64
+          type: integer
+        clicked_count:
+          format: int64
+          type: integer
+        complained_count:
+          format: int64
+          type: integer
+        delivered_count:
+          format: int64
+          type: integer
+        drop_count:
+          format: int64
+          type: integer
+        invalid_count:
+          format: int64
+          type: integer
+        invalid_pct:
+          format: double
+          type: number
+        negative_outcome_pct:
+          format: double
+          type: number
+        opened_count:
+          format: int64
+          type: integer
+        outcome_count:
+          format: int64
+          type: integer
+        processed_records:
+          format: int64
+          type: integer
+        quality_grade:
+          type: string
+        review_count:
+          format: int64
+          type: integer
+        risky_count:
+          format: int64
+          type: integer
+        risky_pct:
+          format: double
+          type: number
+        safe_to_send_count:
+          format: int64
+          type: integer
+        send_count:
+          format: int64
+          type: integer
+        send_with_caution_count:
+          format: int64
+          type: integer
+        source_key:
+          type: string
+        summary:
+          type: string
+        suppress_count:
+          format: int64
+          type: integer
+        total_records:
+          format: int64
+          type: integer
+        unknown_count:
+          format: int64
+          type: integer
+        unsafe_recommendation_pct:
+          format: double
+          type: number
+        unsubscribed_count:
+          format: int64
+          type: integer
+        valid_count:
+          format: int64
+          type: integer
+      required:
+      - bounced_count
+      - clicked_count
+      - complained_count
+      - delivered_count
+      - drop_count
+      - invalid_count
+      - invalid_pct
+      - negative_outcome_pct
+      - opened_count
+      - outcome_count
+      - processed_records
+      - quality_grade
+      - review_count
+      - risky_count
+      - risky_pct
+      - safe_to_send_count
+      - send_count
+      - send_with_caution_count
+      - source_key
+      - summary
+      - suppress_count
+      - total_records
+      - unknown_count
+      - unsafe_recommendation_pct
+      - unsubscribed_count
+      - valid_count
+      type: object
     SubReason:
       enum:
       - deliverable
@@ -9674,6 +10338,153 @@ components:
       type: object
       x-stoplight:
         id: 6053d3ngu2hfn
+    TenantApiKey:
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        last_used_at: 2000-01-23T04:56:07.000+00:00
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        key_prefix: key_prefix
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        scopes:
+        - scopes
+        - scopes
+        status: status
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          format: uuid
+          type: string
+        key_prefix:
+          type: string
+        last_used_at:
+          format: date-time
+          nullable: true
+          type: string
+        name:
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+      required:
+      - created_at
+      - id
+      - key_prefix
+      - name
+      - scopes
+      - status
+      - tenant_id
+      type: object
+    TenantApiKeyList:
+      example:
+        api_keys:
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+        - tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          last_used_at: 2000-01-23T04:56:07.000+00:00
+          expires_at: 2000-01-23T04:56:07.000+00:00
+          key_prefix: key_prefix
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          scopes:
+          - scopes
+          - scopes
+          status: status
+      properties:
+        api_keys:
+          items:
+            $ref: "#/components/schemas/TenantApiKey"
+          type: array
+      required:
+      - api_keys
+      type: object
+    TenantApiKeyRevokeResponse:
+      example:
+        key_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        revoked: true
+      properties:
+        key_id:
+          format: uuid
+          type: string
+        revoked:
+          type: boolean
+      required:
+      - key_id
+      - revoked
+      type: object
+    TenantCreatedApiKey:
+      example:
+        tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        key_prefix: key_prefix
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        scopes:
+        - scopes
+        - scopes
+        key: key
+        status: status
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          format: uuid
+          type: string
+        key:
+          description: The full key. The API shows it only once.
+          type: string
+        key_prefix:
+          type: string
+        name:
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          type: string
+        tenant_id:
+          format: uuid
+          type: string
+      required:
+      - created_at
+      - id
+      - key
+      - key_prefix
+      - name
+      - scopes
+      - status
+      - tenant_id
+      type: object
     TenantSettingsResponse:
       example:
         period_reset_at: period_reset_at
@@ -10003,22 +10814,40 @@ components:
       type: object
     UpdateSavedSegmentRequest:
       example:
-        filter: ""
-        scope: scope
+        filter:
+          reason_codes_any:
+          - reason_codes_any
+          - reason_codes_any
+          is_catch_all: true
+          policy_decision: send
+          change_type: null
+          freshness_days_max: 0
+          is_role_account: true
+          category: SegmentFilter_category
+          is_disposable: true
+          score_max: 60
+          safe_to_send: true
+          score_min: 14
+        scope: ""
         name: name
       properties:
-        filter: {}
+        filter:
+          $ref: "#/components/schemas/SegmentFilter"
         name:
           nullable: true
           type: string
         scope:
+          allOf:
+          - $ref: "#/components/schemas/SegmentScope"
           nullable: true
-          type: string
       type: object
     UpdateScorePolicyRequest:
       example:
         name: name
-        rules: ""
+        rules:
+          review: ""
+          suppress: ""
+          send: ""
         is_default: true
       properties:
         is_default:
@@ -10027,7 +10856,8 @@ components:
         name:
           nullable: true
           type: string
-        rules: {}
+        rules:
+          $ref: "#/components/schemas/ScorePolicyRules"
       type: object
     UpdateTenantDomainRequest:
       example:
@@ -10334,6 +11164,12 @@ components:
       - provider
       - type
       type: object
+    SegmentFilter_category:
+      oneOf:
+      - type: string
+      - items:
+          type: string
+        type: array
     VerifMethod_verif_method:
       description: The SMTP settings the check used. Only for Smtp.
       example:

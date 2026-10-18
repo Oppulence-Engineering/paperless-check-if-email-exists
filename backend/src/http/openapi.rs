@@ -574,6 +574,92 @@ mod operation_id_tests {
 	}
 
 	#[test]
+	fn pipeline_run_stats_use_the_keys_that_pipelines_writes() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let stats = &spec["components"]["schemas"]["PipelineRunStats"]["properties"];
+		// build_pipeline_run_stats and create_push_pipeline_run write these keys.
+		for key in [
+			"accepted_rows",
+			"job_id",
+			"list_id",
+			"total_valid",
+			"total_risky",
+			"total_unknown",
+			"total_invalid",
+			"total_processed",
+			"total_failed",
+			"billed_emails",
+		] {
+			assert!(stats.get(key).is_some(), "PipelineRunStats lost {}", key);
+		}
+		assert!(
+			spec["components"]["schemas"]["PipelineRunView"]["properties"]["source_snapshot"]
+				.get("$ref")
+				.is_none(),
+			"a push run snapshot is not a PipelineSource"
+		);
+	}
+
+	#[test]
+	fn segment_filter_matches_the_backend_validation() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let properties = &spec["components"]["schemas"]["SegmentFilter"]["properties"];
+		let sample = json!({
+			"category": ["valid", "risky"],
+			"change_type": "became_invalid",
+			"safe_to_send": true,
+			"is_role_account": false,
+			"is_disposable": false,
+			"is_catch_all": false,
+			"score_min": 0,
+			"score_max": 100,
+			"freshness_days_max": 30,
+			"reason_codes_any": ["role_account"],
+			"policy_decision": "send"
+		});
+		let mut schema_keys: Vec<&String> =
+			properties.as_object().expect("properties").keys().collect();
+		let mut sample_keys: Vec<&String> = sample.as_object().expect("sample").keys().collect();
+		schema_keys.sort();
+		sample_keys.sort();
+		assert_eq!(schema_keys, sample_keys);
+		crate::list_intelligence::validate_segment_filter(&sample)
+			.expect("the backend accepts every schema field");
+	}
+
+	#[test]
+	fn score_policy_rules_match_policy_rules() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		// PolicyRules rejects unknown fields, so this fails when a field in
+		// the schema does not exist in the Rust type.
+		let sample = json!({
+			"score_min": 1,
+			"score_max": 2,
+			"category": ["valid"],
+			"safe_to_send": true,
+			"reason_codes_any": ["role_account"]
+		});
+		let keys = |value: &serde_json::Value| {
+			let mut keys: Vec<String> =
+				value.as_object().expect("object").keys().cloned().collect();
+			keys.sort();
+			keys
+		};
+		assert_eq!(
+			keys(&schemas["ScorePolicyCondition"]["properties"]),
+			keys(&sample)
+		);
+		let rules = json!({ "send": sample, "review": sample, "suppress": sample });
+		assert_eq!(
+			keys(&schemas["ScorePolicyRules"]["properties"]),
+			keys(&rules)
+		);
+		serde_json::from_value::<crate::list_intelligence::PolicyRules>(rules)
+			.expect("PolicyRules accepts every schema field");
+	}
+
+	#[test]
 	fn every_operation_has_a_unique_id() {
 		let spec = super::build_spec().expect("OpenAPI spec");
 		let mut ids = HashSet::new();
@@ -1841,6 +1927,269 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["deleted"]
 		}),
 	);
+	// Matches ResultRow in http/v1/query.rs.
+	insert_schema(
+		spec,
+		"QueryResultRow",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int32" },
+				"job_id": { "type": "integer", "format": "int32", "nullable": true },
+				"email": { "type": "string", "nullable": true },
+				"score": { "type": "integer", "format": "int32", "nullable": true },
+				"category": { "type": "string", "nullable": true },
+				"sub_reason": { "type": "string", "nullable": true },
+				"safe_to_send": { "type": "boolean", "nullable": true },
+				"reason_codes": { "type": "array", "items": { "type": "string" }, "nullable": true },
+				"recommendation_action": { "type": "string", "nullable": true },
+				"recommendation": { "type": "object", "additionalProperties": true, "nullable": true },
+				"policy_mode": { "type": "string", "nullable": true },
+				"policy_decision": { "type": "string", "nullable": true },
+				"policy_evaluation": { "type": "object", "additionalProperties": true, "nullable": true },
+				"task_state": { "type": "string" },
+				"completed_at": { "type": "string", "format": "date-time", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "task_state", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"QueryResultList",
+		json!({
+			"type": "object",
+			"properties": {
+				"results": { "type": "array", "items": { "$ref": "#/components/schemas/QueryResultRow" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["results", "total"]
+		}),
+	);
+	// Matches Event in http/v1/events.rs.
+	insert_schema(
+		spec,
+		"AuditEvent",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int64" },
+				"job_id": { "type": "integer", "format": "int32" },
+				"task_id": { "type": "integer", "format": "int32", "nullable": true },
+				"event_type": { "type": "string" },
+				"event_data": { "type": "object", "additionalProperties": true, "nullable": true },
+				"actor": { "type": "string", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "job_id", "event_type", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"AuditEventList",
+		json!({
+			"type": "object",
+			"properties": {
+				"events": { "type": "array", "items": { "$ref": "#/components/schemas/AuditEvent" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["events", "total"]
+		}),
+	);
+	// Matches SourceQualityRow in http/v1/source_quality.rs.
+	let mut quality = Map::new();
+	quality.insert("source_key".into(), json!({ "type": "string" }));
+	for count in [
+		"total_records",
+		"processed_records",
+		"valid_count",
+		"risky_count",
+		"unknown_count",
+		"invalid_count",
+		"safe_to_send_count",
+		"send_count",
+		"send_with_caution_count",
+		"review_count",
+		"suppress_count",
+		"drop_count",
+		"outcome_count",
+		"delivered_count",
+		"opened_count",
+		"clicked_count",
+		"bounced_count",
+		"complained_count",
+		"unsubscribed_count",
+	] {
+		quality.insert(
+			count.into(),
+			json!({ "type": "integer", "format": "int64" }),
+		);
+	}
+	for pct in [
+		"risky_pct",
+		"invalid_pct",
+		"unsafe_recommendation_pct",
+		"negative_outcome_pct",
+	] {
+		quality.insert(pct.into(), json!({ "type": "number", "format": "double" }));
+	}
+	quality.insert("quality_grade".into(), json!({ "type": "string" }));
+	quality.insert("summary".into(), json!({ "type": "string" }));
+	let quality_required: Vec<String> = quality.keys().cloned().collect();
+	insert_schema(
+		spec,
+		"SourceQualityRow",
+		json!({ "type": "object", "properties": quality, "required": quality_required }),
+	);
+	insert_schema(
+		spec,
+		"SourceQualityResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"sources": { "type": "array", "items": { "$ref": "#/components/schemas/SourceQualityRow" } }
+			},
+			"required": ["sources"]
+		}),
+	);
+	// Matches list_intelligence::validate_segment_filter, which rejects any
+	// other field.
+	let string_or_list = json!({
+		"oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+	});
+	insert_schema(
+		spec,
+		"SegmentFilter",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"category": string_or_list,
+				"change_type": string_or_list,
+				"safe_to_send": { "type": "boolean" },
+				"is_role_account": { "type": "boolean" },
+				"is_disposable": { "type": "boolean" },
+				"is_catch_all": { "type": "boolean" },
+				"score_min": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"score_max": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"freshness_days_max": { "type": "integer", "format": "int32", "minimum": 0 },
+				"reason_codes_any": { "type": "array", "items": { "type": "string" } },
+				"policy_decision": { "type": "string", "enum": ["send", "review", "suppress"] }
+			}
+		}),
+	);
+	insert_schema(
+		spec,
+		"SegmentScope",
+		json!({ "type": "string", "enum": ["lists", "tenant"] }),
+	);
+	insert_schema(
+		spec,
+		"SavedSegmentDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
+			"required": ["deleted"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ScorePolicyDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
+			"required": ["deleted"]
+		}),
+	);
+	// Matches list_intelligence::PolicyCondition. Serde rejects unknown fields.
+	insert_schema(
+		spec,
+		"ScorePolicyCondition",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"score_min": { "type": "integer", "format": "int32", "nullable": true },
+				"score_max": { "type": "integer", "format": "int32", "nullable": true },
+				"category": { "type": "array", "items": { "type": "string" }, "nullable": true },
+				"safe_to_send": { "type": "boolean", "nullable": true },
+				"reason_codes_any": { "type": "array", "items": { "type": "string" }, "nullable": true }
+			}
+		}),
+	);
+	// Matches list_intelligence::PolicyRules.
+	let condition = json!({
+		"nullable": true,
+		"allOf": [{ "$ref": "#/components/schemas/ScorePolicyCondition" }]
+	});
+	insert_schema(
+		spec,
+		"ScorePolicyRules",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": { "send": condition, "review": condition, "suppress": condition }
+		}),
+	);
+	// Matches ApiKeyResponse in http/v1/account_api_keys.rs.
+	let api_key_properties = json!({
+		"id": { "type": "string", "format": "uuid" },
+		"tenant_id": { "type": "string", "format": "uuid" },
+		"key_prefix": { "type": "string" },
+		"name": { "type": "string" },
+		"scopes": { "type": "array", "items": { "type": "string" } },
+		"status": { "type": "string" },
+		"last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+		"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+		"created_at": { "type": "string", "format": "date-time" }
+	});
+	insert_schema(
+		spec,
+		"TenantApiKey",
+		json!({
+			"type": "object",
+			"properties": api_key_properties,
+			"required": ["id", "tenant_id", "key_prefix", "name", "scopes", "status", "created_at"]
+		}),
+	);
+	let mut created_properties = api_key_properties.clone();
+	created_properties["key"] =
+		json!({ "type": "string", "description": "The full key. The API shows it only once." });
+	if let Some(map) = created_properties.as_object_mut() {
+		map.remove("last_used_at");
+	}
+	insert_schema(
+		spec,
+		"TenantCreatedApiKey",
+		json!({
+			"type": "object",
+			"properties": created_properties,
+			"required": ["id", "tenant_id", "key", "key_prefix", "name", "scopes", "status", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"TenantApiKeyList",
+		json!({
+			"type": "object",
+			"properties": {
+				"api_keys": { "type": "array", "items": { "$ref": "#/components/schemas/TenantApiKey" } }
+			},
+			"required": ["api_keys"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"TenantApiKeyRevokeResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"revoked": { "type": "boolean" },
+				"key_id": { "type": "string", "format": "uuid" }
+			},
+			"required": ["revoked", "key_id"]
+		}),
+	);
 	insert_schema(
 		spec,
 		"RetryJobResponse",
@@ -1894,13 +2243,15 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"changed_only_export": { "type": "boolean", "nullable": true },
 				"selected_unique_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"skipped_unchanged": { "type": "integer", "format": "int32", "nullable": true },
-				"queued_emails": { "type": "integer", "format": "int32", "nullable": true },
-				"published_tasks": { "type": "integer", "format": "int32", "nullable": true },
-				"completed_tasks": { "type": "integer", "format": "int32", "nullable": true },
-				"valid": { "type": "integer", "format": "int32", "nullable": true },
-				"invalid": { "type": "integer", "format": "int32", "nullable": true },
-				"risky": { "type": "integer", "format": "int32", "nullable": true },
-				"unknown": { "type": "integer", "format": "int32", "nullable": true },
+				"accepted_rows": { "type": "integer", "format": "int32", "nullable": true },
+				"job_id": { "type": "integer", "format": "int32", "nullable": true },
+				"list_id": { "type": "integer", "format": "int32", "nullable": true },
+				"total_valid": { "type": "integer", "format": "int64", "nullable": true },
+				"total_risky": { "type": "integer", "format": "int64", "nullable": true },
+				"total_unknown": { "type": "integer", "format": "int64", "nullable": true },
+				"total_invalid": { "type": "integer", "format": "int64", "nullable": true },
+				"total_processed": { "type": "integer", "format": "int64", "nullable": true },
+				"total_failed": { "type": "integer", "format": "int64", "nullable": true },
 				"billed_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"source_name": { "type": "string", "nullable": true },
 				"source_filename": { "type": "string", "nullable": true },
@@ -2351,6 +2702,119 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		json_response("OutcomePolicyDeleteResponse", "Outcome policy deleted"),
 	);
+	for schema in [
+		"ScorePolicyView",
+		"CreateScorePolicyRequest",
+		"UpdateScorePolicyRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"rules",
+			json!({ "$ref": "#/components/schemas/ScorePolicyRules" }),
+		);
+	}
+	set_response(
+		spec,
+		"/v1/score-policies/{policy_id}",
+		"delete",
+		"200",
+		json_response("ScorePolicyDeleteResponse", "Score policy deleted"),
+	);
+	for schema in [
+		"SavedSegmentView",
+		"CreateSavedSegmentRequest",
+		"UpdateSavedSegmentRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"filter",
+			json!({ "$ref": "#/components/schemas/SegmentFilter" }),
+		);
+	}
+	for (schema, scope) in [
+		(
+			"SavedSegmentView",
+			json!({ "$ref": "#/components/schemas/SegmentScope" }),
+		),
+		(
+			"CreateSavedSegmentRequest",
+			json!({ "$ref": "#/components/schemas/SegmentScope" }),
+		),
+		(
+			"UpdateSavedSegmentRequest",
+			json!({ "nullable": true, "allOf": [{ "$ref": "#/components/schemas/SegmentScope" }] }),
+		),
+	] {
+		set_schema_property(spec, schema, "scope", scope);
+	}
+	for (path, method, status, schema, description) in [
+		(
+			"/v1/query",
+			"get",
+			"200",
+			"QueryResultList",
+			"Filtered verification results",
+		),
+		(
+			"/v1/events",
+			"get",
+			"200",
+			"AuditEventList",
+			"Audit log events",
+		),
+		(
+			"/v1/segments/{segment_id}",
+			"delete",
+			"200",
+			"SavedSegmentDeleteResponse",
+			"Saved segment deleted",
+		),
+		(
+			"/v1/me/api-keys",
+			"get",
+			"200",
+			"TenantApiKeyList",
+			"API key list",
+		),
+		(
+			"/v1/me/api-keys",
+			"post",
+			"201",
+			"TenantCreatedApiKey",
+			"API key created",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"get",
+			"200",
+			"TenantApiKey",
+			"API key details",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"patch",
+			"200",
+			"TenantApiKey",
+			"API key updated",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"delete",
+			"200",
+			"TenantApiKeyRevokeResponse",
+			"API key revoked",
+		),
+	] {
+		set_response(
+			spec,
+			path,
+			method,
+			status,
+			json_response(schema, description),
+		);
+	}
 	// The handler reads the CSV from a multipart part named "file".
 	if let Some(operation) = operation_mut(spec, "/v1/campaign-outcomes/upload", "post") {
 		operation.insert(
@@ -2454,11 +2918,23 @@ fn patch_phase_two_paths(spec: &mut Value) {
 			&[("job_id", "int32")],
 		),
 	);
-	upsert_operation(
+	let mut source_quality =
+		generic_json_operation("v1", "List source quality", "Source quality analytics");
+	source_quality["parameters"] = json!([
+		query_parameter("source_key", json!({ "type": "string" })),
+		query_parameter(
+			"min_records",
+			json!({ "type": "integer", "format": "int64" })
+		),
+		query_parameter("limit", json!({ "type": "integer", "format": "int64" })),
+	]);
+	upsert_operation(spec, "/v1/sources/quality", "get", source_quality);
+	set_response(
 		spec,
 		"/v1/sources/quality",
 		"get",
-		generic_json_operation("v1", "List source quality", "Source quality analytics"),
+		"200",
+		json_response("SourceQualityResponse", "Source quality analytics"),
 	);
 	set_response(
 		spec,
@@ -2606,12 +3082,16 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"error_message": Value::Null,
 		}),
 	);
+	// A push run first stores {source, push_batch_id, source_key}, and the
+	// run replaces it when it reads its source (pipelines.rs).
 	set_schema_property(
 		spec,
 		"PipelineRunView",
 		"source_snapshot",
 		json!({
-			"$ref": "#/components/schemas/PipelineSource"
+			"type": "object",
+			"additionalProperties": true,
+			"description": "The source that the run used. Its shape depends on the source type and the run state."
 		}),
 	);
 	set_schema_property(

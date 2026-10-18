@@ -10,22 +10,31 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
+import type { QueryResultList } from "../model";
+
+import { getV1QueryResultsResponseMock } from "./query.faker";
+
+export { getV1QueryResultsResponseMock } from "./query.faker";
+
 export const getV1QueryResultsMockHandler = (
   overrideResponse?:
-    | void
+    | QueryResultList
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<QueryResultList> | QueryResultList),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/query",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1QueryResultsResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );

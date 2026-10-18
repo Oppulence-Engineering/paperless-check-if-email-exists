@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=component
- * Safe setup and status journeys for server integrations.
+ * Connection state, service status, and safe setup guides for server integrations.
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const IntegrationsPanelLit = IntegrationsPanelLitSchema.parse({
 	domain: "",
 	owner: "route",
 	client: true,
-	summary: "Safe setup and status journeys for server integrations.",
+	summary: "Connection state, service status, and safe setup guides for server integrations.",
 	schemas: [
 		"app/(product)/app/integrations/_components/integrations-panel/integrations-panel.schema.ts",
 	],

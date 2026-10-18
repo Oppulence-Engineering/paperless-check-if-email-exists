@@ -270,8 +270,8 @@ type V1API interface {
 	V1SourceQuality(ctx context.Context) V1APIV1SourceQualityRequest
 
 	// V1SourceQualityExecute executes the request
-	//  @return map[string]interface{}
-	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error)
+	//  @return SourceQualityResponse
+	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (*SourceQualityResponse, *http.Response, error)
 
 	/*
 	V1UpdateReverification PUT /v1/reverification
@@ -2913,9 +2913,27 @@ func (a *V1APIService) V1ReverificationStatusExecute(r V1APIV1ReverificationStat
 type V1APIV1SourceQualityRequest struct {
 	ctx context.Context
 	ApiService V1API
+	sourceKey *string
+	minRecords *int64
+	limit *int64
 }
 
-func (r V1APIV1SourceQualityRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r V1APIV1SourceQualityRequest) SourceKey(sourceKey string) V1APIV1SourceQualityRequest {
+	r.sourceKey = &sourceKey
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) MinRecords(minRecords int64) V1APIV1SourceQualityRequest {
+	r.minRecords = &minRecords
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) Limit(limit int64) V1APIV1SourceQualityRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) Execute() (*SourceQualityResponse, *http.Response, error) {
 	return r.ApiService.V1SourceQualityExecute(r)
 }
 
@@ -2933,13 +2951,13 @@ func (a *V1APIService) V1SourceQuality(ctx context.Context) V1APIV1SourceQuality
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
-func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error) {
+//  @return SourceQualityResponse
+func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (*SourceQualityResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarReturnValue  *SourceQualityResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1SourceQuality")
@@ -2953,6 +2971,15 @@ func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (ma
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.sourceKey != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_key", r.sourceKey, "form", "")
+	}
+	if r.minRecords != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "min_records", r.minRecords, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

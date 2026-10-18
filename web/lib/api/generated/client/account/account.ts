@@ -10,6 +10,10 @@
 import type {
   CreateApiKeyRequest,
   ErrorEnvelope,
+  TenantApiKey,
+  TenantApiKeyList,
+  TenantApiKeyRevokeResponse,
+  TenantCreatedApiKey,
   UpdateApiKeyRequest,
 } from "../model";
 
@@ -95,7 +99,7 @@ export const v1Me = async (options?: RequestInit): Promise<v1MeResponse> => {
 };
 
 export type listTenantApiKeysResponse200 = {
-  data: void;
+  data: TenantApiKeyList;
   status: 200;
 };
 
@@ -133,9 +137,7 @@ export const listTenantApiKeys = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: listTenantApiKeysResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: listTenantApiKeysResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -144,7 +146,7 @@ export const listTenantApiKeys = async (
 };
 
 export type createTenantApiKeyResponse201 = {
-  data: void;
+  data: TenantCreatedApiKey;
   status: 201;
 };
 
@@ -186,9 +188,7 @@ export const createTenantApiKey = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: createTenantApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: createTenantApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -197,7 +197,7 @@ export const createTenantApiKey = async (
 };
 
 export type revokeTenantApiKeyResponse200 = {
-  data: void;
+  data: TenantApiKeyRevokeResponse;
   status: 200;
 };
 
@@ -237,9 +237,7 @@ export const revokeTenantApiKey = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: revokeTenantApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: revokeTenantApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -248,7 +246,7 @@ export const revokeTenantApiKey = async (
 };
 
 export type getTenantApiKeyResponse200 = {
-  data: void;
+  data: TenantApiKey;
   status: 200;
 };
 
@@ -286,9 +284,7 @@ export const getTenantApiKey = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getTenantApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: getTenantApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -297,7 +293,7 @@ export const getTenantApiKey = async (
 };
 
 export type updateTenantApiKeyResponse200 = {
-  data: void;
+  data: TenantApiKey;
   status: 200;
 };
 
@@ -340,9 +336,7 @@ export const updateTenantApiKey = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: updateTenantApiKeyResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: updateTenantApiKeyResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,

@@ -28,7 +28,29 @@ export const V1QueryResultsQueryParams = zod.object({
   policy_decision: zod.string().optional(),
 });
 
-export const V1QueryResults200Response = zod.unknown();
+export const V1QueryResults200Response = zod.object({
+  results: zod.array(
+    zod.object({
+      category: zod.string().nullish(),
+      completed_at: zod.iso.datetime({ offset: true }).nullish(),
+      created_at: zod.iso.datetime({ offset: true }),
+      email: zod.string().nullish(),
+      id: zod.int(),
+      job_id: zod.int().nullish(),
+      policy_decision: zod.string().nullish(),
+      policy_evaluation: zod.record(zod.string(), zod.unknown()).nullish(),
+      policy_mode: zod.string().nullish(),
+      reason_codes: zod.array(zod.string()).nullish(),
+      recommendation: zod.record(zod.string(), zod.unknown()).nullish(),
+      recommendation_action: zod.string().nullish(),
+      safe_to_send: zod.boolean().nullish(),
+      score: zod.int().nullish(),
+      sub_reason: zod.string().nullish(),
+      task_state: zod.string(),
+    }),
+  ),
+  total: zod.int(),
+});
 
 export const V1QueryResultsDefaultResponse = zod.object({
   error: zod.string(),

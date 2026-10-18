@@ -177,7 +177,7 @@ const { status, data } = await apiInstance.v1CreateSavedSegment(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1DeleteSavedSegment**
-> v1DeleteSavedSegment()
+> SavedSegmentDeleteResponse v1DeleteSavedSegment()
 
 
 ### Example
@@ -207,7 +207,7 @@ const { status, data } = await apiInstance.v1DeleteSavedSegment(
 
 ### Return type
 
-void (empty response body)
+**SavedSegmentDeleteResponse**
 
 ### Authorization
 

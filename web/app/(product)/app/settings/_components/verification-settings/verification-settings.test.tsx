@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TenantApi, V1Api } from "@oppulence/reacher-sdk";
+import { JobsApi, TenantApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { VerificationSettings } from "./verification-settings";
@@ -19,6 +19,8 @@ beforeEach(() => {
 	vi.spyOn(V1Api.prototype, "v1ReverificationStatus").mockResolvedValue({
 		data: { enabled: false },
 	} as never);
+	const policies = vi.spyOn(TenantApi.prototype, "v1ListScorePolicies"); // gitleaks:allow
+	policies.mockResolvedValue({ data: { policies: [], total: 0 } } as never);
 });
 
 afterEach(() => {
@@ -174,4 +176,50 @@ it("loads only the webhook for its focused settings panel", async () => {
 	expect(usage).not.toHaveBeenCalled();
 	expect(settings).not.toHaveBeenCalled();
 	expect(screen.queryByText("Usage", { selector: "div" })).not.toBeInTheDocument();
+});
+
+it("shows the last re-check run with its job and the score policies", async () => {
+	const status = vi.spyOn(V1Api.prototype, "v1ReverificationStatus"); // gitleaks:allow
+	status.mockResolvedValue({
+		data: {
+			enabled: true,
+			staleness_days: 30,
+			batch_size: 100,
+			last_run_at: "2026-10-17T09:00:00Z",
+			next_run_at: "2026-10-18T09:00:00Z",
+			last_job_id: 42,
+			emails_requeued: 1250,
+		},
+	} as never);
+	const job = vi.spyOn(JobsApi.prototype, "v1GetJobStatus"); // gitleaks:allow
+	job.mockResolvedValue({
+		data: {
+			job_id: 42,
+			status: "completed",
+			total_records: 100,
+			created_at: "2026-10-17T09:00:00Z",
+			task_summary: { completed: 100 },
+		},
+	} as never);
+	vi.spyOn(TenantApi.prototype, "v1GetTenantSettings").mockReturnValue(new Promise(() => {}));
+	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+	render(
+		<QueryClientProvider client={client}>
+			<VerificationSettings organizationId="org-1" organizationRole="owner" scope="verification" />
+		</QueryClientProvider>,
+	);
+
+	expect(await screen.findByRole("link", { name: "Open job 42" })).toHaveAttribute(
+		"href",
+		"/app/jobs?job=42",
+	);
+	expect(await screen.findByText("Completed")).toBeInTheDocument();
+	expect(
+		screen.getByText(
+			/100 addresses in this run · 1,250 addresses sent for a new check in all runs/,
+		),
+	).toBeInTheDocument();
+	expect(job).toHaveBeenCalledWith({ jobId: 42 }, expect.anything());
+	expect(screen.getByRole("heading", { name: "Score policies" })).toBeInTheDocument();
+	expect(await screen.findByText(/No score policies yet\./)).toBeInTheDocument();
 });

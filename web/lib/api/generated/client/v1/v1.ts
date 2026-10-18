@@ -27,6 +27,7 @@ import type {
   ReputationCheckRequest,
   ReputationCheckResponse,
   ReverificationStatusResponse,
+  SourceQualityResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionEventListResponse,
@@ -38,7 +39,7 @@ import type {
   V1ListListsParams,
   V1ListSuppressionEventsParams,
   V1ListSuppressionsParams,
-  V1SourceQuality200,
+  V1SourceQualityParams,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -769,7 +770,7 @@ export const v1ReverificationStatus = async (
 };
 
 export type v1SourceQualityResponse200 = {
-  data: V1SourceQuality200;
+  data: SourceQualityResponse;
   status: 200;
 };
 
@@ -788,17 +789,30 @@ export type v1SourceQualityResponseError = v1SourceQualityResponseDefault & {
 export type v1SourceQualityResponse =
   v1SourceQualityResponseSuccess | v1SourceQualityResponseError;
 
-export const getV1SourceQualityUrl = () => {
-  return `/v1/sources/quality`;
+export const getV1SourceQualityUrl = (params?: V1SourceQualityParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/sources/quality?${stringifiedParams}`
+    : `/v1/sources/quality`;
 };
 
 /**
  * @summary List source quality
  */
 export const v1SourceQuality = async (
+  params?: V1SourceQualityParams,
   options?: RequestInit,
 ): Promise<v1SourceQualityResponse> => {
-  const res = await fetch(getV1SourceQualityUrl(), {
+  const res = await fetch(getV1SourceQualityUrl(params), {
     ...options,
     method: "GET",
   });

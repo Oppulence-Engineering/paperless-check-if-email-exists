@@ -20,9 +20,9 @@ var _ MappedNullable = &UpdateSavedSegmentRequest{}
 
 // UpdateSavedSegmentRequest struct for UpdateSavedSegmentRequest
 type UpdateSavedSegmentRequest struct {
-	Filter interface{} `json:"filter,omitempty"`
+	Filter *SegmentFilter `json:"filter,omitempty"`
 	Name NullableString `json:"name,omitempty"`
-	Scope NullableString `json:"scope,omitempty"`
+	Scope NullableSegmentScope `json:"scope,omitempty"`
 }
 
 // NewUpdateSavedSegmentRequest instantiates a new UpdateSavedSegmentRequest object
@@ -42,23 +42,22 @@ func NewUpdateSavedSegmentRequestWithDefaults() *UpdateSavedSegmentRequest {
 	return &this
 }
 
-// GetFilter returns the Filter field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpdateSavedSegmentRequest) GetFilter() interface{} {
-	if o == nil {
-		var ret interface{}
+// GetFilter returns the Filter field value if set, zero value otherwise.
+func (o *UpdateSavedSegmentRequest) GetFilter() SegmentFilter {
+	if o == nil || IsNil(o.Filter) {
+		var ret SegmentFilter
 		return ret
 	}
-	return o.Filter
+	return *o.Filter
 }
 
 // GetFilterOk returns a tuple with the Filter field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpdateSavedSegmentRequest) GetFilterOk() (*interface{}, bool) {
+func (o *UpdateSavedSegmentRequest) GetFilterOk() (*SegmentFilter, bool) {
 	if o == nil || IsNil(o.Filter) {
 		return nil, false
 	}
-	return &o.Filter, true
+	return o.Filter, true
 }
 
 // HasFilter returns a boolean if a field has been set.
@@ -70,9 +69,9 @@ func (o *UpdateSavedSegmentRequest) HasFilter() bool {
 	return false
 }
 
-// SetFilter gets a reference to the given interface{} and assigns it to the Filter field.
-func (o *UpdateSavedSegmentRequest) SetFilter(v interface{}) {
-	o.Filter = v
+// SetFilter gets a reference to the given SegmentFilter and assigns it to the Filter field.
+func (o *UpdateSavedSegmentRequest) SetFilter(v SegmentFilter) {
+	o.Filter = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -118,9 +117,9 @@ func (o *UpdateSavedSegmentRequest) UnsetName() {
 }
 
 // GetScope returns the Scope field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpdateSavedSegmentRequest) GetScope() string {
+func (o *UpdateSavedSegmentRequest) GetScope() SegmentScope {
 	if o == nil || IsNil(o.Scope.Get()) {
-		var ret string
+		var ret SegmentScope
 		return ret
 	}
 	return *o.Scope.Get()
@@ -129,7 +128,7 @@ func (o *UpdateSavedSegmentRequest) GetScope() string {
 // GetScopeOk returns a tuple with the Scope field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpdateSavedSegmentRequest) GetScopeOk() (*string, bool) {
+func (o *UpdateSavedSegmentRequest) GetScopeOk() (*SegmentScope, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -145,8 +144,8 @@ func (o *UpdateSavedSegmentRequest) HasScope() bool {
 	return false
 }
 
-// SetScope gets a reference to the given NullableString and assigns it to the Scope field.
-func (o *UpdateSavedSegmentRequest) SetScope(v string) {
+// SetScope gets a reference to the given NullableSegmentScope and assigns it to the Scope field.
+func (o *UpdateSavedSegmentRequest) SetScope(v SegmentScope) {
 	o.Scope.Set(&v)
 }
 // SetScopeNil sets the value for Scope to be an explicit nil
@@ -169,7 +168,7 @@ func (o UpdateSavedSegmentRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateSavedSegmentRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Filter != nil {
+	if !IsNil(o.Filter) {
 		toSerialize["filter"] = o.Filter
 	}
 	if o.Name.IsSet() {

@@ -13,6 +13,9 @@ import {
 	humanize,
 	labelFor,
 	outcomeType,
+	pipelineDeliveryStatus,
+	pipelineRunStatus,
+	pipelineStatus,
 	PROVIDER_LABELS,
 	providerConfidence,
 	reachability,
@@ -55,6 +58,9 @@ describe("verification labels", () => {
 		["ReasonCode", Object.keys(REASON_LABELS)],
 		["SubReason", Object.keys(REASON_LABELS)],
 		["SuppressionReason", suppressionReason.values],
+		["PipelineStatus", pipelineStatus.values],
+		["PipelineDeliveryStatus", pipelineDeliveryStatus.values],
+		["PipelineRunStatus", pipelineRunStatus.values],
 	])("labels every %s value", (name, labelled) => {
 		expect(enumOf(name).filter((value) => !labelled.includes(value))).toEqual([]);
 	});

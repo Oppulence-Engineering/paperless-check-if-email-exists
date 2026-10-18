@@ -15,6 +15,7 @@ import type {
   OutcomePolicyDeleteResponse,
   OutcomePolicyListResponse,
   OutcomePolicyView,
+  ScorePolicyDeleteResponse,
   ScorePolicyListResponse,
   ScorePolicyView,
   TenantSettingsResponse,
@@ -998,7 +999,7 @@ export const v1CreateScorePolicy = async (
 };
 
 export type v1DeleteScorePolicyResponse200 = {
-  data: void;
+  data: ScorePolicyDeleteResponse;
   status: 200;
 };
 
@@ -1039,7 +1040,7 @@ export const v1DeleteScorePolicy = async (
 
   const data: v1DeleteScorePolicyResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,

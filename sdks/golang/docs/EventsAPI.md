@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## V1ListEvents
 
-> V1ListEvents(ctx).Limit(limit).Offset(offset).EventType(eventType).Actor(actor).JobId(jobId).Since(since).Until(until).Execute()
+> AuditEventList V1ListEvents(ctx).Limit(limit).Offset(offset).EventType(eventType).Actor(actor).JobId(jobId).Since(since).Until(until).Execute()
 
 GET /v1/events
 
@@ -39,11 +39,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.EventsAPI.V1ListEvents(context.Background()).Limit(limit).Offset(offset).EventType(eventType).Actor(actor).JobId(jobId).Since(since).Until(until).Execute()
+	resp, r, err := apiClient.EventsAPI.V1ListEvents(context.Background()).Limit(limit).Offset(offset).EventType(eventType).Actor(actor).JobId(jobId).Since(since).Until(until).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `EventsAPI.V1ListEvents``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1ListEvents`: AuditEventList
+	fmt.Fprintf(os.Stdout, "Response from `EventsAPI.V1ListEvents`: %v\n", resp)
 }
 ```
 
@@ -68,7 +70,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**AuditEventList**](AuditEventList.md)
 
 ### Authorization
 

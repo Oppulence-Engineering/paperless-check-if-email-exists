@@ -1315,7 +1315,7 @@ Other parameters are passed through a pointer to a apiV1ReverificationStatusRequ
 
 ## V1SourceQuality
 
-> map[string]interface{} V1SourceQuality(ctx).Execute()
+> SourceQualityResponse V1SourceQuality(ctx).SourceKey(sourceKey).MinRecords(minRecords).Limit(limit).Execute()
 
 List source quality
 
@@ -1332,31 +1332,40 @@ import (
 )
 
 func main() {
+	sourceKey := "sourceKey_example" // string |  (optional)
+	minRecords := int64(789) // int64 |  (optional)
+	limit := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).Execute()
+	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).SourceKey(sourceKey).MinRecords(minRecords).Limit(limit).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SourceQuality``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1SourceQuality`: map[string]interface{}
+	// response from `V1SourceQuality`: SourceQualityResponse
 	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SourceQuality`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1SourceQualityRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **sourceKey** | **string** |  |
+ **minRecords** | **int64** |  |
+ **limit** | **int64** |  |
+
 ### Return type
 
-**map[string]interface{}**
+[**SourceQualityResponse**](SourceQualityResponse.md)
 
 ### Authorization
 

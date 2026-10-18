@@ -27,6 +27,12 @@ export interface PipelineRunStats {
      * @type {number}
      * @memberof PipelineRunStats
      */
+    'accepted_rows'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
     'billed_emails'?: number | null;
     /**
      *
@@ -34,12 +40,6 @@ export interface PipelineRunStats {
      * @memberof PipelineRunStats
      */
     'changed_only_export'?: boolean | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PipelineRunStats
-     */
-    'completed_tasks'?: number | null;
     /**
      *
      * @type {boolean}
@@ -57,25 +57,13 @@ export interface PipelineRunStats {
      * @type {number}
      * @memberof PipelineRunStats
      */
-    'invalid'?: number | null;
+    'job_id'?: number | null;
     /**
      *
      * @type {number}
      * @memberof PipelineRunStats
      */
-    'published_tasks'?: number | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PipelineRunStats
-     */
-    'queued_emails'?: number | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PipelineRunStats
-     */
-    'risky'?: number | null;
+    'list_id'?: number | null;
     /**
      *
      * @type {number}
@@ -114,20 +102,44 @@ export interface PipelineRunStats {
     'source_unique_emails'?: number | null;
     /**
      *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_failed'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_invalid'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_processed'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_risky'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_unknown'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof PipelineRunStats
+     */
+    'total_valid'?: number | null;
+    /**
+     *
      * @type {string}
      * @memberof PipelineRunStats
      */
     'trigger_reason'?: string | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PipelineRunStats
-     */
-    'unknown'?: number | null;
-    /**
-     *
-     * @type {number}
-     * @memberof PipelineRunStats
-     */
-    'valid'?: number | null;
 }

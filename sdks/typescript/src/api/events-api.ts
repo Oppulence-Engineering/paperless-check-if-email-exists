@@ -22,6 +22,8 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { AuditEventList } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
 /**
  * EventsApi - axios parameter creator
@@ -120,7 +122,7 @@ export const EventsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ListEvents(limit?: number, offset?: number, eventType?: string, actor?: string, jobId?: number, since?: string, until?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1ListEvents(limit?: number, offset?: number, eventType?: string, actor?: string, jobId?: number, since?: string, until?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuditEventList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListEvents(limit, offset, eventType, actor, jobId, since, until, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['EventsApi.v1ListEvents']?.[localVarOperationServerIndex]?.url;
@@ -143,7 +145,7 @@ export const EventsApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ListEvents(requestParameters: EventsApiV1ListEventsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1ListEvents(requestParameters: EventsApiV1ListEventsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<AuditEventList> {
             return localVarFp.v1ListEvents(requestParameters.limit, requestParameters.offset, requestParameters.eventType, requestParameters.actor, requestParameters.jobId, requestParameters.since, requestParameters.until, options).then((request) => request(axios, basePath));
         },
     };
@@ -163,7 +165,7 @@ export interface EventsApiInterface {
      * @throws {RequiredError}
      * @memberof EventsApiInterface
      */
-    v1ListEvents(requestParameters?: EventsApiV1ListEventsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1ListEvents(requestParameters?: EventsApiV1ListEventsRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuditEventList>;
 
 }
 

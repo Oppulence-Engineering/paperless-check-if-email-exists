@@ -6,10 +6,10 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **created_at** | **string** |  | [required]
-**filter** | **any** |  | [required]
+**filter** | [**SegmentFilter**](SegmentFilter.md) |  | [required]
 **id** | **number** |  | [required]
 **name** | **string** |  | [required]
-**scope** | **string** |  | [required]
+**scope** | [**SegmentScope**](SegmentScope.md) |  | [required]
 **updated_at** | **string** |  | [required]
 
 ## Example
@@ -22,7 +22,7 @@ const instance: SavedSegmentView = {
     filter: {} as any,
     id: 0,
     name: 'Weekly Cleanup',
-    scope: 'example',
+    scope: {} as any,
     updated_at: 'example',
 };
 ```

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=page
- * Integration setup — Set up onboarding, provider callbacks, migration, and service status safely
+ * Connect your stack — See which parts of your stack are connected and open the page that sets up each one
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const IntegrationsLit = IntegrationsLitSchema.parse({
 	domain: "integrations",
 	owner: "page",
 	client: false,
-	summary: "Set up onboarding, provider callbacks, migration, and service status safely",
+	summary: "See which parts of your stack are connected and open the page that sets up each one",
 	schemas: ["app/(product)/app/integrations/search-params.ts"],
 	files: [
 		"app/(product)/app/integrations/integrations.lit.ts",

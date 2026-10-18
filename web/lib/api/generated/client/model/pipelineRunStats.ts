@@ -10,23 +10,19 @@
 
 export interface PipelineRunStats {
   /** @nullable */
+  accepted_rows?: number | null;
+  /** @nullable */
   billed_emails?: number | null;
   /** @nullable */
   changed_only_export?: boolean | null;
-  /** @nullable */
-  completed_tasks?: number | null;
   /** @nullable */
   delta_mode?: boolean | null;
   /** @nullable */
   freshness_days?: number | null;
   /** @nullable */
-  invalid?: number | null;
+  job_id?: number | null;
   /** @nullable */
-  published_tasks?: number | null;
-  /** @nullable */
-  queued_emails?: number | null;
-  /** @nullable */
-  risky?: number | null;
+  list_id?: number | null;
   /** @nullable */
   selected_unique_emails?: number | null;
   /** @nullable */
@@ -40,10 +36,18 @@ export interface PipelineRunStats {
   /** @nullable */
   source_unique_emails?: number | null;
   /** @nullable */
+  total_failed?: number | null;
+  /** @nullable */
+  total_invalid?: number | null;
+  /** @nullable */
+  total_processed?: number | null;
+  /** @nullable */
+  total_risky?: number | null;
+  /** @nullable */
+  total_unknown?: number | null;
+  /** @nullable */
+  total_valid?: number | null;
+  /** @nullable */
   trigger_reason?: string | null;
-  /** @nullable */
-  unknown?: number | null;
-  /** @nullable */
-  valid?: number | null;
   [key: string]: unknown;
 }

@@ -280,7 +280,7 @@ const { status, data } = await apiInstance.v1DeleteOutcomePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1DeleteScorePolicy**
-> v1DeleteScorePolicy()
+> ScorePolicyDeleteResponse v1DeleteScorePolicy()
 
 
 ### Example
@@ -310,7 +310,7 @@ const { status, data } = await apiInstance.v1DeleteScorePolicy(
 
 ### Return type
 
-void (empty response body)
+**ScorePolicyDeleteResponse**
 
 ### Authorization
 

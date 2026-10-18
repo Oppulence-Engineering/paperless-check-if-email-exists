@@ -4,7 +4,7 @@ import "client-only";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Configuration, HealthApi, SystemApi } from "@oppulence/reacher-sdk";
 import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
@@ -12,6 +12,7 @@ import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { cn } from "@oppulence/ui/lib/utils";
+import { IntegrationStack } from "@/components/features/automation/integration-stack/integration-stack";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
 
 import { type IntegrationsPanelPropsFields } from "./integrations-panel.schema";
@@ -25,6 +26,7 @@ const healthApi = new HealthApi(config);
 const systemApi = new SystemApi(config);
 
 export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProps) {
+	const client = useQueryClient();
 	const health = useQuery({
 		queryKey: workflowQueryKey("integration-status", "health"),
 		queryFn: async () => (await healthApi.healthz()).status,
@@ -43,8 +45,21 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 	const link = "text-sm text-neutral-300 underline hover:text-white";
 	return (
 		<Page
-			description="Set up server integrations and check their readiness without sending provider callbacks from the browser."
-			title="Integration setup"
+			actions={
+				<Button
+					className="rounded-lg"
+					size="sm"
+					type="button"
+					variant="outline"
+					onClick={() => {
+						void client.invalidateQueries();
+					}}
+				>
+					Check again
+				</Button>
+			}
+			description="Connect delivery feedback, the webhook, API keys, and pipelines. Each row shows if it is set up and opens its setup page."
+			title="Connect your stack"
 			width="md"
 		>
 			<section
@@ -52,24 +67,10 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 				className={cn("flex flex-col gap-10", className)}
 				{...props}
 			>
-				<Section
-					actions={
-						<Button
-							className="rounded-lg"
-							size="sm"
-							type="button"
-							variant="outline"
-							onClick={() => {
-								void health.refetch();
-								void readiness.refetch();
-								void version.refetch();
-							}}
-						>
-							Check again
-						</Button>
-					}
-					title="Service status"
-				>
+				<Section title="Connections">
+					<IntegrationStack />
+				</Section>
+				<Section title="Service status">
 					<Group>
 						<Row label="API liveness" layout="inline">
 							<Pill tone={health.isPending ? "gray" : health.isSuccess ? "green" : "red"}>

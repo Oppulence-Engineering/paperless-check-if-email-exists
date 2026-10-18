@@ -11,7 +11,7 @@ import type { PipelineDeliveryStatus } from "./pipelineDeliveryStatus";
 import type { PipelineRunResultLocation } from "./pipelineRunResultLocation";
 import type { PipelineRunStats } from "./pipelineRunStats";
 import type { PipelineRunStatus } from "./pipelineRunStatus";
-import type { PipelineSource } from "./pipelineSource";
+import type { PipelineRunViewSourceSnapshot } from "./pipelineRunViewSourceSnapshot";
 
 export interface PipelineRunView {
   billed_emails: number;
@@ -39,7 +39,8 @@ export interface PipelineRunView {
   result_location?: PipelineRunResultLocation | null;
   /** @nullable */
   scheduled_for?: string | null;
-  source_snapshot: PipelineSource;
+  /** The source that the run used. Its shape depends on the source type and the run state. */
+  source_snapshot: PipelineRunViewSourceSnapshot;
   /** @nullable */
   started_at?: string | null;
   stats: PipelineRunStats;

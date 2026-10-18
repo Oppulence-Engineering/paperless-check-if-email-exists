@@ -10,6 +10,29 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
+import type {
+  TenantApiKey,
+  TenantApiKeyList,
+  TenantApiKeyRevokeResponse,
+  TenantCreatedApiKey,
+} from "../model";
+
+import {
+  getCreateTenantApiKeyResponseMock,
+  getGetTenantApiKeyResponseMock,
+  getListTenantApiKeysResponseMock,
+  getRevokeTenantApiKeyResponseMock,
+  getUpdateTenantApiKeyResponseMock,
+} from "./account.faker";
+
+export {
+  getListTenantApiKeysResponseMock,
+  getCreateTenantApiKeyResponseMock,
+  getRevokeTenantApiKeyResponseMock,
+  getGetTenantApiKeyResponseMock,
+  getUpdateTenantApiKeyResponseMock,
+} from "./account.faker";
+
 export const getV1MeMockHandler = (
   overrideResponse?:
     | void
@@ -33,20 +56,23 @@ export const getV1MeMockHandler = (
 
 export const getListTenantApiKeysMockHandler = (
   overrideResponse?:
-    | void
+    | TenantApiKeyList
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantApiKeyList> | TenantApiKeyList),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/me/api-keys",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getListTenantApiKeysResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -54,20 +80,23 @@ export const getListTenantApiKeysMockHandler = (
 
 export const getCreateTenantApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | TenantCreatedApiKey
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantCreatedApiKey> | TenantCreatedApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
     "*/v1/me/api-keys",
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 201 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCreateTenantApiKeyResponseMock(),
+        { status: 201 },
+      );
     },
     options,
   );
@@ -75,20 +104,23 @@ export const getCreateTenantApiKeyMockHandler = (
 
 export const getRevokeTenantApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | TenantApiKeyRevokeResponse
     | ((
         info: Parameters<Parameters<typeof http.delete>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantApiKeyRevokeResponse> | TenantApiKeyRevokeResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
     "*/v1/me/api-keys/:keyId",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getRevokeTenantApiKeyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -96,20 +128,23 @@ export const getRevokeTenantApiKeyMockHandler = (
 
 export const getGetTenantApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | TenantApiKey
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantApiKey> | TenantApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/me/api-keys/:keyId",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetTenantApiKeyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -117,20 +152,23 @@ export const getGetTenantApiKeyMockHandler = (
 
 export const getUpdateTenantApiKeyMockHandler = (
   overrideResponse?:
-    | void
+    | TenantApiKey
     | ((
         info: Parameters<Parameters<typeof http.patch>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantApiKey> | TenantApiKey),
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
     "*/v1/me/api-keys/:keyId",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getUpdateTenantApiKeyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
