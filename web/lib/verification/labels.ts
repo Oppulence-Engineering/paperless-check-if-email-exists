@@ -381,3 +381,58 @@ export const ruleAction = entry({
 	score_boost: { label: "Raise the score", tone: "green" },
 	informational: { label: "Record only", tone: "gray" },
 });
+
+/** Pipeline states (`PipelineStatus` in backend/src/pipelines.rs). */
+export const pipelineStatus = entry({
+	active: { label: "Active", tone: "green" },
+	paused: { label: "Paused", tone: "gray" },
+	deleted: { label: "Deleted", tone: "gray" },
+});
+
+/** Webhook delivery states of a pipeline run (`PipelineDeliveryStatus` in backend/src/pipelines.rs). */
+export const pipelineDeliveryStatus = entry({
+	not_requested: { label: "No webhook", tone: "gray" },
+	pending: { label: "Webhook waiting", tone: "blue" },
+	delivered: { label: "Webhook delivered", tone: "green" },
+	retry_scheduled: { label: "Webhook retry scheduled", tone: "yellow" },
+	failed: { label: "Webhook failed", tone: "red" },
+});
+
+/** Pipeline source types (`PipelineSourceType`). The backend accepts only list_snapshot and push. */
+export const PIPELINE_SOURCE_LABELS: Record<string, string> = {
+	list_snapshot: "Saved list",
+	push: "Push API",
+	integration: "Integration",
+	bucket: "Storage bucket",
+};
+
+/** What started a pipeline run (`trigger_type` in backend/src/pipelines.rs). */
+export const PIPELINE_TRIGGER_LABELS: Record<string, string> = {
+	schedule: "Schedule",
+	manual: "Manual run",
+	push: "Push",
+};
+
+/** Job events (`event_type` in job_events: bulk/post.rs, jobs/cancel.rs, jobs/retry.rs, do_work.rs, delayed_recheck.rs). */
+export const jobEventType = entry({
+	"job.created": { label: "Job created", tone: "blue" },
+	"job.cancellation_requested": { label: "Cancel requested", tone: "yellow" },
+	"job.retry_requested": { label: "Retry requested", tone: "blue" },
+	"task.completed": { label: "Row checked", tone: "green" },
+	"task.retrying": { label: "Row retrying", tone: "yellow" },
+	"task.dead_lettered": { label: "Row stopped after retries", tone: "red" },
+	"task.partial_confidence": { label: "Row has partial confidence", tone: "yellow" },
+	"task.delayed_recheck_scheduled": { label: "Recheck scheduled", tone: "blue" },
+	"task.delayed_recheck_published": { label: "Recheck started", tone: "blue" },
+	"task.delayed_recheck_completed": { label: "Recheck finished", tone: "green" },
+	"task.delayed_recheck_failed": { label: "Recheck failed", tone: "red" },
+});
+
+/** Source quality grades from A (best) to F (`quality_grade` in source_quality.rs). */
+export const qualityGrade = entry({
+	A: { label: "Grade A", tone: "green" },
+	B: { label: "Grade B", tone: "green" },
+	C: { label: "Grade C", tone: "yellow" },
+	D: { label: "Grade D", tone: "red" },
+	F: { label: "Grade F", tone: "red" },
+});
