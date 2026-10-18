@@ -8,6 +8,7 @@ import { V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SuppressionForm } from "./suppression-form";
+import { chooseDate } from "@/quality/test-support/date";
 import { chooseOption } from "@/quality/test-support/select";
 
 function renderForm(mode: "add" | "import") {
@@ -42,7 +43,7 @@ describe("SuppressionForm", () => {
 		await chooseOption("Reason", "Bounce");
 		fireEvent.change(screen.getByLabelText("Reason detail"), { target: { value: "550 unknown" } });
 		fireEvent.change(screen.getByLabelText("Notes"), { target: { value: "Spring send" } });
-		fireEvent.change(screen.getByLabelText("Expires on"), { target: { value: "2027-01-01" } });
+		await chooseDate("Expires on", "2027-01-01");
 		fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
 		await waitFor(() =>
@@ -60,6 +61,8 @@ describe("SuppressionForm", () => {
 		expect(await result.findByText("Duplicates")).toBeInTheDocument();
 		expect(result.getByText("Addresses sent").nextSibling).toHaveTextContent("3");
 		expect(screen.getByLabelText("Addresses")).toHaveValue("");
+		// The date picker clears with the form reset, like a native date field.
+		expect(screen.getByLabelText("Expires on")).toHaveTextContent("Choose a date");
 	});
 
 	it("imports the email column of a CSV file and shows the counts", async () => {
