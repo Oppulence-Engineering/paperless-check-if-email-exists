@@ -35,6 +35,11 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await expect(page.getByRole("heading", { name: "Bounce risk" })).toBeVisible();
 	await expect(page.getByText("Recommendation", { exact: true })).toBeVisible();
 
+	await page.goto("/app/api");
+	await expect(page.getByRole("heading", { name: "API explorer", level: 1 })).toBeVisible();
+	await page.locator(".scalar-app").first().waitFor({ timeout: 60_000 });
+	await expect(page.getByRole("heading", { name: "Workspace API" })).toBeVisible();
+
 	await page.goto("/app/lists");
 	await expect(page.getByText("No lists yet.")).toBeVisible();
 	await page.getByLabel("CSV file").setInputFiles({

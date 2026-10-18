@@ -35,7 +35,11 @@ export function EditorialHeader() {
 					className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
 				/>
 			</Link>
-			<header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-xl">
+			<header
+				className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-xl"
+				// Scalar reads this element to offset its sticky sidebar under the header.
+				data-scalar-scroll-header
+			>
 				<nav aria-label="Main" className={`${CONTAINER} flex h-16 items-center gap-4 sm:gap-8`}>
 					<Link className="flex shrink-0 items-center gap-2.5" href="/">
 						<Image
