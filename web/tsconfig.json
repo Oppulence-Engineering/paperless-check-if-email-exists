@@ -37,7 +37,7 @@
 			"#components/*": ["./vendor/oppulence/ui/src/components/*"],
 			"@base-ui/react": ["./node_modules/@base-ui/react"],
 			"@hookform/resolvers": ["./node_modules/@hookform/resolvers"],
-			"@phosphor-icons/react": ["./node_modules/@phosphor-icons/react"],
+			"@hugeicons/react": ["./node_modules/@hugeicons/react"],
 			"@shadcn/react": ["./node_modules/@shadcn/react"],
 			"class-variance-authority": ["./node_modules/class-variance-authority"],
 			"clsx": ["./node_modules/clsx"],
