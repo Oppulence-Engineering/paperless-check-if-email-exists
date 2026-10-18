@@ -224,7 +224,7 @@ Name | Type | Description  | Notes
 
 ## V1DeleteSavedSegment
 
-> V1DeleteSavedSegment(ctx, segmentId).Execute()
+> SavedSegmentDeleteResponse V1DeleteSavedSegment(ctx, segmentId).Execute()
 
 DELETE /v1/segments/{segment_id}
 
@@ -245,11 +245,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.ListsAPI.V1DeleteSavedSegment(context.Background(), segmentId).Execute()
+	resp, r, err := apiClient.ListsAPI.V1DeleteSavedSegment(context.Background(), segmentId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `ListsAPI.V1DeleteSavedSegment``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1DeleteSavedSegment`: SavedSegmentDeleteResponse
+	fmt.Fprintf(os.Stdout, "Response from `ListsAPI.V1DeleteSavedSegment`: %v\n", resp)
 }
 ```
 
@@ -272,7 +274,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**SavedSegmentDeleteResponse**](SavedSegmentDeleteResponse.md)
 
 ### Authorization
 

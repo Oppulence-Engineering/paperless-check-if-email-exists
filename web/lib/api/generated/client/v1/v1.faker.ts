@@ -42,11 +42,11 @@ import type {
   ReputationCheckResponse,
   ReverificationStatusResponse,
   SmtpDetails,
+  SourceQualityResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionEventListResponse,
   SuppressionListResponse,
-  V1SourceQuality200,
 } from "../model";
 
 export const getV1CreateBulkJobResponseMock = (
@@ -963,7 +963,42 @@ export const getV1ReverificationStatusResponseMock = (
   ...overrideResponse,
 });
 
-export const getV1SourceQualityResponseMock = (): V1SourceQuality200 => ({});
+export const getV1SourceQualityResponseMock = (
+  overrideResponse: Partial<Extract<SourceQualityResponse, object>> = {},
+): SourceQualityResponse => ({
+  sources: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    bounced_count: faker.number.int(),
+    clicked_count: faker.number.int(),
+    complained_count: faker.number.int(),
+    delivered_count: faker.number.int(),
+    drop_count: faker.number.int(),
+    invalid_count: faker.number.int(),
+    invalid_pct: faker.number.float({ fractionDigits: 2 }),
+    negative_outcome_pct: faker.number.float({ fractionDigits: 2 }),
+    opened_count: faker.number.int(),
+    outcome_count: faker.number.int(),
+    processed_records: faker.number.int(),
+    quality_grade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    review_count: faker.number.int(),
+    risky_count: faker.number.int(),
+    risky_pct: faker.number.float({ fractionDigits: 2 }),
+    safe_to_send_count: faker.number.int(),
+    send_count: faker.number.int(),
+    send_with_caution_count: faker.number.int(),
+    source_key: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    summary: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    suppress_count: faker.number.int(),
+    total_records: faker.number.int(),
+    unknown_count: faker.number.int(),
+    unsafe_recommendation_pct: faker.number.float({ fractionDigits: 2 }),
+    unsubscribed_count: faker.number.int(),
+    valid_count: faker.number.int(),
+  })),
+  ...overrideResponse,
+});
 
 export const getV1ListSuppressionsResponseMock = (
   overrideResponse: Partial<Extract<SuppressionListResponse, object>> = {},

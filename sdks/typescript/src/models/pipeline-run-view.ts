@@ -25,9 +25,6 @@ import type { PipelineRunStats } from './pipeline-run-stats';
 // May contain unused imports in some cases
 // @ts-ignore
 import type { PipelineRunStatus } from './pipeline-run-status';
-// May contain unused imports in some cases
-// @ts-ignore
-import type { PipelineSource } from './pipeline-source';
 
 /**
  *
@@ -132,11 +129,11 @@ export interface PipelineRunView {
      */
     'scheduled_for'?: string | null;
     /**
-     *
-     * @type {PipelineSource}
+     * The source that the run used. Its shape depends on the source type and the run state.
+     * @type {{ [key: string]: any; }}
      * @memberof PipelineRunView
      */
-    'source_snapshot': PipelineSource;
+    'source_snapshot': { [key: string]: any; };
     /**
      *
      * @type {string}

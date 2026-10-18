@@ -22,7 +22,7 @@ var _ MappedNullable = &UpdateScorePolicyRequest{}
 type UpdateScorePolicyRequest struct {
 	IsDefault NullableBool `json:"is_default,omitempty"`
 	Name NullableString `json:"name,omitempty"`
-	Rules interface{} `json:"rules,omitempty"`
+	Rules *ScorePolicyRules `json:"rules,omitempty"`
 }
 
 // NewUpdateScorePolicyRequest instantiates a new UpdateScorePolicyRequest object
@@ -126,23 +126,22 @@ func (o *UpdateScorePolicyRequest) UnsetName() {
 	o.Name.Unset()
 }
 
-// GetRules returns the Rules field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpdateScorePolicyRequest) GetRules() interface{} {
-	if o == nil {
-		var ret interface{}
+// GetRules returns the Rules field value if set, zero value otherwise.
+func (o *UpdateScorePolicyRequest) GetRules() ScorePolicyRules {
+	if o == nil || IsNil(o.Rules) {
+		var ret ScorePolicyRules
 		return ret
 	}
-	return o.Rules
+	return *o.Rules
 }
 
 // GetRulesOk returns a tuple with the Rules field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpdateScorePolicyRequest) GetRulesOk() (*interface{}, bool) {
+func (o *UpdateScorePolicyRequest) GetRulesOk() (*ScorePolicyRules, bool) {
 	if o == nil || IsNil(o.Rules) {
 		return nil, false
 	}
-	return &o.Rules, true
+	return o.Rules, true
 }
 
 // HasRules returns a boolean if a field has been set.
@@ -154,9 +153,9 @@ func (o *UpdateScorePolicyRequest) HasRules() bool {
 	return false
 }
 
-// SetRules gets a reference to the given interface{} and assigns it to the Rules field.
-func (o *UpdateScorePolicyRequest) SetRules(v interface{}) {
-	o.Rules = v
+// SetRules gets a reference to the given ScorePolicyRules and assigns it to the Rules field.
+func (o *UpdateScorePolicyRequest) SetRules(v ScorePolicyRules) {
+	o.Rules = &v
 }
 
 func (o UpdateScorePolicyRequest) MarshalJSON() ([]byte, error) {
@@ -175,7 +174,7 @@ func (o UpdateScorePolicyRequest) ToMap() (map[string]interface{}, error) {
 	if o.Name.IsSet() {
 		toSerialize["name"] = o.Name.Get()
 	}
-	if o.Rules != nil {
+	if !IsNil(o.Rules) {
 		toSerialize["rules"] = o.Rules
 	}
 	return toSerialize, nil

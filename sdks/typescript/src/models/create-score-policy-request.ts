@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { ScorePolicyRules } from './score-policy-rules';
 
 /**
  *
@@ -34,8 +37,8 @@ export interface CreateScorePolicyRequest {
     'name': string;
     /**
      *
-     * @type {any}
+     * @type {ScorePolicyRules}
      * @memberof CreateScorePolicyRequest
      */
-    'rules'?: any;
+    'rules'?: ScorePolicyRules;
 }

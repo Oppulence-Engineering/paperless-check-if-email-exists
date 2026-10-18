@@ -7,7 +7,7 @@ All URIs are relative to *http://localhost*
 |[**v1ListEvents**](#v1listevents) | **GET** /v1/events | GET /v1/events|
 
 # **v1ListEvents**
-> v1ListEvents()
+> AuditEventList v1ListEvents()
 
 Returns a paginated, filterable audit log of all job events for the tenant.
 
@@ -56,7 +56,7 @@ const { status, data } = await apiInstance.v1ListEvents(
 
 ### Return type
 
-void (empty response body)
+**AuditEventList**
 
 ### Authorization
 

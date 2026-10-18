@@ -36,6 +36,8 @@ import type { OutcomePolicyListResponse } from '../models';
 // @ts-ignore
 import type { OutcomePolicyView } from '../models';
 // @ts-ignore
+import type { ScorePolicyDeleteResponse } from '../models';
+// @ts-ignore
 import type { ScorePolicyListResponse } from '../models';
 // @ts-ignore
 import type { ScorePolicyView } from '../models';
@@ -932,7 +934,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1DeleteScorePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1DeleteScorePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ScorePolicyDeleteResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteScorePolicy(policyId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteScorePolicy']?.[localVarOperationServerIndex]?.url;
@@ -1195,7 +1197,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyDeleteResponse> {
             return localVarFp.v1DeleteScorePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1405,7 +1407,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1DeleteScorePolicy(requestParameters: TenantApiV1DeleteScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyDeleteResponse>;
 
     /**
      * Remove a domain from the authenticated tenant.

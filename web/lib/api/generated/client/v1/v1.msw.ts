@@ -22,11 +22,11 @@ import type {
   ListUploadResponse,
   ReputationCheckResponse,
   ReverificationStatusResponse,
+  SourceQualityResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
   SuppressionEventListResponse,
   SuppressionListResponse,
-  V1SourceQuality200,
 } from "../model";
 
 import {
@@ -393,10 +393,10 @@ export const getV1ReverificationStatusMockHandler = (
 
 export const getV1SourceQualityMockHandler = (
   overrideResponse?:
-    | V1SourceQuality200
+    | SourceQualityResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<V1SourceQuality200> | V1SourceQuality200),
+      ) => Promise<SourceQualityResponse> | SourceQualityResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

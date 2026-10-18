@@ -58,6 +58,8 @@ import type { ReputationCheckResponse } from '../models';
 // @ts-ignore
 import type { ReverificationStatusResponse } from '../models';
 // @ts-ignore
+import type { SourceQualityResponse } from '../models';
+// @ts-ignore
 import type { SuppressionCheckResponse } from '../models';
 // @ts-ignore
 import type { SuppressionDeleteResponse } from '../models';
@@ -919,10 +921,13 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         /**
          *
          * @summary List source quality
+         * @param {string} [sourceKey]
+         * @param {number} [minRecords]
+         * @param {number} [limit]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1SourceQuality: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1SourceQuality: async (sourceKey?: string, minRecords?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/sources/quality`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -937,6 +942,18 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
 
             // authentication Authorization required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (sourceKey !== undefined) {
+                localVarQueryParameter['source_key'] = sourceKey;
+            }
+
+            if (minRecords !== undefined) {
+                localVarQueryParameter['min_records'] = minRecords;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
 
 
 
@@ -1271,11 +1288,14 @@ export const V1ApiFp = function(configuration?: Configuration) {
         /**
          *
          * @summary List source quality
+         * @param {string} [sourceKey]
+         * @param {number} [minRecords]
+         * @param {number} [limit]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1SourceQuality(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: any; }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1SourceQuality(options);
+        async v1SourceQuality(sourceKey?: string, minRecords?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SourceQualityResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1SourceQuality(sourceKey, minRecords, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1SourceQuality']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1495,11 +1515,12 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         /**
          *
          * @summary List source quality
+         * @param {V1ApiV1SourceQualityRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1SourceQuality(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }> {
-            return localVarFp.v1SourceQuality(options).then((request) => request(axios, basePath));
+        v1SourceQuality(requestParameters: V1ApiV1SourceQualityRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<SourceQualityResponse> {
+            return localVarFp.v1SourceQuality(requestParameters.sourceKey, requestParameters.minRecords, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1712,11 +1733,12 @@ export interface V1ApiInterface {
     /**
      *
      * @summary List source quality
+     * @param {V1ApiV1SourceQualityRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof V1ApiInterface
      */
-    v1SourceQuality(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
+    v1SourceQuality(requestParameters?: V1ApiV1SourceQualityRequest, options?: RawAxiosRequestConfig): AxiosPromise<SourceQualityResponse>;
 
     /**
      *
@@ -2151,6 +2173,34 @@ export interface V1ApiV1ListSuppressionsRequest {
 }
 
 /**
+ * Request parameters for v1SourceQuality operation in V1Api.
+ * @export
+ * @interface V1ApiV1SourceQualityRequest
+ */
+export interface V1ApiV1SourceQualityRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof V1ApiV1SourceQuality
+     */
+    readonly sourceKey?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1SourceQuality
+     */
+    readonly minRecords?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1SourceQuality
+     */
+    readonly limit?: number
+}
+
+/**
  * Request parameters for v1UpdateReverification operation in V1Api.
  * @export
  * @interface V1ApiV1UpdateReverificationRequest
@@ -2401,12 +2451,13 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
     /**
      *
      * @summary List source quality
+     * @param {V1ApiV1SourceQualityRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof V1Api
      */
-    public v1SourceQuality(options?: RawAxiosRequestConfig) {
-        return V1ApiFp(this.configuration).v1SourceQuality(options).then((request) => request(this.axios, this.basePath));
+    public v1SourceQuality(requestParameters: V1ApiV1SourceQualityRequest = {}, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1SourceQuality(requestParameters.sourceKey, requestParameters.minRecords, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

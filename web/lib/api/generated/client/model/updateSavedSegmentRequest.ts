@@ -7,11 +7,12 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import type { SegmentFilter } from "./segmentFilter";
+import type { SegmentScope } from "./segmentScope";
 
 export interface UpdateSavedSegmentRequest {
-  filter?: unknown;
+  filter?: SegmentFilter;
   /** @nullable */
   name?: string | null;
-  /** @nullable */
-  scope?: string | null;
+  scope?: SegmentScope | null;
 }

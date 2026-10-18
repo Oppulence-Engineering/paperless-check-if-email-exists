@@ -1510,10 +1510,44 @@ export const V1ReverificationStatusDefaultResponse = zod.object({
 /**
  * @summary List source quality
  */
-export const V1SourceQuality200Response = zod.record(
-  zod.string(),
-  zod.unknown(),
-);
+export const V1SourceQualityQueryParams = zod.object({
+  source_key: zod.string().optional(),
+  min_records: zod.coerce.number().int().optional(),
+  limit: zod.coerce.number().int().optional(),
+});
+
+export const V1SourceQuality200Response = zod.object({
+  sources: zod.array(
+    zod.object({
+      bounced_count: zod.int(),
+      clicked_count: zod.int(),
+      complained_count: zod.int(),
+      delivered_count: zod.int(),
+      drop_count: zod.int(),
+      invalid_count: zod.int(),
+      invalid_pct: zod.number(),
+      negative_outcome_pct: zod.number(),
+      opened_count: zod.int(),
+      outcome_count: zod.int(),
+      processed_records: zod.int(),
+      quality_grade: zod.string(),
+      review_count: zod.int(),
+      risky_count: zod.int(),
+      risky_pct: zod.number(),
+      safe_to_send_count: zod.int(),
+      send_count: zod.int(),
+      send_with_caution_count: zod.int(),
+      source_key: zod.string(),
+      summary: zod.string(),
+      suppress_count: zod.int(),
+      total_records: zod.int(),
+      unknown_count: zod.int(),
+      unsafe_recommendation_pct: zod.number(),
+      unsubscribed_count: zod.int(),
+      valid_count: zod.int(),
+    }),
+  ),
+});
 
 export const V1SourceQualityDefaultResponse = zod.object({
   error: zod.string(),

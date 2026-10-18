@@ -349,7 +349,7 @@ Name | Type | Description  | Notes
 
 ## V1DeleteScorePolicy
 
-> V1DeleteScorePolicy(ctx, policyId).Execute()
+> ScorePolicyDeleteResponse V1DeleteScorePolicy(ctx, policyId).Execute()
 
 DELETE /v1/score-policies/{policy_id}
 
@@ -370,11 +370,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1DeleteScorePolicy(context.Background(), policyId).Execute()
+	resp, r, err := apiClient.TenantAPI.V1DeleteScorePolicy(context.Background(), policyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1DeleteScorePolicy``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1DeleteScorePolicy`: ScorePolicyDeleteResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1DeleteScorePolicy`: %v\n", resp)
 }
 ```
 
@@ -397,7 +399,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**ScorePolicyDeleteResponse**](ScorePolicyDeleteResponse.md)
 
 ### Authorization
 

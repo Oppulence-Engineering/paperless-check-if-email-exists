@@ -11,6 +11,7 @@ import type {
   CreateSavedSegmentRequest,
   ErrorEnvelope,
   ListDiffResponse,
+  SavedSegmentDeleteResponse,
   SavedSegmentListResponse,
   SavedSegmentView,
   UpdateSavedSegmentRequest,
@@ -508,7 +509,7 @@ export const v1CreateSavedSegment = async (
 };
 
 export type v1DeleteSavedSegmentResponse200 = {
-  data: void;
+  data: SavedSegmentDeleteResponse;
   status: 200;
 };
 
@@ -549,7 +550,7 @@ export const v1DeleteSavedSegment = async (
 
   const data: v1DeleteSavedSegmentResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,

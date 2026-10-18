@@ -72,7 +72,8 @@ type ListsAPI interface {
 	V1DeleteSavedSegment(ctx context.Context, segmentId int64) ListsAPIV1DeleteSavedSegmentRequest
 
 	// V1DeleteSavedSegmentExecute executes the request
-	V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*http.Response, error)
+	//  @return SavedSegmentDeleteResponse
+	V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*SavedSegmentDeleteResponse, *http.Response, error)
 
 	/*
 	V1DiffLists GET /v1/lists/{base_list_id}/diff/{compare_list_id}
@@ -575,7 +576,7 @@ type ListsAPIV1DeleteSavedSegmentRequest struct {
 	segmentId int64
 }
 
-func (r ListsAPIV1DeleteSavedSegmentRequest) Execute() (*http.Response, error) {
+func (r ListsAPIV1DeleteSavedSegmentRequest) Execute() (*SavedSegmentDeleteResponse, *http.Response, error) {
 	return r.ApiService.V1DeleteSavedSegmentExecute(r)
 }
 
@@ -595,16 +596,18 @@ func (a *ListsAPIService) V1DeleteSavedSegment(ctx context.Context, segmentId in
 }
 
 // Execute executes the request
-func (a *ListsAPIService) V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*http.Response, error) {
+//  @return SavedSegmentDeleteResponse
+func (a *ListsAPIService) V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSegmentRequest) (*SavedSegmentDeleteResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *SavedSegmentDeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1DeleteSavedSegment")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/segments/{segment_id}"
@@ -647,19 +650,19 @@ func (a *ListsAPIService) V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSeg
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -671,14 +674,23 @@ func (a *ListsAPIService) V1DeleteSavedSegmentExecute(r ListsAPIV1DeleteSavedSeg
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type ListsAPIV1DiffListsRequest struct {

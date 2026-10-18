@@ -34,7 +34,8 @@ type AccountAPI interface {
 	CreateTenantApiKey(ctx context.Context) AccountAPICreateTenantApiKeyRequest
 
 	// CreateTenantApiKeyExecute executes the request
-	CreateTenantApiKeyExecute(r AccountAPICreateTenantApiKeyRequest) (*http.Response, error)
+	//  @return TenantCreatedApiKey
+	CreateTenantApiKeyExecute(r AccountAPICreateTenantApiKeyRequest) (*TenantCreatedApiKey, *http.Response, error)
 
 	/*
 	GetTenantApiKey GET /v1/me/api-keys/{key_id}
@@ -48,7 +49,8 @@ type AccountAPI interface {
 	GetTenantApiKey(ctx context.Context, keyId string) AccountAPIGetTenantApiKeyRequest
 
 	// GetTenantApiKeyExecute executes the request
-	GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRequest) (*http.Response, error)
+	//  @return TenantApiKey
+	GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRequest) (*TenantApiKey, *http.Response, error)
 
 	/*
 	ListTenantApiKeys GET /v1/me/api-keys
@@ -61,7 +63,8 @@ type AccountAPI interface {
 	ListTenantApiKeys(ctx context.Context) AccountAPIListTenantApiKeysRequest
 
 	// ListTenantApiKeysExecute executes the request
-	ListTenantApiKeysExecute(r AccountAPIListTenantApiKeysRequest) (*http.Response, error)
+	//  @return TenantApiKeyList
+	ListTenantApiKeysExecute(r AccountAPIListTenantApiKeysRequest) (*TenantApiKeyList, *http.Response, error)
 
 	/*
 	RevokeTenantApiKey DELETE /v1/me/api-keys/{key_id}
@@ -75,7 +78,8 @@ type AccountAPI interface {
 	RevokeTenantApiKey(ctx context.Context, keyId string) AccountAPIRevokeTenantApiKeyRequest
 
 	// RevokeTenantApiKeyExecute executes the request
-	RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantApiKeyRequest) (*http.Response, error)
+	//  @return TenantApiKeyRevokeResponse
+	RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantApiKeyRequest) (*TenantApiKeyRevokeResponse, *http.Response, error)
 
 	/*
 	UpdateTenantApiKey PATCH /v1/me/api-keys/{key_id}
@@ -89,7 +93,8 @@ type AccountAPI interface {
 	UpdateTenantApiKey(ctx context.Context, keyId string) AccountAPIUpdateTenantApiKeyRequest
 
 	// UpdateTenantApiKeyExecute executes the request
-	UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantApiKeyRequest) (*http.Response, error)
+	//  @return TenantApiKey
+	UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantApiKeyRequest) (*TenantApiKey, *http.Response, error)
 
 	/*
 	V1Me GET /v1/me
@@ -119,7 +124,7 @@ func (r AccountAPICreateTenantApiKeyRequest) CreateApiKeyRequest(createApiKeyReq
 	return r
 }
 
-func (r AccountAPICreateTenantApiKeyRequest) Execute() (*http.Response, error) {
+func (r AccountAPICreateTenantApiKeyRequest) Execute() (*TenantCreatedApiKey, *http.Response, error) {
 	return r.ApiService.CreateTenantApiKeyExecute(r)
 }
 
@@ -139,16 +144,18 @@ func (a *AccountAPIService) CreateTenantApiKey(ctx context.Context) AccountAPICr
 }
 
 // Execute executes the request
-func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantApiKeyRequest) (*http.Response, error) {
+//  @return TenantCreatedApiKey
+func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantApiKeyRequest) (*TenantCreatedApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantCreatedApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccountAPIService.CreateTenantApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/api-keys"
@@ -157,7 +164,7 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 	if r.createApiKeyRequest == nil {
-		return nil, reportError("createApiKeyRequest is required and must be specified")
+		return localVarReturnValue, nil, reportError("createApiKeyRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -195,19 +202,19 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -219,14 +226,23 @@ func (a *AccountAPIService) CreateTenantApiKeyExecute(r AccountAPICreateTenantAp
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AccountAPIGetTenantApiKeyRequest struct {
@@ -235,7 +251,7 @@ type AccountAPIGetTenantApiKeyRequest struct {
 	keyId string
 }
 
-func (r AccountAPIGetTenantApiKeyRequest) Execute() (*http.Response, error) {
+func (r AccountAPIGetTenantApiKeyRequest) Execute() (*TenantApiKey, *http.Response, error) {
 	return r.ApiService.GetTenantApiKeyExecute(r)
 }
 
@@ -257,16 +273,18 @@ func (a *AccountAPIService) GetTenantApiKey(ctx context.Context, keyId string) A
 }
 
 // Execute executes the request
-func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRequest) (*http.Response, error) {
+//  @return TenantApiKey
+func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRequest) (*TenantApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccountAPIService.GetTenantApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/api-keys/{key_id}"
@@ -309,19 +327,19 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -333,14 +351,23 @@ func (a *AccountAPIService) GetTenantApiKeyExecute(r AccountAPIGetTenantApiKeyRe
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AccountAPIListTenantApiKeysRequest struct {
@@ -348,7 +375,7 @@ type AccountAPIListTenantApiKeysRequest struct {
 	ApiService AccountAPI
 }
 
-func (r AccountAPIListTenantApiKeysRequest) Execute() (*http.Response, error) {
+func (r AccountAPIListTenantApiKeysRequest) Execute() (*TenantApiKeyList, *http.Response, error) {
 	return r.ApiService.ListTenantApiKeysExecute(r)
 }
 
@@ -368,16 +395,18 @@ func (a *AccountAPIService) ListTenantApiKeys(ctx context.Context) AccountAPILis
 }
 
 // Execute executes the request
-func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKeysRequest) (*http.Response, error) {
+//  @return TenantApiKeyList
+func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKeysRequest) (*TenantApiKeyList, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantApiKeyList
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccountAPIService.ListTenantApiKeys")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/api-keys"
@@ -419,19 +448,19 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -443,14 +472,23 @@ func (a *AccountAPIService) ListTenantApiKeysExecute(r AccountAPIListTenantApiKe
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AccountAPIRevokeTenantApiKeyRequest struct {
@@ -459,7 +497,7 @@ type AccountAPIRevokeTenantApiKeyRequest struct {
 	keyId string
 }
 
-func (r AccountAPIRevokeTenantApiKeyRequest) Execute() (*http.Response, error) {
+func (r AccountAPIRevokeTenantApiKeyRequest) Execute() (*TenantApiKeyRevokeResponse, *http.Response, error) {
 	return r.ApiService.RevokeTenantApiKeyExecute(r)
 }
 
@@ -481,16 +519,18 @@ func (a *AccountAPIService) RevokeTenantApiKey(ctx context.Context, keyId string
 }
 
 // Execute executes the request
-func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantApiKeyRequest) (*http.Response, error) {
+//  @return TenantApiKeyRevokeResponse
+func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantApiKeyRequest) (*TenantApiKeyRevokeResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantApiKeyRevokeResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccountAPIService.RevokeTenantApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/api-keys/{key_id}"
@@ -533,19 +573,19 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -557,14 +597,23 @@ func (a *AccountAPIService) RevokeTenantApiKeyExecute(r AccountAPIRevokeTenantAp
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AccountAPIUpdateTenantApiKeyRequest struct {
@@ -579,7 +628,7 @@ func (r AccountAPIUpdateTenantApiKeyRequest) UpdateApiKeyRequest(updateApiKeyReq
 	return r
 }
 
-func (r AccountAPIUpdateTenantApiKeyRequest) Execute() (*http.Response, error) {
+func (r AccountAPIUpdateTenantApiKeyRequest) Execute() (*TenantApiKey, *http.Response, error) {
 	return r.ApiService.UpdateTenantApiKeyExecute(r)
 }
 
@@ -601,16 +650,18 @@ func (a *AccountAPIService) UpdateTenantApiKey(ctx context.Context, keyId string
 }
 
 // Execute executes the request
-func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantApiKeyRequest) (*http.Response, error) {
+//  @return TenantApiKey
+func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantApiKeyRequest) (*TenantApiKey, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantApiKey
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccountAPIService.UpdateTenantApiKey")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/api-keys/{key_id}"
@@ -620,7 +671,7 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 	if r.updateApiKeyRequest == nil {
-		return nil, reportError("updateApiKeyRequest is required and must be specified")
+		return localVarReturnValue, nil, reportError("updateApiKeyRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -658,19 +709,19 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -682,14 +733,23 @@ func (a *AccountAPIService) UpdateTenantApiKeyExecute(r AccountAPIUpdateTenantAp
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type AccountAPIV1MeRequest struct {

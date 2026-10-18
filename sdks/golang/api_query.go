@@ -33,7 +33,8 @@ type QueryAPI interface {
 	V1QueryResults(ctx context.Context) QueryAPIV1QueryResultsRequest
 
 	// V1QueryResultsExecute executes the request
-	V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest) (*http.Response, error)
+	//  @return QueryResultList
+	V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest) (*QueryResultList, *http.Response, error)
 }
 
 // QueryAPIService QueryAPI service
@@ -116,7 +117,7 @@ func (r QueryAPIV1QueryResultsRequest) PolicyDecision(policyDecision string) Que
 	return r
 }
 
-func (r QueryAPIV1QueryResultsRequest) Execute() (*http.Response, error) {
+func (r QueryAPIV1QueryResultsRequest) Execute() (*QueryResultList, *http.Response, error) {
 	return r.ApiService.V1QueryResultsExecute(r)
 }
 
@@ -136,16 +137,18 @@ func (a *QueryAPIService) V1QueryResults(ctx context.Context) QueryAPIV1QueryRes
 }
 
 // Execute executes the request
-func (a *QueryAPIService) V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest) (*http.Response, error) {
+//  @return QueryResultList
+func (a *QueryAPIService) V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest) (*QueryResultList, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *QueryResultList
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "QueryAPIService.V1QueryResults")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/query"
@@ -223,19 +226,19 @@ func (a *QueryAPIService) V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest)
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -247,12 +250,21 @@ func (a *QueryAPIService) V1QueryResultsExecute(r QueryAPIV1QueryResultsRequest)
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }

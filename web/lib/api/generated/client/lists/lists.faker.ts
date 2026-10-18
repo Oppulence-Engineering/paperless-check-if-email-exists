@@ -9,8 +9,10 @@
  */
 import { faker } from "@faker-js/faker";
 
+import { SegmentScope } from "../model";
 import type {
   ListDiffResponse,
+  SavedSegmentDeleteResponse,
   SavedSegmentListResponse,
   SavedSegmentView,
   V1CreateRemediationExport200,
@@ -430,10 +432,70 @@ export const getV1ListSavedSegmentsResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-    filter: {},
+    filter: {
+      category: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          Array.from(
+            { length: faker.number.int({ min: 1, max: 10 }) },
+            (_, i) => i + 1,
+          ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        ]),
+        undefined,
+      ]),
+      change_type: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          Array.from(
+            { length: faker.number.int({ min: 1, max: 10 }) },
+            (_, i) => i + 1,
+          ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        ]),
+        undefined,
+      ]),
+      freshness_days_max: faker.helpers.arrayElement([
+        faker.number.int({ min: 0 }),
+        undefined,
+      ]),
+      is_catch_all: faker.helpers.arrayElement([
+        faker.datatype.boolean(),
+        undefined,
+      ]),
+      is_disposable: faker.helpers.arrayElement([
+        faker.datatype.boolean(),
+        undefined,
+      ]),
+      is_role_account: faker.helpers.arrayElement([
+        faker.datatype.boolean(),
+        undefined,
+      ]),
+      policy_decision: faker.helpers.arrayElement([
+        faker.helpers.arrayElement(["send", "review", "suppress"] as const),
+        undefined,
+      ]),
+      reason_codes_any: faker.helpers.arrayElement([
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        undefined,
+      ]),
+      safe_to_send: faker.helpers.arrayElement([
+        faker.datatype.boolean(),
+        undefined,
+      ]),
+      score_max: faker.helpers.arrayElement([
+        faker.number.int({ min: 0, max: 100 }),
+        undefined,
+      ]),
+      score_min: faker.helpers.arrayElement([
+        faker.number.int({ min: 0, max: 100 }),
+        undefined,
+      ]),
+    },
     id: faker.number.int(),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    scope: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    scope: faker.helpers.arrayElement(Object.values(SegmentScope)),
     updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   })),
   total: faker.number.int(),
@@ -444,11 +506,78 @@ export const getV1CreateSavedSegmentResponseMock = (
   overrideResponse: Partial<Extract<SavedSegmentView, object>> = {},
 ): SavedSegmentView => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-  filter: {},
+  filter: {
+    category: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    change_type: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    freshness_days_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0 }),
+      undefined,
+    ]),
+    is_catch_all: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_disposable: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_role_account: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    policy_decision: faker.helpers.arrayElement([
+      faker.helpers.arrayElement(["send", "review", "suppress"] as const),
+      undefined,
+    ]),
+    reason_codes_any: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      undefined,
+    ]),
+    safe_to_send: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    score_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+    score_min: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+  },
   id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  scope: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  scope: faker.helpers.arrayElement(Object.values(SegmentScope)),
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1DeleteSavedSegmentResponseMock = (
+  overrideResponse: Partial<Extract<SavedSegmentDeleteResponse, object>> = {},
+): SavedSegmentDeleteResponse => ({
+  deleted: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
@@ -456,10 +585,70 @@ export const getV1GetSavedSegmentResponseMock = (
   overrideResponse: Partial<Extract<SavedSegmentView, object>> = {},
 ): SavedSegmentView => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-  filter: {},
+  filter: {
+    category: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    change_type: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    freshness_days_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0 }),
+      undefined,
+    ]),
+    is_catch_all: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_disposable: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_role_account: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    policy_decision: faker.helpers.arrayElement([
+      faker.helpers.arrayElement(["send", "review", "suppress"] as const),
+      undefined,
+    ]),
+    reason_codes_any: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      undefined,
+    ]),
+    safe_to_send: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    score_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+    score_min: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+  },
   id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  scope: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  scope: faker.helpers.arrayElement(Object.values(SegmentScope)),
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,
 });
@@ -468,10 +657,70 @@ export const getV1UpdateSavedSegmentResponseMock = (
   overrideResponse: Partial<Extract<SavedSegmentView, object>> = {},
 ): SavedSegmentView => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-  filter: {},
+  filter: {
+    category: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    change_type: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      ]),
+      undefined,
+    ]),
+    freshness_days_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0 }),
+      undefined,
+    ]),
+    is_catch_all: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_disposable: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    is_role_account: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    policy_decision: faker.helpers.arrayElement([
+      faker.helpers.arrayElement(["send", "review", "suppress"] as const),
+      undefined,
+    ]),
+    reason_codes_any: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      undefined,
+    ]),
+    safe_to_send: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    score_max: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+    score_min: faker.helpers.arrayElement([
+      faker.number.int({ min: 0, max: 100 }),
+      undefined,
+    ]),
+  },
   id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  scope: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  scope: faker.helpers.arrayElement(Object.values(SegmentScope)),
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,
 });

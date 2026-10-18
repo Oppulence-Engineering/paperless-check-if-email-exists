@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 **id** | **number** |  | [required]
 **is_default** | **boolean** |  | [required]
 **name** | **string** |  | [required]
-**rules** | **any** |  | [required]
+**rules** | [**ScorePolicyRules**](ScorePolicyRules.md) |  | [required]
 **updated_at** | **string** |  | [required]
 
 ## Example

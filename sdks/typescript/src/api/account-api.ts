@@ -26,6 +26,14 @@ import type { CreateApiKeyRequest } from '../models';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
+import type { TenantApiKey } from '../models';
+// @ts-ignore
+import type { TenantApiKeyList } from '../models';
+// @ts-ignore
+import type { TenantApiKeyRevokeResponse } from '../models';
+// @ts-ignore
+import type { TenantCreatedApiKey } from '../models';
+// @ts-ignore
 import type { UpdateApiKeyRequest } from '../models';
 /**
  * AccountApi - axios parameter creator
@@ -272,7 +280,7 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createTenantApiKey(createApiKeyRequest: CreateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async createTenantApiKey(createApiKeyRequest: CreateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantCreatedApiKey>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createTenantApiKey(createApiKeyRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.createTenantApiKey']?.[localVarOperationServerIndex]?.url;
@@ -285,7 +293,7 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getTenantApiKey(keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async getTenantApiKey(keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantApiKey>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getTenantApiKey(keyId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.getTenantApiKey']?.[localVarOperationServerIndex]?.url;
@@ -297,7 +305,7 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listTenantApiKeys(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async listTenantApiKeys(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantApiKeyList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listTenantApiKeys(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.listTenantApiKeys']?.[localVarOperationServerIndex]?.url;
@@ -310,7 +318,7 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async revokeTenantApiKey(keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async revokeTenantApiKey(keyId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantApiKeyRevokeResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.revokeTenantApiKey(keyId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.revokeTenantApiKey']?.[localVarOperationServerIndex]?.url;
@@ -324,7 +332,7 @@ export const AccountApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateTenantApiKey(keyId: string, updateApiKeyRequest: UpdateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async updateTenantApiKey(keyId: string, updateApiKeyRequest: UpdateApiKeyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantApiKey>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.updateTenantApiKey(keyId, updateApiKeyRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AccountApi.updateTenantApiKey']?.[localVarOperationServerIndex]?.url;
@@ -359,7 +367,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantCreatedApiKey> {
             return localVarFp.createTenantApiKey(requestParameters.createApiKeyRequest, options).then((request) => request(axios, basePath));
         },
         /**
@@ -369,7 +377,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTenantApiKey(requestParameters: AccountApiGetTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        getTenantApiKey(requestParameters: AccountApiGetTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKey> {
             return localVarFp.getTenantApiKey(requestParameters.keyId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -378,7 +386,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTenantApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        listTenantApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKeyList> {
             return localVarFp.listTenantApiKeys(options).then((request) => request(axios, basePath));
         },
         /**
@@ -388,7 +396,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        revokeTenantApiKey(requestParameters: AccountApiRevokeTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        revokeTenantApiKey(requestParameters: AccountApiRevokeTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKeyRevokeResponse> {
             return localVarFp.revokeTenantApiKey(requestParameters.keyId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -398,7 +406,7 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKey> {
             return localVarFp.updateTenantApiKey(requestParameters.keyId, requestParameters.updateApiKeyRequest, options).then((request) => request(axios, basePath));
         },
         /**
@@ -427,7 +435,7 @@ export interface AccountApiInterface {
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    createTenantApiKey(requestParameters: AccountApiCreateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantCreatedApiKey>;
 
     /**
      * Return a single API key for the authenticated tenant.
@@ -437,7 +445,7 @@ export interface AccountApiInterface {
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    getTenantApiKey(requestParameters: AccountApiGetTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    getTenantApiKey(requestParameters: AccountApiGetTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKey>;
 
     /**
      * List API keys for the authenticated tenant.
@@ -446,7 +454,7 @@ export interface AccountApiInterface {
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    listTenantApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    listTenantApiKeys(options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKeyList>;
 
     /**
      * Revoke an API key.
@@ -456,7 +464,7 @@ export interface AccountApiInterface {
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    revokeTenantApiKey(requestParameters: AccountApiRevokeTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    revokeTenantApiKey(requestParameters: AccountApiRevokeTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKeyRevokeResponse>;
 
     /**
      * Update metadata for an existing API key.
@@ -466,7 +474,7 @@ export interface AccountApiInterface {
      * @throws {RequiredError}
      * @memberof AccountApiInterface
      */
-    updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    updateTenantApiKey(requestParameters: AccountApiUpdateTenantApiKeyRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantApiKey>;
 
     /**
      * Returns the authenticated tenant context and quota metadata.

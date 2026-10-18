@@ -7,7 +7,11 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
-import type { ErrorEnvelope, V1ListEventsParams } from "../model";
+import type {
+  AuditEventList,
+  ErrorEnvelope,
+  V1ListEventsParams,
+} from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
 export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
@@ -52,7 +56,7 @@ export type HTTPStatusCodes =
   | HTTPStatusCode5xx;
 
 export type v1ListEventsResponse200 = {
-  data: void;
+  data: AuditEventList;
   status: 200;
 };
 
@@ -102,9 +106,7 @@ export const v1ListEvents = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: v1ListEventsResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: v1ListEventsResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
