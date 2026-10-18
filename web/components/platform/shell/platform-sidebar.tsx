@@ -29,6 +29,7 @@ import {
 import {
 	Analytics,
 	Api,
+	CaretDown,
 	CaretUpDown,
 	ClockCounterClockwise,
 	FlowArrow,
@@ -130,6 +131,13 @@ function WorkspaceBadge({ name }: { name: string }) {
 	);
 }
 
+/** The link of the current settings section, or null when the page is not settings. */
+function useCurrentSettingsHref(): string | null {
+	const section = settingsSectionFromParam(useSearchParams().get("settings"));
+	// The section lists can be open on any page, so only mark a section on the settings page.
+	return usePathname() === "/app/settings" ? settingsHref(section.key) : null;
+}
+
 /** Polar-style sub-links under the current section, on a hairline rail. */
 function SubNav({
 	items,
@@ -140,8 +148,7 @@ function SubNav({
 	label: string;
 	onNavigate?: () => void;
 }) {
-	const section = settingsSectionFromParam(useSearchParams().get("settings"));
-	const current = settingsHref(section.key);
+	const current = useCurrentSettingsHref();
 	return (
 		<nav
 			aria-label={`Workspace ${label.toLowerCase()}`}
@@ -178,9 +185,7 @@ function RailSubNav({
 	label: string;
 	onNavigate?: () => void;
 }) {
-	const section = settingsSectionFromParam(useSearchParams().get("settings"));
-	// The rail list can be open on any page, so only mark a section on the settings page.
-	const current = usePathname() === "/app/settings" ? settingsHref(section.key) : null;
+	const current = useCurrentSettingsHref();
 	return (
 		<nav
 			aria-label={`Workspace ${label.toLowerCase()}`}
@@ -223,24 +228,26 @@ function NavLink({
 	item: NavItem;
 	onNavigate?: () => void;
 }) {
-	const active = isActive(usePathname(), href);
+	const pathname = usePathname();
+	const active = isActive(pathname, href);
+	const rowClassName = cn(
+		// Polar-style: quiet text that brightens on hover, and a raised pill
+		// one surface lighter for the current page instead of an accent color.
+		"flex h-8 items-center gap-2.5 rounded-lg border px-2 text-sm font-medium transition-colors",
+		active
+			? cn(surface.panel, surface.border, "text-white shadow-xs")
+			: cn(
+					"border-transparent hover:text-neutral-200",
+					// Icon-only rail items keep the Shots grey; visible labels use the AA grey.
+					collapsed ? "text-neutral-500" : "text-[#858585]",
+				),
+		collapsed && "size-8 justify-center px-0",
+	);
 	const link = (
 		<Link
 			aria-current={active ? "page" : undefined}
 			aria-label={collapsed ? label : undefined}
-			className={cn(
-				// Polar-style: quiet text that brightens on hover, and a raised pill
-				// one surface lighter for the current page instead of an accent color.
-				"flex h-8 items-center gap-2.5 rounded-lg border px-2 text-sm font-medium transition-colors",
-				active
-					? cn(surface.panel, surface.border, "text-white shadow-xs")
-					: cn(
-							"border-transparent hover:text-neutral-200",
-							// Icon-only rail items keep the Shots grey; visible labels use the AA grey.
-							collapsed ? "text-neutral-500" : "text-[#858585]",
-						),
-				collapsed && "size-8 justify-center px-0",
-			)}
+			className={rowClassName}
 			href={href}
 			onClick={onNavigate}
 		>
@@ -248,20 +255,30 @@ function NavLink({
 			{collapsed ? null : <span className="truncate">{label}</span>}
 		</Link>
 	);
+	// Section lists start open on their own page. The pathname key resets them on
+	// navigation, so an open list closes when you go to another page.
 	if (!collapsed) {
-		return active && children ? (
-			<div>
-				{link}
-				<SubNav items={children} label={label} onNavigate={onNavigate} />
-			</div>
-		) : (
-			link
+		if (!children) return link;
+		return (
+			<Collapsible defaultOpen={active} key={pathname}>
+				<CollapsibleTrigger className={cn(rowClassName, "group w-full cursor-pointer")}>
+					<Icon className="shrink-0" size={16} strokeWidth={1.8} />
+					<span className="truncate">{label}</span>
+					<CaretDown
+						className="ml-auto shrink-0 transition-transform group-data-[state=closed]:-rotate-90"
+						size={14}
+					/>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<SubNav items={children} label={label} onNavigate={onNavigate} />
+				</CollapsibleContent>
+			</Collapsible>
 		);
 	}
 	if (children) {
 		// The rail has no room for labels, so the section icons expand below.
 		return (
-			<Collapsible defaultOpen={active}>
+			<Collapsible defaultOpen={active} key={pathname}>
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<CollapsibleTrigger asChild>
