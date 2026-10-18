@@ -82,9 +82,41 @@ pub async fn check_domain(
 	Ok(response)
 }
 
+/// The most redirects that an RDAP lookup follows. rdap.org sends one redirect
+/// to the RDAP server of the registry.
+const RDAP_MAX_REDIRECTS: usize = 3;
+
+/// rdap.org answers each lookup with a redirect to the registry's RDAP server.
+/// Follow a redirect only to an HTTPS URL with a host name, and only while
+/// `requests_so_far` is not more than RDAP_MAX_REDIRECTS. A redirect cannot
+/// reach plain HTTP or an IP address.
+// ponytail: a host name that resolves to a private address still passes.
+// Resolve it and check is_disallowed_probe_ip if that becomes a risk.
+fn follow_rdap_redirect(url: &reqwest::Url, requests_so_far: usize) -> bool {
+	requests_so_far <= RDAP_MAX_REDIRECTS
+		&& url.scheme() == "https"
+		&& url
+			.host_str()
+			.is_some_and(|host| host.trim_matches(['[', ']']).parse::<IpAddr>().is_err())
+}
+
+/// A client builder for RDAP lookups. It sends a User-Agent, because rdap.org
+/// answers 403 without one, and it follows only the redirects that
+/// `follow_rdap_redirect` allows.
+pub(crate) fn rdap_client_builder() -> reqwest::ClientBuilder {
+	reqwest::Client::builder()
+		.user_agent(concat!("reacher/", env!("CARGO_PKG_VERSION")))
+		.redirect(reqwest::redirect::Policy::custom(|attempt| {
+			if follow_rdap_redirect(attempt.url(), attempt.previous().len()) {
+				attempt.follow()
+			} else {
+				attempt.stop()
+			}
+		}))
+}
+
 pub async fn fetch_domain_info(domain: &str) -> Result<DomainInfo, ReacherResponseError> {
-	let client = reqwest::Client::builder()
-		.redirect(reqwest::redirect::Policy::none())
+	let client = rdap_client_builder()
 		.build()
 		.map_err(ReacherResponseError::from)?;
 	fetch_domain_info_with_client(&client, domain).await
@@ -155,5 +187,34 @@ pub(crate) fn is_disallowed_probe_ip(ip: IpAddr) -> bool {
 				|| ip.is_multicast()
 				|| ip.is_unspecified()
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::follow_rdap_redirect;
+
+	fn url(value: &str) -> reqwest::Url {
+		reqwest::Url::parse(value).expect("test URL")
+	}
+
+	#[test]
+	fn rdap_redirects_follow_only_https_host_names() {
+		let registry = url("https://rdap.verisign.com/com/v1/domain/gmail.com");
+		assert!(follow_rdap_redirect(&registry, 1));
+		assert!(follow_rdap_redirect(&registry, 3));
+		assert!(!follow_rdap_redirect(&registry, 4), "too many redirects");
+		assert!(!follow_rdap_redirect(
+			&url("http://rdap.verisign.com/com/v1/domain/gmail.com"),
+			1
+		));
+		assert!(!follow_rdap_redirect(
+			&url("https://10.0.0.1/domain/gmail.com"),
+			1
+		));
+		assert!(!follow_rdap_redirect(
+			&url("https://[::1]/domain/gmail.com"),
+			1
+		));
 	}
 }

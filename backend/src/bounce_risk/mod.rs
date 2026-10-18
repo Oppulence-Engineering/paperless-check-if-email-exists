@@ -1,6 +1,8 @@
 use crate::config::BounceRiskConfig;
 use crate::http::v1::lists::canonicalize::canonicalize_email;
-use crate::reputation::checker::{fetch_domain_info_with_client, validate_public_domain_target};
+use crate::reputation::checker::{
+	fetch_domain_info_with_client, rdap_client_builder, validate_public_domain_target,
+};
 use crate::reputation::dns_records::check_dns_records;
 use crate::reputation::models::{DnsRecordResults, DomainInfo};
 use crate::scoring::EmailScore;
@@ -500,9 +502,8 @@ async fn collect_domain_signals(
 	let mut rdap_refreshed = false;
 	let mut infra_refreshed = false;
 
-	let rdap_client = reqwest::Client::builder()
+	let rdap_client = rdap_client_builder()
 		.timeout(Duration::from_millis(runtime.network_timeout_ms))
-		.redirect(reqwest::redirect::Policy::none())
 		.build()?;
 
 	if domain_info.is_none() {
