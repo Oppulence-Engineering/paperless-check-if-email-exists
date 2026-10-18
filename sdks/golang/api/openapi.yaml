@@ -8737,6 +8737,77 @@ components:
       - $ref: "#/components/schemas/PipelineSource_oneOf_1"
       - $ref: "#/components/schemas/PipelineSource_oneOf_2"
       - $ref: "#/components/schemas/PipelineSource_oneOf_3"
+    PipelineSource_oneOf:
+      properties:
+        list_id:
+          format: int32
+          type: integer
+        type:
+          enum:
+          - list_snapshot
+          type: string
+      required:
+      - list_id
+      - type
+      type: object
+    PipelineSource_oneOf_1:
+      properties:
+        audience_id:
+          type: string
+        connection_id:
+          type: string
+        field_mapping: {}
+        provider:
+          type: string
+        type:
+          enum:
+          - integration
+          type: string
+      required:
+      - audience_id
+      - connection_id
+      - provider
+      - type
+      type: object
+    PipelineSource_oneOf_2:
+      properties:
+        accepted_format:
+          type: string
+        token_id:
+          type: string
+        type:
+          enum:
+          - push
+          type: string
+      required:
+      - accepted_format
+      - token_id
+      - type
+      type: object
+    PipelineSource_oneOf_3:
+      properties:
+        bucket:
+          type: string
+        path_pattern:
+          nullable: true
+          type: string
+        prefix:
+          nullable: true
+          type: string
+        provider:
+          type: string
+        region:
+          nullable: true
+          type: string
+        type:
+          enum:
+          - bucket
+          type: string
+      required:
+      - bucket
+      - provider
+      - type
+      type: object
     PipelineStatus:
       enum:
       - active
@@ -11091,77 +11162,6 @@ components:
           description: The type of error.
           type: string
       required:
-      - type
-      type: object
-    PipelineSource_oneOf:
-      properties:
-        list_id:
-          format: int32
-          type: integer
-        type:
-          enum:
-          - list_snapshot
-          type: string
-      required:
-      - list_id
-      - type
-      type: object
-    PipelineSource_oneOf_1:
-      properties:
-        audience_id:
-          type: string
-        connection_id:
-          type: string
-        field_mapping: {}
-        provider:
-          type: string
-        type:
-          enum:
-          - integration
-          type: string
-      required:
-      - audience_id
-      - connection_id
-      - provider
-      - type
-      type: object
-    PipelineSource_oneOf_2:
-      properties:
-        accepted_format:
-          type: string
-        token_id:
-          type: string
-        type:
-          enum:
-          - push
-          type: string
-      required:
-      - accepted_format
-      - token_id
-      - type
-      type: object
-    PipelineSource_oneOf_3:
-      properties:
-        bucket:
-          type: string
-        path_pattern:
-          nullable: true
-          type: string
-        prefix:
-          nullable: true
-          type: string
-        provider:
-          type: string
-        region:
-          nullable: true
-          type: string
-        type:
-          enum:
-          - bucket
-          type: string
-      required:
-      - bucket
-      - provider
       - type
       type: object
     SegmentFilter_category:

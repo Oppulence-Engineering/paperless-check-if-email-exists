@@ -3067,84 +3067,96 @@
 				},
 				"oneOf": [
 					{
-						"properties": {
-							"list_id": {
-								"format": "int32",
-								"type": "integer"
-							},
-							"type": {
-								"enum": ["list_snapshot"],
-								"type": "string"
-							}
-						},
-						"required": ["list_id", "type"],
-						"type": "object"
+						"$ref": "#/components/schemas/PipelineSource_oneOf"
 					},
 					{
-						"properties": {
-							"audience_id": {
-								"type": "string"
-							},
-							"connection_id": {
-								"type": "string"
-							},
-							"field_mapping": {},
-							"provider": {
-								"type": "string"
-							},
-							"type": {
-								"enum": ["integration"],
-								"type": "string"
-							}
-						},
-						"required": ["provider", "connection_id", "audience_id", "type"],
-						"type": "object"
+						"$ref": "#/components/schemas/PipelineSource_oneOf_1"
 					},
 					{
-						"properties": {
-							"accepted_format": {
-								"type": "string"
-							},
-							"token_id": {
-								"type": "string"
-							},
-							"type": {
-								"enum": ["push"],
-								"type": "string"
-							}
-						},
-						"required": ["token_id", "accepted_format", "type"],
-						"type": "object"
+						"$ref": "#/components/schemas/PipelineSource_oneOf_2"
 					},
 					{
-						"properties": {
-							"bucket": {
-								"type": "string"
-							},
-							"path_pattern": {
-								"nullable": true,
-								"type": "string"
-							},
-							"prefix": {
-								"nullable": true,
-								"type": "string"
-							},
-							"provider": {
-								"type": "string"
-							},
-							"region": {
-								"nullable": true,
-								"type": "string"
-							},
-							"type": {
-								"enum": ["bucket"],
-								"type": "string"
-							}
-						},
-						"required": ["provider", "bucket", "type"],
-						"type": "object"
+						"$ref": "#/components/schemas/PipelineSource_oneOf_3"
 					}
 				]
+			},
+			"PipelineSource_oneOf": {
+				"properties": {
+					"list_id": {
+						"format": "int32",
+						"type": "integer"
+					},
+					"type": {
+						"enum": ["list_snapshot"],
+						"type": "string"
+					}
+				},
+				"required": ["list_id", "type"],
+				"type": "object"
+			},
+			"PipelineSource_oneOf_1": {
+				"properties": {
+					"audience_id": {
+						"type": "string"
+					},
+					"connection_id": {
+						"type": "string"
+					},
+					"field_mapping": {},
+					"provider": {
+						"type": "string"
+					},
+					"type": {
+						"enum": ["integration"],
+						"type": "string"
+					}
+				},
+				"required": ["provider", "connection_id", "audience_id", "type"],
+				"type": "object"
+			},
+			"PipelineSource_oneOf_2": {
+				"properties": {
+					"accepted_format": {
+						"type": "string"
+					},
+					"token_id": {
+						"type": "string"
+					},
+					"type": {
+						"enum": ["push"],
+						"type": "string"
+					}
+				},
+				"required": ["token_id", "accepted_format", "type"],
+				"type": "object"
+			},
+			"PipelineSource_oneOf_3": {
+				"properties": {
+					"bucket": {
+						"type": "string"
+					},
+					"path_pattern": {
+						"nullable": true,
+						"type": "string"
+					},
+					"prefix": {
+						"nullable": true,
+						"type": "string"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"region": {
+						"nullable": true,
+						"type": "string"
+					},
+					"type": {
+						"enum": ["bucket"],
+						"type": "string"
+					}
+				},
+				"required": ["provider", "bucket", "type"],
+				"type": "object"
 			},
 			"PipelineStatus": {
 				"enum": ["active", "paused", "deleted"],

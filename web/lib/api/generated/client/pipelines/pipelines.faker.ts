@@ -19,10 +19,80 @@ import type {
   ListPipelineRunsResponse,
   ListPipelinesResponse,
   PipelineRunView,
+  PipelineSourceOneOf,
+  PipelineSourceOneOf1,
+  PipelineSourceOneOf2,
+  PipelineSourceOneOf3,
   PipelineView,
   PushPipelineResponse,
   TriggerPipelineResponse,
 } from "../model";
+
+export const getV1ListPipelinesResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ListPipelinesResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ListPipelinesResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ListPipelinesResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
+  },
+  ...overrideResponse,
+});
 
 export const getV1ListPipelinesResponseMock = (
   overrideResponse: Partial<Extract<ListPipelinesResponse, object>> = {},
@@ -95,48 +165,10 @@ export const getV1ListPipelinesResponseMock = (
       timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
     },
     source: faker.helpers.arrayElement([
-      {
-        list_id: faker.number.int(),
-        type: faker.helpers.arrayElement(["list_snapshot"] as const),
-      },
-      {
-        audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        field_mapping: faker.helpers.arrayElement([{}, undefined]),
-        provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        type: faker.helpers.arrayElement(["integration"] as const),
-      },
-      {
-        accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        type: faker.helpers.arrayElement(["push"] as const),
-      },
-      {
-        bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        path_pattern: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([
-            faker.string.alpha({ length: { min: 10, max: 20 } }),
-            null,
-          ]),
-          undefined,
-        ]),
-        prefix: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([
-            faker.string.alpha({ length: { min: 10, max: 20 } }),
-            null,
-          ]),
-          undefined,
-        ]),
-        provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        region: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([
-            faker.string.alpha({ length: { min: 10, max: 20 } }),
-            null,
-          ]),
-          undefined,
-        ]),
-        type: faker.helpers.arrayElement(["bucket"] as const),
-      },
+      { ...getV1ListPipelinesResponsePipelineSourceOneOfMock() },
+      { ...getV1ListPipelinesResponsePipelineSourceOneOf1Mock() },
+      { ...getV1ListPipelinesResponsePipelineSourceOneOf2Mock() },
+      { ...getV1ListPipelinesResponsePipelineSourceOneOf3Mock() },
     ]),
     status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
     tenant_id: faker.string.uuid(),
@@ -153,6 +185,72 @@ export const getV1ListPipelinesResponseMock = (
     },
   })),
   total: faker.number.int(),
+  ...overrideResponse,
+});
+
+export const getV1CreatePipelineResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1CreatePipelineResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1CreatePipelineResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1CreatePipelineResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
+  },
   ...overrideResponse,
 });
 
@@ -223,48 +321,10 @@ export const getV1CreatePipelineResponseMock = (
     timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
   source: faker.helpers.arrayElement([
-    {
-      list_id: faker.number.int(),
-      type: faker.helpers.arrayElement(["list_snapshot"] as const),
-    },
-    {
-      audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      field_mapping: faker.helpers.arrayElement([{}, undefined]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["integration"] as const),
-    },
-    {
-      accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["push"] as const),
-    },
-    {
-      bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      path_pattern: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      prefix: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      region: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      type: faker.helpers.arrayElement(["bucket"] as const),
-    },
+    { ...getV1CreatePipelineResponsePipelineSourceOneOfMock() },
+    { ...getV1CreatePipelineResponsePipelineSourceOneOf1Mock() },
+    { ...getV1CreatePipelineResponsePipelineSourceOneOf2Mock() },
+    { ...getV1CreatePipelineResponsePipelineSourceOneOf3Mock() },
   ]),
   status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
   tenant_id: faker.string.uuid(),
@@ -286,6 +346,72 @@ export const getV1DeletePipelineResponseMock = (
   overrideResponse: Partial<Extract<DeletePipelineResponse, object>> = {},
 ): DeletePipelineResponse => ({
   deleted: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getV1GetPipelineResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1GetPipelineResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1GetPipelineResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1GetPipelineResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
+  },
   ...overrideResponse,
 });
 
@@ -356,48 +482,10 @@ export const getV1GetPipelineResponseMock = (
     timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
   source: faker.helpers.arrayElement([
-    {
-      list_id: faker.number.int(),
-      type: faker.helpers.arrayElement(["list_snapshot"] as const),
-    },
-    {
-      audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      field_mapping: faker.helpers.arrayElement([{}, undefined]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["integration"] as const),
-    },
-    {
-      accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["push"] as const),
-    },
-    {
-      bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      path_pattern: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      prefix: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      region: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      type: faker.helpers.arrayElement(["bucket"] as const),
-    },
+    { ...getV1GetPipelineResponsePipelineSourceOneOfMock() },
+    { ...getV1GetPipelineResponsePipelineSourceOneOf1Mock() },
+    { ...getV1GetPipelineResponsePipelineSourceOneOf2Mock() },
+    { ...getV1GetPipelineResponsePipelineSourceOneOf3Mock() },
   ]),
   status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
   tenant_id: faker.string.uuid(),
@@ -411,6 +499,72 @@ export const getV1GetPipelineResponseMock = (
       faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
+  },
+  ...overrideResponse,
+});
+
+export const getV1UpdatePipelineResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1UpdatePipelineResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1UpdatePipelineResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1UpdatePipelineResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
   },
   ...overrideResponse,
 });
@@ -482,48 +636,10 @@ export const getV1UpdatePipelineResponseMock = (
     timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
   source: faker.helpers.arrayElement([
-    {
-      list_id: faker.number.int(),
-      type: faker.helpers.arrayElement(["list_snapshot"] as const),
-    },
-    {
-      audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      field_mapping: faker.helpers.arrayElement([{}, undefined]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["integration"] as const),
-    },
-    {
-      accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["push"] as const),
-    },
-    {
-      bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      path_pattern: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      prefix: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      region: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      type: faker.helpers.arrayElement(["bucket"] as const),
-    },
+    { ...getV1UpdatePipelineResponsePipelineSourceOneOfMock() },
+    { ...getV1UpdatePipelineResponsePipelineSourceOneOf1Mock() },
+    { ...getV1UpdatePipelineResponsePipelineSourceOneOf2Mock() },
+    { ...getV1UpdatePipelineResponsePipelineSourceOneOf3Mock() },
   ]),
   status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
   tenant_id: faker.string.uuid(),
@@ -537,6 +653,72 @@ export const getV1UpdatePipelineResponseMock = (
       faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
+  },
+  ...overrideResponse,
+});
+
+export const getV1PausePipelineResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1PausePipelineResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1PausePipelineResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1PausePipelineResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
   },
   ...overrideResponse,
 });
@@ -608,48 +790,10 @@ export const getV1PausePipelineResponseMock = (
     timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
   source: faker.helpers.arrayElement([
-    {
-      list_id: faker.number.int(),
-      type: faker.helpers.arrayElement(["list_snapshot"] as const),
-    },
-    {
-      audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      field_mapping: faker.helpers.arrayElement([{}, undefined]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["integration"] as const),
-    },
-    {
-      accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["push"] as const),
-    },
-    {
-      bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      path_pattern: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      prefix: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      region: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      type: faker.helpers.arrayElement(["bucket"] as const),
-    },
+    { ...getV1PausePipelineResponsePipelineSourceOneOfMock() },
+    { ...getV1PausePipelineResponsePipelineSourceOneOf1Mock() },
+    { ...getV1PausePipelineResponsePipelineSourceOneOf2Mock() },
+    { ...getV1PausePipelineResponsePipelineSourceOneOf3Mock() },
   ]),
   status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
   tenant_id: faker.string.uuid(),
@@ -675,6 +819,72 @@ export const getV1PushPipelineResponseMock = (
   replayed: faker.datatype.boolean(),
   run_id: faker.number.int(),
   status: faker.helpers.arrayElement(Object.values(PipelineRunStatus)),
+  ...overrideResponse,
+});
+
+export const getV1ResumePipelineResponsePipelineSourceOneOfMock = (
+  overrideResponse: Partial<PipelineSourceOneOf> = {},
+): PipelineSourceOneOf => ({
+  ...{
+    list_id: faker.number.int(),
+    type: faker.helpers.arrayElement(["list_snapshot"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ResumePipelineResponsePipelineSourceOneOf1Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf1> = {},
+): PipelineSourceOneOf1 => ({
+  ...{
+    audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    field_mapping: faker.helpers.arrayElement([{}, undefined]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["integration"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ResumePipelineResponsePipelineSourceOneOf2Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf2> = {},
+): PipelineSourceOneOf2 => ({
+  ...{
+    accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.helpers.arrayElement(["push"] as const),
+  },
+  ...overrideResponse,
+});
+
+export const getV1ResumePipelineResponsePipelineSourceOneOf3Mock = (
+  overrideResponse: Partial<PipelineSourceOneOf3> = {},
+): PipelineSourceOneOf3 => ({
+  ...{
+    bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    path_pattern: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    prefix: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    region: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.helpers.arrayElement(["bucket"] as const),
+  },
   ...overrideResponse,
 });
 
@@ -745,48 +955,10 @@ export const getV1ResumePipelineResponseMock = (
     timezone: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
   source: faker.helpers.arrayElement([
-    {
-      list_id: faker.number.int(),
-      type: faker.helpers.arrayElement(["list_snapshot"] as const),
-    },
-    {
-      audience_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      connection_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      field_mapping: faker.helpers.arrayElement([{}, undefined]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["integration"] as const),
-    },
-    {
-      accepted_format: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      token_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      type: faker.helpers.arrayElement(["push"] as const),
-    },
-    {
-      bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      path_pattern: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      prefix: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      region: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
-      ]),
-      type: faker.helpers.arrayElement(["bucket"] as const),
-    },
+    { ...getV1ResumePipelineResponsePipelineSourceOneOfMock() },
+    { ...getV1ResumePipelineResponsePipelineSourceOneOf1Mock() },
+    { ...getV1ResumePipelineResponsePipelineSourceOneOf2Mock() },
+    { ...getV1ResumePipelineResponsePipelineSourceOneOf3Mock() },
   ]),
   status: faker.helpers.arrayElement(Object.values(PipelineStatus)),
   tenant_id: faker.string.uuid(),
