@@ -6,6 +6,7 @@
 		"components/auth/",
 		"components/dev/",
 		"components/legal/",
+		"components/platform/",
 		"components/providers/",
 		"components/sim/"
 	],

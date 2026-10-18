@@ -7,14 +7,17 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-	/* Marketing/legal inherit the root Inter file instead of loading a second one. */
-	--font-marketing-sans: var(--font-inter);
+	/* Marketing and legal use the root Geist file, as screenshot-studio does. */
+	--font-marketing-sans: var(--font-geist-sans);
+	--font-marketing-mono: var(--font-geist-mono);
 }
 
 @theme inline {
-	--font-sans: var(--font-inter);
+	--font-sans:
+		var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	--font-serif: Georgia, serif;
 	--font-display: var(--font-f37-stout);
-	--font-mono: var(--font-geist-mono);
+	--font-mono: var(--font-geist-mono), "Fira Code", monospace;
 	--font-f37-stout: var(--font-f37-stout);
 	--color-background: var(--background);
 	--color-background-50: var(--background-50);
@@ -71,11 +74,26 @@
 	--color-code-number: var(--code-number);
 	--color-selection: var(--selection);
 	--color-selection-foreground: var(--selection-foreground);
-	--radius: var(--radius);
-	--radius-sm: 0;
-	--radius-md: 0;
-	--radius-lg: 0;
-	--radius-xl: 0;
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--shadow-2xs: var(--shadow-2xs);
+	--shadow-xs: var(--shadow-xs);
+	--shadow-sm: var(--shadow-sm);
+	--shadow: var(--shadow);
+	--shadow-md: var(--shadow-md);
+	--shadow-lg: var(--shadow-lg);
+	--shadow-xl: var(--shadow-xl);
+	--shadow-2xl: var(--shadow-2xl);
+
+	--tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+	--tracking-tight: calc(var(--tracking-normal) - 0.025em);
+	--tracking-normal: var(--tracking-normal);
+	--tracking-wide: calc(var(--tracking-normal) + 0.025em);
+	--tracking-wider: calc(var(--tracking-normal) + 0.05em);
+	--tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
 
 /*
@@ -1054,59 +1072,78 @@
 	}
 }
 
+/*
+ * Tokens copied from screenshot-studio (app/globals.css). The app is dark
+ * only, so `.dark` is the live set. The `--background-*` steps, brand, code,
+ * and selection tokens are app extras that the vendored UI reads.
+ */
 :root {
-	--polar-50: #d7d8da;
-	--polar-100: #c7c8cc;
-	--polar-200: #aaabb1;
-	--polar-300: #9a9ba2;
-	--polar-400: #808189;
-	--polar-500: #71727a;
-	--polar-600: #27282a;
-	--polar-700: #1d1e20;
-	--polar-800: #171719;
-	--polar-900: #101011;
-	--polar-950: #090909;
-	--background: #f9fafb;
-	--background-50: #f7f8f9;
-	--background-100: #f3f4f6;
-	--background-200: #edeef1;
-	--background-300: #e5e7eb;
-	--background-400: #d7d8da;
-	--background-500: #c7c8cc;
-	--background-600: #aaabb1;
-	--background-700: #9a9ba2;
-	--foreground: oklch(14.5% 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(14.5% 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(14.5% 0 0);
-	--primary: oklch(20.5% 0 0);
-	--primary-foreground: oklch(98.5% 0 0);
-	--secondary: var(--background-100);
-	--secondary-foreground: oklch(20.5% 0 0);
-	--muted: var(--background-100);
-	--muted-foreground: #6a7282;
-	--accent: var(--background-200);
-	--accent-foreground: oklch(20.5% 0 0);
-	--destructive: oklch(80% 0.22 31);
-	--destructive-foreground: oklch(80% 0.22 31);
-	--border: #e5e7eb;
-	--input: #e5e7eb;
-	--ring: oklch(70.8% 0 0);
-	--radius: 0;
-	--sidebar: hsl(0 0% 98%);
-	--sidebar-foreground: hsl(240 5.3% 26.1%);
-	--sidebar-primary: hsl(240 5.9% 10%);
-	--sidebar-primary-foreground: hsl(0 0% 98%);
-	--sidebar-accent: hsl(240 4.8% 95.9%);
-	--sidebar-accent-foreground: hsl(240 5.9% 10%);
-	--sidebar-border: hsl(220 13% 91%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
-	--chart-1: oklch(0.646 0.222 41.116);
-	--chart-2: oklch(0.6 0.118 184.704);
-	--chart-3: oklch(0.398 0.07 227.392);
-	--chart-4: oklch(0.828 0.189 84.429);
-	--chart-5: oklch(0.769 0.188 70.08);
+	--background: #ffffff;
+	--background-50: #f5f5f5;
+	--background-100: #f0f0f0;
+	--background-200: #e5e5e5;
+	--background-300: #d4d4d4;
+	--background-400: #a3a3a3;
+	--background-500: #858585;
+	--background-600: #757575;
+	--background-700: #525252;
+	--foreground: #1e1e1e;
+	--card: #f5f5f5;
+	--card-foreground: #1e1e1e;
+	--popover: #ffffff;
+	--popover-foreground: #1e1e1e;
+	--primary: #0a0a0a;
+	--primary-foreground: #ffffff;
+	--secondary: #f0f0f0;
+	--secondary-foreground: #1e1e1e;
+	--muted: #f5f5f5;
+	--muted-foreground: #757575;
+	--accent: #f0f0f0;
+	--accent-foreground: #1e1e1e;
+	--destructive: #f44336;
+	--destructive-foreground: #ffffff;
+	--border: #e5e5e5;
+	--input: #e5e5e5;
+	--ring: #737373;
+	--chart-1: #0a0a0a;
+	--chart-2: #737373;
+	--chart-3: #ff9500;
+	--chart-4: #af52de;
+	--chart-5: #ff3b30;
+	--sidebar: #ffffff;
+	--sidebar-foreground: #1e1e1e;
+	--sidebar-primary: #0a0a0a;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #f0f0f0;
+	--sidebar-accent-foreground: #1e1e1e;
+	--sidebar-border: #e5e5e5;
+	--sidebar-ring: #737373;
+	--radius: 0.5rem;
+	--shadow-x: 0px;
+	--shadow-y: 2px;
+	--shadow-blur: 10px;
+	--shadow-spread: 0px;
+	--shadow-opacity: 0.05;
+	--shadow-color: #000000;
+	--shadow-2xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
+	--shadow-xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
+	--shadow-sm: 0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+	--shadow: 0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+	--shadow-md: 0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+	--shadow-lg: 0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+	--shadow-xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
+	--shadow-2xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.13);
+	--tracking-normal: -0.01em;
+	--spacing: 0.25rem;
+	--nav-cta-bg: #ffffff;
+	--nav-cta-fg: #0a0a0a;
+	--nav-cta-glow: rgba(255, 255, 255, 0.5);
+	--nav-cta-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	--nav-cta-hover-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.1), 0 3px 5px var(--nav-cta-glow),
+		inset 0 1px 0 rgba(255, 255, 255, 0.25);
+	--card-highlight-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.06);
+	--card-edge-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	--oppulence-pink: hsla(314, 100%, 80%, 1);
 	--oppulence-yellow: hsla(38, 92%, 50%, 1);
 	--oppulence-yellow-100: hsla(45, 70%, 88%, 1);
@@ -1116,57 +1153,81 @@
 	--oppulence-green: hsla(96, 48%, 38%, 1);
 	--brand: hsla(96, 48%, 38%, 1);
 	--brand-bar: hsla(86, 52%, 64%, 1);
-	--surface: oklch(0.98 0 0);
+	--surface: #f5f5f5;
 	--surface-foreground: var(--foreground);
 	--code: var(--surface);
 	--code-foreground: var(--surface-foreground);
-	--code-highlight: oklch(0.96 0 0);
-	--code-number: oklch(0.56 0 0);
-	--selection: oklch(0.145 0 0);
-	--selection-foreground: oklch(1 0 0);
+	--code-highlight: #f0f0f0;
+	--code-number: #757575;
+	--selection: #0a0a0a;
+	--selection-foreground: #ffffff;
 }
 
 .dark {
-	--background: var(--polar-950);
-	--background-50: var(--polar-900);
-	--background-100: var(--polar-800);
-	--background-200: var(--polar-700);
-	--background-300: var(--polar-600);
-	--background-400: #303134;
-	--background-500: #3c3d41;
-	--background-600: #4c4d53;
-	--background-700: #606168;
-	--foreground: #f7f7f8;
-	--card: var(--polar-900);
-	--card-foreground: var(--polar-50);
-	--popover: var(--polar-900);
-	--popover-foreground: var(--polar-50);
+	--background: #090909;
+	--background-50: #111111;
+	--background-100: #161616;
+	--background-200: #1a1a1a;
+	--background-300: #212121;
+	--background-400: #2a2a2a;
+	--background-500: #3a3a3a;
+	--background-600: #4a4a4a;
+	--background-700: #5f5f5f;
+	--foreground: #ededed;
+	--card: #111111;
+	--card-foreground: #ededed;
+	--popover: #111111;
+	--popover-foreground: #ededed;
 	--primary: #ffffff;
-	--primary-foreground: var(--polar-950);
-	--secondary: var(--polar-800);
-	--secondary-foreground: var(--polar-50);
-	--muted: var(--polar-800);
-	--muted-foreground: var(--polar-300);
-	--accent: var(--polar-700);
-	--accent-foreground: var(--polar-50);
-	--destructive: oklch(80% 0.22 31);
-	--destructive-foreground: oklch(80% 0.22 31);
-	--border: var(--polar-700);
-	--input: var(--polar-700);
-	--ring: var(--polar-500);
-	--sidebar: var(--polar-950);
-	--sidebar-foreground: var(--polar-50);
+	--primary-foreground: #0a0a0a;
+	--secondary: #161616;
+	--secondary-foreground: #ededed;
+	--muted: #161616;
+	--muted-foreground: #858585;
+	--accent: #1a1a1a;
+	--accent-foreground: #ffffff;
+	--destructive: #ff453a;
+	--destructive-foreground: #ffffff;
+	--border: #212121;
+	--input: #212121;
+	--ring: #858585;
+	--chart-1: #ffffff;
+	--chart-2: #a3a3a3;
+	--chart-3: #ff9f0a;
+	--chart-4: #bf5af2;
+	--chart-5: #ff453a;
+	--sidebar: #090909;
+	--sidebar-foreground: #ededed;
 	--sidebar-primary: #ffffff;
-	--sidebar-primary-foreground: var(--polar-950);
-	--sidebar-accent: var(--polar-800);
-	--sidebar-accent-foreground: var(--polar-50);
-	--sidebar-border: var(--polar-700);
-	--sidebar-ring: var(--polar-500);
-	--chart-1: oklch(0.488 0.243 264.376);
-	--chart-2: oklch(0.696 0.17 162.48);
-	--chart-3: oklch(0.769 0.188 70.08);
-	--chart-4: oklch(0.627 0.265 303.9);
-	--chart-5: oklch(0.645 0.246 16.439);
+	--sidebar-primary-foreground: #0a0a0a;
+	--sidebar-accent: #161616;
+	--sidebar-accent-foreground: #ffffff;
+	--sidebar-border: #212121;
+	--sidebar-ring: #858585;
+	--radius: 0.75rem;
+	--shadow-x: 0px;
+	--shadow-y: 4px;
+	--shadow-blur: 12px;
+	--shadow-spread: 0px;
+	--shadow-opacity: 0.3;
+	--shadow-color: #000000;
+	--shadow-2xs: 0px 4px 12px 0px hsl(0 0% 0% / 0.15);
+	--shadow-xs: 0px 4px 12px 0px hsl(0 0% 0% / 0.15);
+	--shadow-sm: 0px 4px 12px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
+	--shadow: 0px 4px 12px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
+	--shadow-md: 0px 4px 12px 0px hsl(0 0% 0% / 0.3), 0px 2px 4px -1px hsl(0 0% 0% / 0.3);
+	--shadow-lg: 0px 4px 12px 0px hsl(0 0% 0% / 0.3), 0px 4px 6px -1px hsl(0 0% 0% / 0.3);
+	--shadow-xl: 0px 4px 12px 0px hsl(0 0% 0% / 0.3), 0px 8px 10px -1px hsl(0 0% 0% / 0.3);
+	--shadow-2xl: 0px 4px 12px 0px hsl(0 0% 0% / 0.75);
+	--nav-cta-bg: #ffffff;
+	--nav-cta-fg: #0a0a0a;
+	--nav-cta-glow: rgba(255, 255, 255, 0.5);
+	--nav-cta-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	--nav-cta-hover-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.1), 0 3px 5px var(--nav-cta-glow),
+		inset 0 1px 0 rgba(255, 255, 255, 0.25);
+	--card-highlight-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+	--card-edge-shadow: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
 	--oppulence-pink: hsla(314, 100%, 85%, 1);
 	--oppulence-yellow: hsla(58, 92%, 79%, 1);
 	--oppulence-yellow-100: hsla(58, 70%, 20%, 1);
@@ -1174,74 +1235,98 @@
 	--oppulence-blue: hsla(218, 91%, 78%, 1);
 	--oppulence-orange: hsla(19, 99%, 50%, 1);
 	--oppulence-green: hsla(156, 86%, 64%, 1);
-	--surface: oklch(0.2 0 0);
-	--surface-foreground: oklch(0.708 0 0);
+	--surface: #111111;
+	--surface-foreground: #a3a3a3;
 	--code: var(--surface);
 	--code-foreground: var(--surface-foreground);
-	--code-highlight: oklch(0.27 0 0);
-	--code-number: oklch(0.72 0 0);
-	--selection: oklch(0.922 0 0);
-	--selection-foreground: oklch(0.205 0 0);
+	--code-highlight: #1a1a1a;
+	--code-number: #858585;
+	--selection: #ededed;
+	--selection-foreground: #0a0a0a;
 }
 
 @layer base {
 	:root {
-		/*
-     * Global visual density. Zoom shrinks layout contribution in the viewport;
-     * --app-vh compensates so svh shells still fill the screen after scaling.
-     */
-		--app-zoom: 0.8;
-		--app-vh: calc(100svh / var(--app-zoom));
+		/* screenshot-studio renders at full size; the old 0.8 density zoom is off. */
+		--app-zoom: 1;
+		--app-vh: 100svh;
 	}
 
 	* {
 		@apply border-border outline-ring/50;
 	}
-
 	html {
-		@apply scroll-smooth;
+		height: 100%;
 	}
-
 	body {
 		@apply bg-background text-foreground;
-		font-synthesis-weight: none;
-		text-rendering: optimizeLegibility;
-		zoom: var(--app-zoom);
-		min-height: var(--app-vh);
+		letter-spacing: var(--tracking-normal);
+		min-height: 100%;
+		width: 100%;
+		overflow-x: hidden;
+		overflow-y: auto;
 	}
 
-	/*
-   * Auth uses the marketing split layout at full size. Body zoom + --app-vh
-   * compensation is for the product shell only; leaving it on sign-in shrinks
-   * the page and leaves a dark band below the white auth canvas.
-   */
-	body:has([data-auth-route]) {
-		--app-vh: 100svh;
-		zoom: 1;
-		min-height: 100svh;
-		overflow: hidden;
-		background: #ffffff;
+	/* Improve touch targets on mobile */
+	button,
+	a,
+	[role="button"] {
+		@apply touch-manipulation;
 	}
 
-	html:has([data-auth-route]) {
-		height: 100%;
-		background: #ffffff;
+	@media (max-width: 768px) {
+		button:not([class*="size"]):not([class*="h-"]),
+		a:not([class*="size"]):not([class*="h-"]),
+		[role="button"]:not([class*="size"]):not([class*="h-"]) {
+			min-height: 44px;
+		}
+	}
+
+	/* Prevent iOS zoom on focus — only enforce 16px on mobile */
+	@media (max-width: 768px) {
+		input,
+		textarea,
+		select {
+			font-size: 16px;
+		}
+	}
+
+	* {
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+
+	/* Scrollbar - minimal */
+	*::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+	*::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	*::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 3px;
+	}
+	*::-webkit-scrollbar-thumb:hover {
+		background: var(--muted-foreground);
+	}
+	*::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
 	}
 }
 
 @layer utilities {
 	.app-vh-shell {
 		height: var(--app-vh);
-	}
-
-	/*
-   * Body zoom shrinks layout but breaks Radix/Floating UI fixed positioning.
-   * Counter-scale portalled overlays on marketing/legal routes only; the
-   * authenticated shell uses transform scale on [data-product-shell] instead.
-   */
-	body:not(:has([data-product-shell])):not(:has([data-auth-route]))
-		[data-radix-popper-content-wrapper] {
-		zoom: calc(1 / var(--app-zoom));
 	}
 
 	.min-h-app-vh {
