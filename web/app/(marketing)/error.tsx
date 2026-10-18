@@ -15,14 +15,14 @@ export default function MarketingError({
 	return (
 		<main className="flex min-h-[60vh] items-center justify-center px-6">
 			<section className="flex max-w-md flex-col items-center gap-4 text-center" role="alert">
-				<h1 className="font-medium text-[var(--text-primary)] text-[28px] leading-tight">
+				<h1 className="text-[28px] leading-tight tracking-[-0.02em] text-white">
 					This page could not be loaded
 				</h1>
-				<p className="text-[15px] text-[var(--text-body)] leading-6">
+				<p className="text-[15px] leading-6 text-[#858585]">
 					Try again. If it keeps failing, go back to the homepage.
 				</p>
 				<Button
-					className="rounded-none border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-[14px] text-[var(--text-primary)]"
+					className="h-11 rounded-full bg-white px-5 text-[15px] font-medium text-black hover:bg-white/90"
 					onClick={() => retry()}
 					type="button"
 				>

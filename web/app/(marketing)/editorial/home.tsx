@@ -1,10 +1,23 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 
+import { ArrowLink, FaqBlock, LinkCards, SplitFeature } from "@/components/platform/landing/blocks";
+import { CtaLink } from "@/components/platform/landing/cta-link";
+import {
+	CONTAINER,
+	Check,
+	MONO,
+	MUTED,
+	Section,
+	SectionIntro,
+	Stage,
+} from "@/components/platform/landing/primitives";
 import { ArrowRight } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
-import { pricingPlans } from "../marketing-data";
+import { homepageFaqs } from "../catalog";
+import { headerNav } from "../site";
+import { PAGE_COMPARE } from "./capability-content";
 import {
 	ApiTerminal,
 	CheckPipeline,
@@ -12,14 +25,13 @@ import {
 	FeedbackFlow,
 	HeroConsole,
 	ListSortDemo,
-	PlatformMarquee,
 	QualityFigure,
 	RecheckDialFigure,
-	Reveal,
 	ScoreScaleFigure,
 	SingleCheckDemo,
 	SuppressionDemo,
 } from "./graphics";
+import { AmazonSesLogo, ApiLogo, CsvLogo, MailgunLogo, PostmarkLogo, SendGridLogo } from "./logos";
 import {
 	FeedbackStreamMini,
 	IntegrationChipsMini,
@@ -30,178 +42,179 @@ import {
 	SuppressionMini,
 	TeamMini,
 } from "./mocks";
-import {
-	AppWindow,
-	ArrowTile,
-	ButtonLink,
-	Container,
-	Display,
-	Eyebrow,
-	Lead,
-	Muted,
-	Section,
-	Sheet,
-	Stage,
-} from "./ui";
+import { PlanCards } from "./pricing";
+import { AppWindow, Sheet } from "./ui";
 import { UseCaseTabs } from "./use-case-tabs";
 
 /*
- * Home page in the polar.sh order: a centered hero over a live product
- * console, a platform strip, building blocks, the platform, how a check
- * works, a flow diagram, list quality, the API, pricing, and the closing
- * call to action from the shell.
+ * Home page in the screenshot-studio `PlatformLanding` order: a split hero
+ * over the product console, the platforms strip, figures on hairline rows,
+ * a before and after, the features, the API, pricing, and questions. The
+ * shell adds the closing call to action and the footer.
  */
 
-const CAPABILITIES = [
-	{ label: "Single checks", href: "/features/single-checks" },
-	{ label: "List cleaning", href: "/features/list-cleaning" },
-	{ label: "Scores and reasons", href: "/features/risk-scoring" },
-	{ label: "Suppression list", href: "/features/suppressions" },
-	{ label: "Delivery feedback", href: "/features/delivery-feedback" },
+const STACK: { logo: ComponentType<SVGProps<SVGSVGElement>>; name: string }[] = [
+	{ logo: SendGridLogo, name: "SendGrid" },
+	{ logo: MailgunLogo, name: "Mailgun" },
+	{ logo: PostmarkLogo, name: "Postmark" },
+	{ logo: AmazonSesLogo, name: "Amazon SES" },
+	{ logo: CsvLogo, name: "CSV files" },
+	{ logo: ApiLogo, name: "REST API" },
 ];
 
-/** Two-line section heading: the first line in white, the second in gray. */
-function Heading({
-	id,
-	eyebrow,
-	title,
-	muted,
-	body,
-	center = false,
-	className,
-}: {
-	id: string;
-	eyebrow?: string;
-	title: string;
-	muted: string;
-	body?: ReactNode;
-	center?: boolean;
-	className?: string;
-}) {
-	return (
-		<Reveal className={cn(center && "mx-auto text-center", className)}>
-			{eyebrow ? <Eyebrow className="mb-4">{eyebrow}</Eyebrow> : null}
-			<Display className={cn("max-w-[24ch]", center && "mx-auto")} id={id} size="md">
-				<span className="block">{title}</span>
-				<Muted>{muted}</Muted>
-			</Display>
-			{body ? <Lead className={cn("mt-5 max-w-[56ch]", center && "mx-auto")}>{body}</Lead> : null}
-		</Reveal>
-	);
-}
-
-/* 1. Hero: centered statement, capability links, and the live console. */
+/* Hero: split headline, the console on a stage, and the platforms strip. */
 function Hero() {
 	return (
-		<section className="bg-[var(--ed-bg)] pt-16 pb-20 sm:pt-24 lg:pt-28">
-			<Container>
-				<Reveal className="flex flex-col items-center text-center">
-					<Link
-						className="ed-sans mb-8 inline-flex items-center gap-2 rounded-full border border-[var(--ed-line)] bg-[var(--ed-subtle)] py-1 pr-3 pl-1 text-[13px] text-[var(--ed-body)] transition-colors hover:text-[var(--ed-ink)]"
-						href="/pricing"
-					>
-						<span className="rounded-full bg-[var(--ed-ink)] px-2 py-0.5 text-[11px] font-[550] text-[var(--ed-bg)]">
-							Free
-						</span>
-						100 checks every month
-						<ArrowRight aria-hidden="true" className="size-3.5" />
-					</Link>
-					<h1 className="ed-display max-w-[18ch] text-[44px] leading-[1.08] text-[var(--ed-ink)] sm:text-[60px] lg:text-[72px]">
-						Check email addresses <Muted>before you send.</Muted>
-					</h1>
-					<p className="ed-sans mt-6 max-w-[48ch] text-[16px] leading-[1.55] font-[450] text-[var(--ed-body)] sm:text-[18px]">
+		<section className={cn(CONTAINER, "pt-16 sm:pt-24")}>
+			<Link
+				className="inline-flex h-8 items-center gap-2 rounded-full border border-[#2a2a2a] pr-3 pl-1 text-[13px] transition-colors hover:border-[#3a3a3a]"
+				href="/pricing"
+			>
+				<span
+					className={cn(
+						MONO,
+						"rounded-full bg-white px-2 py-0.5 text-[10px] font-medium tracking-[0.06em] text-black uppercase",
+					)}
+				>
+					Free
+				</span>
+				<span className="text-white">100 checks every month</span>
+				<span className={cn("hidden sm:inline", MUTED)}>· No email is sent during a check</span>
+				<ArrowRight aria-hidden="true" className="size-3.5 text-white/60" />
+			</Link>
+
+			<div className="mt-8 grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:items-end lg:gap-16">
+				<h1 className="text-[46px] leading-[0.98] tracking-[-0.035em] text-balance sm:text-[64px] lg:text-[72px]">
+					<span className="block text-white">Check email addresses</span>{" "}
+					<span className={cn("block", MUTED)}>before you send.</span>
+				</h1>
+				<div className="lg:pb-2">
+					<p className="max-w-[46ch] text-lg leading-[1.5] text-white/65">
 						Find invalid and risky addresses before they bounce. Clean whole lists, suppress what
 						bounced, and protect your sender reputation.
 					</p>
-					<div className="mt-9 flex flex-wrap justify-center gap-2.5">
-						<ButtonLink arrow href="/sign-up" size="md">
-							Get started free
-						</ButtonLink>
+					<div className="mt-8 flex flex-wrap gap-3">
+						<CtaLink href="/sign-up" label="Get started free" />
+						<CtaLink href="/contact" label="Talk to us" tone="secondary" />
 					</div>
-					<ul className="ed-sans mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[14px] text-[var(--ed-muted)]">
-						{CAPABILITIES.map((item) => (
-							<li key={item.href}>
-								<Link className="transition-colors hover:text-[var(--ed-ink)]" href={item.href}>
-									{item.label}
-								</Link>
+				</div>
+			</div>
+
+			<Stage className="mt-16 p-3 sm:mt-20 sm:p-10 lg:p-14" variant={0}>
+				<HeroConsole />
+			</Stage>
+
+			<div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+				<p className={cn("text-[15px]", MUTED)}>Works with the platform you already send from</p>
+				<ul className="flex flex-wrap items-center gap-x-7 gap-y-3">
+					{STACK.map(({ logo: Logo, name }) => (
+						<li className="flex items-center gap-2 text-[15px] text-white/55" key={name}>
+							<Logo aria-hidden="true" className="size-[18px] grayscale" />
+							{name}
+						</li>
+					))}
+				</ul>
+			</div>
+		</section>
+	);
+}
+
+/* Stats: a statement beside large figures on hairline rows. */
+const STATS = [
+	{ value: "4", label: "categories: valid, risky, invalid, and unknown" },
+	{ value: "0–100", label: "score on every result, with the reasons behind it" },
+	{ value: "0", label: "emails sent during a check" },
+];
+
+function StatsSection() {
+	return (
+		<section className={cn(CONTAINER, "py-24 sm:py-32")}>
+			<div className="grid gap-12 lg:grid-cols-2 lg:gap-24">
+				<p className="text-[24px] leading-[1.3] tracking-[-0.015em] text-balance text-white sm:text-[30px]">
+					Every address, sorted before you send.{" "}
+					<span className={MUTED}>
+						Upload a list and it sorts itself: valid, risky, invalid, and unknown, each with a score
+						and the reason.
+					</span>
+				</p>
+				<dl className="divide-y divide-[#212121] border-y border-[#212121]">
+					{STATS.map((stat) => (
+						<div className="flex items-end justify-between gap-8 py-7" key={stat.label}>
+							<dt className="sr-only">{stat.label}</dt>
+							<dd className="text-[64px] leading-[0.95] tracking-[-0.045em] text-white sm:text-[84px]">
+								{stat.value}
+							</dd>
+							<dd className={cn("max-w-[220px] pb-2 text-right text-base", MUTED)}>{stat.label}</dd>
+						</div>
+					))}
+				</dl>
+			</div>
+		</section>
+	);
+}
+
+/* Problem: the same work without and with checks. */
+const COMPARE = ["/features/single-checks", "/features/list-cleaning"].map(
+	(path) => PAGE_COMPARE[path],
+);
+const WITHOUT = COMPARE.flatMap((compare) => compare.without);
+const WITH = COMPARE.flatMap((compare) => compare.with);
+
+function ProblemSection() {
+	return (
+		<Section>
+			<SectionIntro
+				body="Check one address or a whole list. Each address gets a category, a score, and the reasons, and bounces from your email platform keep your suppression list current."
+				label="Why it matters"
+				lead="You find a bad address"
+				trail="when it bounces."
+			/>
+			<div className="mt-24 grid gap-4 md:grid-cols-2">
+				<div className="border border-[#212121] p-8 sm:p-12">
+					<p className={cn("text-[15px]", MUTED)}>Without</p>
+					<ul className="mt-8 space-y-4">
+						{WITHOUT.map((item) => (
+							<li
+								className="flex items-center gap-4 text-lg text-white/55 line-through decoration-white/20"
+								key={item}
+							>
+								<span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-white/25" />
+								{item}
 							</li>
 						))}
 					</ul>
-				</Reveal>
-				<Reveal className="mt-16 sm:mt-20" delay={0.15}>
-					<HeroConsole />
-				</Reveal>
-			</Container>
-		</section>
-	);
-}
-
-/* 2. Platform strip: where checks plug in. */
-function PlatformStrip() {
-	return (
-		<section className="border-y border-[var(--ed-line)] bg-[var(--ed-bg)] py-12">
-			<Container>
-				<p className="ed-sans mb-8 text-center text-[14px] text-[var(--ed-muted)]">
-					Works with the platform you already send from
-				</p>
-			</Container>
-			<PlatformMarquee />
-		</section>
-	);
-}
-
-/** A figure plate with its number, then a short title, text, and a link under it. */
-function PlateCard({
-	fig,
-	title,
-	body,
-	href,
-	children,
-}: {
-	fig: string;
-	title: string;
-	body: string;
-	href: string;
-	children: ReactNode;
-}) {
-	return (
-		<article className="flex h-full flex-col">
-			<Sheet bodyClassName="px-3 pt-2 pb-3" fig={fig} title={title}>
-				{children}
-			</Sheet>
-			<div className="flex flex-1 flex-col pt-5">
-				<p className="ed-mono text-[11px] text-[var(--ed-faint)]">{fig}</p>
-				<h3 className="ed-sans mt-1 text-[18px] text-[var(--ed-ink)]">{title}</h3>
-				<p className="ed-sans mt-2 text-[14px] leading-[1.55] text-[var(--ed-muted)]">{body}</p>
-				<Link
-					className="ed-sans mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] text-[var(--ed-ink)] hover:opacity-80"
-					href={href}
-				>
-					Learn more <ArrowRight aria-hidden="true" className="size-3.5" />
-				</Link>
+				</div>
+				<div className="bg-[#111] p-8 sm:p-12">
+					<p className={cn("text-[15px]", MUTED)}>With Verifier</p>
+					<ul className="mt-8 space-y-4">
+						{WITH.map((item) => (
+							<li className="flex items-center gap-4 text-lg text-white" key={item}>
+								<Check />
+								{item}
+							</li>
+						))}
+					</ul>
+				</div>
 			</div>
-		</article>
+		</Section>
 	);
 }
 
-/* 3. Building blocks: three animated plates. */
+/* Building blocks: three staged figures in a row. */
 const BLOCKS = [
 	{
-		fig: "3.1",
 		title: "Single checks",
 		body: "Check one address in the app, at signup, or through the API.",
 		href: "/features/single-checks",
 		Graphic: SingleCheckDemo,
 	},
 	{
-		fig: "3.2",
 		title: "List cleaning",
 		body: "Upload a CSV and get a result and an action for every row.",
 		href: "/features/list-cleaning",
 		Graphic: ListSortDemo,
 	},
 	{
-		fig: "3.3",
 		title: "Suppression list",
 		body: "Keep bounced and complained addresses out of every send.",
 		href: "/features/suppressions",
@@ -211,46 +224,48 @@ const BLOCKS = [
 
 function BuildingBlocks() {
 	return (
-		<Section labelledBy="blocks-heading">
-			<Container>
-				<Heading
-					body="Single checks, list cleaning, and a suppression list work together on one workspace. Start with one and add the rest when you need them."
-					id="blocks-heading"
-					muted="that fit the way you send."
-					title="Building blocks for clean sending"
-				/>
-				<div className="mt-14 grid gap-10 lg:grid-cols-3 lg:gap-6">
-					{BLOCKS.map(({ Graphic, ...card }, index) => (
-						<Reveal delay={index * 0.08} key={card.href}>
-							<PlateCard {...card}>
+		<Section>
+			<SectionIntro
+				body="Single checks, list cleaning, and a suppression list work together on one workspace. Start with one and add the rest when you need them."
+				label="Building blocks"
+				lead="Building blocks for clean sending"
+				trail="that fit the way you send."
+			/>
+			<div className="mt-24 grid gap-4 md:grid-cols-3">
+				{BLOCKS.map(({ Graphic, ...card }, index) => (
+					<div key={card.href}>
+						<Stage className="aspect-[405/320] items-center p-8" variant={index + 1}>
+							<Sheet bodyClassName="p-3" className="max-w-[300px]" title={card.title}>
 								<Graphic />
-							</PlateCard>
-						</Reveal>
-					))}
-				</div>
-			</Container>
+							</Sheet>
+						</Stage>
+						<h3 className="mt-7 text-xl tracking-[-0.015em] text-white">{card.title}</h3>
+						<p className={cn("mt-2 text-base leading-[1.55]", MUTED)}>{card.body}</p>
+						<ArrowLink className="mt-4" href={card.href}>
+							Learn more
+						</ArrowLink>
+					</div>
+				))}
+			</div>
 		</Section>
 	);
 }
 
-/* 4. Platform: three readings of one workspace. */
-const PLATFORM_CARDS = [
+/* Platform: three readings of one workspace, text beside each figure. */
+const PLATFORM = [
 	{
-		fig: "4.1",
 		title: "Scores and reasons",
 		body: "Every result has a score from 0 to 100 and the reasons behind it.",
 		href: "/features/risk-scoring",
 		Graphic: ScoreScaleFigure,
 	},
 	{
-		fig: "4.2",
 		title: "Delivery feedback",
 		body: "Bounces, complaints, and unsubscribes come back from your email platform.",
 		href: "/features/delivery-feedback",
 		Graphic: EventTimelineFigure,
 	},
 	{
-		fig: "4.3",
 		title: "Ongoing re-checks",
 		body: "Old results are checked again on a schedule, so lists stay fresh.",
 		href: "/features/reverification",
@@ -260,30 +275,33 @@ const PLATFORM_CARDS = [
 
 function Platform() {
 	return (
-		<Section labelledBy="platform-heading" tone="subtle">
-			<Container>
-				<Heading
-					body="Check addresses, clean lists, suppress what bounced, and re-check on a schedule. One workspace, from the first upload to a safe send."
-					eyebrow="Platform"
-					id="platform-heading"
-					muted="in one workspace."
-					title="A list hygiene team"
-				/>
-				<div className="mt-14 grid gap-10 lg:grid-cols-3 lg:gap-6">
-					{PLATFORM_CARDS.map(({ Graphic, ...card }, index) => (
-						<Reveal delay={index * 0.08} key={card.href}>
-							<PlateCard {...card}>
-								<Graphic />
-							</PlateCard>
-						</Reveal>
-					))}
-				</div>
-			</Container>
+		<Section>
+			<SectionIntro
+				body="Check addresses, clean lists, suppress what bounced, and re-check on a schedule. One workspace, from the first upload to a safe send."
+				label="Platform"
+				lead="A list hygiene team"
+				trail="in one workspace."
+			/>
+			<div className="mt-24 space-y-24">
+				{PLATFORM.map(({ Graphic, ...card }, index) => (
+					<SplitFeature
+						body={card.body}
+						index={index}
+						key={card.href}
+						link={{ href: card.href, label: "Learn more" }}
+						title={card.title}
+					>
+						<Sheet bodyClassName="p-4" title={card.title}>
+							<Graphic />
+						</Sheet>
+					</SplitFeature>
+				))}
+			</div>
 		</Section>
 	);
 }
 
-/* 5. How a check works: the live pipeline and three numbered steps. */
+/* How a check works: the pipeline on a stage, then three numbered steps. */
 const STEPS = [
 	["Send an address or a list", "Check one address, upload a CSV, or call the API."],
 	["We read the path to the inbox", "Format, domain, mail server, and mailbox, in that order."],
@@ -292,187 +310,144 @@ const STEPS = [
 
 function HowItWorks() {
 	return (
-		<Section labelledBy="how-heading">
-			<Container>
-				<div className="grid items-center gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-					<div>
-						<Heading
-							body="A check reads the path to the inbox and stops before anything is delivered. You get the result in seconds."
-							eyebrow="How a check works"
-							id="how-heading"
-							muted="before anything is sent."
-							title="Every address checked"
-						/>
-						<ol className="mt-10 flex flex-col">
-							{STEPS.map(([title, body], index) => (
-								<li
-									className="ed-sans grid grid-cols-[36px_1fr] gap-3 border-t border-[var(--ed-line)] py-4"
-									key={title}
-								>
-									<span className="ed-mono text-[12px] text-[var(--ed-faint)]">
-										{String(index + 1).padStart(2, "0")}
-									</span>
-									<span>
-										<span className="block text-[15px] text-[var(--ed-ink)]">{title}</span>
-										<span className="mt-0.5 block text-[14px] text-[var(--ed-muted)]">{body}</span>
-									</span>
-								</li>
-							))}
-						</ol>
-					</div>
-					<Reveal delay={0.1}>
-						<CheckPipeline />
-					</Reveal>
+		<Section>
+			<SectionIntro
+				body="A check reads the path to the inbox and stops before anything is delivered. You get the result in seconds."
+				label="How a check works"
+				lead="Every address checked"
+				trail="before anything is sent."
+			/>
+			<Stage className="mt-24 px-4 py-12 sm:px-12 sm:py-20" variant={2}>
+				<div className="w-full min-w-0 max-w-[760px]">
+					<CheckPipeline />
 				</div>
-			</Container>
+			</Stage>
+			<ol className="mt-16 border-t border-[#212121]">
+				{STEPS.map(([title, body], index) => (
+					<li
+						className="grid gap-2 border-b border-[#212121] py-6 sm:grid-cols-[140px_1fr_1.4fr] sm:items-baseline sm:gap-8"
+						key={title}
+					>
+						<span className={cn(MONO, "text-[12px] tracking-[0.06em] text-white uppercase")}>
+							{String(index + 1).padStart(2, "0")}
+						</span>
+						<span className="text-lg text-white">{title}</span>
+						<span className={cn("text-base", MUTED)}>{body}</span>
+					</li>
+				))}
+			</ol>
 		</Section>
 	);
 }
 
-/* 6. Delivery feedback: a flow from the email platform to the next send. */
+/* Delivery feedback: the flow from the email platform to the next send. */
 function Feedback() {
 	return (
-		<Section labelledBy="feedback-heading" tone="subtle">
-			<Container>
-				<Heading
-					body="Connect SendGrid, Mailgun, Postmark, or Amazon SES. Bounces, complaints, and unsubscribes update your suppression list."
-					center
-					eyebrow="Delivery feedback"
-					id="feedback-heading"
-					muted="and stay out of your next send."
-					title="Bounces come back"
-				/>
-				<Reveal className="mt-14" delay={0.1}>
+		<Section>
+			<SectionIntro
+				body="Connect SendGrid, Mailgun, Postmark, or Amazon SES. Bounces, complaints, and unsubscribes update your suppression list."
+				label="Delivery feedback"
+				lead="Bounces come back"
+				trail="and stay out of your next send."
+			>
+				<div className="mt-10">
+					<ArrowLink href="/features/delivery-feedback">Learn more</ArrowLink>
+				</div>
+			</SectionIntro>
+			<Stage className="mt-24 px-4 py-12 sm:px-12 sm:py-20" variant={3}>
+				<div className="w-full min-w-0">
 					<FeedbackFlow />
-				</Reveal>
-			</Container>
+				</div>
+			</Stage>
 		</Section>
 	);
 }
 
-/* 7. List quality: a score for the list and a gate for bad uploads. */
+/* List quality: a score for the list and a gate for bad uploads. */
 function ListQuality() {
 	return (
-		<Section labelledBy="quality-heading">
-			<Container>
-				<div className="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
-					<div>
-						<Heading
-							body="Every list gets a quality score and every row gets a reason. Mark a bad upload for review before it reaches your email platform."
-							eyebrow="List quality"
-							id="quality-heading"
-							muted="before you send it."
-							title="See what a list is worth"
-						/>
-						<ButtonLink
-							arrow
-							className="mt-8"
-							href="/features/list-cleaning"
-							size="md"
-							variant="secondary"
-						>
-							See list cleaning
-						</ButtonLink>
-					</div>
-					<Reveal delay={0.1}>
-						<QualityFigure />
-					</Reveal>
+		<Section>
+			<SectionIntro
+				body="Every list gets a quality score and every row gets a reason. Mark a bad upload for review before it reaches your email platform."
+				label="List quality"
+				lead="See what a list is worth"
+				trail="before you send it."
+			>
+				<div className="mt-10">
+					<ArrowLink href="/features/list-cleaning">See list cleaning</ArrowLink>
 				</div>
-			</Container>
+			</SectionIntro>
+			<Stage className="mt-24 px-4 py-12 sm:px-12 sm:py-20" variant={1}>
+				<div className="w-full min-w-0 max-w-[760px]">
+					<QualityFigure />
+				</div>
+			</Stage>
 		</Section>
 	);
 }
 
-/* 8. API: copy and a terminal that runs a check. */
+/* API: the request and response on a stage, then links for developers. */
+const productNav = headerNav.flatMap((group) => group.items);
+const navBlurb = (href: string) => productNav.find((item) => item.href === href)?.description;
+
 function Api() {
 	return (
-		<Section labelledBy="api-heading" tone="subtle">
-			<Container>
-				<div className="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
-					<div>
-						<Heading
-							body="Single checks, list jobs, suppressions, and delivery events are all in the REST API, with Go and TypeScript SDKs and signed webhooks."
-							eyebrow="API and SDKs"
-							id="api-heading"
-							muted="in an afternoon."
-							title="Add checks to your signup form"
-						/>
-						<div className="mt-8 flex flex-wrap gap-2.5">
-							<ButtonLink arrow href="/developers" size="md">
-								Read the API reference
-							</ButtonLink>
-							<ButtonLink href="/features/api" size="md" variant="secondary">
-								API and SDKs
-							</ButtonLink>
-						</div>
-					</div>
-					<Reveal delay={0.1}>
-						<ApiTerminal />
-					</Reveal>
+		<Section id="developers">
+			<SectionIntro
+				body="Single checks, list jobs, suppressions, and delivery events are all in the REST API, with Go and TypeScript SDKs and signed webhooks."
+				label="API and SDKs"
+				lead="Add checks to your signup form"
+				trail="in an afternoon."
+			>
+				<div className="mt-10">
+					<ArrowLink href="/developers">Read the API reference</ArrowLink>
 				</div>
-			</Container>
+			</SectionIntro>
+			<Stage className="mt-24 px-4 py-12 sm:px-12 sm:py-20" variant={3}>
+				<div className="w-full min-w-0 max-w-[760px]">
+					<ApiTerminal />
+				</div>
+			</Stage>
+			<div className="mt-4">
+				<LinkCards
+					columns={4}
+					items={[
+						{
+							href: "/developers",
+							label: "API reference",
+							blurb: "Every endpoint, with request and response shapes.",
+						},
+						{ href: "/features/api", label: "API and SDKs", blurb: navBlurb("/features/api") },
+						{
+							href: "/use-cases/signup-forms",
+							label: "Signup forms",
+							blurb: navBlurb("/use-cases/signup-forms"),
+						},
+						{ href: "/integrations", label: "Integrations", blurb: navBlurb("/integrations") },
+					]}
+				/>
+			</div>
 		</Section>
 	);
 }
 
-/* 9. Pricing: four plans in one row. */
+/* Pricing: four plans in one row. */
 function Pricing() {
 	return (
-		<Section labelledBy="pricing-heading">
-			<Container>
-				<div className="flex flex-wrap items-end justify-between gap-6">
-					<Heading
-						eyebrow="Pricing"
-						id="pricing-heading"
-						muted="Start free, upgrade as you send more."
-						title="Pricing that grows with your lists"
-					/>
-					<div className="flex gap-2.5">
-						<ButtonLink href="/sign-up" size="md">
-							Get started
-						</ButtonLink>
-					</div>
+		<Section id="pricing">
+			<SectionIntro
+				body="Every plan includes scores, reason codes, suppressions, and delivery feedback. No email is sent during a check."
+				label="Pricing"
+				lead="Pricing that grows with your lists"
+				trail="Start free, upgrade as you send more."
+			>
+				<div className="mt-10">
+					<ArrowLink href="/pricing">Compare plans</ArrowLink>
 				</div>
-				<div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					{pricingPlans.map((plan, index) => (
-						<Reveal delay={index * 0.06} key={plan.name}>
-							<article
-								className={cn(
-									"ed-sans flex h-full flex-col rounded-2xl border bg-[var(--ed-subtle)] p-6",
-									plan.recommended ? "border-[#155dfc]/60" : "border-[var(--ed-line)]",
-								)}
-							>
-								<div className="flex items-center justify-between">
-									<h3 className="text-[16px] text-[var(--ed-ink)]">{plan.name}</h3>
-									{plan.recommended ? (
-										<span className="rounded-full bg-[#155dfc]/15 px-2.5 py-0.5 text-[11px] text-[#3080ff]">
-											Most teams
-										</span>
-									) : null}
-								</div>
-								<p className="mt-6 text-[36px] leading-none tracking-[-0.02em] text-[var(--ed-ink)]">
-									{plan.price}
-									{plan.period ? (
-										<span className="ml-1 text-[14px] tracking-normal text-[var(--ed-muted)]">
-											{plan.period}
-										</span>
-									) : null}
-								</p>
-								<p className="mt-2 text-[14px] text-[var(--ed-body)]">{plan.note}</p>
-								<p className="mt-4 text-[14px] leading-[1.55] text-[var(--ed-muted)]">
-									{plan.description}
-								</p>
-							</article>
-						</Reveal>
-					))}
-				</div>
-				<Link
-					className="ed-sans mt-8 inline-flex items-center gap-1.5 text-[14px] text-[var(--ed-ink)] hover:opacity-80"
-					href="/pricing"
-				>
-					Compare plans <ArrowRight aria-hidden="true" className="size-3.5" />
-				</Link>
-			</Container>
+			</SectionIntro>
+			<div className="mt-24">
+				<PlanCards />
+			</div>
 		</Section>
 	);
 }
@@ -482,154 +457,122 @@ function Pricing() {
 /* Sorted list: headline and a staged product view. */
 export function SortedList() {
 	return (
-		<Section labelledBy="sorted-heading">
-			<Container>
-				<Display className="max-w-[20ch]" id="sorted-heading">
-					Every address, sorted <Muted>before you send.</Muted>
-				</Display>
-				<Lead className="mt-5">
-					Upload a list and it sorts itself: valid, risky, invalid, and unknown, each with a score
-					and the reason.
-				</Lead>
-				<Stage className="mt-12">
-					<AppWindow className="mx-auto max-w-[920px]" title="Lists · October newsletter">
-						<ListBoardMock />
-					</AppWindow>
-				</Stage>
-			</Container>
+		<Section>
+			<SectionIntro
+				body="Upload a list and it sorts itself: valid, risky, invalid, and unknown, each with a score and the reason."
+				label="Lists"
+				lead="Every address, sorted"
+				trail="before you send."
+			/>
+			<Stage className="mt-24 px-4 py-12 sm:px-12 sm:py-20" variant={1}>
+				<AppWindow className="max-w-[920px]" title="Lists · October newsletter">
+					<ListBoardMock />
+				</AppWindow>
+			</Stage>
 		</Section>
 	);
 }
 
-function BentoCard({
-	label,
-	title,
-	href,
-	body,
-	className,
-	children,
-}: {
-	label: string;
-	title: string;
-	href: string;
-	body?: string;
-	className?: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<article
-			className={`flex flex-col overflow-hidden rounded-2xl border border-[var(--ed-line)] bg-[var(--ed-bg)] ${className ?? ""}`}
-		>
-			<div className="flex items-start justify-between gap-4 p-5">
-				<div>
-					<p className="ed-sans text-[12px] text-[var(--ed-muted)]">{label}</p>
-					<h3 className="ed-sans mt-1 text-[20px] font-medium text-[var(--ed-ink)]">{title}</h3>
-					{body ? (
-						<p className="ed-sans mt-2 max-w-[38ch] text-[13.5px] leading-[1.5] text-[var(--ed-body)]">
-							{body}
-						</p>
-					) : null}
-				</div>
-				<ArrowTile href={href} label={`${label}: ${title}`} />
-			</div>
-			<div className="flex flex-1 flex-col justify-center bg-[var(--ed-subtle)] p-4 sm:p-5">
-				{children}
-			</div>
-		</article>
-	);
-}
+/* Feature cards: a staged mock, a label, a title, and a link. */
+const BENTO: { label: string; title: string; body?: string; href: string; mock: ReactNode }[] = [
+	{
+		label: "Single checks",
+		title: "Know one address.",
+		href: "/features/single-checks",
+		mock: <SingleCheckMini />,
+	},
+	{
+		label: "Scores and reasons",
+		title: "See why it is risky.",
+		href: "/features/risk-scoring",
+		mock: <ScoreMini />,
+	},
+	{
+		label: "Delivery feedback",
+		title: "Learn from what bounced.",
+		body: "Connect SendGrid, Mailgun, Postmark, or Amazon SES. Bounces, complaints, and unsubscribes update your suppression list.",
+		href: "/features/delivery-feedback",
+		mock: <FeedbackStreamMini />,
+	},
+	{
+		label: "Suppression list",
+		title: "One list, every source.",
+		href: "/features/suppressions",
+		mock: <SuppressionMini />,
+	},
+	{
+		label: "Ongoing re-checks",
+		title: "Keep lists fresh.",
+		href: "/features/reverification",
+		mock: <RecheckMini />,
+	},
+	{
+		label: "Team workspace",
+		title: "Work as a team.",
+		href: "/features/workspace",
+		mock: <TeamMini />,
+	},
+];
 
 export function FeatureBento() {
 	return (
-		<Section labelledBy="bento-heading">
-			<Container>
-				<Display className="max-w-[22ch]" id="bento-heading">
-					From one address <Muted>to every list you send.</Muted>
-				</Display>
-				<p className="ed-sans mt-5 flex flex-wrap items-center gap-2 text-[13px] text-[var(--ed-muted)]">
-					Start with
+		<Section>
+			<SectionIntro label="Features" lead="From one address" trail="to every list you send.">
+				<p className={cn("mt-10 text-lg", MUTED)}>
+					Start with{" "}
 					<Link
-						className="rounded-full border border-[var(--ed-line)] px-3 py-1 text-[var(--ed-ink)] hover:bg-[var(--ed-subtle)]"
+						className="text-white underline-offset-4 hover:underline"
 						href="/features/single-checks"
 					>
 						one address
-					</Link>
-					or
+					</Link>{" "}
+					or{" "}
 					<Link
-						className="rounded-full border border-[var(--ed-line)] px-3 py-1 text-[var(--ed-ink)] hover:bg-[var(--ed-subtle)]"
+						className="text-white underline-offset-4 hover:underline"
 						href="/features/list-cleaning"
 					>
 						a whole list
 					</Link>
+					.
 				</p>
-				<div className="mt-10 grid gap-3 lg:grid-cols-2">
-					<BentoCard href="/features/single-checks" label="Single checks" title="Know one address.">
-						<SingleCheckMini />
-					</BentoCard>
-					<BentoCard
-						href="/features/risk-scoring"
-						label="Scores and reasons"
-						title="See why it is risky."
-					>
-						<ScoreMini />
-					</BentoCard>
-					<article className="grid overflow-hidden rounded-2xl border border-[var(--ed-line)] bg-[var(--ed-bg)] lg:col-span-2 lg:grid-cols-[1fr_1.3fr]">
-						<div className="flex flex-col justify-between gap-6 p-6">
-							<div>
-								<p className="ed-sans text-[12px] text-[var(--ed-muted)]">Delivery feedback</p>
-								<h3 className="ed-sans mt-1 text-[24px] font-medium text-[var(--ed-ink)]">
-									Learn from what bounced.
-								</h3>
-								<p className="ed-sans mt-3 max-w-[40ch] text-[14px] leading-[1.55] text-[var(--ed-body)]">
-									Connect SendGrid, Mailgun, Postmark, or Amazon SES. Bounces, complaints, and
-									unsubscribes update your suppression list.
-								</p>
-							</div>
-							<ArrowTile href="/features/delivery-feedback" label="Delivery feedback" />
-						</div>
-						<div className="bg-[var(--ed-subtle)] p-4 sm:p-6">
-							<FeedbackStreamMini />
-						</div>
-					</article>
-				</div>
-				<div className="mt-3 grid gap-3 lg:grid-cols-3">
-					<BentoCard
-						href="/features/suppressions"
-						label="Suppression list"
-						title="One list, every source."
-					>
-						<SuppressionMini />
-					</BentoCard>
-					<BentoCard
-						href="/features/reverification"
-						label="Ongoing re-checks"
-						title="Keep lists fresh."
-					>
-						<RecheckMini />
-					</BentoCard>
-					<BentoCard href="/features/workspace" label="Team workspace" title="Work as a team.">
-						<TeamMini />
-					</BentoCard>
-				</div>
-				<article className="mt-3 grid overflow-hidden rounded-2xl border border-[var(--ed-line)] bg-[var(--ed-bg)] lg:grid-cols-[1fr_1.3fr]">
-					<div className="flex flex-col justify-between gap-6 p-6">
-						<div>
-							<p className="ed-sans text-[12px] text-[var(--ed-muted)]">Integrations</p>
-							<h3 className="ed-sans mt-1 text-[24px] font-medium text-[var(--ed-ink)]">
-								Connect your stack.
-							</h3>
-							<p className="ed-sans mt-3 max-w-[40ch] text-[14px] leading-[1.55] text-[var(--ed-body)]">
-								Send delivery events from your email platform, move lists by CSV, and build on the
-								REST API with Go and TypeScript SDKs.
+			</SectionIntro>
+			<ul className="mt-24 grid gap-x-4 gap-y-16 md:grid-cols-3">
+				{BENTO.map((card, index) => (
+					<li key={card.href}>
+						<Stage className="items-center px-5 py-10 sm:aspect-[5/4] sm:p-8" variant={index}>
+							<div className="w-full max-w-[400px]">{card.mock}</div>
+						</Stage>
+						<p className={cn(MONO, "mt-7 text-[13px]", MUTED)}>{card.label}</p>
+						<h3 className="mt-2 text-2xl tracking-[-0.02em] text-white">{card.title}</h3>
+						{card.body ? (
+							<p className={cn("mt-3 max-w-[560px] text-[17px] leading-[1.55]", MUTED)}>
+								{card.body}
 							</p>
-						</div>
-						<ArrowTile href="/integrations" label="Integrations" />
-					</div>
-					<div className="bg-[var(--ed-subtle)] p-4 sm:p-6">
-						<IntegrationChipsMini />
-					</div>
-				</article>
-			</Container>
+						) : null}
+						<ArrowLink className="mt-4" href={card.href}>
+							Learn more
+						</ArrowLink>
+					</li>
+				))}
+			</ul>
+			<div className="mt-16 grid gap-12 bg-[#111] p-8 sm:p-12 lg:grid-cols-2">
+				<div>
+					<p className={cn(MONO, "text-[13px]", MUTED)}>Integrations</p>
+					<p className="mt-2 text-[24px] leading-[1.35] tracking-[-0.02em] text-balance text-white sm:text-[28px]">
+						Connect your stack.{" "}
+						<span className={MUTED}>
+							Send delivery events from your email platform, move lists by CSV, and build on the
+							REST API with Go and TypeScript SDKs.
+						</span>
+					</p>
+					<ArrowLink className="mt-8" href="/integrations">
+						Integrations
+					</ArrowLink>
+				</div>
+				<div className="self-center">
+					<IntegrationChipsMini />
+				</div>
+			</div>
 		</Section>
 	);
 }
@@ -637,13 +580,11 @@ export function FeatureBento() {
 /* Teams: selectable list with a product view. */
 export function Teams() {
 	return (
-		<Section labelledBy="teams-heading">
-			<Container>
-				<Display className="mx-auto mb-12 max-w-[20ch] text-center" id="teams-heading">
-					Built for every team <Muted>that sends.</Muted>
-				</Display>
+		<Section>
+			<SectionIntro label="Use cases" lead="Built for every team" trail="that sends." />
+			<div className="mt-24">
 				<UseCaseTabs />
-			</Container>
+			</div>
 		</Section>
 	);
 }
@@ -652,7 +593,8 @@ export function EditorialHome() {
 	return (
 		<>
 			<Hero />
-			<PlatformStrip />
+			<StatsSection />
+			<ProblemSection />
 			<BuildingBlocks />
 			<Platform />
 			<HowItWorks />
@@ -660,6 +602,7 @@ export function EditorialHome() {
 			<ListQuality />
 			<Api />
 			<Pricing />
+			<FaqBlock items={homepageFaqs.map((faq) => ({ q: faq.question, a: faq.answer }))} />
 		</>
 	);
 }

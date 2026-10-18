@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
-import { AddressBook, ArrowRight, Code, EnvelopeSimple, Stack } from "@/lib/icons";
+import { ArrowLink } from "@/components/platform/landing/blocks";
+import { MUTED, Stage } from "@/components/platform/landing/primitives";
+import { AddressBook, Code, EnvelopeSimple, Stack } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 import { ApiResponseMock, QualityGateMock, QualityReportMock, SourceCompareMock } from "./mocks";
-import { Stage } from "./ui";
 
 const TABS = [
 	{
@@ -50,12 +50,8 @@ export function UseCaseTabs() {
 	const current = TABS.find((tab) => tab.id === active) ?? TABS[0];
 
 	return (
-		<div className="grid overflow-hidden rounded-3xl border border-[var(--ed-line)] lg:grid-cols-[300px_1fr]">
-			<div
-				aria-label="Teams"
-				className="flex flex-col border-b border-[var(--ed-line)] lg:border-r lg:border-b-0"
-				role="tablist"
-			>
+		<div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+			<div aria-label="Teams" className="flex flex-col gap-1" role="tablist">
 				{TABS.map((tab) => {
 					const Icon = tab.icon;
 					const selected = tab.id === active;
@@ -64,22 +60,22 @@ export function UseCaseTabs() {
 							aria-controls="use-case-panel"
 							aria-selected={selected}
 							className={cn(
-								"ed-sans flex gap-3 border-b border-[var(--ed-line)] p-4 text-left transition-colors last:border-b-0",
-								selected
-									? "bg-[var(--ed-subtle)]"
-									: "bg-[var(--ed-bg)] hover:bg-[var(--ed-subtle)]",
+								"flex gap-3 p-5 text-left transition-colors duration-150",
+								selected ? "bg-[#181818] ring-1 ring-white/15" : "bg-[#111] hover:bg-[#161616]",
 							)}
 							key={tab.id}
 							onClick={() => setActive(tab.id)}
 							role="tab"
 							type="button"
 						>
-							<Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[var(--ed-ink)]" />
+							<Icon
+								aria-hidden="true"
+								className="mt-0.5 size-5 shrink-0 text-white/80"
+								strokeWidth={1.5}
+							/>
 							<span>
-								<span className="block text-[14px] font-medium text-[var(--ed-ink)]">
-									{tab.title}
-								</span>
-								<span className="mt-1 block text-[12.5px] leading-[1.45] text-[var(--ed-muted)]">
+								<span className="block text-base text-white">{tab.title}</span>
+								<span className={cn("mt-1.5 block text-[15px] leading-[1.55]", MUTED)}>
 									{tab.body}
 								</span>
 							</span>
@@ -87,17 +83,13 @@ export function UseCaseTabs() {
 					);
 				})}
 			</div>
-			<div id="use-case-panel" role="tabpanel">
-				<Stage className="flex h-full min-h-[420px] flex-col justify-center border-0">
-					<div className="mx-auto w-full max-w-[620px]">{current.mock}</div>
-					<Link
-						className="ed-sans mx-auto mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--ed-ink)] hover:underline"
-						href={current.href}
-					>
-						More on {current.title.toLowerCase()}{" "}
-						<ArrowRight aria-hidden="true" className="size-3.5" />
-					</Link>
+			<div className="flex flex-col" id="use-case-panel" role="tabpanel">
+				<Stage className="min-h-[420px] flex-1 items-center px-5 py-10 sm:p-12" variant={2}>
+					<div className="w-full max-w-[620px]">{current.mock}</div>
 				</Stage>
+				<ArrowLink className="mt-6" href={current.href}>
+					More on {current.title.toLowerCase()}
+				</ArrowLink>
 			</div>
 		</div>
 	);

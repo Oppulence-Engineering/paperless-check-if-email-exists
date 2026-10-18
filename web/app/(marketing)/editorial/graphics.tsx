@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Animated figures for the home page, drawn like the plates on
- * playbookmedia.io: black ground, hairlines, mono labels, dimension lines, and
- * plain markers instead of colored badges. Each figure moves only while it is
- * on screen and rests in its finished state on the server render and when the
- * visitor prefers reduced motion. Sample data uses fictional domains.
+ * Animated figures for the public site. Each one sits in a dark product
+ * window on a grainy stage, as on the screenshot-studio landing: hairlines,
+ * mono labels, dimension lines, and plain markers. Each figure moves only
+ * while it is on screen and rests in its finished state on the server render
+ * and when the visitor prefers reduced motion. Sample data uses fictional domains.
  */
 import { AnimatePresence, animate, motion, useInView, useReducedMotion } from "framer-motion";
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { Sheet } from "./ui";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const FIG = "#9db8ff";
+const FIG = "#6ee7b7";
 const LINE = "rgb(255 255 255 / 0.22)";
 const LABEL = "ed-fig-label text-[#9e9e9e]";
 
@@ -57,29 +57,6 @@ export function CountUp({ to, decimals = 0 }: { to: number; decimals?: number })
 		<span className="tabular-nums" ref={ref}>
 			{format(value, decimals)}
 		</span>
-	);
-}
-
-/** Fades content up the first time it scrolls into view. */
-export function Reveal({
-	className,
-	delay = 0,
-	children,
-}: {
-	className?: string;
-	delay?: number;
-	children: ReactNode;
-}) {
-	return (
-		<motion.div
-			className={className}
-			initial={{ opacity: 0, y: 16 }}
-			transition={{ duration: 0.7, delay, ease: EASE }}
-			viewport={{ once: true, amount: 0.2 }}
-			whileInView={{ opacity: 1, y: 0 }}
-		>
-			{children}
-		</motion.div>
 	);
 }
 
@@ -189,7 +166,7 @@ function Ruler({ steps, major, labels }: { steps: number; major: number; labels:
 			))}
 			{labels.map((label, index) => (
 				<span
-					className="ed-fig-label absolute top-3 -translate-x-1/2 text-[9.5px] text-[#7a7a7a]"
+					className="ed-fig-label absolute top-3 -translate-x-1/2 text-[9.5px] text-[#858585]"
 					key={label}
 					style={{ left: `${(index / (labels.length - 1)) * 100}%` }}
 				>
@@ -231,7 +208,7 @@ function Wipe({
 }
 
 const SEGMENT_FILL: Record<Kind, string> = {
-	valid: "border-[var(--ed-fig)] bg-[#9db8ff]/15",
+	valid: "border-[var(--ed-fig)] bg-emerald-400/15",
 	risky: "ed-hatch border-white/50",
 	invalid: "ed-hatch-fine border-white/50",
 	unknown: "border-dashed border-white/40",
@@ -268,7 +245,7 @@ function Legend({ parts, counts = true }: { parts: [Kind, number][]; counts?: bo
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 1 — hero                                                       */
+/* Hero                                                                */
 /* ------------------------------------------------------------------ */
 
 const NEWSLETTER: [Kind, number][] = [
@@ -311,7 +288,7 @@ function DailyChart() {
 			<div className="relative h-[150px]">
 				{["14K", "7K", "0"].map((label, index) => (
 					<span
-						className="ed-fig-label absolute right-0 -translate-y-1/2 text-[9.5px] text-[#7a7a7a]"
+						className="ed-fig-label absolute right-0 -translate-y-1/2 text-[9.5px] text-[#858585]"
 						key={label}
 						style={{ top: `${index * 50}%` }}
 					>
@@ -367,7 +344,7 @@ function DailyChart() {
 				</Wipe>
 				<div className="mt-2 flex justify-between">
 					{["Oct 1", "Oct 7", "Oct 14"].map((label) => (
-						<span className="ed-fig-label text-[9.5px] text-[#7a7a7a]" key={label}>
+						<span className="ed-fig-label text-[9.5px] text-[#858585]" key={label}>
 							{label}
 						</span>
 					))}
@@ -383,7 +360,7 @@ function CheckLog() {
 	const rows = Array.from({ length: 9 }, (_, index) => tick + index);
 	return (
 		<div ref={ref}>
-			<p className={LABEL}>1.3 Check log</p>
+			<p className={LABEL}>Check log</p>
 			<ul className="mt-4 overflow-hidden">
 				<AnimatePresence initial={false}>
 					{rows.map((sequence) => {
@@ -398,7 +375,7 @@ function CheckLog() {
 								layout
 								transition={{ duration: 0.4, ease: EASE }}
 							>
-								<span className="text-[#6b6b6b]">{clock(sequence)}</span>
+								<span className="text-[#858585]">{clock(sequence)}</span>
 								<span className="truncate text-[#d9d9d9]">{email}</span>
 								<span className="flex items-center gap-2">
 									<Marker kind={kind} />
@@ -421,13 +398,17 @@ export function HeroConsole() {
 		<Sheet
 			bodyClassName="grid lg:grid-cols-[1.6fr_1fr]"
 			caption="Sample workspace · fictional domains · no email is sent during a check"
-			fig="1"
-			title="Workspace report · Northwind"
+			title={
+				<>
+					<span className="size-2 rounded-full bg-emerald-400" />
+					Workspace report · Northwind
+				</>
+			}
 		>
 			<div className="flex flex-col gap-10 p-4 sm:p-6 lg:border-r lg:border-white/10">
 				<div>
 					<p className={LABEL}>
-						1.1 October newsletter · <CountUp to={total} /> addresses
+						October newsletter · <CountUp to={total} /> addresses
 					</p>
 					<div className="mt-6 flex">
 						<Dimension align="start" className="w-[84.5%]" label={`Keep · ${format(keep)}`} />
@@ -448,7 +429,7 @@ export function HeroConsole() {
 					</div>
 				</div>
 				<div>
-					<p className={LABEL}>1.2 Checks per day · workspace</p>
+					<p className={LABEL}>Checks per day · workspace</p>
 					<div className="mt-5">
 						<DailyChart />
 					</div>
@@ -462,7 +443,7 @@ export function HeroConsole() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 3 — building blocks                                            */
+/* Building blocks                                                     */
 /* ------------------------------------------------------------------ */
 
 const svgLabel = {
@@ -648,7 +629,7 @@ export function SuppressionDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 4 — platform                                                   */
+/* Platform                                                            */
 /* ------------------------------------------------------------------ */
 
 const SCORED: { score: number; label: string; kind: Kind; row: number }[] = [
@@ -854,7 +835,7 @@ export function RecheckDialFigure() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 5 — how a check works                                          */
+/* How a check works                                                   */
 /* ------------------------------------------------------------------ */
 
 type Reading = "pass" | "warn" | "fail" | "skip";
@@ -943,7 +924,7 @@ function StationMark({ reading }: { reading?: Reading }) {
 }
 
 /** How a check works: one address, four readings in order, then the result. */
-export function CheckPipeline({ fig = "5" }: { fig?: string }) {
+export function CheckPipeline() {
 	const ref = useRef<HTMLDivElement>(null);
 	const tick = useTicker(ref, PIPELINE_SAMPLES.length * PER_SAMPLE, 650, 5);
 	const sample = PIPELINE_SAMPLES[Math.floor(tick / PER_SAMPLE)];
@@ -954,7 +935,6 @@ export function CheckPipeline({ fig = "5" }: { fig?: string }) {
 		<div ref={ref}>
 			<Sheet
 				caption="Readings run in this order · a check stops before delivery"
-				fig={fig}
 				title="One check, four readings"
 			>
 				<div className="p-4 sm:p-6">
@@ -980,7 +960,7 @@ export function CheckPipeline({ fig = "5" }: { fig?: string }) {
 									<span
 										className={cn(
 											"ed-mono min-h-[2.6em] text-[11px] leading-[1.3] break-all transition-opacity duration-300 sm:break-normal",
-											reading === "skip" ? "text-[#6b6b6b]" : "text-[#d9d9d9]",
+											reading === "skip" ? "text-[#858585]" : "text-[#d9d9d9]",
 											shown ? "opacity-100" : "opacity-0",
 										)}
 									>
@@ -1024,7 +1004,7 @@ export function CheckPipeline({ fig = "5" }: { fig?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 6 — delivery feedback                                          */
+/* Delivery feedback                                                   */
 /* ------------------------------------------------------------------ */
 
 const HANDLED = [
@@ -1094,7 +1074,7 @@ function Block({
 }
 
 /** Delivery feedback: events come in from the platform, get handled, and the next send skips them. */
-export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
+export function FeedbackFlow() {
 	const ref = useRef<HTMLDivElement>(null);
 	const tick = useTicker(ref, HANDLED.length + 4, 700, HANDLED.length);
 	const skipped = 1447;
@@ -1104,11 +1084,10 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 		<div ref={ref}>
 			<Sheet
 				caption="Your platform reports the bounce · the address goes on your suppression list · your next send skips it"
-				fig={fig}
 				title="Delivery feedback"
 			>
 				<div className="flex flex-col p-4 sm:p-6 lg:flex-row lg:items-stretch">
-					<Block className="lg:w-[220px]" label="6.1 Email platform">
+					<Block className="lg:w-[220px]" label="Email platform">
 						<ul className="flex flex-col">
 							{["SendGrid", "Mailgun", "Postmark", "Amazon SES"].map((name) => (
 								<li
@@ -1122,7 +1101,7 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 						</ul>
 					</Block>
 					<Connector />
-					<Block className="lg:w-[280px]" label="6.2 Verifier">
+					<Block className="lg:w-[280px]" label="Verifier">
 						<ol className="flex flex-col">
 							{HANDLED.map((item, index) => (
 								<li
@@ -1132,7 +1111,7 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 									)}
 									key={item}
 								>
-									<span className="text-[#6b6b6b]">{String(index + 1).padStart(2, "0")}</span>
+									<span className="text-[#858585]">{String(index + 1).padStart(2, "0")}</span>
 									{item}
 									<Marker className={index < tick ? "" : "opacity-20"} kind="valid" />
 								</li>
@@ -1140,7 +1119,7 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 						</ol>
 					</Block>
 					<Connector />
-					<Block className="lg:w-[250px]" label="6.3 Next send">
+					<Block className="lg:w-[250px]" label="Next send">
 						<p className="ed-mono text-[26px] leading-none text-[#fafafa]">
 							<CountUp to={skipped} />
 						</p>
@@ -1150,7 +1129,7 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 							<span style={{ width: `${skippedShare}%`, minWidth: 6 }} />
 						</div>
 						<div className="mt-2 flex h-5 gap-px">
-							<span className="h-full flex-1 border border-[var(--ed-fig)] bg-[#9db8ff]/15" />
+							<span className="h-full flex-1 border border-[var(--ed-fig)] bg-emerald-400/15" />
 							<span
 								className="ed-hatch h-full border border-white/50"
 								style={{ width: `${skippedShare}%`, minWidth: 6 }}
@@ -1165,7 +1144,7 @@ export function FeedbackFlow({ fig = "6" }: { fig?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 7 — list quality                                               */
+/* List quality                                                        */
 /* ------------------------------------------------------------------ */
 
 const ACME: [Kind, number][] = [
@@ -1193,12 +1172,12 @@ const QUALITY_LISTS: {
 ];
 
 /** List quality: two lists on a score scale against a threshold, and what each one holds. */
-export function QualityFigure({ fig = "7" }: { fig?: string }) {
+export function QualityFigure() {
 	return (
-		<Sheet caption="Sample lists · fictional domains" fig={fig} title="List quality">
+		<Sheet caption="Sample lists · fictional domains" title="List quality">
 			<div className="flex flex-col gap-10 p-4 sm:p-6">
 				<div>
-					<p className={LABEL}>7.1 Quality score</p>
+					<p className={LABEL}>Quality score</p>
 					<div className="relative mt-24">
 						<span
 							className="absolute -top-[84px] bottom-7 w-px border-l border-dashed border-[var(--ed-fig)]/70"
@@ -1231,7 +1210,7 @@ export function QualityFigure({ fig = "7" }: { fig?: string }) {
 					</div>
 				</div>
 				<div>
-					<p className={LABEL}>7.2 What each list holds</p>
+					<p className={LABEL}>What each list holds</p>
 					<div className="mt-4 flex flex-col gap-5">
 						{QUALITY_LISTS.map((list) => {
 							const total = list.parts.reduce((sum, [, count]) => sum + count, 0);
@@ -1254,7 +1233,7 @@ export function QualityFigure({ fig = "7" }: { fig?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Fig. 8 — API                                                        */
+/* API                                                                 */
 /* ------------------------------------------------------------------ */
 
 type Segment = [string, string?];
@@ -1262,7 +1241,7 @@ type Segment = [string, string?];
 const KEY = "text-[#fafafa]";
 const STRING = "text-[var(--ed-fig)]";
 const VALUE = "text-[#d9d9d9]";
-const DIM = "text-[#6b6b6b]";
+const DIM = "text-[#858585]";
 
 const TERMINAL_LINES: Segment[][] = [
 	[
@@ -1293,7 +1272,7 @@ const TERMINAL_LINES: Segment[][] = [
 ];
 
 /** API: the request, then the response arriving line by line. */
-export function ApiTerminal({ fig = "8" }: { fig?: string }) {
+export function ApiTerminal() {
 	const ref = useRef<HTMLDivElement>(null);
 	const total = TERMINAL_LINES.length;
 	const tick = useTicker(ref, total + 8, 260, total);
@@ -1302,7 +1281,6 @@ export function ApiTerminal({ fig = "8" }: { fig?: string }) {
 		<div ref={ref}>
 			<Sheet
 				caption="Request and response · values from a sample check"
-				fig={fig}
 				title="POST /v1/check_email"
 			>
 				<pre className="ed-mono min-h-[330px] overflow-x-auto p-4 text-[12px] leading-[1.75] sm:p-6">
@@ -1327,55 +1305,15 @@ export function ApiTerminal({ fig = "8" }: { fig?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Platform marquee                                                    */
-/* ------------------------------------------------------------------ */
-
-const MARQUEE = [
-	"SendGrid",
-	"Mailgun",
-	"Postmark",
-	"Amazon SES",
-	"CSV files",
-	"REST API",
-	"Go SDK",
-	"TypeScript SDK",
-	"Webhooks",
-];
-
-/** Endless row of the platforms and formats checks work with. */
-export function PlatformMarquee() {
-	return (
-		<div
-			aria-hidden="true"
-			className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]"
-		>
-			<div className="ed-marquee flex w-max">
-				{[...MARQUEE, ...MARQUEE].map((name, index) => (
-					<span
-						className="ed-sans flex items-center gap-14 pr-14 text-[22px] font-medium tracking-[-0.01em] whitespace-nowrap text-[#757575]"
-						key={index}
-					>
-						{name}
-						<span className="ed-mono text-[14px] text-[#3a3a3a]">+</span>
-					</span>
-				))}
-			</div>
-		</div>
-	);
-}
-
-/* ------------------------------------------------------------------ */
 /* Product page figures                                                */
 /* ------------------------------------------------------------------ */
 
 /** Numbered steps on one line; a marker moves from step to step. */
 export function StepFlowFigure({
-	fig,
 	title,
 	caption,
 	steps,
 }: {
-	fig: string;
 	title: string;
 	caption?: string;
 	steps: string[];
@@ -1387,7 +1325,7 @@ export function StepFlowFigure({
 	const span = 100 - 2 * edge;
 	return (
 		<div ref={ref}>
-			<Sheet caption={caption} fig={fig} title={title}>
+			<Sheet caption={caption} title={title}>
 				<div className="p-4 sm:p-6">
 					<ol
 						className={cn(
@@ -1418,12 +1356,12 @@ export function StepFlowFigure({
 									<StationMark reading={shown ? "pass" : undefined} />
 									<span>
 										<span className="ed-mono block text-[11px] text-[var(--ed-fig)]">
-											{fig}.{index + 1}
+											{String(index + 1).padStart(2, "0")}
 										</span>
 										<span
 											className={cn(
 												"ed-sans mt-1 block text-[14px] leading-[1.45] transition-colors duration-300",
-												shown ? "text-[#fafafa]" : "text-[#757575]",
+												shown ? "text-[#fafafa]" : "text-[#858585]",
 											)}
 										>
 											{step.replace(/\.$/, "")}
@@ -1511,7 +1449,6 @@ export function ProviderFigure({ provider, logo }: { provider: ProviderKey; logo
 		<div ref={ref}>
 			<Sheet
 				caption={`POST /v1/inbound/providers/${data.path}/{endpoint}/{token}`}
-				fig="1"
 				title={`${data.name} → Verifier`}
 			>
 				<div className="flex flex-col p-4 sm:p-5">
@@ -1527,7 +1464,7 @@ export function ProviderFigure({ provider, logo }: { provider: ProviderKey; logo
 						</div>
 					</Block>
 					<Connector vertical />
-					<Block label="1.2 Delivery endpoint">
+					<Block label="Delivery endpoint">
 						<ul className="flex flex-col">
 							{data.checks.map((check) => (
 								<li
@@ -1541,7 +1478,7 @@ export function ProviderFigure({ provider, logo }: { provider: ProviderKey; logo
 						</ul>
 					</Block>
 					<Connector vertical />
-					<Block label="1.3 Recorded as">
+					<Block label="Recorded as">
 						<ul className="flex flex-col">
 							{data.events.map(([source, recorded], index) => (
 								<li
@@ -1552,7 +1489,7 @@ export function ProviderFigure({ provider, logo }: { provider: ProviderKey; logo
 									key={source}
 								>
 									<span>
-										<span className="text-[#757575]">{source}</span> → {recorded}
+										<span className="text-[#858585]">{source}</span> → {recorded}
 									</span>
 									{SUPPRESSING.has(recorded) ? (
 										<span className="ed-fig-label text-[var(--ed-fig)]">Suppressed</span>
@@ -1589,14 +1526,14 @@ export function CsvFigure() {
 	const tick = useTicker(ref, CSV_ROWS.length + 4, 700, CSV_ROWS.length);
 	return (
 		<div ref={ref}>
-			<Sheet caption="Sample rows · fictional domains" fig="1" title="newsletter.csv → clean files">
+			<Sheet caption="Sample rows · fictional domains" title="newsletter.csv → clean files">
 				<div className="p-4 sm:p-5">
 					<div className="overflow-x-auto">
 						<table className="ed-mono w-full min-w-[420px] border-collapse text-left text-[11.5px]">
 							<thead>
 								<tr className="border-b border-white/15">
-									<th className="py-2 pr-3 font-normal text-[#757575]">email</th>
-									<th className="py-2 pr-3 font-normal text-[#757575]">first_name</th>
+									<th className="py-2 pr-3 font-normal text-[#858585]">email</th>
+									<th className="py-2 pr-3 font-normal text-[#858585]">first_name</th>
 									<th className="py-2 pr-3 font-normal text-[var(--ed-fig)]">+ result</th>
 									<th className="py-2 font-normal text-[var(--ed-fig)]">+ action</th>
 								</tr>
@@ -1667,11 +1604,10 @@ export function SignupFigure() {
 		<div ref={ref}>
 			<Sheet
 				caption="Sample request · fictional address"
-				fig="1"
 				title="Signup form · POST /v1/check_email"
 			>
 				<div className="flex flex-col p-4 sm:p-5">
-					<Block label="1.1 Form">
+					<Block label="Form">
 						<p className={LABEL}>Work email</p>
 						<div className="ed-mono mt-2 flex h-9 items-center border border-white/20 px-3 text-[13px] text-[#fafafa]">
 							{typed}
@@ -1687,22 +1623,22 @@ export function SignupFigure() {
 						</p>
 					</Block>
 					<Connector vertical />
-					<Block label="1.2 Result">
+					<Block label="Result">
 						<dl
 							className={cn(
 								"ed-mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[12px] transition-opacity duration-300",
 								checked ? "opacity-100" : "opacity-20",
 							)}
 						>
-							<dt className="text-[#757575]">category</dt>
+							<dt className="text-[#858585]">category</dt>
 							<dd className="flex items-center gap-1.5 text-[#fafafa]">
 								<Marker kind="risky" /> risky
 							</dd>
-							<dt className="text-[#757575]">safe_to_send</dt>
+							<dt className="text-[#858585]">safe_to_send</dt>
 							<dd className="text-[#fafafa]">false</dd>
-							<dt className="text-[#757575]">reason_codes</dt>
+							<dt className="text-[#858585]">reason_codes</dt>
 							<dd className="text-[#fafafa]">possible_typo</dd>
-							<dt className="text-[#757575]">suggestion</dt>
+							<dt className="text-[#858585]">suggestion</dt>
 							<dd className="text-[var(--ed-fig)]">anna@gmail.com</dd>
 						</dl>
 					</Block>
@@ -1748,7 +1684,7 @@ const SOURCES_QUALITY: { name: string; score: number; parts: [Kind, number][] }[
 /** Marketing operations: list quality by source, side by side. */
 export function SourceCompareFigure() {
 	return (
-		<Sheet caption="Sample sources · fictional data" fig="1" title="Quality by source">
+		<Sheet caption="Sample sources · fictional data" title="Quality by source">
 			<div className="flex flex-col gap-5 p-4 sm:p-6">
 				{SOURCES_QUALITY.map((source) => {
 					const total = source.parts.reduce((sum, [, count]) => sum + count, 0);
@@ -1784,7 +1720,7 @@ export function WorkspaceFigure() {
 	const ref = useRef<SVGSVGElement>(null);
 	const tick = useTicker(ref, WORKSPACE_NODES.length, 1200, 0);
 	return (
-		<Sheet caption="Sample workspace" fig="1" title="Organization · Northwind">
+		<Sheet caption="Sample workspace" title="Organization · Northwind">
 			<svg aria-hidden="true" className="h-auto w-full" ref={ref} viewBox="0 0 520 250">
 				<rect fill="#090909" height="34" stroke={FIG} width="150" x="185" y="22" />
 				<text {...svgLabel} fill={FIG} textAnchor="middle" x="260" y="43">
@@ -1859,11 +1795,7 @@ export function CatchAllFigure() {
 	const ref = useRef<SVGSVGElement>(null);
 	const tick = useTicker(ref, 7, 900, 5);
 	return (
-		<Sheet
-			caption="Sample exchange · fictional domain · no email is sent"
-			fig="1"
-			title="Catch-all domain"
-		>
+		<Sheet caption="Sample exchange · fictional domain · no email is sent" title="Catch-all domain">
 			<svg aria-hidden="true" className="h-auto w-full" ref={ref} viewBox="0 0 520 240">
 				<rect fill="#090909" height="150" stroke={FIG} width="96" x="20" y="40" />
 				<text {...svgLabel} fill={FIG} textAnchor="middle" x="68" y="62">
@@ -1936,7 +1868,7 @@ const UPLOADS: { name: string; score: number; y: number }[] = [
 /** Sending platforms: each customer upload meets a quality threshold before it is sent. */
 export function GateFigure() {
 	return (
-		<Sheet caption="Sample uploads · threshold set by you" fig="1" title="Quality gate">
+		<Sheet caption="Sample uploads · threshold set by you" title="Quality gate">
 			<svg aria-hidden="true" className="h-auto w-full" viewBox="0 0 520 240">
 				<line stroke={FIG} strokeDasharray="3 4" x1="300" x2="300" y1="30" y2="210" />
 				<text {...svgLabel} fill={FIG} textAnchor="middle" x="300" y="22">
@@ -2006,20 +1938,19 @@ export function FinderFigure() {
 		<div ref={ref}>
 			<Sheet
 				caption="Sample search · fictional person · 5 of 13 patterns shown"
-				fig="1"
 				title="Find email · POST /v1/find_email"
 			>
 				<div className="flex flex-col p-4 sm:p-5">
-					<Block label="1.1 Search">
+					<Block label="Search">
 						<dl className="ed-mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[12px]">
-							<dt className="text-[#757575]">name</dt>
+							<dt className="text-[#858585]">name</dt>
 							<dd className="text-[#fafafa]">Ada Lovelace</dd>
-							<dt className="text-[#757575]">domain</dt>
+							<dt className="text-[#858585]">domain</dt>
 							<dd className="text-[#fafafa]">acme.io · mail server found</dd>
 						</dl>
 					</Block>
 					<Connector vertical />
-					<Block label="1.2 Addresses checked">
+					<Block label="Addresses checked">
 						<ul className="ed-mono space-y-1.5 text-[12px]">
 							{FINDER_ROWS.map(([email, kind, score], index) => (
 								<li
@@ -2033,13 +1964,13 @@ export function FinderFigure() {
 										<Marker kind={kind} />
 										<span className="truncate text-[#fafafa]">{email}</span>
 									</span>
-									<span className="text-[#757575] tabular-nums">{score}</span>
+									<span className="text-[#858585] tabular-nums">{score}</span>
 								</li>
 							))}
 						</ul>
 					</Block>
 					<Connector vertical />
-					<Block label="1.3 Best match">
+					<Block label="Best match">
 						<p
 							className={cn(
 								"ed-mono text-[12.5px] transition-opacity duration-300",
@@ -2047,7 +1978,7 @@ export function FinderFigure() {
 							)}
 						>
 							<span className="text-[var(--ed-fig)]">ada.lovelace@acme.io</span>
-							<span className="text-[#757575]"> · first.last · confidence high</span>
+							<span className="text-[#858585]"> · first.last · confidence high</span>
 						</p>
 					</Block>
 				</div>
