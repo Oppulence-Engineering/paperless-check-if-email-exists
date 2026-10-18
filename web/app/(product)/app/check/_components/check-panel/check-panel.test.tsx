@@ -2,10 +2,11 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { V1Api } from "@oppulence/reacher-sdk";
+import { OutcomesApi, V1Api, VerificationApi } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 import { V1CheckEmail200Response } from "@/lib/api/generated/zod/v1/v1";
-import { CheckPanel, ResultValue } from "./check-panel";
+import { SAMPLE_CHECK_RESULT } from "@/lib/verification/check-result";
+import { CheckPanel } from "./check-panel";
 
 afterEach(() => {
 	cleanup();
@@ -18,22 +19,37 @@ it("accepts the raw submitted address in an API result", () => {
 	);
 });
 
-it("shows every returned result field, including nested and empty values", () => {
+it("checks the ?email= address once and shows the verdict layout", async () => {
+	const check = vi
+		.spyOn(V1Api.prototype, "v1CheckEmail")
+		.mockResolvedValue({ data: SAMPLE_CHECK_RESULT } as never);
+	vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		data: { email: SAMPLE_CHECK_RESULT.input, total: 0, history: [] },
+	} as never);
+	vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
+		data: { limit: 50, offset: 0, outcomes: [] },
+	} as never);
+	vi.spyOn(V1Api.prototype, "v1CheckSuppression").mockResolvedValue({
+		data: { suppressed: false },
+	} as never);
+	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	render(
-		<ResultValue
-			value={{
-				syntax: { is_valid_syntax: false, error: null },
-				reasons: ["invalid_syntax"],
-				mx: {},
-			}}
-		/>,
+		<QueryClientProvider client={client}>
+			<CheckPanel initialEmail="maya@brightlane.co" />
+		</QueryClientProvider>,
 	);
-	expect(screen.getByText("syntax")).toBeVisible();
-	expect(screen.getByText("is valid syntax")).toBeVisible();
-	expect(screen.getByText("No")).toBeVisible();
-	expect(screen.getByText("Not available")).toBeVisible();
-	expect(screen.getByText("invalid_syntax")).toBeVisible();
-	expect(screen.getByText("None")).toBeVisible();
+	expect(screen.getByLabelText("Email address")).toHaveValue("maya@brightlane.co");
+	expect(await screen.findByText("Quality score")).toBeVisible();
+	expect(check).toHaveBeenCalledTimes(1);
+	expect(check).toHaveBeenCalledWith(
+		{ checkEmailRequest: { to_email: "maya@brightlane.co", sandbox: false } },
+		expect.any(Object),
+	);
+	expect(screen.getByText("Domain has a mail server: yes")).toBeVisible();
+	expect(screen.getByText("Technical details")).toBeVisible();
+	expect(
+		await screen.findByRole("button", { name: "Add to suppression list" }),
+	).toBeInTheDocument();
 });
 
 it("shows an inline error for an incomplete email address", () => {

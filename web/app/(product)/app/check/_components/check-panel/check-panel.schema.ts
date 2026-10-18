@@ -8,6 +8,9 @@ import { z } from "zod";
  * inferred from the schema so the shape cannot drift from the check.
  * Owned by the sibling `check-panel.lit.ts`.
  */
-export const CheckPanelPropsSchema = z.object({});
+export const CheckPanelPropsSchema = z.object({
+	/** The address from `?email=`. The panel checks it once when it opens. */
+	initialEmail: z.string().optional(),
+});
 
 export type CheckPanelPropsFields = z.infer<typeof CheckPanelPropsSchema>;
