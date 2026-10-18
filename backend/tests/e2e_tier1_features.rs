@@ -128,6 +128,24 @@ mod scope_tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_suppression_events_and_export_need_scope() {
+		let db = TestDb::start().await;
+		let tid = insert_tenant(db.pool(), "scope-suppressions", None, 0).await;
+		let (key, _) = insert_api_key_with_scopes(db.pool(), tid, &["verify"]).await;
+		let c = worker_config().await;
+		for path in ["/v1/suppressions/1/events", "/v1/suppressions/export"] {
+			let r = request()
+				.path(path)
+				.method("GET")
+				.header("Authorization", format!("Bearer {}", key))
+				.reply(&create_routes(Arc::clone(&c)))
+				.await;
+			assert_eq!(r.status(), StatusCode::FORBIDDEN, "{path}");
+		}
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_wildcard_scope_grants_all() {
 		let db = TestDb::start().await;
 		let tid = insert_tenant(db.pool(), "scope-wild", None, 0).await;
