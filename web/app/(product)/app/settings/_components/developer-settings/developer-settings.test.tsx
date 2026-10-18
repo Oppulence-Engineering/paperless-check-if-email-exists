@@ -9,8 +9,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DeveloperSettings } from "./developer-settings";
 
+const plan = vi.hoisted(() => ({ current: "professional" }));
 vi.mock("@/components/auth/auth-gate", () => ({
-	useEntitlements: () => ({ plan: "professional", active: true, seats: { used: 1, limit: 50 } }),
+	useEntitlements: () => ({ plan: plan.current, active: true, seats: { used: 1, limit: 50 } }),
 }));
 
 const tenantId = "3e205baa-5595-4c28-9f2b-9ae3e9e98e66";
@@ -28,6 +29,7 @@ function renderSettings(role = "owner") {
 afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
+	plan.current = "professional";
 });
 
 describe("DeveloperSettings", () => {
@@ -134,6 +136,43 @@ describe("DeveloperSettings", () => {
 				keyId,
 				updateApiKeyRequest: { name: "Staging", scopes: ["verify", "pipelines.read"] },
 			}),
+		);
+	});
+
+	it("offers every backend scope, keeps the form on a free plan, and shows the plan error", async () => {
+		plan.current = "free";
+		const list = vi.spyOn(AccountApi.prototype, "listTenantApiKeys"); // gitleaks:allow
+		list.mockResolvedValue({ data: { api_keys: [] } } as never);
+		const create = vi.spyOn(AccountApi.prototype, "createTenantApiKey"); // gitleaks:allow
+		create.mockRejectedValue(
+			Object.assign(new Error("Request failed with status code 403"), {
+				response: {
+					data: {
+						error:
+							"API access needs the Professional or Enterprise plan. Upgrade in Settings > Usage.",
+					},
+				},
+			}),
+		);
+		renderSettings();
+
+		expect(
+			screen.getByText("API access needs the Professional or Enterprise plan."),
+		).toBeInTheDocument();
+		for (const label of ["Read campaign results", "Send campaign results"]) {
+			expect(screen.getByRole("checkbox", { name: label })).toBeInTheDocument();
+		}
+		fireEvent.change(screen.getByRole("textbox", { name: "Key name" }), {
+			target: { value: "Feedback" },
+		});
+		fireEvent.click(screen.getByRole("checkbox", { name: "Read campaign results" }));
+		fireEvent.click(screen.getByRole("button", { name: "Create API key" }));
+		await waitFor(() => expect(create).toHaveBeenCalled());
+		expect(create.mock.calls[0]?.[0]?.createApiKeyRequest).toMatchObject({
+			scopes: ["verify", "outcomes.read"],
+		});
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"API access needs the Professional or Enterprise plan. Upgrade in Settings > Usage.",
 		);
 	});
 

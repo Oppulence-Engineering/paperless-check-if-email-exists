@@ -43,6 +43,9 @@ export const ApiKeyScopeSchema = z.enum([
 	"pipelines.read",
 	"pipelines.write",
 	"pipelines.trigger",
+	"outcomes.read",
+	"outcomes.write",
+	"admin",
 ]);
 
 export const CreateApiKeySchema = z.object({
