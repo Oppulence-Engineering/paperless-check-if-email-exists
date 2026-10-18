@@ -10,6 +10,12 @@
 import { faker } from "@faker-js/faker";
 
 import type {
+  OutcomePolicyDeleteResponse,
+  OutcomePolicyListResponse,
+  OutcomePolicyView,
+  ScorePolicyDeleteResponse,
+  ScorePolicyListResponse,
+  ScorePolicyView,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
@@ -116,5 +122,1259 @@ export const getV1UpdateTenantWebhookResponseMock = (
   tenant_id: faker.string.uuid(),
   tenant_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   webhook_signing_secret_configured: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getV1ListOutcomePoliciesResponseMock = (
+  overrideResponse: Partial<Extract<OutcomePolicyListResponse, object>> = {},
+): OutcomePolicyListResponse => ({
+  policies: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    id: faker.number.int(),
+    is_default: faker.datatype.boolean(),
+    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    rules: {
+      click: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      complaint: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      delivered: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      hard_bounce: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      open: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      outcome_ttl_days: faker.helpers.arrayElement([
+        faker.number.int(),
+        undefined,
+      ]),
+      soft_bounce: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+      unsubscribe: faker.helpers.arrayElement([
+        {
+          action: faker.helpers.arrayElement([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ] as const),
+          boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          score_override: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          threshold_count: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+          threshold_window_days: faker.helpers.arrayElement([
+            faker.number.int(),
+            undefined,
+          ]),
+        },
+        undefined,
+      ]),
+    },
+    updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});
+
+export const getV1CreateOutcomePolicyResponseMock = (
+  overrideResponse: Partial<Extract<OutcomePolicyView, object>> = {},
+): OutcomePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    click: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    complaint: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    delivered: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    hard_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    open: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    outcome_ttl_days: faker.helpers.arrayElement([
+      faker.number.int(),
+      undefined,
+    ]),
+    soft_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    unsubscribe: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1DeleteOutcomePolicyResponseMock = (
+  overrideResponse: Partial<Extract<OutcomePolicyDeleteResponse, object>> = {},
+): OutcomePolicyDeleteResponse => ({
+  deleted: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getV1GetOutcomePolicyResponseMock = (
+  overrideResponse: Partial<Extract<OutcomePolicyView, object>> = {},
+): OutcomePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    click: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    complaint: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    delivered: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    hard_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    open: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    outcome_ttl_days: faker.helpers.arrayElement([
+      faker.number.int(),
+      undefined,
+    ]),
+    soft_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    unsubscribe: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1UpdateOutcomePolicyResponseMock = (
+  overrideResponse: Partial<Extract<OutcomePolicyView, object>> = {},
+): OutcomePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    click: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    complaint: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    delivered: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    hard_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    open: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    outcome_ttl_days: faker.helpers.arrayElement([
+      faker.number.int(),
+      undefined,
+    ]),
+    soft_bounce: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    unsubscribe: faker.helpers.arrayElement([
+      {
+        action: faker.helpers.arrayElement([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ] as const),
+        boost: faker.helpers.arrayElement([faker.number.int(), undefined]),
+        score_override: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          undefined,
+        ]),
+        threshold_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+        threshold_window_days: faker.helpers.arrayElement([
+          faker.number.int(),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1ListScorePoliciesResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyListResponse, object>> = {},
+): ScorePolicyListResponse => ({
+  policies: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    id: faker.number.int(),
+    is_default: faker.datatype.boolean(),
+    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    rules: {
+      review: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+      send: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+      suppress: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+    },
+    updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});
+
+export const getV1CreateScorePolicyResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyView, object>> = {},
+): ScorePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1DeleteScorePolicyResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyDeleteResponse, object>> = {},
+): ScorePolicyDeleteResponse => ({
+  deleted: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getV1GetScorePolicyResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyView, object>> = {},
+): ScorePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1UpdateScorePolicyResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyView, object>> = {},
+): ScorePolicyView => ({
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  is_default: faker.datatype.boolean(),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,
 });

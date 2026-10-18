@@ -5,9 +5,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**filter** | **any** |  | [optional]
+**filter** | [**SegmentFilter**](SegmentFilter.md) |  | [optional]
 **name** | **string** |  | [optional]
-**scope** | **string** |  | [optional]
+**scope** | [**SegmentScope**](SegmentScope.md) |  | [optional]
 
 ## Example
 
@@ -17,7 +17,7 @@ import { UpdateSavedSegmentRequest } from '@oppulence/reacher-sdk';
 const instance: UpdateSavedSegmentRequest = {
     filter: {} as any,
     name: 'Weekly Cleanup',
-    scope: 'example',
+    scope: {} as any,
 };
 ```
 

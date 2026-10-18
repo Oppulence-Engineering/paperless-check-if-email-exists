@@ -8,11 +8,16 @@
  * OpenAPI spec version: 4.3.0
  */
 import type { VerifMethodType } from "./verifMethodType";
+import type { VerifMethodVerifMethod } from "./verifMethodVerifMethod";
 
 /**
  * The method used for email verification.
  */
 export interface VerifMethod {
+  /** The mail server host the check connected to. Only for Smtp. */
+  host?: string;
   /** The method used for the email verification. */
   type: VerifMethodType;
+  /** The SMTP settings the check used. Only for Smtp. */
+  verif_method?: VerifMethodVerifMethod;
 }

@@ -9,7 +9,63 @@
  */
 import { faker } from "@faker-js/faker";
 
-import type { V1EmailHistory200 } from "../model";
+import type { AlertListResponse, AlertView, V1EmailHistory200 } from "../model";
+
+export const getV1ListAlertsResponseMock = (
+  overrideResponse: Partial<Extract<AlertListResponse, object>> = {},
+): AlertListResponse => ({
+  alerts: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    body: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    change_event_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    id: faker.number.int(),
+    metadata: {},
+    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});
+
+export const getV1UpdateAlertResponseMock = (
+  overrideResponse: Partial<Extract<AlertView, object>> = {},
+): AlertView => ({
+  body: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  change_event_id: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  id: faker.number.int(),
+  metadata: {},
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
 
 export const getV1EmailHistoryResponseMock = (
   overrideResponse: Partial<Extract<V1EmailHistory200, object>> = {},
@@ -20,6 +76,13 @@ export const getV1EmailHistoryResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     category: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    change_type: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
@@ -44,6 +107,14 @@ export const getV1EmailHistoryResponseMock = (
       faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
+    list_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    pipeline_run_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
     policy_decision: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -57,6 +128,40 @@ export const getV1EmailHistoryResponseMock = (
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
+      undefined,
+    ]),
+    previous_category: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    previous_list_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    previous_pipeline_run_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    previous_reason_codes: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+      undefined,
+    ]),
+    previous_safe_to_send: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    previous_score: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    previous_task_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
     reason_codes: faker.helpers.arrayElement([
@@ -89,6 +194,7 @@ export const getV1EmailHistoryResponseMock = (
       ]),
       undefined,
     ]),
+    task_id: faker.number.int(),
   })),
   total: faker.number.int(),
   ...overrideResponse,

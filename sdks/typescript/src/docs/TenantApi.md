@@ -119,6 +119,7 @@ const { status, data } = await apiInstance.v1CreateOutcomePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Outcome policy created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -170,6 +171,7 @@ const { status, data } = await apiInstance.v1CreateScorePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Score policy created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -227,7 +229,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1DeleteOutcomePolicy**
-> v1DeleteOutcomePolicy()
+> OutcomePolicyDeleteResponse v1DeleteOutcomePolicy()
 
 
 ### Example
@@ -257,7 +259,7 @@ const { status, data } = await apiInstance.v1DeleteOutcomePolicy(
 
 ### Return type
 
-void (empty response body)
+**OutcomePolicyDeleteResponse**
 
 ### Authorization
 
@@ -266,18 +268,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Outcome policy deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1DeleteScorePolicy**
-> v1DeleteScorePolicy()
+> ScorePolicyDeleteResponse v1DeleteScorePolicy()
 
 
 ### Example
@@ -307,7 +310,7 @@ const { status, data } = await apiInstance.v1DeleteScorePolicy(
 
 ### Return type
 
-void (empty response body)
+**ScorePolicyDeleteResponse**
 
 ### Authorization
 
@@ -316,13 +319,14 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Score policy deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -425,6 +429,7 @@ const { status, data } = await apiInstance.v1GetOutcomePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Outcome policy |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -475,6 +480,7 @@ const { status, data } = await apiInstance.v1GetScorePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Score policy |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -715,6 +721,7 @@ const { status, data } = await apiInstance.v1ListOutcomePolicies(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Outcome policies |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -768,6 +775,7 @@ const { status, data } = await apiInstance.v1ListScorePolicies(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Score policies |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -867,6 +875,7 @@ const { status, data } = await apiInstance.v1UpdateOutcomePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Outcome policy updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -921,6 +930,7 @@ const { status, data } = await apiInstance.v1UpdateScorePolicy(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Score policy updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

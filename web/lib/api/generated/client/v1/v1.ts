@@ -27,18 +27,19 @@ import type {
   ReputationCheckRequest,
   ReputationCheckResponse,
   ReverificationStatusResponse,
+  SourceQualityResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
+  SuppressionEventListResponse,
   SuppressionListResponse,
   UpdateReverificationRequest,
   V1CheckSuppressionParams,
   V1DownloadListParams,
-  V1ImportSuppressions200,
-  V1ImportSuppressionsBody,
+  V1ExportSuppressionsParams,
   V1ListListsParams,
-  V1ListSuppressionEvents200,
+  V1ListSuppressionEventsParams,
   V1ListSuppressionsParams,
-  V1SourceQuality200,
+  V1SourceQualityParams,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -430,6 +431,12 @@ export const v1CreateList = async (
     formData.append(`name`, listUploadRequest.name);
   }
   if (
+    listUploadRequest.policy_id !== undefined &&
+    listUploadRequest.policy_id !== null
+  ) {
+    formData.append(`policy_id`, listUploadRequest.policy_id.toString());
+  }
+  if (
     listUploadRequest.source_key !== undefined &&
     listUploadRequest.source_key !== null
   ) {
@@ -763,7 +770,7 @@ export const v1ReverificationStatus = async (
 };
 
 export type v1SourceQualityResponse200 = {
-  data: V1SourceQuality200;
+  data: SourceQualityResponse;
   status: 200;
 };
 
@@ -782,17 +789,30 @@ export type v1SourceQualityResponseError = v1SourceQualityResponseDefault & {
 export type v1SourceQualityResponse =
   v1SourceQualityResponseSuccess | v1SourceQualityResponseError;
 
-export const getV1SourceQualityUrl = () => {
-  return `/v1/sources/quality`;
+export const getV1SourceQualityUrl = (params?: V1SourceQualityParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/sources/quality?${stringifiedParams}`
+    : `/v1/sources/quality`;
 };
 
 /**
  * @summary List source quality
  */
 export const v1SourceQuality = async (
+  params?: V1SourceQualityParams,
   options?: RequestInit,
 ): Promise<v1SourceQualityResponse> => {
-  const res = await fetch(getV1SourceQualityUrl(), {
+  const res = await fetch(getV1SourceQualityUrl(params), {
     ...options,
     method: "GET",
   });
@@ -998,17 +1018,32 @@ export type v1ExportSuppressionsResponseError =
 export type v1ExportSuppressionsResponse =
   v1ExportSuppressionsResponseSuccess | v1ExportSuppressionsResponseError;
 
-export const getV1ExportSuppressionsUrl = () => {
-  return `/v1/suppressions/export`;
+export const getV1ExportSuppressionsUrl = (
+  params?: V1ExportSuppressionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/suppressions/export?${stringifiedParams}`
+    : `/v1/suppressions/export`;
 };
 
 /**
  * @summary Export suppressions
  */
 export const v1ExportSuppressions = async (
+  params?: V1ExportSuppressionsParams,
   options?: RequestInit,
 ): Promise<v1ExportSuppressionsResponse> => {
-  const res = await fetch(getV1ExportSuppressionsUrl(), {
+  const res = await fetch(getV1ExportSuppressionsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -1024,7 +1059,7 @@ export const v1ExportSuppressions = async (
 };
 
 export type v1ImportSuppressionsResponse200 = {
-  data: V1ImportSuppressions200;
+  data: AddSuppressionsResponse;
   status: 200;
 };
 
@@ -1053,14 +1088,14 @@ export const getV1ImportSuppressionsUrl = () => {
  * @summary Import suppressions
  */
 export const v1ImportSuppressions = async (
-  v1ImportSuppressionsBody: V1ImportSuppressionsBody,
+  addSuppressionsRequest: AddSuppressionsRequest,
   options?: RequestInit,
 ): Promise<v1ImportSuppressionsResponse> => {
   const res = await fetch(getV1ImportSuppressionsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(v1ImportSuppressionsBody),
+    body: JSON.stringify(addSuppressionsRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -1126,7 +1161,7 @@ export const v1DeleteSuppression = async (
 };
 
 export type v1ListSuppressionEventsResponse200 = {
-  data: V1ListSuppressionEvents200;
+  data: SuppressionEventListResponse;
   status: 200;
 };
 
@@ -1147,8 +1182,23 @@ export type v1ListSuppressionEventsResponseError =
 export type v1ListSuppressionEventsResponse =
   v1ListSuppressionEventsResponseSuccess | v1ListSuppressionEventsResponseError;
 
-export const getV1ListSuppressionEventsUrl = (id: number) => {
-  return `/v1/suppressions/${id}/events`;
+export const getV1ListSuppressionEventsUrl = (
+  id: number,
+  params?: V1ListSuppressionEventsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/suppressions/${id}/events?${stringifiedParams}`
+    : `/v1/suppressions/${id}/events`;
 };
 
 /**
@@ -1156,9 +1206,10 @@ export const getV1ListSuppressionEventsUrl = (id: number) => {
  */
 export const v1ListSuppressionEvents = async (
   id: number,
+  params?: V1ListSuppressionEventsParams,
   options?: RequestInit,
 ): Promise<v1ListSuppressionEventsResponse> => {
-  const res = await fetch(getV1ListSuppressionEventsUrl(id), {
+  const res = await fetch(getV1ListSuppressionEventsUrl(id, params), {
     ...options,
     method: "GET",
   });

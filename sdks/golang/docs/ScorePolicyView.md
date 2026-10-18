@@ -8,14 +8,14 @@ Name | Type | Description | Notes
 **Id** | **int64** |  | [required]
 **IsDefault** | **bool** |  | [required]
 **Name** | **string** |  | [required]
-**Rules** | **interface{}** |  | [required]
+**Rules** | [**ScorePolicyRules**](ScorePolicyRules.md) |  | [required]
 **UpdatedAt** | **time.Time** |  | [required]
 
 ## Methods
 
 ### NewScorePolicyView
 
-`func NewScorePolicyView(createdAt time.Time, id int64, isDefault bool, name string, rules interface{}, updatedAt time.Time) *ScorePolicyView`
+`func NewScorePolicyView(createdAt time.Time, id int64, isDefault bool, name string, rules ScorePolicyRules, updatedAt time.Time) *ScorePolicyView`
 
 NewScorePolicyView instantiates a new ScorePolicyView object
 This constructor will assign default values to properties that have it defined,
@@ -112,20 +112,20 @@ SetName sets Name field to given value.
 
 ### GetRules
 
-`func (o *ScorePolicyView) GetRules() interface{}`
+`func (o *ScorePolicyView) GetRules() ScorePolicyRules`
 
 GetRules returns the Rules field if non-nil, zero value otherwise.
 
 ### GetRulesOk
 
-`func (o *ScorePolicyView) GetRulesOk() (*interface{}, bool)`
+`func (o *ScorePolicyView) GetRulesOk() (*ScorePolicyRules, bool)`
 
 GetRulesOk returns a tuple with the Rules field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRules
 
-`func (o *ScorePolicyView) SetRules(v interface{})`
+`func (o *ScorePolicyView) SetRules(v ScorePolicyRules)`
 
 SetRules sets Rules field to given value.
 

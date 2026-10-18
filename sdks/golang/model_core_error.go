@@ -20,12 +20,11 @@ import (
 // checks if the CoreError type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &CoreError{}
 
-// CoreError Details of an error encountered during the verification process.
+// CoreError The error that one part of the check returned instead of its details.
 type CoreError struct {
-	// A human-readable description of the error.
-	Message string `json:"message"`
-	// The type of error.
-	Type string `json:"type"`
+	// The category of an SMTP error, when it is known.
+	Description *string `json:"description,omitempty"`
+	Error CoreErrorError `json:"error"`
 }
 
 type _CoreError CoreError
@@ -34,10 +33,9 @@ type _CoreError CoreError
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCoreError(message string, type_ string) *CoreError {
+func NewCoreError(error_ CoreErrorError) *CoreError {
 	this := CoreError{}
-	this.Message = message
-	this.Type = type_
+	this.Error = error_
 	return &this
 }
 
@@ -49,52 +47,60 @@ func NewCoreErrorWithDefaults() *CoreError {
 	return &this
 }
 
-// GetMessage returns the Message field value
-func (o *CoreError) GetMessage() string {
-	if o == nil {
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *CoreError) GetDescription() string {
+	if o == nil || IsNil(o.Description) {
 		var ret string
 		return ret
 	}
-
-	return o.Message
+	return *o.Description
 }
 
-// GetMessageOk returns a tuple with the Message field value
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CoreError) GetMessageOk() (*string, bool) {
-	if o == nil {
+func (o *CoreError) GetDescriptionOk() (*string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return &o.Message, true
+	return o.Description, true
 }
 
-// SetMessage sets field value
-func (o *CoreError) SetMessage(v string) {
-	o.Message = v
+// HasDescription returns a boolean if a field has been set.
+func (o *CoreError) HasDescription() bool {
+	if o != nil && !IsNil(o.Description) {
+		return true
+	}
+
+	return false
 }
 
-// GetType returns the Type field value
-func (o *CoreError) GetType() string {
+// SetDescription gets a reference to the given string and assigns it to the Description field.
+func (o *CoreError) SetDescription(v string) {
+	o.Description = &v
+}
+
+// GetError returns the Error field value
+func (o *CoreError) GetError() CoreErrorError {
 	if o == nil {
-		var ret string
+		var ret CoreErrorError
 		return ret
 	}
 
-	return o.Type
+	return o.Error
 }
 
-// GetTypeOk returns a tuple with the Type field value
+// GetErrorOk returns a tuple with the Error field value
 // and a boolean to check if the value has been set.
-func (o *CoreError) GetTypeOk() (*string, bool) {
+func (o *CoreError) GetErrorOk() (*CoreErrorError, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Type, true
+	return &o.Error, true
 }
 
-// SetType sets field value
-func (o *CoreError) SetType(v string) {
-	o.Type = v
+// SetError sets field value
+func (o *CoreError) SetError(v CoreErrorError) {
+	o.Error = v
 }
 
 func (o CoreError) MarshalJSON() ([]byte, error) {
@@ -107,8 +113,10 @@ func (o CoreError) MarshalJSON() ([]byte, error) {
 
 func (o CoreError) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["message"] = o.Message
-	toSerialize["type"] = o.Type
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
+	}
+	toSerialize["error"] = o.Error
 	return toSerialize, nil
 }
 
@@ -117,8 +125,7 @@ func (o *CoreError) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"message",
-		"type",
+		"error",
 	}
 
 	allProperties := make(map[string]interface{})

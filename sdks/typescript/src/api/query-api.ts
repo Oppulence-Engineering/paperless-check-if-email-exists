@@ -23,6 +23,8 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { QueryResultList } from '../models';
 /**
  * QueryApi - axios parameter creator
  * @export
@@ -150,7 +152,7 @@ export const QueryApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1QueryResults(limit?: number, offset?: number, category?: string, minScore?: number, maxScore?: number, safeToSend?: boolean, jobId?: number, since?: string, until?: string, recommendationAction?: string, policyMode?: string, policyDecision?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1QueryResults(limit?: number, offset?: number, category?: string, minScore?: number, maxScore?: number, safeToSend?: boolean, jobId?: number, since?: string, until?: string, recommendationAction?: string, policyMode?: string, policyDecision?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QueryResultList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1QueryResults(limit, offset, category, minScore, maxScore, safeToSend, jobId, since, until, recommendationAction, policyMode, policyDecision, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['QueryApi.v1QueryResults']?.[localVarOperationServerIndex]?.url;
@@ -173,7 +175,7 @@ export const QueryApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1QueryResults(requestParameters: QueryApiV1QueryResultsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1QueryResults(requestParameters: QueryApiV1QueryResultsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<QueryResultList> {
             return localVarFp.v1QueryResults(requestParameters.limit, requestParameters.offset, requestParameters.category, requestParameters.minScore, requestParameters.maxScore, requestParameters.safeToSend, requestParameters.jobId, requestParameters.since, requestParameters.until, requestParameters.recommendationAction, requestParameters.policyMode, requestParameters.policyDecision, options).then((request) => request(axios, basePath));
         },
     };
@@ -193,7 +195,7 @@ export interface QueryApiInterface {
      * @throws {RequiredError}
      * @memberof QueryApiInterface
      */
-    v1QueryResults(requestParameters?: QueryApiV1QueryResultsRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1QueryResults(requestParameters?: QueryApiV1QueryResultsRequest, options?: RawAxiosRequestConfig): AxiosPromise<QueryResultList>;
 
 }
 

@@ -13,6 +13,7 @@ import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { DomainHealth } from "@/components/features/deliverability/domain-health/domain-health";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
 
 import { type DomainsPanelPropsFields } from "./domains-panel.schema";
@@ -40,6 +41,8 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 	const [selected, setSelected] = useState("");
 	const [editNotes, setEditNotes] = useState("");
 	const [notice, setNotice] = useState("");
+	const [lookup, setLookup] = useState("");
+	const [checked, setChecked] = useState("");
 	const me = useQuery({
 		queryKey: workflowQueryKey("tenant-profile"),
 		queryFn: async () => meSchema.parse((await accountApi.v1Me()).data),
@@ -100,8 +103,8 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 	const field = "h-10 rounded-lg md:w-72";
 	return (
 		<Page
-			description="Manage domains used by this workspace and review their verification state."
-			title="Workspace domains"
+			description="Check the health of the domains this workspace sends from, and manage them."
+			title="Sender domains"
 		>
 			<section
 				data-slot="domains-panel"
@@ -126,21 +129,22 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 				) : null}
 				<Section
 					description={
-						me.data
-							? `${me.data.tenant_name} · ${me.data.plan_tier} · ${me.data.status}`
-							: undefined
+						<>
+							{me.data
+								? `${me.data.tenant_name} · ${me.data.plan_tier} · ${me.data.status}. `
+								: null}
+							The health check reads public DNS records and blocklists. It does not verify
+							ownership.
+						</>
 					}
 					title="Domains"
 				>
-					<Group>
-						{domains.data?.domains.length ? (
-							domains.data.domains.map((item) => (
-								<div
-									className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
-									key={item.domain}
-								>
-									<div className="min-w-0 flex-1">
-										<p className="truncate text-sm text-white">{item.domain}</p>
+					{domains.data?.domains.length ? (
+						domains.data.domains.map((item) => (
+							<Group key={item.domain}>
+								<div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4">
+									<div className="min-w-0 flex-1 basis-40">
+										<h3 className="truncate text-sm font-medium text-white">{item.domain}</h3>
 									</div>
 									<Pill tone={item.is_verified ? "green" : "yellow"}>
 										{item.is_verified ? "Verified" : "Unverified"}
@@ -159,13 +163,16 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 										Manage
 									</Button>
 								</div>
-							))
-						) : (
+								<DomainHealth aria-label={`Health of ${item.domain}`} domain={item.domain} />
+							</Group>
+						))
+					) : (
+						<Group>
 							<Row>
 								<p className="text-sm text-[#858585]">No domains added.</p>
 							</Row>
-						)}
-					</Group>
+						</Group>
+					)}
 				</Section>
 				{detail.data ? (
 					<Section
@@ -270,6 +277,40 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 							</Button>
 						</div>
 					</form>
+				</Section>
+				<Section
+					description="Check the health of any domain, also one that is not in this workspace."
+					title="Check any domain"
+				>
+					<form
+						className="flex flex-col gap-2 sm:flex-row"
+						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+							event.preventDefault();
+							setChecked(lookup.trim().toLowerCase());
+						}}
+					>
+						<Label className="sr-only" htmlFor="reputation-domain">
+							Domain to check
+						</Label>
+						<Input
+							className={field}
+							id="reputation-domain"
+							required
+							placeholder="example.com"
+							value={lookup}
+							onChange={(event) => {
+								setLookup(event.target.value);
+							}}
+						/>
+						<Button className="h-10 rounded-lg" type="submit">
+							Check domain
+						</Button>
+					</form>
+					{checked ? (
+						<Group>
+							<DomainHealth aria-label={`Health of ${checked}`} domain={checked} />
+						</Group>
+					) : null}
 				</Section>
 			</section>
 		</Page>

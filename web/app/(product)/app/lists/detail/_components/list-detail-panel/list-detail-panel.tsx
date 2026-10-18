@@ -7,56 +7,37 @@ import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommentsApi, Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@oppulence/ui/components/tabs";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+import { JobProblems } from "@/components/features/lists/job-problems/job-problems";
+import { JobProgress } from "@/components/features/lists/job-progress/job-progress";
+import { JobReview, Stat } from "@/components/features/lists/job-review/job-review";
+import { JobRows } from "@/components/features/lists/job-rows/job-rows";
+import { ListCompare } from "@/components/features/lists/list-compare/list-compare";
+import { ListExport } from "@/components/features/lists/list-export/list-export";
+import { useV1ListLists } from "@/hooks/queries/use-v1-list-lists";
+import { v1ListListsKeys } from "@/hooks/queries/utils/v1-list-lists-keys";
+import { V1GetList200Response } from "@/lib/api/generated/zod/v1/v1";
+import { ACTIVE_LIST_STATES, ListQualitySchema } from "@/lib/api/schemas/lists";
+import { category, listStatus } from "@/lib/verification/labels";
 
 import { type ListDetailPanelPropsFields } from "./list-detail-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `list-detail-panel.lit.ts`. */
-/** Remediation export files the backend can build (backend/src/http/v1/lists/remediation.rs). */
-const EXPORT_PARTITIONS = {
-	safe_to_send: "Send-ready (safe and fixed)",
-	safe: "Safe",
-	fixed: "Fixed",
-	review: "Review",
-	drop: "Drop",
-	all: "All rows",
-} as const;
-
-type ExportPartition = keyof typeof EXPORT_PARTITIONS;
-
 export type ListDetailPanelProps = ListDetailPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
 const config = new Configuration({ basePath: "/api/backend" });
 const listsApi = new ListsApi(config);
 const commentsApi = new CommentsApi(config);
 const v1Api = new V1Api(config);
-const qualitySchema = z.object({
-	processed: z.number(),
-	quality_grade: z.string(),
-	safe_to_send_count: z.number(),
-	safe_to_send_pct: z.number(),
-	categories: z.record(z.string(), z.number()),
-});
-const planSchema = z.object({
-	id: z.number(),
-	status: z.string(),
-	summary_counts: z.record(z.string(), z.number()),
-	preview_rows: z.array(
-		z.object({
-			id: z.number(),
-			classification: z.string(),
-			original_email: z.string(),
-			effective_email: z.string(),
-		}),
-	),
-});
 const commentsSchema = z.object({
 	comments: z.array(
 		z.object({
@@ -68,24 +49,25 @@ const commentsSchema = z.object({
 	),
 });
 
-function download(data: unknown, filename: string) {
-	const blob = data instanceof Blob ? data : new Blob([data as BlobPart]);
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
-	link.href = url;
-	link.download = filename;
-	link.click();
-	setTimeout(() => {
-		URL.revokeObjectURL(url);
-	}, 1_000);
-}
+/** Risk counters in the quality report (backend/src/http/v1/lists/quality.rs). */
+const RISKS = {
+	disposable: "Disposable",
+	catch_all: "Catch-all",
+	role_account: "Role address",
+	spam_trap: "Spam trap",
+	full_inbox: "Full inbox",
+} as const;
 
-export function ListDetailPanel({ listId, className, ...props }: ListDetailPanelProps) {
+/** The segmented control style of the product pages, applied to the tabs. */
+const TAB_LIST_CLASS =
+	"h-auto w-full flex-wrap justify-start rounded-lg bg-white/[0.03] p-0.5 ring-1 ring-white/[0.08] sm:w-fit";
+const TAB_CLASS =
+	"flex-none rounded-md border-0 px-3 py-1 text-[#858585] after:hidden hover:text-neutral-200 data-[state=active]:bg-white/[0.08] data-[state=active]:text-white";
+
+export function ListDetailPanel({ listId, accepted, className, ...props }: ListDetailPanelProps) {
 	const client = useQueryClient();
+	const router = useRouter();
 	const [comment, setComment] = useState("");
-	const [notice, setNotice] = useState("");
-	const [partition, setPartition] = useState<ExportPartition>("safe_to_send");
-	const [exportIds, setExportIds] = useState<Partial<Record<ExportPartition, number>>>({});
 	const key = ["list-detail", listId];
 	function selectedListId(): number {
 		if (!listId) throw new Error("Select a list first.");
@@ -94,20 +76,24 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 	const detail = useQuery({
 		queryKey: workflowQueryKey(...key, "detail"),
 		enabled: !!listId,
-		queryFn: async () => (await v1Api.v1GetList({ listId: selectedListId() })).data,
+		queryFn: async () =>
+			V1GetList200Response.parse((await v1Api.v1GetList({ listId: selectedListId() })).data),
+		refetchInterval: (query) =>
+			ACTIVE_LIST_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
 	});
+	// ponytail: the list detail has no file name, so the page finds it in the first 100 lists.
+	const file = useV1ListLists({ limit: 100 }).data?.lists.find(
+		(list) => list.id === listId,
+	)?.original_filename;
 	const quality = useQuery({
 		queryKey: workflowQueryKey(...key, "quality"),
 		enabled: !!listId,
 		queryFn: async () =>
-			qualitySchema.parse((await listsApi.v1ListQuality({ listId: selectedListId() })).data),
-	});
-	const plan = useQuery({
-		queryKey: workflowQueryKey(...key, "plan"),
-		enabled: !!listId,
-		retry: false,
-		queryFn: async () =>
-			planSchema.parse((await listsApi.v1GetRemediationPlan({ listId: selectedListId() })).data),
+			ListQualitySchema.parse((await listsApi.v1ListQuality({ listId: selectedListId() })).data),
+		refetchInterval: (query) => {
+			const data = query.state.data;
+			return data && data.processed < data.total_rows ? 5_000 : false;
+		},
 	});
 	const comments = useQuery({
 		queryKey: workflowQueryKey(...key, "comments"),
@@ -116,34 +102,6 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 			commentsSchema.parse(
 				(await commentsApi.v1ListComments({ listId: selectedListId(), limit: 50 })).data,
 			),
-	});
-	const createPlan = useMutation({
-		mutationFn: async () =>
-			planSchema.parse(
-				(await listsApi.v1CreateRemediationPlan({ listId: selectedListId(), requestBody: {} }))
-					.data,
-			),
-		onSuccess: async () => {
-			setNotice("Remediation plan created.");
-			await client.invalidateQueries({ queryKey: workflowQueryKey(...key, "plan") });
-		},
-	});
-	const createExport = useMutation({
-		mutationFn: async (selected: ExportPartition) => ({
-			selected,
-			id: z.object({ id: z.number() }).parse(
-				(
-					await listsApi.v1CreateRemediationExport({
-						listId: selectedListId(),
-						requestBody: { plan_id: plan.data?.id, partitions: [selected], format: "csv" },
-					})
-				).data,
-			).id,
-		}),
-		onSuccess: ({ selected, id }) => {
-			setExportIds((current) => ({ ...current, [selected]: id }));
-			setNotice(`${EXPORT_PARTITIONS[selected]} file is ready.`);
-		},
 	});
 	const addComment = useMutation({
 		mutationFn: async () => {
@@ -169,34 +127,14 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 			await v1Api.v1DeleteList({ listId: selectedListId() });
 		},
 		onSuccess: async () => {
-			setNotice("List deleted.");
-			await client.invalidateQueries({ queryKey: workflowQueryKey("lists") });
+			await client.invalidateQueries({ queryKey: v1ListListsKeys.all });
+			router.push("/app/lists");
 		},
 	});
-	const downloadFile = useMutation({
-		mutationFn: async (kind: "cleaned" | ExportPartition) => {
-			const id = selectedListId();
-			const response =
-				kind === "cleaned"
-					? await v1Api.v1DownloadList({ listId: id, format: "csv" }, { responseType: "blob" })
-					: await listsApi.v1DownloadRemediationExport(
-							{ listId: id, exportId: exportIds[kind] ?? 0 },
-							{ responseType: "blob" },
-						);
-			download(response.data, `list-${String(id)}-${kind}.csv`);
-		},
-	});
-	const error = [
-		detail,
-		quality,
-		comments,
-		createPlan,
-		createExport,
-		addComment,
-		removeComment,
-		removeList,
-		downloadFile,
-	].find((request) => request.isError)?.error;
+	const error = [detail, quality, comments, addComment, removeComment, removeList].find(
+		(request) => request.isError,
+	)?.error;
+	const list = detail.data;
 
 	return (
 		<Page
@@ -206,20 +144,17 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 				</Link>
 			}
 			description={
-				detail.data ? (
-					<>
-						{detail.data.total_rows} rows · {detail.data.status} · Email column:{" "}
-						{detail.data.email_column} ·{" "}
-						<Link
-							className="underline hover:text-neutral-200"
-							href={`/app/jobs?job=${String(detail.data.job_id)}`}
-						>
-							Track verification job
-						</Link>
-					</>
-				) : undefined
+				list
+					? [
+							file,
+							`Email column: ${list.email_column}`,
+							list.source_key && `Source: ${list.source_key}`,
+						]
+							.filter(Boolean)
+							.join(" · ")
+					: undefined
 			}
-			title={detail.data?.name ?? "List detail"}
+			title={list?.name ?? "List workspace"}
 		>
 			<section
 				data-slot="list-detail-panel"
@@ -242,157 +177,113 @@ export function ListDetailPanel({ listId, className, ...props }: ListDetailPanel
 						{error.message}
 					</p>
 				) : null}
-				{notice ? (
+				{accepted ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
 					>
-						{notice}
+						List accepted. The check of each address has started.
 					</p>
 				) : null}
-				{detail.data ? (
+				{list ? (
 					<>
-						<Section
-							actions={
-								<Button
-									className="rounded-lg"
-									size="sm"
-									type="button"
-									variant="outline"
-									disabled={downloadFile.isPending}
-									onClick={() => {
-										downloadFile.mutate("cleaned");
-									}}
-								>
-									Download cleaned CSV
-								</Button>
-							}
-							title="Quality and downloads"
-						>
-							{quality.data ? (
-								<Group>
-									<Row
-										description={`${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} processed`}
-										label={`Grade ${quality.data.quality_grade}`}
+						<Group>
+							<Row>
+								<div className="flex flex-wrap items-center gap-3">
+									<Pill tone={listStatus.tone(list.status)}>{listStatus.label(list.status)}</Pill>
+									<Link
+										className="inline-flex items-center text-xs text-[#858585] underline-offset-4 hover:text-neutral-200 hover:underline"
+										href={`/app/jobs?job=${String(list.job_id)}`}
 									>
-										<div className="flex flex-wrap gap-2 md:justify-end">
-											{Object.entries(quality.data.categories)
-												.filter(([label]) => !label.endsWith("_pct"))
-												.map(([label, count]) => (
-													<Pill key={label}>
-														{label}: {count}
-													</Pill>
+										Bulk job {list.job_id}
+									</Link>
+								</div>
+								<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+									<Stat label="Rows" value={list.total_rows} />
+									<Stat label="Unique addresses" value={list.unique_emails ?? "—"} />
+									<Stat label="Duplicates removed" value={list.deduplicated_count ?? 0} />
+									<Stat label="Checked" value={list.summary.total_processed} />
+								</div>
+								<JobProgress jobId={list.job_id} />
+							</Row>
+						</Group>
+						<Tabs defaultValue="review">
+							<TabsList aria-label="List views" className={TAB_LIST_CLASS}>
+								<TabsTrigger className={TAB_CLASS} value="review">
+									Review
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="rows">
+									Rows
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="export">
+									Clean &amp; export
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="problems">
+									Problems
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="compare">
+									Compare
+								</TabsTrigger>
+							</TabsList>
+							<TabsContent className="mt-6 flex flex-col gap-10" value="review">
+								<div className="flex flex-col gap-4">
+									<h2 className="text-lg font-medium text-white">List quality</h2>
+									<Group>
+										{quality.data ? (
+											<Row
+												description={`Average score ${String(quality.data.avg_score)} · ${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} of ${String(quality.data.total_rows)} checked`}
+												label={`Grade ${quality.data.quality_grade}`}
+											/>
+										) : null}
+										<Row>
+											<h3 className="text-sm font-medium text-white">Categories</h3>
+											<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+												{(["valid", "risky", "unknown", "invalid"] as const).map((value) => (
+													<Stat
+														key={value}
+														label={category.label(value)}
+														value={list.summary[`total_${value}`]}
+													/>
 												))}
-										</div>
-									</Row>
-								</Group>
-							) : null}
-						</Section>
-						<Section
-							description="Review normalization, duplicate removal, suppression, and risky rows before export."
-							title="Remediation"
-						>
-							<Group>
-								{plan.data ? (
-									<>
-										<Row
-											description={Object.entries(plan.data.summary_counts)
-												.map(([label, count]) => `${label}: ${String(count)}`)
-												.join(" · ")}
-											label={`Plan ${plan.data.status}`}
-										/>
-										{plan.data.preview_rows.length ? (
+											</div>
+										</Row>
+										{quality.data ? (
 											<Row>
-												<div className="max-h-72 overflow-auto">
-													<table className="w-full text-left text-sm">
-														<thead>
-															<tr className="border-b border-border">
-																<th className="py-2 pr-4 font-medium text-foreground">Original</th>
-																<th className="py-2 pr-4 font-medium text-foreground">Effective</th>
-																<th className="py-2 font-medium text-foreground">Decision</th>
-															</tr>
-														</thead>
-														<tbody>
-															{plan.data.preview_rows.map((row) => (
-																<tr className="border-b border-border/60" key={row.id}>
-																	<td className="py-2 pr-4 text-foreground">
-																		{row.original_email}
-																	</td>
-																	<td className="py-2 pr-4 text-muted-foreground">
-																		{row.effective_email}
-																	</td>
-																	<td className="py-2 text-muted-foreground">
-																		{row.classification}
-																	</td>
-																</tr>
-															))}
-														</tbody>
-													</table>
+												<h3 className="text-sm font-medium text-white">Risk breakdown</h3>
+												<div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+													{Object.entries(RISKS).map(([risk, label]) => (
+														<Stat
+															key={risk}
+															label={label}
+															value={quality.data.risk_breakdown[risk] ?? 0}
+														/>
+													))}
 												</div>
 											</Row>
 										) : null}
-										<Row label={<Label htmlFor="export-partition">Export file</Label>}>
-											<select
-												className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72"
-												id="export-partition"
-												onChange={(event) => {
-													setPartition(event.target.value as ExportPartition);
-												}}
-												value={partition}
-											>
-												{Object.entries(EXPORT_PARTITIONS).map(([value, label]) => (
-													<option key={value} value={value}>
-														{label}
-													</option>
-												))}
-											</select>
-										</Row>
-										<Row>
-											<div className="flex flex-wrap justify-end gap-2">
-												{exportIds[partition] ? (
-													<Button
-														className="rounded-lg"
-														type="button"
-														variant="outline"
-														disabled={downloadFile.isPending}
-														onClick={() => {
-															downloadFile.mutate(partition);
-														}}
-													>
-														Download {EXPORT_PARTITIONS[partition].toLowerCase()} CSV
-													</Button>
-												) : null}
-												<Button
-													className="rounded-lg"
-													type="button"
-													disabled={createExport.isPending}
-													onClick={() => {
-														createExport.mutate(partition);
-													}}
-												>
-													Prepare CSV
-												</Button>
-											</div>
-										</Row>
-									</>
+									</Group>
+								</div>
+								<JobReview jobId={list.job_id} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="rows">
+								<JobRows jobId={list.job_id} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="export">
+								<ListExport listId={list.id} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="problems">
+								<JobProblems jobId={list.job_id} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="compare">
+								{list.status === "completed" ? (
+									<ListCompare listId={list.id} />
 								) : (
-									<Row>
-										<div className="flex justify-end">
-											<Button
-												className="rounded-lg"
-												type="button"
-												disabled={createPlan.isPending}
-												onClick={() => {
-													createPlan.mutate();
-												}}
-											>
-												Create remediation plan
-											</Button>
-										</div>
-									</Row>
+									<p className="text-sm text-[#858585]">
+										You can compare this list when all its rows are checked.
+									</p>
 								)}
-							</Group>
-						</Section>
+							</TabsContent>
+						</Tabs>
 						<Section title="Team comments">
 							<form
 								className="flex gap-2"

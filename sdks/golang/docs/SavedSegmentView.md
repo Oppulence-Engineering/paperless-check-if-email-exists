@@ -5,17 +5,17 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **CreatedAt** | **time.Time** |  | [required]
-**Filter** | **interface{}** |  | [required]
+**Filter** | [**SegmentFilter**](SegmentFilter.md) |  | [required]
 **Id** | **int64** |  | [required]
 **Name** | **string** |  | [required]
-**Scope** | **string** |  | [required]
+**Scope** | [**SegmentScope**](SegmentScope.md) |  | [required]
 **UpdatedAt** | **time.Time** |  | [required]
 
 ## Methods
 
 ### NewSavedSegmentView
 
-`func NewSavedSegmentView(createdAt time.Time, filter interface{}, id int64, name string, scope string, updatedAt time.Time) *SavedSegmentView`
+`func NewSavedSegmentView(createdAt time.Time, filter SegmentFilter, id int64, name string, scope SegmentScope, updatedAt time.Time) *SavedSegmentView`
 
 NewSavedSegmentView instantiates a new SavedSegmentView object
 This constructor will assign default values to properties that have it defined,
@@ -52,20 +52,20 @@ SetCreatedAt sets CreatedAt field to given value.
 
 ### GetFilter
 
-`func (o *SavedSegmentView) GetFilter() interface{}`
+`func (o *SavedSegmentView) GetFilter() SegmentFilter`
 
 GetFilter returns the Filter field if non-nil, zero value otherwise.
 
 ### GetFilterOk
 
-`func (o *SavedSegmentView) GetFilterOk() (*interface{}, bool)`
+`func (o *SavedSegmentView) GetFilterOk() (*SegmentFilter, bool)`
 
 GetFilterOk returns a tuple with the Filter field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetFilter
 
-`func (o *SavedSegmentView) SetFilter(v interface{})`
+`func (o *SavedSegmentView) SetFilter(v SegmentFilter)`
 
 SetFilter sets Filter field to given value.
 
@@ -112,20 +112,20 @@ SetName sets Name field to given value.
 
 ### GetScope
 
-`func (o *SavedSegmentView) GetScope() string`
+`func (o *SavedSegmentView) GetScope() SegmentScope`
 
 GetScope returns the Scope field if non-nil, zero value otherwise.
 
 ### GetScopeOk
 
-`func (o *SavedSegmentView) GetScopeOk() (*string, bool)`
+`func (o *SavedSegmentView) GetScopeOk() (*SegmentScope, bool)`
 
 GetScopeOk returns a tuple with the Scope field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetScope
 
-`func (o *SavedSegmentView) SetScope(v string)`
+`func (o *SavedSegmentView) SetScope(v SegmentScope)`
 
 SetScope sets Scope field to given value.
 

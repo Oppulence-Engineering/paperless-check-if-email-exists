@@ -3,9 +3,10 @@
 import "client-only";
 
 import {
+	useEffect,
+	useRef,
 	useState,
 	type ComponentPropsWithoutRef,
-	type ReactNode,
 	type SyntheticEvent,
 } from "react";
 import { z } from "zod";
@@ -15,7 +16,13 @@ import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
-import { Group, Page, Pill, Row, Section, type PillTone } from "@/components/platform/page-kit";
+import { Group, Page, Row, Section } from "@/components/platform/page-kit";
+import { AddressTimeline } from "@/components/features/verification/address-timeline/address-timeline";
+import { ProviderDetails } from "@/components/features/verification/provider-details/provider-details";
+import { RiskFactors } from "@/components/features/verification/risk-factors/risk-factors";
+import { SignalChecklist } from "@/components/features/verification/signal-checklist/signal-checklist";
+import { TechnicalDetails } from "@/components/features/verification/technical-details/technical-details";
+import { VerdictSummary } from "@/components/features/verification/verdict-summary/verdict-summary";
 import { useV1CheckEmail } from "@/hooks/queries/use-v1-check-email";
 
 import { type CheckPanelPropsFields } from "./check-panel.schema";
@@ -29,18 +36,21 @@ import { type CheckPanelPropsFields } from "./check-panel.schema";
  */
 export type CheckPanelProps = CheckPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
-const CATEGORY_TONES: Record<string, PillTone> = {
-	invalid: "red",
-	risky: "yellow",
-	unknown: "gray",
-	valid: "green",
-};
-
-export function CheckPanel({ className, ...props }: CheckPanelProps) {
-	const [email, setEmail] = useState("");
+export function CheckPanel({ className, initialEmail, ...props }: CheckPanelProps) {
+	const [email, setEmail] = useState(initialEmail ?? "");
 	const [inputError, setInputError] = useState<string | null>(null);
 	const [sample, setSample] = useState(false);
 	const check = useV1CheckEmail();
+	const { mutate } = check;
+	const checkedInitial = useRef(false);
+
+	// Check the `?email=` address one time. The ref stops a second run in Strict Mode.
+	useEffect(() => {
+		if (checkedInitial.current || !initialEmail) return;
+		checkedInitial.current = true;
+		const address = initialEmail.trim();
+		if (z.email().safeParse(address).success) mutate({ to_email: address, sandbox: false });
+	}, [initialEmail, mutate]);
 
 	function submit(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -127,97 +137,29 @@ export function CheckPanel({ className, ...props }: CheckPanelProps) {
 				{result ? (
 					<>
 						<div aria-live="polite">
-							<Section
-								actions={
-									<Pill tone={CATEGORY_TONES[result.score.category]}>
-										<span className="capitalize">{result.score.category}</span>
-									</Pill>
-								}
-								title={result.input}
-							>
-								<Group>
-									<Row>
-										<dl className="grid gap-5 sm:grid-cols-4">
-											<div>
-												<dt className="text-xs text-[#858585]">Reachability</dt>
-												<dd className="mt-1 text-sm font-medium text-white capitalize">
-													{result.is_reachable}
-												</dd>
-											</div>
-											<div>
-												<dt className="text-xs text-[#858585]">Safe to send</dt>
-												<dd className="mt-1 text-sm font-medium text-white">
-													{result.score.safe_to_send ? "Yes" : "No"}
-												</dd>
-											</div>
-											<div>
-												<dt className="text-xs text-[#858585]">Quality score</dt>
-												<dd className="mt-1 text-sm font-medium text-white">
-													{result.score.score}/100
-												</dd>
-											</div>
-											<div>
-												<dt className="text-xs text-[#858585]">Syntax</dt>
-												<dd className="mt-1 text-sm font-medium text-white">
-													{result.syntax.is_valid_syntax ? "Valid" : "Invalid"}
-												</dd>
-											</div>
-										</dl>
-									</Row>
-									{result.score.reason_codes.length > 0 ? (
-										<Row description={result.score.reason_codes.join(", ")} label="Reasons" />
-									) : null}
-								</Group>
+							<Section title={result.input}>
+								<VerdictSummary result={result} />
 							</Section>
 						</div>
-						<Section title="All check details">
-							<Group>
-								<Row>
-									<div className="text-sm">
-										<ResultValue value={result} />
-									</div>
-								</Row>
-							</Group>
+						<Section title="Risk">
+							<RiskFactors result={result} />
+						</Section>
+						<Section title="Signals">
+							<SignalChecklist result={result} />
+						</Section>
+						<Section title="Provider and policy">
+							<ProviderDetails result={result} />
+						</Section>
+						<TechnicalDetails result={result} />
+						<Section
+							description="Earlier checks, delivery events, and suppression status for this address."
+							title="Address history"
+						>
+							<AddressTimeline email={result.input} />
 						</Section>
 					</>
 				) : null}
 			</section>
 		</Page>
 	);
-}
-
-export function ResultValue({ value }: { value: unknown }): ReactNode {
-	if (value === null || value === undefined) return "Not available";
-	if (Array.isArray(value)) {
-		const items = value as unknown[];
-		if (items.length === 0) return "None";
-		return (
-			<ol className="list-decimal space-y-2 pl-5">
-				{items.map((item, index) => (
-					<li key={index}>
-						<ResultValue value={item} />
-					</li>
-				))}
-			</ol>
-		);
-	}
-	if (typeof value === "object") {
-		const entries = Object.entries(value as Record<string, unknown>);
-		if (entries.length === 0) return "None";
-		return (
-			<dl className="divide-y divide-white/[0.07]">
-				{entries.map(([key, field]) => (
-					<div className="grid gap-2 py-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)]" key={key}>
-						<dt className="font-medium break-words text-white">{key.replaceAll("_", " ")}</dt>
-						<dd className="min-w-0 break-words text-[#858585]">
-							<ResultValue value={field} />
-						</dd>
-					</div>
-				))}
-			</dl>
-		);
-	}
-	if (typeof value === "boolean") return value ? "Yes" : "No";
-	if (typeof value === "string" || typeof value === "number") return String(value) || "Empty";
-	return "Not available";
 }

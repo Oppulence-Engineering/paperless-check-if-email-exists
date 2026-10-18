@@ -18,17 +18,17 @@ export const V1ListPipelinesQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListPipelines200Response = zod.strictObject({
+export const V1ListPipelines200Response = zod.object({
   pipelines: zod.array(
-    zod.strictObject({
+    zod.object({
       created_at: zod.iso.datetime({ offset: true }),
-      delivery: zod.strictObject({
+      delivery: zod.object({
         dashboard: zod.boolean().optional(),
         max_attempts: zod.int().optional(),
         retry_backoff_seconds: zod.int().optional(),
         webhook: zod
           .union([
-            zod.strictObject({
+            zod.object({
               headers: zod.record(zod.string(), zod.string()).optional(),
               url: zod.string(),
             }),
@@ -41,31 +41,32 @@ export const V1ListPipelines200Response = zod.strictObject({
       last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
       name: zod.string(),
       next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-      policy: zod.strictObject({
+      policy: zod.object({
         missed_run_window_hours: zod.int().optional(),
+        policy_id: zod.int().nullish(),
       }),
-      schedule: zod.strictObject({
+      schedule: zod.object({
         cron: zod.string(),
         timezone: zod.string(),
       }),
       source: zod.union([
-        zod.strictObject({
+        zod.object({
           list_id: zod.int(),
           type: zod.enum(["list_snapshot"]),
         }),
-        zod.strictObject({
+        zod.object({
           audience_id: zod.string(),
           connection_id: zod.string(),
           field_mapping: zod.unknown().optional(),
           provider: zod.string(),
           type: zod.enum(["integration"]),
         }),
-        zod.strictObject({
+        zod.object({
           accepted_format: zod.string(),
           token_id: zod.string(),
           type: zod.enum(["push"]),
         }),
-        zod.strictObject({
+        zod.object({
           bucket: zod.string(),
           path_pattern: zod.string().nullish(),
           prefix: zod.string().nullish(),
@@ -77,7 +78,7 @@ export const V1ListPipelines200Response = zod.strictObject({
       status: zod.enum(["active", "paused", "deleted"]),
       tenant_id: zod.uuid(),
       updated_at: zod.iso.datetime({ offset: true }),
-      verification: zod.strictObject({
+      verification: zod.object({
         delta_mode: zod.boolean().optional(),
         freshness_days: zod.int().nullish(),
       }),
@@ -86,23 +87,23 @@ export const V1ListPipelines200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListPipelines400Response = zod.strictObject({
+export const V1ListPipelines400Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelines403Response = zod.strictObject({
+export const V1ListPipelines403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelines500Response = zod.strictObject({
+export const V1ListPipelines500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelines503Response = zod.strictObject({
+export const V1ListPipelines503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelinesDefaultResponse = zod.strictObject({
+export const V1ListPipelinesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -130,6 +131,7 @@ export const V1CreatePipelineBody = zod.strictObject({
   policy: zod
     .strictObject({
       missed_run_window_hours: zod.int().optional(),
+      policy_id: zod.int().nullish(),
     })
     .optional(),
   schedule: zod.strictObject({
@@ -171,15 +173,15 @@ export const V1CreatePipelineBody = zod.strictObject({
     .optional(),
 });
 
-export const V1CreatePipeline201Response = zod.strictObject({
+export const V1CreatePipeline201Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  delivery: zod.strictObject({
+  delivery: zod.object({
     dashboard: zod.boolean().optional(),
     max_attempts: zod.int().optional(),
     retry_backoff_seconds: zod.int().optional(),
     webhook: zod
       .union([
-        zod.strictObject({
+        zod.object({
           headers: zod.record(zod.string(), zod.string()).optional(),
           url: zod.string(),
         }),
@@ -192,31 +194,32 @@ export const V1CreatePipeline201Response = zod.strictObject({
   last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
   name: zod.string(),
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-  policy: zod.strictObject({
+  policy: zod.object({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
-  schedule: zod.strictObject({
+  schedule: zod.object({
     cron: zod.string(),
     timezone: zod.string(),
   }),
   source: zod.union([
-    zod.strictObject({
+    zod.object({
       list_id: zod.int(),
       type: zod.enum(["list_snapshot"]),
     }),
-    zod.strictObject({
+    zod.object({
       audience_id: zod.string(),
       connection_id: zod.string(),
       field_mapping: zod.unknown().optional(),
       provider: zod.string(),
       type: zod.enum(["integration"]),
     }),
-    zod.strictObject({
+    zod.object({
       accepted_format: zod.string(),
       token_id: zod.string(),
       type: zod.enum(["push"]),
     }),
-    zod.strictObject({
+    zod.object({
       bucket: zod.string(),
       path_pattern: zod.string().nullish(),
       prefix: zod.string().nullish(),
@@ -228,29 +231,29 @@ export const V1CreatePipeline201Response = zod.strictObject({
   status: zod.enum(["active", "paused", "deleted"]),
   tenant_id: zod.uuid(),
   updated_at: zod.iso.datetime({ offset: true }),
-  verification: zod.strictObject({
+  verification: zod.object({
     delta_mode: zod.boolean().optional(),
     freshness_days: zod.int().nullish(),
   }),
 });
 
-export const V1CreatePipeline400Response = zod.strictObject({
+export const V1CreatePipeline400Response = zod.object({
   error: zod.string(),
 });
 
-export const V1CreatePipeline403Response = zod.strictObject({
+export const V1CreatePipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1CreatePipeline500Response = zod.strictObject({
+export const V1CreatePipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1CreatePipeline503Response = zod.strictObject({
+export const V1CreatePipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1CreatePipelineDefaultResponse = zod.strictObject({
+export const V1CreatePipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -261,27 +264,27 @@ export const V1DeletePipelineParams = zod.object({
   pipeline_id: zod.coerce.number().int().describe("Pipeline identifier"),
 });
 
-export const V1DeletePipeline200Response = zod.strictObject({
+export const V1DeletePipeline200Response = zod.object({
   deleted: zod.boolean(),
 });
 
-export const V1DeletePipeline403Response = zod.strictObject({
+export const V1DeletePipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1DeletePipeline404Response = zod.strictObject({
+export const V1DeletePipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1DeletePipeline500Response = zod.strictObject({
+export const V1DeletePipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1DeletePipeline503Response = zod.strictObject({
+export const V1DeletePipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1DeletePipelineDefaultResponse = zod.strictObject({
+export const V1DeletePipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -292,15 +295,15 @@ export const V1GetPipelineParams = zod.object({
   pipeline_id: zod.coerce.number().int().describe("Pipeline identifier"),
 });
 
-export const V1GetPipeline200Response = zod.strictObject({
+export const V1GetPipeline200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  delivery: zod.strictObject({
+  delivery: zod.object({
     dashboard: zod.boolean().optional(),
     max_attempts: zod.int().optional(),
     retry_backoff_seconds: zod.int().optional(),
     webhook: zod
       .union([
-        zod.strictObject({
+        zod.object({
           headers: zod.record(zod.string(), zod.string()).optional(),
           url: zod.string(),
         }),
@@ -313,31 +316,32 @@ export const V1GetPipeline200Response = zod.strictObject({
   last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
   name: zod.string(),
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-  policy: zod.strictObject({
+  policy: zod.object({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
-  schedule: zod.strictObject({
+  schedule: zod.object({
     cron: zod.string(),
     timezone: zod.string(),
   }),
   source: zod.union([
-    zod.strictObject({
+    zod.object({
       list_id: zod.int(),
       type: zod.enum(["list_snapshot"]),
     }),
-    zod.strictObject({
+    zod.object({
       audience_id: zod.string(),
       connection_id: zod.string(),
       field_mapping: zod.unknown().optional(),
       provider: zod.string(),
       type: zod.enum(["integration"]),
     }),
-    zod.strictObject({
+    zod.object({
       accepted_format: zod.string(),
       token_id: zod.string(),
       type: zod.enum(["push"]),
     }),
-    zod.strictObject({
+    zod.object({
       bucket: zod.string(),
       path_pattern: zod.string().nullish(),
       prefix: zod.string().nullish(),
@@ -349,29 +353,29 @@ export const V1GetPipeline200Response = zod.strictObject({
   status: zod.enum(["active", "paused", "deleted"]),
   tenant_id: zod.uuid(),
   updated_at: zod.iso.datetime({ offset: true }),
-  verification: zod.strictObject({
+  verification: zod.object({
     delta_mode: zod.boolean().optional(),
     freshness_days: zod.int().nullish(),
   }),
 });
 
-export const V1GetPipeline403Response = zod.strictObject({
+export const V1GetPipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipeline404Response = zod.strictObject({
+export const V1GetPipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipeline500Response = zod.strictObject({
+export const V1GetPipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipeline503Response = zod.strictObject({
+export const V1GetPipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipelineDefaultResponse = zod.strictObject({
+export const V1GetPipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -407,6 +411,7 @@ export const V1UpdatePipelineBody = zod.strictObject({
     .union([
       zod.strictObject({
         missed_run_window_hours: zod.int().optional(),
+        policy_id: zod.int().nullish(),
       }),
       zod.null(),
     ])
@@ -465,15 +470,15 @@ export const V1UpdatePipelineBody = zod.strictObject({
     .optional(),
 });
 
-export const V1UpdatePipeline200Response = zod.strictObject({
+export const V1UpdatePipeline200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  delivery: zod.strictObject({
+  delivery: zod.object({
     dashboard: zod.boolean().optional(),
     max_attempts: zod.int().optional(),
     retry_backoff_seconds: zod.int().optional(),
     webhook: zod
       .union([
-        zod.strictObject({
+        zod.object({
           headers: zod.record(zod.string(), zod.string()).optional(),
           url: zod.string(),
         }),
@@ -486,31 +491,32 @@ export const V1UpdatePipeline200Response = zod.strictObject({
   last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
   name: zod.string(),
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-  policy: zod.strictObject({
+  policy: zod.object({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
-  schedule: zod.strictObject({
+  schedule: zod.object({
     cron: zod.string(),
     timezone: zod.string(),
   }),
   source: zod.union([
-    zod.strictObject({
+    zod.object({
       list_id: zod.int(),
       type: zod.enum(["list_snapshot"]),
     }),
-    zod.strictObject({
+    zod.object({
       audience_id: zod.string(),
       connection_id: zod.string(),
       field_mapping: zod.unknown().optional(),
       provider: zod.string(),
       type: zod.enum(["integration"]),
     }),
-    zod.strictObject({
+    zod.object({
       accepted_format: zod.string(),
       token_id: zod.string(),
       type: zod.enum(["push"]),
     }),
-    zod.strictObject({
+    zod.object({
       bucket: zod.string(),
       path_pattern: zod.string().nullish(),
       prefix: zod.string().nullish(),
@@ -522,33 +528,33 @@ export const V1UpdatePipeline200Response = zod.strictObject({
   status: zod.enum(["active", "paused", "deleted"]),
   tenant_id: zod.uuid(),
   updated_at: zod.iso.datetime({ offset: true }),
-  verification: zod.strictObject({
+  verification: zod.object({
     delta_mode: zod.boolean().optional(),
     freshness_days: zod.int().nullish(),
   }),
 });
 
-export const V1UpdatePipeline400Response = zod.strictObject({
+export const V1UpdatePipeline400Response = zod.object({
   error: zod.string(),
 });
 
-export const V1UpdatePipeline403Response = zod.strictObject({
+export const V1UpdatePipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1UpdatePipeline404Response = zod.strictObject({
+export const V1UpdatePipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1UpdatePipeline500Response = zod.strictObject({
+export const V1UpdatePipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1UpdatePipeline503Response = zod.strictObject({
+export const V1UpdatePipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1UpdatePipelineDefaultResponse = zod.strictObject({
+export const V1UpdatePipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -559,15 +565,15 @@ export const V1PausePipelineParams = zod.object({
   pipeline_id: zod.coerce.number().int().describe("Pipeline identifier"),
 });
 
-export const V1PausePipeline200Response = zod.strictObject({
+export const V1PausePipeline200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  delivery: zod.strictObject({
+  delivery: zod.object({
     dashboard: zod.boolean().optional(),
     max_attempts: zod.int().optional(),
     retry_backoff_seconds: zod.int().optional(),
     webhook: zod
       .union([
-        zod.strictObject({
+        zod.object({
           headers: zod.record(zod.string(), zod.string()).optional(),
           url: zod.string(),
         }),
@@ -580,31 +586,32 @@ export const V1PausePipeline200Response = zod.strictObject({
   last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
   name: zod.string(),
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-  policy: zod.strictObject({
+  policy: zod.object({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
-  schedule: zod.strictObject({
+  schedule: zod.object({
     cron: zod.string(),
     timezone: zod.string(),
   }),
   source: zod.union([
-    zod.strictObject({
+    zod.object({
       list_id: zod.int(),
       type: zod.enum(["list_snapshot"]),
     }),
-    zod.strictObject({
+    zod.object({
       audience_id: zod.string(),
       connection_id: zod.string(),
       field_mapping: zod.unknown().optional(),
       provider: zod.string(),
       type: zod.enum(["integration"]),
     }),
-    zod.strictObject({
+    zod.object({
       accepted_format: zod.string(),
       token_id: zod.string(),
       type: zod.enum(["push"]),
     }),
-    zod.strictObject({
+    zod.object({
       bucket: zod.string(),
       path_pattern: zod.string().nullish(),
       prefix: zod.string().nullish(),
@@ -616,29 +623,29 @@ export const V1PausePipeline200Response = zod.strictObject({
   status: zod.enum(["active", "paused", "deleted"]),
   tenant_id: zod.uuid(),
   updated_at: zod.iso.datetime({ offset: true }),
-  verification: zod.strictObject({
+  verification: zod.object({
     delta_mode: zod.boolean().optional(),
     freshness_days: zod.int().nullish(),
   }),
 });
 
-export const V1PausePipeline403Response = zod.strictObject({
+export const V1PausePipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PausePipeline404Response = zod.strictObject({
+export const V1PausePipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PausePipeline500Response = zod.strictObject({
+export const V1PausePipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PausePipeline503Response = zod.strictObject({
+export const V1PausePipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PausePipelineDefaultResponse = zod.strictObject({
+export const V1PausePipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -659,7 +666,7 @@ export const V1PushPipelineBody = zod.strictObject({
   source_key: zod.string().nullish(),
 });
 
-export const V1PushPipeline202Response = zod.strictObject({
+export const V1PushPipeline202Response = zod.object({
   accepted_rows: zod.int(),
   batch_id: zod.int(),
   replayed: zod.boolean(),
@@ -678,27 +685,27 @@ export const V1PushPipeline202Response = zod.strictObject({
   ]),
 });
 
-export const V1PushPipeline400Response = zod.strictObject({
+export const V1PushPipeline400Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PushPipeline403Response = zod.strictObject({
+export const V1PushPipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PushPipeline404Response = zod.strictObject({
+export const V1PushPipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PushPipeline409Response = zod.strictObject({
+export const V1PushPipeline409Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PushPipeline503Response = zod.strictObject({
+export const V1PushPipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1PushPipelineDefaultResponse = zod.strictObject({
+export const V1PushPipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -709,15 +716,15 @@ export const V1ResumePipelineParams = zod.object({
   pipeline_id: zod.coerce.number().int().describe("Pipeline identifier"),
 });
 
-export const V1ResumePipeline200Response = zod.strictObject({
+export const V1ResumePipeline200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }),
-  delivery: zod.strictObject({
+  delivery: zod.object({
     dashboard: zod.boolean().optional(),
     max_attempts: zod.int().optional(),
     retry_backoff_seconds: zod.int().optional(),
     webhook: zod
       .union([
-        zod.strictObject({
+        zod.object({
           headers: zod.record(zod.string(), zod.string()).optional(),
           url: zod.string(),
         }),
@@ -730,31 +737,32 @@ export const V1ResumePipeline200Response = zod.strictObject({
   last_scheduled_at: zod.iso.datetime({ offset: true }).nullish(),
   name: zod.string(),
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
-  policy: zod.strictObject({
+  policy: zod.object({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
-  schedule: zod.strictObject({
+  schedule: zod.object({
     cron: zod.string(),
     timezone: zod.string(),
   }),
   source: zod.union([
-    zod.strictObject({
+    zod.object({
       list_id: zod.int(),
       type: zod.enum(["list_snapshot"]),
     }),
-    zod.strictObject({
+    zod.object({
       audience_id: zod.string(),
       connection_id: zod.string(),
       field_mapping: zod.unknown().optional(),
       provider: zod.string(),
       type: zod.enum(["integration"]),
     }),
-    zod.strictObject({
+    zod.object({
       accepted_format: zod.string(),
       token_id: zod.string(),
       type: zod.enum(["push"]),
     }),
-    zod.strictObject({
+    zod.object({
       bucket: zod.string(),
       path_pattern: zod.string().nullish(),
       prefix: zod.string().nullish(),
@@ -766,29 +774,29 @@ export const V1ResumePipeline200Response = zod.strictObject({
   status: zod.enum(["active", "paused", "deleted"]),
   tenant_id: zod.uuid(),
   updated_at: zod.iso.datetime({ offset: true }),
-  verification: zod.strictObject({
+  verification: zod.object({
     delta_mode: zod.boolean().optional(),
     freshness_days: zod.int().nullish(),
   }),
 });
 
-export const V1ResumePipeline403Response = zod.strictObject({
+export const V1ResumePipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ResumePipeline404Response = zod.strictObject({
+export const V1ResumePipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ResumePipeline500Response = zod.strictObject({
+export const V1ResumePipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ResumePipeline503Response = zod.strictObject({
+export const V1ResumePipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ResumePipelineDefaultResponse = zod.strictObject({
+export const V1ResumePipelineDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -804,9 +812,9 @@ export const V1ListPipelineRunsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListPipelineRuns200Response = zod.strictObject({
+export const V1ListPipelineRuns200Response = zod.object({
   runs: zod.array(
-    zod.strictObject({
+    zod.object({
       billed_emails: zod.int(),
       completed_at: zod.iso.datetime({ offset: true }).nullish(),
       created_at: zod.iso.datetime({ offset: true }),
@@ -829,59 +837,40 @@ export const V1ListPipelineRuns200Response = zod.strictObject({
       pipeline_id: zod.int(),
       result_location: zod
         .union([
-          zod.strictObject({
+          zod.object({
             download_url: zod.string(),
           }),
           zod.null(),
         ])
         .optional(),
       scheduled_for: zod.iso.datetime({ offset: true }).nullish(),
-      source_snapshot: zod.union([
-        zod.strictObject({
-          list_id: zod.int(),
-          type: zod.enum(["list_snapshot"]),
-        }),
-        zod.strictObject({
-          audience_id: zod.string(),
-          connection_id: zod.string(),
-          field_mapping: zod.unknown().optional(),
-          provider: zod.string(),
-          type: zod.enum(["integration"]),
-        }),
-        zod.strictObject({
-          accepted_format: zod.string(),
-          token_id: zod.string(),
-          type: zod.enum(["push"]),
-        }),
-        zod.strictObject({
-          bucket: zod.string(),
-          path_pattern: zod.string().nullish(),
-          prefix: zod.string().nullish(),
-          provider: zod.string(),
-          region: zod.string().nullish(),
-          type: zod.enum(["bucket"]),
-        }),
-      ]),
+      source_snapshot: zod
+        .record(zod.string(), zod.unknown())
+        .describe(
+          "The source that the run used. Its shape depends on the source type and the run state.",
+        ),
       started_at: zod.iso.datetime({ offset: true }).nullish(),
-      stats: zod.strictObject({
+      stats: zod.object({
+        accepted_rows: zod.int().nullish(),
         billed_emails: zod.int().nullish(),
         changed_only_export: zod.boolean().nullish(),
-        completed_tasks: zod.int().nullish(),
         delta_mode: zod.boolean().nullish(),
         freshness_days: zod.int().nullish(),
-        invalid: zod.int().nullish(),
-        published_tasks: zod.int().nullish(),
-        queued_emails: zod.int().nullish(),
-        risky: zod.int().nullish(),
+        job_id: zod.int().nullish(),
+        list_id: zod.int().nullish(),
         selected_unique_emails: zod.int().nullish(),
         skipped_unchanged: zod.int().nullish(),
         source_filename: zod.string().nullish(),
         source_name: zod.string().nullish(),
         source_row_count: zod.int().nullish(),
         source_unique_emails: zod.int().nullish(),
+        total_failed: zod.int().nullish(),
+        total_invalid: zod.int().nullish(),
+        total_processed: zod.int().nullish(),
+        total_risky: zod.int().nullish(),
+        total_unknown: zod.int().nullish(),
+        total_valid: zod.int().nullish(),
         trigger_reason: zod.string().nullish(),
-        unknown: zod.int().nullish(),
-        valid: zod.int().nullish(),
       }),
       status: zod.enum([
         "queued",
@@ -903,23 +892,23 @@ export const V1ListPipelineRuns200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListPipelineRuns403Response = zod.strictObject({
+export const V1ListPipelineRuns403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelineRuns404Response = zod.strictObject({
+export const V1ListPipelineRuns404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelineRuns500Response = zod.strictObject({
+export const V1ListPipelineRuns500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelineRuns503Response = zod.strictObject({
+export const V1ListPipelineRuns503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1ListPipelineRunsDefaultResponse = zod.strictObject({
+export const V1ListPipelineRunsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -931,7 +920,7 @@ export const V1GetPipelineRunParams = zod.object({
   run_id: zod.coerce.number().int().describe("Pipeline run identifier"),
 });
 
-export const V1GetPipelineRun200Response = zod.strictObject({
+export const V1GetPipelineRun200Response = zod.object({
   billed_emails: zod.int(),
   completed_at: zod.iso.datetime({ offset: true }).nullish(),
   created_at: zod.iso.datetime({ offset: true }),
@@ -954,59 +943,40 @@ export const V1GetPipelineRun200Response = zod.strictObject({
   pipeline_id: zod.int(),
   result_location: zod
     .union([
-      zod.strictObject({
+      zod.object({
         download_url: zod.string(),
       }),
       zod.null(),
     ])
     .optional(),
   scheduled_for: zod.iso.datetime({ offset: true }).nullish(),
-  source_snapshot: zod.union([
-    zod.strictObject({
-      list_id: zod.int(),
-      type: zod.enum(["list_snapshot"]),
-    }),
-    zod.strictObject({
-      audience_id: zod.string(),
-      connection_id: zod.string(),
-      field_mapping: zod.unknown().optional(),
-      provider: zod.string(),
-      type: zod.enum(["integration"]),
-    }),
-    zod.strictObject({
-      accepted_format: zod.string(),
-      token_id: zod.string(),
-      type: zod.enum(["push"]),
-    }),
-    zod.strictObject({
-      bucket: zod.string(),
-      path_pattern: zod.string().nullish(),
-      prefix: zod.string().nullish(),
-      provider: zod.string(),
-      region: zod.string().nullish(),
-      type: zod.enum(["bucket"]),
-    }),
-  ]),
+  source_snapshot: zod
+    .record(zod.string(), zod.unknown())
+    .describe(
+      "The source that the run used. Its shape depends on the source type and the run state.",
+    ),
   started_at: zod.iso.datetime({ offset: true }).nullish(),
-  stats: zod.strictObject({
+  stats: zod.object({
+    accepted_rows: zod.int().nullish(),
     billed_emails: zod.int().nullish(),
     changed_only_export: zod.boolean().nullish(),
-    completed_tasks: zod.int().nullish(),
     delta_mode: zod.boolean().nullish(),
     freshness_days: zod.int().nullish(),
-    invalid: zod.int().nullish(),
-    published_tasks: zod.int().nullish(),
-    queued_emails: zod.int().nullish(),
-    risky: zod.int().nullish(),
+    job_id: zod.int().nullish(),
+    list_id: zod.int().nullish(),
     selected_unique_emails: zod.int().nullish(),
     skipped_unchanged: zod.int().nullish(),
     source_filename: zod.string().nullish(),
     source_name: zod.string().nullish(),
     source_row_count: zod.int().nullish(),
     source_unique_emails: zod.int().nullish(),
+    total_failed: zod.int().nullish(),
+    total_invalid: zod.int().nullish(),
+    total_processed: zod.int().nullish(),
+    total_risky: zod.int().nullish(),
+    total_unknown: zod.int().nullish(),
+    total_valid: zod.int().nullish(),
     trigger_reason: zod.string().nullish(),
-    unknown: zod.int().nullish(),
-    valid: zod.int().nullish(),
   }),
   status: zod.enum([
     "queued",
@@ -1025,23 +995,23 @@ export const V1GetPipelineRun200Response = zod.strictObject({
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
-export const V1GetPipelineRun403Response = zod.strictObject({
+export const V1GetPipelineRun403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipelineRun404Response = zod.strictObject({
+export const V1GetPipelineRun404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipelineRun500Response = zod.strictObject({
+export const V1GetPipelineRun500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipelineRun503Response = zod.strictObject({
+export const V1GetPipelineRun503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1GetPipelineRunDefaultResponse = zod.strictObject({
+export const V1GetPipelineRunDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1057,7 +1027,7 @@ export const V1TriggerPipelineBody = zod.strictObject({
   reason: zod.string().nullish(),
 });
 
-export const V1TriggerPipeline202Response = zod.strictObject({
+export const V1TriggerPipeline202Response = zod.object({
   run_id: zod.int(),
   status: zod.enum([
     "queued",
@@ -1073,30 +1043,30 @@ export const V1TriggerPipeline202Response = zod.strictObject({
   ]),
 });
 
-export const V1TriggerPipeline400Response = zod.strictObject({
+export const V1TriggerPipeline400Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipeline403Response = zod.strictObject({
+export const V1TriggerPipeline403Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipeline404Response = zod.strictObject({
+export const V1TriggerPipeline404Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipeline409Response = zod.strictObject({
+export const V1TriggerPipeline409Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipeline500Response = zod.strictObject({
+export const V1TriggerPipeline500Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipeline503Response = zod.strictObject({
+export const V1TriggerPipeline503Response = zod.object({
   error: zod.string(),
 });
 
-export const V1TriggerPipelineDefaultResponse = zod.strictObject({
+export const V1TriggerPipelineDefaultResponse = zod.object({
   error: zod.string(),
 });

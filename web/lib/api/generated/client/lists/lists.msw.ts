@@ -11,6 +11,10 @@ import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
 import type {
+  ListDiffResponse,
+  SavedSegmentDeleteResponse,
+  SavedSegmentListResponse,
+  SavedSegmentView,
   V1CreateRemediationExport200,
   V1CreateRemediationPlan200,
   V1GetRemediationPlan200,
@@ -19,16 +23,52 @@ import type {
 import {
   getV1CreateRemediationExportResponseMock,
   getV1CreateRemediationPlanResponseMock,
+  getV1CreateSavedSegmentResponseMock,
+  getV1DeleteSavedSegmentResponseMock,
+  getV1DiffListsResponseMock,
   getV1DownloadRemediationExportResponseMock,
   getV1GetRemediationPlanResponseMock,
+  getV1GetSavedSegmentResponseMock,
+  getV1ListSavedSegmentsResponseMock,
+  getV1UpdateSavedSegmentResponseMock,
 } from "./lists.faker";
 
 export {
+  getV1DiffListsResponseMock,
   getV1CreateRemediationExportResponseMock,
   getV1DownloadRemediationExportResponseMock,
   getV1GetRemediationPlanResponseMock,
   getV1CreateRemediationPlanResponseMock,
+  getV1ListSavedSegmentsResponseMock,
+  getV1CreateSavedSegmentResponseMock,
+  getV1DeleteSavedSegmentResponseMock,
+  getV1GetSavedSegmentResponseMock,
+  getV1UpdateSavedSegmentResponseMock,
 } from "./lists.faker";
+
+export const getV1DiffListsMockHandler = (
+  overrideResponse?:
+    | ListDiffResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ListDiffResponse> | ListDiffResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/lists/:baseListId/diff/:compareListId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DiffListsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
 export const getV1ListQualityMockHandler = (
   overrideResponse?:
@@ -152,10 +192,136 @@ export const getV1CreateRemediationPlanMockHandler = (
     options,
   );
 };
+
+export const getV1ListSavedSegmentsMockHandler = (
+  overrideResponse?:
+    | SavedSegmentListResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<SavedSegmentListResponse> | SavedSegmentListResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/segments",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListSavedSegmentsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1CreateSavedSegmentMockHandler = (
+  overrideResponse?:
+    | SavedSegmentView
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<SavedSegmentView> | SavedSegmentView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/segments",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1CreateSavedSegmentResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1DeleteSavedSegmentMockHandler = (
+  overrideResponse?:
+    | SavedSegmentDeleteResponse
+    | ((
+        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+      ) => Promise<SavedSegmentDeleteResponse> | SavedSegmentDeleteResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.delete(
+    "*/v1/segments/:segmentId",
+    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DeleteSavedSegmentResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1GetSavedSegmentMockHandler = (
+  overrideResponse?:
+    | SavedSegmentView
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<SavedSegmentView> | SavedSegmentView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/segments/:segmentId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetSavedSegmentResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1UpdateSavedSegmentMockHandler = (
+  overrideResponse?:
+    | SavedSegmentView
+    | ((
+        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+      ) => Promise<SavedSegmentView> | SavedSegmentView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch(
+    "*/v1/segments/:segmentId",
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateSavedSegmentResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 export const getListsMock = () => [
+  getV1DiffListsMockHandler(),
   getV1ListQualityMockHandler(),
   getV1CreateRemediationExportMockHandler(),
   getV1DownloadRemediationExportMockHandler(),
   getV1GetRemediationPlanMockHandler(),
   getV1CreateRemediationPlanMockHandler(),
+  getV1ListSavedSegmentsMockHandler(),
+  getV1CreateSavedSegmentMockHandler(),
+  getV1DeleteSavedSegmentMockHandler(),
+  getV1GetSavedSegmentMockHandler(),
+  getV1UpdateSavedSegmentMockHandler(),
 ];

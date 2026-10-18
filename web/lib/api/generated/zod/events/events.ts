@@ -23,8 +23,21 @@ export const V1ListEventsQueryParams = zod.object({
   until: zod.string().optional(),
 });
 
-export const V1ListEvents200Response = zod.unknown();
+export const V1ListEvents200Response = zod.object({
+  events: zod.array(
+    zod.object({
+      actor: zod.string().nullish(),
+      created_at: zod.iso.datetime({ offset: true }),
+      event_data: zod.record(zod.string(), zod.unknown()).nullish(),
+      event_type: zod.string(),
+      id: zod.int(),
+      job_id: zod.int(),
+      task_id: zod.int().nullish(),
+    }),
+  ),
+  total: zod.int(),
+});
 
-export const V1ListEventsDefaultResponse = zod.strictObject({
+export const V1ListEventsDefaultResponse = zod.object({
   error: zod.string(),
 });

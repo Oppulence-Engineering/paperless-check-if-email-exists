@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## V1QueryResults
 
-> V1QueryResults(ctx).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
+> QueryResultList V1QueryResults(ctx).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
 
 GET /v1/query
 
@@ -44,11 +44,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.QueryAPI.V1QueryResults(context.Background()).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
+	resp, r, err := apiClient.QueryAPI.V1QueryResults(context.Background()).Limit(limit).Offset(offset).Category(category).MinScore(minScore).MaxScore(maxScore).SafeToSend(safeToSend).JobId(jobId).Since(since).Until(until).RecommendationAction(recommendationAction).PolicyMode(policyMode).PolicyDecision(policyDecision).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `QueryAPI.V1QueryResults``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1QueryResults`: QueryResultList
+	fmt.Fprintf(os.Stdout, "Response from `QueryAPI.V1QueryResults`: %v\n", resp)
 }
 ```
 
@@ -78,7 +80,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**QueryResultList**](QueryResultList.md)
 
 ### Authorization
 

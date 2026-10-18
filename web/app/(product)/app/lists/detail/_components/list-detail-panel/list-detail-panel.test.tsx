@@ -2,17 +2,21 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { CommentsApi, ListsApi, V1Api } from "@oppulence/reacher-sdk";
+import { CommentsApi, JobsApi, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ListDetailPanel } from "./list-detail-panel";
 
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
+	push.mockReset();
 });
 
-it("shows list quality and creates a safe remediation plan", async () => {
+it("shows the list header and review, and returns to the lists after delete", async () => {
 	vi.spyOn(V1Api.prototype, "v1GetList").mockResolvedValue({
 		data: {
 			id: 5,
@@ -20,33 +24,99 @@ it("shows list quality and creates a safe remediation plan", async () => {
 			total_rows: 2,
 			status: "completed",
 			email_column: "email",
+			source_key: "hubspot",
 			job_id: 9,
+			unique_emails: 2,
+			deduplicated_count: 0,
+			summary: {
+				total_valid: 2,
+				total_risky: 0,
+				total_unknown: 0,
+				total_invalid: 0,
+				total_processed: 2,
+			},
+		},
+	} as never);
+	vi.spyOn(V1Api.prototype, "v1ListLists").mockResolvedValue({
+		data: {
+			lists: [
+				{
+					id: 5,
+					name: "Campaign",
+					original_filename: "campaign.csv",
+					email_column: "email",
+					status: "completed",
+					total_rows: 2,
+					created_at: "2026-10-01T00:00:00Z",
+					completed_at: "2026-10-01T00:01:00Z",
+				},
+			],
+			total: 1,
 		},
 	} as never);
 	vi.spyOn(ListsApi.prototype, "v1ListQuality").mockResolvedValue({
 		data: {
+			total_rows: 2,
 			processed: 2,
+			avg_score: 91.5,
 			quality_grade: "A",
 			safe_to_send_count: 2,
 			safe_to_send_pct: 100,
-			categories: { valid: 2 },
+			risk_breakdown: { disposable: 0, catch_all: 0, role_account: 0, spam_trap: 0, full_inbox: 0 },
 		},
 	} as never);
-	vi.spyOn(ListsApi.prototype, "v1GetRemediationPlan").mockRejectedValue(new Error("No plan"));
-	const create = vi.spyOn(ListsApi.prototype, "v1CreateRemediationPlan").mockResolvedValue({
-		data: { id: 7, status: "completed", summary_counts: { safe: 2 }, preview_rows: [] },
+	vi.spyOn(JobsApi.prototype, "v1GetBulkJobProgress").mockResolvedValue({
+		data: { created_at: "2026-10-01T00:00:00Z", total_records: 2, total_processed: 2 },
+	} as never);
+	vi.spyOn(JobsApi.prototype, "v1JobApprovalChecklist").mockResolvedValue({
+		data: {
+			job_id: 9,
+			total_records: 2,
+			categories: { valid: 2, risky: 0, unknown: 0, invalid: 0, unprocessed: 0 },
+			risk_flags: {
+				disposable_count: 0,
+				catch_all_count: 0,
+				role_account_count: 0,
+				spam_trap_count: 0,
+				suppressed_count: 0,
+			},
+			safe_to_send_count: 2,
+			safe_to_send_pct: 100,
+			recommendation: "List quality is excellent.",
+			ready_to_send: true,
+		},
 	} as never);
 	vi.spyOn(CommentsApi.prototype, "v1ListComments").mockResolvedValue({
 		data: { comments: [] },
 	} as never);
+	const remove = vi.spyOn(V1Api.prototype, "v1DeleteList").mockResolvedValue({} as never);
+	vi.spyOn(window, "confirm").mockReturnValue(true);
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	render(
 		<QueryClientProvider client={client}>
-			<ListDetailPanel listId={5} />
+			<ListDetailPanel accepted listId={5} />
 		</QueryClientProvider>,
 	);
-	expect(await screen.findByText("Campaign")).toBeInTheDocument();
+	expect(await screen.findByRole("heading", { name: "Campaign" })).toBeInTheDocument();
+	expect(screen.getByText(/List accepted/)).toBeInTheDocument();
+	expect(
+		await screen.findByText("campaign.csv · Email column: email · Source: hubspot"),
+	).toBeInTheDocument();
 	expect(await screen.findByText("Grade A")).toBeInTheDocument();
-	fireEvent.click(screen.getByRole("button", { name: "Create remediation plan" }));
-	await waitFor(() => expect(create).toHaveBeenCalledWith({ listId: 5, requestBody: {} }));
+	expect(await screen.findByText("Ready to send")).toBeInTheDocument();
+	expect(screen.getByRole("link", { name: "Bulk job 9" })).toHaveAttribute(
+		"href",
+		"/app/jobs?job=9",
+	);
+	expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+		"Review",
+		"Rows",
+		"Clean & export",
+		"Problems",
+		"Compare",
+	]);
+
+	fireEvent.click(screen.getByRole("button", { name: "Delete list" }));
+	await waitFor(() => expect(remove).toHaveBeenCalledWith({ listId: 5 }));
+	await waitFor(() => expect(push).toHaveBeenCalledWith("/app/lists"));
 });

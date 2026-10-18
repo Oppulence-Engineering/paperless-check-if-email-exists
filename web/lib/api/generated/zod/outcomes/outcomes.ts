@@ -9,6 +9,120 @@
  */
 import * as zod from "zod";
 
+export const V1ListCampaignOutcomesQueryParams = zod.object({
+  email: zod.string().optional(),
+  source: zod.string().optional(),
+  type: zod.string().optional(),
+  since: zod.iso.datetime({ offset: true }).optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListCampaignOutcomes200Response = zod.object({
+  outcomes: zod.array(
+    zod.object({
+      campaign_id: zod.string().nullish(),
+      created_at: zod.iso.datetime({ offset: true }),
+      email: zod.string(),
+      id: zod.int(),
+      occurred_at: zod.iso.datetime({ offset: true }),
+      policy_action: zod.string().nullish(),
+      source: zod.string().nullish(),
+      type: zod.string(),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListCampaignOutcomesDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const V1PostCampaignOutcomesBody = zod.strictObject({
+  outcomes: zod.array(
+    zod
+      .strictObject({
+        campaign_id: zod.string().nullish(),
+        email: zod.string(),
+        metadata: zod.unknown().optional(),
+        occurred_at: zod.iso.datetime({ offset: true }),
+        source: zod.string().nullish(),
+        type: zod
+          .enum([
+            "delivered",
+            "hard_bounce",
+            "soft_bounce",
+            "complaint",
+            "open",
+            "click",
+            "unsubscribe",
+          ])
+          .describe(
+            "SQL enum mirror. Must stay in sync with `outcome_type` in\n`migrations\/20260510000001_campaign_outcomes.up.sql`.",
+          ),
+      })
+      .describe("One outcome event ingested via API or CSV."),
+  ),
+});
+
+export const v1PostCampaignOutcomes202ResponseAcceptedMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseErrorsItemIndexMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseRejectedMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseSuppressedMin = 0;
+
+export const V1PostCampaignOutcomes202Response = zod.object({
+  accepted: zod.int().min(v1PostCampaignOutcomes202ResponseAcceptedMin),
+  errors: zod.array(
+    zod.object({
+      email: zod.string(),
+      index: zod.int().min(v1PostCampaignOutcomes202ResponseErrorsItemIndexMin),
+      message: zod.string(),
+    }),
+  ),
+  policy_id: zod.int(),
+  rejected: zod.int().min(v1PostCampaignOutcomes202ResponseRejectedMin),
+  suppressed: zod.int().min(v1PostCampaignOutcomes202ResponseSuppressedMin),
+});
+
+export const V1PostCampaignOutcomesDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const V1UploadCampaignOutcomesBody = zod.strictObject({
+  file: zod.instanceof(File),
+});
+
+export const v1UploadCampaignOutcomes202ResponseAcceptedMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseErrorsItemIndexMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseRejectedMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseSuppressedMin = 0;
+
+export const V1UploadCampaignOutcomes202Response = zod.object({
+  accepted: zod.int().min(v1UploadCampaignOutcomes202ResponseAcceptedMin),
+  errors: zod.array(
+    zod.object({
+      email: zod.string(),
+      index: zod
+        .int()
+        .min(v1UploadCampaignOutcomes202ResponseErrorsItemIndexMin),
+      message: zod.string(),
+    }),
+  ),
+  policy_id: zod.int(),
+  rejected: zod.int().min(v1UploadCampaignOutcomes202ResponseRejectedMin),
+  suppressed: zod.int().min(v1UploadCampaignOutcomes202ResponseSuppressedMin),
+});
+
+export const V1UploadCampaignOutcomesDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 export const V1IngestProviderOutcomesParams = zod.object({
   provider: zod.string().describe("sendgrid, ses, mailgun, or postmark"),
   endpoint_id: zod.uuid().describe("Provider endpoint identifier"),
@@ -17,7 +131,7 @@ export const V1IngestProviderOutcomesParams = zod.object({
 
 export const V1IngestProviderOutcomesBody = zod.unknown();
 
-export const V1IngestProviderOutcomes200Response = zod.strictObject({
+export const V1IngestProviderOutcomes200Response = zod.object({
   accepted: zod.int(),
   duplicates: zod.int(),
   provider: zod.string(),
@@ -26,7 +140,7 @@ export const V1IngestProviderOutcomes200Response = zod.strictObject({
   unmatched: zod.int(),
 });
 
-export const V1IngestProviderOutcomes202Response = zod.strictObject({
+export const V1IngestProviderOutcomes202Response = zod.object({
   accepted: zod.int(),
   duplicates: zod.int(),
   provider: zod.string(),
@@ -37,7 +151,7 @@ export const V1IngestProviderOutcomes202Response = zod.strictObject({
 
 export const V1IngestProviderOutcomes401Response = zod.unknown();
 
-export const V1IngestProviderOutcomesDefaultResponse = zod.strictObject({
+export const V1IngestProviderOutcomesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -53,11 +167,11 @@ export const V1ListOutcomesQueryParams = zod.object({
   since: zod.iso.datetime({ offset: true }).optional(),
 });
 
-export const V1ListOutcomes200Response = zod.strictObject({
+export const V1ListOutcomes200Response = zod.object({
   limit: zod.int(),
   offset: zod.int(),
   outcomes: zod.array(
-    zod.strictObject({
+    zod.object({
       campaign_id: zod.string().nullish(),
       canonical_email: zod.string(),
       correlation_status: zod.string(),
@@ -78,7 +192,7 @@ export const V1ListOutcomes200Response = zod.strictObject({
   ),
 });
 
-export const V1ListOutcomesDefaultResponse = zod.strictObject({
+export const V1ListOutcomesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -102,7 +216,7 @@ export const V1IngestOutcomesBody = zod.strictObject({
   source_key: zod.string().nullish(),
 });
 
-export const V1IngestOutcomes200Response = zod.strictObject({
+export const V1IngestOutcomes200Response = zod.object({
   auto_suppressed: zod.int(),
   ignored: zod.int(),
   ingested: zod.int(),
@@ -110,13 +224,13 @@ export const V1IngestOutcomes200Response = zod.strictObject({
 
 export const V1IngestOutcomes400Response = zod.unknown();
 
-export const V1IngestOutcomesDefaultResponse = zod.strictObject({
+export const V1IngestOutcomesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
-export const V1ListProviderEndpoints200Response = zod.strictObject({
+export const V1ListProviderEndpoints200Response = zod.object({
   provider_endpoints: zod.array(
-    zod.strictObject({
+    zod.object({
       allowed_ips: zod.array(zod.string()),
       created_at: zod.iso.datetime({ offset: true }),
       delivery_token: zod.string().nullish(),
@@ -131,7 +245,7 @@ export const V1ListProviderEndpoints200Response = zod.strictObject({
   ),
 });
 
-export const V1ListProviderEndpointsDefaultResponse = zod.strictObject({
+export const V1ListProviderEndpointsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -143,7 +257,7 @@ export const V1CreateProviderEndpointBody = zod.strictObject({
   status: zod.string().optional(),
 });
 
-export const V1CreateProviderEndpoint201Response = zod.strictObject({
+export const V1CreateProviderEndpoint201Response = zod.object({
   allowed_ips: zod.array(zod.string()),
   created_at: zod.iso.datetime({ offset: true }),
   delivery_token: zod.string().nullish(),
@@ -158,7 +272,7 @@ export const V1CreateProviderEndpoint201Response = zod.strictObject({
 
 export const V1CreateProviderEndpoint400Response = zod.unknown();
 
-export const V1CreateProviderEndpointDefaultResponse = zod.strictObject({
+export const V1CreateProviderEndpointDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -166,13 +280,13 @@ export const V1DeleteProviderEndpointParams = zod.object({
   endpoint_id: zod.uuid().describe("Provider endpoint identifier"),
 });
 
-export const V1DeleteProviderEndpoint200Response = zod.strictObject({
+export const V1DeleteProviderEndpoint200Response = zod.object({
   deleted: zod.boolean(),
 });
 
 export const V1DeleteProviderEndpoint404Response = zod.unknown();
 
-export const V1DeleteProviderEndpointDefaultResponse = zod.strictObject({
+export const V1DeleteProviderEndpointDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -188,7 +302,7 @@ export const V1UpdateProviderEndpointBody = zod.strictObject({
   status: zod.string().nullish(),
 });
 
-export const V1UpdateProviderEndpoint200Response = zod.strictObject({
+export const V1UpdateProviderEndpoint200Response = zod.object({
   allowed_ips: zod.array(zod.string()),
   created_at: zod.iso.datetime({ offset: true }),
   delivery_token: zod.string().nullish(),
@@ -203,6 +317,6 @@ export const V1UpdateProviderEndpoint200Response = zod.strictObject({
 
 export const V1UpdateProviderEndpoint404Response = zod.unknown();
 
-export const V1UpdateProviderEndpointDefaultResponse = zod.strictObject({
+export const V1UpdateProviderEndpointDefaultResponse = zod.object({
   error: zod.string(),
 });

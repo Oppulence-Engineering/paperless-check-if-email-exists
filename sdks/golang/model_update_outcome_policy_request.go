@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -22,7 +22,7 @@ var _ MappedNullable = &UpdateOutcomePolicyRequest{}
 type UpdateOutcomePolicyRequest struct {
 	IsDefault NullableBool `json:"is_default,omitempty"`
 	Name NullableString `json:"name,omitempty"`
-	Rules interface{} `json:"rules,omitempty"`
+	Rules *OutcomePolicyRules `json:"rules,omitempty"`
 }
 
 // NewUpdateOutcomePolicyRequest instantiates a new UpdateOutcomePolicyRequest object
@@ -126,23 +126,22 @@ func (o *UpdateOutcomePolicyRequest) UnsetName() {
 	o.Name.Unset()
 }
 
-// GetRules returns the Rules field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpdateOutcomePolicyRequest) GetRules() interface{} {
-	if o == nil {
-		var ret interface{}
+// GetRules returns the Rules field value if set, zero value otherwise.
+func (o *UpdateOutcomePolicyRequest) GetRules() OutcomePolicyRules {
+	if o == nil || IsNil(o.Rules) {
+		var ret OutcomePolicyRules
 		return ret
 	}
-	return o.Rules
+	return *o.Rules
 }
 
 // GetRulesOk returns a tuple with the Rules field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpdateOutcomePolicyRequest) GetRulesOk() (*interface{}, bool) {
+func (o *UpdateOutcomePolicyRequest) GetRulesOk() (*OutcomePolicyRules, bool) {
 	if o == nil || IsNil(o.Rules) {
 		return nil, false
 	}
-	return &o.Rules, true
+	return o.Rules, true
 }
 
 // HasRules returns a boolean if a field has been set.
@@ -154,9 +153,9 @@ func (o *UpdateOutcomePolicyRequest) HasRules() bool {
 	return false
 }
 
-// SetRules gets a reference to the given interface{} and assigns it to the Rules field.
-func (o *UpdateOutcomePolicyRequest) SetRules(v interface{}) {
-	o.Rules = v
+// SetRules gets a reference to the given OutcomePolicyRules and assigns it to the Rules field.
+func (o *UpdateOutcomePolicyRequest) SetRules(v OutcomePolicyRules) {
+	o.Rules = &v
 }
 
 func (o UpdateOutcomePolicyRequest) MarshalJSON() ([]byte, error) {
@@ -175,7 +174,7 @@ func (o UpdateOutcomePolicyRequest) ToMap() (map[string]interface{}, error) {
 	if o.Name.IsSet() {
 		toSerialize["name"] = o.Name.Get()
 	}
-	if o.Rules != nil {
+	if !IsNil(o.Rules) {
 		toSerialize["rules"] = o.Rules
 	}
 	return toSerialize, nil

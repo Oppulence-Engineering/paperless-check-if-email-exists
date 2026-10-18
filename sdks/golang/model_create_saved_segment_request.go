@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -22,9 +22,9 @@ var _ MappedNullable = &CreateSavedSegmentRequest{}
 
 // CreateSavedSegmentRequest struct for CreateSavedSegmentRequest
 type CreateSavedSegmentRequest struct {
-	Filter interface{} `json:"filter,omitempty"`
+	Filter *SegmentFilter `json:"filter,omitempty"`
 	Name string `json:"name"`
-	Scope *string `json:"scope,omitempty"`
+	Scope *SegmentScope `json:"scope,omitempty"`
 }
 
 type _CreateSavedSegmentRequest CreateSavedSegmentRequest
@@ -47,23 +47,22 @@ func NewCreateSavedSegmentRequestWithDefaults() *CreateSavedSegmentRequest {
 	return &this
 }
 
-// GetFilter returns the Filter field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateSavedSegmentRequest) GetFilter() interface{} {
-	if o == nil {
-		var ret interface{}
+// GetFilter returns the Filter field value if set, zero value otherwise.
+func (o *CreateSavedSegmentRequest) GetFilter() SegmentFilter {
+	if o == nil || IsNil(o.Filter) {
+		var ret SegmentFilter
 		return ret
 	}
-	return o.Filter
+	return *o.Filter
 }
 
 // GetFilterOk returns a tuple with the Filter field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateSavedSegmentRequest) GetFilterOk() (*interface{}, bool) {
+func (o *CreateSavedSegmentRequest) GetFilterOk() (*SegmentFilter, bool) {
 	if o == nil || IsNil(o.Filter) {
 		return nil, false
 	}
-	return &o.Filter, true
+	return o.Filter, true
 }
 
 // HasFilter returns a boolean if a field has been set.
@@ -75,9 +74,9 @@ func (o *CreateSavedSegmentRequest) HasFilter() bool {
 	return false
 }
 
-// SetFilter gets a reference to the given interface{} and assigns it to the Filter field.
-func (o *CreateSavedSegmentRequest) SetFilter(v interface{}) {
-	o.Filter = v
+// SetFilter gets a reference to the given SegmentFilter and assigns it to the Filter field.
+func (o *CreateSavedSegmentRequest) SetFilter(v SegmentFilter) {
+	o.Filter = &v
 }
 
 // GetName returns the Name field value
@@ -105,9 +104,9 @@ func (o *CreateSavedSegmentRequest) SetName(v string) {
 }
 
 // GetScope returns the Scope field value if set, zero value otherwise.
-func (o *CreateSavedSegmentRequest) GetScope() string {
+func (o *CreateSavedSegmentRequest) GetScope() SegmentScope {
 	if o == nil || IsNil(o.Scope) {
-		var ret string
+		var ret SegmentScope
 		return ret
 	}
 	return *o.Scope
@@ -115,7 +114,7 @@ func (o *CreateSavedSegmentRequest) GetScope() string {
 
 // GetScopeOk returns a tuple with the Scope field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CreateSavedSegmentRequest) GetScopeOk() (*string, bool) {
+func (o *CreateSavedSegmentRequest) GetScopeOk() (*SegmentScope, bool) {
 	if o == nil || IsNil(o.Scope) {
 		return nil, false
 	}
@@ -131,8 +130,8 @@ func (o *CreateSavedSegmentRequest) HasScope() bool {
 	return false
 }
 
-// SetScope gets a reference to the given string and assigns it to the Scope field.
-func (o *CreateSavedSegmentRequest) SetScope(v string) {
+// SetScope gets a reference to the given SegmentScope and assigns it to the Scope field.
+func (o *CreateSavedSegmentRequest) SetScope(v SegmentScope) {
 	o.Scope = &v
 }
 
@@ -146,7 +145,7 @@ func (o CreateSavedSegmentRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateSavedSegmentRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Filter != nil {
+	if !IsNil(o.Filter) {
 		toSerialize["filter"] = o.Filter
 	}
 	toSerialize["name"] = o.Name

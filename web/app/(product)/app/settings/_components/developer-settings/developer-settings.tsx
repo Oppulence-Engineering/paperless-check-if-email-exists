@@ -63,6 +63,9 @@ const scopeOptions = [
 	["pipelines.read", "Read pipelines"],
 	["pipelines.write", "Edit pipelines"],
 	["pipelines.trigger", "Trigger pipelines"],
+	["outcomes.read", "Read campaign results"],
+	["outcomes.write", "Send campaign results"],
+	// "admin" stays out of the picker: a key with it can create more keys.
 ] as const;
 
 function requestError(cause: unknown) {
@@ -183,8 +186,8 @@ export function DeveloperSettings({
 			setName("");
 			setScopes(["verify"]);
 			setNotice("API key created. Copy it now; it will not be shown again.");
-		} catch (cause) {
-			setError(requestError(cause));
+		} catch {
+			// The form shows the error next to the create button.
 		}
 	}
 
@@ -475,7 +478,7 @@ export function DeveloperSettings({
 									) : null}
 									{apiDenial ? (
 										<Row
-											description="API keys come with the Professional and Enterprise plans."
+											description="API access needs the Professional or Enterprise plan."
 											label="Upgrade for API access"
 										>
 											<Link
@@ -485,98 +488,99 @@ export function DeveloperSettings({
 												See plans in Usage
 											</Link>
 										</Row>
-									) : (
-										<Row>
-											<form
-												className="flex flex-col gap-4"
-												onSubmit={(event) => void submit(event)}
-											>
-												<div>
-													<h3 className="text-sm font-medium text-white">Create a key</h3>
-													<p className="mt-0.5 text-xs text-[#858585]">
-														Choose only the operations this integration needs. New keys expire by
-														default.
-													</p>
+									) : null}
+									<Row>
+										<form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+											<div>
+												<h3 className="text-sm font-medium text-white">Create a key</h3>
+												<p className="mt-0.5 text-xs text-[#858585]">
+													Choose only the operations this integration needs. New keys expire by
+													default.
+												</p>
+											</div>
+											<div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
+												<div className="flex flex-col gap-1.5">
+													<Label className={fieldLabel} htmlFor="api-key-name">
+														Key name
+													</Label>
+													<Input
+														className="h-10 rounded-lg"
+														id="api-key-name"
+														maxLength={80}
+														onChange={(event) => {
+															setName(event.target.value);
+														}}
+														placeholder="Production integration"
+														required
+														value={name}
+													/>
 												</div>
-												<div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
-													<div className="flex flex-col gap-1.5">
-														<Label className={fieldLabel} htmlFor="api-key-name">
-															Key name
-														</Label>
-														<Input
-															className="h-10 rounded-lg"
-															id="api-key-name"
-															maxLength={80}
-															onChange={(event) => {
-																setName(event.target.value);
-															}}
-															placeholder="Production integration"
-															required
-															value={name}
-														/>
-													</div>
-													<div className="flex flex-col gap-1.5">
-														<Label className={fieldLabel} htmlFor="api-key-lifetime">
-															Expires after
-														</Label>
-														<Select
-															onValueChange={(value) => {
-																setLifetimeDays(Number(value));
-															}}
-															value={String(lifetimeDays)}
-														>
-															<SelectTrigger
-																className="h-10 w-full rounded-lg"
-																id="api-key-lifetime"
-															>
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="30">30 days</SelectItem>
-																<SelectItem value="90">90 days</SelectItem>
-																<SelectItem value="365">1 year</SelectItem>
-															</SelectContent>
-														</Select>
-													</div>
-												</div>
-												<fieldset className="flex flex-col gap-2">
-													<legend className={`mb-2 ${fieldLabel}`}>Scopes</legend>
-													<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-														{scopeOptions.map(([scope, label]) => (
-															<Label
-																className="flex items-center gap-2 text-xs text-neutral-300"
-																htmlFor={`api-key-scope-${scope}`}
-																key={scope}
-															>
-																<Checkbox
-																	aria-label={label}
-																	checked={scopes.includes(scope)}
-																	id={`api-key-scope-${scope}`}
-																	onCheckedChange={(checked) => {
-																		setScopes((current) =>
-																			checked === true
-																				? [...current, scope]
-																				: current.filter((item) => item !== scope),
-																		);
-																	}}
-																/>
-																{label}
-															</Label>
-														))}
-													</div>
-												</fieldset>
-												<div className="flex justify-end">
-													<Button
-														className="rounded-lg"
-														disabled={create.isPending || Boolean(revealedKey)}
-														type="submit"
+												<div className="flex flex-col gap-1.5">
+													<Label className={fieldLabel} htmlFor="api-key-lifetime">
+														Expires after
+													</Label>
+													<Select
+														onValueChange={(value) => {
+															setLifetimeDays(Number(value));
+														}}
+														value={String(lifetimeDays)}
 													>
-														{create.isPending ? "Creating…" : "Create API key"}
-													</Button>
+														<SelectTrigger className="h-10 w-full rounded-lg" id="api-key-lifetime">
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="30">30 days</SelectItem>
+															<SelectItem value="90">90 days</SelectItem>
+															<SelectItem value="365">1 year</SelectItem>
+														</SelectContent>
+													</Select>
 												</div>
-											</form>
-										</Row>
-									)}
+											</div>
+											<fieldset className="flex flex-col gap-2">
+												<legend className={`mb-2 ${fieldLabel}`}>Scopes</legend>
+												<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+													{scopeOptions.map(([scope, label]) => (
+														<Label
+															className="flex items-center gap-2 text-xs text-neutral-300"
+															htmlFor={`api-key-scope-${scope}`}
+															key={scope}
+														>
+															<Checkbox
+																aria-label={label}
+																checked={scopes.includes(scope)}
+																id={`api-key-scope-${scope}`}
+																onCheckedChange={(checked) => {
+																	setScopes((current) =>
+																		checked === true
+																			? [...current, scope]
+																			: current.filter((item) => item !== scope),
+																	);
+																}}
+															/>
+															{label}
+														</Label>
+													))}
+												</div>
+											</fieldset>
+											{create.isError ? (
+												<p
+													className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+													role="alert"
+												>
+													{requestError(create.error)}
+												</p>
+											) : null}
+											<div className="flex justify-end">
+												<Button
+													className="rounded-lg"
+													disabled={create.isPending || Boolean(revealedKey)}
+													type="submit"
+												>
+													{create.isPending ? "Creating…" : "Create API key"}
+												</Button>
+											</div>
+										</form>
+									</Row>
 								</Group>
 							</Section>
 						</>

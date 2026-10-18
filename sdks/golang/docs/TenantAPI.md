@@ -281,7 +281,7 @@ Name | Type | Description  | Notes
 
 ## V1DeleteOutcomePolicy
 
-> V1DeleteOutcomePolicy(ctx, policyId).Execute()
+> OutcomePolicyDeleteResponse V1DeleteOutcomePolicy(ctx, policyId).Execute()
 
 
 
@@ -302,11 +302,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1DeleteOutcomePolicy(context.Background(), policyId).Execute()
+	resp, r, err := apiClient.TenantAPI.V1DeleteOutcomePolicy(context.Background(), policyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1DeleteOutcomePolicy``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1DeleteOutcomePolicy`: OutcomePolicyDeleteResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1DeleteOutcomePolicy`: %v\n", resp)
 }
 ```
 
@@ -329,7 +331,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**OutcomePolicyDeleteResponse**](OutcomePolicyDeleteResponse.md)
 
 ### Authorization
 
@@ -338,7 +340,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -347,7 +349,7 @@ Name | Type | Description  | Notes
 
 ## V1DeleteScorePolicy
 
-> V1DeleteScorePolicy(ctx, policyId).Execute()
+> ScorePolicyDeleteResponse V1DeleteScorePolicy(ctx, policyId).Execute()
 
 DELETE /v1/score-policies/{policy_id}
 
@@ -368,11 +370,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1DeleteScorePolicy(context.Background(), policyId).Execute()
+	resp, r, err := apiClient.TenantAPI.V1DeleteScorePolicy(context.Background(), policyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1DeleteScorePolicy``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1DeleteScorePolicy`: ScorePolicyDeleteResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1DeleteScorePolicy`: %v\n", resp)
 }
 ```
 
@@ -395,7 +399,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**ScorePolicyDeleteResponse**](ScorePolicyDeleteResponse.md)
 
 ### Authorization
 
@@ -404,7 +408,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

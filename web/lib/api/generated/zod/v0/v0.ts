@@ -133,14 +133,27 @@ export const postCheckEmail200ResponseBounceRiskOneConfidenceMax = 1;
 export const postCheckEmail200ResponseBounceRiskOneScoreMin = 0;
 export const postCheckEmail200ResponseBounceRiskOneScoreMax = 100;
 
+export const postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
+export const postCheckEmail200ResponseScoreCatchAllConfidenceMin = 0;
+export const postCheckEmail200ResponseScoreCatchAllConfidenceMax = 100;
+
+export const postCheckEmail200ResponseScoreConfidenceMin = 0;
+export const postCheckEmail200ResponseScoreConfidenceMax = 100;
+
+export const postCheckEmail200ResponseScorePartialConfidenceConfidenceMin = 0;
+export const postCheckEmail200ResponseScorePartialConfidenceConfidenceMax = 100;
+
 export const postCheckEmail200ResponseScoreScoreMin = 0;
 export const postCheckEmail200ResponseScoreScoreMax = 100;
 
 export const PostCheckEmail200Response = zod
-  .strictObject({
+  .object({
     bounce_risk: zod
       .union([
-        zod.strictObject({
+        zod.object({
           action: zod.enum([
             "send",
             "send_with_caution",
@@ -154,7 +167,7 @@ export const PostCheckEmail200Response = zod
             .max(postCheckEmail200ResponseBounceRiskOneConfidenceMax),
           model_version: zod.string(),
           risk_factors: zod.array(
-            zod.strictObject({
+            zod.object({
               contribution: zod.int(),
               description: zod.string(),
               direction: zod.enum(["increases_risk", "decreases_risk"]),
@@ -174,12 +187,12 @@ export const PostCheckEmail200Response = zod
         "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
       ),
     debug: zod
-      .strictObject({
+      .object({
         backend_name: zod
           .string()
           .describe("The name of the backend that performed the verification."),
         duration: zod
-          .strictObject({
+          .object({
             nanos: zod.number().describe("Duration in nanoseconds."),
             secs: zod.number().describe("Duration in seconds."),
           })
@@ -190,12 +203,53 @@ export const PostCheckEmail200Response = zod
           .string()
           .describe("The timestamp when the email verification ended."),
         smtp: zod
-          .strictObject({
+          .object({
             verif_method: zod
-              .strictObject({
+              .object({
+                host: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The mail server host the check connected to. Only for Smtp.",
+                  ),
                 type: zod
                   .enum(["Smtp", "Headless", "Api", "Skipped"])
                   .describe("The method used for the email verification."),
+                verif_method: zod
+                  .object({
+                    from_email: zod.string().optional(),
+                    hello_name: zod.string().optional(),
+                    proxy: zod.string().nullish(),
+                    retries: zod
+                      .int()
+                      .min(
+                        postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin,
+                      )
+                      .optional(),
+                    smtp_port: zod
+                      .int()
+                      .min(
+                        postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                      )
+                      .optional(),
+                    smtp_timeout: zod
+                      .union([
+                        zod
+                          .object({
+                            nanos: zod
+                              .number()
+                              .describe("Duration in nanoseconds."),
+                            secs: zod.number().describe("Duration in seconds."),
+                          })
+                          .describe(
+                            "An object representing a duration in seconds and nanoseconds.",
+                          ),
+                        zod.null(),
+                      ])
+                      .optional(),
+                  })
+                  .optional()
+                  .describe("The SMTP settings the check used. Only for Smtp."),
               })
               .optional()
               .describe("The method used for email verification."),
@@ -217,7 +271,7 @@ export const PostCheckEmail200Response = zod
     misc: zod
       .union([
         zod
-          .strictObject({
+          .object({
             gravatar_url: zod
               .string()
               .nullable()
@@ -240,21 +294,28 @@ export const PostCheckEmail200Response = zod
           })
           .describe("Additional information about the email account."),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Additional information about the email account."),
     mx: zod
       .union([
         zod
-          .strictObject({
+          .object({
             accepts_mail: zod
               .boolean()
               .describe("Indicates if the mail server accepts emails."),
@@ -266,14 +327,21 @@ export const PostCheckEmail200Response = zod
           })
           .describe("Details about the mail server's MX records."),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Details obtained from querying the mail server's MX records."),
@@ -314,15 +382,34 @@ export const PostCheckEmail200Response = zod
       .optional(),
     provider_rules_applied: zod.boolean(),
     recommendation: zod.unknown().optional(),
-    score: zod.strictObject({
+    score: zod.object({
       age_days: zod.int().optional(),
+      catch_all: zod
+        .object({
+          confidence: zod
+            .int()
+            .min(postCheckEmail200ResponseScoreCatchAllConfidenceMin)
+            .max(postCheckEmail200ResponseScoreCatchAllConfidenceMax),
+          factors: zod.array(zod.string()),
+          severity: zod.enum(["low", "medium", "high"]),
+        })
+        .optional(),
       catch_all_severity: zod
-        .enum(["low", "high"])
+        .enum(["low", "medium", "high"])
         .optional()
         .describe(
-          "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+          "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
         ),
       category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+      confidence: zod
+        .int()
+        .min(postCheckEmail200ResponseScoreConfidenceMin)
+        .max(postCheckEmail200ResponseScoreConfidenceMax)
+        .optional(),
+      confidence_factors: zod.array(zod.string()).optional(),
+      confidence_level: zod
+        .enum(["high", "medium", "low", "very_low"])
+        .optional(),
       domain_suggestion: zod
         .string()
         .optional()
@@ -338,6 +425,23 @@ export const PostCheckEmail200Response = zod
         .describe(
           "Canonical form of the email after alias\/plus-address normalization",
         ),
+      partial_confidence: zod
+        .object({
+          classification: zod.enum([
+            "transient",
+            "policy_block",
+            "timeout",
+            "network",
+            "ambiguous_response",
+            "smtp_unreachable",
+          ]),
+          confidence: zod
+            .int()
+            .min(postCheckEmail200ResponseScorePartialConfidenceConfidenceMin)
+            .max(postCheckEmail200ResponseScorePartialConfidenceConfidenceMax),
+          factors: zod.array(zod.string()),
+        })
+        .optional(),
       reason_codes: zod.array(
         zod.enum([
           "deliverable",
@@ -366,6 +470,21 @@ export const PostCheckEmail200Response = zod
           "unknown_deliverability",
           "free_provider",
           "possible_typo",
+          "provider_reputation",
+          "tenant_history_positive",
+          "tenant_history_inconsistent",
+          "catch_all_low_confidence",
+          "catch_all_medium_confidence",
+          "catch_all_high_risk",
+          "partial_confidence",
+          "transient_smtp",
+          "smtp_policy_block",
+          "smtp_timeout",
+          "smtp_network",
+          "smtp_ambiguous",
+          "outcome_hard_bounce",
+          "outcome_complaint",
+          "outcome_engagement",
         ]),
       ),
       safe_to_send: zod.boolean(),
@@ -373,7 +492,7 @@ export const PostCheckEmail200Response = zod
         .int()
         .min(postCheckEmail200ResponseScoreScoreMin)
         .max(postCheckEmail200ResponseScoreScoreMax),
-      signals: zod.strictObject({
+      signals: zod.object({
         has_domain_suggestion: zod.boolean(),
         has_mx_records: zod.boolean(),
         is_disposable: zod.boolean(),
@@ -416,7 +535,7 @@ export const PostCheckEmail200Response = zod
     smtp: zod
       .union([
         zod
-          .strictObject({
+          .object({
             can_connect_smtp: zod
               .boolean()
               .describe(
@@ -445,19 +564,26 @@ export const PostCheckEmail200Response = zod
             "Results from SMTP connection attempts to the mail server.",
           ),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Results from connecting to the mail server via SMTP."),
     syntax: zod
-      .strictObject({
+      .object({
         address: zod.string().nullable(),
         domain: zod.string().describe("The domain part of the email address."),
         is_valid_syntax: zod

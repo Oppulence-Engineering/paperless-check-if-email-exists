@@ -26,4 +26,10 @@ export interface SuppressionDeleteResponse {
      * @memberof SuppressionDeleteResponse
      */
     'deleted': boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionDeleteResponse
+     */
+    'status': string;
 }

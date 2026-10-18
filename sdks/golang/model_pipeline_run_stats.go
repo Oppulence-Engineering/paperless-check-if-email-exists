@@ -20,24 +20,26 @@ var _ MappedNullable = &PipelineRunStats{}
 
 // PipelineRunStats struct for PipelineRunStats
 type PipelineRunStats struct {
+	AcceptedRows NullableInt32 `json:"accepted_rows,omitempty"`
 	BilledEmails NullableInt32 `json:"billed_emails,omitempty"`
 	ChangedOnlyExport NullableBool `json:"changed_only_export,omitempty"`
-	CompletedTasks NullableInt32 `json:"completed_tasks,omitempty"`
 	DeltaMode NullableBool `json:"delta_mode,omitempty"`
 	FreshnessDays NullableInt32 `json:"freshness_days,omitempty"`
-	Invalid NullableInt32 `json:"invalid,omitempty"`
-	PublishedTasks NullableInt32 `json:"published_tasks,omitempty"`
-	QueuedEmails NullableInt32 `json:"queued_emails,omitempty"`
-	Risky NullableInt32 `json:"risky,omitempty"`
+	JobId NullableInt32 `json:"job_id,omitempty"`
+	ListId NullableInt32 `json:"list_id,omitempty"`
 	SelectedUniqueEmails NullableInt32 `json:"selected_unique_emails,omitempty"`
 	SkippedUnchanged NullableInt32 `json:"skipped_unchanged,omitempty"`
 	SourceFilename NullableString `json:"source_filename,omitempty"`
 	SourceName NullableString `json:"source_name,omitempty"`
 	SourceRowCount NullableInt32 `json:"source_row_count,omitempty"`
 	SourceUniqueEmails NullableInt32 `json:"source_unique_emails,omitempty"`
+	TotalFailed NullableInt64 `json:"total_failed,omitempty"`
+	TotalInvalid NullableInt64 `json:"total_invalid,omitempty"`
+	TotalProcessed NullableInt64 `json:"total_processed,omitempty"`
+	TotalRisky NullableInt64 `json:"total_risky,omitempty"`
+	TotalUnknown NullableInt64 `json:"total_unknown,omitempty"`
+	TotalValid NullableInt64 `json:"total_valid,omitempty"`
 	TriggerReason NullableString `json:"trigger_reason,omitempty"`
-	Unknown NullableInt32 `json:"unknown,omitempty"`
-	Valid NullableInt32 `json:"valid,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -58,6 +60,48 @@ func NewPipelineRunStats() *PipelineRunStats {
 func NewPipelineRunStatsWithDefaults() *PipelineRunStats {
 	this := PipelineRunStats{}
 	return &this
+}
+
+// GetAcceptedRows returns the AcceptedRows field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetAcceptedRows() int32 {
+	if o == nil || IsNil(o.AcceptedRows.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.AcceptedRows.Get()
+}
+
+// GetAcceptedRowsOk returns a tuple with the AcceptedRows field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetAcceptedRowsOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.AcceptedRows.Get(), o.AcceptedRows.IsSet()
+}
+
+// HasAcceptedRows returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasAcceptedRows() bool {
+	if o != nil && o.AcceptedRows.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetAcceptedRows gets a reference to the given NullableInt32 and assigns it to the AcceptedRows field.
+func (o *PipelineRunStats) SetAcceptedRows(v int32) {
+	o.AcceptedRows.Set(&v)
+}
+// SetAcceptedRowsNil sets the value for AcceptedRows to be an explicit nil
+func (o *PipelineRunStats) SetAcceptedRowsNil() {
+	o.AcceptedRows.Set(nil)
+}
+
+// UnsetAcceptedRows ensures that no value is present for AcceptedRows, not even an explicit nil
+func (o *PipelineRunStats) UnsetAcceptedRows() {
+	o.AcceptedRows.Unset()
 }
 
 // GetBilledEmails returns the BilledEmails field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -144,48 +188,6 @@ func (o *PipelineRunStats) UnsetChangedOnlyExport() {
 	o.ChangedOnlyExport.Unset()
 }
 
-// GetCompletedTasks returns the CompletedTasks field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetCompletedTasks() int32 {
-	if o == nil || IsNil(o.CompletedTasks.Get()) {
-		var ret int32
-		return ret
-	}
-	return *o.CompletedTasks.Get()
-}
-
-// GetCompletedTasksOk returns a tuple with the CompletedTasks field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetCompletedTasksOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.CompletedTasks.Get(), o.CompletedTasks.IsSet()
-}
-
-// HasCompletedTasks returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasCompletedTasks() bool {
-	if o != nil && o.CompletedTasks.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetCompletedTasks gets a reference to the given NullableInt32 and assigns it to the CompletedTasks field.
-func (o *PipelineRunStats) SetCompletedTasks(v int32) {
-	o.CompletedTasks.Set(&v)
-}
-// SetCompletedTasksNil sets the value for CompletedTasks to be an explicit nil
-func (o *PipelineRunStats) SetCompletedTasksNil() {
-	o.CompletedTasks.Set(nil)
-}
-
-// UnsetCompletedTasks ensures that no value is present for CompletedTasks, not even an explicit nil
-func (o *PipelineRunStats) UnsetCompletedTasks() {
-	o.CompletedTasks.Unset()
-}
-
 // GetDeltaMode returns the DeltaMode field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PipelineRunStats) GetDeltaMode() bool {
 	if o == nil || IsNil(o.DeltaMode.Get()) {
@@ -270,172 +272,88 @@ func (o *PipelineRunStats) UnsetFreshnessDays() {
 	o.FreshnessDays.Unset()
 }
 
-// GetInvalid returns the Invalid field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetInvalid() int32 {
-	if o == nil || IsNil(o.Invalid.Get()) {
+// GetJobId returns the JobId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetJobId() int32 {
+	if o == nil || IsNil(o.JobId.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.Invalid.Get()
+	return *o.JobId.Get()
 }
 
-// GetInvalidOk returns a tuple with the Invalid field value if set, nil otherwise
+// GetJobIdOk returns a tuple with the JobId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetInvalidOk() (*int32, bool) {
+func (o *PipelineRunStats) GetJobIdOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Invalid.Get(), o.Invalid.IsSet()
+	return o.JobId.Get(), o.JobId.IsSet()
 }
 
-// HasInvalid returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasInvalid() bool {
-	if o != nil && o.Invalid.IsSet() {
+// HasJobId returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasJobId() bool {
+	if o != nil && o.JobId.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetInvalid gets a reference to the given NullableInt32 and assigns it to the Invalid field.
-func (o *PipelineRunStats) SetInvalid(v int32) {
-	o.Invalid.Set(&v)
+// SetJobId gets a reference to the given NullableInt32 and assigns it to the JobId field.
+func (o *PipelineRunStats) SetJobId(v int32) {
+	o.JobId.Set(&v)
 }
-// SetInvalidNil sets the value for Invalid to be an explicit nil
-func (o *PipelineRunStats) SetInvalidNil() {
-	o.Invalid.Set(nil)
-}
-
-// UnsetInvalid ensures that no value is present for Invalid, not even an explicit nil
-func (o *PipelineRunStats) UnsetInvalid() {
-	o.Invalid.Unset()
+// SetJobIdNil sets the value for JobId to be an explicit nil
+func (o *PipelineRunStats) SetJobIdNil() {
+	o.JobId.Set(nil)
 }
 
-// GetPublishedTasks returns the PublishedTasks field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetPublishedTasks() int32 {
-	if o == nil || IsNil(o.PublishedTasks.Get()) {
+// UnsetJobId ensures that no value is present for JobId, not even an explicit nil
+func (o *PipelineRunStats) UnsetJobId() {
+	o.JobId.Unset()
+}
+
+// GetListId returns the ListId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetListId() int32 {
+	if o == nil || IsNil(o.ListId.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.PublishedTasks.Get()
+	return *o.ListId.Get()
 }
 
-// GetPublishedTasksOk returns a tuple with the PublishedTasks field value if set, nil otherwise
+// GetListIdOk returns a tuple with the ListId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetPublishedTasksOk() (*int32, bool) {
+func (o *PipelineRunStats) GetListIdOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.PublishedTasks.Get(), o.PublishedTasks.IsSet()
+	return o.ListId.Get(), o.ListId.IsSet()
 }
 
-// HasPublishedTasks returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasPublishedTasks() bool {
-	if o != nil && o.PublishedTasks.IsSet() {
+// HasListId returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasListId() bool {
+	if o != nil && o.ListId.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetPublishedTasks gets a reference to the given NullableInt32 and assigns it to the PublishedTasks field.
-func (o *PipelineRunStats) SetPublishedTasks(v int32) {
-	o.PublishedTasks.Set(&v)
+// SetListId gets a reference to the given NullableInt32 and assigns it to the ListId field.
+func (o *PipelineRunStats) SetListId(v int32) {
+	o.ListId.Set(&v)
 }
-// SetPublishedTasksNil sets the value for PublishedTasks to be an explicit nil
-func (o *PipelineRunStats) SetPublishedTasksNil() {
-	o.PublishedTasks.Set(nil)
-}
-
-// UnsetPublishedTasks ensures that no value is present for PublishedTasks, not even an explicit nil
-func (o *PipelineRunStats) UnsetPublishedTasks() {
-	o.PublishedTasks.Unset()
+// SetListIdNil sets the value for ListId to be an explicit nil
+func (o *PipelineRunStats) SetListIdNil() {
+	o.ListId.Set(nil)
 }
 
-// GetQueuedEmails returns the QueuedEmails field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetQueuedEmails() int32 {
-	if o == nil || IsNil(o.QueuedEmails.Get()) {
-		var ret int32
-		return ret
-	}
-	return *o.QueuedEmails.Get()
-}
-
-// GetQueuedEmailsOk returns a tuple with the QueuedEmails field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetQueuedEmailsOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.QueuedEmails.Get(), o.QueuedEmails.IsSet()
-}
-
-// HasQueuedEmails returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasQueuedEmails() bool {
-	if o != nil && o.QueuedEmails.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetQueuedEmails gets a reference to the given NullableInt32 and assigns it to the QueuedEmails field.
-func (o *PipelineRunStats) SetQueuedEmails(v int32) {
-	o.QueuedEmails.Set(&v)
-}
-// SetQueuedEmailsNil sets the value for QueuedEmails to be an explicit nil
-func (o *PipelineRunStats) SetQueuedEmailsNil() {
-	o.QueuedEmails.Set(nil)
-}
-
-// UnsetQueuedEmails ensures that no value is present for QueuedEmails, not even an explicit nil
-func (o *PipelineRunStats) UnsetQueuedEmails() {
-	o.QueuedEmails.Unset()
-}
-
-// GetRisky returns the Risky field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetRisky() int32 {
-	if o == nil || IsNil(o.Risky.Get()) {
-		var ret int32
-		return ret
-	}
-	return *o.Risky.Get()
-}
-
-// GetRiskyOk returns a tuple with the Risky field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetRiskyOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Risky.Get(), o.Risky.IsSet()
-}
-
-// HasRisky returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasRisky() bool {
-	if o != nil && o.Risky.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetRisky gets a reference to the given NullableInt32 and assigns it to the Risky field.
-func (o *PipelineRunStats) SetRisky(v int32) {
-	o.Risky.Set(&v)
-}
-// SetRiskyNil sets the value for Risky to be an explicit nil
-func (o *PipelineRunStats) SetRiskyNil() {
-	o.Risky.Set(nil)
-}
-
-// UnsetRisky ensures that no value is present for Risky, not even an explicit nil
-func (o *PipelineRunStats) UnsetRisky() {
-	o.Risky.Unset()
+// UnsetListId ensures that no value is present for ListId, not even an explicit nil
+func (o *PipelineRunStats) UnsetListId() {
+	o.ListId.Unset()
 }
 
 // GetSelectedUniqueEmails returns the SelectedUniqueEmails field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -690,6 +608,258 @@ func (o *PipelineRunStats) UnsetSourceUniqueEmails() {
 	o.SourceUniqueEmails.Unset()
 }
 
+// GetTotalFailed returns the TotalFailed field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalFailed() int64 {
+	if o == nil || IsNil(o.TotalFailed.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalFailed.Get()
+}
+
+// GetTotalFailedOk returns a tuple with the TotalFailed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalFailedOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalFailed.Get(), o.TotalFailed.IsSet()
+}
+
+// HasTotalFailed returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalFailed() bool {
+	if o != nil && o.TotalFailed.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalFailed gets a reference to the given NullableInt64 and assigns it to the TotalFailed field.
+func (o *PipelineRunStats) SetTotalFailed(v int64) {
+	o.TotalFailed.Set(&v)
+}
+// SetTotalFailedNil sets the value for TotalFailed to be an explicit nil
+func (o *PipelineRunStats) SetTotalFailedNil() {
+	o.TotalFailed.Set(nil)
+}
+
+// UnsetTotalFailed ensures that no value is present for TotalFailed, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalFailed() {
+	o.TotalFailed.Unset()
+}
+
+// GetTotalInvalid returns the TotalInvalid field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalInvalid() int64 {
+	if o == nil || IsNil(o.TotalInvalid.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalInvalid.Get()
+}
+
+// GetTotalInvalidOk returns a tuple with the TotalInvalid field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalInvalidOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalInvalid.Get(), o.TotalInvalid.IsSet()
+}
+
+// HasTotalInvalid returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalInvalid() bool {
+	if o != nil && o.TotalInvalid.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalInvalid gets a reference to the given NullableInt64 and assigns it to the TotalInvalid field.
+func (o *PipelineRunStats) SetTotalInvalid(v int64) {
+	o.TotalInvalid.Set(&v)
+}
+// SetTotalInvalidNil sets the value for TotalInvalid to be an explicit nil
+func (o *PipelineRunStats) SetTotalInvalidNil() {
+	o.TotalInvalid.Set(nil)
+}
+
+// UnsetTotalInvalid ensures that no value is present for TotalInvalid, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalInvalid() {
+	o.TotalInvalid.Unset()
+}
+
+// GetTotalProcessed returns the TotalProcessed field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalProcessed() int64 {
+	if o == nil || IsNil(o.TotalProcessed.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalProcessed.Get()
+}
+
+// GetTotalProcessedOk returns a tuple with the TotalProcessed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalProcessedOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalProcessed.Get(), o.TotalProcessed.IsSet()
+}
+
+// HasTotalProcessed returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalProcessed() bool {
+	if o != nil && o.TotalProcessed.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalProcessed gets a reference to the given NullableInt64 and assigns it to the TotalProcessed field.
+func (o *PipelineRunStats) SetTotalProcessed(v int64) {
+	o.TotalProcessed.Set(&v)
+}
+// SetTotalProcessedNil sets the value for TotalProcessed to be an explicit nil
+func (o *PipelineRunStats) SetTotalProcessedNil() {
+	o.TotalProcessed.Set(nil)
+}
+
+// UnsetTotalProcessed ensures that no value is present for TotalProcessed, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalProcessed() {
+	o.TotalProcessed.Unset()
+}
+
+// GetTotalRisky returns the TotalRisky field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalRisky() int64 {
+	if o == nil || IsNil(o.TotalRisky.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalRisky.Get()
+}
+
+// GetTotalRiskyOk returns a tuple with the TotalRisky field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalRiskyOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalRisky.Get(), o.TotalRisky.IsSet()
+}
+
+// HasTotalRisky returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalRisky() bool {
+	if o != nil && o.TotalRisky.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalRisky gets a reference to the given NullableInt64 and assigns it to the TotalRisky field.
+func (o *PipelineRunStats) SetTotalRisky(v int64) {
+	o.TotalRisky.Set(&v)
+}
+// SetTotalRiskyNil sets the value for TotalRisky to be an explicit nil
+func (o *PipelineRunStats) SetTotalRiskyNil() {
+	o.TotalRisky.Set(nil)
+}
+
+// UnsetTotalRisky ensures that no value is present for TotalRisky, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalRisky() {
+	o.TotalRisky.Unset()
+}
+
+// GetTotalUnknown returns the TotalUnknown field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalUnknown() int64 {
+	if o == nil || IsNil(o.TotalUnknown.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalUnknown.Get()
+}
+
+// GetTotalUnknownOk returns a tuple with the TotalUnknown field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalUnknownOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalUnknown.Get(), o.TotalUnknown.IsSet()
+}
+
+// HasTotalUnknown returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalUnknown() bool {
+	if o != nil && o.TotalUnknown.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalUnknown gets a reference to the given NullableInt64 and assigns it to the TotalUnknown field.
+func (o *PipelineRunStats) SetTotalUnknown(v int64) {
+	o.TotalUnknown.Set(&v)
+}
+// SetTotalUnknownNil sets the value for TotalUnknown to be an explicit nil
+func (o *PipelineRunStats) SetTotalUnknownNil() {
+	o.TotalUnknown.Set(nil)
+}
+
+// UnsetTotalUnknown ensures that no value is present for TotalUnknown, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalUnknown() {
+	o.TotalUnknown.Unset()
+}
+
+// GetTotalValid returns the TotalValid field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PipelineRunStats) GetTotalValid() int64 {
+	if o == nil || IsNil(o.TotalValid.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalValid.Get()
+}
+
+// GetTotalValidOk returns a tuple with the TotalValid field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PipelineRunStats) GetTotalValidOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TotalValid.Get(), o.TotalValid.IsSet()
+}
+
+// HasTotalValid returns a boolean if a field has been set.
+func (o *PipelineRunStats) HasTotalValid() bool {
+	if o != nil && o.TotalValid.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalValid gets a reference to the given NullableInt64 and assigns it to the TotalValid field.
+func (o *PipelineRunStats) SetTotalValid(v int64) {
+	o.TotalValid.Set(&v)
+}
+// SetTotalValidNil sets the value for TotalValid to be an explicit nil
+func (o *PipelineRunStats) SetTotalValidNil() {
+	o.TotalValid.Set(nil)
+}
+
+// UnsetTotalValid ensures that no value is present for TotalValid, not even an explicit nil
+func (o *PipelineRunStats) UnsetTotalValid() {
+	o.TotalValid.Unset()
+}
+
 // GetTriggerReason returns the TriggerReason field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PipelineRunStats) GetTriggerReason() string {
 	if o == nil || IsNil(o.TriggerReason.Get()) {
@@ -732,90 +902,6 @@ func (o *PipelineRunStats) UnsetTriggerReason() {
 	o.TriggerReason.Unset()
 }
 
-// GetUnknown returns the Unknown field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetUnknown() int32 {
-	if o == nil || IsNil(o.Unknown.Get()) {
-		var ret int32
-		return ret
-	}
-	return *o.Unknown.Get()
-}
-
-// GetUnknownOk returns a tuple with the Unknown field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetUnknownOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Unknown.Get(), o.Unknown.IsSet()
-}
-
-// HasUnknown returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasUnknown() bool {
-	if o != nil && o.Unknown.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetUnknown gets a reference to the given NullableInt32 and assigns it to the Unknown field.
-func (o *PipelineRunStats) SetUnknown(v int32) {
-	o.Unknown.Set(&v)
-}
-// SetUnknownNil sets the value for Unknown to be an explicit nil
-func (o *PipelineRunStats) SetUnknownNil() {
-	o.Unknown.Set(nil)
-}
-
-// UnsetUnknown ensures that no value is present for Unknown, not even an explicit nil
-func (o *PipelineRunStats) UnsetUnknown() {
-	o.Unknown.Unset()
-}
-
-// GetValid returns the Valid field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PipelineRunStats) GetValid() int32 {
-	if o == nil || IsNil(o.Valid.Get()) {
-		var ret int32
-		return ret
-	}
-	return *o.Valid.Get()
-}
-
-// GetValidOk returns a tuple with the Valid field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PipelineRunStats) GetValidOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Valid.Get(), o.Valid.IsSet()
-}
-
-// HasValid returns a boolean if a field has been set.
-func (o *PipelineRunStats) HasValid() bool {
-	if o != nil && o.Valid.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetValid gets a reference to the given NullableInt32 and assigns it to the Valid field.
-func (o *PipelineRunStats) SetValid(v int32) {
-	o.Valid.Set(&v)
-}
-// SetValidNil sets the value for Valid to be an explicit nil
-func (o *PipelineRunStats) SetValidNil() {
-	o.Valid.Set(nil)
-}
-
-// UnsetValid ensures that no value is present for Valid, not even an explicit nil
-func (o *PipelineRunStats) UnsetValid() {
-	o.Valid.Unset()
-}
-
 func (o PipelineRunStats) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -826,14 +912,14 @@ func (o PipelineRunStats) MarshalJSON() ([]byte, error) {
 
 func (o PipelineRunStats) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.AcceptedRows.IsSet() {
+		toSerialize["accepted_rows"] = o.AcceptedRows.Get()
+	}
 	if o.BilledEmails.IsSet() {
 		toSerialize["billed_emails"] = o.BilledEmails.Get()
 	}
 	if o.ChangedOnlyExport.IsSet() {
 		toSerialize["changed_only_export"] = o.ChangedOnlyExport.Get()
-	}
-	if o.CompletedTasks.IsSet() {
-		toSerialize["completed_tasks"] = o.CompletedTasks.Get()
 	}
 	if o.DeltaMode.IsSet() {
 		toSerialize["delta_mode"] = o.DeltaMode.Get()
@@ -841,17 +927,11 @@ func (o PipelineRunStats) ToMap() (map[string]interface{}, error) {
 	if o.FreshnessDays.IsSet() {
 		toSerialize["freshness_days"] = o.FreshnessDays.Get()
 	}
-	if o.Invalid.IsSet() {
-		toSerialize["invalid"] = o.Invalid.Get()
+	if o.JobId.IsSet() {
+		toSerialize["job_id"] = o.JobId.Get()
 	}
-	if o.PublishedTasks.IsSet() {
-		toSerialize["published_tasks"] = o.PublishedTasks.Get()
-	}
-	if o.QueuedEmails.IsSet() {
-		toSerialize["queued_emails"] = o.QueuedEmails.Get()
-	}
-	if o.Risky.IsSet() {
-		toSerialize["risky"] = o.Risky.Get()
+	if o.ListId.IsSet() {
+		toSerialize["list_id"] = o.ListId.Get()
 	}
 	if o.SelectedUniqueEmails.IsSet() {
 		toSerialize["selected_unique_emails"] = o.SelectedUniqueEmails.Get()
@@ -871,14 +951,26 @@ func (o PipelineRunStats) ToMap() (map[string]interface{}, error) {
 	if o.SourceUniqueEmails.IsSet() {
 		toSerialize["source_unique_emails"] = o.SourceUniqueEmails.Get()
 	}
+	if o.TotalFailed.IsSet() {
+		toSerialize["total_failed"] = o.TotalFailed.Get()
+	}
+	if o.TotalInvalid.IsSet() {
+		toSerialize["total_invalid"] = o.TotalInvalid.Get()
+	}
+	if o.TotalProcessed.IsSet() {
+		toSerialize["total_processed"] = o.TotalProcessed.Get()
+	}
+	if o.TotalRisky.IsSet() {
+		toSerialize["total_risky"] = o.TotalRisky.Get()
+	}
+	if o.TotalUnknown.IsSet() {
+		toSerialize["total_unknown"] = o.TotalUnknown.Get()
+	}
+	if o.TotalValid.IsSet() {
+		toSerialize["total_valid"] = o.TotalValid.Get()
+	}
 	if o.TriggerReason.IsSet() {
 		toSerialize["trigger_reason"] = o.TriggerReason.Get()
-	}
-	if o.Unknown.IsSet() {
-		toSerialize["unknown"] = o.Unknown.Get()
-	}
-	if o.Valid.IsSet() {
-		toSerialize["valid"] = o.Valid.Get()
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -902,24 +994,26 @@ func (o *PipelineRunStats) UnmarshalJSON(data []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "accepted_rows")
 		delete(additionalProperties, "billed_emails")
 		delete(additionalProperties, "changed_only_export")
-		delete(additionalProperties, "completed_tasks")
 		delete(additionalProperties, "delta_mode")
 		delete(additionalProperties, "freshness_days")
-		delete(additionalProperties, "invalid")
-		delete(additionalProperties, "published_tasks")
-		delete(additionalProperties, "queued_emails")
-		delete(additionalProperties, "risky")
+		delete(additionalProperties, "job_id")
+		delete(additionalProperties, "list_id")
 		delete(additionalProperties, "selected_unique_emails")
 		delete(additionalProperties, "skipped_unchanged")
 		delete(additionalProperties, "source_filename")
 		delete(additionalProperties, "source_name")
 		delete(additionalProperties, "source_row_count")
 		delete(additionalProperties, "source_unique_emails")
+		delete(additionalProperties, "total_failed")
+		delete(additionalProperties, "total_invalid")
+		delete(additionalProperties, "total_processed")
+		delete(additionalProperties, "total_risky")
+		delete(additionalProperties, "total_unknown")
+		delete(additionalProperties, "total_valid")
 		delete(additionalProperties, "trigger_reason")
-		delete(additionalProperties, "unknown")
-		delete(additionalProperties, "valid")
 		o.AdditionalProperties = additionalProperties
 	}
 

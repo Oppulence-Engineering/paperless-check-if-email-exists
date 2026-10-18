@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **EmailColumn** | Pointer to **NullableString** |  | [optional]
 **File** | ***os.File** |  | [required]
 **Name** | Pointer to **NullableString** |  | [optional]
+**PolicyId** | Pointer to **NullableInt64** |  | [optional]
 **SourceKey** | Pointer to **NullableString** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. | [optional]
 
 ## Methods
@@ -119,6 +120,42 @@ HasName returns a boolean if a field has been set.
 `func (o *ListUploadRequest) UnsetName()`
 
 UnsetName ensures that no value is present for Name, not even an explicit nil
+
+### GetPolicyId
+
+`func (o *ListUploadRequest) GetPolicyId() int64`
+
+GetPolicyId returns the PolicyId field if non-nil, zero value otherwise.
+
+### GetPolicyIdOk
+
+`func (o *ListUploadRequest) GetPolicyIdOk() (*int64, bool)`
+
+GetPolicyIdOk returns a tuple with the PolicyId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPolicyId
+
+`func (o *ListUploadRequest) SetPolicyId(v int64)`
+
+SetPolicyId sets PolicyId field to given value.
+
+### HasPolicyId
+
+`func (o *ListUploadRequest) HasPolicyId() bool`
+
+HasPolicyId returns a boolean if a field has been set.
+
+### SetPolicyIdNil
+
+`func (o *ListUploadRequest) SetPolicyIdNil()`
+
+ SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+
+### UnsetPolicyId
+`func (o *ListUploadRequest) UnsetPolicyId()`
+
+UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
 
 ### GetSourceKey
 

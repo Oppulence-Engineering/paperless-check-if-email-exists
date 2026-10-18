@@ -8,12 +8,20 @@
  * OpenAPI spec version: 4.3.0
  */
 import type {
+  CreateSavedSegmentRequest,
   ErrorEnvelope,
+  ListDiffResponse,
+  SavedSegmentDeleteResponse,
+  SavedSegmentListResponse,
+  SavedSegmentView,
+  UpdateSavedSegmentRequest,
   V1CreateRemediationExport200,
   V1CreateRemediationExportBody,
   V1CreateRemediationPlan200,
   V1CreateRemediationPlanBody,
+  V1DiffListsParams,
   V1GetRemediationPlan200,
+  V1ListSavedSegmentsParams,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -57,6 +65,73 @@ export type HTTPStatusCodes =
   | HTTPStatusCode3xx
   | HTTPStatusCode4xx
   | HTTPStatusCode5xx;
+
+export type v1DiffListsResponse200 = {
+  data: ListDiffResponse;
+  status: 200;
+};
+
+export type v1DiffListsResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1DiffListsResponseSuccess = v1DiffListsResponse200 & {
+  headers: Headers;
+};
+export type v1DiffListsResponseError = v1DiffListsResponseDefault & {
+  headers: Headers;
+};
+
+export type v1DiffListsResponse =
+  v1DiffListsResponseSuccess | v1DiffListsResponseError;
+
+export const getV1DiffListsUrl = (
+  baseListId: number,
+  compareListId: number,
+  params?: V1DiffListsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/lists/${baseListId}/diff/${compareListId}?${stringifiedParams}`
+    : `/v1/lists/${baseListId}/diff/${compareListId}`;
+};
+
+/**
+ * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+ */
+export const v1DiffLists = async (
+  baseListId: number,
+  compareListId: number,
+  params?: V1DiffListsParams,
+  options?: RequestInit,
+): Promise<v1DiffListsResponse> => {
+  const res = await fetch(
+    getV1DiffListsUrl(baseListId, compareListId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1DiffListsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1DiffListsResponse;
+};
 
 export type v1ListQualityResponse200 = {
   data: void;
@@ -315,4 +390,270 @@ export const v1CreateRemediationPlan = async (
     status: res.status,
     headers: res.headers,
   } as v1CreateRemediationPlanResponse;
+};
+
+export type v1ListSavedSegmentsResponse200 = {
+  data: SavedSegmentListResponse;
+  status: 200;
+};
+
+export type v1ListSavedSegmentsResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListSavedSegmentsResponseSuccess =
+  v1ListSavedSegmentsResponse200 & {
+    headers: Headers;
+  };
+export type v1ListSavedSegmentsResponseError =
+  v1ListSavedSegmentsResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1ListSavedSegmentsResponse =
+  v1ListSavedSegmentsResponseSuccess | v1ListSavedSegmentsResponseError;
+
+export const getV1ListSavedSegmentsUrl = (
+  params?: V1ListSavedSegmentsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/segments?${stringifiedParams}`
+    : `/v1/segments`;
+};
+
+/**
+ * @summary GET /v1/segments
+ */
+export const v1ListSavedSegments = async (
+  params?: V1ListSavedSegmentsParams,
+  options?: RequestInit,
+): Promise<v1ListSavedSegmentsResponse> => {
+  const res = await fetch(getV1ListSavedSegmentsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListSavedSegmentsResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListSavedSegmentsResponse;
+};
+
+export type v1CreateSavedSegmentResponse201 = {
+  data: SavedSegmentView;
+  status: 201;
+};
+
+export type v1CreateSavedSegmentResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 201>;
+};
+
+export type v1CreateSavedSegmentResponseSuccess =
+  v1CreateSavedSegmentResponse201 & {
+    headers: Headers;
+  };
+export type v1CreateSavedSegmentResponseError =
+  v1CreateSavedSegmentResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1CreateSavedSegmentResponse =
+  v1CreateSavedSegmentResponseSuccess | v1CreateSavedSegmentResponseError;
+
+export const getV1CreateSavedSegmentUrl = () => {
+  return `/v1/segments`;
+};
+
+/**
+ * @summary POST /v1/segments
+ */
+export const v1CreateSavedSegment = async (
+  createSavedSegmentRequest: CreateSavedSegmentRequest,
+  options?: RequestInit,
+): Promise<v1CreateSavedSegmentResponse> => {
+  const res = await fetch(getV1CreateSavedSegmentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSavedSegmentRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1CreateSavedSegmentResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1CreateSavedSegmentResponse;
+};
+
+export type v1DeleteSavedSegmentResponse200 = {
+  data: SavedSegmentDeleteResponse;
+  status: 200;
+};
+
+export type v1DeleteSavedSegmentResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1DeleteSavedSegmentResponseSuccess =
+  v1DeleteSavedSegmentResponse200 & {
+    headers: Headers;
+  };
+export type v1DeleteSavedSegmentResponseError =
+  v1DeleteSavedSegmentResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1DeleteSavedSegmentResponse =
+  v1DeleteSavedSegmentResponseSuccess | v1DeleteSavedSegmentResponseError;
+
+export const getV1DeleteSavedSegmentUrl = (segmentId: number) => {
+  return `/v1/segments/${segmentId}`;
+};
+
+/**
+ * @summary DELETE /v1/segments/{segment_id}
+ */
+export const v1DeleteSavedSegment = async (
+  segmentId: number,
+  options?: RequestInit,
+): Promise<v1DeleteSavedSegmentResponse> => {
+  const res = await fetch(getV1DeleteSavedSegmentUrl(segmentId), {
+    ...options,
+    method: "DELETE",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1DeleteSavedSegmentResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1DeleteSavedSegmentResponse;
+};
+
+export type v1GetSavedSegmentResponse200 = {
+  data: SavedSegmentView;
+  status: 200;
+};
+
+export type v1GetSavedSegmentResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1GetSavedSegmentResponseSuccess = v1GetSavedSegmentResponse200 & {
+  headers: Headers;
+};
+export type v1GetSavedSegmentResponseError =
+  v1GetSavedSegmentResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1GetSavedSegmentResponse =
+  v1GetSavedSegmentResponseSuccess | v1GetSavedSegmentResponseError;
+
+export const getV1GetSavedSegmentUrl = (segmentId: number) => {
+  return `/v1/segments/${segmentId}`;
+};
+
+/**
+ * @summary GET /v1/segments/{segment_id}
+ */
+export const v1GetSavedSegment = async (
+  segmentId: number,
+  options?: RequestInit,
+): Promise<v1GetSavedSegmentResponse> => {
+  const res = await fetch(getV1GetSavedSegmentUrl(segmentId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1GetSavedSegmentResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1GetSavedSegmentResponse;
+};
+
+export type v1UpdateSavedSegmentResponse200 = {
+  data: SavedSegmentView;
+  status: 200;
+};
+
+export type v1UpdateSavedSegmentResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1UpdateSavedSegmentResponseSuccess =
+  v1UpdateSavedSegmentResponse200 & {
+    headers: Headers;
+  };
+export type v1UpdateSavedSegmentResponseError =
+  v1UpdateSavedSegmentResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1UpdateSavedSegmentResponse =
+  v1UpdateSavedSegmentResponseSuccess | v1UpdateSavedSegmentResponseError;
+
+export const getV1UpdateSavedSegmentUrl = (segmentId: number) => {
+  return `/v1/segments/${segmentId}`;
+};
+
+/**
+ * @summary PATCH /v1/segments/{segment_id}
+ */
+export const v1UpdateSavedSegment = async (
+  segmentId: number,
+  updateSavedSegmentRequest: UpdateSavedSegmentRequest,
+  options?: RequestInit,
+): Promise<v1UpdateSavedSegmentResponse> => {
+  const res = await fetch(getV1UpdateSavedSegmentUrl(segmentId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateSavedSegmentRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UpdateSavedSegmentResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UpdateSavedSegmentResponse;
 };

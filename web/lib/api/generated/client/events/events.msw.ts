@@ -10,22 +10,31 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
+import type { AuditEventList } from "../model";
+
+import { getV1ListEventsResponseMock } from "./events.faker";
+
+export { getV1ListEventsResponseMock } from "./events.faker";
+
 export const getV1ListEventsMockHandler = (
   overrideResponse?:
-    | void
+    | AuditEventList
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<AuditEventList> | AuditEventList),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/events",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListEventsResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );

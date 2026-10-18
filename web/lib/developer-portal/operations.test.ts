@@ -41,7 +41,7 @@ it("gives every operation a reachable product or setup journey", () => {
 	for (const operation of operations) {
 		const destination = workflowDestination(operation);
 		expect(destination.label, operation.id).toBeTruthy();
-		expect(destination.href, operation.id).toMatch(/^\/app\//);
+		expect(destination.href, operation.id).toMatch(/^\/app(\/|\?|$)/);
 		expect(destination.href, operation.id).not.toBe("/app/api");
 		const pathname = destination.href.split("?")[0];
 		expect(

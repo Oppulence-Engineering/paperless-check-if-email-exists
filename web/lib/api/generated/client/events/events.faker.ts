@@ -7,3 +7,37 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import { faker } from "@faker-js/faker";
+
+import type { AuditEventList } from "../model";
+
+export const getV1ListEventsResponseMock = (
+  overrideResponse: Partial<Extract<AuditEventList, object>> = {},
+): AuditEventList => ({
+  events: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    actor: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    event_data: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([null]),
+      undefined,
+    ]),
+    event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    id: faker.number.int(),
+    job_id: faker.number.int(),
+    task_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});

@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -24,7 +24,7 @@ var _ MappedNullable = &CreateOutcomePolicyRequest{}
 type CreateOutcomePolicyRequest struct {
 	IsDefault *bool `json:"is_default,omitempty"`
 	Name string `json:"name"`
-	Rules interface{} `json:"rules,omitempty"`
+	Rules *OutcomePolicyRules `json:"rules,omitempty"`
 }
 
 type _CreateOutcomePolicyRequest CreateOutcomePolicyRequest
@@ -103,23 +103,22 @@ func (o *CreateOutcomePolicyRequest) SetName(v string) {
 	o.Name = v
 }
 
-// GetRules returns the Rules field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateOutcomePolicyRequest) GetRules() interface{} {
-	if o == nil {
-		var ret interface{}
+// GetRules returns the Rules field value if set, zero value otherwise.
+func (o *CreateOutcomePolicyRequest) GetRules() OutcomePolicyRules {
+	if o == nil || IsNil(o.Rules) {
+		var ret OutcomePolicyRules
 		return ret
 	}
-	return o.Rules
+	return *o.Rules
 }
 
 // GetRulesOk returns a tuple with the Rules field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateOutcomePolicyRequest) GetRulesOk() (*interface{}, bool) {
+func (o *CreateOutcomePolicyRequest) GetRulesOk() (*OutcomePolicyRules, bool) {
 	if o == nil || IsNil(o.Rules) {
 		return nil, false
 	}
-	return &o.Rules, true
+	return o.Rules, true
 }
 
 // HasRules returns a boolean if a field has been set.
@@ -131,9 +130,9 @@ func (o *CreateOutcomePolicyRequest) HasRules() bool {
 	return false
 }
 
-// SetRules gets a reference to the given interface{} and assigns it to the Rules field.
-func (o *CreateOutcomePolicyRequest) SetRules(v interface{}) {
-	o.Rules = v
+// SetRules gets a reference to the given OutcomePolicyRules and assigns it to the Rules field.
+func (o *CreateOutcomePolicyRequest) SetRules(v OutcomePolicyRules) {
+	o.Rules = &v
 }
 
 func (o CreateOutcomePolicyRequest) MarshalJSON() ([]byte, error) {
@@ -150,7 +149,7 @@ func (o CreateOutcomePolicyRequest) ToMap() (map[string]interface{}, error) {
 		toSerialize["is_default"] = o.IsDefault
 	}
 	toSerialize["name"] = o.Name
-	if o.Rules != nil {
+	if !IsNil(o.Rules) {
 		toSerialize["rules"] = o.Rules
 	}
 	return toSerialize, nil

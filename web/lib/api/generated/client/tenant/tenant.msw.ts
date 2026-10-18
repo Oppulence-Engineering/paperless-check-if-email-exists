@@ -11,15 +11,31 @@ import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
 import type {
+  OutcomePolicyDeleteResponse,
+  OutcomePolicyListResponse,
+  OutcomePolicyView,
+  ScorePolicyDeleteResponse,
+  ScorePolicyListResponse,
+  ScorePolicyView,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
 } from "../model";
 
 import {
+  getV1CreateOutcomePolicyResponseMock,
+  getV1CreateScorePolicyResponseMock,
+  getV1DeleteOutcomePolicyResponseMock,
+  getV1DeleteScorePolicyResponseMock,
+  getV1GetOutcomePolicyResponseMock,
+  getV1GetScorePolicyResponseMock,
   getV1GetTenantSettingsResponseMock,
   getV1GetTenantUsageResponseMock,
   getV1GetTenantWebhookResponseMock,
+  getV1ListOutcomePoliciesResponseMock,
+  getV1ListScorePoliciesResponseMock,
+  getV1UpdateOutcomePolicyResponseMock,
+  getV1UpdateScorePolicyResponseMock,
   getV1UpdateTenantSettingsResponseMock,
   getV1UpdateTenantWebhookResponseMock,
 } from "./tenant.faker";
@@ -30,6 +46,16 @@ export {
   getV1GetTenantUsageResponseMock,
   getV1GetTenantWebhookResponseMock,
   getV1UpdateTenantWebhookResponseMock,
+  getV1ListOutcomePoliciesResponseMock,
+  getV1CreateOutcomePolicyResponseMock,
+  getV1DeleteOutcomePolicyResponseMock,
+  getV1GetOutcomePolicyResponseMock,
+  getV1UpdateOutcomePolicyResponseMock,
+  getV1ListScorePoliciesResponseMock,
+  getV1CreateScorePolicyResponseMock,
+  getV1DeleteScorePolicyResponseMock,
+  getV1GetScorePolicyResponseMock,
+  getV1UpdateScorePolicyResponseMock,
 } from "./tenant.faker";
 
 export const getV1ListTenantDomainsMockHandler = (
@@ -277,6 +303,246 @@ export const getV1UpdateTenantWebhookMockHandler = (
     options,
   );
 };
+
+export const getV1ListOutcomePoliciesMockHandler = (
+  overrideResponse?:
+    | OutcomePolicyListResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<OutcomePolicyListResponse> | OutcomePolicyListResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/outcome-policies",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListOutcomePoliciesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1CreateOutcomePolicyMockHandler = (
+  overrideResponse?:
+    | OutcomePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<OutcomePolicyView> | OutcomePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/outcome-policies",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1CreateOutcomePolicyResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1DeleteOutcomePolicyMockHandler = (
+  overrideResponse?:
+    | OutcomePolicyDeleteResponse
+    | ((
+        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+      ) => Promise<OutcomePolicyDeleteResponse> | OutcomePolicyDeleteResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.delete(
+    "*/v1/outcome-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DeleteOutcomePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1GetOutcomePolicyMockHandler = (
+  overrideResponse?:
+    | OutcomePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<OutcomePolicyView> | OutcomePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/outcome-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetOutcomePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1UpdateOutcomePolicyMockHandler = (
+  overrideResponse?:
+    | OutcomePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+      ) => Promise<OutcomePolicyView> | OutcomePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch(
+    "*/v1/outcome-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateOutcomePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1ListScorePoliciesMockHandler = (
+  overrideResponse?:
+    | ScorePolicyListResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ScorePolicyListResponse> | ScorePolicyListResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/score-policies",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListScorePoliciesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1CreateScorePolicyMockHandler = (
+  overrideResponse?:
+    | ScorePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ScorePolicyView> | ScorePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/score-policies",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1CreateScorePolicyResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1DeleteScorePolicyMockHandler = (
+  overrideResponse?:
+    | ScorePolicyDeleteResponse
+    | ((
+        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+      ) => Promise<ScorePolicyDeleteResponse> | ScorePolicyDeleteResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.delete(
+    "*/v1/score-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DeleteScorePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1GetScorePolicyMockHandler = (
+  overrideResponse?:
+    | ScorePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ScorePolicyView> | ScorePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/score-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetScorePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1UpdateScorePolicyMockHandler = (
+  overrideResponse?:
+    | ScorePolicyView
+    | ((
+        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+      ) => Promise<ScorePolicyView> | ScorePolicyView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch(
+    "*/v1/score-policies/:policyId",
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateScorePolicyResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 export const getTenantMock = () => [
   getV1ListTenantDomainsMockHandler(),
   getV1CreateTenantDomainMockHandler(),
@@ -289,4 +555,14 @@ export const getTenantMock = () => [
   getV1ClearTenantWebhookMockHandler(),
   getV1GetTenantWebhookMockHandler(),
   getV1UpdateTenantWebhookMockHandler(),
+  getV1ListOutcomePoliciesMockHandler(),
+  getV1CreateOutcomePolicyMockHandler(),
+  getV1DeleteOutcomePolicyMockHandler(),
+  getV1GetOutcomePolicyMockHandler(),
+  getV1UpdateOutcomePolicyMockHandler(),
+  getV1ListScorePoliciesMockHandler(),
+  getV1CreateScorePolicyMockHandler(),
+  getV1DeleteScorePolicyMockHandler(),
+  getV1GetScorePolicyMockHandler(),
+  getV1UpdateScorePolicyMockHandler(),
 ];

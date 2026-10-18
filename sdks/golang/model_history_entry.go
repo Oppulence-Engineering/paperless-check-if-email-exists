@@ -14,6 +14,8 @@ package reacher
 import (
 	"encoding/json"
 	"time"
+	"bytes"
+	"fmt"
 )
 
 // checks if the HistoryEntry type satisfies the MappedNullable interface at compile time
@@ -22,26 +24,40 @@ var _ MappedNullable = &HistoryEntry{}
 // HistoryEntry struct for HistoryEntry
 type HistoryEntry struct {
 	Category NullableString `json:"category,omitempty"`
+	ChangeType NullableString `json:"change_type,omitempty"`
 	CompletedAt NullableTime `json:"completed_at,omitempty"`
 	IsReachable NullableString `json:"is_reachable,omitempty"`
 	JobId NullableInt32 `json:"job_id,omitempty"`
+	ListId NullableInt32 `json:"list_id,omitempty"`
+	PipelineRunId NullableInt64 `json:"pipeline_run_id,omitempty"`
 	PolicyDecision NullableString `json:"policy_decision,omitempty"`
 	PolicyEvaluation interface{} `json:"policy_evaluation,omitempty"`
 	PolicyMode NullableString `json:"policy_mode,omitempty"`
+	PreviousCategory NullableString `json:"previous_category,omitempty"`
+	PreviousListId NullableInt32 `json:"previous_list_id,omitempty"`
+	PreviousPipelineRunId NullableInt64 `json:"previous_pipeline_run_id,omitempty"`
+	PreviousReasonCodes []string `json:"previous_reason_codes,omitempty"`
+	PreviousSafeToSend NullableBool `json:"previous_safe_to_send,omitempty"`
+	PreviousScore NullableInt32 `json:"previous_score,omitempty"`
+	PreviousTaskId NullableInt32 `json:"previous_task_id,omitempty"`
 	ReasonCodes []string `json:"reason_codes,omitempty"`
 	Recommendation interface{} `json:"recommendation,omitempty"`
 	RecommendationAction NullableString `json:"recommendation_action,omitempty"`
 	SafeToSend NullableBool `json:"safe_to_send,omitempty"`
 	Score NullableInt32 `json:"score,omitempty"`
 	SubReason NullableString `json:"sub_reason,omitempty"`
+	TaskId int32 `json:"task_id"`
 }
+
+type _HistoryEntry HistoryEntry
 
 // NewHistoryEntry instantiates a new HistoryEntry object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewHistoryEntry() *HistoryEntry {
+func NewHistoryEntry(taskId int32) *HistoryEntry {
 	this := HistoryEntry{}
+	this.TaskId = taskId
 	return &this
 }
 
@@ -93,6 +109,48 @@ func (o *HistoryEntry) SetCategoryNil() {
 // UnsetCategory ensures that no value is present for Category, not even an explicit nil
 func (o *HistoryEntry) UnsetCategory() {
 	o.Category.Unset()
+}
+
+// GetChangeType returns the ChangeType field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetChangeType() string {
+	if o == nil || IsNil(o.ChangeType.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.ChangeType.Get()
+}
+
+// GetChangeTypeOk returns a tuple with the ChangeType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetChangeTypeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ChangeType.Get(), o.ChangeType.IsSet()
+}
+
+// HasChangeType returns a boolean if a field has been set.
+func (o *HistoryEntry) HasChangeType() bool {
+	if o != nil && o.ChangeType.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetChangeType gets a reference to the given NullableString and assigns it to the ChangeType field.
+func (o *HistoryEntry) SetChangeType(v string) {
+	o.ChangeType.Set(&v)
+}
+// SetChangeTypeNil sets the value for ChangeType to be an explicit nil
+func (o *HistoryEntry) SetChangeTypeNil() {
+	o.ChangeType.Set(nil)
+}
+
+// UnsetChangeType ensures that no value is present for ChangeType, not even an explicit nil
+func (o *HistoryEntry) UnsetChangeType() {
+	o.ChangeType.Unset()
 }
 
 // GetCompletedAt returns the CompletedAt field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -221,6 +279,90 @@ func (o *HistoryEntry) UnsetJobId() {
 	o.JobId.Unset()
 }
 
+// GetListId returns the ListId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetListId() int32 {
+	if o == nil || IsNil(o.ListId.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.ListId.Get()
+}
+
+// GetListIdOk returns a tuple with the ListId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetListIdOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ListId.Get(), o.ListId.IsSet()
+}
+
+// HasListId returns a boolean if a field has been set.
+func (o *HistoryEntry) HasListId() bool {
+	if o != nil && o.ListId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetListId gets a reference to the given NullableInt32 and assigns it to the ListId field.
+func (o *HistoryEntry) SetListId(v int32) {
+	o.ListId.Set(&v)
+}
+// SetListIdNil sets the value for ListId to be an explicit nil
+func (o *HistoryEntry) SetListIdNil() {
+	o.ListId.Set(nil)
+}
+
+// UnsetListId ensures that no value is present for ListId, not even an explicit nil
+func (o *HistoryEntry) UnsetListId() {
+	o.ListId.Unset()
+}
+
+// GetPipelineRunId returns the PipelineRunId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPipelineRunId() int64 {
+	if o == nil || IsNil(o.PipelineRunId.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.PipelineRunId.Get()
+}
+
+// GetPipelineRunIdOk returns a tuple with the PipelineRunId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPipelineRunIdOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PipelineRunId.Get(), o.PipelineRunId.IsSet()
+}
+
+// HasPipelineRunId returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPipelineRunId() bool {
+	if o != nil && o.PipelineRunId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPipelineRunId gets a reference to the given NullableInt64 and assigns it to the PipelineRunId field.
+func (o *HistoryEntry) SetPipelineRunId(v int64) {
+	o.PipelineRunId.Set(&v)
+}
+// SetPipelineRunIdNil sets the value for PipelineRunId to be an explicit nil
+func (o *HistoryEntry) SetPipelineRunIdNil() {
+	o.PipelineRunId.Set(nil)
+}
+
+// UnsetPipelineRunId ensures that no value is present for PipelineRunId, not even an explicit nil
+func (o *HistoryEntry) UnsetPipelineRunId() {
+	o.PipelineRunId.Unset()
+}
+
 // GetPolicyDecision returns the PolicyDecision field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *HistoryEntry) GetPolicyDecision() string {
 	if o == nil || IsNil(o.PolicyDecision.Get()) {
@@ -336,6 +478,291 @@ func (o *HistoryEntry) SetPolicyModeNil() {
 // UnsetPolicyMode ensures that no value is present for PolicyMode, not even an explicit nil
 func (o *HistoryEntry) UnsetPolicyMode() {
 	o.PolicyMode.Unset()
+}
+
+// GetPreviousCategory returns the PreviousCategory field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousCategory() string {
+	if o == nil || IsNil(o.PreviousCategory.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.PreviousCategory.Get()
+}
+
+// GetPreviousCategoryOk returns a tuple with the PreviousCategory field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousCategoryOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousCategory.Get(), o.PreviousCategory.IsSet()
+}
+
+// HasPreviousCategory returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousCategory() bool {
+	if o != nil && o.PreviousCategory.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousCategory gets a reference to the given NullableString and assigns it to the PreviousCategory field.
+func (o *HistoryEntry) SetPreviousCategory(v string) {
+	o.PreviousCategory.Set(&v)
+}
+// SetPreviousCategoryNil sets the value for PreviousCategory to be an explicit nil
+func (o *HistoryEntry) SetPreviousCategoryNil() {
+	o.PreviousCategory.Set(nil)
+}
+
+// UnsetPreviousCategory ensures that no value is present for PreviousCategory, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousCategory() {
+	o.PreviousCategory.Unset()
+}
+
+// GetPreviousListId returns the PreviousListId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousListId() int32 {
+	if o == nil || IsNil(o.PreviousListId.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.PreviousListId.Get()
+}
+
+// GetPreviousListIdOk returns a tuple with the PreviousListId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousListIdOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousListId.Get(), o.PreviousListId.IsSet()
+}
+
+// HasPreviousListId returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousListId() bool {
+	if o != nil && o.PreviousListId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousListId gets a reference to the given NullableInt32 and assigns it to the PreviousListId field.
+func (o *HistoryEntry) SetPreviousListId(v int32) {
+	o.PreviousListId.Set(&v)
+}
+// SetPreviousListIdNil sets the value for PreviousListId to be an explicit nil
+func (o *HistoryEntry) SetPreviousListIdNil() {
+	o.PreviousListId.Set(nil)
+}
+
+// UnsetPreviousListId ensures that no value is present for PreviousListId, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousListId() {
+	o.PreviousListId.Unset()
+}
+
+// GetPreviousPipelineRunId returns the PreviousPipelineRunId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousPipelineRunId() int64 {
+	if o == nil || IsNil(o.PreviousPipelineRunId.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.PreviousPipelineRunId.Get()
+}
+
+// GetPreviousPipelineRunIdOk returns a tuple with the PreviousPipelineRunId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousPipelineRunIdOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousPipelineRunId.Get(), o.PreviousPipelineRunId.IsSet()
+}
+
+// HasPreviousPipelineRunId returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousPipelineRunId() bool {
+	if o != nil && o.PreviousPipelineRunId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousPipelineRunId gets a reference to the given NullableInt64 and assigns it to the PreviousPipelineRunId field.
+func (o *HistoryEntry) SetPreviousPipelineRunId(v int64) {
+	o.PreviousPipelineRunId.Set(&v)
+}
+// SetPreviousPipelineRunIdNil sets the value for PreviousPipelineRunId to be an explicit nil
+func (o *HistoryEntry) SetPreviousPipelineRunIdNil() {
+	o.PreviousPipelineRunId.Set(nil)
+}
+
+// UnsetPreviousPipelineRunId ensures that no value is present for PreviousPipelineRunId, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousPipelineRunId() {
+	o.PreviousPipelineRunId.Unset()
+}
+
+// GetPreviousReasonCodes returns the PreviousReasonCodes field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousReasonCodes() []string {
+	if o == nil {
+		var ret []string
+		return ret
+	}
+	return o.PreviousReasonCodes
+}
+
+// GetPreviousReasonCodesOk returns a tuple with the PreviousReasonCodes field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousReasonCodesOk() ([]string, bool) {
+	if o == nil || IsNil(o.PreviousReasonCodes) {
+		return nil, false
+	}
+	return o.PreviousReasonCodes, true
+}
+
+// HasPreviousReasonCodes returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousReasonCodes() bool {
+	if o != nil && !IsNil(o.PreviousReasonCodes) {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousReasonCodes gets a reference to the given []string and assigns it to the PreviousReasonCodes field.
+func (o *HistoryEntry) SetPreviousReasonCodes(v []string) {
+	o.PreviousReasonCodes = v
+}
+
+// GetPreviousSafeToSend returns the PreviousSafeToSend field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousSafeToSend() bool {
+	if o == nil || IsNil(o.PreviousSafeToSend.Get()) {
+		var ret bool
+		return ret
+	}
+	return *o.PreviousSafeToSend.Get()
+}
+
+// GetPreviousSafeToSendOk returns a tuple with the PreviousSafeToSend field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousSafeToSendOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousSafeToSend.Get(), o.PreviousSafeToSend.IsSet()
+}
+
+// HasPreviousSafeToSend returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousSafeToSend() bool {
+	if o != nil && o.PreviousSafeToSend.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousSafeToSend gets a reference to the given NullableBool and assigns it to the PreviousSafeToSend field.
+func (o *HistoryEntry) SetPreviousSafeToSend(v bool) {
+	o.PreviousSafeToSend.Set(&v)
+}
+// SetPreviousSafeToSendNil sets the value for PreviousSafeToSend to be an explicit nil
+func (o *HistoryEntry) SetPreviousSafeToSendNil() {
+	o.PreviousSafeToSend.Set(nil)
+}
+
+// UnsetPreviousSafeToSend ensures that no value is present for PreviousSafeToSend, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousSafeToSend() {
+	o.PreviousSafeToSend.Unset()
+}
+
+// GetPreviousScore returns the PreviousScore field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousScore() int32 {
+	if o == nil || IsNil(o.PreviousScore.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.PreviousScore.Get()
+}
+
+// GetPreviousScoreOk returns a tuple with the PreviousScore field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousScoreOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousScore.Get(), o.PreviousScore.IsSet()
+}
+
+// HasPreviousScore returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousScore() bool {
+	if o != nil && o.PreviousScore.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousScore gets a reference to the given NullableInt32 and assigns it to the PreviousScore field.
+func (o *HistoryEntry) SetPreviousScore(v int32) {
+	o.PreviousScore.Set(&v)
+}
+// SetPreviousScoreNil sets the value for PreviousScore to be an explicit nil
+func (o *HistoryEntry) SetPreviousScoreNil() {
+	o.PreviousScore.Set(nil)
+}
+
+// UnsetPreviousScore ensures that no value is present for PreviousScore, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousScore() {
+	o.PreviousScore.Unset()
+}
+
+// GetPreviousTaskId returns the PreviousTaskId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *HistoryEntry) GetPreviousTaskId() int32 {
+	if o == nil || IsNil(o.PreviousTaskId.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.PreviousTaskId.Get()
+}
+
+// GetPreviousTaskIdOk returns a tuple with the PreviousTaskId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *HistoryEntry) GetPreviousTaskIdOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PreviousTaskId.Get(), o.PreviousTaskId.IsSet()
+}
+
+// HasPreviousTaskId returns a boolean if a field has been set.
+func (o *HistoryEntry) HasPreviousTaskId() bool {
+	if o != nil && o.PreviousTaskId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviousTaskId gets a reference to the given NullableInt32 and assigns it to the PreviousTaskId field.
+func (o *HistoryEntry) SetPreviousTaskId(v int32) {
+	o.PreviousTaskId.Set(&v)
+}
+// SetPreviousTaskIdNil sets the value for PreviousTaskId to be an explicit nil
+func (o *HistoryEntry) SetPreviousTaskIdNil() {
+	o.PreviousTaskId.Set(nil)
+}
+
+// UnsetPreviousTaskId ensures that no value is present for PreviousTaskId, not even an explicit nil
+func (o *HistoryEntry) UnsetPreviousTaskId() {
+	o.PreviousTaskId.Unset()
 }
 
 // GetReasonCodes returns the ReasonCodes field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -572,6 +999,30 @@ func (o *HistoryEntry) UnsetSubReason() {
 	o.SubReason.Unset()
 }
 
+// GetTaskId returns the TaskId field value
+func (o *HistoryEntry) GetTaskId() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.TaskId
+}
+
+// GetTaskIdOk returns a tuple with the TaskId field value
+// and a boolean to check if the value has been set.
+func (o *HistoryEntry) GetTaskIdOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.TaskId, true
+}
+
+// SetTaskId sets field value
+func (o *HistoryEntry) SetTaskId(v int32) {
+	o.TaskId = v
+}
+
 func (o HistoryEntry) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -585,6 +1036,9 @@ func (o HistoryEntry) ToMap() (map[string]interface{}, error) {
 	if o.Category.IsSet() {
 		toSerialize["category"] = o.Category.Get()
 	}
+	if o.ChangeType.IsSet() {
+		toSerialize["change_type"] = o.ChangeType.Get()
+	}
 	if o.CompletedAt.IsSet() {
 		toSerialize["completed_at"] = o.CompletedAt.Get()
 	}
@@ -594,6 +1048,12 @@ func (o HistoryEntry) ToMap() (map[string]interface{}, error) {
 	if o.JobId.IsSet() {
 		toSerialize["job_id"] = o.JobId.Get()
 	}
+	if o.ListId.IsSet() {
+		toSerialize["list_id"] = o.ListId.Get()
+	}
+	if o.PipelineRunId.IsSet() {
+		toSerialize["pipeline_run_id"] = o.PipelineRunId.Get()
+	}
 	if o.PolicyDecision.IsSet() {
 		toSerialize["policy_decision"] = o.PolicyDecision.Get()
 	}
@@ -602,6 +1062,27 @@ func (o HistoryEntry) ToMap() (map[string]interface{}, error) {
 	}
 	if o.PolicyMode.IsSet() {
 		toSerialize["policy_mode"] = o.PolicyMode.Get()
+	}
+	if o.PreviousCategory.IsSet() {
+		toSerialize["previous_category"] = o.PreviousCategory.Get()
+	}
+	if o.PreviousListId.IsSet() {
+		toSerialize["previous_list_id"] = o.PreviousListId.Get()
+	}
+	if o.PreviousPipelineRunId.IsSet() {
+		toSerialize["previous_pipeline_run_id"] = o.PreviousPipelineRunId.Get()
+	}
+	if o.PreviousReasonCodes != nil {
+		toSerialize["previous_reason_codes"] = o.PreviousReasonCodes
+	}
+	if o.PreviousSafeToSend.IsSet() {
+		toSerialize["previous_safe_to_send"] = o.PreviousSafeToSend.Get()
+	}
+	if o.PreviousScore.IsSet() {
+		toSerialize["previous_score"] = o.PreviousScore.Get()
+	}
+	if o.PreviousTaskId.IsSet() {
+		toSerialize["previous_task_id"] = o.PreviousTaskId.Get()
 	}
 	if o.ReasonCodes != nil {
 		toSerialize["reason_codes"] = o.ReasonCodes
@@ -621,7 +1102,44 @@ func (o HistoryEntry) ToMap() (map[string]interface{}, error) {
 	if o.SubReason.IsSet() {
 		toSerialize["sub_reason"] = o.SubReason.Get()
 	}
+	toSerialize["task_id"] = o.TaskId
 	return toSerialize, nil
+}
+
+func (o *HistoryEntry) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"task_id",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varHistoryEntry := _HistoryEntry{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	err = decoder.Decode(&varHistoryEntry)
+
+	if err != nil {
+		return err
+	}
+
+	*o = HistoryEntry(varHistoryEntry)
+
+	return err
 }
 
 type NullableHistoryEntry struct {

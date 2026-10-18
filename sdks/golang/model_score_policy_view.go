@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -27,7 +27,7 @@ type ScorePolicyView struct {
 	Id int64 `json:"id"`
 	IsDefault bool `json:"is_default"`
 	Name string `json:"name"`
-	Rules interface{} `json:"rules"`
+	Rules ScorePolicyRules `json:"rules"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
@@ -37,7 +37,7 @@ type _ScorePolicyView ScorePolicyView
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewScorePolicyView(createdAt time.Time, id int64, isDefault bool, name string, rules interface{}, updatedAt time.Time) *ScorePolicyView {
+func NewScorePolicyView(createdAt time.Time, id int64, isDefault bool, name string, rules ScorePolicyRules, updatedAt time.Time) *ScorePolicyView {
 	this := ScorePolicyView{}
 	this.CreatedAt = createdAt
 	this.Id = id
@@ -153,10 +153,9 @@ func (o *ScorePolicyView) SetName(v string) {
 }
 
 // GetRules returns the Rules field value
-// If the value is explicit nil, the zero value for interface{} will be returned
-func (o *ScorePolicyView) GetRules() interface{} {
+func (o *ScorePolicyView) GetRules() ScorePolicyRules {
 	if o == nil {
-		var ret interface{}
+		var ret ScorePolicyRules
 		return ret
 	}
 
@@ -165,16 +164,15 @@ func (o *ScorePolicyView) GetRules() interface{} {
 
 // GetRulesOk returns a tuple with the Rules field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ScorePolicyView) GetRulesOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.Rules) {
+func (o *ScorePolicyView) GetRulesOk() (*ScorePolicyRules, bool) {
+	if o == nil {
 		return nil, false
 	}
 	return &o.Rules, true
 }
 
 // SetRules sets field value
-func (o *ScorePolicyView) SetRules(v interface{}) {
+func (o *ScorePolicyView) SetRules(v ScorePolicyRules) {
 	o.Rules = v
 }
 
@@ -216,9 +214,7 @@ func (o ScorePolicyView) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["is_default"] = o.IsDefault
 	toSerialize["name"] = o.Name
-	if o.Rules != nil {
-		toSerialize["rules"] = o.Rules
-	}
+	toSerialize["rules"] = o.Rules
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
 }

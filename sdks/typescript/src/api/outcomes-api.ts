@@ -22,11 +22,17 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CampaignOutcomeListResponse } from '../models';
+// @ts-ignore
 import type { CreateProviderEndpointInput } from '../models';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
 import type { InboundOutcomeResponse } from '../models';
+// @ts-ignore
+import type { IngestOutcomesRequest } from '../models';
+// @ts-ignore
+import type { IngestOutcomesResponse } from '../models';
 // @ts-ignore
 import type { OutcomeIngestRequest } from '../models';
 // @ts-ignore
@@ -209,6 +215,70 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          *
+         * @param {string} [email]
+         * @param {string} [source]
+         * @param {string} [type]
+         * @param {string} [since]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListCampaignOutcomes: async (email?: string, source?: string, type?: string, since?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/campaign-outcomes`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (email !== undefined) {
+                localVarQueryParameter['email'] = email;
+            }
+
+            if (source !== undefined) {
+                localVarQueryParameter['source'] = source;
+            }
+
+            if (type !== undefined) {
+                localVarQueryParameter['type'] = type;
+            }
+
+            if (since !== undefined) {
+                localVarQueryParameter['since'] = (since as any instanceof Date) ?
+                    (since as any).toISOString() :
+                    since;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary GET /v1/outcomes
          * @param {number} [limit]
          * @param {number} [offset]
@@ -306,6 +376,44 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          *
+         * @param {IngestOutcomesRequest} ingestOutcomesRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1PostCampaignOutcomes: async (ingestOutcomesRequest: IngestOutcomesRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'ingestOutcomesRequest' is not null or undefined
+            assertParamExists('v1PostCampaignOutcomes', 'ingestOutcomesRequest', ingestOutcomesRequest)
+            const localVarPath = `/v1/campaign-outcomes`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(ingestOutcomesRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @param {string} endpointId Provider endpoint identifier
          * @param {UpdateProviderEndpointInput} updateProviderEndpointInput
          * @param {*} [options] Override http request option.
@@ -340,6 +448,49 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(updateProviderEndpointInput, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {File} file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UploadCampaignOutcomes: async (file: File, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('v1UploadCampaignOutcomes', 'file', file)
+            const localVarPath = `/v1/campaign-outcomes/upload`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+            if (file !== undefined) {
+                localVarFormParams.append('file', file as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -410,6 +561,23 @@ export const OutcomesApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {string} [email]
+         * @param {string} [source]
+         * @param {string} [type]
+         * @param {string} [since]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListCampaignOutcomes(email?: string, source?: string, type?: string, since?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CampaignOutcomeListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListCampaignOutcomes(email, source, type, since, limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1ListCampaignOutcomes']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary GET /v1/outcomes
          * @param {number} [limit]
          * @param {number} [offset]
@@ -439,6 +607,18 @@ export const OutcomesApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {IngestOutcomesRequest} ingestOutcomesRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1PostCampaignOutcomes(ingestOutcomesRequest: IngestOutcomesRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<IngestOutcomesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1PostCampaignOutcomes(ingestOutcomesRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1PostCampaignOutcomes']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @param {string} endpointId Provider endpoint identifier
          * @param {UpdateProviderEndpointInput} updateProviderEndpointInput
          * @param {*} [options] Override http request option.
@@ -448,6 +628,18 @@ export const OutcomesApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateProviderEndpoint(endpointId, updateProviderEndpointInput, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1UpdateProviderEndpoint']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {File} file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UploadCampaignOutcomes(file: File, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<IngestOutcomesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UploadCampaignOutcomes(file, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1UploadCampaignOutcomes']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -499,6 +691,15 @@ export const OutcomesApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          *
+         * @param {OutcomesApiV1ListCampaignOutcomesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListCampaignOutcomes(requestParameters: OutcomesApiV1ListCampaignOutcomesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<CampaignOutcomeListResponse> {
+            return localVarFp.v1ListCampaignOutcomes(requestParameters.email, requestParameters.source, requestParameters.type, requestParameters.since, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary GET /v1/outcomes
          * @param {OutcomesApiV1ListOutcomesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -517,12 +718,30 @@ export const OutcomesApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          *
+         * @param {OutcomesApiV1PostCampaignOutcomesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1PostCampaignOutcomes(requestParameters: OutcomesApiV1PostCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse> {
+            return localVarFp.v1PostCampaignOutcomes(requestParameters.ingestOutcomesRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @param {OutcomesApiV1UpdateProviderEndpointRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         v1UpdateProviderEndpoint(requestParameters: OutcomesApiV1UpdateProviderEndpointRequest, options?: RawAxiosRequestConfig): AxiosPromise<ProviderEndpointView> {
             return localVarFp.v1UpdateProviderEndpoint(requestParameters.endpointId, requestParameters.updateProviderEndpointInput, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse> {
+            return localVarFp.v1UploadCampaignOutcomes(requestParameters.file, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -572,6 +791,15 @@ export interface OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1ListCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApiInterface
+     */
+    v1ListCampaignOutcomes(requestParameters?: OutcomesApiV1ListCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<CampaignOutcomeListResponse>;
+
+    /**
+     *
      * @summary GET /v1/outcomes
      * @param {OutcomesApiV1ListOutcomesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -590,12 +818,30 @@ export interface OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1PostCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApiInterface
+     */
+    v1PostCampaignOutcomes(requestParameters: OutcomesApiV1PostCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse>;
+
+    /**
+     *
      * @param {OutcomesApiV1UpdateProviderEndpointRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof OutcomesApiInterface
      */
     v1UpdateProviderEndpoint(requestParameters: OutcomesApiV1UpdateProviderEndpointRequest, options?: RawAxiosRequestConfig): AxiosPromise<ProviderEndpointView>;
+
+    /**
+     *
+     * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApiInterface
+     */
+    v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse>;
 
 }
 
@@ -677,6 +923,55 @@ export interface OutcomesApiV1IngestProviderOutcomesRequest {
 }
 
 /**
+ * Request parameters for v1ListCampaignOutcomes operation in OutcomesApi.
+ * @export
+ * @interface OutcomesApiV1ListCampaignOutcomesRequest
+ */
+export interface OutcomesApiV1ListCampaignOutcomesRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly email?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly source?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly type?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly since?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof OutcomesApiV1ListCampaignOutcomes
+     */
+    readonly offset?: number
+}
+
+/**
  * Request parameters for v1ListOutcomes operation in OutcomesApi.
  * @export
  * @interface OutcomesApiV1ListOutcomesRequest
@@ -726,6 +1021,20 @@ export interface OutcomesApiV1ListOutcomesRequest {
 }
 
 /**
+ * Request parameters for v1PostCampaignOutcomes operation in OutcomesApi.
+ * @export
+ * @interface OutcomesApiV1PostCampaignOutcomesRequest
+ */
+export interface OutcomesApiV1PostCampaignOutcomesRequest {
+    /**
+     *
+     * @type {IngestOutcomesRequest}
+     * @memberof OutcomesApiV1PostCampaignOutcomes
+     */
+    readonly ingestOutcomesRequest: IngestOutcomesRequest
+}
+
+/**
  * Request parameters for v1UpdateProviderEndpoint operation in OutcomesApi.
  * @export
  * @interface OutcomesApiV1UpdateProviderEndpointRequest
@@ -744,6 +1053,20 @@ export interface OutcomesApiV1UpdateProviderEndpointRequest {
      * @memberof OutcomesApiV1UpdateProviderEndpoint
      */
     readonly updateProviderEndpointInput: UpdateProviderEndpointInput
+}
+
+/**
+ * Request parameters for v1UploadCampaignOutcomes operation in OutcomesApi.
+ * @export
+ * @interface OutcomesApiV1UploadCampaignOutcomesRequest
+ */
+export interface OutcomesApiV1UploadCampaignOutcomesRequest {
+    /**
+     *
+     * @type {File}
+     * @memberof OutcomesApiV1UploadCampaignOutcomes
+     */
+    readonly file: File
 }
 
 /**
@@ -800,6 +1123,17 @@ export class OutcomesApi extends BaseAPI implements OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1ListCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApi
+     */
+    public v1ListCampaignOutcomes(requestParameters: OutcomesApiV1ListCampaignOutcomesRequest = {}, options?: RawAxiosRequestConfig) {
+        return OutcomesApiFp(this.configuration).v1ListCampaignOutcomes(requestParameters.email, requestParameters.source, requestParameters.type, requestParameters.since, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary GET /v1/outcomes
      * @param {OutcomesApiV1ListOutcomesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -822,6 +1156,17 @@ export class OutcomesApi extends BaseAPI implements OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1PostCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApi
+     */
+    public v1PostCampaignOutcomes(requestParameters: OutcomesApiV1PostCampaignOutcomesRequest, options?: RawAxiosRequestConfig) {
+        return OutcomesApiFp(this.configuration).v1PostCampaignOutcomes(requestParameters.ingestOutcomesRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @param {OutcomesApiV1UpdateProviderEndpointRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -829,5 +1174,16 @@ export class OutcomesApi extends BaseAPI implements OutcomesApiInterface {
      */
     public v1UpdateProviderEndpoint(requestParameters: OutcomesApiV1UpdateProviderEndpointRequest, options?: RawAxiosRequestConfig) {
         return OutcomesApiFp(this.configuration).v1UpdateProviderEndpoint(requestParameters.endpointId, requestParameters.updateProviderEndpointInput, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OutcomesApi
+     */
+    public v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig) {
+        return OutcomesApiFp(this.configuration).v1UploadCampaignOutcomes(requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 }

@@ -83,7 +83,8 @@ type TenantAPI interface {
 	V1DeleteOutcomePolicy(ctx context.Context, policyId int64) TenantAPIV1DeleteOutcomePolicyRequest
 
 	// V1DeleteOutcomePolicyExecute executes the request
-	V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutcomePolicyRequest) (*http.Response, error)
+	//  @return OutcomePolicyDeleteResponse
+	V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutcomePolicyRequest) (*OutcomePolicyDeleteResponse, *http.Response, error)
 
 	/*
 	V1DeleteScorePolicy DELETE /v1/score-policies/{policy_id}
@@ -95,7 +96,8 @@ type TenantAPI interface {
 	V1DeleteScorePolicy(ctx context.Context, policyId int64) TenantAPIV1DeleteScorePolicyRequest
 
 	// V1DeleteScorePolicyExecute executes the request
-	V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePolicyRequest) (*http.Response, error)
+	//  @return ScorePolicyDeleteResponse
+	V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePolicyRequest) (*ScorePolicyDeleteResponse, *http.Response, error)
 
 	/*
 	V1DeleteTenantDomain DELETE /v1/me/domains/{domain}
@@ -519,6 +521,14 @@ func (a *TenantAPIService) V1CreateOutcomePolicyExecute(r TenantAPIV1CreateOutco
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -641,6 +651,14 @@ func (a *TenantAPIService) V1CreateScorePolicyExecute(r TenantAPIV1CreateScorePo
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -783,7 +801,7 @@ type TenantAPIV1DeleteOutcomePolicyRequest struct {
 	policyId int64
 }
 
-func (r TenantAPIV1DeleteOutcomePolicyRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1DeleteOutcomePolicyRequest) Execute() (*OutcomePolicyDeleteResponse, *http.Response, error) {
 	return r.ApiService.V1DeleteOutcomePolicyExecute(r)
 }
 
@@ -803,16 +821,18 @@ func (a *TenantAPIService) V1DeleteOutcomePolicy(ctx context.Context, policyId i
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutcomePolicyRequest) (*http.Response, error) {
+//  @return OutcomePolicyDeleteResponse
+func (a *TenantAPIService) V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutcomePolicyRequest) (*OutcomePolicyDeleteResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *OutcomePolicyDeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1DeleteOutcomePolicy")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/outcome-policies/{policy_id}"
@@ -832,7 +852,7 @@ func (a *TenantAPIService) V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutco
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -855,19 +875,19 @@ func (a *TenantAPIService) V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutco
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -875,10 +895,27 @@ func (a *TenantAPIService) V1DeleteOutcomePolicyExecute(r TenantAPIV1DeleteOutco
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1DeleteScorePolicyRequest struct {
@@ -887,7 +924,7 @@ type TenantAPIV1DeleteScorePolicyRequest struct {
 	policyId int64
 }
 
-func (r TenantAPIV1DeleteScorePolicyRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1DeleteScorePolicyRequest) Execute() (*ScorePolicyDeleteResponse, *http.Response, error) {
 	return r.ApiService.V1DeleteScorePolicyExecute(r)
 }
 
@@ -907,16 +944,18 @@ func (a *TenantAPIService) V1DeleteScorePolicy(ctx context.Context, policyId int
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePolicyRequest) (*http.Response, error) {
+//  @return ScorePolicyDeleteResponse
+func (a *TenantAPIService) V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePolicyRequest) (*ScorePolicyDeleteResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *ScorePolicyDeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1DeleteScorePolicy")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/score-policies/{policy_id}"
@@ -936,7 +975,7 @@ func (a *TenantAPIService) V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePo
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
+	localVarHTTPHeaderAccepts := []string{"application/json"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -959,19 +998,19 @@ func (a *TenantAPIService) V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePo
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -979,10 +1018,27 @@ func (a *TenantAPIService) V1DeleteScorePolicyExecute(r TenantAPIV1DeleteScorePo
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		return localVarHTTPResponse, newErr
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1DeleteTenantDomainRequest struct {
@@ -1199,6 +1255,14 @@ func (a *TenantAPIService) V1GetOutcomePolicyExecute(r TenantAPIV1GetOutcomePoli
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1314,6 +1378,14 @@ func (a *TenantAPIService) V1GetScorePolicyExecute(r TenantAPIV1GetScorePolicyRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -1920,6 +1992,14 @@ func (a *TenantAPIService) V1ListOutcomePoliciesExecute(r TenantAPIV1ListOutcome
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -2049,6 +2129,14 @@ func (a *TenantAPIService) V1ListScorePoliciesExecute(r TenantAPIV1ListScorePoli
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -2285,6 +2373,14 @@ func (a *TenantAPIService) V1UpdateOutcomePolicyExecute(r TenantAPIV1UpdateOutco
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -2411,6 +2507,14 @@ func (a *TenantAPIService) V1UpdateScorePolicyExecute(r TenantAPIV1UpdateScorePo
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 

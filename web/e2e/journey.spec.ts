@@ -31,9 +31,9 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByRole("button", { name: "Check email" }).click();
 	await expect(page.getByText("test@valid.example.com").first()).toBeVisible();
 	await expect(page.getByText("Quality score")).toBeVisible();
-	await expect(page.getByText("All check details")).toBeVisible();
-	await expect(page.getByText("bounce risk", { exact: true })).toBeVisible();
-	await expect(page.getByText("recommendation", { exact: true })).toBeVisible();
+	await expect(page.getByText("Technical details")).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Bounce risk" })).toBeVisible();
+	await expect(page.getByText("Recommendation", { exact: true })).toBeVisible();
 
 	await page.goto("/app/lists");
 	await expect(page.getByText("No lists yet.")).toBeVisible();
@@ -45,7 +45,7 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByLabel("Name").fill("E2E list");
 	await page.getByRole("button", { name: "Upload" }).click();
 	await expect(page.getByText(/List accepted/)).toBeVisible();
-	await expect(page.getByText("E2E list")).toBeVisible();
+	await expect(page.getByRole("heading", { name: "E2E list" })).toBeVisible();
 	const ownListsResponse = await page.request.get("/api/backend/v1/lists");
 	expect(ownListsResponse.ok()).toBe(true);
 	const ownLists = V1ListLists200Response.parse(await ownListsResponse.json());
@@ -109,7 +109,10 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.goto("/app/history");
 	await page.getByLabel("Email address").fill("test@valid.example.com");
 	await page.getByRole("button", { name: "Search" }).click();
-	await expect(page.getByText("No earlier results for this address.")).toBeVisible();
+	// The uploaded list checked this address, so its result links to the list.
+	await expect(page.getByRole("link", { name: "Open the list" }).first()).toBeVisible({
+		timeout: 15_000,
+	});
 
 	await page.getByRole("button", { name: /Open account and workspace menu/ }).click();
 	await page.getByRole("menuitem", { name: "Sign out" }).click();

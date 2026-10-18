@@ -11,4 +11,6 @@
 export type V1DownloadListParams = {
   filter?: string;
   format?: string;
+  segment_id?: number;
+  changed_since_list_id?: number;
 };

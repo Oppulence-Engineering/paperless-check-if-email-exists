@@ -420,7 +420,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateList
 
-> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
+> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 
 POST /v1/lists
 
@@ -440,11 +440,12 @@ func main() {
 	file := os.NewFile(1234, "some_file") // *os.File |
 	emailColumn := "emailColumn_example" // string |  (optional)
 	name := "name_example" // string |  (optional)
+	policyId := int64(789) // int64 |  (optional)
 	sourceKey := "sourceKey_example" // string | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
+	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -468,6 +469,7 @@ Name | Type | Description  | Notes
  **file** | ***os.File** |  |
  **emailColumn** | **string** |  |
  **name** | **string** |  |
+ **policyId** | **int64** |  |
  **sourceKey** | **string** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. |
 
 ### Return type
@@ -626,7 +628,7 @@ Name | Type | Description  | Notes
 
 ## V1DownloadList
 
-> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).Execute()
+> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
 
 GET /v1/lists/{list_id}/download
 
@@ -646,10 +648,12 @@ func main() {
 	listId := int32(56) // int32 | List identifier
 	filter := "filter_example" // string |  (optional)
 	format := "format_example" // string |  (optional)
+	segmentId := int64(789) // int64 |  (optional)
+	changedSinceListId := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).Execute()
+	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1DownloadList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -677,6 +681,8 @@ Name | Type | Description  | Notes
 
  **filter** | **string** |  |
  **format** | **string** |  |
+ **segmentId** | **int64** |  |
+ **changedSinceListId** | **int32** |  |
 
 ### Return type
 
@@ -698,7 +704,7 @@ Name | Type | Description  | Notes
 
 ## V1ExportSuppressions
 
-> *os.File V1ExportSuppressions(ctx).Execute()
+> *os.File V1ExportSuppressions(ctx).Format(format).Reason(reason).Status(status).SourceType(sourceType).SourceRef(sourceRef).IncludeExpired(includeExpired).Execute()
 
 Export suppressions
 
@@ -715,10 +721,16 @@ import (
 )
 
 func main() {
+	format := "format_example" // string |  (optional)
+	reason := openapiclient.SuppressionReason("manual") // SuppressionReason |  (optional)
+	status := "status_example" // string |  (optional)
+	sourceType := "sourceType_example" // string |  (optional)
+	sourceRef := "sourceRef_example" // string |  (optional)
+	includeExpired := true // bool |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1ExportSuppressions(context.Background()).Execute()
+	resp, r, err := apiClient.V1API.V1ExportSuppressions(context.Background()).Format(format).Reason(reason).Status(status).SourceType(sourceType).SourceRef(sourceRef).IncludeExpired(includeExpired).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ExportSuppressions``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -730,12 +742,21 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1ExportSuppressionsRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **format** | **string** |  |
+ **reason** | [**SuppressionReason**](SuppressionReason.md) |  |
+ **status** | **string** |  |
+ **sourceType** | **string** |  |
+ **sourceRef** | **string** |  |
+ **includeExpired** | **bool** |  |
 
 ### Return type
 
@@ -957,7 +978,7 @@ Name | Type | Description  | Notes
 
 ## V1ImportSuppressions
 
-> map[string]interface{} V1ImportSuppressions(ctx).RequestBody(requestBody).Execute()
+> AddSuppressionsResponse V1ImportSuppressions(ctx).AddSuppressionsRequest(addSuppressionsRequest).Execute()
 
 Import suppressions
 
@@ -974,16 +995,16 @@ import (
 )
 
 func main() {
-	requestBody := map[string]interface{}{"key": interface{}(123)} // map[string]interface{} |
+	addSuppressionsRequest := *openapiclient.NewAddSuppressionsRequest([]string{"Emails_example"}) // AddSuppressionsRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1ImportSuppressions(context.Background()).RequestBody(requestBody).Execute()
+	resp, r, err := apiClient.V1API.V1ImportSuppressions(context.Background()).AddSuppressionsRequest(addSuppressionsRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ImportSuppressions``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1ImportSuppressions`: map[string]interface{}
+	// response from `V1ImportSuppressions`: AddSuppressionsResponse
 	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ImportSuppressions`: %v\n", resp)
 }
 ```
@@ -999,11 +1020,11 @@ Other parameters are passed through a pointer to a apiV1ImportSuppressionsReques
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **requestBody** | **map[string]interface{}** |  |
+ **addSuppressionsRequest** | [**AddSuppressionsRequest**](AddSuppressionsRequest.md) |  |
 
 ### Return type
 
-**map[string]interface{}**
+[**AddSuppressionsResponse**](AddSuppressionsResponse.md)
 
 ### Authorization
 
@@ -1087,7 +1108,7 @@ Name | Type | Description  | Notes
 
 ## V1ListSuppressionEvents
 
-> map[string]interface{} V1ListSuppressionEvents(ctx, id).Execute()
+> SuppressionEventListResponse V1ListSuppressionEvents(ctx, id).Limit(limit).Offset(offset).Execute()
 
 List suppression events
 
@@ -1105,15 +1126,17 @@ import (
 
 func main() {
 	id := int32(56) // int32 |
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1ListSuppressionEvents(context.Background(), id).Execute()
+	resp, r, err := apiClient.V1API.V1ListSuppressionEvents(context.Background(), id).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListSuppressionEvents``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1ListSuppressionEvents`: map[string]interface{}
+	// response from `V1ListSuppressionEvents`: SuppressionEventListResponse
 	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ListSuppressionEvents`: %v\n", resp)
 }
 ```
@@ -1134,10 +1157,12 @@ Other parameters are passed through a pointer to a apiV1ListSuppressionEventsReq
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
-**map[string]interface{}**
+[**SuppressionEventListResponse**](SuppressionEventListResponse.md)
 
 ### Authorization
 
@@ -1290,7 +1315,7 @@ Other parameters are passed through a pointer to a apiV1ReverificationStatusRequ
 
 ## V1SourceQuality
 
-> map[string]interface{} V1SourceQuality(ctx).Execute()
+> SourceQualityResponse V1SourceQuality(ctx).SourceKey(sourceKey).MinRecords(minRecords).Limit(limit).Execute()
 
 List source quality
 
@@ -1307,31 +1332,40 @@ import (
 )
 
 func main() {
+	sourceKey := "sourceKey_example" // string |  (optional)
+	minRecords := int64(789) // int64 |  (optional)
+	limit := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).Execute()
+	resp, r, err := apiClient.V1API.V1SourceQuality(context.Background()).SourceKey(sourceKey).MinRecords(minRecords).Limit(limit).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1SourceQuality``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1SourceQuality`: map[string]interface{}
+	// response from `V1SourceQuality`: SourceQualityResponse
 	fmt.Fprintf(os.Stdout, "Response from `V1API.V1SourceQuality`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiV1SourceQualityRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **sourceKey** | **string** |  |
+ **minRecords** | **int64** |  |
+ **limit** | **int64** |  |
+
 ### Return type
 
-**map[string]interface{}**
+[**SourceQualityResponse**](SourceQualityResponse.md)
 
 ### Authorization
 

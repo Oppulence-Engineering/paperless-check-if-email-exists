@@ -8,14 +8,26 @@
  * OpenAPI spec version: 4.3.0
  */
 import type {
+  CreateOutcomePolicyRequest,
+  CreateScorePolicyRequest,
   CreateTenantDomainRequest,
   ErrorEnvelope,
+  OutcomePolicyDeleteResponse,
+  OutcomePolicyListResponse,
+  OutcomePolicyView,
+  ScorePolicyDeleteResponse,
+  ScorePolicyListResponse,
+  ScorePolicyView,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
+  UpdateOutcomePolicyRequest,
+  UpdateScorePolicyRequest,
   UpdateTenantDomainRequest,
   UpdateTenantSettingsRequest,
   UpdateWebhookRequest,
+  V1ListOutcomePoliciesParams,
+  V1ListScorePoliciesParams,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -616,4 +628,521 @@ export const v1UpdateTenantWebhook = async (
     status: res.status,
     headers: res.headers,
   } as v1UpdateTenantWebhookResponse;
+};
+
+export type v1ListOutcomePoliciesResponse200 = {
+  data: OutcomePolicyListResponse;
+  status: 200;
+};
+
+export type v1ListOutcomePoliciesResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListOutcomePoliciesResponseSuccess =
+  v1ListOutcomePoliciesResponse200 & {
+    headers: Headers;
+  };
+export type v1ListOutcomePoliciesResponseError =
+  v1ListOutcomePoliciesResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1ListOutcomePoliciesResponse =
+  v1ListOutcomePoliciesResponseSuccess | v1ListOutcomePoliciesResponseError;
+
+export const getV1ListOutcomePoliciesUrl = (
+  params?: V1ListOutcomePoliciesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/outcome-policies?${stringifiedParams}`
+    : `/v1/outcome-policies`;
+};
+
+export const v1ListOutcomePolicies = async (
+  params?: V1ListOutcomePoliciesParams,
+  options?: RequestInit,
+): Promise<v1ListOutcomePoliciesResponse> => {
+  const res = await fetch(getV1ListOutcomePoliciesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListOutcomePoliciesResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListOutcomePoliciesResponse;
+};
+
+export type v1CreateOutcomePolicyResponse201 = {
+  data: OutcomePolicyView;
+  status: 201;
+};
+
+export type v1CreateOutcomePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 201>;
+};
+
+export type v1CreateOutcomePolicyResponseSuccess =
+  v1CreateOutcomePolicyResponse201 & {
+    headers: Headers;
+  };
+export type v1CreateOutcomePolicyResponseError =
+  v1CreateOutcomePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1CreateOutcomePolicyResponse =
+  v1CreateOutcomePolicyResponseSuccess | v1CreateOutcomePolicyResponseError;
+
+export const getV1CreateOutcomePolicyUrl = () => {
+  return `/v1/outcome-policies`;
+};
+
+export const v1CreateOutcomePolicy = async (
+  createOutcomePolicyRequest: CreateOutcomePolicyRequest,
+  options?: RequestInit,
+): Promise<v1CreateOutcomePolicyResponse> => {
+  const res = await fetch(getV1CreateOutcomePolicyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createOutcomePolicyRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1CreateOutcomePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1CreateOutcomePolicyResponse;
+};
+
+export type v1DeleteOutcomePolicyResponse200 = {
+  data: OutcomePolicyDeleteResponse;
+  status: 200;
+};
+
+export type v1DeleteOutcomePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1DeleteOutcomePolicyResponseSuccess =
+  v1DeleteOutcomePolicyResponse200 & {
+    headers: Headers;
+  };
+export type v1DeleteOutcomePolicyResponseError =
+  v1DeleteOutcomePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1DeleteOutcomePolicyResponse =
+  v1DeleteOutcomePolicyResponseSuccess | v1DeleteOutcomePolicyResponseError;
+
+export const getV1DeleteOutcomePolicyUrl = (policyId: number) => {
+  return `/v1/outcome-policies/${policyId}`;
+};
+
+export const v1DeleteOutcomePolicy = async (
+  policyId: number,
+  options?: RequestInit,
+): Promise<v1DeleteOutcomePolicyResponse> => {
+  const res = await fetch(getV1DeleteOutcomePolicyUrl(policyId), {
+    ...options,
+    method: "DELETE",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1DeleteOutcomePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1DeleteOutcomePolicyResponse;
+};
+
+export type v1GetOutcomePolicyResponse200 = {
+  data: OutcomePolicyView;
+  status: 200;
+};
+
+export type v1GetOutcomePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1GetOutcomePolicyResponseSuccess =
+  v1GetOutcomePolicyResponse200 & {
+    headers: Headers;
+  };
+export type v1GetOutcomePolicyResponseError =
+  v1GetOutcomePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1GetOutcomePolicyResponse =
+  v1GetOutcomePolicyResponseSuccess | v1GetOutcomePolicyResponseError;
+
+export const getV1GetOutcomePolicyUrl = (policyId: number) => {
+  return `/v1/outcome-policies/${policyId}`;
+};
+
+export const v1GetOutcomePolicy = async (
+  policyId: number,
+  options?: RequestInit,
+): Promise<v1GetOutcomePolicyResponse> => {
+  const res = await fetch(getV1GetOutcomePolicyUrl(policyId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1GetOutcomePolicyResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1GetOutcomePolicyResponse;
+};
+
+export type v1UpdateOutcomePolicyResponse200 = {
+  data: OutcomePolicyView;
+  status: 200;
+};
+
+export type v1UpdateOutcomePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1UpdateOutcomePolicyResponseSuccess =
+  v1UpdateOutcomePolicyResponse200 & {
+    headers: Headers;
+  };
+export type v1UpdateOutcomePolicyResponseError =
+  v1UpdateOutcomePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1UpdateOutcomePolicyResponse =
+  v1UpdateOutcomePolicyResponseSuccess | v1UpdateOutcomePolicyResponseError;
+
+export const getV1UpdateOutcomePolicyUrl = (policyId: number) => {
+  return `/v1/outcome-policies/${policyId}`;
+};
+
+export const v1UpdateOutcomePolicy = async (
+  policyId: number,
+  updateOutcomePolicyRequest: UpdateOutcomePolicyRequest,
+  options?: RequestInit,
+): Promise<v1UpdateOutcomePolicyResponse> => {
+  const res = await fetch(getV1UpdateOutcomePolicyUrl(policyId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateOutcomePolicyRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UpdateOutcomePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UpdateOutcomePolicyResponse;
+};
+
+export type v1ListScorePoliciesResponse200 = {
+  data: ScorePolicyListResponse;
+  status: 200;
+};
+
+export type v1ListScorePoliciesResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListScorePoliciesResponseSuccess =
+  v1ListScorePoliciesResponse200 & {
+    headers: Headers;
+  };
+export type v1ListScorePoliciesResponseError =
+  v1ListScorePoliciesResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1ListScorePoliciesResponse =
+  v1ListScorePoliciesResponseSuccess | v1ListScorePoliciesResponseError;
+
+export const getV1ListScorePoliciesUrl = (
+  params?: V1ListScorePoliciesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/score-policies?${stringifiedParams}`
+    : `/v1/score-policies`;
+};
+
+/**
+ * @summary GET /v1/score-policies
+ */
+export const v1ListScorePolicies = async (
+  params?: V1ListScorePoliciesParams,
+  options?: RequestInit,
+): Promise<v1ListScorePoliciesResponse> => {
+  const res = await fetch(getV1ListScorePoliciesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListScorePoliciesResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListScorePoliciesResponse;
+};
+
+export type v1CreateScorePolicyResponse201 = {
+  data: ScorePolicyView;
+  status: 201;
+};
+
+export type v1CreateScorePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 201>;
+};
+
+export type v1CreateScorePolicyResponseSuccess =
+  v1CreateScorePolicyResponse201 & {
+    headers: Headers;
+  };
+export type v1CreateScorePolicyResponseError =
+  v1CreateScorePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1CreateScorePolicyResponse =
+  v1CreateScorePolicyResponseSuccess | v1CreateScorePolicyResponseError;
+
+export const getV1CreateScorePolicyUrl = () => {
+  return `/v1/score-policies`;
+};
+
+/**
+ * @summary POST /v1/score-policies
+ */
+export const v1CreateScorePolicy = async (
+  createScorePolicyRequest: CreateScorePolicyRequest,
+  options?: RequestInit,
+): Promise<v1CreateScorePolicyResponse> => {
+  const res = await fetch(getV1CreateScorePolicyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createScorePolicyRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1CreateScorePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1CreateScorePolicyResponse;
+};
+
+export type v1DeleteScorePolicyResponse200 = {
+  data: ScorePolicyDeleteResponse;
+  status: 200;
+};
+
+export type v1DeleteScorePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1DeleteScorePolicyResponseSuccess =
+  v1DeleteScorePolicyResponse200 & {
+    headers: Headers;
+  };
+export type v1DeleteScorePolicyResponseError =
+  v1DeleteScorePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1DeleteScorePolicyResponse =
+  v1DeleteScorePolicyResponseSuccess | v1DeleteScorePolicyResponseError;
+
+export const getV1DeleteScorePolicyUrl = (policyId: number) => {
+  return `/v1/score-policies/${policyId}`;
+};
+
+/**
+ * @summary DELETE /v1/score-policies/{policy_id}
+ */
+export const v1DeleteScorePolicy = async (
+  policyId: number,
+  options?: RequestInit,
+): Promise<v1DeleteScorePolicyResponse> => {
+  const res = await fetch(getV1DeleteScorePolicyUrl(policyId), {
+    ...options,
+    method: "DELETE",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1DeleteScorePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1DeleteScorePolicyResponse;
+};
+
+export type v1GetScorePolicyResponse200 = {
+  data: ScorePolicyView;
+  status: 200;
+};
+
+export type v1GetScorePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1GetScorePolicyResponseSuccess = v1GetScorePolicyResponse200 & {
+  headers: Headers;
+};
+export type v1GetScorePolicyResponseError = v1GetScorePolicyResponseDefault & {
+  headers: Headers;
+};
+
+export type v1GetScorePolicyResponse =
+  v1GetScorePolicyResponseSuccess | v1GetScorePolicyResponseError;
+
+export const getV1GetScorePolicyUrl = (policyId: number) => {
+  return `/v1/score-policies/${policyId}`;
+};
+
+/**
+ * @summary GET /v1/score-policies/{policy_id}
+ */
+export const v1GetScorePolicy = async (
+  policyId: number,
+  options?: RequestInit,
+): Promise<v1GetScorePolicyResponse> => {
+  const res = await fetch(getV1GetScorePolicyUrl(policyId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1GetScorePolicyResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1GetScorePolicyResponse;
+};
+
+export type v1UpdateScorePolicyResponse200 = {
+  data: ScorePolicyView;
+  status: 200;
+};
+
+export type v1UpdateScorePolicyResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1UpdateScorePolicyResponseSuccess =
+  v1UpdateScorePolicyResponse200 & {
+    headers: Headers;
+  };
+export type v1UpdateScorePolicyResponseError =
+  v1UpdateScorePolicyResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1UpdateScorePolicyResponse =
+  v1UpdateScorePolicyResponseSuccess | v1UpdateScorePolicyResponseError;
+
+export const getV1UpdateScorePolicyUrl = (policyId: number) => {
+  return `/v1/score-policies/${policyId}`;
+};
+
+/**
+ * @summary PATCH /v1/score-policies/{policy_id}
+ */
+export const v1UpdateScorePolicy = async (
+  policyId: number,
+  updateScorePolicyRequest: UpdateScorePolicyRequest,
+  options?: RequestInit,
+): Promise<v1UpdateScorePolicyResponse> => {
+  const res = await fetch(getV1UpdateScorePolicyUrl(policyId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateScorePolicyRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UpdateScorePolicyResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UpdateScorePolicyResponse;
 };

@@ -22,7 +22,7 @@ export const ListJobsQueryParams = zod.object({
 
 export const ListJobs200Response = zod.unknown();
 
-export const ListJobsDefaultResponse = zod.strictObject({
+export const ListJobsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -36,7 +36,7 @@ export const GetJobParams = zod.object({
 
 export const GetJob200Response = zod.unknown();
 
-export const GetJobDefaultResponse = zod.strictObject({
+export const GetJobDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -55,7 +55,7 @@ export const GetJobEventsQueryParams = zod.object({
 
 export const GetJobEvents200Response = zod.unknown();
 
-export const GetJobEventsDefaultResponse = zod.strictObject({
+export const GetJobEventsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -75,7 +75,7 @@ export const GetJobResultsQueryParams = zod.object({
 
 export const GetJobResults200Response = zod.unknown();
 
-export const GetJobResultsDefaultResponse = zod.strictObject({
+export const GetJobResultsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -95,6 +95,6 @@ export const ListTenantJobsQueryParams = zod.object({
 
 export const ListTenantJobs200Response = zod.unknown();
 
-export const ListTenantJobsDefaultResponse = zod.strictObject({
+export const ListTenantJobsDefaultResponse = zod.object({
   error: zod.string(),
 });

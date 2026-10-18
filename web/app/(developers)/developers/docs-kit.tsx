@@ -31,7 +31,7 @@ export function DocsPage({
 	title: ReactNode;
 }) {
 	return (
-		<div className="mx-auto max-w-3xl flex-1 px-6 pt-28 pb-16 sm:pb-24">
+		<div className="mx-auto max-w-3xl flex-1 px-6 pt-28 pb-16 text-foreground sm:pb-24">
 			<h1
 				className="mb-4 text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl"
 				style={{ fontFamily: INTER }}

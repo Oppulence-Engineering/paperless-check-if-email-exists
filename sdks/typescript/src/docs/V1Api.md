@@ -363,12 +363,14 @@ const apiInstance = new V1Api(configuration);
 let file: File; // (default to undefined)
 let emailColumn: string; // (optional) (default to undefined)
 let name: string; // (optional) (default to undefined)
+let policyId: number; // (optional) (default to undefined)
 let sourceKey: string; //Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1CreateList(
     file,
     emailColumn,
     name,
+    policyId,
     sourceKey
 );
 ```
@@ -380,6 +382,7 @@ const { status, data } = await apiInstance.v1CreateList(
 | **file** | [**File**] |  | defaults to undefined|
 | **emailColumn** | [**string**] |  | (optional) defaults to undefined|
 | **name** | [**string**] |  | (optional) defaults to undefined|
+| **policyId** | [**number**] |  | (optional) defaults to undefined|
 | **sourceKey** | [**string**] | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. | (optional) defaults to undefined|
 
 
@@ -525,11 +528,15 @@ const apiInstance = new V1Api(configuration);
 let listId: number; //List identifier (default to undefined)
 let filter: string; // (optional) (default to undefined)
 let format: string; // (optional) (default to undefined)
+let segmentId: number; // (optional) (default to undefined)
+let changedSinceListId: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1DownloadList(
     listId,
     filter,
-    format
+    format,
+    segmentId,
+    changedSinceListId
 );
 ```
 
@@ -540,6 +547,8 @@ const { status, data } = await apiInstance.v1DownloadList(
 | **listId** | [**number**] | List identifier | defaults to undefined|
 | **filter** | [**string**] |  | (optional) defaults to undefined|
 | **format** | [**string**] |  | (optional) defaults to undefined|
+| **segmentId** | [**number**] |  | (optional) defaults to undefined|
+| **changedSinceListId** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -579,11 +588,33 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-const { status, data } = await apiInstance.v1ExportSuppressions();
+let format: 'csv'; // (optional) (default to undefined)
+let reason: SuppressionReason; // (optional) (default to undefined)
+let status: string; // (optional) (default to undefined)
+let sourceType: string; // (optional) (default to undefined)
+let sourceRef: string; // (optional) (default to undefined)
+let includeExpired: boolean; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ExportSuppressions(
+    format,
+    reason,
+    status,
+    sourceType,
+    sourceRef,
+    includeExpired
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **format** | [**&#39;csv&#39;**]**Array<&#39;csv&#39;>** |  | (optional) defaults to undefined|
+| **reason** | **SuppressionReason** |  | (optional) defaults to undefined|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **sourceType** | [**string**] |  | (optional) defaults to undefined|
+| **sourceRef** | [**string**] |  | (optional) defaults to undefined|
+| **includeExpired** | [**boolean**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -763,7 +794,7 @@ const { status, data } = await apiInstance.v1GetList(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ImportSuppressions**
-> { [key: string]: any; } v1ImportSuppressions(requestBody)
+> AddSuppressionsResponse v1ImportSuppressions(addSuppressionsRequest)
 
 
 ### Example
@@ -771,16 +802,17 @@ const { status, data } = await apiInstance.v1GetList(
 ```typescript
 import {
     V1Api,
-    Configuration
+    Configuration,
+    AddSuppressionsRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-let requestBody: { [key: string]: any; }; //
+let addSuppressionsRequest: AddSuppressionsRequest; //
 
 const { status, data } = await apiInstance.v1ImportSuppressions(
-    requestBody
+    addSuppressionsRequest
 );
 ```
 
@@ -788,12 +820,12 @@ const { status, data } = await apiInstance.v1ImportSuppressions(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **requestBody** | **{ [key: string]: any; }**|  | |
+| **addSuppressionsRequest** | **AddSuppressionsRequest**|  | |
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**AddSuppressionsResponse**
 
 ### Authorization
 
@@ -868,7 +900,7 @@ const { status, data } = await apiInstance.v1ListLists(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ListSuppressionEvents**
-> { [key: string]: any; } v1ListSuppressionEvents()
+> SuppressionEventListResponse v1ListSuppressionEvents()
 
 
 ### Example
@@ -883,9 +915,13 @@ const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
 let id: number; // (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1ListSuppressionEvents(
-    id
+    id,
+    limit,
+    offset
 );
 ```
 
@@ -894,11 +930,13 @@ const { status, data } = await apiInstance.v1ListSuppressionEvents(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **id** | [**number**] |  | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**SuppressionEventListResponse**
 
 ### Authorization
 
@@ -1032,7 +1070,7 @@ This endpoint does not have any parameters.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1SourceQuality**
-> { [key: string]: any; } v1SourceQuality()
+> SourceQualityResponse v1SourceQuality()
 
 
 ### Example
@@ -1046,16 +1084,29 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-const { status, data } = await apiInstance.v1SourceQuality();
+let sourceKey: string; // (optional) (default to undefined)
+let minRecords: number; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1SourceQuality(
+    sourceKey,
+    minRecords,
+    limit
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **sourceKey** | [**string**] |  | (optional) defaults to undefined|
+| **minRecords** | [**number**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**SourceQualityResponse**
 
 ### Authorization
 

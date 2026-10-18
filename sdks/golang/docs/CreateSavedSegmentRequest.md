@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Filter** | Pointer to **interface{}** |  | [optional]
+**Filter** | Pointer to [**SegmentFilter**](SegmentFilter.md) |  | [optional]
 **Name** | **string** |  | [required]
-**Scope** | Pointer to **string** |  | [optional]
+**Scope** | Pointer to [**SegmentScope**](SegmentScope.md) |  | [optional]
 
 ## Methods
 
@@ -29,20 +29,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetFilter
 
-`func (o *CreateSavedSegmentRequest) GetFilter() interface{}`
+`func (o *CreateSavedSegmentRequest) GetFilter() SegmentFilter`
 
 GetFilter returns the Filter field if non-nil, zero value otherwise.
 
 ### GetFilterOk
 
-`func (o *CreateSavedSegmentRequest) GetFilterOk() (*interface{}, bool)`
+`func (o *CreateSavedSegmentRequest) GetFilterOk() (*SegmentFilter, bool)`
 
 GetFilterOk returns a tuple with the Filter field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetFilter
 
-`func (o *CreateSavedSegmentRequest) SetFilter(v interface{})`
+`func (o *CreateSavedSegmentRequest) SetFilter(v SegmentFilter)`
 
 SetFilter sets Filter field to given value.
 
@@ -74,20 +74,20 @@ SetName sets Name field to given value.
 
 ### GetScope
 
-`func (o *CreateSavedSegmentRequest) GetScope() string`
+`func (o *CreateSavedSegmentRequest) GetScope() SegmentScope`
 
 GetScope returns the Scope field if non-nil, zero value otherwise.
 
 ### GetScopeOk
 
-`func (o *CreateSavedSegmentRequest) GetScopeOk() (*string, bool)`
+`func (o *CreateSavedSegmentRequest) GetScopeOk() (*SegmentScope, bool)`
 
 GetScopeOk returns a tuple with the Scope field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetScope
 
-`func (o *CreateSavedSegmentRequest) SetScope(v string)`
+`func (o *CreateSavedSegmentRequest) SetScope(v SegmentScope)`
 
 SetScope sets Scope field to given value.
 

@@ -209,8 +209,8 @@ type V1API interface {
 	V1ImportSuppressions(ctx context.Context) V1APIV1ImportSuppressionsRequest
 
 	// V1ImportSuppressionsExecute executes the request
-	//  @return map[string]interface{}
-	V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (map[string]interface{}, *http.Response, error)
+	//  @return AddSuppressionsResponse
+	V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (*AddSuppressionsResponse, *http.Response, error)
 
 	/*
 	V1ListLists GET /v1/lists
@@ -234,8 +234,8 @@ type V1API interface {
 	V1ListSuppressionEvents(ctx context.Context, id int32) V1APIV1ListSuppressionEventsRequest
 
 	// V1ListSuppressionEventsExecute executes the request
-	//  @return map[string]interface{}
-	V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (map[string]interface{}, *http.Response, error)
+	//  @return SuppressionEventListResponse
+	V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (*SuppressionEventListResponse, *http.Response, error)
 
 	/*
 	V1ListSuppressions GET /v1/suppressions
@@ -270,8 +270,8 @@ type V1API interface {
 	V1SourceQuality(ctx context.Context) V1APIV1SourceQualityRequest
 
 	// V1SourceQualityExecute executes the request
-	//  @return map[string]interface{}
-	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error)
+	//  @return SourceQualityResponse
+	V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (*SourceQualityResponse, *http.Response, error)
 
 	/*
 	V1UpdateReverification PUT /v1/reverification
@@ -1073,6 +1073,7 @@ type V1APIV1CreateListRequest struct {
 	file *os.File
 	emailColumn *string
 	name *string
+	policyId *int64
 	sourceKey *string
 }
 
@@ -1088,6 +1089,11 @@ func (r V1APIV1CreateListRequest) EmailColumn(emailColumn string) V1APIV1CreateL
 
 func (r V1APIV1CreateListRequest) Name(name string) V1APIV1CreateListRequest {
 	r.name = &name
+	return r
+}
+
+func (r V1APIV1CreateListRequest) PolicyId(policyId int64) V1APIV1CreateListRequest {
+	r.policyId = &policyId
 	return r
 }
 
@@ -1175,6 +1181,9 @@ func (a *V1APIService) V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUpl
 	}
 	if r.name != nil {
 		parameterAddToHeaderOrQuery(localVarFormParams, "name", r.name, "", "")
+	}
+	if r.policyId != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "policy_id", r.policyId, "", "")
 	}
 	if r.sourceKey != nil {
 		parameterAddToHeaderOrQuery(localVarFormParams, "source_key", r.sourceKey, "", "")
@@ -1490,6 +1499,8 @@ type V1APIV1DownloadListRequest struct {
 	listId int32
 	filter *string
 	format *string
+	segmentId *int64
+	changedSinceListId *int32
 }
 
 func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListRequest {
@@ -1499,6 +1510,16 @@ func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListReq
 
 func (r V1APIV1DownloadListRequest) Format(format string) V1APIV1DownloadListRequest {
 	r.format = &format
+	return r
+}
+
+func (r V1APIV1DownloadListRequest) SegmentId(segmentId int64) V1APIV1DownloadListRequest {
+	r.segmentId = &segmentId
+	return r
+}
+
+func (r V1APIV1DownloadListRequest) ChangedSinceListId(changedSinceListId int32) V1APIV1DownloadListRequest {
+	r.changedSinceListId = &changedSinceListId
 	return r
 }
 
@@ -1548,6 +1569,12 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 	}
 	if r.format != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "format", r.format, "form", "")
+	}
+	if r.segmentId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "segment_id", r.segmentId, "form", "")
+	}
+	if r.changedSinceListId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_since_list_id", r.changedSinceListId, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1628,6 +1655,42 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 type V1APIV1ExportSuppressionsRequest struct {
 	ctx context.Context
 	ApiService V1API
+	format *string
+	reason *SuppressionReason
+	status *string
+	sourceType *string
+	sourceRef *string
+	includeExpired *bool
+}
+
+func (r V1APIV1ExportSuppressionsRequest) Format(format string) V1APIV1ExportSuppressionsRequest {
+	r.format = &format
+	return r
+}
+
+func (r V1APIV1ExportSuppressionsRequest) Reason(reason SuppressionReason) V1APIV1ExportSuppressionsRequest {
+	r.reason = &reason
+	return r
+}
+
+func (r V1APIV1ExportSuppressionsRequest) Status(status string) V1APIV1ExportSuppressionsRequest {
+	r.status = &status
+	return r
+}
+
+func (r V1APIV1ExportSuppressionsRequest) SourceType(sourceType string) V1APIV1ExportSuppressionsRequest {
+	r.sourceType = &sourceType
+	return r
+}
+
+func (r V1APIV1ExportSuppressionsRequest) SourceRef(sourceRef string) V1APIV1ExportSuppressionsRequest {
+	r.sourceRef = &sourceRef
+	return r
+}
+
+func (r V1APIV1ExportSuppressionsRequest) IncludeExpired(includeExpired bool) V1APIV1ExportSuppressionsRequest {
+	r.includeExpired = &includeExpired
+	return r
 }
 
 func (r V1APIV1ExportSuppressionsRequest) Execute() (*os.File, *http.Response, error) {
@@ -1668,6 +1731,24 @@ func (a *V1APIService) V1ExportSuppressionsExecute(r V1APIV1ExportSuppressionsRe
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.format != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "format", r.format, "form", "")
+	}
+	if r.reason != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "reason", r.reason, "form", "")
+	}
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.sourceType != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_type", r.sourceType, "form", "")
+	}
+	if r.sourceRef != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_ref", r.sourceRef, "form", "")
+	}
+	if r.includeExpired != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "include_expired", r.includeExpired, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -2123,15 +2204,15 @@ func (a *V1APIService) V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailRes
 type V1APIV1ImportSuppressionsRequest struct {
 	ctx context.Context
 	ApiService V1API
-	requestBody *map[string]interface{}
+	addSuppressionsRequest *AddSuppressionsRequest
 }
 
-func (r V1APIV1ImportSuppressionsRequest) RequestBody(requestBody map[string]interface{}) V1APIV1ImportSuppressionsRequest {
-	r.requestBody = &requestBody
+func (r V1APIV1ImportSuppressionsRequest) AddSuppressionsRequest(addSuppressionsRequest AddSuppressionsRequest) V1APIV1ImportSuppressionsRequest {
+	r.addSuppressionsRequest = &addSuppressionsRequest
 	return r
 }
 
-func (r V1APIV1ImportSuppressionsRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r V1APIV1ImportSuppressionsRequest) Execute() (*AddSuppressionsResponse, *http.Response, error) {
 	return r.ApiService.V1ImportSuppressionsExecute(r)
 }
 
@@ -2149,13 +2230,13 @@ func (a *V1APIService) V1ImportSuppressions(ctx context.Context) V1APIV1ImportSu
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
-func (a *V1APIService) V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (map[string]interface{}, *http.Response, error) {
+//  @return AddSuppressionsResponse
+func (a *V1APIService) V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRequest) (*AddSuppressionsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarReturnValue  *AddSuppressionsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ImportSuppressions")
@@ -2168,8 +2249,8 @@ func (a *V1APIService) V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.requestBody == nil {
-		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	if r.addSuppressionsRequest == nil {
+		return localVarReturnValue, nil, reportError("addSuppressionsRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -2190,7 +2271,7 @@ func (a *V1APIService) V1ImportSuppressionsExecute(r V1APIV1ImportSuppressionsRe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.requestBody
+	localVarPostBody = r.addSuppressionsRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -2391,9 +2472,21 @@ type V1APIV1ListSuppressionEventsRequest struct {
 	ctx context.Context
 	ApiService V1API
 	id int32
+	limit *int64
+	offset *int64
 }
 
-func (r V1APIV1ListSuppressionEventsRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r V1APIV1ListSuppressionEventsRequest) Limit(limit int64) V1APIV1ListSuppressionEventsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r V1APIV1ListSuppressionEventsRequest) Offset(offset int64) V1APIV1ListSuppressionEventsRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r V1APIV1ListSuppressionEventsRequest) Execute() (*SuppressionEventListResponse, *http.Response, error) {
 	return r.ApiService.V1ListSuppressionEventsExecute(r)
 }
 
@@ -2413,13 +2506,13 @@ func (a *V1APIService) V1ListSuppressionEvents(ctx context.Context, id int32) V1
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
-func (a *V1APIService) V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (map[string]interface{}, *http.Response, error) {
+//  @return SuppressionEventListResponse
+func (a *V1APIService) V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEventsRequest) (*SuppressionEventListResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarReturnValue  *SuppressionEventListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ListSuppressionEvents")
@@ -2434,6 +2527,12 @@ func (a *V1APIService) V1ListSuppressionEventsExecute(r V1APIV1ListSuppressionEv
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -2814,9 +2913,27 @@ func (a *V1APIService) V1ReverificationStatusExecute(r V1APIV1ReverificationStat
 type V1APIV1SourceQualityRequest struct {
 	ctx context.Context
 	ApiService V1API
+	sourceKey *string
+	minRecords *int64
+	limit *int64
 }
 
-func (r V1APIV1SourceQualityRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r V1APIV1SourceQualityRequest) SourceKey(sourceKey string) V1APIV1SourceQualityRequest {
+	r.sourceKey = &sourceKey
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) MinRecords(minRecords int64) V1APIV1SourceQualityRequest {
+	r.minRecords = &minRecords
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) Limit(limit int64) V1APIV1SourceQualityRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r V1APIV1SourceQualityRequest) Execute() (*SourceQualityResponse, *http.Response, error) {
 	return r.ApiService.V1SourceQualityExecute(r)
 }
 
@@ -2834,13 +2951,13 @@ func (a *V1APIService) V1SourceQuality(ctx context.Context) V1APIV1SourceQuality
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
-func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (map[string]interface{}, *http.Response, error) {
+//  @return SourceQualityResponse
+func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (*SourceQualityResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarReturnValue  *SourceQualityResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1SourceQuality")
@@ -2854,6 +2971,15 @@ func (a *V1APIService) V1SourceQualityExecute(r V1APIV1SourceQualityRequest) (ma
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.sourceKey != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source_key", r.sourceKey, "form", "")
+	}
+	if r.minRecords != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "min_records", r.minRecords, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

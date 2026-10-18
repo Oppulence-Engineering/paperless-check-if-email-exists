@@ -11,6 +11,16 @@ const sdk = new V1Api(new Configuration({ basePath: "/api/backend" }));
 /** @oppulence-gen kind=mutation; owned by `use-v1-create-list.lit.ts`. */
 export async function fetchV1CreateList(body: V1CreateListInput, signal?: AbortSignal) {
 	const input = V1CreateListBody.parse(body);
-	const response = await sdk.v1CreateList(input, { signal });
+	// The SDK takes camelCase names; a snake_case key would be dropped without an error.
+	const response = await sdk.v1CreateList(
+		{
+			file: input.file,
+			name: input.name,
+			emailColumn: input.email_column,
+			sourceKey: input.source_key,
+			policyId: input.policy_id,
+		},
+		{ signal },
+	);
 	return V1CreateList202Response.parse(response.data);
 }

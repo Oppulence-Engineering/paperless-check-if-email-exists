@@ -10,4 +10,6 @@
 
 export interface PipelinePolicyConfig {
   missed_run_window_hours?: number;
+  /** @nullable */
+  policy_id?: number | null;
 }

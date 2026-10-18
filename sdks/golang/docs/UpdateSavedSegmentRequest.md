@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Filter** | Pointer to **interface{}** |  | [optional]
+**Filter** | Pointer to [**SegmentFilter**](SegmentFilter.md) |  | [optional]
 **Name** | Pointer to **NullableString** |  | [optional]
-**Scope** | Pointer to **NullableString** |  | [optional]
+**Scope** | Pointer to [**NullableSegmentScope**](SegmentScope.md) |  | [optional]
 
 ## Methods
 
@@ -29,20 +29,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetFilter
 
-`func (o *UpdateSavedSegmentRequest) GetFilter() interface{}`
+`func (o *UpdateSavedSegmentRequest) GetFilter() SegmentFilter`
 
 GetFilter returns the Filter field if non-nil, zero value otherwise.
 
 ### GetFilterOk
 
-`func (o *UpdateSavedSegmentRequest) GetFilterOk() (*interface{}, bool)`
+`func (o *UpdateSavedSegmentRequest) GetFilterOk() (*SegmentFilter, bool)`
 
 GetFilterOk returns a tuple with the Filter field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetFilter
 
-`func (o *UpdateSavedSegmentRequest) SetFilter(v interface{})`
+`func (o *UpdateSavedSegmentRequest) SetFilter(v SegmentFilter)`
 
 SetFilter sets Filter field to given value.
 
@@ -90,20 +90,20 @@ UnsetName ensures that no value is present for Name, not even an explicit nil
 
 ### GetScope
 
-`func (o *UpdateSavedSegmentRequest) GetScope() string`
+`func (o *UpdateSavedSegmentRequest) GetScope() SegmentScope`
 
 GetScope returns the Scope field if non-nil, zero value otherwise.
 
 ### GetScopeOk
 
-`func (o *UpdateSavedSegmentRequest) GetScopeOk() (*string, bool)`
+`func (o *UpdateSavedSegmentRequest) GetScopeOk() (*SegmentScope, bool)`
 
 GetScopeOk returns a tuple with the Scope field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetScope
 
-`func (o *UpdateSavedSegmentRequest) SetScope(v string)`
+`func (o *UpdateSavedSegmentRequest) SetScope(v SegmentScope)`
 
 SetScope sets Scope field to given value.
 

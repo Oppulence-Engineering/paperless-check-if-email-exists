@@ -8,13 +8,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Configuration, JobsApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
-import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@oppulence/ui/components/tabs";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+import { JobProblems } from "@/components/features/lists/job-problems/job-problems";
+import { JobProgress } from "@/components/features/lists/job-progress/job-progress";
+import { JobReview, Stat } from "@/components/features/lists/job-review/job-review";
+import { JobRows } from "@/components/features/lists/job-rows/job-rows";
+import { fetchV1EmailHistory } from "@/hooks/queries/utils/fetch-v1-email-history";
+import { saveFile } from "@/lib/downloads";
+import { V1GetJobResults200Response } from "@/lib/api/generated/zod/jobs/jobs";
+import { ACTIVE_JOB_STATES, JobStatusSchema } from "@/lib/api/schemas/jobs";
+import { jobStatus, taskState } from "@/lib/verification/labels";
 
 import { type JobsPanelPropsFields } from "./jobs-panel.schema";
 
@@ -23,41 +32,12 @@ export type JobsPanelProps = JobsPanelPropsFields & ComponentPropsWithoutRef<"se
 
 const jobsApi = new JobsApi(new Configuration({ basePath: "/api/backend" }));
 const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
-const jobStatus = z.object({
-	status: z.string(),
-	total_records: z.number(),
-	task_summary: z.record(z.string(), z.number()),
-});
-const bulkProgress = z.object({
-	total_processed: z.number(),
-	summary: z.record(z.string(), z.number()),
-});
-const jobEvents = z.object({
-	total: z.number(),
-	events: z.array(
-		z.object({
-			id: z.number(),
-			event_type: z.string(),
-			created_at: z.string(),
-		}),
-	),
-});
-const failureCenter = z.object({
-	failures_total: z.number(),
-	retry_summary: z.object({
-		retryable_rows: z.number(),
-		permanent_failures: z.number(),
-	}),
-	failure_breakdown: z.array(z.object({ error: z.string(), count: z.number() })),
-});
-const jobLatency = z.object({
-	total_completed: z.number(),
-	p50_duration_ms: z.number(),
-	p95_duration_ms: z.number(),
-	p99_duration_ms: z.number(),
-});
-type Tab = "progress" | "results" | "events" | "failures" | "approval" | "latency";
-const tabs: Tab[] = ["progress", "results", "events", "failures", "approval", "latency"];
+
+/** The segmented control style of the product pages, applied to the tabs. */
+const TAB_LIST_CLASS =
+	"h-auto w-full flex-wrap justify-start rounded-lg bg-white/[0.03] p-0.5 ring-1 ring-white/[0.08] sm:w-fit";
+const TAB_CLASS =
+	"flex-none rounded-md border-0 px-3 py-1 text-[#858585] after:hidden hover:text-neutral-200 data-[state=active]:bg-white/[0.08] data-[state=active]:text-white";
 
 export function parseEmailBatch(value: string): string[] {
 	return value
@@ -66,27 +46,12 @@ export function parseEmailBatch(value: string): string[] {
 		.filter(Boolean);
 }
 
-function saveBlob(data: unknown, filename: string) {
-	const blob = data instanceof Blob ? data : new Blob([data as BlobPart]);
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
-	link.href = url;
-	link.download = filename;
-	link.click();
-	setTimeout(() => {
-		URL.revokeObjectURL(url);
-	}, 1_000);
-}
-
 export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps) {
 	const queryClient = useQueryClient();
 	const [input, setInput] = useState("");
 	const [source, setSource] = useState("");
 	const [lookup, setLookup] = useState(initialJobId ? String(initialJobId) : "");
 	const [jobId, setJobId] = useState(initialJobId);
-	const [tab, setTab] = useState<Tab>("progress");
-	const [cursor, setCursor] = useState<number>();
-	const [eventOffset, setEventOffset] = useState(0);
 	const [notice, setNotice] = useState("");
 	const [validation, setValidation] = useState("");
 	const key = ["jobs", jobId];
@@ -113,100 +78,47 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 			setLookup(String(data.job_id));
 			setInput("");
 			setNotice(`Job ${String(data.job_id)} created.`);
-			setTab("progress");
 		},
 	});
 	const status = useQuery({
 		queryKey: workflowQueryKey(...key, "status"),
 		enabled: !!jobId,
 		queryFn: async () =>
-			jobStatus.parse((await jobsApi.v1GetJobStatus({ jobId: selectedJobId() })).data),
+			JobStatusSchema.parse((await jobsApi.v1GetJobStatus({ jobId: selectedJobId() })).data),
 		refetchInterval: (query) =>
-			["queued", "running", "retrying"].includes(query.state.data?.status ?? "") ? 5_000 : false,
+			ACTIVE_JOB_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
 	});
-	const progress = useQuery({
-		queryKey: workflowQueryKey(...key, "bulk-progress"),
-		enabled: !!jobId && tab === "progress",
-		queryFn: async () =>
-			bulkProgress.parse((await jobsApi.v1GetBulkJobProgress({ jobId: selectedJobId() })).data),
-	});
-	const results = useQuery({
-		queryKey: workflowQueryKey(...key, "results", cursor),
-		enabled: !!jobId && tab === "results",
-		queryFn: async () =>
-			(
-				await jobsApi.v1GetJobResults({
-					jobId: selectedJobId(),
-					cursor,
-					limit: 50,
-				})
-			).data,
-	});
-	const bulkResults = useQuery({
-		queryKey: workflowQueryKey(...key, "bulk-results"),
-		enabled: !!jobId && tab === "results",
-		queryFn: async () =>
-			(
-				await jobsApi.v1GetBulkJobResults({
-					jobId: selectedJobId(),
-					format: "json",
-					limit: 50,
-				})
-			).data,
-	});
-	const events = useQuery({
-		queryKey: workflowQueryKey(...key, "events", eventOffset),
-		enabled: !!jobId && tab === "events",
-		queryFn: async () =>
-			jobEvents.parse(
-				(
-					await jobsApi.v1GetJobEvents({
-						jobId: selectedJobId(),
-						limit: 50,
-						offset: eventOffset,
-					})
-				).data,
-			),
-	});
-	const failures = useQuery({
-		queryKey: workflowQueryKey(...key, "failures"),
-		enabled: !!jobId && tab === "failures",
-		queryFn: async () =>
-			failureCenter.parse((await jobsApi.v1GetJobFailureCenter({ jobId: selectedJobId() })).data),
-	});
-	const approval = useQuery({
-		queryKey: workflowQueryKey(...key, "approval"),
-		enabled: !!jobId && tab === "approval",
-		queryFn: async () => (await jobsApi.v1JobApprovalChecklist({ jobId: selectedJobId() })).data,
-	});
-	const latency = useQuery({
-		queryKey: workflowQueryKey(...key, "latency"),
-		enabled: !!jobId && tab === "latency",
-		queryFn: async () =>
-			jobLatency.parse((await jobsApi.v1JobLatency({ jobId: selectedJobId() })).data),
+	// ponytail: the job API has no list ID. The history of one checked row has it.
+	// Use a list_id field on the job status when the backend adds one.
+	const listId = useQuery({
+		queryKey: workflowQueryKey(...key, "list"),
+		enabled: !!jobId,
+		queryFn: async () => {
+			const page = V1GetJobResults200Response.parse(
+				(await jobsApi.v1GetJobResults({ jobId: selectedJobId(), limit: 10 })).data,
+			);
+			const row = page.results.find((item) => item.result?.input);
+			if (!row?.result) return null;
+			const history = await fetchV1EmailHistory(row.result.input);
+			return history.history.find((entry) => entry.task_id === row.id)?.list_id ?? null;
+		},
 	});
 	const action = useMutation({
-		mutationFn: async (kind: "cancel" | "retry") => {
-			if (!jobId) return;
-			if (kind === "cancel") await jobsApi.v1CancelJob({ jobId });
-			else await jobsApi.v1RetryJob({ jobId });
+		mutationFn: async () => {
+			await jobsApi.v1CancelJob({ jobId: selectedJobId() });
 		},
-		onSuccess: async (_, kind) => {
-			setNotice(kind === "cancel" ? "Cancellation requested." : "Failed rows queued for retry.");
+		onSuccess: async () => {
+			setNotice("Cancellation requested.");
 			await queryClient.invalidateQueries({ queryKey: key });
 		},
 	});
 	const download = useMutation({
-		mutationFn: async (kind: "results" | "failures") => {
-			if (!jobId) return;
-			const response =
-				kind === "results"
-					? await jobsApi.v1DownloadJobResults({ jobId, format: "csv" }, { responseType: "blob" })
-					: await jobsApi.v1GetJobFailureReport(
-							{ jobId },
-							{ params: { format: "csv" }, responseType: "blob" },
-						);
-			saveBlob(response.data, `job-${String(jobId)}-${kind}.csv`);
+		mutationFn: async () => {
+			const response = await jobsApi.v1DownloadJobResults(
+				{ jobId: selectedJobId(), format: "csv" },
+				{ responseType: "blob" },
+			);
+			saveFile(response.data, `job-${String(jobId)}-results.csv`);
 		},
 	});
 
@@ -219,35 +131,12 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 		}
 		setValidation("");
 		setJobId(id);
-		setTab("progress");
-		setCursor(undefined);
-		setEventOffset(0);
 	}
-	function changeJob(kind: "cancel" | "retry") {
-		if (
-			window.confirm(
-				`${kind === "cancel" ? "Cancel" : "Retry failed rows in"} job ${String(jobId)}?`,
-			)
-		)
-			action.mutate(kind);
-	}
-	const requestError = [
-		create,
-		status,
-		progress,
-		results,
-		bulkResults,
-		events,
-		failures,
-		approval,
-		latency,
-		action,
-		download,
-	].find((request) => request.isError)?.error;
+	const requestError = [create, status, action, download].find((request) => request.isError)?.error;
 
 	return (
 		<Page
-			description="Create a batch, then review progress, results, failures, and delivery readiness."
+			description="Create a batch, then review its rows, failures, and send readiness."
 			title="Bulk jobs"
 		>
 			<section data-slot="jobs-panel" className={cn("flex flex-col gap-10", className)} {...props}>
@@ -372,250 +261,82 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 								</Row>
 							) : null}
 							{status.data ? (
-								<>
-									<div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4">
-										<Pill>{status.data.status}</Pill>
+								<Row>
+									<div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+										<Pill tone={jobStatus.tone(status.data.status)}>
+											{jobStatus.label(status.data.status)}
+										</Pill>
 										<span className="min-w-0 flex-1 text-sm text-white">
 											{status.data.total_records} records
+											<span className="block text-xs text-[#858585]">
+												Created {new Date(status.data.created_at).toLocaleString()}
+												{status.data.completed_at
+													? ` · Done ${new Date(status.data.completed_at).toLocaleString()}`
+													: ""}
+											</span>
 										</span>
-										<div className="flex items-center gap-2">
-											<Button
-												size="sm"
-												variant="secondary"
-												disabled={
-													action.isPending ||
-													["completed", "cancelled"].includes(status.data.status)
-												}
-												onClick={() => {
-													changeJob("cancel");
-												}}
+										{listId.data ? (
+											<Link
+												className="text-sm text-white underline underline-offset-4"
+												href={`/app/lists/detail?list=${String(listId.data)}`}
 											>
-												Cancel
-											</Button>
-											<Button
-												size="sm"
-												variant="secondary"
-												disabled={
-													action.isPending ||
-													!(
-														status.data.task_summary.failed ||
-														status.data.task_summary.dead_lettered
-													)
-												}
-												onClick={() => {
-													changeJob("retry");
-												}}
-											>
-												Retry failed
-											</Button>
-										</div>
-									</div>
-									<Row>
-										<div className="grid gap-3 sm:grid-cols-4">
-											{Object.entries(status.data.task_summary).map(([label, count]) => (
-												<div
-													className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]"
-													key={label}
-												>
-													<p className="text-xs text-[#858585]">{label.replaceAll("_", " ")}</p>
-													<p className="mt-1 text-xl font-medium text-white">{count}</p>
-												</div>
-											))}
-										</div>
-									</Row>
-								</>
-							) : null}
-						</Group>
-						<div
-							aria-label="Job views"
-							className="inline-flex w-fit flex-wrap rounded-lg bg-white/[0.03] p-0.5 ring-1 ring-white/[0.08]"
-							role="group"
-						>
-							{tabs.map((item) => (
-								<button
-									aria-pressed={tab === item}
-									className={cn(
-										"rounded-md px-3 py-1 text-sm font-medium transition-colors",
-										tab === item
-											? "bg-white/[0.08] text-white"
-											: "text-[#858585] hover:text-neutral-200",
-									)}
-									key={item}
-									onClick={() => {
-										setTab(item);
-									}}
-									type="button"
-								>
-									{item[0].toUpperCase() + item.slice(1)}
-								</button>
-							))}
-						</div>
-						<Group>
-							{tab === "progress" && progress.data ? (
-								<Row
-									description={Object.entries(progress.data.summary)
-										.map(([label, count]) => `${label.replaceAll("_", " ")}: ${String(count)}`)
-										.join(" · ")}
-									label={`${String(progress.data.total_processed)} processed`}
-								/>
-							) : null}
-							{tab === "results" ? (
-								<Row>
-									<div className="flex flex-wrap items-center justify-between gap-3">
-										{bulkResults.data ? (
-											<p className="text-sm text-[#858585]">
-												{bulkResults.data.results.length} verified outputs in this batch.
-											</p>
-										) : (
-											<span />
-										)}
+												Open list workspace
+											</Link>
+										) : null}
 										<Button
-											size="sm"
-											variant="secondary"
+											className="rounded-lg"
 											disabled={download.isPending}
 											onClick={() => {
-												download.mutate("results");
+												download.mutate();
 											}}
+											size="sm"
+											variant="outline"
 										>
 											Download results CSV
 										</Button>
-									</div>
-									{results.data?.results.length ? (
-										<div className="overflow-x-auto">
-											<table className="w-full text-left text-sm">
-												<thead>
-													<tr className="border-b border-border">
-														<th className="py-2 pr-4 font-medium text-foreground">Email</th>
-														<th className="py-2 pr-4 font-medium text-foreground">State</th>
-														<th className="py-2 pr-4 font-medium text-foreground">Reachability</th>
-														<th className="py-2 font-medium text-foreground">Error</th>
-													</tr>
-												</thead>
-												<tbody>
-													{results.data.results.map((row) => (
-														<tr className="border-b border-border/60" key={row.id}>
-															<td className="py-2 pr-4 text-foreground">
-																{row.result?.input ?? `Row ${String(row.id)}`}
-															</td>
-															<td className="py-2 pr-4 text-muted-foreground">{row.task_state}</td>
-															<td className="py-2 pr-4 text-muted-foreground">
-																{row.result?.is_reachable ?? "—"}
-															</td>
-															<td className="py-2 text-muted-foreground">{row.error ?? "—"}</td>
-														</tr>
-													))}
-												</tbody>
-											</table>
-										</div>
-									) : (
-										<p className="text-sm text-[#858585]">No results yet.</p>
-									)}
-									<div className="flex justify-end">
 										<Button
 											className="rounded-lg"
-											size="sm"
-											variant="outline"
-											disabled={!results.data?.has_more || !results.data.next_cursor}
-											onClick={() => {
-												setCursor(results.data?.next_cursor ?? undefined);
-											}}
-										>
-											Next results
-										</Button>
-									</div>
-								</Row>
-							) : null}
-							{tab === "events" ? (
-								<>
-									{events.data?.events.length ? (
-										events.data.events.map((event) => (
-											<div className="px-5 py-4 text-sm text-white" key={event.id}>
-												{event.event_type}{" "}
-												<span className="text-xs text-[#858585]">
-													· {new Date(event.created_at).toLocaleString()}
-												</span>
-											</div>
-										))
-									) : (
-										<Row>
-											<p className="text-sm text-[#858585]">No events yet.</p>
-										</Row>
-									)}
-									<div className="flex justify-end px-5 py-3">
-										<Button
-											className="rounded-lg"
-											size="sm"
-											variant="outline"
-											disabled={!events.data || eventOffset + 50 >= events.data.total}
-											onClick={() => {
-												setEventOffset(eventOffset + 50);
-											}}
-										>
-											More events
-										</Button>
-									</div>
-								</>
-							) : null}
-							{tab === "failures" ? (
-								<>
-									<Row
-										label={`${String(failures.data?.failures_total ?? 0)} failed rows · ${String(failures.data?.retry_summary.retryable_rows ?? 0)} retryable · ${String(failures.data?.retry_summary.permanent_failures ?? 0)} permanent`}
-										layout="inline"
-									>
-										<Button
 											size="sm"
 											variant="secondary"
-											disabled={download.isPending}
+											disabled={action.isPending || !ACTIVE_JOB_STATES.includes(status.data.status)}
 											onClick={() => {
-												download.mutate("failures");
+												if (window.confirm(`Cancel job ${String(jobId)}?`)) action.mutate();
 											}}
 										>
-											Download failure report
+											Cancel
 										</Button>
-									</Row>
-									{failures.data?.failure_breakdown.map((item) => (
-										<div
-											className="flex items-center justify-between gap-4 px-5 py-4 text-sm"
-											key={item.error}
-										>
-											<span className="min-w-0 truncate text-white">{item.error}</span>
-											<span className="text-[#858585]">{String(item.count)}</span>
-										</div>
-									))}
-								</>
-							) : null}
-							{tab === "approval" && approval.data ? (
-								<Row
-									description={`${String(approval.data.safe_to_send_count)} safe addresses (${String(approval.data.safe_to_send_pct)}%)`}
-									label={approval.data.ready_to_send ? "Ready to send" : "Review before sending"}
-								>
-									<p className="text-sm text-neutral-300">{approval.data.recommendation}</p>
-								</Row>
-							) : null}
-							{tab === "latency" && latency.data ? (
-								<Row>
-									<div className="grid gap-3 sm:grid-cols-4">
-										{[
-											["Completed", latency.data.total_completed],
-											["Median", latency.data.p50_duration_ms],
-											["P95", latency.data.p95_duration_ms],
-											["P99", latency.data.p99_duration_ms],
-										].map(([label, value]) => (
-											<div
-												className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]"
-												key={label}
-											>
-												<p className="text-xs text-[#858585]">{label}</p>
-												<p className="mt-1 text-xl font-medium text-white">
-													{String(value)}
-													{label === "Completed" ? "" : " ms"}
-												</p>
-											</div>
+									</div>
+									<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+										{Object.entries(status.data.task_summary).map(([state, count]) => (
+											<Stat key={state} label={taskState.label(state)} value={count} />
 										))}
 									</div>
+									<JobProgress jobId={jobId} />
 								</Row>
 							) : null}
 						</Group>
+						<Tabs defaultValue="review" key={jobId}>
+							<TabsList aria-label="Job views" className={TAB_LIST_CLASS}>
+								<TabsTrigger className={TAB_CLASS} value="review">
+									Review
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="rows">
+									Rows
+								</TabsTrigger>
+								<TabsTrigger className={TAB_CLASS} value="problems">
+									Problems
+								</TabsTrigger>
+							</TabsList>
+							<TabsContent className="mt-6" value="review">
+								<JobReview jobId={jobId} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="rows">
+								<JobRows jobId={jobId} />
+							</TabsContent>
+							<TabsContent className="mt-6" value="problems">
+								<JobProblems jobId={jobId} />
+							</TabsContent>
+						</Tabs>
 					</Section>
 				) : null}
 			</section>

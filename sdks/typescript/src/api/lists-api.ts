@@ -22,7 +22,19 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateSavedSegmentRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { ListDiffResponse } from '../models';
+// @ts-ignore
+import type { SavedSegmentDeleteResponse } from '../models';
+// @ts-ignore
+import type { SavedSegmentListResponse } from '../models';
+// @ts-ignore
+import type { SavedSegmentView } from '../models';
+// @ts-ignore
+import type { UpdateSavedSegmentRequest } from '../models';
 /**
  * ListsApi - axios parameter creator
  * @export
@@ -117,6 +129,133 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          *
+         * @summary POST /v1/segments
+         * @param {CreateSavedSegmentRequest} createSavedSegmentRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateSavedSegment: async (createSavedSegmentRequest: CreateSavedSegmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createSavedSegmentRequest' is not null or undefined
+            assertParamExists('v1CreateSavedSegment', 'createSavedSegmentRequest', createSavedSegmentRequest)
+            const localVarPath = `/v1/segments`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createSavedSegmentRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary DELETE /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteSavedSegment: async (segmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'segmentId' is not null or undefined
+            assertParamExists('v1DeleteSavedSegment', 'segmentId', segmentId)
+            const localVarPath = `/v1/segments/{segment_id}`
+                .replace(`{${"segment_id"}}`, encodeURIComponent(String(segmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+         * @param {number} baseListId Base list identifier
+         * @param {number} compareListId Compare list identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DiffLists: async (baseListId: number, compareListId: number, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'baseListId' is not null or undefined
+            assertParamExists('v1DiffLists', 'baseListId', baseListId)
+            // verify required parameter 'compareListId' is not null or undefined
+            assertParamExists('v1DiffLists', 'compareListId', compareListId)
+            const localVarPath = `/v1/lists/{base_list_id}/diff/{compare_list_id}`
+                .replace(`{${"base_list_id"}}`, encodeURIComponent(String(baseListId)))
+                .replace(`{${"compare_list_id"}}`, encodeURIComponent(String(compareListId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary Download remediation export
          * @param {number} listId
          * @param {number} exportId
@@ -194,6 +333,43 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         *
+         * @summary GET /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetSavedSegment: async (segmentId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'segmentId' is not null or undefined
+            assertParamExists('v1GetSavedSegment', 'segmentId', segmentId)
+            const localVarPath = `/v1/segments/{segment_id}`
+                .replace(`{${"segment_id"}}`, encodeURIComponent(String(segmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
          * @param {number} listId List identifier
@@ -224,6 +400,97 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary GET /v1/segments
+         * @param {string} [scope]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListSavedSegments: async (scope?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/segments`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (scope !== undefined) {
+                localVarQueryParameter['scope'] = scope;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary PATCH /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {UpdateSavedSegmentRequest} updateSavedSegmentRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateSavedSegment: async (segmentId: number, updateSavedSegmentRequest: UpdateSavedSegmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'segmentId' is not null or undefined
+            assertParamExists('v1UpdateSavedSegment', 'segmentId', segmentId)
+            // verify required parameter 'updateSavedSegmentRequest' is not null or undefined
+            assertParamExists('v1UpdateSavedSegment', 'updateSavedSegmentRequest', updateSavedSegmentRequest)
+            const localVarPath = `/v1/segments/{segment_id}`
+                .replace(`{${"segment_id"}}`, encodeURIComponent(String(segmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateSavedSegmentRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -270,6 +537,48 @@ export const ListsApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @summary POST /v1/segments
+         * @param {CreateSavedSegmentRequest} createSavedSegmentRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateSavedSegment(createSavedSegmentRequest: CreateSavedSegmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateSavedSegment(createSavedSegmentRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1CreateSavedSegment']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary DELETE /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DeleteSavedSegment(segmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentDeleteResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteSavedSegment(segmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DeleteSavedSegment']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+         * @param {number} baseListId Base list identifier
+         * @param {number} compareListId Compare list identifier
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1DiffLists(baseListId: number, compareListId: number, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListDiffResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DiffLists(baseListId, compareListId, limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DiffLists']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary Download remediation export
          * @param {number} listId
          * @param {number} exportId
@@ -296,6 +605,19 @@ export const ListsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         *
+         * @summary GET /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetSavedSegment(segmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetSavedSegment(segmentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1GetSavedSegment']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
          * @param {number} listId List identifier
@@ -306,6 +628,35 @@ export const ListsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListQuality(listId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListQuality']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary GET /v1/segments
+         * @param {string} [scope]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListSavedSegments(scope?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListSavedSegments(scope, limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1ListSavedSegments']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary PATCH /v1/segments/{segment_id}
+         * @param {number} segmentId Saved segment identifier
+         * @param {UpdateSavedSegmentRequest} updateSavedSegmentRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UpdateSavedSegment(segmentId: number, updateSavedSegmentRequest: UpdateSavedSegmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateSavedSegment(segmentId, updateSavedSegmentRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1UpdateSavedSegment']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -340,6 +691,36 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          *
+         * @summary POST /v1/segments
+         * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateSavedSegment(requestParameters: ListsApiV1CreateSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView> {
+            return localVarFp.v1CreateSavedSegment(requestParameters.createSavedSegmentRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary DELETE /v1/segments/{segment_id}
+         * @param {ListsApiV1DeleteSavedSegmentRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentDeleteResponse> {
+            return localVarFp.v1DeleteSavedSegment(requestParameters.segmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+         * @param {ListsApiV1DiffListsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDiffResponse> {
+            return localVarFp.v1DiffLists(requestParameters.baseListId, requestParameters.compareListId, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary Download remediation export
          * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -359,6 +740,16 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.v1GetRemediationPlan(requestParameters.listId, options).then((request) => request(axios, basePath));
         },
         /**
+         *
+         * @summary GET /v1/segments/{segment_id}
+         * @param {ListsApiV1GetSavedSegmentRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetSavedSegment(requestParameters: ListsApiV1GetSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView> {
+            return localVarFp.v1GetSavedSegment(requestParameters.segmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Returns a quality benchmark report for a list.
          * @summary GET /v1/lists/{list_id}/quality
          * @param {ListsApiV1ListQualityRequest} requestParameters Request parameters.
@@ -367,6 +758,26 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
          */
         v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.v1ListQuality(requestParameters.listId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary GET /v1/segments
+         * @param {ListsApiV1ListSavedSegmentsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListSavedSegments(requestParameters: ListsApiV1ListSavedSegmentsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentListResponse> {
+            return localVarFp.v1ListSavedSegments(requestParameters.scope, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary PATCH /v1/segments/{segment_id}
+         * @param {ListsApiV1UpdateSavedSegmentRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateSavedSegment(requestParameters: ListsApiV1UpdateSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView> {
+            return localVarFp.v1UpdateSavedSegment(requestParameters.segmentId, requestParameters.updateSavedSegmentRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -399,6 +810,36 @@ export interface ListsApiInterface {
 
     /**
      *
+     * @summary POST /v1/segments
+     * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1CreateSavedSegment(requestParameters: ListsApiV1CreateSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView>;
+
+    /**
+     *
+     * @summary DELETE /v1/segments/{segment_id}
+     * @param {ListsApiV1DeleteSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentDeleteResponse>;
+
+    /**
+     *
+     * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+     * @param {ListsApiV1DiffListsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListDiffResponse>;
+
+    /**
+     *
      * @summary Download remediation export
      * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -418,6 +859,16 @@ export interface ListsApiInterface {
     v1GetRemediationPlan(requestParameters: ListsApiV1GetRemediationPlanRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: any; }>;
 
     /**
+     *
+     * @summary GET /v1/segments/{segment_id}
+     * @param {ListsApiV1GetSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1GetSavedSegment(requestParameters: ListsApiV1GetSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView>;
+
+    /**
      * Returns a quality benchmark report for a list.
      * @summary GET /v1/lists/{list_id}/quality
      * @param {ListsApiV1ListQualityRequest} requestParameters Request parameters.
@@ -426,6 +877,26 @@ export interface ListsApiInterface {
      * @memberof ListsApiInterface
      */
     v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @summary GET /v1/segments
+     * @param {ListsApiV1ListSavedSegmentsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1ListSavedSegments(requestParameters?: ListsApiV1ListSavedSegmentsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentListResponse>;
+
+    /**
+     *
+     * @summary PATCH /v1/segments/{segment_id}
+     * @param {ListsApiV1UpdateSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1UpdateSavedSegment(requestParameters: ListsApiV1UpdateSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentView>;
 
 }
 
@@ -472,6 +943,69 @@ export interface ListsApiV1CreateRemediationPlanRequest {
 }
 
 /**
+ * Request parameters for v1CreateSavedSegment operation in ListsApi.
+ * @export
+ * @interface ListsApiV1CreateSavedSegmentRequest
+ */
+export interface ListsApiV1CreateSavedSegmentRequest {
+    /**
+     *
+     * @type {CreateSavedSegmentRequest}
+     * @memberof ListsApiV1CreateSavedSegment
+     */
+    readonly createSavedSegmentRequest: CreateSavedSegmentRequest
+}
+
+/**
+ * Request parameters for v1DeleteSavedSegment operation in ListsApi.
+ * @export
+ * @interface ListsApiV1DeleteSavedSegmentRequest
+ */
+export interface ListsApiV1DeleteSavedSegmentRequest {
+    /**
+     * Saved segment identifier
+     * @type {number}
+     * @memberof ListsApiV1DeleteSavedSegment
+     */
+    readonly segmentId: number
+}
+
+/**
+ * Request parameters for v1DiffLists operation in ListsApi.
+ * @export
+ * @interface ListsApiV1DiffListsRequest
+ */
+export interface ListsApiV1DiffListsRequest {
+    /**
+     * Base list identifier
+     * @type {number}
+     * @memberof ListsApiV1DiffLists
+     */
+    readonly baseListId: number
+
+    /**
+     * Compare list identifier
+     * @type {number}
+     * @memberof ListsApiV1DiffLists
+     */
+    readonly compareListId: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1DiffLists
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1DiffLists
+     */
+    readonly offset?: number
+}
+
+/**
  * Request parameters for v1DownloadRemediationExport operation in ListsApi.
  * @export
  * @interface ListsApiV1DownloadRemediationExportRequest
@@ -507,6 +1041,20 @@ export interface ListsApiV1GetRemediationPlanRequest {
 }
 
 /**
+ * Request parameters for v1GetSavedSegment operation in ListsApi.
+ * @export
+ * @interface ListsApiV1GetSavedSegmentRequest
+ */
+export interface ListsApiV1GetSavedSegmentRequest {
+    /**
+     * Saved segment identifier
+     * @type {number}
+     * @memberof ListsApiV1GetSavedSegment
+     */
+    readonly segmentId: number
+}
+
+/**
  * Request parameters for v1ListQuality operation in ListsApi.
  * @export
  * @interface ListsApiV1ListQualityRequest
@@ -518,6 +1066,55 @@ export interface ListsApiV1ListQualityRequest {
      * @memberof ListsApiV1ListQuality
      */
     readonly listId: number
+}
+
+/**
+ * Request parameters for v1ListSavedSegments operation in ListsApi.
+ * @export
+ * @interface ListsApiV1ListSavedSegmentsRequest
+ */
+export interface ListsApiV1ListSavedSegmentsRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof ListsApiV1ListSavedSegments
+     */
+    readonly scope?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1ListSavedSegments
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1ListSavedSegments
+     */
+    readonly offset?: number
+}
+
+/**
+ * Request parameters for v1UpdateSavedSegment operation in ListsApi.
+ * @export
+ * @interface ListsApiV1UpdateSavedSegmentRequest
+ */
+export interface ListsApiV1UpdateSavedSegmentRequest {
+    /**
+     * Saved segment identifier
+     * @type {number}
+     * @memberof ListsApiV1UpdateSavedSegment
+     */
+    readonly segmentId: number
+
+    /**
+     *
+     * @type {UpdateSavedSegmentRequest}
+     * @memberof ListsApiV1UpdateSavedSegment
+     */
+    readonly updateSavedSegmentRequest: UpdateSavedSegmentRequest
 }
 
 /**
@@ -553,6 +1150,42 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
 
     /**
      *
+     * @summary POST /v1/segments
+     * @param {ListsApiV1CreateSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1CreateSavedSegment(requestParameters: ListsApiV1CreateSavedSegmentRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1CreateSavedSegment(requestParameters.createSavedSegmentRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary DELETE /v1/segments/{segment_id}
+     * @param {ListsApiV1DeleteSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1DeleteSavedSegment(requestParameters.segmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+     * @param {ListsApiV1DiffListsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1DiffLists(requestParameters: ListsApiV1DiffListsRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1DiffLists(requestParameters.baseListId, requestParameters.compareListId, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary Download remediation export
      * @param {ListsApiV1DownloadRemediationExportRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -576,6 +1209,18 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
     }
 
     /**
+     *
+     * @summary GET /v1/segments/{segment_id}
+     * @param {ListsApiV1GetSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1GetSavedSegment(requestParameters: ListsApiV1GetSavedSegmentRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1GetSavedSegment(requestParameters.segmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Returns a quality benchmark report for a list.
      * @summary GET /v1/lists/{list_id}/quality
      * @param {ListsApiV1ListQualityRequest} requestParameters Request parameters.
@@ -585,5 +1230,29 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
      */
     public v1ListQuality(requestParameters: ListsApiV1ListQualityRequest, options?: RawAxiosRequestConfig) {
         return ListsApiFp(this.configuration).v1ListQuality(requestParameters.listId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/segments
+     * @param {ListsApiV1ListSavedSegmentsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1ListSavedSegments(requestParameters: ListsApiV1ListSavedSegmentsRequest = {}, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1ListSavedSegments(requestParameters.scope, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary PATCH /v1/segments/{segment_id}
+     * @param {ListsApiV1UpdateSavedSegmentRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1UpdateSavedSegment(requestParameters: ListsApiV1UpdateSavedSegmentRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1UpdateSavedSegment(requestParameters.segmentId, requestParameters.updateSavedSegmentRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }

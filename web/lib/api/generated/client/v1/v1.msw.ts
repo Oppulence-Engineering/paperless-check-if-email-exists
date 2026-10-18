@@ -22,12 +22,11 @@ import type {
   ListUploadResponse,
   ReputationCheckResponse,
   ReverificationStatusResponse,
+  SourceQualityResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
+  SuppressionEventListResponse,
   SuppressionListResponse,
-  V1ImportSuppressions200,
-  V1ListSuppressionEvents200,
-  V1SourceQuality200,
 } from "../model";
 
 import {
@@ -394,10 +393,10 @@ export const getV1ReverificationStatusMockHandler = (
 
 export const getV1SourceQualityMockHandler = (
   overrideResponse?:
-    | V1SourceQuality200
+    | SourceQualityResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<V1SourceQuality200> | V1SourceQuality200),
+      ) => Promise<SourceQualityResponse> | SourceQualityResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -519,10 +518,10 @@ export const getV1ExportSuppressionsMockHandler = (
 
 export const getV1ImportSuppressionsMockHandler = (
   overrideResponse?:
-    | V1ImportSuppressions200
+    | AddSuppressionsResponse
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<V1ImportSuppressions200> | V1ImportSuppressions200),
+      ) => Promise<AddSuppressionsResponse> | AddSuppressionsResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -567,10 +566,11 @@ export const getV1DeleteSuppressionMockHandler = (
 
 export const getV1ListSuppressionEventsMockHandler = (
   overrideResponse?:
-    | V1ListSuppressionEvents200
+    | SuppressionEventListResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<V1ListSuppressionEvents200> | V1ListSuppressionEvents200),
+      ) =>
+        Promise<SuppressionEventListResponse> | SuppressionEventListResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

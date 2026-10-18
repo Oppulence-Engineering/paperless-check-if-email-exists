@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -24,10 +24,10 @@ var _ MappedNullable = &SavedSegmentView{}
 // SavedSegmentView struct for SavedSegmentView
 type SavedSegmentView struct {
 	CreatedAt time.Time `json:"created_at"`
-	Filter interface{} `json:"filter"`
+	Filter SegmentFilter `json:"filter"`
 	Id int64 `json:"id"`
 	Name string `json:"name"`
-	Scope string `json:"scope"`
+	Scope SegmentScope `json:"scope"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
@@ -37,7 +37,7 @@ type _SavedSegmentView SavedSegmentView
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSavedSegmentView(createdAt time.Time, filter interface{}, id int64, name string, scope string, updatedAt time.Time) *SavedSegmentView {
+func NewSavedSegmentView(createdAt time.Time, filter SegmentFilter, id int64, name string, scope SegmentScope, updatedAt time.Time) *SavedSegmentView {
 	this := SavedSegmentView{}
 	this.CreatedAt = createdAt
 	this.Filter = filter
@@ -81,10 +81,9 @@ func (o *SavedSegmentView) SetCreatedAt(v time.Time) {
 }
 
 // GetFilter returns the Filter field value
-// If the value is explicit nil, the zero value for interface{} will be returned
-func (o *SavedSegmentView) GetFilter() interface{} {
+func (o *SavedSegmentView) GetFilter() SegmentFilter {
 	if o == nil {
-		var ret interface{}
+		var ret SegmentFilter
 		return ret
 	}
 
@@ -93,16 +92,15 @@ func (o *SavedSegmentView) GetFilter() interface{} {
 
 // GetFilterOk returns a tuple with the Filter field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SavedSegmentView) GetFilterOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.Filter) {
+func (o *SavedSegmentView) GetFilterOk() (*SegmentFilter, bool) {
+	if o == nil {
 		return nil, false
 	}
 	return &o.Filter, true
 }
 
 // SetFilter sets field value
-func (o *SavedSegmentView) SetFilter(v interface{}) {
+func (o *SavedSegmentView) SetFilter(v SegmentFilter) {
 	o.Filter = v
 }
 
@@ -155,9 +153,9 @@ func (o *SavedSegmentView) SetName(v string) {
 }
 
 // GetScope returns the Scope field value
-func (o *SavedSegmentView) GetScope() string {
+func (o *SavedSegmentView) GetScope() SegmentScope {
 	if o == nil {
-		var ret string
+		var ret SegmentScope
 		return ret
 	}
 
@@ -166,7 +164,7 @@ func (o *SavedSegmentView) GetScope() string {
 
 // GetScopeOk returns a tuple with the Scope field value
 // and a boolean to check if the value has been set.
-func (o *SavedSegmentView) GetScopeOk() (*string, bool) {
+func (o *SavedSegmentView) GetScopeOk() (*SegmentScope, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -174,7 +172,7 @@ func (o *SavedSegmentView) GetScopeOk() (*string, bool) {
 }
 
 // SetScope sets field value
-func (o *SavedSegmentView) SetScope(v string) {
+func (o *SavedSegmentView) SetScope(v SegmentScope) {
 	o.Scope = v
 }
 
@@ -213,9 +211,7 @@ func (o SavedSegmentView) MarshalJSON() ([]byte, error) {
 func (o SavedSegmentView) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["created_at"] = o.CreatedAt
-	if o.Filter != nil {
-		toSerialize["filter"] = o.Filter
-	}
+	toSerialize["filter"] = o.Filter
 	toSerialize["id"] = o.Id
 	toSerialize["name"] = o.Name
 	toSerialize["scope"] = o.Scope

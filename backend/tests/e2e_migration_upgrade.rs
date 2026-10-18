@@ -23,3 +23,37 @@ async fn v410_fixture_migrates_to_head_and_passes_upgrade_safe_api_subset() {
 	);
 	execute_cases(&cases, &fixtures, &runtime).await;
 }
+
+/// Staging and production ran the migrations of master at 0f780f9. Four
+/// older migrations reached master later, through develop. A crashed staging
+/// start also applied 20260401000001 before it failed. Both databases must
+/// migrate to head.
+#[tokio::test]
+#[serial]
+async fn databases_without_the_late_spring_migrations_migrate_to_head() {
+	use test_helpers::migrate_scratch_db_to_head;
+
+	for missing in [
+		&[
+			"20260401000001",
+			"20260402000001",
+			"20260403000001",
+			"20260510000001",
+		][..],
+		&["20260402000001", "20260403000001", "20260510000001"][..],
+	] {
+		let db = migrate_scratch_db_to_head(
+			|prefix| !missing.iter().any(|version| prefix.starts_with(version)),
+			None,
+		)
+		.await;
+		let tables: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM information_schema.tables WHERE table_name IN \
+			 ('v1_remediation_plans', 'v1_alerts', 'verification_delayed_rechecks', 'verification_outcomes')",
+		)
+		.fetch_one(db.pool())
+		.await
+		.expect("count tables");
+		assert_eq!(tables, 4, "missing tables after {missing:?}");
+	}
+}
