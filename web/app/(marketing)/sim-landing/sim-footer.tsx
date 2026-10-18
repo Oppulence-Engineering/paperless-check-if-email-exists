@@ -1,75 +1,64 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import { cn } from "@/lib/sim/cn";
+import { CONTAINER, MUTED } from "@/components/platform/landing/primitives";
+import { ArrowUpRight } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 import { footerGroups } from "../site";
-import type { LinkItem } from "../marketing-data";
-import { InlineLogo } from "../marketing-chrome";
-import { SimFooterWordmark } from "./footer-wordmark";
-import { SimThemeToggle } from "./theme-toggle";
-import { LANDING_CONTENT_WIDTH, LANDING_GUTTER } from "./tokens";
 
-const LINK_CLASS =
-	"text-left text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]";
-
-function SimFooterColumn({ title, items }: { title: string; items: LinkItem[] }) {
-	return (
-		<div>
-			<h3 className="mb-4 text-sm text-[var(--text-primary)]">{title}</h3>
-			<div className="flex flex-col gap-2.5">
-				{items.map((item) =>
-					item.external ? (
-						<a
-							className={LINK_CLASS}
-							href={item.href}
-							key={`${title}-${item.label}`}
-							rel="noopener noreferrer"
-							target="_blank"
-						>
-							{item.label}
-						</a>
-					) : (
-						<Link className={LINK_CLASS} href={item.href} key={`${title}-${item.label}`}>
-							{item.label}
-						</Link>
-					),
-				)}
-			</div>
-		</div>
-	);
-}
-
-/** Sim `Footer` grid with Oppulence link groups and no invented proof blocks. */
+/** Link columns over an oversized wordmark, copied from screenshot-studio `LandingFooter`. */
 export function SimFooter() {
 	return (
-		<footer className="sim-landing-root w-full border-t border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)]">
-			<div
-				className={cn("pt-16 pb-6 max-sm:pb-5 max-lg:pt-12", LANDING_CONTENT_WIDTH, LANDING_GUTTER)}
-			>
-				<nav
-					aria-label="Footer navigation"
-					className="grid grid-cols-7 gap-x-8 gap-y-10 max-sm:grid-cols-2 max-sm:gap-y-8 max-lg:grid-cols-3"
-					itemScope
-					itemType="https://schema.org/SiteNavigationElement"
-				>
-					<div className="flex flex-col items-start gap-5 max-lg:col-span-full max-lg:mb-2">
-						<Link aria-label="Verifier home" className="flex h-[18px] items-center" href="/">
-							<InlineLogo header />
+		<footer className="overflow-hidden">
+			<div className={CONTAINER}>
+				<div className="grid gap-16 border-t border-[#212121] py-24 lg:grid-cols-[1fr_2fr]">
+					<div className="flex flex-col justify-between gap-10">
+						<Link className="flex items-center gap-3" href="/">
+							<Image alt="" className="size-9" height={36} src="/check-email-logo.svg" width={36} />
+							<span className="text-2xl tracking-[-0.03em] text-white">Verifier</span>
 						</Link>
-						<SimThemeToggle />
+						<div className="space-y-6">
+							<Link
+								className="inline-flex items-center gap-1.5 border-b border-white pb-1 text-base text-white"
+								href="/sign-up"
+							>
+								Get started
+								<ArrowUpRight aria-hidden="true" className="size-4" />
+							</Link>
+							<p className={cn("text-[15px]", MUTED)}>© 2026 Oppulence Engineering · Verifier</p>
+						</div>
 					</div>
-
-					{footerGroups.map((group) => (
-						<SimFooterColumn items={group.items} key={group.title} title={group.title} />
-					))}
-				</nav>
-
-				<SimFooterWordmark />
-
-				<p className="mt-16 text-sm text-[var(--text-secondary)]">
-					© 2026 Oppulence Engineering · Verifier
-				</p>
+					<nav
+						aria-label="Footer"
+						className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:grid-cols-5"
+					>
+						{footerGroups.map((column) => (
+							<div key={column.title}>
+								<p className={cn("text-[15px]", MUTED)}>{column.title}</p>
+								<ul className="mt-5 space-y-3">
+									{column.items.map((link) => (
+										<li key={link.href}>
+											<Link
+												className="text-[15px] text-white transition-colors hover:text-white/65"
+												href={link.href}
+											>
+												{link.label}
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+						))}
+					</nav>
+				</div>
 			</div>
+			<p
+				aria-hidden="true"
+				className="bg-gradient-to-b from-white/[0.14] to-transparent bg-clip-text pb-2 text-center text-[13.5vw] leading-[0.8] tracking-[-0.06em] whitespace-nowrap text-transparent select-none"
+			>
+				Verifier
+			</p>
 		</footer>
 	);
 }

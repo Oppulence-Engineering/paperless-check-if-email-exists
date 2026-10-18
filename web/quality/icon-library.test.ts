@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const UI_ROOT = path.resolve(ROOT, "vendor/oppulence/ui/src");
 
-const FORBIDDEN_ICON_IMPORTS = ["lucide-react", "@mui/icons-material"] as const;
+const FORBIDDEN_ICON_IMPORTS = [
+	"lucide-react",
+	"@mui/icons-material",
+	"@phosphor-icons/react",
+] as const;
 const ALLOWED_ICON_SURFACES = [
 	path.join(ROOT, "lib/icons.tsx"),
 	path.join(UI_ROOT, "lib/icons.tsx"),
@@ -51,12 +55,12 @@ function findForbiddenImports(files: string[]) {
 }
 
 describe("icon library policy", () => {
-	it("uses Phosphor via lib/icons wrappers, not lucide-react or MUI icons", () => {
+	it("uses Hugeicons via lib/icons wrappers, not lucide-react or MUI icons", () => {
 		const files = [...collectSourceFiles(ROOT), ...collectSourceFiles(UI_ROOT)];
 		expect(findForbiddenImports(files)).toEqual([]);
 	});
 
-	it("declares @phosphor-icons/react in the web app and @oppulence/ui", () => {
+	it("declares the Hugeicons renderer in the web app and @oppulence/ui", () => {
 		const wwwPkg = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8")) as {
 			dependencies?: Record<string, string>;
 		};
@@ -64,8 +68,8 @@ describe("icon library policy", () => {
 			dependencies?: Record<string, string>;
 		};
 
-		expect(wwwPkg.dependencies?.["@phosphor-icons/react"]).toBeTruthy();
-		expect(uiPkg.dependencies?.["@phosphor-icons/react"]).toBeTruthy();
+		expect(wwwPkg.dependencies?.["@hugeicons/react"]).toBeTruthy();
+		expect(uiPkg.dependencies?.["@hugeicons/react"]).toBeTruthy();
 		expect(wwwPkg.dependencies?.["lucide-react"]).toBeUndefined();
 		expect(uiPkg.dependencies?.["lucide-react"]).toBeUndefined();
 	});

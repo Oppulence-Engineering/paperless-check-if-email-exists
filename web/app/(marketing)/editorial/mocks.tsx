@@ -50,7 +50,12 @@ export function CategoryBadge({ category }: { category: Category }) {
 
 function MockShell({ className, children }: { className?: string; children: ReactNode }) {
 	return (
-		<div className={cn("ed-sans overflow-hidden rounded-xl bg-[#111111] text-white", className)}>
+		<div
+			className={cn(
+				"overflow-hidden rounded-xl bg-[#111111] text-white shadow-[0_16px_40px_-12px_rgba(0,0,0,0.75)]",
+				className,
+			)}
+		>
 			{children}
 		</div>
 	);
@@ -108,7 +113,7 @@ export function ListBoardMock() {
 				<div className="mb-3 flex items-center gap-2 border border-white/[0.06] bg-[#111111] px-2 py-1.5 text-[11px] text-[#858585]">
 					<SquaresFour aria-hidden="true" className="size-3" /> Home
 				</div>
-				<p className="mb-1 text-[10px] text-[#757575]">Workspace</p>
+				<p className="mb-1 text-[10px] text-[#858585]">Workspace</p>
 				{[
 					[ListChecks, "Lists"],
 					[Prohibit, "Suppressions"],
@@ -125,7 +130,7 @@ export function ListBoardMock() {
 						</div>
 					);
 				})}
-				<p className="mt-3 mb-1 text-[10px] text-[#757575]">Recent lists</p>
+				<p className="mt-3 mb-1 text-[10px] text-[#858585]">Recent lists</p>
 				{["October newsletter", "Webinar signups", "CRM export"].map((name, index) => (
 					<div className="flex items-center gap-2 py-1 text-[11px] text-[#d9d9d9]" key={name}>
 						<span
@@ -157,7 +162,7 @@ export function ListBoardMock() {
 							<div className="mb-1.5 flex items-center gap-1.5 text-[11px]">
 								<span className={cn("size-1.5 rounded-full", CATEGORY_DOT[column.category])} />
 								<span className="capitalize">{column.category}</span>
-								<span className="text-[#757575]">{column.count}</span>
+								<span className="text-[#858585]">{column.count}</span>
 							</div>
 							<div className="flex flex-col gap-1.5">
 								{column.rows.map(([email, score, reason]) => (
@@ -529,18 +534,18 @@ export function ApiResponseMock() {
 				<span className="size-2 rounded-full bg-[#ef4444]" />
 				<span className="size-2 rounded-full bg-[#f59e0b]" />
 				<span className="size-2 rounded-full bg-[#22c55e]" />
-				<span className="ml-2 text-[10.5px] text-[#757575]">signup form · real-time check</span>
+				<span className="ml-2 text-[10.5px] text-[#858585]">signup form · real-time check</span>
 			</div>
 			<pre className="overflow-x-auto p-4">
 				<code>
-					<span className="text-[#757575]">{"// POST /v1/check_email"}</span>
+					<span className="text-[#858585]">{"// POST /v1/check_email"}</span>
 					{"\n"}
 					{"{ "}
 					<span className="text-[#93c5fd]">{'"to_email"'}</span>
 					{": "}
 					<span className="text-[#86efac]">{'"anna@gmial.com"'}</span>
 					{" }\n\n"}
-					<span className="text-[#757575]">{"// response (shortened)"}</span>
+					<span className="text-[#858585]">{"// response (shortened)"}</span>
 					{"\n{\n  "}
 					<span className="text-[#93c5fd]">{'"is_reachable"'}</span>
 					{": "}
@@ -618,7 +623,7 @@ export function RetentionMock() {
 					+ organization only
 				</span>
 			</div>
-			<p className="mb-1.5 text-[10px] tracking-wide text-[#757575] uppercase">Keep results for</p>
+			<p className="mb-1.5 text-[10px] tracking-wide text-[#858585] uppercase">Keep results for</p>
 			{[
 				["30 days", "Default", true],
 				["90 days", "For quarterly reviews", false],

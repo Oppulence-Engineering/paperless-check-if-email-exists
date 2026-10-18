@@ -40,6 +40,12 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.6.0
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.2.6))(zod@4.6.5)
+      '@hugeicons/core-free-icons':
+        specifier: ^3.1.1
+        version: 3.3.0
+      '@hugeicons/react':
+        specifier: ^1.1.5
+        version: 1.1.10(react@19.2.6)
       '@oppulence/reacher-sdk':
         specifier: file:../sdks/typescript/src
         version: file:../sdks/typescript/src
@@ -48,10 +54,7 @@ importers:
         version: file:vendor/oppulence/relationship-contract
       '@oppulence/ui':
         specifier: file:./vendor/oppulence/ui
-        version: file:vendor/oppulence/ui(@date-fns/tz@1.5.0)(@standard-schema/spec@1.1.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.3.0)(react@19.2.6)(redux@5.0.1)
-      '@phosphor-icons/react':
-        specifier: ^2.1.10
-        version: 2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: file:vendor/oppulence/ui(@date-fns/tz@1.5.0)(@hugeicons/core-free-icons@3.3.0)(@standard-schema/spec@1.1.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.3.0)(react@19.2.6)(redux@5.0.1)
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -1381,6 +1384,14 @@ packages:
       zod:
         optional: true
 
+  '@hugeicons/core-free-icons@3.3.0':
+    resolution: {integrity: sha512-qYyr4JQ2eQIHTSTbITvnJvs6ERNK64D9gpwZnf2IyuG0exzqfyABLO/oTB71FB3RZPfu1GbwycdiGSo46apjMQ==}
+
+  '@hugeicons/react@1.1.10':
+    resolution: {integrity: sha512-9tAsd92yMVVGP+E+d8cM+wc0VnXuYZHNbWQi7TOe8k2neawmhiaFmVFbzyruejhOMa197/LbgvSED32ayUo3ZA==}
+    peerDependencies:
+      react: '>=16.0.0'
+
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
     engines: {node: '>=18.18.0'}
@@ -1830,6 +1841,7 @@ packages:
   '@oppulence/ui@file:vendor/oppulence/ui':
     resolution: {directory: vendor/oppulence/ui, type: directory}
     peerDependencies:
+      '@hugeicons/core-free-icons': ^3.1.1
       react: ^19.0.0
       react-dom: ^19.0.0
 
@@ -2375,13 +2387,6 @@ packages:
   '@peculiar/x509@1.14.3':
     resolution: {integrity: sha512-C2Xj8FZ0uHWeCXXqX5B4/gVFQmtSkiuOolzAgutjTfseNOHT3pUjljDZsTSxXFGgio54bCzVFqmEOUrIVk8RDA==}
     engines: {node: '>=20.0.0'}
-
-  '@phosphor-icons/react@2.1.10':
-    resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>= 16.8'
-      react-dom: '>= 16.8'
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -10222,6 +10227,12 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.20.0)
       zod: 4.6.5
 
+  '@hugeicons/core-free-icons@3.3.0': {}
+
+  '@hugeicons/react@1.1.10(react@19.2.6)':
+    dependencies:
+      react: 19.2.6
+
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -10662,11 +10673,12 @@ snapshots:
 
   '@oppulence/relationship-contract@file:vendor/oppulence/relationship-contract': {}
 
-  '@oppulence/ui@file:vendor/oppulence/ui(@date-fns/tz@1.5.0)(@standard-schema/spec@1.1.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.3.0)(react@19.2.6)(redux@5.0.1)':
+  '@oppulence/ui@file:vendor/oppulence/ui(@date-fns/tz@1.5.0)(@hugeicons/core-free-icons@3.3.0)(@standard-schema/spec@1.1.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.3.0)(react@19.2.6)(redux@5.0.1)':
     dependencies:
       '@base-ui/react': 1.8.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@hookform/resolvers': 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.2.6))(zod@4.6.5)
-      '@phosphor-icons/react': 2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@hugeicons/core-free-icons': 3.3.0
+      '@hugeicons/react': 1.1.10(react@19.2.6)
       '@shadcn/react': 0.2.1(@types/react@19.3.0)(react@19.2.6)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
@@ -11176,11 +11188,6 @@ snapshots:
       reflect-metadata: 0.2.2
       tslib: 2.8.1
       tsyringe: 4.10.0
-
-  '@phosphor-icons/react@2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
 
   '@pkgjs/parseargs@0.11.0':
     optional: true

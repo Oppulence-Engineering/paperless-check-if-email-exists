@@ -27,10 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
-	themeColor: [
-		{ media: "(prefers-color-scheme: light)", color: "#ffffff" },
-		{ media: "(prefers-color-scheme: dark)", color: "#111111" },
-	],
+	themeColor: "#090909",
 };
 
 /**
@@ -48,33 +45,17 @@ const reactGrabOptions = {
 	maxContextLines: 3,
 } as const;
 
-/** Keep theme-color in sync with next-themes before hydration paints the shell. */
-const themeColorScript = `
-(() => {
-  try {
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) return;
-    var prefersDark =
-      localStorage.theme === "dark" ||
-      ((!('theme' in localStorage) || localStorage.theme === "system") &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    meta.setAttribute("content", prefersDark ? "#111111" : "#ffffff");
-  } catch (_) {}
-})();
-`;
-
 export default function RootLayout({ children }: { children: ReactNode }) {
 	const devToolsEnabled = isDevelopment();
 
 	return (
 		<html
 			lang="en"
-			className={cn(fontVariables, "antialiased", "font-sans")}
+			className={cn("dark", fontVariables, "antialiased", "font-sans")}
 			suppressHydrationWarning
 			data-scroll-behavior="smooth"
 		>
 			<head>
-				<script dangerouslySetInnerHTML={{ __html: themeColorScript }} />
 				{devToolsEnabled ? (
 					<Script
 						src="//unpkg.com/react-scan@0.5.7/dist/auto.global.js"

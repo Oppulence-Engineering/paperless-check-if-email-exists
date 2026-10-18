@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `analytics.lit.ts`.
  */
 export default function AnalyticsLoading() {
-	return <DashboardRouteFallback label="Loading Analytics…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Analytics…" />
+		</main>
+	);
 }

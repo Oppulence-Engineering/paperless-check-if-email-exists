@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import type { Family, PortalOperation } from "@/lib/developer-portal/operations";
 
+import { DocsSection, bodyClassName, cardSurface } from "../docs-kit";
+
 type Entry = Pick<PortalOperation, "id" | "method" | "path" | "family" | "description">;
 
 export function OperationIndex({
@@ -23,32 +25,42 @@ export function OperationIndex({
 
 	return (
 		<>
-			<label htmlFor="api-operation-search">Find an operation</label>
-			<input
-				id="api-operation-search"
-				type="search"
-				value={query}
-				onChange={(event) => setQuery(event.target.value)}
-				placeholder="Method, path, or operation ID"
-				className="mb-6 block w-full rounded-md border border-border bg-background px-3 py-2"
-			/>
-			{matching.length === 0 ? <p>No matching operations.</p> : null}
+			<div className="space-y-2">
+				<label className="text-sm font-medium text-neutral-300" htmlFor="api-operation-search">
+					Find an operation
+				</label>
+				<input
+					id="api-operation-search"
+					type="search"
+					value={query}
+					onChange={(event) => setQuery(event.target.value)}
+					placeholder="Method, path, or operation ID"
+					className="block h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+				/>
+			</div>
+			{matching.length === 0 ? <p className={bodyClassName}>No matching operations.</p> : null}
 			{families.map((family) => {
 				const entries = matching.filter((operation) => operation.family === family);
 				return entries.length === 0 ? null : (
-					<section key={family}>
-						<h2>{family}</h2>
-						<ul>
+					<DocsSection key={family} title={family}>
+						<ul className="grid grid-cols-1 gap-3">
 							{entries.map((operation) => (
 								<li key={operation.id}>
-									<Link href={`/developers/reference/${operation.id}`}>
-										<code>{operation.method}</code> <code>{operation.path}</code>
+									<Link
+										className={`block ${cardSurface} transition-colors hover:bg-white/[0.04]`}
+										href={`/developers/reference/${operation.id}`}
+									>
+										<p className="font-mono text-[13px] text-foreground">
+											{operation.method} {operation.path}
+										</p>
+										{operation.description ? (
+											<p className="mt-1 text-sm text-muted-foreground">{operation.description}</p>
+										) : null}
 									</Link>
-									{operation.description ? ` — ${operation.description}` : ""}
 								</li>
 							))}
 						</ul>
-					</section>
+					</DocsSection>
 				);
 			})}
 		</>

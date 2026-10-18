@@ -3,20 +3,21 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { ArrowRight, MagnifyingGlass } from "@/lib/icons";
+import { PageHero } from "@/components/platform/landing/blocks";
+import { MONO, MUTED, Section } from "@/components/platform/landing/primitives";
+import { ArrowUpRight, MagnifyingGlass } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 import type { CapabilityPage } from "../catalog";
 import { INTEGRATION_LOGOS } from "./logos";
-import { Container, Display, Lead } from "./ui";
 
 type Kind = CapabilityPage["kind"];
 
-const CATEGORIES: { kind: Kind; label: string; href: string; numeral: string }[] = [
-	{ kind: "feature", label: "Features", href: "/features", numeral: "I" },
-	{ kind: "use-case", label: "Use cases", href: "/use-cases", numeral: "II" },
-	{ kind: "integration", label: "Integrations", href: "/integrations", numeral: "III" },
-	{ kind: "guide", label: "Guides", href: "/guides", numeral: "IV" },
+const CATEGORIES: { kind: Kind; label: string; href: string }[] = [
+	{ kind: "feature", label: "Features", href: "/features" },
+	{ kind: "use-case", label: "Use cases", href: "/use-cases" },
+	{ kind: "integration", label: "Integrations", href: "/integrations" },
+	{ kind: "guide", label: "Guides", href: "/guides" },
 ];
 
 export type HubItem = {
@@ -29,7 +30,7 @@ export type HubItem = {
 	spec?: [string, string];
 };
 
-/** Index page laid out as a table of contents, with search. */
+/** Index page: a split hero, category tabs, search, and one card per page. */
 export function CatalogHub({
 	kind,
 	title,
@@ -52,29 +53,47 @@ export function CatalogHub({
 	const active = CATEGORIES.find((category) => category.kind === kind) ?? CATEGORIES[0];
 
 	return (
-		<section className="bg-[var(--ed-bg)] pt-12 pb-20 sm:pt-16">
-			<Container>
-				<div className="ed-fig-label flex items-center justify-between border-y border-[var(--ed-line)] py-3 text-[#757575]">
-					<span>Verifier · {active.label}</span>
-					<span>
-						{counts[kind]} {counts[kind] === 1 ? "page" : "pages"}
-					</span>
-				</div>
-				<div className="mt-12 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-					<div>
-						<Display as="h1" size="xl">
-							{title}
-						</Display>
-						<Lead className="mt-5 max-w-[56ch]">{lede}</Lead>
-					</div>
+		<>
+			<PageHero
+				body={lede}
+				eyebrow={{
+					label: `${counts[kind]} ${counts[kind] === 1 ? "page" : "pages"}`,
+					parent: "Verifier",
+					href: "/",
+				}}
+				lead={title}
+			/>
+			<Section>
+				<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+					<nav aria-label="Categories">
+						<ul className="flex flex-wrap items-center gap-1">
+							{CATEGORIES.map((category) => (
+								<li key={category.kind}>
+									<Link
+										aria-current={category.kind === kind ? "page" : undefined}
+										className={cn(
+											"flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] transition-colors duration-150",
+											category.kind === kind
+												? "bg-white/[0.09] text-white"
+												: "text-[#858585] hover:text-white",
+										)}
+										href={category.href}
+									>
+										{category.label}
+										<span className={cn(MONO, "text-[11px]", MUTED)}>{counts[category.kind]}</span>
+									</Link>
+								</li>
+							))}
+						</ul>
+					</nav>
 					<label className="relative w-full lg:w-[320px]">
 						<span className="sr-only">Search {active.label.toLowerCase()}</span>
 						<MagnifyingGlass
 							aria-hidden="true"
-							className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--ed-faint)]"
+							className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#858585]"
 						/>
 						<input
-							className="ed-sans h-11 w-full border border-[var(--ed-line)] bg-[var(--ed-bg)] pr-3 pl-9 text-[14px] text-[var(--ed-ink)] placeholder:text-[var(--ed-faint)] focus:border-[var(--ed-ink)] focus:outline-none"
+							className="h-11 w-full rounded-full border border-white/10 bg-[#090909] pr-4 pl-10 text-[15px] text-white placeholder:text-[#858585] focus:border-white/30 focus:outline-none"
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder={`Search ${active.label.toLowerCase()}`}
 							type="search"
@@ -83,90 +102,54 @@ export function CatalogHub({
 					</label>
 				</div>
 
-				<nav aria-label="Categories" className="mt-12">
-					<ul className="flex flex-wrap gap-x-8 gap-y-2 border-b border-[var(--ed-line)]">
-						{CATEGORIES.map((category) => (
-							<li key={category.kind}>
-								<Link
-									aria-current={category.kind === kind ? "page" : undefined}
-									className={cn(
-										"ed-sans -mb-px flex items-baseline gap-2 border-b py-3 text-[14px] transition-colors",
-										category.kind === kind
-											? "border-[var(--ed-ink)] text-[var(--ed-ink)]"
-											: "border-transparent text-[var(--ed-muted)] hover:text-[var(--ed-ink)]",
-									)}
-									href={category.href}
-								>
-									<span className="ed-mono text-[11px] text-[var(--ed-fig)]">
-										{category.numeral}
-									</span>
-									{category.label}
-									<span className="ed-mono text-[11px] text-[var(--ed-faint)]">
-										{counts[category.kind]}
-									</span>
-								</Link>
-							</li>
-						))}
-					</ul>
-				</nav>
-
 				{visible.length === 0 ? (
-					<p className="ed-sans border-b border-[var(--ed-line)] py-10 text-[14px] text-[var(--ed-muted)]">
-						Nothing matches “{query}”.
-					</p>
+					<p className={cn("mt-12 text-lg", MUTED)}>Nothing matches “{query}”.</p>
 				) : (
-					<ol>
+					<ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{visible.map((item) => {
-							const number = items.indexOf(item) + 1;
 							const Logo =
 								item.kind === "integration"
 									? INTEGRATION_LOGOS[item.slug as keyof typeof INTEGRATION_LOGOS]
 									: undefined;
 							return (
-								<li className="border-b border-[var(--ed-line)]" key={item.href}>
+								<li key={item.href}>
 									<Link
-										className="group grid gap-4 py-7 md:grid-cols-[64px_1fr_minmax(0,300px)] md:items-center md:gap-8"
+										className="group flex h-full flex-col justify-between gap-12 bg-[#111] p-6 transition-colors hover:bg-[#161616]"
 										href={item.href}
 									>
-										<span className="ed-mono text-[12px] text-[var(--ed-fig)]">
-											{String(number).padStart(2, "0")}
-										</span>
-										<span className="flex items-start gap-4">
-											{Logo ? (
-												<span className="inline-flex size-11 shrink-0 items-center justify-center border border-white/15 bg-[#111111] p-2">
-													<Logo aria-hidden="true" className="size-full" />
-												</span>
-											) : null}
-											<span>
-												<span className="ed-display block text-[22px] leading-[1.25] text-[var(--ed-ink)] sm:text-[26px]">
-													{item.title}
-												</span>
-												<span className="ed-sans mt-2 block max-w-[60ch] text-[14px] leading-[1.55] text-[var(--ed-muted)]">
-													{item.body}
-												</span>
-											</span>
-										</span>
-										<span className="flex items-center justify-between gap-4 md:justify-end">
-											{item.spec ? (
-												<span className="text-left md:text-right">
-													<span className="ed-fig-label block text-[#757575]">{item.spec[0]}</span>
-													<span className="ed-sans mt-1 block text-[13px] text-[#d9d9d9]">
-														{item.spec[1]}
-													</span>
-												</span>
-											) : null}
-											<ArrowRight
+										<span className="flex items-start justify-between">
+											{Logo ? <Logo aria-hidden="true" className="size-6" /> : <span />}
+											<ArrowUpRight
 												aria-hidden="true"
-												className="size-4 shrink-0 text-[var(--ed-muted)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--ed-ink)]"
+												className="size-5 text-[#858585] transition-colors group-hover:text-white"
 											/>
+										</span>
+										<span>
+											<span className="block text-lg text-white">{item.title}</span>
+											<span className={cn("mt-1 block text-[15px] leading-[1.5]", MUTED)}>
+												{item.body}
+											</span>
+											{item.spec ? (
+												<span
+													className={cn(
+														MONO,
+														"mt-6 flex items-baseline justify-between gap-4 border-t border-[#212121] pt-4 text-[12px]",
+													)}
+												>
+													<span className={cn("tracking-[0.06em] uppercase", MUTED)}>
+														{item.spec[0]}
+													</span>
+													<span className="text-right text-white/80">{item.spec[1]}</span>
+												</span>
+											) : null}
 										</span>
 									</Link>
 								</li>
 							);
 						})}
-					</ol>
+					</ul>
 				)}
-			</Container>
-		</section>
+			</Section>
+		</>
 	);
 }

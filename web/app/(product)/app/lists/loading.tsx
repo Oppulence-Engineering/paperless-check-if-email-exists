@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `lists.lit.ts`.
  */
 export default function ListsLoading() {
-	return <DashboardRouteFallback label="Loading Email lists…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Email lists…" />
+		</main>
+	);
 }

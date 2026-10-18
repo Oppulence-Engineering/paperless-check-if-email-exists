@@ -11,10 +11,10 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Row, Section } from "@/components/platform/page-kit";
 import { type PlatformOperationRunnerPropsFields } from "./platform-operation-runner.schema";
 
 /** @oppulence-gen kind=component Owned by `platform-operation-runner.lit.ts`. */
@@ -244,15 +244,18 @@ export function PlatformOperationRunner({
 	return (
 		<section
 			data-slot="platform-operation-runner"
-			className={cn("space-y-6", className)}
+			className={cn("flex flex-col gap-10", className)}
 			{...props}
 		>
-			<p className="text-sm text-muted-foreground">
+			<p className="text-sm text-[#858585]">
 				{operations.length} restricted operations are grouped into tenant, key, and job workflows.
 				Reads and changes pass through the audited operator route.
 			</p>
 			{validation || error ? (
-				<p role="alert" className="text-destructive">
+				<p
+					role="alert"
+					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+				>
 					{validation || error?.message} If recent verification is required, complete it in{" "}
 					<Link className="underline" href="/app/settings?settings=security">
 						Security settings
@@ -260,385 +263,422 @@ export function PlatformOperationRunner({
 					.
 				</p>
 			) : null}
-			{notice ? <p role="status">{notice}</p> : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Operator change reason</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<Label htmlFor="operator-reason">Reason for changes</Label>
-					<Input
-						id="operator-reason"
-						minLength={10}
-						maxLength={255}
-						value={reason}
-						onChange={(event) => {
-							setReason(event.target.value);
-						}}
-						placeholder="Ticket and purpose"
-					/>
-				</CardContent>
-			</Card>
-			<Card>
-				<CardHeader>
-					<CardTitle>Tenant directory</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{tenants.data?.tenants?.length ? (
-						<ul className="divide-y">
-							{tenants.data.tenants.map((item) => (
-								<li className="flex items-center justify-between gap-3 py-2" key={item.id}>
-									<div>
-										<p className="font-medium">
-											{item.name} · {item.status}
-										</p>
-										<p className="text-xs text-muted-foreground">
-											{item.id} · {item.slug}
-										</p>
-									</div>
-									<Button
-										size="sm"
-										variant="outline"
-										onClick={() => {
-											setTenantId(item.id || "");
-											setKeyId("");
-											setName(item.name || "");
-											setStatus(item.status || "active");
-											setQuotaInput(
-												item.monthly_email_limit == null ? "" : String(item.monthly_email_limit),
-											);
-										}}
-									>
-										Inspect
-									</Button>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p>No tenants found.</p>
-					)}
-					<form
-						className="grid gap-3 sm:grid-cols-3"
-						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-							event.preventDefault();
-							run("createTenant");
-						}}
-					>
-						<div>
-							<Label htmlFor="operator-tenant-name">Tenant name</Label>
-							<Input
-								id="operator-tenant-name"
-								value={name}
-								onChange={(event) => {
-									setName(event.target.value);
-								}}
-							/>
-						</div>
-						<div>
-							<Label htmlFor="operator-tenant-slug">Slug</Label>
-							<Input
-								id="operator-tenant-slug"
-								value={slug}
-								onChange={(event) => {
-									setSlug(event.target.value);
-								}}
-							/>
-						</div>
-						<div>
-							<Label htmlFor="operator-tenant-email">Contact email</Label>
-							<Input
-								id="operator-tenant-email"
-								type="email"
-								value={email}
-								onChange={(event) => {
-									setEmail(event.target.value);
-								}}
-							/>
-						</div>
-						<Button type="submit" disabled={action.isPending}>
-							Create tenant
-						</Button>
-					</form>
-				</CardContent>
-			</Card>
-			{tenantId ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>Tenant {tenant.data?.name || tenantId}</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<p>
-							{tenant.data?.status} · {tenant.data?.plan_tier} · {tenant.data?.contact_email}
-						</p>
-						<div className="flex flex-wrap gap-2">
-							<Label htmlFor="operator-status">Status</Label>
-							<select
-								id="operator-status"
-								className="h-9 rounded border bg-background px-3"
-								value={status}
-								onChange={(event) => {
-									setStatus(event.target.value);
-								}}
-							>
-								<option value="active">Active</option>
-								<option value="suspended">Suspended</option>
-							</select>
-							<Button
-								variant="outline"
-								disabled={action.isPending}
-								onClick={() => {
-									run("updateTenant");
-								}}
-							>
-								Save tenant
-							</Button>
-							<Button
-								variant="destructive"
-								disabled={action.isPending}
-								onClick={() => {
-									run("deleteTenant");
-								}}
-							>
-								Delete tenant
-							</Button>
-						</div>
-						<p>
-							Quota: {quota.data?.used_this_period ?? 0} used ·{" "}
-							{quota.data?.quota_unlimited
-								? "Unlimited"
-								: (quota.data?.monthly_email_limit ?? "Unset")}{" "}
-							monthly limit
-						</p>
-						<div className="flex flex-wrap gap-2">
-							<Label className="sr-only" htmlFor="operator-quota">
-								Monthly email limit
-							</Label>
-							<Input
-								id="operator-quota"
-								inputMode="numeric"
-								placeholder="Monthly limit"
-								value={quotaInput}
-								onChange={(event) => {
-									setQuotaInput(event.target.value);
-								}}
-							/>
-							<Button
-								variant="outline"
-								disabled={action.isPending}
-								onClick={() => {
-									run("updateQuota");
-								}}
-							>
-								Set quota
-							</Button>
-							<Button
-								variant="outline"
-								disabled={action.isPending}
-								onClick={() => {
-									run("resetQuota");
-								}}
-							>
-								Reset usage
-							</Button>
-						</div>
-						<p className="text-sm">
-							Tenant jobs: {tenantJobs.data?.total ?? 0}. Select a job below to inspect results and
-							events.
-						</p>
-					</CardContent>
-				</Card>
+			{notice ? (
+				<p
+					role="status"
+					className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
+				>
+					{notice}
+				</p>
 			) : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>API key oversight</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<p>
-						Platform keys: {globalKeys.data?.total ?? globalKeys.data?.api_keys?.length ?? 0} ·
-						Selected tenant keys: {tenantKeys.data?.api_keys?.length ?? 0}
-					</p>
-					{tenantKeys.data?.api_keys?.length ? (
-						<ul className="divide-y">
-							{tenantKeys.data.api_keys.map((item) => (
-								<li className="flex items-center justify-between gap-2 py-2" key={item.id}>
-									<div>
-										<p>
-											{item.name} · {item.status}
-										</p>
-										<p className="text-xs">
-											{item.key_prefix}… · {item.scopes?.join(", ")}
-										</p>
-									</div>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => {
-											setKeyId(item.id || "");
-											setKeyName(item.name || "");
-											setKeyScopes(item.scopes?.join(", ") || "verify");
-										}}
-									>
-										Inspect
-									</Button>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p>Select a tenant to review its keys.</p>
-					)}
-					{tenantId ? (
-						<div className="space-y-3">
-							<div className="flex flex-wrap gap-2">
-								<div>
-									<Label htmlFor="operator-key-name">Key name</Label>
-									<Input
-										id="operator-key-name"
-										value={keyName}
-										onChange={(event) => {
-											setKeyName(event.target.value);
-										}}
-									/>
-								</div>
-								<div>
-									<Label htmlFor="operator-key-scopes">Scopes, comma separated</Label>
-									<Input
-										id="operator-key-scopes"
-										value={keyScopes}
-										onChange={(event) => {
-											setKeyScopes(event.target.value);
-										}}
-									/>
-								</div>
-							</div>
-							<div className="flex flex-wrap gap-2">
-								<Button
-									disabled={action.isPending || Boolean(revealedKey)}
-									onClick={() => {
-										run("createKey");
-									}}
-								>
-									Create key
-								</Button>
-								{keyId ? (
-									<>
+			<Section title="Operator change reason">
+				<Group>
+					<Row>
+						<Label className="text-xs font-medium text-neutral-400" htmlFor="operator-reason">
+							Reason for changes
+						</Label>
+						<Input
+							id="operator-reason"
+							minLength={10}
+							maxLength={255}
+							value={reason}
+							onChange={(event) => {
+								setReason(event.target.value);
+							}}
+							placeholder="Ticket and purpose"
+						/>
+					</Row>
+				</Group>
+			</Section>
+			<Section title="Tenant directory">
+				<Group>
+					<Row>
+						{tenants.data?.tenants?.length ? (
+							<ul className="divide-y divide-white/[0.07]">
+								{tenants.data.tenants.map((item) => (
+									<li className="flex items-center justify-between gap-3 py-2" key={item.id}>
+										<div>
+											<p className="text-sm text-white">
+												{item.name} · {item.status}
+											</p>
+											<p className="text-xs text-[#858585]">
+												{item.id} · {item.slug}
+											</p>
+										</div>
 										<Button
+											size="sm"
 											variant="outline"
-											disabled={action.isPending}
 											onClick={() => {
-												run("updateKey");
+												setTenantId(item.id || "");
+												setKeyId("");
+												setName(item.name || "");
+												setStatus(item.status || "active");
+												setQuotaInput(
+													item.monthly_email_limit == null ? "" : String(item.monthly_email_limit),
+												);
 											}}
 										>
-											Update key
+											Inspect
 										</Button>
-										<Button
-											variant="outline"
-											disabled={action.isPending}
-											onClick={() => {
-												run("reactivateKey");
-											}}
-										>
-											Reactivate
-										</Button>
-										<Button
-											variant="destructive"
-											disabled={action.isPending}
-											onClick={() => {
-												run("revokeKey");
-											}}
-										>
-											Revoke
-										</Button>
-									</>
-								) : null}
-							</div>
-							{key.data ? (
-								<p className="text-sm">
-									Selected key {key.data.key_prefix}… · {key.data.status} · Last used{" "}
-									{key.data.last_used_at || "never"}
-								</p>
-							) : null}
-						</div>
-					) : null}
-					{revealedKey ? (
-						<div role="status" className="rounded border p-3">
-							<Label htmlFor="operator-new-key">New key — copy once</Label>
-							<Input id="operator-new-key" readOnly value={revealedKey} />
-							<Button
-								variant="outline"
-								onClick={() => {
-									void navigator.clipboard.writeText(revealedKey);
-								}}
-							>
-								Copy
-							</Button>
-							<Button
-								variant="ghost"
-								onClick={() => {
-									setRevealedKey("");
-								}}
-							>
-								Done
-							</Button>
-						</div>
-					) : null}
-				</CardContent>
-			</Card>
-			<Card>
-				<CardHeader>
-					<CardTitle>Job monitoring</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<p>{allJobs.data?.total ?? 0} recent platform jobs</p>
-					{allJobs.data?.jobs.length ? (
-						<ul className="divide-y">
-							{allJobs.data.jobs.map((item) => (
-								<li className="flex items-center justify-between gap-2 py-2" key={item.job_id}>
-									<span>
-										Job {String(item.job_id)} · {item.tenant_name || item.tenant_id || "Legacy"} ·{" "}
-										{item.status}
-									</span>
-									<Button
-										size="sm"
-										variant="outline"
-										onClick={() => {
-											setJobId(item.job_id);
-										}}
-									>
-										Inspect
-									</Button>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p>No jobs found.</p>
-					)}
-					{job.data ? (
-						<div className="rounded border p-3">
-							<p className="font-medium">
-								Job {String(job.data.job_id)} · {job.data.status} · {job.data.total_records} records
-							</p>
-							<p>
-								Events: {events.data?.total ?? 0} · Results: {results.data?.total ?? 0}
-							</p>
-							<ol className="mt-2 space-y-1 text-sm">
-								{events.data?.events.map((item) => (
-									<li key={item.id}>
-										{item.event_type} · {new Date(item.created_at).toLocaleString()}
-									</li>
-								))}
-							</ol>
-							<ul className="mt-2 space-y-1 text-sm">
-								{results.data?.results.map((item) => (
-									<li key={item.id}>
-										Task {String(item.id)} · {item.task_state}
-										{item.error ? ` · ${item.error}` : ""}
 									</li>
 								))}
 							</ul>
-						</div>
-					) : null}
-				</CardContent>
-			</Card>
+						) : (
+							<p className="text-sm text-[#858585]">No tenants found.</p>
+						)}
+						<form
+							className="grid gap-3 sm:grid-cols-3"
+							onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+								event.preventDefault();
+								run("createTenant");
+							}}
+						>
+							<div>
+								<Label
+									className="text-xs font-medium text-neutral-400"
+									htmlFor="operator-tenant-name"
+								>
+									Tenant name
+								</Label>
+								<Input
+									id="operator-tenant-name"
+									value={name}
+									onChange={(event) => {
+										setName(event.target.value);
+									}}
+								/>
+							</div>
+							<div>
+								<Label
+									className="text-xs font-medium text-neutral-400"
+									htmlFor="operator-tenant-slug"
+								>
+									Slug
+								</Label>
+								<Input
+									id="operator-tenant-slug"
+									value={slug}
+									onChange={(event) => {
+										setSlug(event.target.value);
+									}}
+								/>
+							</div>
+							<div>
+								<Label
+									className="text-xs font-medium text-neutral-400"
+									htmlFor="operator-tenant-email"
+								>
+									Contact email
+								</Label>
+								<Input
+									id="operator-tenant-email"
+									type="email"
+									value={email}
+									onChange={(event) => {
+										setEmail(event.target.value);
+									}}
+								/>
+							</div>
+							<Button type="submit" disabled={action.isPending}>
+								Create tenant
+							</Button>
+						</form>
+					</Row>
+				</Group>
+			</Section>
+			{tenantId ? (
+				<Section title={`Tenant ${tenant.data?.name || tenantId}`}>
+					<Group>
+						<Row>
+							<p>
+								{tenant.data?.status} · {tenant.data?.plan_tier} · {tenant.data?.contact_email}
+							</p>
+							<div className="flex flex-wrap gap-2">
+								<Label className="text-xs font-medium text-neutral-400" htmlFor="operator-status">
+									Status
+								</Label>
+								<select
+									id="operator-status"
+									className="h-9 rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
+									value={status}
+									onChange={(event) => {
+										setStatus(event.target.value);
+									}}
+								>
+									<option value="active">Active</option>
+									<option value="suspended">Suspended</option>
+								</select>
+								<Button
+									variant="outline"
+									disabled={action.isPending}
+									onClick={() => {
+										run("updateTenant");
+									}}
+								>
+									Save tenant
+								</Button>
+								<Button
+									variant="destructive"
+									disabled={action.isPending}
+									onClick={() => {
+										run("deleteTenant");
+									}}
+								>
+									Delete tenant
+								</Button>
+							</div>
+							<p>
+								Quota: {quota.data?.used_this_period ?? 0} used ·{" "}
+								{quota.data?.quota_unlimited
+									? "Unlimited"
+									: (quota.data?.monthly_email_limit ?? "Unset")}{" "}
+								monthly limit
+							</p>
+							<div className="flex flex-wrap gap-2">
+								<Label className="sr-only" htmlFor="operator-quota">
+									Monthly email limit
+								</Label>
+								<Input
+									id="operator-quota"
+									inputMode="numeric"
+									placeholder="Monthly limit"
+									value={quotaInput}
+									onChange={(event) => {
+										setQuotaInput(event.target.value);
+									}}
+								/>
+								<Button
+									variant="outline"
+									disabled={action.isPending}
+									onClick={() => {
+										run("updateQuota");
+									}}
+								>
+									Set quota
+								</Button>
+								<Button
+									variant="outline"
+									disabled={action.isPending}
+									onClick={() => {
+										run("resetQuota");
+									}}
+								>
+									Reset usage
+								</Button>
+							</div>
+							<p className="text-sm">
+								Tenant jobs: {tenantJobs.data?.total ?? 0}. Select a job below to inspect results
+								and events.
+							</p>
+						</Row>
+					</Group>
+				</Section>
+			) : null}
+			<Section title="API key oversight">
+				<Group>
+					<Row>
+						<p>
+							Platform keys: {globalKeys.data?.total ?? globalKeys.data?.api_keys?.length ?? 0} ·
+							Selected tenant keys: {tenantKeys.data?.api_keys?.length ?? 0}
+						</p>
+						{tenantKeys.data?.api_keys?.length ? (
+							<ul className="divide-y divide-white/[0.07]">
+								{tenantKeys.data.api_keys.map((item) => (
+									<li className="flex items-center justify-between gap-2 py-2" key={item.id}>
+										<div>
+											<p>
+												{item.name} · {item.status}
+											</p>
+											<p className="text-xs">
+												{item.key_prefix}… · {item.scopes?.join(", ")}
+											</p>
+										</div>
+										<Button
+											variant="secondary"
+											size="sm"
+											onClick={() => {
+												setKeyId(item.id || "");
+												setKeyName(item.name || "");
+												setKeyScopes(item.scopes?.join(", ") || "verify");
+											}}
+										>
+											Inspect
+										</Button>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="text-sm text-[#858585]">Select a tenant to review its keys.</p>
+						)}
+						{tenantId ? (
+							<div className="space-y-3">
+								<div className="flex flex-wrap gap-2">
+									<div>
+										<Label
+											className="text-xs font-medium text-neutral-400"
+											htmlFor="operator-key-name"
+										>
+											Key name
+										</Label>
+										<Input
+											id="operator-key-name"
+											value={keyName}
+											onChange={(event) => {
+												setKeyName(event.target.value);
+											}}
+										/>
+									</div>
+									<div>
+										<Label
+											className="text-xs font-medium text-neutral-400"
+											htmlFor="operator-key-scopes"
+										>
+											Scopes, comma separated
+										</Label>
+										<Input
+											id="operator-key-scopes"
+											value={keyScopes}
+											onChange={(event) => {
+												setKeyScopes(event.target.value);
+											}}
+										/>
+									</div>
+								</div>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										disabled={action.isPending || Boolean(revealedKey)}
+										onClick={() => {
+											run("createKey");
+										}}
+									>
+										Create key
+									</Button>
+									{keyId ? (
+										<>
+											<Button
+												variant="outline"
+												disabled={action.isPending}
+												onClick={() => {
+													run("updateKey");
+												}}
+											>
+												Update key
+											</Button>
+											<Button
+												variant="outline"
+												disabled={action.isPending}
+												onClick={() => {
+													run("reactivateKey");
+												}}
+											>
+												Reactivate
+											</Button>
+											<Button
+												variant="destructive"
+												disabled={action.isPending}
+												onClick={() => {
+													run("revokeKey");
+												}}
+											>
+												Revoke
+											</Button>
+										</>
+									) : null}
+								</div>
+								{key.data ? (
+									<p className="text-sm">
+										Selected key {key.data.key_prefix}… · {key.data.status} · Last used{" "}
+										{key.data.last_used_at || "never"}
+									</p>
+								) : null}
+							</div>
+						) : null}
+						{revealedKey ? (
+							<div
+								role="status"
+								className="space-y-2 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]"
+							>
+								<Label className="text-xs font-medium text-neutral-400" htmlFor="operator-new-key">
+									New key — copy once
+								</Label>
+								<Input id="operator-new-key" readOnly value={revealedKey} />
+								<Button
+									variant="outline"
+									onClick={() => {
+										void navigator.clipboard.writeText(revealedKey);
+									}}
+								>
+									Copy
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={() => {
+										setRevealedKey("");
+									}}
+								>
+									Done
+								</Button>
+							</div>
+						) : null}
+					</Row>
+				</Group>
+			</Section>
+			<Section title="Job monitoring">
+				<Group>
+					<Row>
+						<p>{allJobs.data?.total ?? 0} recent platform jobs</p>
+						{allJobs.data?.jobs.length ? (
+							<ul className="divide-y divide-white/[0.07]">
+								{allJobs.data.jobs.map((item) => (
+									<li className="flex items-center justify-between gap-2 py-2" key={item.job_id}>
+										<span>
+											Job {String(item.job_id)} · {item.tenant_name || item.tenant_id || "Legacy"} ·{" "}
+											{item.status}
+										</span>
+										<Button
+											size="sm"
+											variant="outline"
+											onClick={() => {
+												setJobId(item.job_id);
+											}}
+										>
+											Inspect
+										</Button>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="text-sm text-[#858585]">No jobs found.</p>
+						)}
+						{job.data ? (
+							<div className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
+								<p className="text-sm font-medium text-white">
+									Job {String(job.data.job_id)} · {job.data.status} · {job.data.total_records}{" "}
+									records
+								</p>
+								<p>
+									Events: {events.data?.total ?? 0} · Results: {results.data?.total ?? 0}
+								</p>
+								<ol className="mt-2 space-y-1 text-sm">
+									{events.data?.events.map((item) => (
+										<li key={item.id}>
+											{item.event_type} · {new Date(item.created_at).toLocaleString()}
+										</li>
+									))}
+								</ol>
+								<ul className="mt-2 space-y-1 text-sm">
+									{results.data?.results.map((item) => (
+										<li key={item.id}>
+											Task {String(item.id)} · {item.task_state}
+											{item.error ? ` · ${item.error}` : ""}
+										</li>
+									))}
+								</ul>
+							</div>
+						) : null}
+					</Row>
+				</Group>
+			</Section>
 		</section>
 	);
 }

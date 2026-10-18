@@ -25,6 +25,7 @@ import {
 	SelectValue,
 } from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
 import {
 	CreateTenantApiKey201Response,
 	GetTenantApiKey200Response,
@@ -199,313 +200,94 @@ export function DeveloperSettings({
 		}
 	}
 
+	const fieldLabel = "text-xs font-medium text-neutral-400";
 	return (
-		<section className={cn("pb-10", className)} data-slot="developer-settings" {...props}>
-			<header className="settings-page-intro">
-				<h1 className="settings-page-title">API keys</h1>
-				<p className="settings-page-description">
-					Create scoped credentials for the backend API and review their status and recent use.
-				</p>
-			</header>
-			{error ? (
-				<Alert variant="destructive">
-					<AlertDescription>{error}</AlertDescription>
-				</Alert>
-			) : null}
-			{notice ? (
-				<Alert role="status">
-					<AlertDescription>{notice}</AlertDescription>
-				</Alert>
-			) : null}
-			<section className="settings-section-block">
-				<div className="settings-section-heading">
-					<div>
-						<h2 className="settings-section-title">API access</h2>
-						<p className="settings-section-description">
-							Call <code>/v1/*</code> on this app&apos;s host with the key as a Bearer token. Keys
-							belong to this workspace.
-						</p>
-					</div>
-				</div>
-				<div className="settings-panel">
-					<div className="settings-row">
-						<div className="settings-row-copy">
-							<p className="settings-row-label">API reference</p>
-							<p className="settings-row-description">
-								Browse backend endpoints and operation details in the OpenAPI schema.
-							</p>
-						</div>
-						<Link
-							className="text-sm underline underline-offset-4"
-							href="/api/backend/openapi.json"
-							rel="noopener noreferrer"
-							target="_blank"
-						>
-							Open schema
-						</Link>
-					</div>
-				</div>
-			</section>
-			{!canManage ? (
-				<Alert className="mt-6">
-					<AlertDescription>
-						Only workspace owners and administrators can manage API keys.
-					</AlertDescription>
-				</Alert>
-			) : (
-				<>
-					<section className="settings-section-block">
-						<div className="settings-section-heading">
-							<div>
-								<h2 className="settings-section-title">Workspace keys</h2>
-								<p className="settings-section-description">
-									Only prefixes are visible after creation.
-								</p>
-							</div>
-						</div>
-						<div className="settings-panel">
-							{keys.isPending ? <p className="p-4 text-sm">Loading API keys…</p> : null}
-							{keys.isError ? (
-								<div className="settings-row">
-									<p role="alert">{requestError(keys.error)}</p>
-									<Button
-										onClick={() => void keys.refetch()}
-										size="sm"
-										type="button"
-										variant="outline"
-									>
-										Retry
-									</Button>
-								</div>
-							) : null}
-							{keys.data?.api_keys.length === 0 ? (
-								<p className="p-4 text-sm text-muted-foreground">No API keys yet.</p>
-							) : null}
-							{keys.data?.api_keys.map((key) => (
-								<div className="settings-row" key={key.id}>
-									<div className="settings-row-copy">
-										<p className="settings-row-label">{key.name}</p>
-										<p className="settings-row-description">
-											<code>{key.key_prefix}…</code> · {key.status} ·{" "}
-											{key.scopes.length ? key.scopes.join(", ") : "Full access"}
-										</p>
-										<p className="settings-row-description">
-											Created {new Date(key.created_at).toLocaleDateString()} · Last used{" "}
-											{key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : "never"}{" "}
-											· Expires{" "}
-											{key.expires_at ? new Date(key.expires_at).toLocaleDateString() : "never"}
-										</p>
-									</div>
-									{key.status === "active" ? (
-										<div className="flex gap-2">
-											<Button
-												onClick={() => {
-													setSelectedKeyId(key.id);
-													setEditName(key.name);
-													setEditScopes(
-														key.scopes.filter(
-															(scope): scope is z.infer<typeof ApiKeyScopeSchema> =>
-																ApiKeyScopeSchema.safeParse(scope).success,
-														),
-													);
-												}}
-												size="sm"
-												type="button"
-												variant="outline"
-											>
-												Manage
-											</Button>
-											<Button
-												disabled={revoke.isPending}
-												onClick={() => void revokeKey(key.id, key.name)}
-												size="sm"
-												type="button"
-												variant="destructive"
-											>
-												Revoke {key.name}
-											</Button>
-										</div>
-									) : null}
-								</div>
-							))}
-						</div>
-						{selectedKeyId ? (
-							<div className="border-t p-5">
-								<h3 className="font-medium">Manage key</h3>
-								{selectedKey.isPending ? <p role="status">Loading key details…</p> : null}
-								{selectedKey.isError ? <p role="alert">{requestError(selectedKey.error)}</p> : null}
-								{selectedKey.data ? (
-									<p className="text-sm text-muted-foreground">
-										{selectedKey.data.key_prefix}… · {selectedKey.data.status} · Expires{" "}
-										{selectedKey.data.expires_at
-											? new Date(selectedKey.data.expires_at).toLocaleDateString()
-											: "never"}
-									</p>
-								) : null}
-								<form
-									className="mt-4 space-y-4"
-									onSubmit={(event) => {
-										event.preventDefault();
-										void update.mutateAsync().catch((cause: unknown) => {
-											setError(requestError(cause));
-										});
-									}}
+		<section
+			className={cn("flex flex-col gap-10", className)}
+			data-slot="developer-settings"
+			{...props}
+		>
+			<Section
+				description="Create scoped credentials for the backend API and review their status and recent use."
+				title="API keys"
+			>
+				<div className="flex flex-col gap-10">
+					{error ? (
+						<Alert variant="destructive">
+							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					) : null}
+					{notice ? (
+						<Alert role="status">
+							<AlertDescription>{notice}</AlertDescription>
+						</Alert>
+					) : null}
+					<Section
+						description={
+							<>
+								Call <code>/v1/*</code> on this app&apos;s host with the key as a Bearer token. Keys
+								belong to this workspace.
+							</>
+						}
+						title="API access"
+					>
+						<Group>
+							<Row
+								description="Browse backend endpoints and operation details in the OpenAPI schema."
+								label="API reference"
+								layout="inline"
+							>
+								<Link
+									className="text-sm text-neutral-300 underline underline-offset-4 hover:text-white"
+									href="/api/backend/openapi.json"
+									rel="noopener noreferrer"
+									target="_blank"
 								>
-									<div className="space-y-2">
-										<Label htmlFor="edit-api-key-name">Name</Label>
-										<Input
-											id="edit-api-key-name"
-											value={editName}
-											onChange={(event) => {
-												setEditName(event.target.value);
-											}}
-										/>
-									</div>
-									<fieldset className="space-y-2">
-										<legend className="text-sm font-medium">Scopes</legend>
-										<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-											{scopeOptions.map(([scope, label]) => (
-												<Label
-													className="flex items-center gap-2 text-sm"
-													htmlFor={`edit-api-key-scope-${scope}`}
-													key={scope}
-												>
-													<Checkbox
-														id={`edit-api-key-scope-${scope}`}
-														checked={editScopes.includes(scope)}
-														onCheckedChange={(checked) => {
-															setEditScopes((current) =>
-																checked === true
-																	? [...current, scope]
-																	: current.filter((item) => item !== scope),
-															);
-														}}
-													/>
-													{label}
-												</Label>
-											))}
-										</div>
-									</fieldset>
-									<div className="flex gap-2">
-										<Button type="submit" disabled={update.isPending}>
-											Save key
-										</Button>
-										<Button
-											type="button"
-											variant="ghost"
-											onClick={() => {
-												setSelectedKeyId(null);
-											}}
-										>
-											Close
-										</Button>
-									</div>
-								</form>
-							</div>
-						) : null}
-					</section>
-					<section className="settings-section-block">
-						<div className="settings-section-heading">
-							<div>
-								<h2 className="settings-section-title">Create a key</h2>
-								<p className="settings-section-description">
-									Choose only the operations this integration needs. New keys expire by default.
-								</p>
-							</div>
-						</div>
-						{apiDenial ? (
-							<div className="settings-panel space-y-2 p-5 text-sm">
-								<p>API keys come with the Professional and Enterprise plans.</p>
-								<Link className="underline underline-offset-2" href="/app/settings?settings=usage">
-									See plans in Usage
+									Open schema
 								</Link>
-							</div>
-						) : (
-							<div className="settings-panel p-5">
-								<form className="space-y-5" onSubmit={(event) => void submit(event)}>
-									<div className="space-y-2">
-										<Label htmlFor="api-key-name">Key name</Label>
-										<Input
-											id="api-key-name"
-											maxLength={80}
-											onChange={(event) => {
-												setName(event.target.value);
-											}}
-											placeholder="Production integration"
-											required
-											value={name}
-										/>
-									</div>
-									<fieldset className="space-y-2">
-										<legend className="text-sm font-medium">Scopes</legend>
-										<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-											{scopeOptions.map(([scope, label]) => (
-												<Label
-													className="flex items-center gap-2 text-sm"
-													htmlFor={`api-key-scope-${scope}`}
-													key={scope}
-												>
-													<Checkbox
-														aria-label={label}
-														checked={scopes.includes(scope)}
-														id={`api-key-scope-${scope}`}
-														onCheckedChange={(checked) => {
-															setScopes((current) =>
-																checked === true
-																	? [...current, scope]
-																	: current.filter((item) => item !== scope),
-															);
-														}}
-													/>
-													{label}
-												</Label>
-											))}
-										</div>
-									</fieldset>
-									<div className="space-y-2">
-										<Label htmlFor="api-key-lifetime">Expires after</Label>
-										<Select
-											onValueChange={(value) => {
-												setLifetimeDays(Number(value));
-											}}
-											value={String(lifetimeDays)}
+							</Row>
+						</Group>
+					</Section>
+					{!canManage ? (
+						<Alert>
+							<AlertDescription>
+								Only workspace owners and administrators can manage API keys.
+							</AlertDescription>
+						</Alert>
+					) : (
+						<>
+							{revealedKey ? (
+								<div
+									className="flex flex-col gap-3 rounded-2xl bg-emerald-500/5 p-5 ring-1 ring-emerald-500/20"
+									role="status"
+								>
+									<Label className="text-sm font-medium text-white" htmlFor="new-api-key">
+										New API key — copy it now
+									</Label>
+									<Input
+										className="h-9 rounded-lg font-mono text-xs"
+										id="new-api-key"
+										readOnly
+										value={revealedKey}
+									/>
+									<div className="flex gap-2">
+										<Button
+											className="rounded-lg"
+											onClick={() =>
+												void navigator.clipboard.writeText(revealedKey).then(
+													() => {
+														setCopied(true);
+													},
+													() => {
+														setError("Could not copy the key.");
+													},
+												)
+											}
+											size="sm"
+											type="button"
 										>
-											<SelectTrigger className="w-full" id="api-key-lifetime">
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="30">30 days</SelectItem>
-												<SelectItem value="90">90 days</SelectItem>
-												<SelectItem value="365">1 year</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-									<Button disabled={create.isPending || Boolean(revealedKey)} type="submit">
-										{create.isPending ? "Creating…" : "Create API key"}
-									</Button>
-								</form>
-								{revealedKey ? (
-									<div className="mt-5 space-y-2 border-t pt-5" role="status">
-										<Label htmlFor="new-api-key">New API key — copy it now</Label>
-										<div className="flex gap-2">
-											<Input id="new-api-key" readOnly value={revealedKey} />
-											<Button
-												onClick={() =>
-													void navigator.clipboard.writeText(revealedKey).then(
-														() => {
-															setCopied(true);
-														},
-														() => {
-															setError("Could not copy the key.");
-														},
-													)
-												}
-												type="button"
-												variant="outline"
-											>
-												{copied ? "Copied" : "Copy key"}
-											</Button>
-										</div>
+											{copied ? "Copied" : "Copy key"}
+										</Button>
 										<Button
 											onClick={() => {
 												setRevealedKey(null);
@@ -517,12 +299,290 @@ export function DeveloperSettings({
 											Done
 										</Button>
 									</div>
-								) : null}
-							</div>
-						)}
-					</section>
-				</>
-			)}
+								</div>
+							) : null}
+							<Section
+								description="Only prefixes are visible after creation."
+								title="Workspace keys"
+							>
+								<Group>
+									{keys.isPending ? (
+										<Row>
+											<p className="text-sm text-[#858585]">Loading API keys…</p>
+										</Row>
+									) : null}
+									{keys.isError ? (
+										<Row
+											label={<span role="alert">{requestError(keys.error)}</span>}
+											layout="inline"
+										>
+											<Button
+												className="rounded-lg"
+												onClick={() => void keys.refetch()}
+												size="sm"
+												type="button"
+												variant="outline"
+											>
+												Retry
+											</Button>
+										</Row>
+									) : null}
+									{keys.data?.api_keys.length === 0 ? (
+										<Row>
+											<p className="text-sm text-[#858585]">No API keys yet.</p>
+										</Row>
+									) : null}
+									{keys.data?.api_keys.map((key) => (
+										<div
+											className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+											key={key.id}
+										>
+											<div className="min-w-0 flex-1">
+												<p className="truncate text-sm text-white">{key.name}</p>
+												<p className="truncate text-xs text-[#858585]">
+													<code className="font-mono">{key.key_prefix}…</code> ·{" "}
+													{key.scopes.length ? key.scopes.join(", ") : "Full access"}
+												</p>
+												<p className="truncate text-xs text-[#858585]">
+													Created {new Date(key.created_at).toLocaleDateString()} · Last used{" "}
+													{key.last_used_at
+														? new Date(key.last_used_at).toLocaleDateString()
+														: "never"}{" "}
+													· Expires{" "}
+													{key.expires_at ? new Date(key.expires_at).toLocaleDateString() : "never"}
+												</p>
+											</div>
+											<Pill tone={key.status === "active" ? "green" : "gray"}>{key.status}</Pill>
+											{key.status === "active" ? (
+												<div className="flex items-center gap-2">
+													<Button
+														onClick={() => {
+															setSelectedKeyId(key.id);
+															setEditName(key.name);
+															setEditScopes(
+																key.scopes.filter(
+																	(scope): scope is z.infer<typeof ApiKeyScopeSchema> =>
+																		ApiKeyScopeSchema.safeParse(scope).success,
+																),
+															);
+														}}
+														size="sm"
+														type="button"
+														variant="secondary"
+													>
+														Manage
+													</Button>
+													<Button
+														className="text-red-400 hover:text-red-300"
+														disabled={revoke.isPending}
+														onClick={() => void revokeKey(key.id, key.name)}
+														size="sm"
+														type="button"
+														variant="ghost"
+													>
+														Revoke {key.name}
+													</Button>
+												</div>
+											) : null}
+										</div>
+									))}
+									{selectedKeyId ? (
+										<Row>
+											<div>
+												<h3 className="text-sm font-medium text-white">Manage key</h3>
+												{selectedKey.isPending ? (
+													<p className="mt-0.5 text-xs text-[#858585]" role="status">
+														Loading key details…
+													</p>
+												) : null}
+												{selectedKey.isError ? (
+													<p className="mt-0.5 text-xs text-red-300" role="alert">
+														{requestError(selectedKey.error)}
+													</p>
+												) : null}
+												{selectedKey.data ? (
+													<p className="mt-0.5 text-xs text-[#858585]">
+														{selectedKey.data.key_prefix}… · {selectedKey.data.status} · Expires{" "}
+														{selectedKey.data.expires_at
+															? new Date(selectedKey.data.expires_at).toLocaleDateString()
+															: "never"}
+													</p>
+												) : null}
+											</div>
+											<form
+												className="flex flex-col gap-4"
+												onSubmit={(event) => {
+													event.preventDefault();
+													void update.mutateAsync().catch((cause: unknown) => {
+														setError(requestError(cause));
+													});
+												}}
+											>
+												<div className="flex flex-col gap-1.5">
+													<Label className={fieldLabel} htmlFor="edit-api-key-name">
+														Name
+													</Label>
+													<Input
+														className="h-10 rounded-lg"
+														id="edit-api-key-name"
+														value={editName}
+														onChange={(event) => {
+															setEditName(event.target.value);
+														}}
+													/>
+												</div>
+												<fieldset className="flex flex-col gap-2">
+													<legend className={`mb-2 ${fieldLabel}`}>Scopes</legend>
+													<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+														{scopeOptions.map(([scope, label]) => (
+															<Label
+																className="flex items-center gap-2 text-xs text-neutral-300"
+																htmlFor={`edit-api-key-scope-${scope}`}
+																key={scope}
+															>
+																<Checkbox
+																	id={`edit-api-key-scope-${scope}`}
+																	checked={editScopes.includes(scope)}
+																	onCheckedChange={(checked) => {
+																		setEditScopes((current) =>
+																			checked === true
+																				? [...current, scope]
+																				: current.filter((item) => item !== scope),
+																		);
+																	}}
+																/>
+																{label}
+															</Label>
+														))}
+													</div>
+												</fieldset>
+												<div className="flex justify-end gap-2">
+													<Button
+														type="button"
+														variant="ghost"
+														onClick={() => {
+															setSelectedKeyId(null);
+														}}
+													>
+														Close
+													</Button>
+													<Button className="rounded-lg" type="submit" disabled={update.isPending}>
+														Save key
+													</Button>
+												</div>
+											</form>
+										</Row>
+									) : null}
+									{apiDenial ? (
+										<Row
+											description="API keys come with the Professional and Enterprise plans."
+											label="Upgrade for API access"
+										>
+											<Link
+												className="text-sm text-neutral-300 underline underline-offset-2 hover:text-white"
+												href="/app/settings?settings=usage"
+											>
+												See plans in Usage
+											</Link>
+										</Row>
+									) : (
+										<Row>
+											<form
+												className="flex flex-col gap-4"
+												onSubmit={(event) => void submit(event)}
+											>
+												<div>
+													<h3 className="text-sm font-medium text-white">Create a key</h3>
+													<p className="mt-0.5 text-xs text-[#858585]">
+														Choose only the operations this integration needs. New keys expire by
+														default.
+													</p>
+												</div>
+												<div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
+													<div className="flex flex-col gap-1.5">
+														<Label className={fieldLabel} htmlFor="api-key-name">
+															Key name
+														</Label>
+														<Input
+															className="h-10 rounded-lg"
+															id="api-key-name"
+															maxLength={80}
+															onChange={(event) => {
+																setName(event.target.value);
+															}}
+															placeholder="Production integration"
+															required
+															value={name}
+														/>
+													</div>
+													<div className="flex flex-col gap-1.5">
+														<Label className={fieldLabel} htmlFor="api-key-lifetime">
+															Expires after
+														</Label>
+														<Select
+															onValueChange={(value) => {
+																setLifetimeDays(Number(value));
+															}}
+															value={String(lifetimeDays)}
+														>
+															<SelectTrigger
+																className="h-10 w-full rounded-lg"
+																id="api-key-lifetime"
+															>
+																<SelectValue />
+															</SelectTrigger>
+															<SelectContent>
+																<SelectItem value="30">30 days</SelectItem>
+																<SelectItem value="90">90 days</SelectItem>
+																<SelectItem value="365">1 year</SelectItem>
+															</SelectContent>
+														</Select>
+													</div>
+												</div>
+												<fieldset className="flex flex-col gap-2">
+													<legend className={`mb-2 ${fieldLabel}`}>Scopes</legend>
+													<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+														{scopeOptions.map(([scope, label]) => (
+															<Label
+																className="flex items-center gap-2 text-xs text-neutral-300"
+																htmlFor={`api-key-scope-${scope}`}
+																key={scope}
+															>
+																<Checkbox
+																	aria-label={label}
+																	checked={scopes.includes(scope)}
+																	id={`api-key-scope-${scope}`}
+																	onCheckedChange={(checked) => {
+																		setScopes((current) =>
+																			checked === true
+																				? [...current, scope]
+																				: current.filter((item) => item !== scope),
+																		);
+																	}}
+																/>
+																{label}
+															</Label>
+														))}
+													</div>
+												</fieldset>
+												<div className="flex justify-end">
+													<Button
+														className="rounded-lg"
+														disabled={create.isPending || Boolean(revealedKey)}
+														type="submit"
+													>
+														{create.isPending ? "Creating…" : "Create API key"}
+													</Button>
+												</div>
+											</form>
+										</Row>
+									)}
+								</Group>
+							</Section>
+						</>
+					)}
+				</div>
+			</Section>
 		</section>
 	);
 }

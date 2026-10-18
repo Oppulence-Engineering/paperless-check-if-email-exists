@@ -7,13 +7,9 @@ import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Row, Section } from "@/components/platform/page-kit";
 import { ArrowRight } from "@/lib/icons";
-import {
-	settingsGroups,
-	settingsHref,
-	settingsSectionFromParam,
-	settingsSections,
-} from "@/lib/dashboard/settings-navigation";
+import { settingsHref, settingsSectionFromParam } from "@/lib/dashboard/settings-navigation";
 
 import type { IdentitySettingsPropsFields } from "../identity-settings/identity-settings.schema";
 import type { VerificationSettingsPropsFields } from "../verification-settings/verification-settings.schema";
@@ -21,24 +17,24 @@ import { type SettingsDashboardRoutePropsFields } from "./settings-dashboard-rou
 
 const IdentitySettings = dynamic(
 	() => import("../identity-settings/identity-settings").then((module) => module.IdentitySettings),
-	{ loading: () => <div className="settings-panel p-4">Loading settings…</div> },
+	{ loading: () => <p className="text-sm text-[#858585]">Loading settings…</p> },
 );
 const VerificationSettings = dynamic(
 	() =>
 		import("../verification-settings/verification-settings").then(
 			(module) => module.VerificationSettings,
 		),
-	{ loading: () => <div className="settings-panel p-4">Loading settings…</div> },
+	{ loading: () => <p className="text-sm text-[#858585]">Loading settings…</p> },
 );
 const DeveloperSettings = dynamic(
 	() =>
 		import("../developer-settings/developer-settings").then((module) => module.DeveloperSettings),
-	{ loading: () => <div className="settings-panel p-4">Loading API keys…</div> },
+	{ loading: () => <p className="text-sm text-[#858585]">Loading API keys…</p> },
 );
 
 /**
  * @oppulence-gen kind=component
- * Template settings overview and focused panels for this workspace.
+ * One settings section for this workspace, like the Shots settings page.
  * Owned by `settings-dashboard-route.lit.ts`.
  */
 export type SettingsDashboardRouteProps = SettingsDashboardRoutePropsFields &
@@ -71,53 +67,14 @@ export function SettingsDashboardRoute({
 	};
 	const verificationScope = verificationScopes[current.key];
 
+	const linkRow = "flex items-center gap-4 p-5 transition-colors hover:bg-white/[0.02]";
 	return (
-		<section
-			className={cn("settings-page-scroll min-h-0 flex-1", className)}
-			data-slot="settings-dashboard-route"
-			{...props}
-		>
-			<div className={cn("settings-page", current.key === "overview" && "settings-page--wide")}>
-				{current.key === "overview" ? (
-					<>
-						<header className="settings-page-intro">
-							<h1 className="settings-page-title">Settings</h1>
-							<p className="settings-page-description">
-								Manage your workspace, verification, access, integrations, and account.
-							</p>
-						</header>
-						<div className="settings-overview-grid">
-							{settingsGroups.map((group) => (
-								<section className="settings-overview-group" data-group={group.key} key={group.key}>
-									<h2 className="settings-section-title mb-2">{group.label}</h2>
-									<nav aria-label={`${group.label} settings`} className="settings-link-list">
-										{settingsSections
-											.filter((item) => item.group === group.key)
-											.map((item) => (
-												<Link
-													aria-label={item.label}
-													className="settings-link-row"
-													href={settingsHref(item.key)}
-													key={item.key}
-												>
-													<span className="settings-link-row-icon">
-														<item.icon />
-													</span>
-													<span className="settings-link-row-copy min-w-0 flex-1">
-														<span className="settings-link-row-title">{item.label}</span>
-														<span className="settings-link-row-description">
-															{item.description}
-														</span>
-													</span>
-													<ArrowRight className="ml-2 size-3.5 shrink-0 opacity-30" />
-												</Link>
-											))}
-									</nav>
-								</section>
-							))}
-						</div>
-					</>
-				) : null}
+		<Page title="Settings" width="md">
+			<section
+				className={cn("flex flex-col gap-10", className)}
+				data-slot="settings-dashboard-route"
+				{...props}
+			>
 				{identityScope ? (
 					<IdentitySettings
 						organizationId={organizationId}
@@ -142,58 +99,54 @@ export function SettingsDashboardRoute({
 					/>
 				) : null}
 				{current.key === "account" ? (
-					<>
-						<header className="settings-page-intro">
-							<h1 className="settings-page-title">Account</h1>
-							<p className="settings-page-description">
-								Review your personal identity and current workspace access.
-							</p>
-						</header>
-						<section className="settings-section-block">
-							<h2 className="settings-section-title mb-3">Profile</h2>
-							<div className="settings-panel">
+					<Section
+						description="Review your personal identity and current workspace access."
+						title="Account"
+					>
+						<Section title="Profile">
+							<Group>
 								{[
 									["Name", userName || "—"],
 									["Email", userEmail],
 									["Workspace role", organizationRole],
 								].map(([label, value]) => (
-									<div className="settings-row" key={label}>
-										<span className="settings-row-label">{label}</span>
-										<span className="text-sm">{value}</span>
-									</div>
+									<Row key={label} label={label} layout="inline">
+										<span className="text-sm text-neutral-300">{value}</span>
+									</Row>
 								))}
-							</div>
-						</section>
-						<Link
-							className="mt-5 inline-flex text-sm underline underline-offset-4"
-							href={settingsHref("security")}
-						>
-							Manage authentication and sessions
-						</Link>
-					</>
+								<Link className={linkRow} href={settingsHref("security")}>
+									<span className="min-w-0 flex-1 text-sm font-medium text-white">
+										Manage authentication and sessions
+									</span>
+									<ArrowRight className="shrink-0 text-neutral-600" size={14} />
+								</Link>
+							</Group>
+						</Section>
+					</Section>
 				) : null}
 				{current.key === "help" ? (
-					<>
-						<header className="settings-page-intro">
-							<h1 className="settings-page-title">Help</h1>
-							<p className="settings-page-description">
-								Get help with your workspace and verification.
-							</p>
-						</header>
-						<section className="settings-section-block">
-							<h2 className="settings-section-title mb-3">Support</h2>
-							<nav aria-label="Support" className="settings-link-list">
-								<Link className="settings-link-row" href="/contact">
-									Contact support
-								</Link>
-								<Link className="settings-link-row" href="/blog">
-									Product updates
-								</Link>
+					<Section description="Get help with your workspace and verification." title="Help">
+						<Section title="Support">
+							<nav aria-label="Support">
+								<Group>
+									<Link className={linkRow} href="/contact">
+										<span className="min-w-0 flex-1 text-sm font-medium text-white">
+											Contact support
+										</span>
+										<ArrowRight className="shrink-0 text-neutral-600" size={14} />
+									</Link>
+									<Link className={linkRow} href="/blog">
+										<span className="min-w-0 flex-1 text-sm font-medium text-white">
+											Product updates
+										</span>
+										<ArrowRight className="shrink-0 text-neutral-600" size={14} />
+									</Link>
+								</Group>
 							</nav>
-						</section>
-					</>
+						</Section>
+					</Section>
 				) : null}
-			</div>
-		</section>
+			</section>
+		</Page>
 	);
 }

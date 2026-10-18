@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `check.lit.ts`.
  */
 export default function CheckLoading() {
-	return <DashboardRouteFallback label="Loading Check an email…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Check an email…" />
+		</main>
+	);
 }

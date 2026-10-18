@@ -6,6 +6,7 @@ import type { ComponentPropsWithoutRef } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Row } from "@/components/platform/page-kit";
 
 import { MONTHLY_CHECKS, MONTHLY_PRICE_USD, PAID_PLANS, type PaidPlan } from "@/lib/billing/plans";
 import { seatLimit } from "@/lib/entitlements/entitlements";
@@ -62,50 +63,55 @@ export function BillingPlan({
 	return (
 		<section
 			aria-label="Plan"
-			className={cn("space-y-4 text-sm", className)}
+			className={cn("flex flex-col divide-y divide-white/[0.07]", className)}
 			data-slot="billing-plan"
 			{...props}
 		>
-			<div>
-				<p className="text-xs text-muted-foreground">Current plan</p>
-				<p className="mt-1 text-base font-medium">{PLAN_NAME[plan]}</p>
-				<p className="text-xs text-muted-foreground">{allowance(plan)}</p>
-			</div>
+			<Row description={allowance(plan)} label="Current plan" layout="inline">
+				<span className="text-sm font-medium text-white">{PLAN_NAME[plan]}</span>
+			</Row>
 
 			{error ? (
-				<p className="text-xs text-destructive" role="alert">
-					{error}
-				</p>
+				<Row>
+					<p className="text-sm text-red-300" role="alert">
+						{error}
+					</p>
+				</Row>
 			) : null}
 
 			{!billingEnabled ? (
-				<p className="text-xs text-muted-foreground">
-					Online billing is not set up here. Contact us to change your plan.
-				</p>
+				<Row>
+					<p className="text-sm text-[#858585]">
+						Online billing is not set up here. Contact us to change your plan.
+					</p>
+				</Row>
 			) : !canManage ? (
-				<p className="text-xs text-muted-foreground">Only owners and admins can change the plan.</p>
+				<Row>
+					<p className="text-sm text-[#858585]">Only owners and admins can change the plan.</p>
+				</Row>
 			) : (
 				<>
 					{upgrades.length > 0 ? (
-						<ul className="divide-y divide-border border-y border-border">
+						<ul className="flex flex-col divide-y divide-white/[0.07]">
 							{upgrades.map((option) => (
 								<li
 									className={cn(
-										"flex items-center justify-between gap-4 py-3",
-										option === chosen && "-mx-3 bg-primary/5 px-3",
+										"flex items-center justify-between gap-4 px-5 py-4",
+										option === chosen && "bg-white/[0.04]",
 									)}
 									key={option}
 								>
-									<span>
+									<span className="min-w-0">
 										{option === chosen ? (
-											<span className="block text-xs text-primary">The plan you picked</span>
+											<span className="block text-xs text-violet-300">The plan you picked</span>
 										) : null}
-										<span className="block font-medium">
+										<span className="block text-sm font-medium text-white">
 											{PLAN_NAME[option]} · ${MONTHLY_PRICE_USD[option]} a month
 										</span>
-										<span className="block text-xs text-muted-foreground">{allowance(option)}</span>
+										<span className="block text-xs text-[#858585]">{allowance(option)}</span>
 									</span>
 									<Button
+										className="rounded-lg"
 										disabled={pending}
 										onClick={() => onUpgrade?.(option)}
 										size="sm"
@@ -118,26 +124,35 @@ export function BillingPlan({
 						</ul>
 					) : null}
 					{paid ? (
-						<Button
-							disabled={pending}
-							onClick={() => onManage?.()}
-							size="sm"
-							type="button"
-							variant="outline"
-						>
-							Manage billing
-						</Button>
+						<Row>
+							<div className="flex flex-wrap items-start gap-3">
+								<Button
+									className="rounded-lg"
+									disabled={pending}
+									onClick={() => onManage?.()}
+									type="button"
+									variant="outline"
+								>
+									Manage billing
+								</Button>
+							</div>
+						</Row>
 					) : null}
 				</>
 			)}
 			{plan !== "enterprise" ? (
-				<p className="text-xs text-muted-foreground">
-					Need more than {MONTHLY_CHECKS.professional?.toLocaleString("en-US")} checks a month?{" "}
-					<a className="underline underline-offset-2" href="/contact">
-						Ask about Enterprise
-					</a>
-					.
-				</p>
+				<Row>
+					<p className="text-sm text-[#858585]">
+						Need more than {MONTHLY_CHECKS.professional?.toLocaleString("en-US")} checks a month?{" "}
+						<a
+							className="text-neutral-300 underline underline-offset-2 hover:text-white"
+							href="/contact"
+						>
+							Ask about Enterprise
+						</a>
+						.
+					</p>
+				</Row>
 			) : null}
 		</section>
 	);

@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `outcomes.lit.ts`.
  */
 export default function OutcomesLoading() {
-	return <DashboardRouteFallback label="Loading Outcomes…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Outcomes…" />
+		</main>
+	);
 }

@@ -3,7 +3,11 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../identity-settings/identity-settings", () => ({
+	IdentitySettings: ({ scope }: { scope: string }) => <p>identity scope: {scope}</p>,
+}));
 
 import { SettingsDashboardRoute } from "./settings-dashboard-route";
 
@@ -19,27 +23,26 @@ const props = {
 afterEach(cleanup);
 
 describe("SettingsDashboardRoute", () => {
-	it("groups settings into focused sections with direct links", () => {
-		render(<SettingsDashboardRoute {...props} />);
+	it("opens the first section for an old, missing, or unknown key", async () => {
+		const { rerender } = render(<SettingsDashboardRoute {...props} />);
 
 		expect(screen.getByRole("heading", { name: "Settings", level: 1 })).toBeInTheDocument();
-		expect(screen.getByRole("navigation", { name: "Workspace settings" })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "Verification" })).toHaveAttribute(
-			"href",
-			"/app/settings?settings=verification",
-		);
-		expect(screen.getByRole("link", { name: "Members" })).toHaveAttribute(
-			"href",
-			"/app/settings?settings=members",
-		);
-		expect(screen.getByRole("link", { name: "API keys" })).toHaveAttribute(
-			"href",
-			"/app/settings?settings=developer",
-		);
+		expect(await screen.findByText("identity scope: workspace")).toBeInTheDocument();
+		expect(
+			screen.queryByRole("navigation", { name: "Workspace settings" }),
+		).not.toBeInTheDocument();
+
+		rerender(<SettingsDashboardRoute {...props} section="missing" />);
+		expect(screen.getByText("identity scope: workspace")).toBeInTheDocument();
 	});
 
-	it("falls back to the overview for an unknown section", () => {
-		render(<SettingsDashboardRoute {...props} section="missing" />);
-		expect(screen.getByRole("heading", { name: "Settings", level: 1 })).toBeInTheDocument();
+	it("shows the account profile with a link to authentication", () => {
+		render(<SettingsDashboardRoute {...props} section="account" />);
+
+		expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
+		expect(screen.getByText("owner@example.com")).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Manage authentication and sessions" }),
+		).toHaveAttribute("href", "/app/settings?settings=security");
 	});
 });

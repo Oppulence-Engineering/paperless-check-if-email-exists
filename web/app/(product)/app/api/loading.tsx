@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `api-explorer.lit.ts`.
  */
 export default function ApiExplorerLoading() {
-	return <DashboardRouteFallback label="Loading API explorer…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading API explorer…" />
+		</main>
+	);
 }

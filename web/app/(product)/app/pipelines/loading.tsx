@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `pipelines.lit.ts`.
  */
 export default function PipelinesLoading() {
-	return <DashboardRouteFallback label="Loading Pipelines…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Pipelines…" />
+		</main>
+	);
 }
