@@ -8,9 +8,6 @@ import { afterEach, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth/auth-client";
 import { AuthShell } from "./auth-shell";
 
-vi.mock("@/components/auth/auth-ledger-preview", () => ({
-	AuthLedgerPreview: () => null,
-}));
 vi.mock("@/lib/auth/auth-client", () => ({
 	authClient: {
 		emailOtp: {
