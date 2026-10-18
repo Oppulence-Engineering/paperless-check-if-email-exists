@@ -4,9 +4,10 @@ import "client-only";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
+import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Configuration, TenantApi, V1Api } from "@oppulence/reacher-sdk";
+import { Configuration, JobsApi, TenantApi, V1Api } from "@oppulence/reacher-sdk";
 import { z } from "zod";
 
 import { Alert, AlertDescription } from "@oppulence/ui/components/alert";
@@ -22,6 +23,7 @@ import {
 	SelectValue,
 } from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
+import { ScorePolicyList } from "@/components/features/automation/score-policy-list/score-policy-list";
 import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
 
 import {
@@ -33,6 +35,9 @@ import {
 	V1UpdateTenantWebhook200Response,
 	V1UpdateTenantWebhookBody,
 } from "@/lib/api/generated/zod/tenant/tenant";
+import { V1ReverificationStatus200Response } from "@/lib/api/generated/zod/v1/v1";
+import { JobStatusSchema } from "@/lib/api/schemas/jobs";
+import { jobStatus } from "@/lib/verification/labels";
 import { useAuthSession, useEntitlements } from "@/components/auth/auth-gate";
 import { authClient } from "@/lib/auth/auth-client";
 import { BillingPlan } from "../billing-plan/billing-plan";
@@ -44,15 +49,7 @@ export type VerificationSettingsProps = VerificationSettingsPropsFields &
 
 const sdk = new TenantApi(new Configuration({ basePath: "/api/backend" }));
 const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
-const reverificationSchema = z.object({
-	enabled: z.boolean(),
-	staleness_days: z.number().optional(),
-	batch_size: z.number().optional(),
-	last_run_at: z.string().optional(),
-	next_run_at: z.string().optional(),
-	last_job_id: z.number().optional(),
-	emails_requeued: z.number().optional(),
-});
+const jobsApi = new JobsApi(new Configuration({ basePath: "/api/backend" }));
 const policyModes = [
 	["growth", "Growth"],
 	["deliverability", "Deliverability"],
@@ -140,11 +137,21 @@ export function VerificationSettings({
 	const reverification = useQuery({
 		queryKey: workflowQueryKey("reverification-status", organizationId),
 		enabled: showDefaults,
-		queryFn: async () => reverificationSchema.parse((await v1Api.v1ReverificationStatus()).data),
+		queryFn: async () =>
+			V1ReverificationStatus200Response.parse((await v1Api.v1ReverificationStatus()).data),
+	});
+	const lastJobId = reverification.data?.last_job_id;
+	const lastJob = useQuery({
+		queryKey: workflowQueryKey("reverification-status", organizationId, "job", lastJobId),
+		enabled: lastJobId != null,
+		queryFn: async ({ signal }) =>
+			JobStatusSchema.parse(
+				(await jobsApi.v1GetJobStatus({ jobId: Number(lastJobId) }, { signal })).data,
+			),
 	});
 	const saveReverification = useMutation({
 		mutationFn: async (body: { enabled: boolean; staleness_days: number; batch_size: number }) =>
-			reverificationSchema.parse(
+			V1ReverificationStatus200Response.parse(
 				(await v1Api.v1UpdateReverification({ updateReverificationRequest: body })).data,
 			),
 		onSuccess: (data) => {
@@ -491,9 +498,6 @@ export function VerificationSettings({
 												reverification.data.next_run_at
 													? `Next run: ${new Date(reverification.data.next_run_at).toLocaleString()}`
 													: null,
-												reverification.data.emails_requeued != null
-													? `Addresses requeued: ${String(reverification.data.emails_requeued)}`
-													: null,
 												!canManage && reverification.data.staleness_days
 													? `Staleness threshold: ${String(reverification.data.staleness_days)} days`
 													: null,
@@ -506,6 +510,44 @@ export function VerificationSettings({
 											<Pill tone={reverification.data.enabled ? "green" : "gray"}>
 												{reverification.data.enabled ? "Enabled" : "Disabled"}
 											</Pill>
+										</Row>
+									) : null}
+									{reverification.data ? (
+										<Row
+											description={
+												reverification.data.last_run_at
+													? [
+															lastJob.data
+																? `${lastJob.data.total_records.toLocaleString()} addresses in this run`
+																: null,
+															`${(reverification.data.emails_requeued ?? 0).toLocaleString()} addresses sent for a new check in all runs`,
+														]
+															.filter(Boolean)
+															.join(" · ")
+													: "No run yet."
+											}
+											label="Last run"
+										>
+											<div className="flex flex-wrap items-center gap-2">
+												{reverification.data.last_run_at ? (
+													<time className={value} dateTime={reverification.data.last_run_at}>
+														{new Date(reverification.data.last_run_at).toLocaleString()}
+													</time>
+												) : null}
+												{lastJob.data ? (
+													<Pill tone={jobStatus.tone(lastJob.data.status)}>
+														{jobStatus.label(lastJob.data.status)}
+													</Pill>
+												) : null}
+												{lastJobId != null ? (
+													<Link
+														className="text-sm text-neutral-300 underline underline-offset-4 hover:text-white"
+														href={`/app/jobs?job=${String(lastJobId)}`}
+													>
+														Open job {lastJobId}
+													</Link>
+												) : null}
+											</div>
 										</Row>
 									) : null}
 									{reverification.data && canManage ? (
@@ -575,6 +617,14 @@ export function VerificationSettings({
 									</>
 								) : null}
 							</form>
+						</Section>
+					) : null}
+					{canManage && showDefaults ? (
+						<Section
+							description="A score policy decides send, review, or suppress for each address in a list. A list or a pipeline can name a policy. Other lists use the default policy."
+							title="Score policies"
+						>
+							<ScorePolicyList />
 						</Section>
 					) : null}
 					{canManage && showWebhook ? (

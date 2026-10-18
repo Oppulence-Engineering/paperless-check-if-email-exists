@@ -13,6 +13,12 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { SegmentFilter } from './segment-filter';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { SegmentScope } from './segment-scope';
 
 /**
  *
@@ -22,10 +28,10 @@
 export interface UpdateSavedSegmentRequest {
     /**
      *
-     * @type {any}
+     * @type {SegmentFilter}
      * @memberof UpdateSavedSegmentRequest
      */
-    'filter'?: any;
+    'filter'?: SegmentFilter;
     /**
      *
      * @type {string}
@@ -34,8 +40,8 @@ export interface UpdateSavedSegmentRequest {
     'name'?: string | null;
     /**
      *
-     * @type {string}
+     * @type {SegmentScope}
      * @memberof UpdateSavedSegmentRequest
      */
-    'scope'?: string | null;
+    'scope'?: SegmentScope | null;
 }

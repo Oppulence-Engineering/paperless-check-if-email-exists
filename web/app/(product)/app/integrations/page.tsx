@@ -5,7 +5,7 @@ import IntegrationsLoading from "./loading";
 
 /**
  * @oppulence-gen kind=page
- * Authenticated Integration setup route. The page stays a Server Component; interactivity
+ * Authenticated Connect your stack route. The page stays a Server Component; interactivity
  * lives in the route-private panel. Owned by `integrations.lit.ts`.
  *
  * Instant navigation: searchParams and prefetch stay behind Suspense. Do not
@@ -13,8 +13,9 @@ import IntegrationsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Integration setup - Oppulence",
-	description: "Set up onboarding, provider callbacks, migration, and service status safely",
+	title: "Connect your stack - Oppulence",
+	description:
+		"See which parts of your stack are connected and open the page that sets up each one",
 };
 
 type IntegrationsPageProps = {

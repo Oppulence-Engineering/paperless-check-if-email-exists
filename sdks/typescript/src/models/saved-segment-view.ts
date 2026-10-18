@@ -13,6 +13,12 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { SegmentFilter } from './segment-filter';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { SegmentScope } from './segment-scope';
 
 /**
  *
@@ -28,10 +34,10 @@ export interface SavedSegmentView {
     'created_at': string;
     /**
      *
-     * @type {any}
+     * @type {SegmentFilter}
      * @memberof SavedSegmentView
      */
-    'filter': any;
+    'filter': SegmentFilter;
     /**
      *
      * @type {number}
@@ -46,10 +52,10 @@ export interface SavedSegmentView {
     'name': string;
     /**
      *
-     * @type {string}
+     * @type {SegmentScope}
      * @memberof SavedSegmentView
      */
-    'scope': string;
+    'scope': SegmentScope;
     /**
      *
      * @type {string}

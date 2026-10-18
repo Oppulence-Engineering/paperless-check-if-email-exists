@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **is_default** | **boolean** |  | [optional]
 **name** | **string** |  | [optional]
-**rules** | **any** |  | [optional]
+**rules** | [**ScorePolicyRules**](ScorePolicyRules.md) |  | [optional]
 
 ## Example
 

@@ -28,6 +28,8 @@ import type { ErrorEnvelope } from '../models';
 // @ts-ignore
 import type { ListDiffResponse } from '../models';
 // @ts-ignore
+import type { SavedSegmentDeleteResponse } from '../models';
+// @ts-ignore
 import type { SavedSegmentListResponse } from '../models';
 // @ts-ignore
 import type { SavedSegmentView } from '../models';
@@ -553,7 +555,7 @@ export const ListsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1DeleteSavedSegment(segmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1DeleteSavedSegment(segmentId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SavedSegmentDeleteResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteSavedSegment(segmentId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ListsApi.v1DeleteSavedSegment']?.[localVarOperationServerIndex]?.url;
@@ -704,7 +706,7 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentDeleteResponse> {
             return localVarFp.v1DeleteSavedSegment(requestParameters.segmentId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -824,7 +826,7 @@ export interface ListsApiInterface {
      * @throws {RequiredError}
      * @memberof ListsApiInterface
      */
-    v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1DeleteSavedSegment(requestParameters: ListsApiV1DeleteSavedSegmentRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentDeleteResponse>;
 
     /**
      *

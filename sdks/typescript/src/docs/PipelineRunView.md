@@ -21,7 +21,7 @@ Name | Type | Description | Notes
 **pipeline_id** | **number** |  | [required]
 **result_location** | [**PipelineRunResultLocation**](PipelineRunResultLocation.md) |  | [optional]
 **scheduled_for** | **string** |  | [optional]
-**source_snapshot** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**source_snapshot** | **{ [key: string]: any; }** | The source that the run used. Its shape depends on the source type and the run state. | [required]
 **started_at** | **string** |  | [optional]
 **stats** | [**PipelineRunStats**](PipelineRunStats.md) |  | [required]
 **status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]

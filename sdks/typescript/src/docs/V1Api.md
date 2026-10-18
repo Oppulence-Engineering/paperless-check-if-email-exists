@@ -1070,7 +1070,7 @@ This endpoint does not have any parameters.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1SourceQuality**
-> { [key: string]: any; } v1SourceQuality()
+> SourceQualityResponse v1SourceQuality()
 
 
 ### Example
@@ -1084,16 +1084,29 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-const { status, data } = await apiInstance.v1SourceQuality();
+let sourceKey: string; // (optional) (default to undefined)
+let minRecords: number; // (optional) (default to undefined)
+let limit: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1SourceQuality(
+    sourceKey,
+    minRecords,
+    limit
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **sourceKey** | [**string**] |  | (optional) defaults to undefined|
+| **minRecords** | [**number**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**SourceQualityResponse**
 
 ### Authorization
 

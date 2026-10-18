@@ -7,7 +7,7 @@ All URIs are relative to *http://localhost*
 |[**v1QueryResults**](#v1queryresults) | **GET** /v1/query | GET /v1/query|
 
 # **v1QueryResults**
-> v1QueryResults()
+> QueryResultList v1QueryResults()
 
 Flexible historical query API for verification results across jobs.
 
@@ -71,7 +71,7 @@ const { status, data } = await apiInstance.v1QueryResults(
 
 ### Return type
 
-void (empty response body)
+**QueryResultList**
 
 ### Authorization
 

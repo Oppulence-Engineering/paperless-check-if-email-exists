@@ -23,7 +23,21 @@ export const V1MeDefaultResponse = zod.object({
  * List API keys for the authenticated tenant.
  * @summary GET /v1/me/api-keys
  */
-export const ListTenantApiKeys200Response = zod.unknown();
+export const ListTenantApiKeys200Response = zod.object({
+  api_keys: zod.array(
+    zod.object({
+      created_at: zod.iso.datetime({ offset: true }),
+      expires_at: zod.iso.datetime({ offset: true }).nullish(),
+      id: zod.uuid(),
+      key_prefix: zod.string(),
+      last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+      name: zod.string(),
+      scopes: zod.array(zod.string()),
+      status: zod.string(),
+      tenant_id: zod.uuid(),
+    }),
+  ),
+});
 
 export const ListTenantApiKeysDefaultResponse = zod.object({
   error: zod.string(),
@@ -39,7 +53,17 @@ export const CreateTenantApiKeyBody = zod.strictObject({
   scopes: zod.array(zod.string()).nullish(),
 });
 
-export const CreateTenantApiKey201Response = zod.unknown();
+export const CreateTenantApiKey201Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid(),
+  key: zod.string().describe("The full key. The API shows it only once."),
+  key_prefix: zod.string(),
+  name: zod.string(),
+  scopes: zod.array(zod.string()),
+  status: zod.string(),
+  tenant_id: zod.uuid(),
+});
 
 export const CreateTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
@@ -53,7 +77,10 @@ export const RevokeTenantApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
 });
 
-export const RevokeTenantApiKey200Response = zod.unknown();
+export const RevokeTenantApiKey200Response = zod.object({
+  key_id: zod.uuid(),
+  revoked: zod.boolean(),
+});
 
 export const RevokeTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
@@ -67,7 +94,17 @@ export const GetTenantApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
 });
 
-export const GetTenantApiKey200Response = zod.unknown();
+export const GetTenantApiKey200Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid(),
+  key_prefix: zod.string(),
+  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string(),
+  scopes: zod.array(zod.string()),
+  status: zod.string(),
+  tenant_id: zod.uuid(),
+});
 
 export const GetTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
@@ -87,7 +124,17 @@ export const UpdateTenantApiKeyBody = zod.strictObject({
   scopes: zod.array(zod.string()).nullish(),
 });
 
-export const UpdateTenantApiKey200Response = zod.unknown();
+export const UpdateTenantApiKey200Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.uuid(),
+  key_prefix: zod.string(),
+  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+  name: zod.string(),
+  scopes: zod.array(zod.string()),
+  status: zod.string(),
+  tenant_id: zod.uuid(),
+});
 
 export const UpdateTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),

@@ -7,6 +7,10 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { IntegrationsPanel } from "./integrations-panel";
 
+vi.mock("@/components/features/automation/integration-stack/integration-stack", () => ({
+	IntegrationStack: () => <p>Connection rows</p>,
+}));
+
 afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
@@ -24,6 +28,8 @@ it("shows live status and safe setup journeys", async () => {
 			<IntegrationsPanel />
 		</QueryClientProvider>,
 	);
+	expect(screen.getByRole("heading", { name: "Connect your stack" })).toBeInTheDocument();
+	expect(screen.getByText("Connection rows")).toBeInTheDocument();
 	expect(await screen.findByText("Ready")).toBeInTheDocument();
 	expect(await screen.findByText("4.3.0")).toBeInTheDocument();
 	expect(screen.getByRole("link", { name: "Callback contract" })).toHaveAttribute(

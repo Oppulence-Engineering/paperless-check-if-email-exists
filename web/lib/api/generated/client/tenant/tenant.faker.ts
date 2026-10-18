@@ -13,6 +13,7 @@ import type {
   OutcomePolicyDeleteResponse,
   OutcomePolicyListResponse,
   OutcomePolicyView,
+  ScorePolicyDeleteResponse,
   ScorePolicyListResponse,
   ScorePolicyView,
   TenantSettingsResponse,
@@ -916,7 +917,110 @@ export const getV1ListScorePoliciesResponseMock = (
     id: faker.number.int(),
     is_default: faker.datatype.boolean(),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    rules: {},
+    rules: {
+      review: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+      send: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+      suppress: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([
+          {
+            category: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            reason_codes_any: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            safe_to_send: faker.helpers.arrayElement([
+              faker.datatype.boolean(),
+              undefined,
+            ]),
+            score_max: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+            score_min: faker.helpers.arrayElement([
+              faker.helpers.arrayElement([faker.number.int(), null]),
+              undefined,
+            ]),
+          },
+          null,
+        ]),
+        undefined,
+      ]),
+    },
     updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   })),
   total: faker.number.int(),
@@ -930,8 +1034,118 @@ export const getV1CreateScorePolicyResponseMock = (
   id: faker.number.int(),
   is_default: faker.datatype.boolean(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  rules: {},
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  ...overrideResponse,
+});
+
+export const getV1DeleteScorePolicyResponseMock = (
+  overrideResponse: Partial<Extract<ScorePolicyDeleteResponse, object>> = {},
+): ScorePolicyDeleteResponse => ({
+  deleted: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
@@ -942,7 +1156,110 @@ export const getV1GetScorePolicyResponseMock = (
   id: faker.number.int(),
   is_default: faker.datatype.boolean(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  rules: {},
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,
 });
@@ -954,7 +1271,110 @@ export const getV1UpdateScorePolicyResponseMock = (
   id: faker.number.int(),
   is_default: faker.datatype.boolean(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  rules: {},
+  rules: {
+    review: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    send: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+    suppress: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        {
+          category: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          reason_codes_any: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          safe_to_send: faker.helpers.arrayElement([
+            faker.datatype.boolean(),
+            undefined,
+          ]),
+          score_max: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+          score_min: faker.helpers.arrayElement([
+            faker.helpers.arrayElement([faker.number.int(), null]),
+            undefined,
+          ]),
+        },
+        null,
+      ]),
+      undefined,
+    ]),
+  },
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,
 });

@@ -4,24 +4,26 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**AcceptedRows** | Pointer to **NullableInt32** |  | [optional]
 **BilledEmails** | Pointer to **NullableInt32** |  | [optional]
 **ChangedOnlyExport** | Pointer to **NullableBool** |  | [optional]
-**CompletedTasks** | Pointer to **NullableInt32** |  | [optional]
 **DeltaMode** | Pointer to **NullableBool** |  | [optional]
 **FreshnessDays** | Pointer to **NullableInt32** |  | [optional]
-**Invalid** | Pointer to **NullableInt32** |  | [optional]
-**PublishedTasks** | Pointer to **NullableInt32** |  | [optional]
-**QueuedEmails** | Pointer to **NullableInt32** |  | [optional]
-**Risky** | Pointer to **NullableInt32** |  | [optional]
+**JobId** | Pointer to **NullableInt32** |  | [optional]
+**ListId** | Pointer to **NullableInt32** |  | [optional]
 **SelectedUniqueEmails** | Pointer to **NullableInt32** |  | [optional]
 **SkippedUnchanged** | Pointer to **NullableInt32** |  | [optional]
 **SourceFilename** | Pointer to **NullableString** |  | [optional]
 **SourceName** | Pointer to **NullableString** |  | [optional]
 **SourceRowCount** | Pointer to **NullableInt32** |  | [optional]
 **SourceUniqueEmails** | Pointer to **NullableInt32** |  | [optional]
+**TotalFailed** | Pointer to **NullableInt64** |  | [optional]
+**TotalInvalid** | Pointer to **NullableInt64** |  | [optional]
+**TotalProcessed** | Pointer to **NullableInt64** |  | [optional]
+**TotalRisky** | Pointer to **NullableInt64** |  | [optional]
+**TotalUnknown** | Pointer to **NullableInt64** |  | [optional]
+**TotalValid** | Pointer to **NullableInt64** |  | [optional]
 **TriggerReason** | Pointer to **NullableString** |  | [optional]
-**Unknown** | Pointer to **NullableInt32** |  | [optional]
-**Valid** | Pointer to **NullableInt32** |  | [optional]
 
 ## Methods
 
@@ -41,6 +43,42 @@ will change when the set of required properties is changed
 NewPipelineRunStatsWithDefaults instantiates a new PipelineRunStats object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetAcceptedRows
+
+`func (o *PipelineRunStats) GetAcceptedRows() int32`
+
+GetAcceptedRows returns the AcceptedRows field if non-nil, zero value otherwise.
+
+### GetAcceptedRowsOk
+
+`func (o *PipelineRunStats) GetAcceptedRowsOk() (*int32, bool)`
+
+GetAcceptedRowsOk returns a tuple with the AcceptedRows field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAcceptedRows
+
+`func (o *PipelineRunStats) SetAcceptedRows(v int32)`
+
+SetAcceptedRows sets AcceptedRows field to given value.
+
+### HasAcceptedRows
+
+`func (o *PipelineRunStats) HasAcceptedRows() bool`
+
+HasAcceptedRows returns a boolean if a field has been set.
+
+### SetAcceptedRowsNil
+
+`func (o *PipelineRunStats) SetAcceptedRowsNil()`
+
+ SetAcceptedRowsNil sets the value for AcceptedRows to be an explicit nil
+
+### UnsetAcceptedRows
+`func (o *PipelineRunStats) UnsetAcceptedRows()`
+
+UnsetAcceptedRows ensures that no value is present for AcceptedRows, not even an explicit nil
 
 ### GetBilledEmails
 
@@ -114,42 +152,6 @@ HasChangedOnlyExport returns a boolean if a field has been set.
 
 UnsetChangedOnlyExport ensures that no value is present for ChangedOnlyExport, not even an explicit nil
 
-### GetCompletedTasks
-
-`func (o *PipelineRunStats) GetCompletedTasks() int32`
-
-GetCompletedTasks returns the CompletedTasks field if non-nil, zero value otherwise.
-
-### GetCompletedTasksOk
-
-`func (o *PipelineRunStats) GetCompletedTasksOk() (*int32, bool)`
-
-GetCompletedTasksOk returns a tuple with the CompletedTasks field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetCompletedTasks
-
-`func (o *PipelineRunStats) SetCompletedTasks(v int32)`
-
-SetCompletedTasks sets CompletedTasks field to given value.
-
-### HasCompletedTasks
-
-`func (o *PipelineRunStats) HasCompletedTasks() bool`
-
-HasCompletedTasks returns a boolean if a field has been set.
-
-### SetCompletedTasksNil
-
-`func (o *PipelineRunStats) SetCompletedTasksNil()`
-
- SetCompletedTasksNil sets the value for CompletedTasks to be an explicit nil
-
-### UnsetCompletedTasks
-`func (o *PipelineRunStats) UnsetCompletedTasks()`
-
-UnsetCompletedTasks ensures that no value is present for CompletedTasks, not even an explicit nil
-
 ### GetDeltaMode
 
 `func (o *PipelineRunStats) GetDeltaMode() bool`
@@ -222,149 +224,77 @@ HasFreshnessDays returns a boolean if a field has been set.
 
 UnsetFreshnessDays ensures that no value is present for FreshnessDays, not even an explicit nil
 
-### GetInvalid
+### GetJobId
 
-`func (o *PipelineRunStats) GetInvalid() int32`
+`func (o *PipelineRunStats) GetJobId() int32`
 
-GetInvalid returns the Invalid field if non-nil, zero value otherwise.
+GetJobId returns the JobId field if non-nil, zero value otherwise.
 
-### GetInvalidOk
+### GetJobIdOk
 
-`func (o *PipelineRunStats) GetInvalidOk() (*int32, bool)`
+`func (o *PipelineRunStats) GetJobIdOk() (*int32, bool)`
 
-GetInvalidOk returns a tuple with the Invalid field if it's non-nil, zero value otherwise
+GetJobIdOk returns a tuple with the JobId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetInvalid
+### SetJobId
 
-`func (o *PipelineRunStats) SetInvalid(v int32)`
+`func (o *PipelineRunStats) SetJobId(v int32)`
 
-SetInvalid sets Invalid field to given value.
+SetJobId sets JobId field to given value.
 
-### HasInvalid
+### HasJobId
 
-`func (o *PipelineRunStats) HasInvalid() bool`
+`func (o *PipelineRunStats) HasJobId() bool`
 
-HasInvalid returns a boolean if a field has been set.
+HasJobId returns a boolean if a field has been set.
 
-### SetInvalidNil
+### SetJobIdNil
 
-`func (o *PipelineRunStats) SetInvalidNil()`
+`func (o *PipelineRunStats) SetJobIdNil()`
 
- SetInvalidNil sets the value for Invalid to be an explicit nil
+ SetJobIdNil sets the value for JobId to be an explicit nil
 
-### UnsetInvalid
-`func (o *PipelineRunStats) UnsetInvalid()`
+### UnsetJobId
+`func (o *PipelineRunStats) UnsetJobId()`
 
-UnsetInvalid ensures that no value is present for Invalid, not even an explicit nil
+UnsetJobId ensures that no value is present for JobId, not even an explicit nil
 
-### GetPublishedTasks
+### GetListId
 
-`func (o *PipelineRunStats) GetPublishedTasks() int32`
+`func (o *PipelineRunStats) GetListId() int32`
 
-GetPublishedTasks returns the PublishedTasks field if non-nil, zero value otherwise.
+GetListId returns the ListId field if non-nil, zero value otherwise.
 
-### GetPublishedTasksOk
+### GetListIdOk
 
-`func (o *PipelineRunStats) GetPublishedTasksOk() (*int32, bool)`
+`func (o *PipelineRunStats) GetListIdOk() (*int32, bool)`
 
-GetPublishedTasksOk returns a tuple with the PublishedTasks field if it's non-nil, zero value otherwise
+GetListIdOk returns a tuple with the ListId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetPublishedTasks
+### SetListId
 
-`func (o *PipelineRunStats) SetPublishedTasks(v int32)`
+`func (o *PipelineRunStats) SetListId(v int32)`
 
-SetPublishedTasks sets PublishedTasks field to given value.
+SetListId sets ListId field to given value.
 
-### HasPublishedTasks
+### HasListId
 
-`func (o *PipelineRunStats) HasPublishedTasks() bool`
+`func (o *PipelineRunStats) HasListId() bool`
 
-HasPublishedTasks returns a boolean if a field has been set.
+HasListId returns a boolean if a field has been set.
 
-### SetPublishedTasksNil
+### SetListIdNil
 
-`func (o *PipelineRunStats) SetPublishedTasksNil()`
+`func (o *PipelineRunStats) SetListIdNil()`
 
- SetPublishedTasksNil sets the value for PublishedTasks to be an explicit nil
+ SetListIdNil sets the value for ListId to be an explicit nil
 
-### UnsetPublishedTasks
-`func (o *PipelineRunStats) UnsetPublishedTasks()`
+### UnsetListId
+`func (o *PipelineRunStats) UnsetListId()`
 
-UnsetPublishedTasks ensures that no value is present for PublishedTasks, not even an explicit nil
-
-### GetQueuedEmails
-
-`func (o *PipelineRunStats) GetQueuedEmails() int32`
-
-GetQueuedEmails returns the QueuedEmails field if non-nil, zero value otherwise.
-
-### GetQueuedEmailsOk
-
-`func (o *PipelineRunStats) GetQueuedEmailsOk() (*int32, bool)`
-
-GetQueuedEmailsOk returns a tuple with the QueuedEmails field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetQueuedEmails
-
-`func (o *PipelineRunStats) SetQueuedEmails(v int32)`
-
-SetQueuedEmails sets QueuedEmails field to given value.
-
-### HasQueuedEmails
-
-`func (o *PipelineRunStats) HasQueuedEmails() bool`
-
-HasQueuedEmails returns a boolean if a field has been set.
-
-### SetQueuedEmailsNil
-
-`func (o *PipelineRunStats) SetQueuedEmailsNil()`
-
- SetQueuedEmailsNil sets the value for QueuedEmails to be an explicit nil
-
-### UnsetQueuedEmails
-`func (o *PipelineRunStats) UnsetQueuedEmails()`
-
-UnsetQueuedEmails ensures that no value is present for QueuedEmails, not even an explicit nil
-
-### GetRisky
-
-`func (o *PipelineRunStats) GetRisky() int32`
-
-GetRisky returns the Risky field if non-nil, zero value otherwise.
-
-### GetRiskyOk
-
-`func (o *PipelineRunStats) GetRiskyOk() (*int32, bool)`
-
-GetRiskyOk returns a tuple with the Risky field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetRisky
-
-`func (o *PipelineRunStats) SetRisky(v int32)`
-
-SetRisky sets Risky field to given value.
-
-### HasRisky
-
-`func (o *PipelineRunStats) HasRisky() bool`
-
-HasRisky returns a boolean if a field has been set.
-
-### SetRiskyNil
-
-`func (o *PipelineRunStats) SetRiskyNil()`
-
- SetRiskyNil sets the value for Risky to be an explicit nil
-
-### UnsetRisky
-`func (o *PipelineRunStats) UnsetRisky()`
-
-UnsetRisky ensures that no value is present for Risky, not even an explicit nil
+UnsetListId ensures that no value is present for ListId, not even an explicit nil
 
 ### GetSelectedUniqueEmails
 
@@ -582,6 +512,222 @@ HasSourceUniqueEmails returns a boolean if a field has been set.
 
 UnsetSourceUniqueEmails ensures that no value is present for SourceUniqueEmails, not even an explicit nil
 
+### GetTotalFailed
+
+`func (o *PipelineRunStats) GetTotalFailed() int64`
+
+GetTotalFailed returns the TotalFailed field if non-nil, zero value otherwise.
+
+### GetTotalFailedOk
+
+`func (o *PipelineRunStats) GetTotalFailedOk() (*int64, bool)`
+
+GetTotalFailedOk returns a tuple with the TotalFailed field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalFailed
+
+`func (o *PipelineRunStats) SetTotalFailed(v int64)`
+
+SetTotalFailed sets TotalFailed field to given value.
+
+### HasTotalFailed
+
+`func (o *PipelineRunStats) HasTotalFailed() bool`
+
+HasTotalFailed returns a boolean if a field has been set.
+
+### SetTotalFailedNil
+
+`func (o *PipelineRunStats) SetTotalFailedNil()`
+
+ SetTotalFailedNil sets the value for TotalFailed to be an explicit nil
+
+### UnsetTotalFailed
+`func (o *PipelineRunStats) UnsetTotalFailed()`
+
+UnsetTotalFailed ensures that no value is present for TotalFailed, not even an explicit nil
+
+### GetTotalInvalid
+
+`func (o *PipelineRunStats) GetTotalInvalid() int64`
+
+GetTotalInvalid returns the TotalInvalid field if non-nil, zero value otherwise.
+
+### GetTotalInvalidOk
+
+`func (o *PipelineRunStats) GetTotalInvalidOk() (*int64, bool)`
+
+GetTotalInvalidOk returns a tuple with the TotalInvalid field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalInvalid
+
+`func (o *PipelineRunStats) SetTotalInvalid(v int64)`
+
+SetTotalInvalid sets TotalInvalid field to given value.
+
+### HasTotalInvalid
+
+`func (o *PipelineRunStats) HasTotalInvalid() bool`
+
+HasTotalInvalid returns a boolean if a field has been set.
+
+### SetTotalInvalidNil
+
+`func (o *PipelineRunStats) SetTotalInvalidNil()`
+
+ SetTotalInvalidNil sets the value for TotalInvalid to be an explicit nil
+
+### UnsetTotalInvalid
+`func (o *PipelineRunStats) UnsetTotalInvalid()`
+
+UnsetTotalInvalid ensures that no value is present for TotalInvalid, not even an explicit nil
+
+### GetTotalProcessed
+
+`func (o *PipelineRunStats) GetTotalProcessed() int64`
+
+GetTotalProcessed returns the TotalProcessed field if non-nil, zero value otherwise.
+
+### GetTotalProcessedOk
+
+`func (o *PipelineRunStats) GetTotalProcessedOk() (*int64, bool)`
+
+GetTotalProcessedOk returns a tuple with the TotalProcessed field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalProcessed
+
+`func (o *PipelineRunStats) SetTotalProcessed(v int64)`
+
+SetTotalProcessed sets TotalProcessed field to given value.
+
+### HasTotalProcessed
+
+`func (o *PipelineRunStats) HasTotalProcessed() bool`
+
+HasTotalProcessed returns a boolean if a field has been set.
+
+### SetTotalProcessedNil
+
+`func (o *PipelineRunStats) SetTotalProcessedNil()`
+
+ SetTotalProcessedNil sets the value for TotalProcessed to be an explicit nil
+
+### UnsetTotalProcessed
+`func (o *PipelineRunStats) UnsetTotalProcessed()`
+
+UnsetTotalProcessed ensures that no value is present for TotalProcessed, not even an explicit nil
+
+### GetTotalRisky
+
+`func (o *PipelineRunStats) GetTotalRisky() int64`
+
+GetTotalRisky returns the TotalRisky field if non-nil, zero value otherwise.
+
+### GetTotalRiskyOk
+
+`func (o *PipelineRunStats) GetTotalRiskyOk() (*int64, bool)`
+
+GetTotalRiskyOk returns a tuple with the TotalRisky field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalRisky
+
+`func (o *PipelineRunStats) SetTotalRisky(v int64)`
+
+SetTotalRisky sets TotalRisky field to given value.
+
+### HasTotalRisky
+
+`func (o *PipelineRunStats) HasTotalRisky() bool`
+
+HasTotalRisky returns a boolean if a field has been set.
+
+### SetTotalRiskyNil
+
+`func (o *PipelineRunStats) SetTotalRiskyNil()`
+
+ SetTotalRiskyNil sets the value for TotalRisky to be an explicit nil
+
+### UnsetTotalRisky
+`func (o *PipelineRunStats) UnsetTotalRisky()`
+
+UnsetTotalRisky ensures that no value is present for TotalRisky, not even an explicit nil
+
+### GetTotalUnknown
+
+`func (o *PipelineRunStats) GetTotalUnknown() int64`
+
+GetTotalUnknown returns the TotalUnknown field if non-nil, zero value otherwise.
+
+### GetTotalUnknownOk
+
+`func (o *PipelineRunStats) GetTotalUnknownOk() (*int64, bool)`
+
+GetTotalUnknownOk returns a tuple with the TotalUnknown field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalUnknown
+
+`func (o *PipelineRunStats) SetTotalUnknown(v int64)`
+
+SetTotalUnknown sets TotalUnknown field to given value.
+
+### HasTotalUnknown
+
+`func (o *PipelineRunStats) HasTotalUnknown() bool`
+
+HasTotalUnknown returns a boolean if a field has been set.
+
+### SetTotalUnknownNil
+
+`func (o *PipelineRunStats) SetTotalUnknownNil()`
+
+ SetTotalUnknownNil sets the value for TotalUnknown to be an explicit nil
+
+### UnsetTotalUnknown
+`func (o *PipelineRunStats) UnsetTotalUnknown()`
+
+UnsetTotalUnknown ensures that no value is present for TotalUnknown, not even an explicit nil
+
+### GetTotalValid
+
+`func (o *PipelineRunStats) GetTotalValid() int64`
+
+GetTotalValid returns the TotalValid field if non-nil, zero value otherwise.
+
+### GetTotalValidOk
+
+`func (o *PipelineRunStats) GetTotalValidOk() (*int64, bool)`
+
+GetTotalValidOk returns a tuple with the TotalValid field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalValid
+
+`func (o *PipelineRunStats) SetTotalValid(v int64)`
+
+SetTotalValid sets TotalValid field to given value.
+
+### HasTotalValid
+
+`func (o *PipelineRunStats) HasTotalValid() bool`
+
+HasTotalValid returns a boolean if a field has been set.
+
+### SetTotalValidNil
+
+`func (o *PipelineRunStats) SetTotalValidNil()`
+
+ SetTotalValidNil sets the value for TotalValid to be an explicit nil
+
+### UnsetTotalValid
+`func (o *PipelineRunStats) UnsetTotalValid()`
+
+UnsetTotalValid ensures that no value is present for TotalValid, not even an explicit nil
+
 ### GetTriggerReason
 
 `func (o *PipelineRunStats) GetTriggerReason() string`
@@ -617,77 +763,5 @@ HasTriggerReason returns a boolean if a field has been set.
 `func (o *PipelineRunStats) UnsetTriggerReason()`
 
 UnsetTriggerReason ensures that no value is present for TriggerReason, not even an explicit nil
-
-### GetUnknown
-
-`func (o *PipelineRunStats) GetUnknown() int32`
-
-GetUnknown returns the Unknown field if non-nil, zero value otherwise.
-
-### GetUnknownOk
-
-`func (o *PipelineRunStats) GetUnknownOk() (*int32, bool)`
-
-GetUnknownOk returns a tuple with the Unknown field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetUnknown
-
-`func (o *PipelineRunStats) SetUnknown(v int32)`
-
-SetUnknown sets Unknown field to given value.
-
-### HasUnknown
-
-`func (o *PipelineRunStats) HasUnknown() bool`
-
-HasUnknown returns a boolean if a field has been set.
-
-### SetUnknownNil
-
-`func (o *PipelineRunStats) SetUnknownNil()`
-
- SetUnknownNil sets the value for Unknown to be an explicit nil
-
-### UnsetUnknown
-`func (o *PipelineRunStats) UnsetUnknown()`
-
-UnsetUnknown ensures that no value is present for Unknown, not even an explicit nil
-
-### GetValid
-
-`func (o *PipelineRunStats) GetValid() int32`
-
-GetValid returns the Valid field if non-nil, zero value otherwise.
-
-### GetValidOk
-
-`func (o *PipelineRunStats) GetValidOk() (*int32, bool)`
-
-GetValidOk returns a tuple with the Valid field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetValid
-
-`func (o *PipelineRunStats) SetValid(v int32)`
-
-SetValid sets Valid field to given value.
-
-### HasValid
-
-`func (o *PipelineRunStats) HasValid() bool`
-
-HasValid returns a boolean if a field has been set.
-
-### SetValidNil
-
-`func (o *PipelineRunStats) SetValidNil()`
-
- SetValidNil sets the value for Valid to be an explicit nil
-
-### UnsetValid
-`func (o *PipelineRunStats) UnsetValid()`
-
-UnsetValid ensures that no value is present for Valid, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

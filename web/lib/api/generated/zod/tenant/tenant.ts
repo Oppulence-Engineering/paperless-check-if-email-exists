@@ -966,7 +966,44 @@ export const V1ListScorePolicies200Response = zod.object({
       id: zod.int(),
       is_default: zod.boolean(),
       name: zod.string(),
-      rules: zod.unknown(),
+      rules: zod.object({
+        review: zod
+          .union([
+            zod.object({
+              category: zod.array(zod.string()).nullish(),
+              reason_codes_any: zod.array(zod.string()).nullish(),
+              safe_to_send: zod.boolean().nullish(),
+              score_max: zod.int().nullish(),
+              score_min: zod.int().nullish(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        send: zod
+          .union([
+            zod.object({
+              category: zod.array(zod.string()).nullish(),
+              reason_codes_any: zod.array(zod.string()).nullish(),
+              safe_to_send: zod.boolean().nullish(),
+              score_max: zod.int().nullish(),
+              score_min: zod.int().nullish(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        suppress: zod
+          .union([
+            zod.object({
+              category: zod.array(zod.string()).nullish(),
+              reason_codes_any: zod.array(zod.string()).nullish(),
+              safe_to_send: zod.boolean().nullish(),
+              score_max: zod.int().nullish(),
+              score_min: zod.int().nullish(),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+      }),
       updated_at: zod.iso.datetime({ offset: true }),
     }),
   ),
@@ -983,7 +1020,46 @@ export const V1ListScorePoliciesDefaultResponse = zod.object({
 export const V1CreateScorePolicyBody = zod.strictObject({
   is_default: zod.boolean().optional(),
   name: zod.string(),
-  rules: zod.unknown().optional(),
+  rules: zod
+    .strictObject({
+      review: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      send: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      suppress: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+    })
+    .optional(),
 });
 
 export const V1CreateScorePolicy201Response = zod.object({
@@ -991,7 +1067,44 @@ export const V1CreateScorePolicy201Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    review: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    send: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    suppress: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -1006,7 +1119,9 @@ export const V1DeleteScorePolicyParams = zod.object({
   policy_id: zod.coerce.number().int().describe("Score policy identifier"),
 });
 
-export const V1DeleteScorePolicy200Response = zod.unknown();
+export const V1DeleteScorePolicy200Response = zod.object({
+  deleted: zod.boolean(),
+});
 
 export const V1DeleteScorePolicyDefaultResponse = zod.object({
   error: zod.string(),
@@ -1024,7 +1139,44 @@ export const V1GetScorePolicy200Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    review: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    send: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    suppress: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -1042,7 +1194,46 @@ export const V1UpdateScorePolicyParams = zod.object({
 export const V1UpdateScorePolicyBody = zod.strictObject({
   is_default: zod.boolean().nullish(),
   name: zod.string().nullish(),
-  rules: zod.unknown().optional(),
+  rules: zod
+    .strictObject({
+      review: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      send: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      suppress: zod
+        .union([
+          zod.strictObject({
+            category: zod.array(zod.string()).nullish(),
+            reason_codes_any: zod.array(zod.string()).nullish(),
+            safe_to_send: zod.boolean().nullish(),
+            score_max: zod.int().nullish(),
+            score_min: zod.int().nullish(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+    })
+    .optional(),
 });
 
 export const V1UpdateScorePolicy200Response = zod.object({
@@ -1050,7 +1241,44 @@ export const V1UpdateScorePolicy200Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    review: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    send: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    suppress: zod
+      .union([
+        zod.object({
+          category: zod.array(zod.string()).nullish(),
+          reason_codes_any: zod.array(zod.string()).nullish(),
+          safe_to_send: zod.boolean().nullish(),
+          score_max: zod.int().nullish(),
+          score_min: zod.int().nullish(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 

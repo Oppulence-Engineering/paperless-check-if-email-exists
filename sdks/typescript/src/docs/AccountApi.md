@@ -12,7 +12,7 @@ All URIs are relative to *http://localhost*
 |[**v1Me**](#v1me) | **GET** /v1/me | GET /v1/me|
 
 # **createTenantApiKey**
-> createTenantApiKey(createApiKeyRequest)
+> TenantCreatedApiKey createTenantApiKey(createApiKeyRequest)
 
 Create a new API key for the authenticated tenant.
 
@@ -44,7 +44,7 @@ const { status, data } = await apiInstance.createTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantCreatedApiKey**
 
 ### Authorization
 
@@ -65,7 +65,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getTenantApiKey**
-> getTenantApiKey()
+> TenantApiKey getTenantApiKey()
 
 Return a single API key for the authenticated tenant.
 
@@ -96,7 +96,7 @@ const { status, data } = await apiInstance.getTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantApiKey**
 
 ### Authorization
 
@@ -117,7 +117,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **listTenantApiKeys**
-> listTenantApiKeys()
+> TenantApiKeyList listTenantApiKeys()
 
 List API keys for the authenticated tenant.
 
@@ -141,7 +141,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantApiKeyList**
 
 ### Authorization
 
@@ -162,7 +162,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **revokeTenantApiKey**
-> revokeTenantApiKey()
+> TenantApiKeyRevokeResponse revokeTenantApiKey()
 
 Revoke an API key.
 
@@ -193,7 +193,7 @@ const { status, data } = await apiInstance.revokeTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantApiKeyRevokeResponse**
 
 ### Authorization
 
@@ -214,7 +214,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **updateTenantApiKey**
-> updateTenantApiKey(updateApiKeyRequest)
+> TenantApiKey updateTenantApiKey(updateApiKeyRequest)
 
 Update metadata for an existing API key.
 
@@ -249,7 +249,7 @@ const { status, data } = await apiInstance.updateTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantApiKey**
 
 ### Authorization
 

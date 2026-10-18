@@ -12,6 +12,7 @@ import type { RequestHandlerOptions } from "msw";
 
 import type {
   ListDiffResponse,
+  SavedSegmentDeleteResponse,
   SavedSegmentListResponse,
   SavedSegmentView,
   V1CreateRemediationExport200,
@@ -23,6 +24,7 @@ import {
   getV1CreateRemediationExportResponseMock,
   getV1CreateRemediationPlanResponseMock,
   getV1CreateSavedSegmentResponseMock,
+  getV1DeleteSavedSegmentResponseMock,
   getV1DiffListsResponseMock,
   getV1DownloadRemediationExportResponseMock,
   getV1GetRemediationPlanResponseMock,
@@ -39,6 +41,7 @@ export {
   getV1CreateRemediationPlanResponseMock,
   getV1ListSavedSegmentsResponseMock,
   getV1CreateSavedSegmentResponseMock,
+  getV1DeleteSavedSegmentResponseMock,
   getV1GetSavedSegmentResponseMock,
   getV1UpdateSavedSegmentResponseMock,
 } from "./lists.faker";
@@ -240,20 +243,23 @@ export const getV1CreateSavedSegmentMockHandler = (
 
 export const getV1DeleteSavedSegmentMockHandler = (
   overrideResponse?:
-    | void
+    | SavedSegmentDeleteResponse
     | ((
         info: Parameters<Parameters<typeof http.delete>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<SavedSegmentDeleteResponse> | SavedSegmentDeleteResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
     "*/v1/segments/:segmentId",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DeleteSavedSegmentResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );

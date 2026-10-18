@@ -8,4 +8,11 @@
  * OpenAPI spec version: 4.3.0
  */
 
-export type V1SourceQuality200 = { [key: string]: unknown };
+export type SegmentFilterPolicyDecision =
+  (typeof SegmentFilterPolicyDecision)[keyof typeof SegmentFilterPolicyDecision];
+
+export const SegmentFilterPolicyDecision = {
+  send: "send",
+  review: "review",
+  suppress: "suppress",
+} as const;
