@@ -106,6 +106,9 @@ const nextConfig: NextConfig = {
 	output: "standalone",
 	outputFileTracingRoot: __dirname,
 	transpilePackages: [
+		// The generated SDK's dist/ is gitignored. CI and Docker build it, but a fresh
+		// checkout only has the TypeScript source, so Next compiles that instead.
+		"@oppulence/reacher-sdk",
 		"@oppulence/ui",
 		"@sim/emcn",
 		"@sim/workflow-renderer",
