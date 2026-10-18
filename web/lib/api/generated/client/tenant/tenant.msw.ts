@@ -11,6 +11,7 @@ import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
 import type {
+  OutcomePolicyDeleteResponse,
   OutcomePolicyListResponse,
   OutcomePolicyView,
   ScorePolicyListResponse,
@@ -23,6 +24,7 @@ import type {
 import {
   getV1CreateOutcomePolicyResponseMock,
   getV1CreateScorePolicyResponseMock,
+  getV1DeleteOutcomePolicyResponseMock,
   getV1GetOutcomePolicyResponseMock,
   getV1GetScorePolicyResponseMock,
   getV1GetTenantSettingsResponseMock,
@@ -44,6 +46,7 @@ export {
   getV1UpdateTenantWebhookResponseMock,
   getV1ListOutcomePoliciesResponseMock,
   getV1CreateOutcomePolicyResponseMock,
+  getV1DeleteOutcomePolicyResponseMock,
   getV1GetOutcomePolicyResponseMock,
   getV1UpdateOutcomePolicyResponseMock,
   getV1ListScorePoliciesResponseMock,
@@ -348,20 +351,23 @@ export const getV1CreateOutcomePolicyMockHandler = (
 
 export const getV1DeleteOutcomePolicyMockHandler = (
   overrideResponse?:
-    | void
+    | OutcomePolicyDeleteResponse
     | ((
         info: Parameters<Parameters<typeof http.delete>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<OutcomePolicyDeleteResponse> | OutcomePolicyDeleteResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
     "*/v1/outcome-policies/:policyId",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1DeleteOutcomePolicyResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );

@@ -223,7 +223,114 @@ export const V1ListOutcomePolicies200Response = zod.object({
       id: zod.int(),
       is_default: zod.boolean(),
       name: zod.string(),
-      rules: zod.unknown(),
+      rules: zod.object({
+        click: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        complaint: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        delivered: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        hard_bounce: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        open: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        outcome_ttl_days: zod.int().optional(),
+        soft_bounce: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+        unsubscribe: zod
+          .object({
+            action: zod.enum([
+              "suppress",
+              "suppress_and_unsubscribe",
+              "suppress_after",
+              "score_boost",
+              "informational",
+            ]),
+            boost: zod.int().optional(),
+            score_override: zod.string().optional(),
+            threshold_count: zod.int().optional(),
+            threshold_window_days: zod.int().optional(),
+          })
+          .optional(),
+      }),
       updated_at: zod.iso.datetime({ offset: true }),
     }),
   ),
@@ -237,7 +344,116 @@ export const V1ListOutcomePoliciesDefaultResponse = zod.object({
 export const V1CreateOutcomePolicyBody = zod.strictObject({
   is_default: zod.boolean().optional(),
   name: zod.string(),
-  rules: zod.unknown().optional(),
+  rules: zod
+    .strictObject({
+      click: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      complaint: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      delivered: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      hard_bounce: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      open: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      outcome_ttl_days: zod.int().optional(),
+      soft_bounce: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      unsubscribe: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const V1CreateOutcomePolicy201Response = zod.object({
@@ -245,7 +461,114 @@ export const V1CreateOutcomePolicy201Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    click: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    complaint: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    delivered: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    hard_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    open: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    outcome_ttl_days: zod.int().optional(),
+    soft_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    unsubscribe: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -257,7 +580,9 @@ export const V1DeleteOutcomePolicyParams = zod.object({
   policy_id: zod.coerce.number().int().describe("Outcome policy identifier"),
 });
 
-export const V1DeleteOutcomePolicy200Response = zod.unknown();
+export const V1DeleteOutcomePolicy200Response = zod.object({
+  deleted: zod.boolean(),
+});
 
 export const V1DeleteOutcomePolicyDefaultResponse = zod.object({
   error: zod.string(),
@@ -272,7 +597,114 @@ export const V1GetOutcomePolicy200Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    click: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    complaint: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    delivered: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    hard_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    open: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    outcome_ttl_days: zod.int().optional(),
+    soft_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    unsubscribe: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 
@@ -287,7 +719,116 @@ export const V1UpdateOutcomePolicyParams = zod.object({
 export const V1UpdateOutcomePolicyBody = zod.strictObject({
   is_default: zod.boolean().nullish(),
   name: zod.string().nullish(),
-  rules: zod.unknown().optional(),
+  rules: zod
+    .strictObject({
+      click: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      complaint: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      delivered: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      hard_bounce: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      open: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      outcome_ttl_days: zod.int().optional(),
+      soft_bounce: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+      unsubscribe: zod
+        .strictObject({
+          action: zod.enum([
+            "suppress",
+            "suppress_and_unsubscribe",
+            "suppress_after",
+            "score_boost",
+            "informational",
+          ]),
+          boost: zod.int().optional(),
+          score_override: zod.string().optional(),
+          threshold_count: zod.int().optional(),
+          threshold_window_days: zod.int().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const V1UpdateOutcomePolicy200Response = zod.object({
@@ -295,7 +836,114 @@ export const V1UpdateOutcomePolicy200Response = zod.object({
   id: zod.int(),
   is_default: zod.boolean(),
   name: zod.string(),
-  rules: zod.unknown(),
+  rules: zod.object({
+    click: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    complaint: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    delivered: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    hard_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    open: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    outcome_ttl_days: zod.int().optional(),
+    soft_bounce: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+    unsubscribe: zod
+      .object({
+        action: zod.enum([
+          "suppress",
+          "suppress_and_unsubscribe",
+          "suppress_after",
+          "score_boost",
+          "informational",
+        ]),
+        boost: zod.int().optional(),
+        score_override: zod.string().optional(),
+        threshold_count: zod.int().optional(),
+        threshold_window_days: zod.int().optional(),
+      })
+      .optional(),
+  }),
   updated_at: zod.iso.datetime({ offset: true }),
 });
 

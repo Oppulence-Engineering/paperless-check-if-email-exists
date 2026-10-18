@@ -8,4 +8,4 @@
  * OpenAPI spec version: 4.3.0
  */
 
-export type V1ImportSuppressions200 = { [key: string]: unknown };
+export type SuppressionEntryMetadata = { [key: string]: unknown };

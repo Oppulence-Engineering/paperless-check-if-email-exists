@@ -30,6 +30,8 @@ import type { CreateTenantDomainRequest } from '../models';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
+import type { OutcomePolicyDeleteResponse } from '../models';
+// @ts-ignore
 import type { OutcomePolicyListResponse } from '../models';
 // @ts-ignore
 import type { OutcomePolicyView } from '../models';
@@ -917,7 +919,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1DeleteOutcomePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1DeleteOutcomePolicy(policyId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomePolicyDeleteResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DeleteOutcomePolicy(policyId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1DeleteOutcomePolicy']?.[localVarOperationServerIndex]?.url;
@@ -1183,7 +1185,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyDeleteResponse> {
             return localVarFp.v1DeleteOutcomePolicy(requestParameters.policyId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1393,7 +1395,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1DeleteOutcomePolicy(requestParameters: TenantApiV1DeleteOutcomePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomePolicyDeleteResponse>;
 
     /**
      *

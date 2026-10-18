@@ -23,12 +23,23 @@ var _ MappedNullable = &SuppressionEntry{}
 
 // SuppressionEntry struct for SuppressionEntry
 type SuppressionEntry struct {
+	CanonicalEmail string `json:"canonical_email"`
 	CreatedAt time.Time `json:"created_at"`
+	CreatedBy NullableString `json:"created_by,omitempty"`
 	Email string `json:"email"`
+	ExpiresAt NullableTime `json:"expires_at,omitempty"`
 	Id int32 `json:"id"`
+	LastSeenAt NullableTime `json:"last_seen_at,omitempty"`
+	Metadata map[string]interface{} `json:"metadata"`
 	Notes NullableString `json:"notes,omitempty"`
 	Reason SuppressionReason `json:"reason"`
+	ReasonCode NullableString `json:"reason_code,omitempty"`
+	ReasonDetail NullableString `json:"reason_detail,omitempty"`
 	Source NullableString `json:"source,omitempty"`
+	SourceRef NullableString `json:"source_ref,omitempty"`
+	SourceType NullableString `json:"source_type,omitempty"`
+	Status string `json:"status"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type _SuppressionEntry SuppressionEntry
@@ -37,12 +48,16 @@ type _SuppressionEntry SuppressionEntry
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSuppressionEntry(createdAt time.Time, email string, id int32, reason SuppressionReason) *SuppressionEntry {
+func NewSuppressionEntry(canonicalEmail string, createdAt time.Time, email string, id int32, metadata map[string]interface{}, reason SuppressionReason, status string, updatedAt time.Time) *SuppressionEntry {
 	this := SuppressionEntry{}
+	this.CanonicalEmail = canonicalEmail
 	this.CreatedAt = createdAt
 	this.Email = email
 	this.Id = id
+	this.Metadata = metadata
 	this.Reason = reason
+	this.Status = status
+	this.UpdatedAt = updatedAt
 	return &this
 }
 
@@ -52,6 +67,30 @@ func NewSuppressionEntry(createdAt time.Time, email string, id int32, reason Sup
 func NewSuppressionEntryWithDefaults() *SuppressionEntry {
 	this := SuppressionEntry{}
 	return &this
+}
+
+// GetCanonicalEmail returns the CanonicalEmail field value
+func (o *SuppressionEntry) GetCanonicalEmail() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CanonicalEmail
+}
+
+// GetCanonicalEmailOk returns a tuple with the CanonicalEmail field value
+// and a boolean to check if the value has been set.
+func (o *SuppressionEntry) GetCanonicalEmailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CanonicalEmail, true
+}
+
+// SetCanonicalEmail sets field value
+func (o *SuppressionEntry) SetCanonicalEmail(v string) {
+	o.CanonicalEmail = v
 }
 
 // GetCreatedAt returns the CreatedAt field value
@@ -78,6 +117,48 @@ func (o *SuppressionEntry) SetCreatedAt(v time.Time) {
 	o.CreatedAt = v
 }
 
+// GetCreatedBy returns the CreatedBy field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetCreatedBy() string {
+	if o == nil || IsNil(o.CreatedBy.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.CreatedBy.Get()
+}
+
+// GetCreatedByOk returns a tuple with the CreatedBy field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetCreatedByOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.CreatedBy.Get(), o.CreatedBy.IsSet()
+}
+
+// HasCreatedBy returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasCreatedBy() bool {
+	if o != nil && o.CreatedBy.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedBy gets a reference to the given NullableString and assigns it to the CreatedBy field.
+func (o *SuppressionEntry) SetCreatedBy(v string) {
+	o.CreatedBy.Set(&v)
+}
+// SetCreatedByNil sets the value for CreatedBy to be an explicit nil
+func (o *SuppressionEntry) SetCreatedByNil() {
+	o.CreatedBy.Set(nil)
+}
+
+// UnsetCreatedBy ensures that no value is present for CreatedBy, not even an explicit nil
+func (o *SuppressionEntry) UnsetCreatedBy() {
+	o.CreatedBy.Unset()
+}
+
 // GetEmail returns the Email field value
 func (o *SuppressionEntry) GetEmail() string {
 	if o == nil {
@@ -102,6 +183,48 @@ func (o *SuppressionEntry) SetEmail(v string) {
 	o.Email = v
 }
 
+// GetExpiresAt returns the ExpiresAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetExpiresAt() time.Time {
+	if o == nil || IsNil(o.ExpiresAt.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.ExpiresAt.Get()
+}
+
+// GetExpiresAtOk returns a tuple with the ExpiresAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetExpiresAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ExpiresAt.Get(), o.ExpiresAt.IsSet()
+}
+
+// HasExpiresAt returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasExpiresAt() bool {
+	if o != nil && o.ExpiresAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetExpiresAt gets a reference to the given NullableTime and assigns it to the ExpiresAt field.
+func (o *SuppressionEntry) SetExpiresAt(v time.Time) {
+	o.ExpiresAt.Set(&v)
+}
+// SetExpiresAtNil sets the value for ExpiresAt to be an explicit nil
+func (o *SuppressionEntry) SetExpiresAtNil() {
+	o.ExpiresAt.Set(nil)
+}
+
+// UnsetExpiresAt ensures that no value is present for ExpiresAt, not even an explicit nil
+func (o *SuppressionEntry) UnsetExpiresAt() {
+	o.ExpiresAt.Unset()
+}
+
 // GetId returns the Id field value
 func (o *SuppressionEntry) GetId() int32 {
 	if o == nil {
@@ -124,6 +247,72 @@ func (o *SuppressionEntry) GetIdOk() (*int32, bool) {
 // SetId sets field value
 func (o *SuppressionEntry) SetId(v int32) {
 	o.Id = v
+}
+
+// GetLastSeenAt returns the LastSeenAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetLastSeenAt() time.Time {
+	if o == nil || IsNil(o.LastSeenAt.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.LastSeenAt.Get()
+}
+
+// GetLastSeenAtOk returns a tuple with the LastSeenAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetLastSeenAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.LastSeenAt.Get(), o.LastSeenAt.IsSet()
+}
+
+// HasLastSeenAt returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasLastSeenAt() bool {
+	if o != nil && o.LastSeenAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLastSeenAt gets a reference to the given NullableTime and assigns it to the LastSeenAt field.
+func (o *SuppressionEntry) SetLastSeenAt(v time.Time) {
+	o.LastSeenAt.Set(&v)
+}
+// SetLastSeenAtNil sets the value for LastSeenAt to be an explicit nil
+func (o *SuppressionEntry) SetLastSeenAtNil() {
+	o.LastSeenAt.Set(nil)
+}
+
+// UnsetLastSeenAt ensures that no value is present for LastSeenAt, not even an explicit nil
+func (o *SuppressionEntry) UnsetLastSeenAt() {
+	o.LastSeenAt.Unset()
+}
+
+// GetMetadata returns the Metadata field value
+func (o *SuppressionEntry) GetMetadata() map[string]interface{} {
+	if o == nil {
+		var ret map[string]interface{}
+		return ret
+	}
+
+	return o.Metadata
+}
+
+// GetMetadataOk returns a tuple with the Metadata field value
+// and a boolean to check if the value has been set.
+func (o *SuppressionEntry) GetMetadataOk() (map[string]interface{}, bool) {
+	if o == nil {
+		return map[string]interface{}{}, false
+	}
+	return o.Metadata, true
+}
+
+// SetMetadata sets field value
+func (o *SuppressionEntry) SetMetadata(v map[string]interface{}) {
+	o.Metadata = v
 }
 
 // GetNotes returns the Notes field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -192,6 +381,90 @@ func (o *SuppressionEntry) SetReason(v SuppressionReason) {
 	o.Reason = v
 }
 
+// GetReasonCode returns the ReasonCode field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetReasonCode() string {
+	if o == nil || IsNil(o.ReasonCode.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.ReasonCode.Get()
+}
+
+// GetReasonCodeOk returns a tuple with the ReasonCode field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetReasonCodeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ReasonCode.Get(), o.ReasonCode.IsSet()
+}
+
+// HasReasonCode returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasReasonCode() bool {
+	if o != nil && o.ReasonCode.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetReasonCode gets a reference to the given NullableString and assigns it to the ReasonCode field.
+func (o *SuppressionEntry) SetReasonCode(v string) {
+	o.ReasonCode.Set(&v)
+}
+// SetReasonCodeNil sets the value for ReasonCode to be an explicit nil
+func (o *SuppressionEntry) SetReasonCodeNil() {
+	o.ReasonCode.Set(nil)
+}
+
+// UnsetReasonCode ensures that no value is present for ReasonCode, not even an explicit nil
+func (o *SuppressionEntry) UnsetReasonCode() {
+	o.ReasonCode.Unset()
+}
+
+// GetReasonDetail returns the ReasonDetail field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetReasonDetail() string {
+	if o == nil || IsNil(o.ReasonDetail.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.ReasonDetail.Get()
+}
+
+// GetReasonDetailOk returns a tuple with the ReasonDetail field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetReasonDetailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ReasonDetail.Get(), o.ReasonDetail.IsSet()
+}
+
+// HasReasonDetail returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasReasonDetail() bool {
+	if o != nil && o.ReasonDetail.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetReasonDetail gets a reference to the given NullableString and assigns it to the ReasonDetail field.
+func (o *SuppressionEntry) SetReasonDetail(v string) {
+	o.ReasonDetail.Set(&v)
+}
+// SetReasonDetailNil sets the value for ReasonDetail to be an explicit nil
+func (o *SuppressionEntry) SetReasonDetailNil() {
+	o.ReasonDetail.Set(nil)
+}
+
+// UnsetReasonDetail ensures that no value is present for ReasonDetail, not even an explicit nil
+func (o *SuppressionEntry) UnsetReasonDetail() {
+	o.ReasonDetail.Unset()
+}
+
 // GetSource returns the Source field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *SuppressionEntry) GetSource() string {
 	if o == nil || IsNil(o.Source.Get()) {
@@ -234,6 +507,138 @@ func (o *SuppressionEntry) UnsetSource() {
 	o.Source.Unset()
 }
 
+// GetSourceRef returns the SourceRef field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetSourceRef() string {
+	if o == nil || IsNil(o.SourceRef.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceRef.Get()
+}
+
+// GetSourceRefOk returns a tuple with the SourceRef field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetSourceRefOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceRef.Get(), o.SourceRef.IsSet()
+}
+
+// HasSourceRef returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasSourceRef() bool {
+	if o != nil && o.SourceRef.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceRef gets a reference to the given NullableString and assigns it to the SourceRef field.
+func (o *SuppressionEntry) SetSourceRef(v string) {
+	o.SourceRef.Set(&v)
+}
+// SetSourceRefNil sets the value for SourceRef to be an explicit nil
+func (o *SuppressionEntry) SetSourceRefNil() {
+	o.SourceRef.Set(nil)
+}
+
+// UnsetSourceRef ensures that no value is present for SourceRef, not even an explicit nil
+func (o *SuppressionEntry) UnsetSourceRef() {
+	o.SourceRef.Unset()
+}
+
+// GetSourceType returns the SourceType field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SuppressionEntry) GetSourceType() string {
+	if o == nil || IsNil(o.SourceType.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.SourceType.Get()
+}
+
+// GetSourceTypeOk returns a tuple with the SourceType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SuppressionEntry) GetSourceTypeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SourceType.Get(), o.SourceType.IsSet()
+}
+
+// HasSourceType returns a boolean if a field has been set.
+func (o *SuppressionEntry) HasSourceType() bool {
+	if o != nil && o.SourceType.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceType gets a reference to the given NullableString and assigns it to the SourceType field.
+func (o *SuppressionEntry) SetSourceType(v string) {
+	o.SourceType.Set(&v)
+}
+// SetSourceTypeNil sets the value for SourceType to be an explicit nil
+func (o *SuppressionEntry) SetSourceTypeNil() {
+	o.SourceType.Set(nil)
+}
+
+// UnsetSourceType ensures that no value is present for SourceType, not even an explicit nil
+func (o *SuppressionEntry) UnsetSourceType() {
+	o.SourceType.Unset()
+}
+
+// GetStatus returns the Status field value
+func (o *SuppressionEntry) GetStatus() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Status
+}
+
+// GetStatusOk returns a tuple with the Status field value
+// and a boolean to check if the value has been set.
+func (o *SuppressionEntry) GetStatusOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Status, true
+}
+
+// SetStatus sets field value
+func (o *SuppressionEntry) SetStatus(v string) {
+	o.Status = v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value
+func (o *SuppressionEntry) GetUpdatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value
+// and a boolean to check if the value has been set.
+func (o *SuppressionEntry) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UpdatedAt, true
+}
+
+// SetUpdatedAt sets field value
+func (o *SuppressionEntry) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = v
+}
+
 func (o SuppressionEntry) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -244,16 +649,41 @@ func (o SuppressionEntry) MarshalJSON() ([]byte, error) {
 
 func (o SuppressionEntry) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["canonical_email"] = o.CanonicalEmail
 	toSerialize["created_at"] = o.CreatedAt
+	if o.CreatedBy.IsSet() {
+		toSerialize["created_by"] = o.CreatedBy.Get()
+	}
 	toSerialize["email"] = o.Email
+	if o.ExpiresAt.IsSet() {
+		toSerialize["expires_at"] = o.ExpiresAt.Get()
+	}
 	toSerialize["id"] = o.Id
+	if o.LastSeenAt.IsSet() {
+		toSerialize["last_seen_at"] = o.LastSeenAt.Get()
+	}
+	toSerialize["metadata"] = o.Metadata
 	if o.Notes.IsSet() {
 		toSerialize["notes"] = o.Notes.Get()
 	}
 	toSerialize["reason"] = o.Reason
+	if o.ReasonCode.IsSet() {
+		toSerialize["reason_code"] = o.ReasonCode.Get()
+	}
+	if o.ReasonDetail.IsSet() {
+		toSerialize["reason_detail"] = o.ReasonDetail.Get()
+	}
 	if o.Source.IsSet() {
 		toSerialize["source"] = o.Source.Get()
 	}
+	if o.SourceRef.IsSet() {
+		toSerialize["source_ref"] = o.SourceRef.Get()
+	}
+	if o.SourceType.IsSet() {
+		toSerialize["source_type"] = o.SourceType.Get()
+	}
+	toSerialize["status"] = o.Status
+	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
 }
 
@@ -262,10 +692,14 @@ func (o *SuppressionEntry) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"canonical_email",
 		"created_at",
 		"email",
 		"id",
+		"metadata",
 		"reason",
+		"status",
+		"updated_at",
 	}
 
 	allProperties := make(map[string]interface{})

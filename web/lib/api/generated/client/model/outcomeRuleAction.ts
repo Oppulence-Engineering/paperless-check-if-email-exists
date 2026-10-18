@@ -7,5 +7,12 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import type { OutcomeRuleActionAction } from "./outcomeRuleActionAction";
 
-export type V1ImportSuppressionsBody = { [key: string]: unknown };
+export interface OutcomeRuleAction {
+  action: OutcomeRuleActionAction;
+  boost?: number;
+  score_override?: string;
+  threshold_count?: number;
+  threshold_window_days?: number;
+}

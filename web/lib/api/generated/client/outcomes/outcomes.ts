@@ -23,6 +23,7 @@ import type {
   UpdateProviderEndpointInput,
   V1ListCampaignOutcomesParams,
   V1ListOutcomesParams,
+  V1UploadCampaignOutcomesBody,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -205,11 +206,16 @@ export const getV1UploadCampaignOutcomesUrl = () => {
 };
 
 export const v1UploadCampaignOutcomes = async (
+  v1UploadCampaignOutcomesBody: V1UploadCampaignOutcomesBody,
   options?: RequestInit,
 ): Promise<v1UploadCampaignOutcomesResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, v1UploadCampaignOutcomesBody.file);
+
   const res = await fetch(getV1UploadCampaignOutcomesUrl(), {
     ...options,
     method: "POST",
+    body: formData,
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();

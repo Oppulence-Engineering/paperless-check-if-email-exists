@@ -28,19 +28,79 @@ export interface SuppressionCheckResponse {
      * @type {string}
      * @memberof SuppressionCheckResponse
      */
+    'canonical_email'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
     'created_at'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'created_by'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'expires_at'?: string | null;
+    /**
+     *
+     * @type {number}
+     * @memberof SuppressionCheckResponse
+     */
+    'id'?: number | null;
+    /**
+     *
+     * @type {{ [key: string]: any; }}
+     * @memberof SuppressionCheckResponse
+     */
+    'metadata'?: { [key: string]: any; } | null;
     /**
      *
      * @type {SuppressionReason}
      * @memberof SuppressionCheckResponse
      */
-    'reason'?: SuppressionReason;
+    'reason'?: SuppressionReason | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'reason_code'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'reason_detail'?: string | null;
     /**
      *
      * @type {string}
      * @memberof SuppressionCheckResponse
      */
     'source'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'source_ref'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'source_type'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionCheckResponse
+     */
+    'status'?: string | null;
     /**
      *
      * @type {boolean}

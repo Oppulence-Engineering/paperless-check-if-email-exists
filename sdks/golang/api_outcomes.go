@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"os"
 )
 
 
@@ -1396,6 +1397,12 @@ func (a *OutcomesAPIService) V1UpdateProviderEndpointExecute(r OutcomesAPIV1Upda
 type OutcomesAPIV1UploadCampaignOutcomesRequest struct {
 	ctx context.Context
 	ApiService OutcomesAPI
+	file *os.File
+}
+
+func (r OutcomesAPIV1UploadCampaignOutcomesRequest) File(file *os.File) OutcomesAPIV1UploadCampaignOutcomesRequest {
+	r.file = file
+	return r
 }
 
 func (r OutcomesAPIV1UploadCampaignOutcomesRequest) Execute() (*IngestOutcomesResponse, *http.Response, error) {
@@ -1435,9 +1442,12 @@ func (a *OutcomesAPIService) V1UploadCampaignOutcomesExecute(r OutcomesAPIV1Uplo
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
+	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"multipart/form-data"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1452,6 +1462,21 @@ func (a *OutcomesAPIService) V1UploadCampaignOutcomesExecute(r OutcomesAPIV1Uplo
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	var fileLocalVarFormFileName string
+	var fileLocalVarFileName     string
+	var fileLocalVarFileBytes    []byte
+
+	fileLocalVarFormFileName = "file"
+	fileLocalVarFile := r.file
+
+	if fileLocalVarFile != nil {
+		fbs, _ := io.ReadAll(fileLocalVarFile)
+
+		fileLocalVarFileBytes = fbs
+		fileLocalVarFileName = fileLocalVarFile.Name()
+		fileLocalVarFile.Close()
+		formFiles = append(formFiles, formFile{fileBytes: fileLocalVarFileBytes, fileName: fileLocalVarFileName, formFileName: fileLocalVarFormFileName})
 	}
 	if r.ctx != nil {
 		// API Key Authentication

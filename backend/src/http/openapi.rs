@@ -537,6 +537,43 @@ mod operation_id_tests {
 	}
 
 	#[test]
+	fn suppression_and_outcome_policy_contracts_match_the_handlers() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		// check.rs sends null fields when the address is not suppressed.
+		assert_eq!(
+			schemas["SuppressionCheckResponse"]["properties"]["reason"]["nullable"],
+			json!(true)
+		);
+		for field in ["status", "reason_detail", "expires_at", "last_seen_at"] {
+			assert!(
+				schemas["SuppressionEntry"]["properties"]
+					.get(field)
+					.is_some(),
+				"SuppressionEntry lost {}",
+				field
+			);
+		}
+
+		let rules = crate::outcomes::default_outcome_policy_rules_json();
+		let properties = &schemas["OutcomePolicyRules"]["properties"];
+		let actions = schemas["OutcomeRuleAction"]["properties"]["action"]["enum"]
+			.as_array()
+			.expect("action enum");
+		for (key, value) in rules.as_object().expect("rules object") {
+			assert!(properties.get(key).is_some(), "rules lost {}", key);
+			if let Some(action) = value.get("action") {
+				assert!(actions.contains(action), "unknown action {}", action);
+			}
+		}
+		assert!(
+			spec["paths"]["/v1/campaign-outcomes/upload"]["post"]["requestBody"]["content"]
+				["multipart/form-data"]
+				.is_object()
+		);
+	}
+
+	#[test]
 	fn every_operation_has_a_unique_id() {
 		let spec = super::build_spec().expect("OpenAPI spec");
 		let mut ids = HashSet::new();
@@ -718,6 +755,10 @@ fn with_path_parameters(mut operation: Value, parameters: &[(&str, &str)]) -> Va
 		);
 	}
 	operation
+}
+
+fn query_parameter(name: &str, schema: Value) -> Value {
+	json!({ "name": name, "in": "query", "required": false, "schema": schema })
 }
 
 fn download_operation(
@@ -1646,12 +1687,23 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"id": { "type": "integer", "format": "int32" },
 				"email": { "type": "string" },
+				"canonical_email": { "type": "string" },
+				"status": { "type": "string" },
 				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
 				"source": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
 				"notes": { "type": "string", "nullable": true },
-				"created_at": { "type": "string", "format": "date-time" }
+				"created_by": { "type": "string", "nullable": true },
+				"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+				"last_seen_at": { "type": "string", "format": "date-time", "nullable": true },
+				"metadata": generic_object_schema(),
+				"created_at": { "type": "string", "format": "date-time" },
+				"updated_at": { "type": "string", "format": "date-time" }
 			},
-			"required": ["id", "email", "reason", "created_at"]
+			"required": ["id", "email", "canonical_email", "status", "reason", "metadata", "created_at", "updated_at"]
 		}),
 	);
 	insert_schema(
@@ -1673,8 +1725,21 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"type": "object",
 			"properties": {
 				"suppressed": { "type": "boolean" },
-				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"id": { "type": "integer", "format": "int32", "nullable": true },
+				"canonical_email": { "type": "string", "nullable": true },
+				"status": { "type": "string", "nullable": true },
+				"reason": {
+					"nullable": true,
+					"allOf": [{ "$ref": "#/components/schemas/SuppressionReason" }]
+				},
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
 				"source": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
+				"created_by": { "type": "string", "nullable": true },
+				"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+				"metadata": { "type": "object", "additionalProperties": true, "nullable": true },
 				"created_at": { "type": "string", "format": "date-time", "nullable": true }
 			},
 			"required": ["suppressed"]
@@ -1686,8 +1751,93 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "object",
 			"properties": {
-				"deleted": { "type": "boolean" }
+				"deleted": { "type": "boolean" },
+				"status": { "type": "string" }
 			},
+			"required": ["deleted", "status"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionEvent",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int64" },
+				"entry_id": { "type": "integer", "format": "int32", "nullable": true },
+				"canonical_email": { "type": "string" },
+				"event_type": { "type": "string" },
+				"from_status": { "type": "string", "nullable": true },
+				"to_status": { "type": "string", "nullable": true },
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
+				"actor_type": { "type": "string" },
+				"actor_id": { "type": "string", "nullable": true },
+				"metadata": generic_object_schema(),
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "canonical_email", "event_type", "actor_type", "metadata", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionEventListResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"events": { "type": "array", "items": { "$ref": "#/components/schemas/SuppressionEvent" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["events", "total"]
+		}),
+	);
+	// Matches outcomes::RuleAction, which serde tags by "action".
+	insert_schema(
+		spec,
+		"OutcomeRuleAction",
+		json!({
+			"type": "object",
+			"properties": {
+				"action": {
+					"type": "string",
+					"enum": ["suppress", "suppress_and_unsubscribe", "suppress_after", "score_boost", "informational"]
+				},
+				"score_override": { "type": "string" },
+				"threshold_count": { "type": "integer", "format": "int64" },
+				"threshold_window_days": { "type": "integer", "format": "int32" },
+				"boost": { "type": "integer", "format": "int32" }
+			},
+			"required": ["action"]
+		}),
+	);
+	// Matches outcomes::OutcomePolicyRules. Serde fills a missing field with
+	// its default, so no field is required.
+	let rule = json!({ "$ref": "#/components/schemas/OutcomeRuleAction" });
+	insert_schema(
+		spec,
+		"OutcomePolicyRules",
+		json!({
+			"type": "object",
+			"properties": {
+				"hard_bounce": rule,
+				"complaint": rule,
+				"soft_bounce": rule,
+				"unsubscribe": rule,
+				"delivered": rule,
+				"open": rule,
+				"click": rule,
+				"outcome_ttl_days": { "type": "integer", "format": "int32" }
+			}
+		}),
+	);
+	insert_schema(
+		spec,
+		"OutcomePolicyDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
 			"required": ["deleted"]
 		}),
 	);
@@ -2119,32 +2269,106 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"entry_ids",
 		json!({ "type": "array", "items": { "type": "integer", "format": "int32" } }),
 	);
+	// Import uses the add handler, so it takes and returns the same bodies.
 	upsert_operation(
 		spec,
 		"/v1/suppressions/import",
 		"post",
 		generic_json_post_operation("v1", "Import suppressions", "Suppression entries imported"),
 	);
-	upsert_operation(
+	set_request_body(
 		spec,
-		"/v1/suppressions/export",
-		"get",
-		download_operation(
-			"v1",
-			"Export suppressions",
-			"Suppression export CSV",
-			&["text/csv"],
-		),
+		"/v1/suppressions/import",
+		"post",
+		"application/json",
+		"AddSuppressionsRequest",
+		true,
 	);
-	upsert_operation(
+	set_response(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		"200",
+		json_response("AddSuppressionsResponse", "Suppression entries imported"),
+	);
+	let mut export = download_operation(
+		"v1",
+		"Export suppressions",
+		"Suppression export CSV",
+		&["text/csv"],
+	);
+	export["parameters"] = json!([
+		query_parameter("format", json!({ "type": "string", "enum": ["csv"] })),
+		query_parameter(
+			"reason",
+			json!({ "$ref": "#/components/schemas/SuppressionReason" })
+		),
+		query_parameter("status", json!({ "type": "string" })),
+		query_parameter("source_type", json!({ "type": "string" })),
+		query_parameter("source_ref", json!({ "type": "string" })),
+		query_parameter("include_expired", json!({ "type": "boolean" })),
+	]);
+	upsert_operation(spec, "/v1/suppressions/export", "get", export);
+	let mut events = with_path_parameters(
+		generic_json_operation("v1", "List suppression events", "Suppression event list"),
+		&[("id", "int32")],
+	);
+	if let Some(parameters) = events["parameters"].as_array_mut() {
+		parameters.push(query_parameter(
+			"limit",
+			json!({ "type": "integer", "format": "int64", "maximum": 200 }),
+		));
+		parameters.push(query_parameter(
+			"offset",
+			json!({ "type": "integer", "format": "int64" }),
+		));
+	}
+	upsert_operation(spec, "/v1/suppressions/{id}/events", "get", events);
+	set_response(
 		spec,
 		"/v1/suppressions/{id}/events",
 		"get",
-		with_path_parameters(
-			generic_json_operation("v1", "List suppression events", "Suppression event list"),
-			&[("id", "int32")],
-		),
+		"200",
+		json_response("SuppressionEventListResponse", "Suppression event list"),
 	);
+	// The rules follow outcomes::OutcomePolicyRules; storage keeps them as loose JSON.
+	for schema in [
+		"OutcomePolicyView",
+		"CreateOutcomePolicyRequest",
+		"UpdateOutcomePolicyRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"rules",
+			json!({ "$ref": "#/components/schemas/OutcomePolicyRules" }),
+		);
+	}
+	set_response(
+		spec,
+		"/v1/outcome-policies/{policy_id}",
+		"delete",
+		"200",
+		json_response("OutcomePolicyDeleteResponse", "Outcome policy deleted"),
+	);
+	// The handler reads the CSV from a multipart part named "file".
+	if let Some(operation) = operation_mut(spec, "/v1/campaign-outcomes/upload", "post") {
+		operation.insert(
+			"requestBody".to_string(),
+			json!({
+				"required": true,
+				"content": {
+					"multipart/form-data": {
+						"schema": {
+							"type": "object",
+							"properties": { "file": { "type": "string", "format": "binary" } },
+							"required": ["file"]
+						}
+					}
+				}
+			}),
+		);
+	}
 	set_response(
 		spec,
 		"/v1/jobs/{job_id}/retry",

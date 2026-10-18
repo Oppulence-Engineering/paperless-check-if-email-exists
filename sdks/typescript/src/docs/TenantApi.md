@@ -229,7 +229,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1DeleteOutcomePolicy**
-> v1DeleteOutcomePolicy()
+> OutcomePolicyDeleteResponse v1DeleteOutcomePolicy()
 
 
 ### Example
@@ -259,7 +259,7 @@ const { status, data } = await apiInstance.v1DeleteOutcomePolicy(
 
 ### Return type
 
-void (empty response body)
+**OutcomePolicyDeleteResponse**
 
 ### Authorization
 

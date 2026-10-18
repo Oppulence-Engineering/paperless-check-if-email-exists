@@ -456,10 +456,13 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          *
+         * @param {File} file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UploadCampaignOutcomes: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1UploadCampaignOutcomes: async (file: File, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('v1UploadCampaignOutcomes', 'file', file)
             const localVarPath = `/v1/campaign-outcomes/upload`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -471,15 +474,23 @@ export const OutcomesApiAxiosParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
 
             // authentication Authorization required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
+            if (file !== undefined) {
+                localVarFormParams.append('file', file as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -621,11 +632,12 @@ export const OutcomesApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {File} file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1UploadCampaignOutcomes(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<IngestOutcomesResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UploadCampaignOutcomes(options);
+        async v1UploadCampaignOutcomes(file: File, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<IngestOutcomesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UploadCampaignOutcomes(file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1UploadCampaignOutcomes']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -724,11 +736,12 @@ export const OutcomesApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          *
+         * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UploadCampaignOutcomes(options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse> {
-            return localVarFp.v1UploadCampaignOutcomes(options).then((request) => request(axios, basePath));
+        v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse> {
+            return localVarFp.v1UploadCampaignOutcomes(requestParameters.file, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -823,11 +836,12 @@ export interface OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof OutcomesApiInterface
      */
-    v1UploadCampaignOutcomes(options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse>;
+    v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<IngestOutcomesResponse>;
 
 }
 
@@ -1042,6 +1056,20 @@ export interface OutcomesApiV1UpdateProviderEndpointRequest {
 }
 
 /**
+ * Request parameters for v1UploadCampaignOutcomes operation in OutcomesApi.
+ * @export
+ * @interface OutcomesApiV1UploadCampaignOutcomesRequest
+ */
+export interface OutcomesApiV1UploadCampaignOutcomesRequest {
+    /**
+     *
+     * @type {File}
+     * @memberof OutcomesApiV1UploadCampaignOutcomes
+     */
+    readonly file: File
+}
+
+/**
  * OutcomesApi - object-oriented interface
  * @export
  * @class OutcomesApi
@@ -1150,11 +1178,12 @@ export class OutcomesApi extends BaseAPI implements OutcomesApiInterface {
 
     /**
      *
+     * @param {OutcomesApiV1UploadCampaignOutcomesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof OutcomesApi
      */
-    public v1UploadCampaignOutcomes(options?: RawAxiosRequestConfig) {
-        return OutcomesApiFp(this.configuration).v1UploadCampaignOutcomes(options).then((request) => request(this.axios, this.basePath));
+    public v1UploadCampaignOutcomes(requestParameters: OutcomesApiV1UploadCampaignOutcomesRequest, options?: RawAxiosRequestConfig) {
+        return OutcomesApiFp(this.configuration).v1UploadCampaignOutcomes(requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 }

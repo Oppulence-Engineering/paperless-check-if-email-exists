@@ -29,14 +29,14 @@ import type {
   ReverificationStatusResponse,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
+  SuppressionEventListResponse,
   SuppressionListResponse,
   UpdateReverificationRequest,
   V1CheckSuppressionParams,
   V1DownloadListParams,
-  V1ImportSuppressions200,
-  V1ImportSuppressionsBody,
+  V1ExportSuppressionsParams,
   V1ListListsParams,
-  V1ListSuppressionEvents200,
+  V1ListSuppressionEventsParams,
   V1ListSuppressionsParams,
   V1SourceQuality200,
 } from "../model";
@@ -1004,17 +1004,32 @@ export type v1ExportSuppressionsResponseError =
 export type v1ExportSuppressionsResponse =
   v1ExportSuppressionsResponseSuccess | v1ExportSuppressionsResponseError;
 
-export const getV1ExportSuppressionsUrl = () => {
-  return `/v1/suppressions/export`;
+export const getV1ExportSuppressionsUrl = (
+  params?: V1ExportSuppressionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/suppressions/export?${stringifiedParams}`
+    : `/v1/suppressions/export`;
 };
 
 /**
  * @summary Export suppressions
  */
 export const v1ExportSuppressions = async (
+  params?: V1ExportSuppressionsParams,
   options?: RequestInit,
 ): Promise<v1ExportSuppressionsResponse> => {
-  const res = await fetch(getV1ExportSuppressionsUrl(), {
+  const res = await fetch(getV1ExportSuppressionsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -1030,7 +1045,7 @@ export const v1ExportSuppressions = async (
 };
 
 export type v1ImportSuppressionsResponse200 = {
-  data: V1ImportSuppressions200;
+  data: AddSuppressionsResponse;
   status: 200;
 };
 
@@ -1059,14 +1074,14 @@ export const getV1ImportSuppressionsUrl = () => {
  * @summary Import suppressions
  */
 export const v1ImportSuppressions = async (
-  v1ImportSuppressionsBody: V1ImportSuppressionsBody,
+  addSuppressionsRequest: AddSuppressionsRequest,
   options?: RequestInit,
 ): Promise<v1ImportSuppressionsResponse> => {
   const res = await fetch(getV1ImportSuppressionsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(v1ImportSuppressionsBody),
+    body: JSON.stringify(addSuppressionsRequest),
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -1132,7 +1147,7 @@ export const v1DeleteSuppression = async (
 };
 
 export type v1ListSuppressionEventsResponse200 = {
-  data: V1ListSuppressionEvents200;
+  data: SuppressionEventListResponse;
   status: 200;
 };
 
@@ -1153,8 +1168,23 @@ export type v1ListSuppressionEventsResponseError =
 export type v1ListSuppressionEventsResponse =
   v1ListSuppressionEventsResponseSuccess | v1ListSuppressionEventsResponseError;
 
-export const getV1ListSuppressionEventsUrl = (id: number) => {
-  return `/v1/suppressions/${id}/events`;
+export const getV1ListSuppressionEventsUrl = (
+  id: number,
+  params?: V1ListSuppressionEventsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/suppressions/${id}/events?${stringifiedParams}`
+    : `/v1/suppressions/${id}/events`;
 };
 
 /**
@@ -1162,9 +1192,10 @@ export const getV1ListSuppressionEventsUrl = (id: number) => {
  */
 export const v1ListSuppressionEvents = async (
   id: number,
+  params?: V1ListSuppressionEventsParams,
   options?: RequestInit,
 ): Promise<v1ListSuppressionEventsResponse> => {
-  const res = await fetch(getV1ListSuppressionEventsUrl(id), {
+  const res = await fetch(getV1ListSuppressionEventsUrl(id, params), {
     ...options,
     method: "GET",
   });

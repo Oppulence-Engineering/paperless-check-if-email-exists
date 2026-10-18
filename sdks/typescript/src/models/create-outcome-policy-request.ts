@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { OutcomePolicyRules } from './outcome-policy-rules';
 
 /**
  *
@@ -34,8 +37,8 @@ export interface CreateOutcomePolicyRequest {
     'name': string;
     /**
      *
-     * @type {any}
+     * @type {OutcomePolicyRules}
      * @memberof CreateOutcomePolicyRequest
      */
-    'rules'?: any;
+    'rules'?: OutcomePolicyRules;
 }

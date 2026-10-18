@@ -588,11 +588,33 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-const { status, data } = await apiInstance.v1ExportSuppressions();
+let format: 'csv'; // (optional) (default to undefined)
+let reason: SuppressionReason; // (optional) (default to undefined)
+let status: string; // (optional) (default to undefined)
+let sourceType: string; // (optional) (default to undefined)
+let sourceRef: string; // (optional) (default to undefined)
+let includeExpired: boolean; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ExportSuppressions(
+    format,
+    reason,
+    status,
+    sourceType,
+    sourceRef,
+    includeExpired
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **format** | [**&#39;csv&#39;**]**Array<&#39;csv&#39;>** |  | (optional) defaults to undefined|
+| **reason** | **SuppressionReason** |  | (optional) defaults to undefined|
+| **status** | [**string**] |  | (optional) defaults to undefined|
+| **sourceType** | [**string**] |  | (optional) defaults to undefined|
+| **sourceRef** | [**string**] |  | (optional) defaults to undefined|
+| **includeExpired** | [**boolean**] |  | (optional) defaults to undefined|
 
 
 ### Return type
@@ -772,7 +794,7 @@ const { status, data } = await apiInstance.v1GetList(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ImportSuppressions**
-> { [key: string]: any; } v1ImportSuppressions(requestBody)
+> AddSuppressionsResponse v1ImportSuppressions(addSuppressionsRequest)
 
 
 ### Example
@@ -780,16 +802,17 @@ const { status, data } = await apiInstance.v1GetList(
 ```typescript
 import {
     V1Api,
-    Configuration
+    Configuration,
+    AddSuppressionsRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-let requestBody: { [key: string]: any; }; //
+let addSuppressionsRequest: AddSuppressionsRequest; //
 
 const { status, data } = await apiInstance.v1ImportSuppressions(
-    requestBody
+    addSuppressionsRequest
 );
 ```
 
@@ -797,12 +820,12 @@ const { status, data } = await apiInstance.v1ImportSuppressions(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **requestBody** | **{ [key: string]: any; }**|  | |
+| **addSuppressionsRequest** | **AddSuppressionsRequest**|  | |
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**AddSuppressionsResponse**
 
 ### Authorization
 
@@ -877,7 +900,7 @@ const { status, data } = await apiInstance.v1ListLists(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ListSuppressionEvents**
-> { [key: string]: any; } v1ListSuppressionEvents()
+> SuppressionEventListResponse v1ListSuppressionEvents()
 
 
 ### Example
@@ -892,9 +915,13 @@ const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
 let id: number; // (default to undefined)
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1ListSuppressionEvents(
-    id
+    id,
+    limit,
+    offset
 );
 ```
 
@@ -903,11 +930,13 @@ const { status, data } = await apiInstance.v1ListSuppressionEvents(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **id** | [**number**] |  | defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**{ [key: string]: any; }**
+**SuppressionEventListResponse**
 
 ### Authorization
 

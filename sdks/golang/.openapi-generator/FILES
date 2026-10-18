@@ -119,8 +119,11 @@ docs/OutcomeIngestRequest.md
 docs/OutcomeIngestResponse.md
 docs/OutcomeInput.md
 docs/OutcomeListResponse.md
+docs/OutcomePolicyDeleteResponse.md
 docs/OutcomePolicyListResponse.md
+docs/OutcomePolicyRules.md
 docs/OutcomePolicyView.md
+docs/OutcomeRuleAction.md
 docs/OutcomeType.md
 docs/OutcomeView.md
 docs/OutcomesAPI.md
@@ -173,6 +176,8 @@ docs/SubReason.md
 docs/SuppressionCheckResponse.md
 docs/SuppressionDeleteResponse.md
 docs/SuppressionEntry.md
+docs/SuppressionEvent.md
+docs/SuppressionEventListResponse.md
 docs/SuppressionListResponse.md
 docs/SuppressionReason.md
 docs/SyntaxDetails.md
@@ -198,6 +203,7 @@ docs/UpdateWebhookRequest.md
 docs/V0API.md
 docs/V1API.md
 docs/V1EmailHistory200Response.md
+docs/V1UploadCampaignOutcomesRequest.md
 docs/VerifMethod.md
 docs/VerifMethodVerifMethod.md
 docs/VerificationAPI.md
@@ -296,8 +302,11 @@ model_outcome_ingest_request.go
 model_outcome_ingest_response.go
 model_outcome_input.go
 model_outcome_list_response.go
+model_outcome_policy_delete_response.go
 model_outcome_policy_list_response.go
+model_outcome_policy_rules.go
 model_outcome_policy_view.go
+model_outcome_rule_action.go
 model_outcome_type.go
 model_outcome_view.go
 model_partial_confidence.go
@@ -347,6 +356,8 @@ model_sub_reason.go
 model_suppression_check_response.go
 model_suppression_delete_response.go
 model_suppression_entry.go
+model_suppression_event.go
+model_suppression_event_list_response.go
 model_suppression_list_response.go
 model_suppression_reason.go
 model_syntax_details.go
@@ -368,6 +379,7 @@ model_update_tenant_domain_request.go
 model_update_tenant_settings_request.go
 model_update_webhook_request.go
 model_v1_email_history_200_response.go
+model_v1_upload_campaign_outcomes_request.go
 model_verif_method.go
 model_verif_method_verif_method.go
 model_webhook.go
