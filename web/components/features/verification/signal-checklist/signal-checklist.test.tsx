@@ -27,7 +27,9 @@ describe("SignalChecklist", () => {
 			"data-slot",
 			"signal-checklist",
 		);
-		expect(screen.getByText("Mailbox accepts mail")).toBeInTheDocument();
+		expect(screen.getByText("Mailbox accepts mail: yes")).toBeInTheDocument();
+		// A passed "bad" signal must still read as "no", not as a plain label.
+		expect(screen.getByText("Mailbox is disabled: no")).toBeInTheDocument();
 		expect(screen.getByText("Free email provider: no")).toBeInTheDocument();
 		expect(screen.queryByText("Catch-all risk")).not.toBeInTheDocument();
 	});

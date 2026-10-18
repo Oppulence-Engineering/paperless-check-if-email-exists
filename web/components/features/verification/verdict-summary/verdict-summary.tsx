@@ -61,7 +61,7 @@ export function VerdictSummary({ className, result, ...props }: VerdictSummaryPr
 		<section data-slot="verdict-summary" className={cn(className)} {...props}>
 			<Group>
 				<Row>
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+					<div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
 						<div className="min-w-0">
 							<p className="text-xs text-[#858585]">Recommendation</p>
 							<p className="mt-1 text-lg font-medium text-white">{recommendation.label(action)}</p>

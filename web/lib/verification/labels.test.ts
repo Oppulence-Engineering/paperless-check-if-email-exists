@@ -9,6 +9,7 @@ import {
 	category,
 	confidenceLevel,
 	freshness,
+	confidenceFactor,
 	humanize,
 	labelFor,
 	outcomeType,
@@ -67,6 +68,9 @@ describe("verification labels", () => {
 
 	it("falls back to readable text for unknown values", () => {
 		expect(humanize("smtp_is_catch_all")).toBe("Smtp is catch all");
+		expect(confidenceFactor("provider_reputation:gmail")).toBe("Provider reputation: gmail");
+		expect(confidenceFactor("tenant_history:safe_repeat")).toBe("Your earlier checks: safe repeat");
+		expect(confidenceFactor("hard_invalid_signal")).toBe("Hard invalid signal");
 		expect(labelFor(REASON_LABELS, "brand_new_code")).toBe("Brand new code");
 		expect(labelFor(REASON_LABELS, null)).toBe("Not available");
 		expect(category.tone("brand_new")).toBe("gray");

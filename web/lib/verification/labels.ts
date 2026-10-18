@@ -19,6 +19,26 @@ export function labelFor(map: Record<string, string>, value: string | null | und
 	return map[value] ?? humanize(value);
 }
 
+const FACTOR_TOPICS: Record<string, string> = {
+	tenant_history: "Your earlier checks",
+	fresh_history: "Last check",
+	outcome_feedback: "Delivery feedback",
+	auth_records: "Sender authentication",
+	mx: "Mail server",
+};
+
+/**
+ * A readable confidence factor. The backend sends `topic:detail` codes, for
+ * example `provider_reputation:gmail` (backend/src/scoring/mod.rs).
+ */
+export function confidenceFactor(code: string): string {
+	const [topic = "", ...details] = code.split(":");
+	const label = labelFor(FACTOR_TOPICS, topic);
+	return details.length
+		? `${label}: ${details.map((detail) => detail.replaceAll("_", " ")).join(", ")}`
+		: label;
+}
+
 function entry<T extends Record<string, Labelled>>(map: T) {
 	return {
 		label: (value: string | null | undefined) =>
@@ -130,6 +150,12 @@ export const outcomeType = entry({
 	hard_bounce: { label: "Hard bounce", tone: "red" },
 	complaint: { label: "Complaint", tone: "red" },
 	unsubscribe: { label: "Unsubscribed", tone: "gray" },
+	// Provider outcome events use these values (backend/src/http/v1/outcomes.rs).
+	bounced: { label: "Bounced", tone: "red" },
+	opened: { label: "Opened", tone: "blue" },
+	clicked: { label: "Clicked", tone: "blue" },
+	complained: { label: "Complaint", tone: "red" },
+	unsubscribed: { label: "Unsubscribed", tone: "gray" },
 });
 
 export const PROVIDER_LABELS: Record<string, string> = {
@@ -216,3 +242,63 @@ export const SIGNALS: { key: string; label: string; good: boolean | null }[] = [
 	{ key: "has_domain_suggestion", label: "Domain may have a typo", good: false },
 	{ key: "is_free_provider", label: "Free email provider", good: null },
 ];
+
+/** Alert types are the change types in backend/src/list_intelligence.rs (`classify_change`). */
+export const alertType = entry({
+	became_invalid: { label: "Became invalid", tone: "red" },
+	became_risky: { label: "Became risky", tone: "yellow" },
+	became_safe: { label: "Became safe", tone: "green" },
+	improved: { label: "Improved", tone: "green" },
+	degraded: { label: "Degraded", tone: "yellow" },
+});
+
+/** The `list_status` database enum (backend/migrations/20260318000003_email_lists.up.sql). */
+export const listStatus = entry({
+	uploading: { label: "Uploading", tone: "blue" },
+	processing: { label: "Processing", tone: "blue" },
+	completed: { label: "Completed", tone: "green" },
+	failed: { label: "Failed", tone: "red" },
+	deleted: { label: "Deleted", tone: "gray" },
+});
+
+export const pipelineRunStatus = entry({
+	queued: { label: "Queued", tone: "blue" },
+	preparing: { label: "Preparing", tone: "blue" },
+	fetching_source: { label: "Fetching source", tone: "blue" },
+	publishing: { label: "Publishing", tone: "blue" },
+	running: { label: "Running", tone: "blue" },
+	delivering: { label: "Delivering", tone: "blue" },
+	completed: { label: "Completed", tone: "green" },
+	failed: { label: "Failed", tone: "red" },
+	cancelled: { label: "Cancelled", tone: "gray" },
+	skipped: { label: "Skipped", tone: "gray" },
+});
+
+/** The `job_state` database enum (backend/migrations/20260316000003_enhanced_job_lifecycle.up.sql). */
+export const jobStatus = entry({
+	pending: { label: "Waiting", tone: "blue" },
+	running: { label: "Running", tone: "blue" },
+	completed: { label: "Completed", tone: "green" },
+	cancelling: { label: "Cancelling", tone: "yellow" },
+	cancelled: { label: "Cancelled", tone: "gray" },
+	failed: { label: "Failed", tone: "red" },
+});
+
+/** The `task_state` database enum: the state of one row in a job. */
+export const taskState = entry({
+	queued: { label: "Queued", tone: "gray" },
+	running: { label: "Running", tone: "blue" },
+	completed: { label: "Completed", tone: "green" },
+	retrying: { label: "Retrying", tone: "yellow" },
+	failed: { label: "Failed", tone: "red" },
+	cancelled: { label: "Cancelled", tone: "gray" },
+	dead_lettered: { label: "Stopped after retries", tone: "red" },
+});
+
+/** Remediation classes (backend/src/http/v1/lists/remediation.rs). */
+export const remediationClass = entry({
+	fixed: { label: "Fixed", tone: "blue" },
+	safe: { label: "Safe", tone: "green" },
+	review: { label: "Review", tone: "yellow" },
+	drop: { label: "Drop", tone: "red" },
+});

@@ -5,6 +5,7 @@ import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Pill, Row } from "@/components/platform/page-kit";
 import { policyEvaluationOf } from "@/lib/verification/check-result";
 import {
+	confidenceFactor,
 	labelFor,
 	POLICY_MODE_LABELS,
 	policyDecision,
@@ -61,7 +62,10 @@ export function ProviderDetails({ className, result, ...props }: ProviderDetails
 				) : null}
 				{partial ? (
 					<Row
-						description={`Confidence ${partial.confidence}/100. ${partial.factors.join(" ")}`.trim()}
+						description={[
+							`Confidence ${partial.confidence}/100`,
+							...partial.factors.map(confidenceFactor),
+						].join(". ")}
 						label="Why the check could not finish"
 						layout="stacked"
 					>
@@ -78,7 +82,7 @@ export function ProviderDetails({ className, result, ...props }: ProviderDetails
 						label="Workspace policy"
 						layout="stacked"
 					>
-						<div className="flex flex-col gap-2">
+						<div className="flex flex-col items-start gap-2">
 							<Pill tone={policyDecision.tone(policy.decision)}>
 								{policyDecision.label(policy.decision)}
 							</Pill>

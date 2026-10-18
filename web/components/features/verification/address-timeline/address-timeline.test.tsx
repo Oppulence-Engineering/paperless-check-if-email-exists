@@ -37,6 +37,8 @@ describe("AddressTimeline", () => {
 						score: 12,
 						category: "invalid",
 						previous_category: "valid",
+						previous_score: 80,
+						policy_decision: "suppress",
 						reason_codes: ["invalid_recipient"],
 						recommendation_action: "suppress",
 						is_reachable: "invalid",
@@ -47,14 +49,18 @@ describe("AddressTimeline", () => {
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
 			data: {
-				total: 1,
+				limit: 50,
+				offset: 0,
 				outcomes: [
 					{
 						id: 1,
 						email: "maya@brightlane.co",
-						type: "hard_bounce",
-						source: "sendgrid",
+						canonical_email: "maya@brightlane.co",
+						provider: "sendgrid",
+						event_type: "bounced",
 						campaign_id: "spring",
+						correlation_status: "matched",
+						metadata: {},
 						occurred_at: "2026-10-17T09:00:00Z",
 						created_at: "2026-10-17T09:00:01Z",
 					},
@@ -64,14 +70,19 @@ describe("AddressTimeline", () => {
 		vi.spyOn(V1Api.prototype, "v1CheckSuppression").mockResolvedValue({
 			data: { suppressed: false },
 		} as never);
-		const add = vi.spyOn(V1Api.prototype, "v1AddSuppressions").mockResolvedValue({
+		// gitleaks reads the method name as a key.
+		const add = vi.spyOn(V1Api.prototype, "v1AddSuppressions"); // gitleaks:allow
+		add.mockResolvedValue({
 			data: { added: 1, duplicates: 0, updated: 0, entry_ids: [1] },
 		} as never);
 
 		renderTimeline();
 
-		expect(await screen.findByText("Hard bounce")).toBeInTheDocument();
+		expect(await screen.findByText("Bounced")).toBeInTheDocument();
+		expect(screen.getByText("Campaign spring · Matched to a send: matched")).toBeInTheDocument();
 		expect(screen.getByText("Changed from Valid to Invalid")).toBeInTheDocument();
+		expect(screen.getByText("Score changed from 80 to 12")).toBeInTheDocument();
+		expect(screen.getByText("Policy: Suppress")).toBeInTheDocument();
 		expect(screen.getByText("The mailbox does not exist")).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Open the list" })).toHaveAttribute(
 			"href",
@@ -91,7 +102,7 @@ describe("AddressTimeline", () => {
 			data: { email: "maya@brightlane.co", total: 0, history: [] },
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
-			data: { total: 0, outcomes: [] },
+			data: { limit: 50, offset: 0, outcomes: [] },
 		} as never);
 		vi.spyOn(V1Api.prototype, "v1CheckSuppression").mockResolvedValue({
 			data: { suppressed: true, reason: "complaint", created_at: "2026-10-01T00:00:00Z" },
@@ -100,8 +111,6 @@ describe("AddressTimeline", () => {
 		renderTimeline();
 
 		expect(await screen.findByText("Suppressed")).toBeInTheDocument();
-		expect(
-			await screen.findByText("No earlier checks or delivery events for this address."),
-		).toBeInTheDocument();
+		expect(await screen.findByText("No earlier results for this address.")).toBeInTheDocument();
 	});
 });

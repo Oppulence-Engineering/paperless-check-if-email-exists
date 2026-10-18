@@ -4,7 +4,7 @@ import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row } from "@/components/platform/page-kit";
 import { Check, Minus, X } from "@/lib/icons";
-import { catchAllSeverity, SIGNALS } from "@/lib/verification/labels";
+import { catchAllSeverity, confidenceFactor, SIGNALS } from "@/lib/verification/labels";
 
 import { type SignalChecklistPropsFields } from "./signal-checklist.schema";
 
@@ -51,8 +51,7 @@ export function SignalChecklist({ className, result, ...props }: SignalChecklist
 								<li className="flex items-center gap-2.5 text-sm" key={signal.key}>
 									<Icon className={cn("size-4", tone)} title={label} />
 									<span className={state === "fail" ? "text-white" : "text-neutral-300"}>
-										{signal.label}
-										{signal.good === null ? `: ${value ? "yes" : "no"}` : null}
+										{signal.label}: {value ? "yes" : "no"}
 									</span>
 								</li>
 							);
@@ -76,7 +75,7 @@ export function SignalChecklist({ className, result, ...props }: SignalChecklist
 					<Row label="Catch-all factors" layout="stacked">
 						<ul className="list-disc space-y-1 pl-5 text-sm text-neutral-300">
 							{catchAllFactors.map((factor) => (
-								<li key={factor}>{factor}</li>
+								<li key={factor}>{confidenceFactor(factor)}</li>
 							))}
 						</ul>
 					</Row>

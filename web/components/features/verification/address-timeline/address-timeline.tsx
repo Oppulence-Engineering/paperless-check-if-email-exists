@@ -22,6 +22,7 @@ import {
 	category,
 	labelFor,
 	outcomeType,
+	policyDecision,
 	REASON_LABELS,
 	recommendation,
 	suppressionReason,
@@ -128,11 +129,15 @@ export function AddressTimeline({ className, email, ...props }: AddressTimelineP
 					<Row>
 						<p className="text-sm text-[#858585]">Loading the history of this address…</p>
 					</Row>
+				) : history.isError ? (
+					<Row>
+						<p className="text-sm text-red-300" role="alert">
+							We could not load the history of this address. Try again.
+						</p>
+					</Row>
 				) : items.length === 0 ? (
 					<Row>
-						<p className="text-sm text-[#858585]">
-							No earlier checks or delivery events for this address.
-						</p>
+						<p className="text-sm text-[#858585]">No earlier results for this address.</p>
 					</Row>
 				) : (
 					items.map((item) =>
@@ -152,12 +157,24 @@ export function AddressTimeline({ className, email, ...props }: AddressTimelineP
 											{recommendation.label(item.entry.recommendation_action)}
 										</Pill>
 									) : null}
+									{item.entry.policy_decision ? (
+										<Pill tone={policyDecision.tone(item.entry.policy_decision)}>
+											Policy: {policyDecision.label(item.entry.policy_decision)}
+										</Pill>
+									) : null}
 								</div>
 								{item.entry.previous_category &&
 								item.entry.previous_category !== item.entry.category ? (
 									<p className="text-sm text-neutral-300">
 										Changed from {category.label(item.entry.previous_category)} to{" "}
 										{category.label(item.entry.category)}
+									</p>
+								) : null}
+								{item.entry.previous_score != null &&
+								item.entry.score != null &&
+								item.entry.previous_score !== item.entry.score ? (
+									<p className="text-sm text-neutral-300">
+										Score changed from {item.entry.previous_score} to {item.entry.score}
 									</p>
 								) : null}
 								{item.entry.reason_codes?.length ? (
@@ -191,18 +208,20 @@ export function AddressTimeline({ className, email, ...props }: AddressTimelineP
 								<div className="flex flex-wrap items-center gap-2 text-sm">
 									<span className="text-[#858585]">{when(item.at)}</span>
 									<span className="text-white">Delivery event</span>
-									<Pill tone={outcomeType.tone(item.event.type)}>
-										{outcomeType.label(item.event.type)}
+									<Pill tone={outcomeType.tone(item.event.event_type)}>
+										{outcomeType.label(item.event.event_type)}
 									</Pill>
-									{item.event.source ? (
-										<span className="text-neutral-300">{item.event.source}</span>
+									{item.event.provider ? (
+										<span className="text-neutral-300">{item.event.provider}</span>
 									) : null}
 								</div>
-								{item.event.campaign_id || item.event.policy_action ? (
+								{item.event.campaign_id || item.event.correlation_status ? (
 									<p className="text-xs text-[#858585]">
 										{[
 											item.event.campaign_id ? `Campaign ${item.event.campaign_id}` : null,
-											item.event.policy_action ? `Action: ${item.event.policy_action}` : null,
+											item.event.correlation_status
+												? `Matched to a send: ${item.event.correlation_status}`
+												: null,
 										]
 											.filter(Boolean)
 											.join(" · ")}

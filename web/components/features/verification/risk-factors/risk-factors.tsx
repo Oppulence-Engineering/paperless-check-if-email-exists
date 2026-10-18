@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row } from "@/components/platform/page-kit";
-import { bounceRisk, humanize } from "@/lib/verification/labels";
+import { bounceRisk, confidenceFactor, humanize } from "@/lib/verification/labels";
 
 import { type RiskFactorsPropsFields } from "./risk-factors.schema";
 
@@ -43,7 +43,7 @@ export function RiskFactors({ className, result, ...props }: RiskFactorsProps) {
 				)}
 				{factors.length > 0 ? (
 					<Row label="What changed the risk" layout="stacked">
-						<ul className="flex flex-col gap-3">
+						<ul className="flex w-full flex-col gap-3">
 							{factors.map((factor) => {
 								const lowers = factor.direction === "decreases_risk";
 								return (
@@ -77,7 +77,7 @@ export function RiskFactors({ className, result, ...props }: RiskFactorsProps) {
 					<Row label="Why we are this confident" layout="stacked">
 						<ul className="list-disc space-y-1 pl-5 text-sm text-neutral-300">
 							{confidenceFactors.map((factor) => (
-								<li key={factor}>{factor}</li>
+								<li key={factor}>{confidenceFactor(factor)}</li>
 							))}
 						</ul>
 					</Row>
