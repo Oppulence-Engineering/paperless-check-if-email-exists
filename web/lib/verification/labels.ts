@@ -302,3 +302,82 @@ export const remediationClass = entry({
 	review: { label: "Review", tone: "yellow" },
 	drop: { label: "Drop", tone: "red" },
 });
+
+/** Domain reputation risk levels (backend/src/reputation/scorer.rs). */
+export const reputationRisk = entry({
+	low: { label: "Low risk", tone: "green" },
+	medium: { label: "Medium risk", tone: "yellow" },
+	high: { label: "High risk", tone: "red" },
+	critical: { label: "Critical risk", tone: "red" },
+});
+
+/** The DMARC `p=` policy values. "none" only monitors and does not protect the domain. */
+export const dmarcPolicy = entry({
+	none: { label: "Monitor only", tone: "yellow" },
+	quarantine: { label: "Quarantine", tone: "green" },
+	reject: { label: "Reject", tone: "green" },
+});
+
+/** Suppression entry states (backend/src/http/v1/suppressions/list.rs). */
+export const suppressionStatus = entry({
+	active: { label: "Active", tone: "red" },
+	inactive: { label: "Removed", tone: "gray" },
+	merged: { label: "Merged", tone: "gray" },
+});
+
+/**
+ * Suppression source types. The API keeps any text, so a new value shows in
+ * plain words. The Suppressions page sets `import` for a CSV file.
+ */
+export const suppressionSource = entry({
+	manual: { label: "Manual", tone: "gray" },
+	import: { label: "CSV import", tone: "gray" },
+	outcome: { label: "Delivery feedback", tone: "gray" },
+	auto_action: { label: "Automatic action", tone: "gray" },
+});
+
+/** Suppression audit events (backend/src/http/v1/suppressions/add.rs and delete.rs). */
+export const suppressionEvent = entry({
+	created: { label: "Added", tone: "red" },
+	updated: { label: "Updated", tone: "blue" },
+	deactivated: { label: "Removed", tone: "gray" },
+});
+
+/** Who changed a suppression entry (`actor_type` in `v1_suppression_events`). */
+export const SUPPRESSION_ACTOR_LABELS: Record<string, string> = {
+	api: "App or API",
+	policy: "Policy",
+	outcome: "Delivery feedback",
+	outcome_ingest: "Delivery feedback",
+	worker: "Automatic check",
+};
+
+/** Provider event families (`event_family` in backend/src/http/v1/provider_outcomes.rs). */
+export const eventFamily = entry({
+	delivery: { label: "Delivery", tone: "blue" },
+	engagement: { label: "Engagement", tone: "green" },
+	negative_feedback: { label: "Negative feedback", tone: "red" },
+	routing: { label: "Routing", tone: "gray" },
+});
+
+/** Whether the backend matched a provider event to a send. It writes `unmatched` only today. */
+export const correlationStatus = entry({
+	unmatched: { label: "Not matched", tone: "gray" },
+});
+
+/** What a campaign outcome policy did with an event (`action_label` in backend/src/outcomes.rs). */
+export const policyAction = entry({
+	suppressed: { label: "Suppressed", tone: "red" },
+	pending: { label: "Waiting for more events", tone: "yellow" },
+	boosted: { label: "Score raised", tone: "green" },
+	informational: { label: "Recorded only", tone: "gray" },
+});
+
+/** Outcome policy rule actions (`RuleAction` in backend/src/outcomes.rs). */
+export const ruleAction = entry({
+	suppress: { label: "Suppress", tone: "red" },
+	suppress_and_unsubscribe: { label: "Suppress and unsubscribe", tone: "red" },
+	suppress_after: { label: "Suppress after repeats", tone: "yellow" },
+	score_boost: { label: "Raise the score", tone: "green" },
+	informational: { label: "Record only", tone: "gray" },
+});
