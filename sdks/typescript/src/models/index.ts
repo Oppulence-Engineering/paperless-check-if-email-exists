@@ -22,6 +22,8 @@ export * from './bounce-risk-category';
 export * from './bulk-create-request';
 export * from './bulk-create-response';
 export * from './bulk-job-results-response';
+export * from './campaign-outcome-list-response';
+export * from './campaign-outcome-view';
 export * from './catch-all-score';
 export * from './catch-all-severity';
 export * from './check-email-input-proxy';

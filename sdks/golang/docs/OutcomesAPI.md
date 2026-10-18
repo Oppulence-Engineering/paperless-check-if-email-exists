@@ -291,7 +291,7 @@ No authorization required
 
 ## V1ListCampaignOutcomes
 
-> OutcomeListResponse V1ListCampaignOutcomes(ctx).Email(email).Source(source).Type_(type_).Since(since).Limit(limit).Offset(offset).Execute()
+> CampaignOutcomeListResponse V1ListCampaignOutcomes(ctx).Email(email).Source(source).Type_(type_).Since(since).Limit(limit).Offset(offset).Execute()
 
 
 
@@ -323,7 +323,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error when calling `OutcomesAPI.V1ListCampaignOutcomes``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1ListCampaignOutcomes`: OutcomeListResponse
+	// response from `V1ListCampaignOutcomes`: CampaignOutcomeListResponse
 	fmt.Fprintf(os.Stdout, "Response from `OutcomesAPI.V1ListCampaignOutcomes`: %v\n", resp)
 }
 ```
@@ -348,7 +348,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**OutcomeListResponse**](OutcomeListResponse.md)
+[**CampaignOutcomeListResponse**](CampaignOutcomeListResponse.md)
 
 ### Authorization
 

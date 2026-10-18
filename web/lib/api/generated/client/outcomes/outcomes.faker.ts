@@ -10,6 +10,7 @@
 import { faker } from "@faker-js/faker";
 
 import type {
+  CampaignOutcomeListResponse,
   InboundOutcomeResponse,
   IngestOutcomesResponse,
   OutcomeIngestResponse,
@@ -20,8 +21,8 @@ import type {
 } from "../model";
 
 export const getV1ListCampaignOutcomesResponseMock = (
-  overrideResponse: Partial<Extract<OutcomeListResponse, object>> = {},
-): OutcomeListResponse => ({
+  overrideResponse: Partial<Extract<CampaignOutcomeListResponse, object>> = {},
+): CampaignOutcomeListResponse => ({
   outcomes: Array.from(
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
@@ -120,6 +121,8 @@ export const getV1IngestProviderOutcomesResponseMock = (
 export const getV1ListOutcomesResponseMock = (
   overrideResponse: Partial<Extract<OutcomeListResponse, object>> = {},
 ): OutcomeListResponse => ({
+  limit: faker.number.int(),
+  offset: faker.number.int(),
   outcomes: Array.from(
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
@@ -131,27 +134,52 @@ export const getV1ListOutcomesResponseMock = (
       ]),
       undefined,
     ]),
+    canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    correlation_status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    endpoint_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.uuid(), null]),
+      undefined,
+    ]),
+    event_family: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.number.int(),
+    metadata: {},
     occurred_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-    policy_action: faker.helpers.arrayElement([
+    provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    provider_event_id: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
       undefined,
     ]),
-    source: faker.helpers.arrayElement([
+    provider_message_id: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
         null,
       ]),
       undefined,
     ]),
-    type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    receipt_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.uuid(), null]),
+      undefined,
+    ]),
+    source_key: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
   })),
-  total: faker.number.int(),
   ...overrideResponse,
 });
 

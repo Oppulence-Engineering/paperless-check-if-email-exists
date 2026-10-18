@@ -8,6 +8,7 @@
  * OpenAPI spec version: 4.3.0
  */
 import type {
+  CampaignOutcomeListResponse,
   CreateProviderEndpointInput,
   ErrorEnvelope,
   InboundOutcomeResponse,
@@ -67,7 +68,7 @@ export type HTTPStatusCodes =
   | HTTPStatusCode5xx;
 
 export type v1ListCampaignOutcomesResponse200 = {
-  data: OutcomeListResponse;
+  data: CampaignOutcomeListResponse;
   status: 200;
 };
 

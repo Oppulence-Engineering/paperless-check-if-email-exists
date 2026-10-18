@@ -32,7 +32,10 @@ pub struct OutcomeListQuery {
 	offset: Option<i64>,
 }
 
+// The provider outcome API (outcomes.rs) owns the OutcomeView and
+// OutcomeListResponse names; these schemas use their own names in the spec.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(as = CampaignOutcomeView)]
 pub struct OutcomeView {
 	pub id: i64,
 	pub email: String,
@@ -46,6 +49,7 @@ pub struct OutcomeView {
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(as = CampaignOutcomeListResponse)]
 pub struct OutcomeListResponse {
 	pub outcomes: Vec<OutcomeView>,
 	pub total: i64,

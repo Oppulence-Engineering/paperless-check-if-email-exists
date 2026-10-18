@@ -164,19 +164,28 @@ export const V1ListOutcomesQueryParams = zod.object({
 });
 
 export const V1ListOutcomes200Response = zod.strictObject({
+  limit: zod.int(),
+  offset: zod.int(),
   outcomes: zod.array(
     zod.strictObject({
       campaign_id: zod.string().nullish(),
+      canonical_email: zod.string(),
+      correlation_status: zod.string(),
       created_at: zod.iso.datetime({ offset: true }),
       email: zod.string(),
+      endpoint_id: zod.uuid().nullish(),
+      event_family: zod.string().nullish(),
+      event_type: zod.string(),
       id: zod.int(),
+      metadata: zod.unknown(),
       occurred_at: zod.iso.datetime({ offset: true }),
-      policy_action: zod.string().nullish(),
-      source: zod.string().nullish(),
-      type: zod.string(),
+      provider: zod.string(),
+      provider_event_id: zod.string().nullish(),
+      provider_message_id: zod.string().nullish(),
+      receipt_id: zod.uuid().nullish(),
+      source_key: zod.string().nullish(),
     }),
   ),
-  total: zod.int(),
 });
 
 export const V1ListOutcomesDefaultResponse = zod.strictObject({

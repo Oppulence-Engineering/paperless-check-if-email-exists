@@ -11,13 +11,25 @@
 export interface OutcomeView {
   /** @nullable */
   campaign_id?: string | null;
+  canonical_email: string;
+  correlation_status: string;
   created_at: string;
   email: string;
+  /** @nullable */
+  endpoint_id?: string | null;
+  /** @nullable */
+  event_family?: string | null;
+  event_type: string;
   id: number;
+  metadata: unknown;
   occurred_at: string;
+  provider: string;
   /** @nullable */
-  policy_action?: string | null;
+  provider_event_id?: string | null;
   /** @nullable */
-  source?: string | null;
-  type: string;
+  provider_message_id?: string | null;
+  /** @nullable */
+  receipt_id?: string | null;
+  /** @nullable */
+  source_key?: string | null;
 }

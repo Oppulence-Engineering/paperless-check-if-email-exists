@@ -85,8 +85,8 @@ type OutcomesAPI interface {
 	V1ListCampaignOutcomes(ctx context.Context) OutcomesAPIV1ListCampaignOutcomesRequest
 
 	// V1ListCampaignOutcomesExecute executes the request
-	//  @return OutcomeListResponse
-	V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*OutcomeListResponse, *http.Response, error)
+	//  @return CampaignOutcomeListResponse
+	V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*CampaignOutcomeListResponse, *http.Response, error)
 
 	/*
 	V1ListOutcomes GET /v1/outcomes
@@ -705,7 +705,7 @@ func (r OutcomesAPIV1ListCampaignOutcomesRequest) Offset(offset int64) OutcomesA
 	return r
 }
 
-func (r OutcomesAPIV1ListCampaignOutcomesRequest) Execute() (*OutcomeListResponse, *http.Response, error) {
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Execute() (*CampaignOutcomeListResponse, *http.Response, error) {
 	return r.ApiService.V1ListCampaignOutcomesExecute(r)
 }
 
@@ -723,13 +723,13 @@ func (a *OutcomesAPIService) V1ListCampaignOutcomes(ctx context.Context) Outcome
 }
 
 // Execute executes the request
-//  @return OutcomeListResponse
-func (a *OutcomesAPIService) V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*OutcomeListResponse, *http.Response, error) {
+//  @return CampaignOutcomeListResponse
+func (a *OutcomesAPIService) V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*CampaignOutcomeListResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *OutcomeListResponse
+		localVarReturnValue  *CampaignOutcomeListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1ListCampaignOutcomes")

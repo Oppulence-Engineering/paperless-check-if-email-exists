@@ -48,6 +48,8 @@ docs/BounceRiskCategory.md
 docs/BulkCreateRequest.md
 docs/BulkCreateResponse.md
 docs/BulkJobResultsResponse.md
+docs/CampaignOutcomeListResponse.md
+docs/CampaignOutcomeView.md
 docs/CatchAllScore.md
 docs/CatchAllSeverity.md
 docs/CheckEmailInputProxy.md
@@ -227,6 +229,8 @@ models/bounce-risk-category.ts
 models/bulk-create-request.ts
 models/bulk-create-response.ts
 models/bulk-job-results-response.ts
+models/campaign-outcome-list-response.ts
+models/campaign-outcome-view.ts
 models/catch-all-score.ts
 models/catch-all-severity.ts
 models/check-email-input-proxy.ts

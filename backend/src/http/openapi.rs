@@ -490,6 +490,32 @@ mod operation_id_tests {
 	}
 
 	#[test]
+	fn provider_and_campaign_outcomes_keep_their_own_schemas() {
+		// Two Rust types once shared the OutcomeView name, and the spec kept
+		// only one shape for both list endpoints.
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = |path: &str| {
+			spec["paths"][path]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+				["$ref"]
+				.as_str()
+				.map(str::to_owned)
+		};
+		assert_eq!(
+			schema("/v1/outcomes").as_deref(),
+			Some("#/components/schemas/OutcomeListResponse")
+		);
+		assert_eq!(
+			schema("/v1/campaign-outcomes").as_deref(),
+			Some("#/components/schemas/CampaignOutcomeListResponse")
+		);
+		let provider = &spec["components"]["schemas"]["OutcomeView"]["properties"];
+		assert!(
+			provider.get("event_type").is_some(),
+			"provider outcomes lost event_type"
+		);
+	}
+
+	#[test]
 	fn every_operation_has_a_unique_id() {
 		let spec = super::build_spec().expect("OpenAPI spec");
 		let mut ids = HashSet::new();

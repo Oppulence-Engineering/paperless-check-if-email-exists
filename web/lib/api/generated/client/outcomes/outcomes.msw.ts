@@ -11,6 +11,7 @@ import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
 import type {
+  CampaignOutcomeListResponse,
   InboundOutcomeResponse,
   IngestOutcomesResponse,
   OutcomeIngestResponse,
@@ -48,10 +49,10 @@ export {
 
 export const getV1ListCampaignOutcomesMockHandler = (
   overrideResponse?:
-    | OutcomeListResponse
+    | CampaignOutcomeListResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<OutcomeListResponse> | OutcomeListResponse),
+      ) => Promise<CampaignOutcomeListResponse> | CampaignOutcomeListResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(

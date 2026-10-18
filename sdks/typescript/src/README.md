@@ -207,6 +207,8 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [BulkCreateRequest](docs/BulkCreateRequest.md)
  - [BulkCreateResponse](docs/BulkCreateResponse.md)
  - [BulkJobResultsResponse](docs/BulkJobResultsResponse.md)
+ - [CampaignOutcomeListResponse](docs/CampaignOutcomeListResponse.md)
+ - [CampaignOutcomeView](docs/CampaignOutcomeView.md)
  - [CatchAllScore](docs/CatchAllScore.md)
  - [CatchAllSeverity](docs/CatchAllSeverity.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)

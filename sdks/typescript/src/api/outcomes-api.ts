@@ -22,6 +22,8 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CampaignOutcomeListResponse } from '../models';
+// @ts-ignore
 import type { CreateProviderEndpointInput } from '../models';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
@@ -557,7 +559,7 @@ export const OutcomesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ListCampaignOutcomes(email?: string, source?: string, type?: string, since?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OutcomeListResponse>> {
+        async v1ListCampaignOutcomes(email?: string, source?: string, type?: string, since?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CampaignOutcomeListResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListCampaignOutcomes(email, source, type, since, limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OutcomesApi.v1ListCampaignOutcomes']?.[localVarOperationServerIndex]?.url;
@@ -681,7 +683,7 @@ export const OutcomesApiFactory = function (configuration?: Configuration, baseP
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ListCampaignOutcomes(requestParameters: OutcomesApiV1ListCampaignOutcomesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<OutcomeListResponse> {
+        v1ListCampaignOutcomes(requestParameters: OutcomesApiV1ListCampaignOutcomesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<CampaignOutcomeListResponse> {
             return localVarFp.v1ListCampaignOutcomes(requestParameters.email, requestParameters.source, requestParameters.type, requestParameters.since, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
         },
         /**
@@ -781,7 +783,7 @@ export interface OutcomesApiInterface {
      * @throws {RequiredError}
      * @memberof OutcomesApiInterface
      */
-    v1ListCampaignOutcomes(requestParameters?: OutcomesApiV1ListCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<OutcomeListResponse>;
+    v1ListCampaignOutcomes(requestParameters?: OutcomesApiV1ListCampaignOutcomesRequest, options?: RawAxiosRequestConfig): AxiosPromise<CampaignOutcomeListResponse>;
 
     /**
      *

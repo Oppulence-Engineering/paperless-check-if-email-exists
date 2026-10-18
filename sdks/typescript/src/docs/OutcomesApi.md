@@ -236,7 +236,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ListCampaignOutcomes**
-> OutcomeListResponse v1ListCampaignOutcomes()
+> CampaignOutcomeListResponse v1ListCampaignOutcomes()
 
 
 ### Example
@@ -281,7 +281,7 @@ const { status, data } = await apiInstance.v1ListCampaignOutcomes(
 
 ### Return type
 
-**OutcomeListResponse**
+**CampaignOutcomeListResponse**
 
 ### Authorization
 

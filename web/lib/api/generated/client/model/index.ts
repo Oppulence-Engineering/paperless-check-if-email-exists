@@ -34,6 +34,8 @@ export * from "./bulkCreateRequest";
 export * from "./bulkCreateRequestWebhook";
 export * from "./bulkCreateResponse";
 export * from "./bulkJobResultsResponse";
+export * from "./campaignOutcomeListResponse";
+export * from "./campaignOutcomeView";
 export * from "./catchAllScore";
 export * from "./catchAllSeverity";
 export * from "./checkEmailInputProxy";
