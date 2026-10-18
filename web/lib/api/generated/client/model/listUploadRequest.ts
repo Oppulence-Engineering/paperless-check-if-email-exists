@@ -14,6 +14,8 @@ export interface ListUploadRequest {
   file: Blob;
   /** @nullable */
   name?: string | null;
+  /** @nullable */
+  policy_id?: number | null;
   /**
    * Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
    * @nullable

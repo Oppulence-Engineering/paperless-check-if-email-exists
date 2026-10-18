@@ -25,20 +25,14 @@ import type { OutcomeView } from './outcome-view';
 export interface OutcomeListResponse {
     /**
      *
-     * @type {number}
-     * @memberof OutcomeListResponse
-     */
-    'limit': number;
-    /**
-     *
-     * @type {number}
-     * @memberof OutcomeListResponse
-     */
-    'offset': number;
-    /**
-     *
      * @type {Array<OutcomeView>}
      * @memberof OutcomeListResponse
      */
     'outcomes': Array<OutcomeView>;
+    /**
+     *
+     * @type {number}
+     * @memberof OutcomeListResponse
+     */
+    'total': number;
 }

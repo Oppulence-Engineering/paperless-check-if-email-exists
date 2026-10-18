@@ -24,21 +24,13 @@ var _ MappedNullable = &OutcomeView{}
 // OutcomeView struct for OutcomeView
 type OutcomeView struct {
 	CampaignId NullableString `json:"campaign_id,omitempty"`
-	CanonicalEmail string `json:"canonical_email"`
-	CorrelationStatus string `json:"correlation_status"`
 	CreatedAt time.Time `json:"created_at"`
 	Email string `json:"email"`
-	EndpointId NullableString `json:"endpoint_id,omitempty"`
-	EventFamily NullableString `json:"event_family,omitempty"`
-	EventType string `json:"event_type"`
 	Id int64 `json:"id"`
-	Metadata interface{} `json:"metadata"`
 	OccurredAt time.Time `json:"occurred_at"`
-	Provider string `json:"provider"`
-	ProviderEventId NullableString `json:"provider_event_id,omitempty"`
-	ProviderMessageId NullableString `json:"provider_message_id,omitempty"`
-	ReceiptId NullableString `json:"receipt_id,omitempty"`
-	SourceKey NullableString `json:"source_key,omitempty"`
+	PolicyAction NullableString `json:"policy_action,omitempty"`
+	Source NullableString `json:"source,omitempty"`
+	Type string `json:"type"`
 }
 
 type _OutcomeView OutcomeView
@@ -47,17 +39,13 @@ type _OutcomeView OutcomeView
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOutcomeView(canonicalEmail string, correlationStatus string, createdAt time.Time, email string, eventType string, id int64, metadata interface{}, occurredAt time.Time, provider string) *OutcomeView {
+func NewOutcomeView(createdAt time.Time, email string, id int64, occurredAt time.Time, type_ string) *OutcomeView {
 	this := OutcomeView{}
-	this.CanonicalEmail = canonicalEmail
-	this.CorrelationStatus = correlationStatus
 	this.CreatedAt = createdAt
 	this.Email = email
-	this.EventType = eventType
 	this.Id = id
-	this.Metadata = metadata
 	this.OccurredAt = occurredAt
-	this.Provider = provider
+	this.Type = type_
 	return &this
 }
 
@@ -111,54 +99,6 @@ func (o *OutcomeView) UnsetCampaignId() {
 	o.CampaignId.Unset()
 }
 
-// GetCanonicalEmail returns the CanonicalEmail field value
-func (o *OutcomeView) GetCanonicalEmail() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.CanonicalEmail
-}
-
-// GetCanonicalEmailOk returns a tuple with the CanonicalEmail field value
-// and a boolean to check if the value has been set.
-func (o *OutcomeView) GetCanonicalEmailOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.CanonicalEmail, true
-}
-
-// SetCanonicalEmail sets field value
-func (o *OutcomeView) SetCanonicalEmail(v string) {
-	o.CanonicalEmail = v
-}
-
-// GetCorrelationStatus returns the CorrelationStatus field value
-func (o *OutcomeView) GetCorrelationStatus() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.CorrelationStatus
-}
-
-// GetCorrelationStatusOk returns a tuple with the CorrelationStatus field value
-// and a boolean to check if the value has been set.
-func (o *OutcomeView) GetCorrelationStatusOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.CorrelationStatus, true
-}
-
-// SetCorrelationStatus sets field value
-func (o *OutcomeView) SetCorrelationStatus(v string) {
-	o.CorrelationStatus = v
-}
-
 // GetCreatedAt returns the CreatedAt field value
 func (o *OutcomeView) GetCreatedAt() time.Time {
 	if o == nil {
@@ -207,114 +147,6 @@ func (o *OutcomeView) SetEmail(v string) {
 	o.Email = v
 }
 
-// GetEndpointId returns the EndpointId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetEndpointId() string {
-	if o == nil || IsNil(o.EndpointId.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.EndpointId.Get()
-}
-
-// GetEndpointIdOk returns a tuple with the EndpointId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetEndpointIdOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.EndpointId.Get(), o.EndpointId.IsSet()
-}
-
-// HasEndpointId returns a boolean if a field has been set.
-func (o *OutcomeView) HasEndpointId() bool {
-	if o != nil && o.EndpointId.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetEndpointId gets a reference to the given NullableString and assigns it to the EndpointId field.
-func (o *OutcomeView) SetEndpointId(v string) {
-	o.EndpointId.Set(&v)
-}
-// SetEndpointIdNil sets the value for EndpointId to be an explicit nil
-func (o *OutcomeView) SetEndpointIdNil() {
-	o.EndpointId.Set(nil)
-}
-
-// UnsetEndpointId ensures that no value is present for EndpointId, not even an explicit nil
-func (o *OutcomeView) UnsetEndpointId() {
-	o.EndpointId.Unset()
-}
-
-// GetEventFamily returns the EventFamily field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetEventFamily() string {
-	if o == nil || IsNil(o.EventFamily.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.EventFamily.Get()
-}
-
-// GetEventFamilyOk returns a tuple with the EventFamily field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetEventFamilyOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.EventFamily.Get(), o.EventFamily.IsSet()
-}
-
-// HasEventFamily returns a boolean if a field has been set.
-func (o *OutcomeView) HasEventFamily() bool {
-	if o != nil && o.EventFamily.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetEventFamily gets a reference to the given NullableString and assigns it to the EventFamily field.
-func (o *OutcomeView) SetEventFamily(v string) {
-	o.EventFamily.Set(&v)
-}
-// SetEventFamilyNil sets the value for EventFamily to be an explicit nil
-func (o *OutcomeView) SetEventFamilyNil() {
-	o.EventFamily.Set(nil)
-}
-
-// UnsetEventFamily ensures that no value is present for EventFamily, not even an explicit nil
-func (o *OutcomeView) UnsetEventFamily() {
-	o.EventFamily.Unset()
-}
-
-// GetEventType returns the EventType field value
-func (o *OutcomeView) GetEventType() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.EventType
-}
-
-// GetEventTypeOk returns a tuple with the EventType field value
-// and a boolean to check if the value has been set.
-func (o *OutcomeView) GetEventTypeOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.EventType, true
-}
-
-// SetEventType sets field value
-func (o *OutcomeView) SetEventType(v string) {
-	o.EventType = v
-}
-
 // GetId returns the Id field value
 func (o *OutcomeView) GetId() int64 {
 	if o == nil {
@@ -337,32 +169,6 @@ func (o *OutcomeView) GetIdOk() (*int64, bool) {
 // SetId sets field value
 func (o *OutcomeView) SetId(v int64) {
 	o.Id = v
-}
-
-// GetMetadata returns the Metadata field value
-// If the value is explicit nil, the zero value for interface{} will be returned
-func (o *OutcomeView) GetMetadata() interface{} {
-	if o == nil {
-		var ret interface{}
-		return ret
-	}
-
-	return o.Metadata
-}
-
-// GetMetadataOk returns a tuple with the Metadata field value
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetMetadataOk() (*interface{}, bool) {
-	if o == nil || IsNil(o.Metadata) {
-		return nil, false
-	}
-	return &o.Metadata, true
-}
-
-// SetMetadata sets field value
-func (o *OutcomeView) SetMetadata(v interface{}) {
-	o.Metadata = v
 }
 
 // GetOccurredAt returns the OccurredAt field value
@@ -389,196 +195,112 @@ func (o *OutcomeView) SetOccurredAt(v time.Time) {
 	o.OccurredAt = v
 }
 
-// GetProvider returns the Provider field value
-func (o *OutcomeView) GetProvider() string {
-	if o == nil {
+// GetPolicyAction returns the PolicyAction field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OutcomeView) GetPolicyAction() string {
+	if o == nil || IsNil(o.PolicyAction.Get()) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.PolicyAction.Get()
 }
 
-// GetProviderOk returns a tuple with the Provider field value
-// and a boolean to check if the value has been set.
-func (o *OutcomeView) GetProviderOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Provider, true
-}
-
-// SetProvider sets field value
-func (o *OutcomeView) SetProvider(v string) {
-	o.Provider = v
-}
-
-// GetProviderEventId returns the ProviderEventId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetProviderEventId() string {
-	if o == nil || IsNil(o.ProviderEventId.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.ProviderEventId.Get()
-}
-
-// GetProviderEventIdOk returns a tuple with the ProviderEventId field value if set, nil otherwise
+// GetPolicyActionOk returns a tuple with the PolicyAction field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetProviderEventIdOk() (*string, bool) {
+func (o *OutcomeView) GetPolicyActionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ProviderEventId.Get(), o.ProviderEventId.IsSet()
+	return o.PolicyAction.Get(), o.PolicyAction.IsSet()
 }
 
-// HasProviderEventId returns a boolean if a field has been set.
-func (o *OutcomeView) HasProviderEventId() bool {
-	if o != nil && o.ProviderEventId.IsSet() {
+// HasPolicyAction returns a boolean if a field has been set.
+func (o *OutcomeView) HasPolicyAction() bool {
+	if o != nil && o.PolicyAction.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetProviderEventId gets a reference to the given NullableString and assigns it to the ProviderEventId field.
-func (o *OutcomeView) SetProviderEventId(v string) {
-	o.ProviderEventId.Set(&v)
+// SetPolicyAction gets a reference to the given NullableString and assigns it to the PolicyAction field.
+func (o *OutcomeView) SetPolicyAction(v string) {
+	o.PolicyAction.Set(&v)
 }
-// SetProviderEventIdNil sets the value for ProviderEventId to be an explicit nil
-func (o *OutcomeView) SetProviderEventIdNil() {
-	o.ProviderEventId.Set(nil)
-}
-
-// UnsetProviderEventId ensures that no value is present for ProviderEventId, not even an explicit nil
-func (o *OutcomeView) UnsetProviderEventId() {
-	o.ProviderEventId.Unset()
+// SetPolicyActionNil sets the value for PolicyAction to be an explicit nil
+func (o *OutcomeView) SetPolicyActionNil() {
+	o.PolicyAction.Set(nil)
 }
 
-// GetProviderMessageId returns the ProviderMessageId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetProviderMessageId() string {
-	if o == nil || IsNil(o.ProviderMessageId.Get()) {
+// UnsetPolicyAction ensures that no value is present for PolicyAction, not even an explicit nil
+func (o *OutcomeView) UnsetPolicyAction() {
+	o.PolicyAction.Unset()
+}
+
+// GetSource returns the Source field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OutcomeView) GetSource() string {
+	if o == nil || IsNil(o.Source.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.ProviderMessageId.Get()
+	return *o.Source.Get()
 }
 
-// GetProviderMessageIdOk returns a tuple with the ProviderMessageId field value if set, nil otherwise
+// GetSourceOk returns a tuple with the Source field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetProviderMessageIdOk() (*string, bool) {
+func (o *OutcomeView) GetSourceOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ProviderMessageId.Get(), o.ProviderMessageId.IsSet()
+	return o.Source.Get(), o.Source.IsSet()
 }
 
-// HasProviderMessageId returns a boolean if a field has been set.
-func (o *OutcomeView) HasProviderMessageId() bool {
-	if o != nil && o.ProviderMessageId.IsSet() {
+// HasSource returns a boolean if a field has been set.
+func (o *OutcomeView) HasSource() bool {
+	if o != nil && o.Source.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetProviderMessageId gets a reference to the given NullableString and assigns it to the ProviderMessageId field.
-func (o *OutcomeView) SetProviderMessageId(v string) {
-	o.ProviderMessageId.Set(&v)
+// SetSource gets a reference to the given NullableString and assigns it to the Source field.
+func (o *OutcomeView) SetSource(v string) {
+	o.Source.Set(&v)
 }
-// SetProviderMessageIdNil sets the value for ProviderMessageId to be an explicit nil
-func (o *OutcomeView) SetProviderMessageIdNil() {
-	o.ProviderMessageId.Set(nil)
-}
-
-// UnsetProviderMessageId ensures that no value is present for ProviderMessageId, not even an explicit nil
-func (o *OutcomeView) UnsetProviderMessageId() {
-	o.ProviderMessageId.Unset()
+// SetSourceNil sets the value for Source to be an explicit nil
+func (o *OutcomeView) SetSourceNil() {
+	o.Source.Set(nil)
 }
 
-// GetReceiptId returns the ReceiptId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetReceiptId() string {
-	if o == nil || IsNil(o.ReceiptId.Get()) {
+// UnsetSource ensures that no value is present for Source, not even an explicit nil
+func (o *OutcomeView) UnsetSource() {
+	o.Source.Unset()
+}
+
+// GetType returns the Type field value
+func (o *OutcomeView) GetType() string {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.ReceiptId.Get()
+
+	return o.Type
 }
 
-// GetReceiptIdOk returns a tuple with the ReceiptId field value if set, nil otherwise
+// GetTypeOk returns a tuple with the Type field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetReceiptIdOk() (*string, bool) {
+func (o *OutcomeView) GetTypeOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ReceiptId.Get(), o.ReceiptId.IsSet()
+	return &o.Type, true
 }
 
-// HasReceiptId returns a boolean if a field has been set.
-func (o *OutcomeView) HasReceiptId() bool {
-	if o != nil && o.ReceiptId.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetReceiptId gets a reference to the given NullableString and assigns it to the ReceiptId field.
-func (o *OutcomeView) SetReceiptId(v string) {
-	o.ReceiptId.Set(&v)
-}
-// SetReceiptIdNil sets the value for ReceiptId to be an explicit nil
-func (o *OutcomeView) SetReceiptIdNil() {
-	o.ReceiptId.Set(nil)
-}
-
-// UnsetReceiptId ensures that no value is present for ReceiptId, not even an explicit nil
-func (o *OutcomeView) UnsetReceiptId() {
-	o.ReceiptId.Unset()
-}
-
-// GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OutcomeView) GetSourceKey() string {
-	if o == nil || IsNil(o.SourceKey.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.SourceKey.Get()
-}
-
-// GetSourceKeyOk returns a tuple with the SourceKey field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OutcomeView) GetSourceKeyOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.SourceKey.Get(), o.SourceKey.IsSet()
-}
-
-// HasSourceKey returns a boolean if a field has been set.
-func (o *OutcomeView) HasSourceKey() bool {
-	if o != nil && o.SourceKey.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceKey gets a reference to the given NullableString and assigns it to the SourceKey field.
-func (o *OutcomeView) SetSourceKey(v string) {
-	o.SourceKey.Set(&v)
-}
-// SetSourceKeyNil sets the value for SourceKey to be an explicit nil
-func (o *OutcomeView) SetSourceKeyNil() {
-	o.SourceKey.Set(nil)
-}
-
-// UnsetSourceKey ensures that no value is present for SourceKey, not even an explicit nil
-func (o *OutcomeView) UnsetSourceKey() {
-	o.SourceKey.Unset()
+// SetType sets field value
+func (o *OutcomeView) SetType(v string) {
+	o.Type = v
 }
 
 func (o OutcomeView) MarshalJSON() ([]byte, error) {
@@ -594,35 +316,17 @@ func (o OutcomeView) ToMap() (map[string]interface{}, error) {
 	if o.CampaignId.IsSet() {
 		toSerialize["campaign_id"] = o.CampaignId.Get()
 	}
-	toSerialize["canonical_email"] = o.CanonicalEmail
-	toSerialize["correlation_status"] = o.CorrelationStatus
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["email"] = o.Email
-	if o.EndpointId.IsSet() {
-		toSerialize["endpoint_id"] = o.EndpointId.Get()
-	}
-	if o.EventFamily.IsSet() {
-		toSerialize["event_family"] = o.EventFamily.Get()
-	}
-	toSerialize["event_type"] = o.EventType
 	toSerialize["id"] = o.Id
-	if o.Metadata != nil {
-		toSerialize["metadata"] = o.Metadata
-	}
 	toSerialize["occurred_at"] = o.OccurredAt
-	toSerialize["provider"] = o.Provider
-	if o.ProviderEventId.IsSet() {
-		toSerialize["provider_event_id"] = o.ProviderEventId.Get()
+	if o.PolicyAction.IsSet() {
+		toSerialize["policy_action"] = o.PolicyAction.Get()
 	}
-	if o.ProviderMessageId.IsSet() {
-		toSerialize["provider_message_id"] = o.ProviderMessageId.Get()
+	if o.Source.IsSet() {
+		toSerialize["source"] = o.Source.Get()
 	}
-	if o.ReceiptId.IsSet() {
-		toSerialize["receipt_id"] = o.ReceiptId.Get()
-	}
-	if o.SourceKey.IsSet() {
-		toSerialize["source_key"] = o.SourceKey.Get()
-	}
+	toSerialize["type"] = o.Type
 	return toSerialize, nil
 }
 
@@ -631,15 +335,11 @@ func (o *OutcomeView) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"canonical_email",
-		"correlation_status",
 		"created_at",
 		"email",
-		"event_type",
 		"id",
-		"metadata",
 		"occurred_at",
-		"provider",
+		"type",
 	}
 
 	allProperties := make(map[string]interface{})

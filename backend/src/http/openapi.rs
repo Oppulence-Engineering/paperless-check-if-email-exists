@@ -235,9 +235,16 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 			.or_insert_with(|| Value::Array(Vec::new()))
 			.as_array_mut()
 			.expect("tags array");
+		// Match tags by name. A spec with two tags of the same name is invalid,
+		// so the generated tag replaces a base tag with a different description.
 		for tag in generated_tags {
-			if !base_tags.iter().any(|existing| existing == tag) {
-				base_tags.push(tag.clone());
+			let name = tag.get("name");
+			match base_tags
+				.iter_mut()
+				.find(|existing| existing.get("name") == name)
+			{
+				Some(existing) => *existing = tag.clone(),
+				None => base_tags.push(tag.clone()),
 			}
 		}
 	}
@@ -471,6 +478,16 @@ fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: V
 mod operation_id_tests {
 	use serde_json::json;
 	use std::collections::HashSet;
+
+	#[test]
+	fn every_tag_name_is_unique() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut names = HashSet::new();
+		for tag in spec["tags"].as_array().expect("tags") {
+			let name = tag["name"].as_str().expect("tag name");
+			assert!(names.insert(name), "duplicate tag: {}", name);
+		}
+	}
 
 	#[test]
 	fn every_operation_has_a_unique_id() {

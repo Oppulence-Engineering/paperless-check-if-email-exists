@@ -9,6 +9,116 @@
  */
 import * as zod from "zod";
 
+export const V1ListCampaignOutcomesQueryParams = zod.object({
+  email: zod.string().optional(),
+  source: zod.string().optional(),
+  type: zod.string().optional(),
+  since: zod.iso.datetime({ offset: true }).optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListCampaignOutcomes200Response = zod.strictObject({
+  outcomes: zod.array(
+    zod.strictObject({
+      campaign_id: zod.string().nullish(),
+      created_at: zod.iso.datetime({ offset: true }),
+      email: zod.string(),
+      id: zod.int(),
+      occurred_at: zod.iso.datetime({ offset: true }),
+      policy_action: zod.string().nullish(),
+      source: zod.string().nullish(),
+      type: zod.string(),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListCampaignOutcomesDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const V1PostCampaignOutcomesBody = zod.strictObject({
+  outcomes: zod.array(
+    zod
+      .strictObject({
+        campaign_id: zod.string().nullish(),
+        email: zod.string(),
+        metadata: zod.unknown().optional(),
+        occurred_at: zod.iso.datetime({ offset: true }),
+        source: zod.string().nullish(),
+        type: zod
+          .enum([
+            "delivered",
+            "hard_bounce",
+            "soft_bounce",
+            "complaint",
+            "open",
+            "click",
+            "unsubscribe",
+          ])
+          .describe(
+            "SQL enum mirror. Must stay in sync with `outcome_type` in\n`migrations\/20260510000001_campaign_outcomes.up.sql`.",
+          ),
+      })
+      .describe("One outcome event ingested via API or CSV."),
+  ),
+});
+
+export const v1PostCampaignOutcomes202ResponseAcceptedMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseErrorsItemIndexMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseRejectedMin = 0;
+
+export const v1PostCampaignOutcomes202ResponseSuppressedMin = 0;
+
+export const V1PostCampaignOutcomes202Response = zod.strictObject({
+  accepted: zod.int().min(v1PostCampaignOutcomes202ResponseAcceptedMin),
+  errors: zod.array(
+    zod.strictObject({
+      email: zod.string(),
+      index: zod.int().min(v1PostCampaignOutcomes202ResponseErrorsItemIndexMin),
+      message: zod.string(),
+    }),
+  ),
+  policy_id: zod.int(),
+  rejected: zod.int().min(v1PostCampaignOutcomes202ResponseRejectedMin),
+  suppressed: zod.int().min(v1PostCampaignOutcomes202ResponseSuppressedMin),
+});
+
+export const V1PostCampaignOutcomesDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const v1UploadCampaignOutcomes202ResponseAcceptedMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseErrorsItemIndexMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseRejectedMin = 0;
+
+export const v1UploadCampaignOutcomes202ResponseSuppressedMin = 0;
+
+export const V1UploadCampaignOutcomes202Response = zod.strictObject({
+  accepted: zod.int().min(v1UploadCampaignOutcomes202ResponseAcceptedMin),
+  errors: zod.array(
+    zod.strictObject({
+      email: zod.string(),
+      index: zod
+        .int()
+        .min(v1UploadCampaignOutcomes202ResponseErrorsItemIndexMin),
+      message: zod.string(),
+    }),
+  ),
+  policy_id: zod.int(),
+  rejected: zod.int().min(v1UploadCampaignOutcomes202ResponseRejectedMin),
+  suppressed: zod.int().min(v1UploadCampaignOutcomes202ResponseSuppressedMin),
+});
+
+export const V1UploadCampaignOutcomesDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
 export const V1IngestProviderOutcomesParams = zod.object({
   provider: zod.string().describe("sendgrid, ses, mailgun, or postmark"),
   endpoint_id: zod.uuid().describe("Provider endpoint identifier"),
@@ -54,28 +164,19 @@ export const V1ListOutcomesQueryParams = zod.object({
 });
 
 export const V1ListOutcomes200Response = zod.strictObject({
-  limit: zod.int(),
-  offset: zod.int(),
   outcomes: zod.array(
     zod.strictObject({
       campaign_id: zod.string().nullish(),
-      canonical_email: zod.string(),
-      correlation_status: zod.string(),
       created_at: zod.iso.datetime({ offset: true }),
       email: zod.string(),
-      endpoint_id: zod.uuid().nullish(),
-      event_family: zod.string().nullish(),
-      event_type: zod.string(),
       id: zod.int(),
-      metadata: zod.unknown(),
       occurred_at: zod.iso.datetime({ offset: true }),
-      provider: zod.string(),
-      provider_event_id: zod.string().nullish(),
-      provider_message_id: zod.string().nullish(),
-      receipt_id: zod.uuid().nullish(),
-      source_key: zod.string().nullish(),
+      policy_action: zod.string().nullish(),
+      source: zod.string().nullish(),
+      type: zod.string(),
     }),
   ),
+  total: zod.int(),
 });
 
 export const V1ListOutcomesDefaultResponse = zod.strictObject({

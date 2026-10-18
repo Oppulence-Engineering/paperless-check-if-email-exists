@@ -1073,6 +1073,7 @@ type V1APIV1CreateListRequest struct {
 	file *os.File
 	emailColumn *string
 	name *string
+	policyId *int64
 	sourceKey *string
 }
 
@@ -1088,6 +1089,11 @@ func (r V1APIV1CreateListRequest) EmailColumn(emailColumn string) V1APIV1CreateL
 
 func (r V1APIV1CreateListRequest) Name(name string) V1APIV1CreateListRequest {
 	r.name = &name
+	return r
+}
+
+func (r V1APIV1CreateListRequest) PolicyId(policyId int64) V1APIV1CreateListRequest {
+	r.policyId = &policyId
 	return r
 }
 
@@ -1175,6 +1181,9 @@ func (a *V1APIService) V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUpl
 	}
 	if r.name != nil {
 		parameterAddToHeaderOrQuery(localVarFormParams, "name", r.name, "", "")
+	}
+	if r.policyId != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "policy_id", r.policyId, "", "")
 	}
 	if r.sourceKey != nil {
 		parameterAddToHeaderOrQuery(localVarFormParams, "source_key", r.sourceKey, "", "")
@@ -1490,6 +1499,8 @@ type V1APIV1DownloadListRequest struct {
 	listId int32
 	filter *string
 	format *string
+	segmentId *int64
+	changedSinceListId *int32
 }
 
 func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListRequest {
@@ -1499,6 +1510,16 @@ func (r V1APIV1DownloadListRequest) Filter(filter string) V1APIV1DownloadListReq
 
 func (r V1APIV1DownloadListRequest) Format(format string) V1APIV1DownloadListRequest {
 	r.format = &format
+	return r
+}
+
+func (r V1APIV1DownloadListRequest) SegmentId(segmentId int64) V1APIV1DownloadListRequest {
+	r.segmentId = &segmentId
+	return r
+}
+
+func (r V1APIV1DownloadListRequest) ChangedSinceListId(changedSinceListId int32) V1APIV1DownloadListRequest {
+	r.changedSinceListId = &changedSinceListId
 	return r
 }
 
@@ -1548,6 +1569,12 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 	}
 	if r.format != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "format", r.format, "form", "")
+	}
+	if r.segmentId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "segment_id", r.segmentId, "form", "")
+	}
+	if r.changedSinceListId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_since_list_id", r.changedSinceListId, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

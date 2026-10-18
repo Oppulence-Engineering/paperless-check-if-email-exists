@@ -430,6 +430,12 @@ export const v1CreateList = async (
     formData.append(`name`, listUploadRequest.name);
   }
   if (
+    listUploadRequest.policy_id !== undefined &&
+    listUploadRequest.policy_id !== null
+  ) {
+    formData.append(`policy_id`, listUploadRequest.policy_id.toString());
+  }
+  if (
     listUploadRequest.source_key !== undefined &&
     listUploadRequest.source_key !== null
   ) {

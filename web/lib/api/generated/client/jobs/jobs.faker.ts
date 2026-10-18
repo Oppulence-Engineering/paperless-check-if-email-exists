@@ -11,6 +11,8 @@ import { faker } from "@faker-js/faker";
 
 import {
   BounceRiskCategory,
+  CatchAllSeverity,
+  ConfidenceLevel,
   EmailCategory,
   Freshness,
   Provider,
@@ -20,6 +22,7 @@ import {
   ReasonCode,
   RecommendedAction,
   RiskDirection,
+  SmtpUncertaintyClass,
   SubReason,
 } from "../model";
 import type {
@@ -199,11 +202,39 @@ export const getV1GetBulkJobResultsResponseMock = (
         recommendation: faker.helpers.arrayElement([{}, undefined]),
         score: {
           age_days: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          catch_all: faker.helpers.arrayElement([
+            {
+              confidence: faker.number.int({ min: 0, max: 100 }),
+              factors: Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              severity: faker.helpers.arrayElement(
+                Object.values(CatchAllSeverity),
+              ),
+            },
+            undefined,
+          ]),
           catch_all_severity: faker.helpers.arrayElement([
-            faker.helpers.arrayElement(["low", "high"] as const),
+            faker.helpers.arrayElement(["low", "medium", "high"] as const),
             undefined,
           ]),
           category: faker.helpers.arrayElement(Object.values(EmailCategory)),
+          confidence: faker.helpers.arrayElement([
+            faker.number.int({ min: 0, max: 100 }),
+            undefined,
+          ]),
+          confidence_factors: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          confidence_level: faker.helpers.arrayElement([
+            faker.helpers.arrayElement(Object.values(ConfidenceLevel)),
+            undefined,
+          ]),
           domain_suggestion: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             undefined,
@@ -214,6 +245,19 @@ export const getV1GetBulkJobResultsResponseMock = (
           ]),
           normalized_email: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          partial_confidence: faker.helpers.arrayElement([
+            {
+              classification: faker.helpers.arrayElement(
+                Object.values(SmtpUncertaintyClass),
+              ),
+              confidence: faker.number.int({ min: 0, max: 100 }),
+              factors: Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            },
             undefined,
           ]),
           reason_codes: faker.helpers.arrayElements(Object.values(ReasonCode)),
@@ -493,11 +537,41 @@ export const getV1GetJobResultsResponseMock = (
               faker.number.int(),
               undefined,
             ]),
+            catch_all: faker.helpers.arrayElement([
+              {
+                confidence: faker.number.int({ min: 0, max: 100 }),
+                factors: Array.from(
+                  { length: faker.number.int({ min: 1, max: 10 }) },
+                  (_, i) => i + 1,
+                ).map(() =>
+                  faker.string.alpha({ length: { min: 10, max: 20 } }),
+                ),
+                severity: faker.helpers.arrayElement(
+                  Object.values(CatchAllSeverity),
+                ),
+              },
+              undefined,
+            ]),
             catch_all_severity: faker.helpers.arrayElement([
-              faker.helpers.arrayElement(["low", "high"] as const),
+              faker.helpers.arrayElement(["low", "medium", "high"] as const),
               undefined,
             ]),
             category: faker.helpers.arrayElement(Object.values(EmailCategory)),
+            confidence: faker.helpers.arrayElement([
+              faker.number.int({ min: 0, max: 100 }),
+              undefined,
+            ]),
+            confidence_factors: faker.helpers.arrayElement([
+              Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+              undefined,
+            ]),
+            confidence_level: faker.helpers.arrayElement([
+              faker.helpers.arrayElement(Object.values(ConfidenceLevel)),
+              undefined,
+            ]),
             domain_suggestion: faker.helpers.arrayElement([
               faker.string.alpha({ length: { min: 10, max: 20 } }),
               undefined,
@@ -508,6 +582,21 @@ export const getV1GetJobResultsResponseMock = (
             ]),
             normalized_email: faker.helpers.arrayElement([
               faker.string.alpha({ length: { min: 10, max: 20 } }),
+              undefined,
+            ]),
+            partial_confidence: faker.helpers.arrayElement([
+              {
+                classification: faker.helpers.arrayElement(
+                  Object.values(SmtpUncertaintyClass),
+                ),
+                confidence: faker.number.int({ min: 0, max: 100 }),
+                factors: Array.from(
+                  { length: faker.number.int({ min: 1, max: 10 }) },
+                  (_, i) => i + 1,
+                ).map(() =>
+                  faker.string.alpha({ length: { min: 10, max: 20 } }),
+                ),
+              },
               undefined,
             ]),
             reason_codes: faker.helpers.arrayElements(

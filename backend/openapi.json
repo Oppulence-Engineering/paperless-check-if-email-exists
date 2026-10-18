@@ -415,6 +415,74 @@
         },
         "type": "object"
       },
+      "AlertListResponse": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "alerts",
+          "total"
+        ],
+        "type": "object"
+      },
+      "AlertView": {
+        "properties": {
+          "body": {
+            "nullable": true,
+            "type": "string"
+          },
+          "canonical_email": {
+            "type": "string"
+          },
+          "change_event_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "metadata": {},
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "canonical_email",
+          "title",
+          "metadata",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
       "ApprovalCategoryBreakdown": {
         "properties": {
           "invalid": {
@@ -655,6 +723,39 @@
           "results"
         ],
         "type": "object"
+      },
+      "CatchAllScore": {
+        "properties": {
+          "confidence": {
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/CatchAllSeverity"
+          }
+        },
+        "required": [
+          "severity",
+          "confidence",
+          "factors"
+        ],
+        "type": "object"
+      },
+      "CatchAllSeverity": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
       },
       "CheckEmailInputProxy": {
         "description": "Proxy configuration for email verification.",
@@ -903,6 +1004,15 @@
         ],
         "type": "object"
       },
+      "ConfidenceLevel": {
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "very_low"
+        ],
+        "type": "string"
+      },
       "CoreError": {
         "description": "Details of an error encountered during the verification process.",
         "properties": {
@@ -967,6 +1077,21 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "CreateOutcomePolicyRequest": {
+        "properties": {
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rules": {}
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -1048,6 +1173,36 @@
         "required": [
           "provider",
           "label"
+        ],
+        "type": "object"
+      },
+      "CreateSavedSegmentRequest": {
+        "properties": {
+          "filter": {},
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateScorePolicyRequest": {
+        "properties": {
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rules": {}
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -1134,6 +1289,78 @@
         },
         "required": [
           "deleted"
+        ],
+        "type": "object"
+      },
+      "DiffGroup": {
+        "properties": {
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DiffRow"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "DiffRow": {
+        "properties": {
+          "base_category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "base_row_index": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "base_score": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "base_task_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "canonical_email": {
+            "type": "string"
+          },
+          "change_type": {
+            "type": "string"
+          },
+          "compare_category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "compare_row_index": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "compare_score": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "compare_task_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "canonical_email",
+          "change_type"
         ],
         "type": "object"
       },
@@ -1230,16 +1457,35 @@
             "format": "int64",
             "type": "integer"
           },
+          "catch_all": {
+            "$ref": "#/components/schemas/CatchAllScore"
+          },
           "catch_all_severity": {
-            "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+            "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
             "enum": [
               "low",
+              "medium",
               "high"
             ],
             "type": "string"
           },
           "category": {
             "$ref": "#/components/schemas/EmailCategory"
+          },
+          "confidence": {
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "confidence_factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "confidence_level": {
+            "$ref": "#/components/schemas/ConfidenceLevel"
           },
           "domain_suggestion": {
             "description": "Suggested corrected email when a likely domain typo is detected",
@@ -1251,6 +1497,9 @@
           "normalized_email": {
             "description": "Canonical form of the email after alias/plus-address normalization",
             "type": "string"
+          },
+          "partial_confidence": {
+            "$ref": "#/components/schemas/PartialConfidence"
           },
           "reason_codes": {
             "items": {
@@ -1513,6 +1762,10 @@
             "nullable": true,
             "type": "string"
           },
+          "change_type": {
+            "nullable": true,
+            "type": "string"
+          },
           "completed_at": {
             "format": "date-time",
             "nullable": true,
@@ -1527,6 +1780,16 @@
             "nullable": true,
             "type": "integer"
           },
+          "list_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "pipeline_run_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
           "policy_decision": {
             "nullable": true,
             "type": "string"
@@ -1535,6 +1798,41 @@
           "policy_mode": {
             "nullable": true,
             "type": "string"
+          },
+          "previous_category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "previous_list_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "previous_pipeline_run_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
+          "previous_reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "previous_safe_to_send": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "previous_score": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "previous_task_id": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
           },
           "reason_codes": {
             "items": {
@@ -1560,8 +1858,15 @@
           "sub_reason": {
             "nullable": true,
             "type": "string"
+          },
+          "task_id": {
+            "format": "int32",
+            "type": "integer"
           }
         },
+        "required": [
+          "task_id"
+        ],
         "type": "object"
       },
       "HotmailB2BVerifMethod": {
@@ -1620,6 +1925,104 @@
           "duplicates",
           "unmatched",
           "rejected"
+        ],
+        "type": "object"
+      },
+      "IngestOutcome": {
+        "description": "One outcome event ingested via API or CSV.",
+        "properties": {
+          "campaign_id": {
+            "nullable": true,
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "metadata": {},
+          "occurred_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "source": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/OutcomeType"
+          }
+        },
+        "required": [
+          "email",
+          "type",
+          "occurred_at"
+        ],
+        "type": "object"
+      },
+      "IngestOutcomesRequest": {
+        "properties": {
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/IngestOutcome"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcomes"
+        ],
+        "type": "object"
+      },
+      "IngestOutcomesResponse": {
+        "properties": {
+          "accepted": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/IngestRowError"
+            },
+            "type": "array"
+          },
+          "policy_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "rejected": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "suppressed": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected",
+          "suppressed",
+          "policy_id",
+          "errors"
+        ],
+        "type": "object"
+      },
+      "IngestRowError": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "email",
+          "message"
         ],
         "type": "object"
       },
@@ -1711,6 +2114,11 @@
           "name": {
             "type": "string"
           },
+          "policy_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
+          },
           "source_key": {
             "nullable": true,
             "type": "string"
@@ -1739,6 +2147,55 @@
           "total_rows",
           "email_column",
           "summary"
+        ],
+        "type": "object"
+      },
+      "ListDiffResponse": {
+        "properties": {
+          "added": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "base_list_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "compare_list_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "degraded": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "improved": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "newly_invalid": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "newly_risky": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "newly_safe": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "removed": {
+            "$ref": "#/components/schemas/DiffGroup"
+          },
+          "unchanged": {
+            "$ref": "#/components/schemas/DiffGroup"
+          }
+        },
+        "required": [
+          "base_list_id",
+          "compare_list_id",
+          "added",
+          "removed",
+          "unchanged",
+          "improved",
+          "degraded",
+          "newly_invalid",
+          "newly_risky",
+          "newly_safe"
         ],
         "type": "object"
       },
@@ -1892,6 +2349,11 @@
           "name": {
             "nullable": true,
             "type": "string"
+          },
+          "policy_id": {
+            "format": "int64",
+            "nullable": true,
+            "type": "integer"
           },
           "source_key": {
             "description": "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.",
@@ -2113,38 +2575,91 @@
       },
       "OutcomeListResponse": {
         "properties": {
-          "limit": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "offset": {
-            "format": "int64",
-            "type": "integer"
-          },
           "outcomes": {
             "items": {
               "$ref": "#/components/schemas/OutcomeView"
             },
             "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "required": [
           "outcomes",
-          "limit",
-          "offset"
+          "total"
         ],
         "type": "object"
+      },
+      "OutcomePolicyListResponse": {
+        "properties": {
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomePolicyView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "policies",
+          "total"
+        ],
+        "type": "object"
+      },
+      "OutcomePolicyView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rules": {},
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "rules",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "OutcomeType": {
+        "description": "SQL enum mirror. Must stay in sync with `outcome_type` in\n`migrations/20260510000001_campaign_outcomes.up.sql`.",
+        "enum": [
+          "delivered",
+          "hard_bounce",
+          "soft_bounce",
+          "complaint",
+          "open",
+          "click",
+          "unsubscribe"
+        ],
+        "type": "string"
       },
       "OutcomeView": {
         "properties": {
           "campaign_id": {
             "nullable": true,
-            "type": "string"
-          },
-          "canonical_email": {
-            "type": "string"
-          },
-          "correlation_status": {
             "type": "string"
           },
           "created_at": {
@@ -2154,58 +2669,57 @@
           "email": {
             "type": "string"
           },
-          "endpoint_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "event_family": {
-            "nullable": true,
-            "type": "string"
-          },
-          "event_type": {
-            "type": "string"
-          },
           "id": {
             "format": "int64",
             "type": "integer"
           },
-          "metadata": {},
           "occurred_at": {
             "format": "date-time",
             "type": "string"
           },
-          "provider": {
-            "type": "string"
-          },
-          "provider_event_id": {
+          "policy_action": {
             "nullable": true,
             "type": "string"
           },
-          "provider_message_id": {
+          "source": {
             "nullable": true,
             "type": "string"
           },
-          "receipt_id": {
-            "format": "uuid",
-            "nullable": true,
-            "type": "string"
-          },
-          "source_key": {
-            "nullable": true,
+          "type": {
             "type": "string"
           }
         },
         "required": [
           "id",
           "email",
-          "canonical_email",
-          "provider",
-          "event_type",
+          "type",
           "occurred_at",
-          "metadata",
-          "correlation_status",
           "created_at"
+        ],
+        "type": "object"
+      },
+      "PartialConfidence": {
+        "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/SmtpUncertaintyClass"
+          },
+          "confidence": {
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "confidence",
+          "classification",
+          "factors"
         ],
         "type": "object"
       },
@@ -2281,6 +2795,11 @@
         "properties": {
           "missed_run_window_hours": {
             "format": "int32",
+            "type": "integer"
+          },
+          "policy_id": {
+            "format": "int64",
+            "nullable": true,
             "type": "integer"
           }
         },
@@ -3014,7 +3533,22 @@
           "spam_trap",
           "unknown_deliverability",
           "free_provider",
-          "possible_typo"
+          "possible_typo",
+          "provider_reputation",
+          "tenant_history_positive",
+          "tenant_history_inconsistent",
+          "catch_all_low_confidence",
+          "catch_all_medium_confidence",
+          "catch_all_high_risk",
+          "partial_confidence",
+          "transient_smtp",
+          "smtp_policy_block",
+          "smtp_timeout",
+          "smtp_network",
+          "smtp_ambiguous",
+          "outcome_hard_bounce",
+          "outcome_complaint",
+          "outcome_engagement"
         ],
         "type": "string"
       },
@@ -3173,6 +3707,108 @@
         ],
         "type": "object"
       },
+      "SavedSegmentListResponse": {
+        "properties": {
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/SavedSegmentView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segments",
+          "total"
+        ],
+        "type": "object"
+      },
+      "SavedSegmentView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "filter": {},
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "scope",
+          "filter",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "ScorePolicyListResponse": {
+        "properties": {
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/ScorePolicyView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "policies",
+          "total"
+        ],
+        "type": "object"
+      },
+      "ScorePolicyView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rules": {},
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "rules",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
       "ScoringSignals": {
         "properties": {
           "has_domain_suggestion": {
@@ -3269,6 +3905,17 @@
         ],
         "title": "SmtpDetails",
         "type": "object"
+      },
+      "SmtpUncertaintyClass": {
+        "enum": [
+          "transient",
+          "policy_block",
+          "timeout",
+          "network",
+          "ambiguous_response",
+          "smtp_unreachable"
+        ],
+        "type": "string"
       },
       "SubReason": {
         "enum": [
@@ -3593,6 +4240,17 @@
         ],
         "type": "object"
       },
+      "UpdateAlertRequest": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
       "UpdateApiKeyRequest": {
         "properties": {
           "expires_at": {
@@ -3610,6 +4268,20 @@
             "nullable": true,
             "type": "array"
           }
+        },
+        "type": "object"
+      },
+      "UpdateOutcomePolicyRequest": {
+        "properties": {
+          "is_default": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rules": {}
         },
         "type": "object"
       },
@@ -3740,6 +4412,34 @@
           "enabled",
           "staleness_days"
         ],
+        "type": "object"
+      },
+      "UpdateSavedSegmentRequest": {
+        "properties": {
+          "filter": {},
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "scope": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateScorePolicyRequest": {
+        "properties": {
+          "is_default": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rules": {}
+        },
         "type": "object"
       },
       "UpdateTenantDomainRequest": {
@@ -5198,6 +5898,126 @@
         ]
       }
     },
+    "/v1/alerts": {
+      "get": {
+        "operationId": "v1_list_alerts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertListResponse"
+                }
+              }
+            },
+            "description": "Tenant alert inbox"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/alerts",
+        "tags": [
+          "Verification"
+        ]
+      }
+    },
+    "/v1/alerts/{alert_id}": {
+      "patch": {
+        "operationId": "v1_update_alert",
+        "parameters": [
+          {
+            "description": "Alert identifier",
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertView"
+                }
+              }
+            },
+            "description": "Updated alert"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "PATCH /v1/alerts/{alert_id}",
+        "tags": [
+          "Verification"
+        ]
+      }
+    },
     "/v1/bulk": {
       "post": {
         "description": "Creates a tenant-scoped bulk job for async processing.",
@@ -5365,6 +6185,157 @@
         "summary": "GET /v1/bulk/{job_id}/results",
         "tags": [
           "Jobs"
+        ]
+      }
+    },
+    "/v1/campaign-outcomes": {
+      "get": {
+        "operationId": "v1_list_campaign_outcomes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeListResponse"
+                }
+              }
+            },
+            "description": "List of outcomes"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Outcomes"
+        ]
+      },
+      "post": {
+        "operationId": "v1_post_campaign_outcomes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestOutcomesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestOutcomesResponse"
+                }
+              }
+            },
+            "description": "Outcomes accepted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Outcomes"
+        ]
+      }
+    },
+    "/v1/campaign-outcomes/upload": {
+      "post": {
+        "operationId": "v1_upload_campaign_outcomes",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestOutcomesResponse"
+                }
+              }
+            },
+            "description": "Outcomes ingested via CSV"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Outcomes"
         ]
       }
     },
@@ -6477,6 +7448,77 @@
         ]
       }
     },
+    "/v1/lists/{base_list_id}/diff/{compare_list_id}": {
+      "get": {
+        "operationId": "v1_diff_lists",
+        "parameters": [
+          {
+            "description": "Base list identifier",
+            "in": "path",
+            "name": "base_list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Compare list identifier",
+            "in": "path",
+            "name": "compare_list_id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDiffResponse"
+                }
+              }
+            },
+            "description": "List diff"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/lists/{base_list_id}/diff/{compare_list_id}",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
     "/v1/lists/{list_id}": {
       "delete": {
         "operationId": "v1_delete_list",
@@ -6589,6 +7631,24 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "segment_id",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "changed_since_list_id",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
             }
           }
         ],
@@ -7425,6 +8485,219 @@
           }
         },
         "summary": "PATCH /v1/me/webhook",
+        "tags": [
+          "Tenant"
+        ]
+      }
+    },
+    "/v1/outcome-policies": {
+      "get": {
+        "operationId": "v1_list_outcome_policies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomePolicyListResponse"
+                }
+              }
+            },
+            "description": "Outcome policies"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_outcome_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOutcomePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomePolicyView"
+                }
+              }
+            },
+            "description": "Outcome policy created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Tenant"
+        ]
+      }
+    },
+    "/v1/outcome-policies/{policy_id}": {
+      "delete": {
+        "operationId": "v1_delete_outcome_policy",
+        "parameters": [
+          {
+            "description": "Outcome policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Outcome policy deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "get": {
+        "operationId": "v1_get_outcome_policy",
+        "parameters": [
+          {
+            "description": "Outcome policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomePolicyView"
+                }
+              }
+            },
+            "description": "Outcome policy"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "patch": {
+        "operationId": "v1_update_outcome_policy",
+        "parameters": [
+          {
+            "description": "Outcome policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutcomePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomePolicyView"
+                }
+              }
+            },
+            "description": "Outcome policy updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
         "tags": [
           "Tenant"
         ]
@@ -8997,6 +10270,450 @@
         ]
       }
     },
+    "/v1/score-policies": {
+      "get": {
+        "operationId": "v1_list_score_policies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScorePolicyListResponse"
+                }
+              }
+            },
+            "description": "Score policies"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/score-policies",
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_score_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScorePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScorePolicyView"
+                }
+              }
+            },
+            "description": "Score policy created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "POST /v1/score-policies",
+        "tags": [
+          "Tenant"
+        ]
+      }
+    },
+    "/v1/score-policies/{policy_id}": {
+      "delete": {
+        "operationId": "v1_delete_score_policy",
+        "parameters": [
+          {
+            "description": "Score policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Score policy deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "DELETE /v1/score-policies/{policy_id}",
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "get": {
+        "operationId": "v1_get_score_policy",
+        "parameters": [
+          {
+            "description": "Score policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScorePolicyView"
+                }
+              }
+            },
+            "description": "Score policy"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/score-policies/{policy_id}",
+        "tags": [
+          "Tenant"
+        ]
+      },
+      "patch": {
+        "operationId": "v1_update_score_policy",
+        "parameters": [
+          {
+            "description": "Score policy identifier",
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScorePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScorePolicyView"
+                }
+              }
+            },
+            "description": "Score policy updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "PATCH /v1/score-policies/{policy_id}",
+        "tags": [
+          "Tenant"
+        ]
+      }
+    },
+    "/v1/segments": {
+      "get": {
+        "operationId": "v1_list_saved_segments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedSegmentListResponse"
+                }
+              }
+            },
+            "description": "Saved segments"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/segments",
+        "tags": [
+          "Lists"
+        ]
+      },
+      "post": {
+        "operationId": "v1_create_saved_segment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedSegmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedSegmentView"
+                }
+              }
+            },
+            "description": "Saved segment created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "POST /v1/segments",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
+    "/v1/segments/{segment_id}": {
+      "delete": {
+        "operationId": "v1_delete_saved_segment",
+        "parameters": [
+          {
+            "description": "Saved segment identifier",
+            "in": "path",
+            "name": "segment_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved segment deleted"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "DELETE /v1/segments/{segment_id}",
+        "tags": [
+          "Lists"
+        ]
+      },
+      "get": {
+        "operationId": "v1_get_saved_segment",
+        "parameters": [
+          {
+            "description": "Saved segment identifier",
+            "in": "path",
+            "name": "segment_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedSegmentView"
+                }
+              }
+            },
+            "description": "Saved segment"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "GET /v1/segments/{segment_id}",
+        "tags": [
+          "Lists"
+        ]
+      },
+      "patch": {
+        "operationId": "v1_update_saved_segment",
+        "parameters": [
+          {
+            "description": "Saved segment identifier",
+            "in": "path",
+            "name": "segment_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavedSegmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedSegmentView"
+                }
+              }
+            },
+            "description": "Saved segment updated"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "summary": "PATCH /v1/segments/{segment_id}",
+        "tags": [
+          "Lists"
+        ]
+      }
+    },
     "/v1/sources/quality": {
       "get": {
         "operationId": "v1_source_quality",
@@ -9451,7 +11168,7 @@
       "name": "Comments"
     },
     {
-      "description": "Normalized provider outcomes, suppression feedback, and authenticated provider adapters",
+      "description": "Normalized provider outcomes, suppression feedback, authenticated provider adapters, and campaign outcome ingestion",
       "name": "Outcomes"
     }
   ]

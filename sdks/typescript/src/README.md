@@ -97,16 +97,25 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 *ListsApi* | [**v1CreateRemediationExport**](docs/ListsApi.md#v1createremediationexport) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export
 *ListsApi* | [**v1CreateRemediationPlan**](docs/ListsApi.md#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan
+*ListsApi* | [**v1CreateSavedSegment**](docs/ListsApi.md#v1createsavedsegment) | **POST** /v1/segments | POST /v1/segments
+*ListsApi* | [**v1DeleteSavedSegment**](docs/ListsApi.md#v1deletesavedsegment) | **DELETE** /v1/segments/{segment_id} | DELETE /v1/segments/{segment_id}
+*ListsApi* | [**v1DiffLists**](docs/ListsApi.md#v1difflists) | **GET** /v1/lists/{base_list_id}/diff/{compare_list_id} | GET /v1/lists/{base_list_id}/diff/{compare_list_id}
 *ListsApi* | [**v1DownloadRemediationExport**](docs/ListsApi.md#v1downloadremediationexport) | **GET** /v1/lists/{list_id}/remediation-exports/{export_id}/download | Download remediation export
 *ListsApi* | [**v1GetRemediationPlan**](docs/ListsApi.md#v1getremediationplan) | **GET** /v1/lists/{list_id}/remediation-plan | Get remediation plan
+*ListsApi* | [**v1GetSavedSegment**](docs/ListsApi.md#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 *ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
+*ListsApi* | [**v1ListSavedSegments**](docs/ListsApi.md#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments
+*ListsApi* | [**v1UpdateSavedSegment**](docs/ListsApi.md#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}
 *OutcomesApi* | [**v1CreateProviderEndpoint**](docs/OutcomesApi.md#v1createproviderendpoint) | **POST** /v1/provider-endpoints |
 *OutcomesApi* | [**v1DeleteProviderEndpoint**](docs/OutcomesApi.md#v1deleteproviderendpoint) | **DELETE** /v1/provider-endpoints/{endpoint_id} |
 *OutcomesApi* | [**v1IngestOutcomes**](docs/OutcomesApi.md#v1ingestoutcomes) | **POST** /v1/outcomes | POST /v1/outcomes
 *OutcomesApi* | [**v1IngestProviderOutcomes**](docs/OutcomesApi.md#v1ingestprovideroutcomes) | **POST** /v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token} |
+*OutcomesApi* | [**v1ListCampaignOutcomes**](docs/OutcomesApi.md#v1listcampaignoutcomes) | **GET** /v1/campaign-outcomes |
 *OutcomesApi* | [**v1ListOutcomes**](docs/OutcomesApi.md#v1listoutcomes) | **GET** /v1/outcomes | GET /v1/outcomes
 *OutcomesApi* | [**v1ListProviderEndpoints**](docs/OutcomesApi.md#v1listproviderendpoints) | **GET** /v1/provider-endpoints |
+*OutcomesApi* | [**v1PostCampaignOutcomes**](docs/OutcomesApi.md#v1postcampaignoutcomes) | **POST** /v1/campaign-outcomes |
 *OutcomesApi* | [**v1UpdateProviderEndpoint**](docs/OutcomesApi.md#v1updateproviderendpoint) | **PATCH** /v1/provider-endpoints/{endpoint_id} |
+*OutcomesApi* | [**v1UploadCampaignOutcomes**](docs/OutcomesApi.md#v1uploadcampaignoutcomes) | **POST** /v1/campaign-outcomes/upload |
 _PipelinesApi_ | [__v1CreatePipeline__](docs/PipelinesApi.md#v1createpipeline) | **POST** /v1/pipelines | POST /v1/pipelines
 _PipelinesApi_ | [__v1DeletePipeline__](docs/PipelinesApi.md#v1deletepipeline) | **DELETE** /v1/pipelines/{pipeline_id} | DELETE /v1/pipelines/{pipeline_id}
 _PipelinesApi_ | [__v1GetPipeline__](docs/PipelinesApi.md#v1getpipeline) | **GET** /v1/pipelines/{pipeline_id} | GET /v1/pipelines/{pipeline_id}
@@ -122,13 +131,23 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *SystemApi* | [**getVersion**](docs/SystemApi.md#getversion) | **GET** /version | GET /version
 *SystemApi* | [**openapiSpec**](docs/SystemApi.md#openapispec) | **GET** /openapi.json | Serve the merged OpenAPI document for all documented REST endpoints.
 *TenantApi* | [**v1ClearTenantWebhook**](docs/TenantApi.md#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook
+*TenantApi* | [**v1CreateOutcomePolicy**](docs/TenantApi.md#v1createoutcomepolicy) | **POST** /v1/outcome-policies |
+*TenantApi* | [**v1CreateScorePolicy**](docs/TenantApi.md#v1createscorepolicy) | **POST** /v1/score-policies | POST /v1/score-policies
 *TenantApi* | [**v1CreateTenantDomain**](docs/TenantApi.md#v1createtenantdomain) | **POST** /v1/me/domains | POST /v1/me/domains
+*TenantApi* | [**v1DeleteOutcomePolicy**](docs/TenantApi.md#v1deleteoutcomepolicy) | **DELETE** /v1/outcome-policies/{policy_id} |
+*TenantApi* | [**v1DeleteScorePolicy**](docs/TenantApi.md#v1deletescorepolicy) | **DELETE** /v1/score-policies/{policy_id} | DELETE /v1/score-policies/{policy_id}
 *TenantApi* | [**v1DeleteTenantDomain**](docs/TenantApi.md#v1deletetenantdomain) | **DELETE** /v1/me/domains/{domain} | DELETE /v1/me/domains/{domain}
+*TenantApi* | [**v1GetOutcomePolicy**](docs/TenantApi.md#v1getoutcomepolicy) | **GET** /v1/outcome-policies/{policy_id} |
+*TenantApi* | [**v1GetScorePolicy**](docs/TenantApi.md#v1getscorepolicy) | **GET** /v1/score-policies/{policy_id} | GET /v1/score-policies/{policy_id}
 *TenantApi* | [**v1GetTenantDomain**](docs/TenantApi.md#v1gettenantdomain) | **GET** /v1/me/domains/{domain} | GET /v1/me/domains/{domain}
 *TenantApi* | [**v1GetTenantSettings**](docs/TenantApi.md#v1gettenantsettings) | **GET** /v1/me/settings | GET /v1/me/settings
 *TenantApi* | [**v1GetTenantUsage**](docs/TenantApi.md#v1gettenantusage) | **GET** /v1/me/usage | GET /v1/me/usage
 *TenantApi* | [**v1GetTenantWebhook**](docs/TenantApi.md#v1gettenantwebhook) | **GET** /v1/me/webhook | GET /v1/me/webhook
+*TenantApi* | [**v1ListOutcomePolicies**](docs/TenantApi.md#v1listoutcomepolicies) | **GET** /v1/outcome-policies |
+*TenantApi* | [**v1ListScorePolicies**](docs/TenantApi.md#v1listscorepolicies) | **GET** /v1/score-policies | GET /v1/score-policies
 *TenantApi* | [**v1ListTenantDomains**](docs/TenantApi.md#v1listtenantdomains) | **GET** /v1/me/domains | GET /v1/me/domains
+*TenantApi* | [**v1UpdateOutcomePolicy**](docs/TenantApi.md#v1updateoutcomepolicy) | **PATCH** /v1/outcome-policies/{policy_id} |
+*TenantApi* | [**v1UpdateScorePolicy**](docs/TenantApi.md#v1updatescorepolicy) | **PATCH** /v1/score-policies/{policy_id} | PATCH /v1/score-policies/{policy_id}
 *TenantApi* | [**v1UpdateTenantDomain**](docs/TenantApi.md#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}
 *TenantApi* | [**v1UpdateTenantSettings**](docs/TenantApi.md#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings
 *TenantApi* | [**v1UpdateTenantWebhook**](docs/TenantApi.md#v1updatetenantwebhook) | **PATCH** /v1/me/webhook | PATCH /v1/me/webhook
@@ -158,6 +177,8 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1SourceQuality**](docs/V1Api.md#v1sourcequality) | **GET** /v1/sources/quality | List source quality
 *V1Api* | [**v1UpdateReverification**](docs/V1Api.md#v1updatereverification) | **PUT** /v1/reverification | PUT /v1/reverification
 *VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
+*VerificationApi* | [**v1ListAlerts**](docs/VerificationApi.md#v1listalerts) | **GET** /v1/alerts | GET /v1/alerts
+*VerificationApi* | [**v1UpdateAlert**](docs/VerificationApi.md#v1updatealert) | **PATCH** /v1/alerts/{alert_id} | PATCH /v1/alerts/{alert_id}
 
 
 ### Documentation For Models
@@ -175,6 +196,8 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [AdminTenantQuota](docs/AdminTenantQuota.md)
  - [AdminUpdateQuotaRequest](docs/AdminUpdateQuotaRequest.md)
  - [AdminUpdateTenantRequest](docs/AdminUpdateTenantRequest.md)
+ - [AlertListResponse](docs/AlertListResponse.md)
+ - [AlertView](docs/AlertView.md)
  - [ApprovalCategoryBreakdown](docs/ApprovalCategoryBreakdown.md)
  - [ApprovalChecklistResponse](docs/ApprovalChecklistResponse.md)
  - [ApprovalRiskFlags](docs/ApprovalRiskFlags.md)
@@ -184,6 +207,8 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [BulkCreateRequest](docs/BulkCreateRequest.md)
  - [BulkCreateResponse](docs/BulkCreateResponse.md)
  - [BulkJobResultsResponse](docs/BulkJobResultsResponse.md)
+ - [CatchAllScore](docs/CatchAllScore.md)
+ - [CatchAllSeverity](docs/CatchAllSeverity.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)
  - [CheckEmailOutput](docs/CheckEmailOutput.md)
  - [CheckEmailOutputMisc](docs/CheckEmailOutputMisc.md)
@@ -191,15 +216,21 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [CheckEmailOutputSmtp](docs/CheckEmailOutputSmtp.md)
  - [CheckEmailRequest](docs/CheckEmailRequest.md)
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
+ - [ConfidenceLevel](docs/ConfidenceLevel.md)
  - [CoreError](docs/CoreError.md)
  - [CreateApiKeyRequest](docs/CreateApiKeyRequest.md)
  - [CreateCommentRequest](docs/CreateCommentRequest.md)
+ - [CreateOutcomePolicyRequest](docs/CreateOutcomePolicyRequest.md)
  - [CreatePipelineInput](docs/CreatePipelineInput.md)
  - [CreateProviderEndpointInput](docs/CreateProviderEndpointInput.md)
+ - [CreateSavedSegmentRequest](docs/CreateSavedSegmentRequest.md)
+ - [CreateScorePolicyRequest](docs/CreateScorePolicyRequest.md)
  - [CreateTenantDomainRequest](docs/CreateTenantDomainRequest.md)
  - [DebugDetails](docs/DebugDetails.md)
  - [DebugDetailsSmtp](docs/DebugDetailsSmtp.md)
  - [DeletePipelineResponse](docs/DeletePipelineResponse.md)
+ - [DiffGroup](docs/DiffGroup.md)
+ - [DiffRow](docs/DiffRow.md)
  - [DnsRecordResults](docs/DnsRecordResults.md)
  - [DomainInfo](docs/DomainInfo.md)
  - [Duration](docs/Duration.md)
@@ -218,10 +249,15 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [HotmailB2BVerifMethod](docs/HotmailB2BVerifMethod.md)
  - [HotmailB2CVerifMethod](docs/HotmailB2CVerifMethod.md)
  - [InboundOutcomeResponse](docs/InboundOutcomeResponse.md)
+ - [IngestOutcome](docs/IngestOutcome.md)
+ - [IngestOutcomesRequest](docs/IngestOutcomesRequest.md)
+ - [IngestOutcomesResponse](docs/IngestOutcomesResponse.md)
+ - [IngestRowError](docs/IngestRowError.md)
  - [JobResultPageResponse](docs/JobResultPageResponse.md)
  - [JobTaskResult](docs/JobTaskResult.md)
  - [ListDeleteResponse](docs/ListDeleteResponse.md)
  - [ListDetailResponse](docs/ListDetailResponse.md)
+ - [ListDiffResponse](docs/ListDiffResponse.md)
  - [ListItem](docs/ListItem.md)
  - [ListListResponse](docs/ListListResponse.md)
  - [ListPipelineRunsResponse](docs/ListPipelineRunsResponse.md)
@@ -235,7 +271,11 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [OutcomeIngestResponse](docs/OutcomeIngestResponse.md)
  - [OutcomeInput](docs/OutcomeInput.md)
  - [OutcomeListResponse](docs/OutcomeListResponse.md)
+ - [OutcomePolicyListResponse](docs/OutcomePolicyListResponse.md)
+ - [OutcomePolicyView](docs/OutcomePolicyView.md)
+ - [OutcomeType](docs/OutcomeType.md)
  - [OutcomeView](docs/OutcomeView.md)
+ - [PartialConfidence](docs/PartialConfidence.md)
  - [PipelineDeliveryConfig](docs/PipelineDeliveryConfig.md)
  - [PipelineDeliveryStatus](docs/PipelineDeliveryStatus.md)
  - [PipelineDeliveryWebhook](docs/PipelineDeliveryWebhook.md)
@@ -271,8 +311,13 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ReverificationStatusResponse](docs/ReverificationStatusResponse.md)
  - [RiskDirection](docs/RiskDirection.md)
  - [RiskFactor](docs/RiskFactor.md)
+ - [SavedSegmentListResponse](docs/SavedSegmentListResponse.md)
+ - [SavedSegmentView](docs/SavedSegmentView.md)
+ - [ScorePolicyListResponse](docs/ScorePolicyListResponse.md)
+ - [ScorePolicyView](docs/ScorePolicyView.md)
  - [ScoringSignals](docs/ScoringSignals.md)
  - [SmtpDetails](docs/SmtpDetails.md)
+ - [SmtpUncertaintyClass](docs/SmtpUncertaintyClass.md)
  - [SubReason](docs/SubReason.md)
  - [SuppressionCheckResponse](docs/SuppressionCheckResponse.md)
  - [SuppressionDeleteResponse](docs/SuppressionDeleteResponse.md)
@@ -286,10 +331,14 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [TenantWebhookResponse](docs/TenantWebhookResponse.md)
  - [TriggerPipelineInput](docs/TriggerPipelineInput.md)
  - [TriggerPipelineResponse](docs/TriggerPipelineResponse.md)
+ - [UpdateAlertRequest](docs/UpdateAlertRequest.md)
  - [UpdateApiKeyRequest](docs/UpdateApiKeyRequest.md)
+ - [UpdateOutcomePolicyRequest](docs/UpdateOutcomePolicyRequest.md)
  - [UpdatePipelineInput](docs/UpdatePipelineInput.md)
  - [UpdateProviderEndpointInput](docs/UpdateProviderEndpointInput.md)
  - [UpdateReverificationRequest](docs/UpdateReverificationRequest.md)
+ - [UpdateSavedSegmentRequest](docs/UpdateSavedSegmentRequest.md)
+ - [UpdateScorePolicyRequest](docs/UpdateScorePolicyRequest.md)
  - [UpdateTenantDomainRequest](docs/UpdateTenantDomainRequest.md)
  - [UpdateTenantSettingsRequest](docs/UpdateTenantSettingsRequest.md)
  - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)

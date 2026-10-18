@@ -12,16 +12,36 @@ export interface HistoryEntry {
   /** @nullable */
   category?: string | null;
   /** @nullable */
+  change_type?: string | null;
+  /** @nullable */
   completed_at?: string | null;
   /** @nullable */
   is_reachable?: string | null;
   /** @nullable */
   job_id?: number | null;
   /** @nullable */
+  list_id?: number | null;
+  /** @nullable */
+  pipeline_run_id?: number | null;
+  /** @nullable */
   policy_decision?: string | null;
   policy_evaluation?: unknown;
   /** @nullable */
   policy_mode?: string | null;
+  /** @nullable */
+  previous_category?: string | null;
+  /** @nullable */
+  previous_list_id?: number | null;
+  /** @nullable */
+  previous_pipeline_run_id?: number | null;
+  /** @nullable */
+  previous_reason_codes?: string[] | null;
+  /** @nullable */
+  previous_safe_to_send?: boolean | null;
+  /** @nullable */
+  previous_score?: number | null;
+  /** @nullable */
+  previous_task_id?: number | null;
   /** @nullable */
   reason_codes?: string[] | null;
   recommendation?: unknown;
@@ -33,4 +53,5 @@ export interface HistoryEntry {
   score?: number | null;
   /** @nullable */
   sub_reason?: string | null;
+  task_id: number;
 }

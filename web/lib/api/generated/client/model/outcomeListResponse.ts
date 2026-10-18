@@ -10,7 +10,6 @@
 import type { OutcomeView } from "./outcomeView";
 
 export interface OutcomeListResponse {
-  limit: number;
-  offset: number;
   outcomes: OutcomeView[];
+  total: number;
 }

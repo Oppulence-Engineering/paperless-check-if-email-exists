@@ -11,6 +11,8 @@ import type {
   CreateProviderEndpointInput,
   ErrorEnvelope,
   InboundOutcomeResponse,
+  IngestOutcomesRequest,
+  IngestOutcomesResponse,
   OutcomeIngestRequest,
   OutcomeIngestResponse,
   OutcomeListResponse,
@@ -18,6 +20,7 @@ import type {
   ProviderEndpointListResponse,
   ProviderEndpointView,
   UpdateProviderEndpointInput,
+  V1ListCampaignOutcomesParams,
   V1ListOutcomesParams,
 } from "../model";
 
@@ -62,6 +65,163 @@ export type HTTPStatusCodes =
   | HTTPStatusCode3xx
   | HTTPStatusCode4xx
   | HTTPStatusCode5xx;
+
+export type v1ListCampaignOutcomesResponse200 = {
+  data: OutcomeListResponse;
+  status: 200;
+};
+
+export type v1ListCampaignOutcomesResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListCampaignOutcomesResponseSuccess =
+  v1ListCampaignOutcomesResponse200 & {
+    headers: Headers;
+  };
+export type v1ListCampaignOutcomesResponseError =
+  v1ListCampaignOutcomesResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1ListCampaignOutcomesResponse =
+  v1ListCampaignOutcomesResponseSuccess | v1ListCampaignOutcomesResponseError;
+
+export const getV1ListCampaignOutcomesUrl = (
+  params?: V1ListCampaignOutcomesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/campaign-outcomes?${stringifiedParams}`
+    : `/v1/campaign-outcomes`;
+};
+
+export const v1ListCampaignOutcomes = async (
+  params?: V1ListCampaignOutcomesParams,
+  options?: RequestInit,
+): Promise<v1ListCampaignOutcomesResponse> => {
+  const res = await fetch(getV1ListCampaignOutcomesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListCampaignOutcomesResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListCampaignOutcomesResponse;
+};
+
+export type v1PostCampaignOutcomesResponse202 = {
+  data: IngestOutcomesResponse;
+  status: 202;
+};
+
+export type v1PostCampaignOutcomesResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 202>;
+};
+
+export type v1PostCampaignOutcomesResponseSuccess =
+  v1PostCampaignOutcomesResponse202 & {
+    headers: Headers;
+  };
+export type v1PostCampaignOutcomesResponseError =
+  v1PostCampaignOutcomesResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1PostCampaignOutcomesResponse =
+  v1PostCampaignOutcomesResponseSuccess | v1PostCampaignOutcomesResponseError;
+
+export const getV1PostCampaignOutcomesUrl = () => {
+  return `/v1/campaign-outcomes`;
+};
+
+export const v1PostCampaignOutcomes = async (
+  ingestOutcomesRequest: IngestOutcomesRequest,
+  options?: RequestInit,
+): Promise<v1PostCampaignOutcomesResponse> => {
+  const res = await fetch(getV1PostCampaignOutcomesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(ingestOutcomesRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1PostCampaignOutcomesResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1PostCampaignOutcomesResponse;
+};
+
+export type v1UploadCampaignOutcomesResponse202 = {
+  data: IngestOutcomesResponse;
+  status: 202;
+};
+
+export type v1UploadCampaignOutcomesResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 202>;
+};
+
+export type v1UploadCampaignOutcomesResponseSuccess =
+  v1UploadCampaignOutcomesResponse202 & {
+    headers: Headers;
+  };
+export type v1UploadCampaignOutcomesResponseError =
+  v1UploadCampaignOutcomesResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1UploadCampaignOutcomesResponse =
+  | v1UploadCampaignOutcomesResponseSuccess
+  | v1UploadCampaignOutcomesResponseError;
+
+export const getV1UploadCampaignOutcomesUrl = () => {
+  return `/v1/campaign-outcomes/upload`;
+};
+
+export const v1UploadCampaignOutcomes = async (
+  options?: RequestInit,
+): Promise<v1UploadCampaignOutcomesResponse> => {
+  const res = await fetch(getV1UploadCampaignOutcomesUrl(), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UploadCampaignOutcomesResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UploadCampaignOutcomesResponse;
+};
 
 export type v1IngestProviderOutcomesResponse200 = {
   data: InboundOutcomeResponse;

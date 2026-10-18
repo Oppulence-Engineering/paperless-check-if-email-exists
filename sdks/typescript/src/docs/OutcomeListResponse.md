@@ -5,9 +5,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**limit** | **number** |  | [required]
-**offset** | **number** |  | [required]
 **outcomes** | [**Array&lt;OutcomeView&gt;**](OutcomeView.md) |  | [required]
+**total** | **number** |  | [required]
 
 ## Example
 
@@ -15,9 +14,8 @@ Name | Type | Description | Notes
 import { OutcomeListResponse } from '@oppulence/reacher-sdk';
 
 const instance: OutcomeListResponse = {
-    limit: 0,
-    offset: 0,
     outcomes: [],
+    total: 0,
 };
 ```
 

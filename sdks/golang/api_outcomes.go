@@ -77,6 +77,18 @@ type OutcomesAPI interface {
 	V1IngestProviderOutcomesExecute(r OutcomesAPIV1IngestProviderOutcomesRequest) (*InboundOutcomeResponse, *http.Response, error)
 
 	/*
+	V1ListCampaignOutcomes Method for V1ListCampaignOutcomes
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return OutcomesAPIV1ListCampaignOutcomesRequest
+	*/
+	V1ListCampaignOutcomes(ctx context.Context) OutcomesAPIV1ListCampaignOutcomesRequest
+
+	// V1ListCampaignOutcomesExecute executes the request
+	//  @return OutcomeListResponse
+	V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*OutcomeListResponse, *http.Response, error)
+
+	/*
 	V1ListOutcomes GET /v1/outcomes
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -101,6 +113,18 @@ type OutcomesAPI interface {
 	V1ListProviderEndpointsExecute(r OutcomesAPIV1ListProviderEndpointsRequest) (*ProviderEndpointListResponse, *http.Response, error)
 
 	/*
+	V1PostCampaignOutcomes Method for V1PostCampaignOutcomes
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return OutcomesAPIV1PostCampaignOutcomesRequest
+	*/
+	V1PostCampaignOutcomes(ctx context.Context) OutcomesAPIV1PostCampaignOutcomesRequest
+
+	// V1PostCampaignOutcomesExecute executes the request
+	//  @return IngestOutcomesResponse
+	V1PostCampaignOutcomesExecute(r OutcomesAPIV1PostCampaignOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error)
+
+	/*
 	V1UpdateProviderEndpoint Method for V1UpdateProviderEndpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -112,6 +136,18 @@ type OutcomesAPI interface {
 	// V1UpdateProviderEndpointExecute executes the request
 	//  @return ProviderEndpointView
 	V1UpdateProviderEndpointExecute(r OutcomesAPIV1UpdateProviderEndpointRequest) (*ProviderEndpointView, *http.Response, error)
+
+	/*
+	V1UploadCampaignOutcomes Method for V1UploadCampaignOutcomes
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return OutcomesAPIV1UploadCampaignOutcomesRequest
+	*/
+	V1UploadCampaignOutcomes(ctx context.Context) OutcomesAPIV1UploadCampaignOutcomesRequest
+
+	// V1UploadCampaignOutcomesExecute executes the request
+	//  @return IngestOutcomesResponse
+	V1UploadCampaignOutcomesExecute(r OutcomesAPIV1UploadCampaignOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error)
 }
 
 // OutcomesAPIService OutcomesAPI service
@@ -628,6 +664,179 @@ func (a *OutcomesAPIService) V1IngestProviderOutcomesExecute(r OutcomesAPIV1Inge
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type OutcomesAPIV1ListCampaignOutcomesRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	email *string
+	source *string
+	type_ *string
+	since *time.Time
+	limit *int64
+	offset *int64
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Email(email string) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.email = &email
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Source(source string) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.source = &source
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Type_(type_ string) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.type_ = &type_
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Since(since time.Time) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.since = &since
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Limit(limit int64) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Offset(offset int64) OutcomesAPIV1ListCampaignOutcomesRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r OutcomesAPIV1ListCampaignOutcomesRequest) Execute() (*OutcomeListResponse, *http.Response, error) {
+	return r.ApiService.V1ListCampaignOutcomesExecute(r)
+}
+
+/*
+V1ListCampaignOutcomes Method for V1ListCampaignOutcomes
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return OutcomesAPIV1ListCampaignOutcomesRequest
+*/
+func (a *OutcomesAPIService) V1ListCampaignOutcomes(ctx context.Context) OutcomesAPIV1ListCampaignOutcomesRequest {
+	return OutcomesAPIV1ListCampaignOutcomesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return OutcomeListResponse
+func (a *OutcomesAPIService) V1ListCampaignOutcomesExecute(r OutcomesAPIV1ListCampaignOutcomesRequest) (*OutcomeListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *OutcomeListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1ListCampaignOutcomes")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/campaign-outcomes"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.email != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "email", r.email, "form", "")
+	}
+	if r.source != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source", r.source, "form", "")
+	}
+	if r.type_ != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
+	}
+	if r.since != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "since", r.since, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type OutcomesAPIV1ListOutcomesRequest struct {
 	ctx context.Context
 	ApiService OutcomesAPI
@@ -920,6 +1129,136 @@ func (a *OutcomesAPIService) V1ListProviderEndpointsExecute(r OutcomesAPIV1ListP
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type OutcomesAPIV1PostCampaignOutcomesRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+	ingestOutcomesRequest *IngestOutcomesRequest
+}
+
+func (r OutcomesAPIV1PostCampaignOutcomesRequest) IngestOutcomesRequest(ingestOutcomesRequest IngestOutcomesRequest) OutcomesAPIV1PostCampaignOutcomesRequest {
+	r.ingestOutcomesRequest = &ingestOutcomesRequest
+	return r
+}
+
+func (r OutcomesAPIV1PostCampaignOutcomesRequest) Execute() (*IngestOutcomesResponse, *http.Response, error) {
+	return r.ApiService.V1PostCampaignOutcomesExecute(r)
+}
+
+/*
+V1PostCampaignOutcomes Method for V1PostCampaignOutcomes
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return OutcomesAPIV1PostCampaignOutcomesRequest
+*/
+func (a *OutcomesAPIService) V1PostCampaignOutcomes(ctx context.Context) OutcomesAPIV1PostCampaignOutcomesRequest {
+	return OutcomesAPIV1PostCampaignOutcomesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return IngestOutcomesResponse
+func (a *OutcomesAPIService) V1PostCampaignOutcomesExecute(r OutcomesAPIV1PostCampaignOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *IngestOutcomesResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1PostCampaignOutcomes")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/campaign-outcomes"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.ingestOutcomesRequest == nil {
+		return localVarReturnValue, nil, reportError("ingestOutcomesRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.ingestOutcomesRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type OutcomesAPIV1UpdateProviderEndpointRequest struct {
 	ctx context.Context
 	ApiService OutcomesAPI
@@ -995,6 +1334,125 @@ func (a *OutcomesAPIService) V1UpdateProviderEndpointExecute(r OutcomesAPIV1Upda
 	}
 	// body params
 	localVarPostBody = r.updateProviderEndpointInput
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type OutcomesAPIV1UploadCampaignOutcomesRequest struct {
+	ctx context.Context
+	ApiService OutcomesAPI
+}
+
+func (r OutcomesAPIV1UploadCampaignOutcomesRequest) Execute() (*IngestOutcomesResponse, *http.Response, error) {
+	return r.ApiService.V1UploadCampaignOutcomesExecute(r)
+}
+
+/*
+V1UploadCampaignOutcomes Method for V1UploadCampaignOutcomes
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return OutcomesAPIV1UploadCampaignOutcomesRequest
+*/
+func (a *OutcomesAPIService) V1UploadCampaignOutcomes(ctx context.Context) OutcomesAPIV1UploadCampaignOutcomesRequest {
+	return OutcomesAPIV1UploadCampaignOutcomesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return IngestOutcomesResponse
+func (a *OutcomesAPIService) V1UploadCampaignOutcomesExecute(r OutcomesAPIV1UploadCampaignOutcomesRequest) (*IngestOutcomesResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *IngestOutcomesResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OutcomesAPIService.V1UploadCampaignOutcomes")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/campaign-outcomes/upload"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {

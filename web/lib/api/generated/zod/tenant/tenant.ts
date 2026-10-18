@@ -210,3 +210,202 @@ export const V1UpdateTenantWebhook200Response = zod.strictObject({
 export const V1UpdateTenantWebhookDefaultResponse = zod.strictObject({
   error: zod.string(),
 });
+
+export const V1ListOutcomePoliciesQueryParams = zod.object({
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListOutcomePolicies200Response = zod.strictObject({
+  policies: zod.array(
+    zod.strictObject({
+      created_at: zod.iso.datetime({ offset: true }),
+      id: zod.int(),
+      is_default: zod.boolean(),
+      name: zod.string(),
+      rules: zod.unknown(),
+      updated_at: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListOutcomePoliciesDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const V1CreateOutcomePolicyBody = zod.strictObject({
+  is_default: zod.boolean().optional(),
+  name: zod.string(),
+  rules: zod.unknown().optional(),
+});
+
+export const V1CreateOutcomePolicy201Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1CreateOutcomePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const V1DeleteOutcomePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Outcome policy identifier"),
+});
+
+export const V1DeleteOutcomePolicy200Response = zod.unknown();
+
+export const V1DeleteOutcomePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const V1GetOutcomePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Outcome policy identifier"),
+});
+
+export const V1GetOutcomePolicy200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1GetOutcomePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+export const V1UpdateOutcomePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Outcome policy identifier"),
+});
+
+export const V1UpdateOutcomePolicyBody = zod.strictObject({
+  is_default: zod.boolean().nullish(),
+  name: zod.string().nullish(),
+  rules: zod.unknown().optional(),
+});
+
+export const V1UpdateOutcomePolicy200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1UpdateOutcomePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
+ * @summary GET /v1/score-policies
+ */
+export const V1ListScorePoliciesQueryParams = zod.object({
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListScorePolicies200Response = zod.strictObject({
+  policies: zod.array(
+    zod.strictObject({
+      created_at: zod.iso.datetime({ offset: true }),
+      id: zod.int(),
+      is_default: zod.boolean(),
+      name: zod.string(),
+      rules: zod.unknown(),
+      updated_at: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListScorePoliciesDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
+ * @summary POST /v1/score-policies
+ */
+export const V1CreateScorePolicyBody = zod.strictObject({
+  is_default: zod.boolean().optional(),
+  name: zod.string(),
+  rules: zod.unknown().optional(),
+});
+
+export const V1CreateScorePolicy201Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1CreateScorePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
+ * @summary DELETE /v1/score-policies/{policy_id}
+ */
+export const V1DeleteScorePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Score policy identifier"),
+});
+
+export const V1DeleteScorePolicy200Response = zod.unknown();
+
+export const V1DeleteScorePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
+ * @summary GET /v1/score-policies/{policy_id}
+ */
+export const V1GetScorePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Score policy identifier"),
+});
+
+export const V1GetScorePolicy200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1GetScorePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});
+
+/**
+ * @summary PATCH /v1/score-policies/{policy_id}
+ */
+export const V1UpdateScorePolicyParams = zod.object({
+  policy_id: zod.coerce.number().int().describe("Score policy identifier"),
+});
+
+export const V1UpdateScorePolicyBody = zod.strictObject({
+  is_default: zod.boolean().nullish(),
+  name: zod.string().nullish(),
+  rules: zod.unknown().optional(),
+});
+
+export const V1UpdateScorePolicy200Response = zod.strictObject({
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  is_default: zod.boolean(),
+  name: zod.string(),
+  rules: zod.unknown(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1UpdateScorePolicyDefaultResponse = zod.strictObject({
+  error: zod.string(),
+});

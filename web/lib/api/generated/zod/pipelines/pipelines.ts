@@ -43,6 +43,7 @@ export const V1ListPipelines200Response = zod.strictObject({
       next_run_at: zod.iso.datetime({ offset: true }).nullish(),
       policy: zod.strictObject({
         missed_run_window_hours: zod.int().optional(),
+        policy_id: zod.int().nullish(),
       }),
       schedule: zod.strictObject({
         cron: zod.string(),
@@ -130,6 +131,7 @@ export const V1CreatePipelineBody = zod.strictObject({
   policy: zod
     .strictObject({
       missed_run_window_hours: zod.int().optional(),
+      policy_id: zod.int().nullish(),
     })
     .optional(),
   schedule: zod.strictObject({
@@ -194,6 +196,7 @@ export const V1CreatePipeline201Response = zod.strictObject({
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
   policy: zod.strictObject({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
   schedule: zod.strictObject({
     cron: zod.string(),
@@ -315,6 +318,7 @@ export const V1GetPipeline200Response = zod.strictObject({
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
   policy: zod.strictObject({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
   schedule: zod.strictObject({
     cron: zod.string(),
@@ -407,6 +411,7 @@ export const V1UpdatePipelineBody = zod.strictObject({
     .union([
       zod.strictObject({
         missed_run_window_hours: zod.int().optional(),
+        policy_id: zod.int().nullish(),
       }),
       zod.null(),
     ])
@@ -488,6 +493,7 @@ export const V1UpdatePipeline200Response = zod.strictObject({
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
   policy: zod.strictObject({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
   schedule: zod.strictObject({
     cron: zod.string(),
@@ -582,6 +588,7 @@ export const V1PausePipeline200Response = zod.strictObject({
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
   policy: zod.strictObject({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
   schedule: zod.strictObject({
     cron: zod.string(),
@@ -732,6 +739,7 @@ export const V1ResumePipeline200Response = zod.strictObject({
   next_run_at: zod.iso.datetime({ offset: true }).nullish(),
   policy: zod.strictObject({
     missed_run_window_hours: zod.int().optional(),
+    policy_id: zod.int().nullish(),
   }),
   schedule: zod.strictObject({
     cron: zod.string(),

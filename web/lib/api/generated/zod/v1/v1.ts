@@ -164,6 +164,15 @@ export const v1CheckEmail200ResponseBounceRiskOneConfidenceMax = 1;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMin = 0;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMax = 100;
 
+export const v1CheckEmail200ResponseScoreCatchAllConfidenceMin = 0;
+export const v1CheckEmail200ResponseScoreCatchAllConfidenceMax = 100;
+
+export const v1CheckEmail200ResponseScoreConfidenceMin = 0;
+export const v1CheckEmail200ResponseScoreConfidenceMax = 100;
+
+export const v1CheckEmail200ResponseScorePartialConfidenceConfidenceMin = 0;
+export const v1CheckEmail200ResponseScorePartialConfidenceConfidenceMax = 100;
+
 export const v1CheckEmail200ResponseScoreScoreMin = 0;
 export const v1CheckEmail200ResponseScoreScoreMax = 100;
 
@@ -347,13 +356,32 @@ export const V1CheckEmail200Response = zod
     recommendation: zod.unknown().optional(),
     score: zod.strictObject({
       age_days: zod.int().optional(),
+      catch_all: zod
+        .strictObject({
+          confidence: zod
+            .int()
+            .min(v1CheckEmail200ResponseScoreCatchAllConfidenceMin)
+            .max(v1CheckEmail200ResponseScoreCatchAllConfidenceMax),
+          factors: zod.array(zod.string()),
+          severity: zod.enum(["low", "medium", "high"]),
+        })
+        .optional(),
       catch_all_severity: zod
-        .enum(["low", "high"])
+        .enum(["low", "medium", "high"])
         .optional()
         .describe(
-          "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+          "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
         ),
       category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+      confidence: zod
+        .int()
+        .min(v1CheckEmail200ResponseScoreConfidenceMin)
+        .max(v1CheckEmail200ResponseScoreConfidenceMax)
+        .optional(),
+      confidence_factors: zod.array(zod.string()).optional(),
+      confidence_level: zod
+        .enum(["high", "medium", "low", "very_low"])
+        .optional(),
       domain_suggestion: zod
         .string()
         .optional()
@@ -369,6 +397,23 @@ export const V1CheckEmail200Response = zod
         .describe(
           "Canonical form of the email after alias\/plus-address normalization",
         ),
+      partial_confidence: zod
+        .strictObject({
+          classification: zod.enum([
+            "transient",
+            "policy_block",
+            "timeout",
+            "network",
+            "ambiguous_response",
+            "smtp_unreachable",
+          ]),
+          confidence: zod
+            .int()
+            .min(v1CheckEmail200ResponseScorePartialConfidenceConfidenceMin)
+            .max(v1CheckEmail200ResponseScorePartialConfidenceConfidenceMax),
+          factors: zod.array(zod.string()),
+        })
+        .optional(),
       reason_codes: zod.array(
         zod.enum([
           "deliverable",
@@ -397,6 +442,21 @@ export const V1CheckEmail200Response = zod
           "unknown_deliverability",
           "free_provider",
           "possible_typo",
+          "provider_reputation",
+          "tenant_history_positive",
+          "tenant_history_inconsistent",
+          "catch_all_low_confidence",
+          "catch_all_medium_confidence",
+          "catch_all_high_risk",
+          "partial_confidence",
+          "transient_smtp",
+          "smtp_policy_block",
+          "smtp_timeout",
+          "smtp_network",
+          "smtp_ambiguous",
+          "outcome_hard_bounce",
+          "outcome_complaint",
+          "outcome_engagement",
         ]),
       ),
       safe_to_send: zod.boolean(),
@@ -551,6 +611,15 @@ export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneConfidenc
 
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMax = 100;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMax = 100;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMax = 100;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax = 100;
 
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreScoreMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreScoreMax = 100;
@@ -812,13 +881,40 @@ export const V1GetFindEmail200Response = zod.strictObject({
               recommendation: zod.unknown().optional(),
               score: zod.strictObject({
                 age_days: zod.int().optional(),
+                catch_all: zod
+                  .strictObject({
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMin,
+                      )
+                      .max(
+                        v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                    severity: zod.enum(["low", "medium", "high"]),
+                  })
+                  .optional(),
                 catch_all_severity: zod
-                  .enum(["low", "high"])
+                  .enum(["low", "medium", "high"])
                   .optional()
                   .describe(
-                    "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+                    "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
                   ),
                 category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+                confidence: zod
+                  .int()
+                  .min(
+                    v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMin,
+                  )
+                  .max(
+                    v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMax,
+                  )
+                  .optional(),
+                confidence_factors: zod.array(zod.string()).optional(),
+                confidence_level: zod
+                  .enum(["high", "medium", "low", "very_low"])
+                  .optional(),
                 domain_suggestion: zod
                   .string()
                   .optional()
@@ -834,6 +930,27 @@ export const V1GetFindEmail200Response = zod.strictObject({
                   .describe(
                     "Canonical form of the email after alias\/plus-address normalization",
                   ),
+                partial_confidence: zod
+                  .strictObject({
+                    classification: zod.enum([
+                      "transient",
+                      "policy_block",
+                      "timeout",
+                      "network",
+                      "ambiguous_response",
+                      "smtp_unreachable",
+                    ]),
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin,
+                      )
+                      .max(
+                        v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                  })
+                  .optional(),
                 reason_codes: zod.array(
                   zod.enum([
                     "deliverable",
@@ -862,6 +979,21 @@ export const V1GetFindEmail200Response = zod.strictObject({
                     "unknown_deliverability",
                     "free_provider",
                     "possible_typo",
+                    "provider_reputation",
+                    "tenant_history_positive",
+                    "tenant_history_inconsistent",
+                    "catch_all_low_confidence",
+                    "catch_all_medium_confidence",
+                    "catch_all_high_risk",
+                    "partial_confidence",
+                    "transient_smtp",
+                    "smtp_policy_block",
+                    "smtp_timeout",
+                    "smtp_network",
+                    "smtp_ambiguous",
+                    "outcome_hard_bounce",
+                    "outcome_complaint",
+                    "outcome_engagement",
                   ]),
                 ),
                 safe_to_send: zod.boolean(),
@@ -1045,6 +1177,7 @@ export const V1CreateListBody = zod.strictObject({
   email_column: zod.string().nullish(),
   file: zod.instanceof(File),
   name: zod.string().nullish(),
+  policy_id: zod.int().nullish(),
   source_key: zod
     .string()
     .nullish()
@@ -1093,6 +1226,7 @@ export const V1GetList200Response = zod.strictObject({
   id: zod.int(),
   job_id: zod.int(),
   name: zod.string(),
+  policy_id: zod.int().nullish(),
   source_key: zod.string().nullish(),
   status: zod.string(),
   summary: zod.strictObject({
@@ -1120,6 +1254,8 @@ export const V1DownloadListParams = zod.object({
 export const V1DownloadListQueryParams = zod.object({
   filter: zod.string().optional(),
   format: zod.string().optional(),
+  segment_id: zod.coerce.number().int().optional(),
+  changed_since_list_id: zod.coerce.number().int().optional(),
 });
 
 export const V1DownloadList200Response = zod.unknown();

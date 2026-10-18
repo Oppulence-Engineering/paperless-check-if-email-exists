@@ -31,18 +31,6 @@ export interface OutcomeView {
      * @type {string}
      * @memberof OutcomeView
      */
-    'canonical_email': string;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'correlation_status': string;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
     'created_at': string;
     /**
      *
@@ -52,34 +40,10 @@ export interface OutcomeView {
     'email': string;
     /**
      *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'endpoint_id'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'event_family'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'event_type': string;
-    /**
-     *
      * @type {number}
      * @memberof OutcomeView
      */
     'id': number;
-    /**
-     *
-     * @type {any}
-     * @memberof OutcomeView
-     */
-    'metadata': any;
     /**
      *
      * @type {string}
@@ -91,29 +55,17 @@ export interface OutcomeView {
      * @type {string}
      * @memberof OutcomeView
      */
-    'provider': string;
+    'policy_action'?: string | null;
     /**
      *
      * @type {string}
      * @memberof OutcomeView
      */
-    'provider_event_id'?: string | null;
+    'source'?: string | null;
     /**
      *
      * @type {string}
      * @memberof OutcomeView
      */
-    'provider_message_id'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'receipt_id'?: string | null;
-    /**
-     *
-     * @type {string}
-     * @memberof OutcomeView
-     */
-    'source_key'?: string | null;
+    'type': string;
 }

@@ -12,6 +12,7 @@ import type { RequestHandlerOptions } from "msw";
 
 import type {
   InboundOutcomeResponse,
+  IngestOutcomesResponse,
   OutcomeIngestResponse,
   OutcomeListResponse,
   ProviderDeleteResponse,
@@ -24,12 +25,18 @@ import {
   getV1DeleteProviderEndpointResponseMock,
   getV1IngestOutcomesResponseMock,
   getV1IngestProviderOutcomesResponseMock,
+  getV1ListCampaignOutcomesResponseMock,
   getV1ListOutcomesResponseMock,
   getV1ListProviderEndpointsResponseMock,
+  getV1PostCampaignOutcomesResponseMock,
   getV1UpdateProviderEndpointResponseMock,
+  getV1UploadCampaignOutcomesResponseMock,
 } from "./outcomes.faker";
 
 export {
+  getV1ListCampaignOutcomesResponseMock,
+  getV1PostCampaignOutcomesResponseMock,
+  getV1UploadCampaignOutcomesResponseMock,
   getV1IngestProviderOutcomesResponseMock,
   getV1ListOutcomesResponseMock,
   getV1IngestOutcomesResponseMock,
@@ -38,6 +45,78 @@ export {
   getV1DeleteProviderEndpointResponseMock,
   getV1UpdateProviderEndpointResponseMock,
 } from "./outcomes.faker";
+
+export const getV1ListCampaignOutcomesMockHandler = (
+  overrideResponse?:
+    | OutcomeListResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<OutcomeListResponse> | OutcomeListResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/campaign-outcomes",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListCampaignOutcomesResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1PostCampaignOutcomesMockHandler = (
+  overrideResponse?:
+    | IngestOutcomesResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<IngestOutcomesResponse> | IngestOutcomesResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/campaign-outcomes",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1PostCampaignOutcomesResponseMock(),
+        { status: 202 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1UploadCampaignOutcomesMockHandler = (
+  overrideResponse?:
+    | IngestOutcomesResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<IngestOutcomesResponse> | IngestOutcomesResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/campaign-outcomes/upload",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UploadCampaignOutcomesResponseMock(),
+        { status: 202 },
+      );
+    },
+    options,
+  );
+};
 
 export const getV1IngestProviderOutcomesMockHandler = (
   overrideResponse?:
@@ -208,6 +287,9 @@ export const getV1UpdateProviderEndpointMockHandler = (
   );
 };
 export const getOutcomesMock = () => [
+  getV1ListCampaignOutcomesMockHandler(),
+  getV1PostCampaignOutcomesMockHandler(),
+  getV1UploadCampaignOutcomesMockHandler(),
   getV1IngestProviderOutcomesMockHandler(),
   getV1ListOutcomesMockHandler(),
   getV1IngestOutcomesMockHandler(),

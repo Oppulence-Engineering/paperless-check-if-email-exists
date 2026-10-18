@@ -9,12 +9,13 @@
  */
 
 /**
- * Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.
+ * Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.
  */
 export type EmailScoreCatchAllSeverity =
   (typeof EmailScoreCatchAllSeverity)[keyof typeof EmailScoreCatchAllSeverity];
 
 export const EmailScoreCatchAllSeverity = {
   low: "low",
+  medium: "medium",
   high: "high",
 } as const;

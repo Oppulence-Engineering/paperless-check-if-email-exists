@@ -16,6 +16,7 @@ it("looks up an address with the SDK and renders its history", async () => {
 			history: [
 				{
 					job_id: 4,
+					task_id: 41,
 					score: 86,
 					category: "safe",
 					sub_reason: null,

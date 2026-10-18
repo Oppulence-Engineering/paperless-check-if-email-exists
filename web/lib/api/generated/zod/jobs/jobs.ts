@@ -55,6 +55,15 @@ export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneConfidenceMax
 export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneScoreMin = 0;
 export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneScoreMax = 100;
 
+export const v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMin = 0;
+export const v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMax = 100;
+
+export const v1GetBulkJobResults200ResponseResultsItemScoreConfidenceMin = 0;
+export const v1GetBulkJobResults200ResponseResultsItemScoreConfidenceMax = 100;
+
+export const v1GetBulkJobResults200ResponseResultsItemScorePartialConfidenceConfidenceMin = 0;
+export const v1GetBulkJobResults200ResponseResultsItemScorePartialConfidenceConfidenceMax = 100;
+
 export const v1GetBulkJobResults200ResponseResultsItemScoreScoreMin = 0;
 export const v1GetBulkJobResults200ResponseResultsItemScoreScoreMax = 100;
 
@@ -258,13 +267,36 @@ export const V1GetBulkJobResults200Response = zod.strictObject({
         recommendation: zod.unknown().optional(),
         score: zod.strictObject({
           age_days: zod.int().optional(),
+          catch_all: zod
+            .strictObject({
+              confidence: zod
+                .int()
+                .min(
+                  v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMin,
+                )
+                .max(
+                  v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMax,
+                ),
+              factors: zod.array(zod.string()),
+              severity: zod.enum(["low", "medium", "high"]),
+            })
+            .optional(),
           catch_all_severity: zod
-            .enum(["low", "high"])
+            .enum(["low", "medium", "high"])
             .optional()
             .describe(
-              "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+              "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
             ),
           category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+          confidence: zod
+            .int()
+            .min(v1GetBulkJobResults200ResponseResultsItemScoreConfidenceMin)
+            .max(v1GetBulkJobResults200ResponseResultsItemScoreConfidenceMax)
+            .optional(),
+          confidence_factors: zod.array(zod.string()).optional(),
+          confidence_level: zod
+            .enum(["high", "medium", "low", "very_low"])
+            .optional(),
           domain_suggestion: zod
             .string()
             .optional()
@@ -280,6 +312,27 @@ export const V1GetBulkJobResults200Response = zod.strictObject({
             .describe(
               "Canonical form of the email after alias\/plus-address normalization",
             ),
+          partial_confidence: zod
+            .strictObject({
+              classification: zod.enum([
+                "transient",
+                "policy_block",
+                "timeout",
+                "network",
+                "ambiguous_response",
+                "smtp_unreachable",
+              ]),
+              confidence: zod
+                .int()
+                .min(
+                  v1GetBulkJobResults200ResponseResultsItemScorePartialConfidenceConfidenceMin,
+                )
+                .max(
+                  v1GetBulkJobResults200ResponseResultsItemScorePartialConfidenceConfidenceMax,
+                ),
+              factors: zod.array(zod.string()),
+            })
+            .optional(),
           reason_codes: zod.array(
             zod.enum([
               "deliverable",
@@ -308,6 +361,21 @@ export const V1GetBulkJobResults200Response = zod.strictObject({
               "unknown_deliverability",
               "free_provider",
               "possible_typo",
+              "provider_reputation",
+              "tenant_history_positive",
+              "tenant_history_inconsistent",
+              "catch_all_low_confidence",
+              "catch_all_medium_confidence",
+              "catch_all_high_risk",
+              "partial_confidence",
+              "transient_smtp",
+              "smtp_policy_block",
+              "smtp_timeout",
+              "smtp_network",
+              "smtp_ambiguous",
+              "outcome_hard_bounce",
+              "outcome_complaint",
+              "outcome_engagement",
             ]),
           ),
           safe_to_send: zod.boolean(),
@@ -586,6 +654,15 @@ export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneConfiden
 export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneScoreMin = 0;
 export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneScoreMax = 100;
 
+export const v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMin = 0;
+export const v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMax = 100;
+
+export const v1GetJobResults200ResponseResultsItemResultOneScoreConfidenceMin = 0;
+export const v1GetJobResults200ResponseResultsItemResultOneScoreConfidenceMax = 100;
+
+export const v1GetJobResults200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin = 0;
+export const v1GetJobResults200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax = 100;
+
 export const v1GetJobResults200ResponseResultsItemResultOneScoreScoreMin = 0;
 export const v1GetJobResults200ResponseResultsItemResultOneScoreScoreMax = 100;
 
@@ -813,13 +890,40 @@ export const V1GetJobResults200Response = zod.strictObject({
               recommendation: zod.unknown().optional(),
               score: zod.strictObject({
                 age_days: zod.int().optional(),
+                catch_all: zod
+                  .strictObject({
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMin,
+                      )
+                      .max(
+                        v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                    severity: zod.enum(["low", "medium", "high"]),
+                  })
+                  .optional(),
                 catch_all_severity: zod
-                  .enum(["low", "high"])
+                  .enum(["low", "medium", "high"])
                   .optional()
                   .describe(
-                    "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+                    "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
                   ),
                 category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+                confidence: zod
+                  .int()
+                  .min(
+                    v1GetJobResults200ResponseResultsItemResultOneScoreConfidenceMin,
+                  )
+                  .max(
+                    v1GetJobResults200ResponseResultsItemResultOneScoreConfidenceMax,
+                  )
+                  .optional(),
+                confidence_factors: zod.array(zod.string()).optional(),
+                confidence_level: zod
+                  .enum(["high", "medium", "low", "very_low"])
+                  .optional(),
                 domain_suggestion: zod
                   .string()
                   .optional()
@@ -835,6 +939,27 @@ export const V1GetJobResults200Response = zod.strictObject({
                   .describe(
                     "Canonical form of the email after alias\/plus-address normalization",
                   ),
+                partial_confidence: zod
+                  .strictObject({
+                    classification: zod.enum([
+                      "transient",
+                      "policy_block",
+                      "timeout",
+                      "network",
+                      "ambiguous_response",
+                      "smtp_unreachable",
+                    ]),
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetJobResults200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin,
+                      )
+                      .max(
+                        v1GetJobResults200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                  })
+                  .optional(),
                 reason_codes: zod.array(
                   zod.enum([
                     "deliverable",
@@ -863,6 +988,21 @@ export const V1GetJobResults200Response = zod.strictObject({
                     "unknown_deliverability",
                     "free_provider",
                     "possible_typo",
+                    "provider_reputation",
+                    "tenant_history_positive",
+                    "tenant_history_inconsistent",
+                    "catch_all_low_confidence",
+                    "catch_all_medium_confidence",
+                    "catch_all_high_risk",
+                    "partial_confidence",
+                    "transient_smtp",
+                    "smtp_policy_block",
+                    "smtp_timeout",
+                    "smtp_network",
+                    "smtp_ambiguous",
+                    "outcome_hard_bounce",
+                    "outcome_complaint",
+                    "outcome_engagement",
                   ]),
                 ),
                 safe_to_send: zod.boolean(),
