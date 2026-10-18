@@ -122,7 +122,7 @@ const authPool =
 		connectionString: getAuthRuntimeConfig().databaseUrl,
 		options:
 			"-c search_path=auth,pg_catalog -c statement_timeout=15000 -c idle_in_transaction_session_timeout=15000",
-		max: 10,
+		max: getAuthRuntimeConfig().databasePoolMax,
 	});
 
 export const authDatabase =

@@ -94,3 +94,13 @@ describe("production authentication configuration", () => {
 		},
 	);
 });
+
+describe("auth database pool", () => {
+	it("opens at most 5 connections unless DATABASE_POOL_MAX sets a value", () => {
+		expect(getAuthRuntimeConfig().databasePoolMax).toBe(5);
+		vi.stubEnv("DATABASE_POOL_MAX", "3");
+		expect(getAuthRuntimeConfig().databasePoolMax).toBe(3);
+		vi.stubEnv("DATABASE_POOL_MAX", "0");
+		expect(() => getAuthRuntimeConfig()).toThrow();
+	});
+});

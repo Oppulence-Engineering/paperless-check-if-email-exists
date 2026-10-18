@@ -17,6 +17,10 @@ resources:
 config:
   env:
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
+    # Staging and production share one Postgres cluster with about 47
+    # connections. Staging pods open fewer connections than production pods.
+    RCH__DB_MAX_CONNECTIONS: "3"
+    DATABASE_POOL_MAX: "2"
 
 # The Resend key comes from Infisical, as in values.production.yaml.
 extraEnv:
