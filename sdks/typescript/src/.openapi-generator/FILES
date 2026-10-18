@@ -62,6 +62,7 @@ docs/CommentsApi.md
 docs/ConfidenceExplanation.md
 docs/ConfidenceLevel.md
 docs/CoreError.md
+docs/CoreErrorError.md
 docs/CreateApiKeyRequest.md
 docs/CreateCommentRequest.md
 docs/CreateOutcomePolicyRequest.md
@@ -241,6 +242,7 @@ models/check-email-output.ts
 models/check-email-request.ts
 models/confidence-explanation.ts
 models/confidence-level.ts
+models/core-error-error.ts
 models/core-error.ts
 models/create-api-key-request.ts
 models/create-comment-request.ts

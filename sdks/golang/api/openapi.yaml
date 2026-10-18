@@ -5864,21 +5864,20 @@ components:
       - very_low
       type: string
     CoreError:
-      description: Details of an error encountered during the verification process.
+      description: The error that one part of the check returned instead of its details.
       properties:
-        message:
-          description: A human-readable description of the error.
+        description:
+          description: "The category of an SMTP error, when it is known."
+          enum:
+          - IpBlacklisted
+          - NeedsRDNS
           type: string
-        type:
-          description: The type of error.
-          type: string
+        error:
+          $ref: "#/components/schemas/CoreError_error"
       required:
-      - message
-      - type
+      - error
       title: CoreError
       type: object
-      x-stoplight:
-        id: a872ead6474cd
     CreateApiKeyRequest:
       example:
         expires_at: expires_at
@@ -9621,6 +9620,16 @@ components:
       oneOf:
       - $ref: "#/components/schemas/SmtpDetails"
       - $ref: "#/components/schemas/CoreError"
+    CoreError_error:
+      properties:
+        message:
+          description: The error details. Usually a string.
+        type:
+          description: The type of error.
+          type: string
+      required:
+      - type
+      type: object
     PipelineSource_oneOf:
       properties:
         list_id:

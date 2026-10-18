@@ -57,8 +57,14 @@ export const getPostCheckEmailResponseCoreErrorMock = (
   overrideResponse: Partial<CoreError> = {},
 ): CoreError => ({
   ...{
-    message: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    description: faker.helpers.arrayElement([
+      faker.helpers.arrayElement(["IpBlacklisted", "NeedsRDNS"] as const),
+      undefined,
+    ]),
+    error: {
+      message: faker.helpers.arrayElement([{}, undefined]),
+      type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    },
   },
   ...overrideResponse,
 });

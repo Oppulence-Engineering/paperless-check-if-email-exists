@@ -7,13 +7,14 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import type { CoreErrorDescription } from "./coreErrorDescription";
+import type { CoreErrorError } from "./coreErrorError";
 
 /**
- * Details of an error encountered during the verification process.
+ * The error that one part of the check returned instead of its details.
  */
 export interface CoreError {
-  /** A human-readable description of the error. */
-  message: string;
-  /** The type of error. */
-  type: string;
+  /** The category of an SMTP error, when it is known. */
+  description?: CoreErrorDescription;
+  error: CoreErrorError;
 }

@@ -516,6 +516,27 @@ mod operation_id_tests {
 	}
 
 	#[test]
+	fn core_error_matches_the_check_output() {
+		let output = check_if_email_exists::CheckEmailOutput {
+			smtp: Err(check_if_email_exists::smtp::SmtpError::Timeout(
+				std::time::Duration::from_secs(1),
+			)),
+			..Default::default()
+		};
+		let sent = serde_json::to_value(&output).expect("check output");
+		assert!(
+			sent["smtp"]["error"]["type"].is_string(),
+			"{}",
+			sent["smtp"]
+		);
+
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = &spec["components"]["schemas"]["CoreError"];
+		assert_eq!(schema["required"], json!(["error"]));
+		assert_eq!(schema["properties"]["error"]["required"], json!(["type"]));
+	}
+
+	#[test]
 	fn every_operation_has_a_unique_id() {
 		let spec = super::build_spec().expect("OpenAPI spec");
 		let mut ids = HashSet::new();
@@ -1189,6 +1210,34 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				}
 			},
 			"required": ["type"]
+		}),
+	);
+	// Matches the custom Serialize of core::CheckEmailOutput. It wraps each
+	// misc, mx, and smtp error in an "error" field. Some errors send an
+	// object as the message, so the message has no type.
+	insert_schema(
+		spec,
+		"CoreError",
+		json!({
+			"type": "object",
+			"title": "CoreError",
+			"description": "The error that one part of the check returned instead of its details.",
+			"properties": {
+				"error": {
+					"type": "object",
+					"properties": {
+						"type": { "type": "string", "description": "The type of error." },
+						"message": { "description": "The error details. Usually a string." }
+					},
+					"required": ["type"]
+				},
+				"description": {
+					"type": "string",
+					"enum": ["IpBlacklisted", "NeedsRDNS"],
+					"description": "The category of an SMTP error, when it is known."
+				}
+			},
+			"required": ["error"]
 		}),
 	);
 	insert_schema(

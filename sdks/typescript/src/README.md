@@ -220,6 +220,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ConfidenceExplanation](docs/ConfidenceExplanation.md)
  - [ConfidenceLevel](docs/ConfidenceLevel.md)
  - [CoreError](docs/CoreError.md)
+ - [CoreErrorError](docs/CoreErrorError.md)
  - [CreateApiKeyRequest](docs/CreateApiKeyRequest.md)
  - [CreateCommentRequest](docs/CreateCommentRequest.md)
  - [CreateOutcomePolicyRequest](docs/CreateOutcomePolicyRequest.md)

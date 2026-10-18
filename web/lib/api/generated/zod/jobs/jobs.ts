@@ -239,13 +239,20 @@ export const V1GetBulkJobResults200Response = zod.object({
               .describe("Additional information about the email account."),
             zod
               .object({
-                message: zod
-                  .string()
-                  .describe("A human-readable description of the error."),
-                type: zod.string().describe("The type of error."),
+                description: zod
+                  .enum(["IpBlacklisted", "NeedsRDNS"])
+                  .optional()
+                  .describe("The category of an SMTP error, when it is known."),
+                error: zod.object({
+                  message: zod
+                    .unknown()
+                    .optional()
+                    .describe("The error details. Usually a string."),
+                  type: zod.string().describe("The type of error."),
+                }),
               })
               .describe(
-                "Details of an error encountered during the verification process.",
+                "The error that one part of the check returned instead of its details.",
               ),
           ])
           .describe("Additional information about the email account."),
@@ -265,13 +272,20 @@ export const V1GetBulkJobResults200Response = zod.object({
               .describe("Details about the mail server's MX records."),
             zod
               .object({
-                message: zod
-                  .string()
-                  .describe("A human-readable description of the error."),
-                type: zod.string().describe("The type of error."),
+                description: zod
+                  .enum(["IpBlacklisted", "NeedsRDNS"])
+                  .optional()
+                  .describe("The category of an SMTP error, when it is known."),
+                error: zod.object({
+                  message: zod
+                    .unknown()
+                    .optional()
+                    .describe("The error details. Usually a string."),
+                  type: zod.string().describe("The type of error."),
+                }),
               })
               .describe(
-                "Details of an error encountered during the verification process.",
+                "The error that one part of the check returned instead of its details.",
               ),
           ])
           .describe(
@@ -505,13 +519,20 @@ export const V1GetBulkJobResults200Response = zod.object({
               ),
             zod
               .object({
-                message: zod
-                  .string()
-                  .describe("A human-readable description of the error."),
-                type: zod.string().describe("The type of error."),
+                description: zod
+                  .enum(["IpBlacklisted", "NeedsRDNS"])
+                  .optional()
+                  .describe("The category of an SMTP error, when it is known."),
+                error: zod.object({
+                  message: zod
+                    .unknown()
+                    .optional()
+                    .describe("The error details. Usually a string."),
+                  type: zod.string().describe("The type of error."),
+                }),
               })
               .describe(
-                "Details of an error encountered during the verification process.",
+                "The error that one part of the check returned instead of its details.",
               ),
           ])
           .describe("Results from connecting to the mail server via SMTP."),
@@ -909,13 +930,22 @@ export const V1GetJobResults200Response = zod.object({
                     ),
                   zod
                     .object({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe("Additional information about the email account."),
@@ -937,13 +967,22 @@ export const V1GetJobResults200Response = zod.object({
                     .describe("Details about the mail server's MX records."),
                   zod
                     .object({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe(
@@ -1185,13 +1224,22 @@ export const V1GetJobResults200Response = zod.object({
                     ),
                   zod
                     .object({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe(

@@ -21,12 +21,20 @@ describe("check result helpers", () => {
 		expect(recommendationOf(SAMPLE_CHECK_RESULT)?.summary).toBe(
 			"The mailbox exists and accepts mail.",
 		);
-		expect(recommendationOf({ ...SAMPLE_CHECK_RESULT, recommendation: { action: 1 } })).toBeNull();
+		expect(
+			recommendationOf({
+				...SAMPLE_CHECK_RESULT,
+				recommendation: { action: 1 },
+			}),
+		).toBeNull();
 	});
 
 	it("picks the action from the most specific source", () => {
 		expect(primaryAction(SAMPLE_CHECK_RESULT)).toBe("send");
-		const withoutDecision: CheckResult = { ...SAMPLE_CHECK_RESULT, recommendation: undefined };
+		const withoutDecision: CheckResult = {
+			...SAMPLE_CHECK_RESULT,
+			recommendation: undefined,
+		};
 		expect(primaryAction({ ...withoutDecision, bounce_risk: null })).toBe("send");
 		expect(
 			primaryAction({
@@ -39,8 +47,25 @@ describe("check result helpers", () => {
 
 	it("separates details from check errors", () => {
 		expect(mxDetails(SAMPLE_CHECK_RESULT).details?.records).toHaveLength(2);
-		const failed = { ...SAMPLE_CHECK_RESULT, smtp: { type: "Timeout", message: "No answer" } };
+		const failed = {
+			...SAMPLE_CHECK_RESULT,
+			smtp: { error: { type: "Timeout", message: "No answer" } },
+		};
 		expect(smtpDetails(failed).error?.message).toBe("No answer");
+	});
+
+	it("accepts the error shape that the backend sends", () => {
+		// A timeout sends its duration as an object.
+		const failed = V1CheckEmail200Response.parse({
+			...SAMPLE_CHECK_RESULT,
+			smtp: {
+				error: { type: "Timeout", message: { secs: 10, nanos: 0 } },
+			},
+		});
+		expect(smtpDetails(failed).error).toEqual({
+			type: "Timeout",
+			message: '{"secs":10,"nanos":0}',
+		});
 	});
 
 	it("offers a corrected address only when one exists", () => {
@@ -49,7 +74,10 @@ describe("check result helpers", () => {
 			suggestedEmail({
 				...SAMPLE_CHECK_RESULT,
 				recommendation: undefined,
-				score: { ...SAMPLE_CHECK_RESULT.score, domain_suggestion: "maya@gmail.com" },
+				score: {
+					...SAMPLE_CHECK_RESULT.score,
+					domain_suggestion: "maya@gmail.com",
+				},
 			}),
 		).toBe("maya@gmail.com");
 	});

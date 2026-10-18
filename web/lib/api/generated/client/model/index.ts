@@ -45,6 +45,8 @@ export * from "./confidenceExplanation";
 export * from "./confidenceExplanationLevel";
 export * from "./confidenceLevel";
 export * from "./coreError";
+export * from "./coreErrorDescription";
+export * from "./coreErrorError";
 export * from "./createApiKeyRequest";
 export * from "./createCommentRequest";
 export * from "./createOutcomePolicyRequest";

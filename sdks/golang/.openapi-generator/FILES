@@ -60,6 +60,7 @@ docs/CommentsAPI.md
 docs/ConfidenceExplanation.md
 docs/ConfidenceLevel.md
 docs/CoreError.md
+docs/CoreErrorError.md
 docs/CreateApiKeyRequest.md
 docs/CreateCommentRequest.md
 docs/CreateOutcomePolicyRequest.md
@@ -240,6 +241,7 @@ model_check_email_request.go
 model_confidence_explanation.go
 model_confidence_level.go
 model_core_error.go
+model_core_error_error.go
 model_create_api_key_request.go
 model_create_comment_request.go
 model_create_outcome_policy_request.go

@@ -27,7 +27,10 @@ describe("TechnicalDetails", () => {
 	it("shows the error when a check part failed", () => {
 		render(
 			<TechnicalDetails
-				result={{ ...SAMPLE_CHECK_RESULT, smtp: { type: "Timeout", message: "No answer" } }}
+				result={{
+					...SAMPLE_CHECK_RESULT,
+					smtp: { error: { type: "Timeout", message: "No answer" } },
+				}}
 			/>,
 		);
 

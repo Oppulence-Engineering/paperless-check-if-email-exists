@@ -1,13 +1,13 @@
 # CoreError
 
-Details of an error encountered during the verification process.
+The error that one part of the check returned instead of its details.
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**message** | **string** | A human-readable description of the error. | [required]
-**type** | **string** | The type of error. | [required]
+**description** | **string** | The category of an SMTP error, when it is known. | [optional]
+**error** | [**CoreErrorError**](CoreErrorError.md) |  | [required]
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { CoreError } from '@oppulence/reacher-sdk';
 
 const instance: CoreError = {
-    message: 'example',
-    type: 'example',
+    description: 'example',
+    error: {} as any,
 };
 ```
 

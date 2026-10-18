@@ -18,6 +18,9 @@
 import type { CoreError } from './core-error';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { CoreErrorError } from './core-error-error';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { SmtpDetails } from './smtp-details';
 
 /**

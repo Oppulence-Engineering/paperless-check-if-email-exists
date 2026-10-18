@@ -35,6 +35,7 @@ export * from './check-email-request';
 export * from './confidence-explanation';
 export * from './confidence-level';
 export * from './core-error';
+export * from './core-error-error';
 export * from './create-api-key-request';
 export * from './create-comment-request';
 export * from './create-outcome-policy-request';

@@ -6,25 +6,32 @@ import { parsePolicyEvaluation, parseRecommendation } from "@/lib/api/schemas/de
 /** One email check result. Single checks, bulk rows, and finder candidates share it. */
 export type CheckResult = z.infer<typeof V1CheckEmail200Response>;
 
-type CoreError = { type: string; message: string };
+type CoreError = { error: { type: string; message?: unknown } };
 
 function isCoreError(value: unknown): value is CoreError {
-	return typeof value === "object" && value !== null && "message" in value && "type" in value;
+	return typeof value === "object" && value !== null && "error" in value;
+}
+
+/** The error type and a readable message. Some errors send an object as the message. */
+function errorOf({ error }: CoreError) {
+	const message =
+		typeof error.message === "string" ? error.message : (JSON.stringify(error.message) ?? "");
+	return { type: error.type, message };
 }
 
 /** MX details, or the error the check returned instead. */
 export function mxDetails(result: CheckResult) {
-	return isCoreError(result.mx) ? { error: result.mx } : { details: result.mx };
+	return isCoreError(result.mx) ? { error: errorOf(result.mx) } : { details: result.mx };
 }
 
 /** SMTP details, or the error the check returned instead. */
 export function smtpDetails(result: CheckResult) {
-	return isCoreError(result.smtp) ? { error: result.smtp } : { details: result.smtp };
+	return isCoreError(result.smtp) ? { error: errorOf(result.smtp) } : { details: result.smtp };
 }
 
 /** Account details, or the error the check returned instead. */
 export function miscDetails(result: CheckResult) {
-	return isCoreError(result.misc) ? { error: result.misc } : { details: result.misc };
+	return isCoreError(result.misc) ? { error: errorOf(result.misc) } : { details: result.misc };
 }
 
 /** The decision engine output for this result, when the backend sent one. */
@@ -73,7 +80,13 @@ export const SAMPLE_CHECK_RESULT: CheckResult = {
 		confidence: "high",
 		priority: "low",
 		summary: "The mailbox exists and accepts mail.",
-		reasons: [{ code: "deliverable", severity: "info", message: "The mailbox accepts mail." }],
+		reasons: [
+			{
+				code: "deliverable",
+				severity: "info",
+				message: "The mailbox accepts mail.",
+			},
+		],
 		engine_version: "1",
 		evaluated_at: "2026-10-17T12:00:00Z",
 	},
@@ -136,7 +149,10 @@ export const SAMPLE_CHECK_RESULT: CheckResult = {
 		normalized_email: "maya@brightlane.co",
 		suggestion: null,
 	},
-	mx: { accepts_mail: true, records: ["aspmx.l.google.com.", "alt1.aspmx.l.google.com."] },
+	mx: {
+		accepts_mail: true,
+		records: ["aspmx.l.google.com.", "alt1.aspmx.l.google.com."],
+	},
 	smtp: {
 		can_connect_smtp: true,
 		has_full_inbox: false,

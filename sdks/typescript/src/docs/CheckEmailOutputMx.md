@@ -8,8 +8,8 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **accepts_mail** | **boolean** | Indicates if the mail server accepts emails. | [optional]
 **records** | **Array&lt;string&gt;** | List of Fully Qualified Domain Names (FQDN) of the mail server. | [optional]
-**message** | **string** | A human-readable description of the error. | [optional]
-**type** | **string** | The type of error. | [optional]
+**description** | **string** | The category of an SMTP error, when it is known. | [optional]
+**error** | [**CoreErrorError**](CoreErrorError.md) |  | [optional]
 
 ## Example
 
@@ -19,8 +19,8 @@ import { CheckEmailOutputMx } from '@oppulence/reacher-sdk';
 const instance: CheckEmailOutputMx = {
     accepts_mail: true,
     records: [],
-    message: 'example',
-    type: 'example',
+    description: 'example',
+    error: {} as any,
 };
 ```
 
