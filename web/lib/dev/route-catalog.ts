@@ -12,8 +12,16 @@ export type RouteCatalogEntry = {
 export function productRouteCatalog(): RouteCatalogEntry[] {
 	return [
 		{
+			path: "/app",
+			label: "Overview",
+			segment: "product",
+			auth: "session",
+			clientBoundary: "app/(product)/app/_components/overview-panel",
+			bffEndpoints: ["/api/backend/v1/me/usage", "/api/backend/v1/lists", "/api/backend/v1/alerts"],
+		},
+		{
 			path: "/app/check",
-			label: "Check email",
+			label: "Check an address",
 			segment: "product",
 			auth: "session",
 			clientBoundary: "app/(product)/app/check/_components/check-panel",
@@ -29,7 +37,7 @@ export function productRouteCatalog(): RouteCatalogEntry[] {
 		},
 		{
 			path: "/app/history",
-			label: "History",
+			label: "Address history",
 			segment: "product",
 			auth: "session",
 			clientBoundary: "app/(product)/app/history",
