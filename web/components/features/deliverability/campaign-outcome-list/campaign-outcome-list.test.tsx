@@ -8,6 +8,7 @@ import { OutcomesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CampaignOutcomeList } from "./campaign-outcome-list";
+import { chooseOption } from "@/quality/test-support/select";
 
 describe("CampaignOutcomeList", () => {
 	afterEach(() => {
@@ -51,7 +52,7 @@ describe("CampaignOutcomeList", () => {
 			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 })),
 		);
 
-		fireEvent.change(screen.getByLabelText("Result type"), { target: { value: "complaint" } });
+		await chooseOption("Result type", "Complaint");
 		fireEvent.change(screen.getByLabelText("Result source"), { target: { value: "mailchimp" } });
 		fireEvent.click(screen.getByRole("button", { name: "Search results" }));
 		await waitFor(() =>

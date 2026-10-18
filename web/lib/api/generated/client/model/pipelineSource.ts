@@ -7,32 +7,13 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.3.0
  */
+import type { PipelineSourceOneOf } from "./pipelineSourceOneOf";
+import type { PipelineSourceOneOf1 } from "./pipelineSourceOneOf1";
+import type { PipelineSourceOneOf2 } from "./pipelineSourceOneOf2";
+import type { PipelineSourceOneOf3 } from "./pipelineSourceOneOf3";
 
 export type PipelineSource =
-  | {
-      list_id: number;
-      type: "list_snapshot";
-    }
-  | {
-      audience_id: string;
-      connection_id: string;
-      field_mapping?: unknown;
-      provider: string;
-      type: "integration";
-    }
-  | {
-      accepted_format: string;
-      token_id: string;
-      type: "push";
-    }
-  | {
-      bucket: string;
-      /** @nullable */
-      path_pattern?: string | null;
-      /** @nullable */
-      prefix?: string | null;
-      provider: string;
-      /** @nullable */
-      region?: string | null;
-      type: "bucket";
-    };
+  | PipelineSourceOneOf
+  | PipelineSourceOneOf1
+  | PipelineSourceOneOf2
+  | PipelineSourceOneOf3;

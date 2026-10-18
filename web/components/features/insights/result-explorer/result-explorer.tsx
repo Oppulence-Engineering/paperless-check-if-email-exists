@@ -17,6 +17,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -147,39 +155,44 @@ export function ResultExplorer({
 					<Label className={FIELD_LABEL} htmlFor="explorer-category">
 						Category
 					</Label>
-					<select
-						className={FILTER_CLASS}
-						id="explorer-category"
-						onChange={(event) => {
-							set({ category: event.target.value || undefined });
+					<Select
+						onValueChange={(value) => {
+							set({ category: fromSelect(value) || undefined });
 						}}
-						value={filters.category ?? ""}
+						value={filters.category ?? ALL}
 					>
-						<option value="">All</option>
-						{category.values.map((value) => (
-							<option key={value} value={value}>
-								{category.label(value)}
-							</option>
-						))}
-					</select>
+						<SelectTrigger className={FILTER_CLASS} id="explorer-category">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All</SelectItem>
+							{category.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{category.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex w-full flex-col gap-1.5 sm:w-36">
 					<Label className={FIELD_LABEL} htmlFor="explorer-safe">
 						Safe to send
 					</Label>
-					<select
-						className={FILTER_CLASS}
-						id="explorer-safe"
-						onChange={(event) => {
-							const value = event.target.value;
-							set({ safeToSend: value ? value === "yes" : undefined });
+					<Select
+						onValueChange={(value) => {
+							set({ safeToSend: value === ALL ? undefined : value === "yes" });
 						}}
-						value={filters.safeToSend === undefined ? "" : filters.safeToSend ? "yes" : "no"}
+						value={filters.safeToSend === undefined ? ALL : filters.safeToSend ? "yes" : "no"}
 					>
-						<option value="">Any</option>
-						<option value="yes">Yes</option>
-						<option value="no">No</option>
-					</select>
+						<SelectTrigger className={FILTER_CLASS} id="explorer-safe">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>Any</SelectItem>
+							<SelectItem value="yes">Yes</SelectItem>
+							<SelectItem value="no">No</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
 				<Button
 					className="h-10 rounded-lg"
@@ -250,15 +263,16 @@ export function ResultExplorer({
 									return (
 										<tr className="border-b border-border/60 align-top" key={row.id}>
 											<td className="py-2 pr-4">
-												<button
-													className="text-left break-all text-white underline-offset-4 hover:underline"
+												<Button
+													className="h-auto justify-start p-0 text-left break-all whitespace-normal text-white"
 													onClick={() => {
 														setOpen(row);
 													}}
 													type="button"
+													variant="link"
 												>
 													{row.email || `Result ${String(row.id)}`}
-												</button>
+												</Button>
 											</td>
 											<td className="py-2 pr-4 text-white">{row.score ?? "—"}</td>
 											<td className="py-2 pr-4">

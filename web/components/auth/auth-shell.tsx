@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import { authClient } from "@/lib/auth/auth-client";
 import { authCallbackPath } from "@/lib/auth/return-to";
 import { ArrowRightLine, CircleNotch, Key } from "@/lib/icons";
@@ -167,9 +168,9 @@ export function AuthShell({
 				<div className="space-y-6">
 					<form className="space-y-5" onSubmit={(event) => void submitEmail(event)}>
 						<div className="space-y-2">
-							<label className={LABEL_CLASS} htmlFor="auth-email">
+							<Label className={LABEL_CLASS} htmlFor="auth-email">
 								Email
-							</label>
+							</Label>
 							<Input
 								autoComplete="email webauthn"
 								className={INPUT_CLASS}
@@ -183,9 +184,9 @@ export function AuthShell({
 						</div>
 						{otpSent ? (
 							<div className="space-y-2">
-								<label className={LABEL_CLASS} htmlFor="auth-otp">
+								<Label className={LABEL_CLASS} htmlFor="auth-otp">
 									Sign-in code
-								</label>
+								</Label>
 								<Input
 									autoComplete="one-time-code"
 									className={`${INPUT_CLASS} font-mono tracking-[0.3em]`}

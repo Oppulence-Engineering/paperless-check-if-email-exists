@@ -13,6 +13,7 @@ import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@oppulence/ui/components/tabs";
+import { Textarea } from "@oppulence/ui/components/textarea";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
 import { JobProblems } from "@/components/features/lists/job-problems/job-problems";
@@ -153,10 +154,10 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 								<Label className="text-xs font-medium text-neutral-400" htmlFor="bulk-emails">
 									Email addresses
 								</Label>
-								<textarea
+								<Textarea
 									id="bulk-emails"
 									aria-label="Email addresses"
-									className="min-h-32 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm dark:bg-input/30"
+									className="min-h-32 rounded-lg"
 									placeholder="One address per line"
 									required
 									value={input}

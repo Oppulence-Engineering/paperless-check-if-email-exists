@@ -8,6 +8,7 @@ import { V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SuppressionForm } from "./suppression-form";
+import { chooseOption } from "@/quality/test-support/select";
 
 function renderForm(mode: "add" | "import") {
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -38,7 +39,7 @@ describe("SuppressionForm", () => {
 		fireEvent.change(screen.getByLabelText("Addresses"), {
 			target: { value: "a@example.com\nb@example.com, a@example.com" },
 		});
-		fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "bounce" } });
+		await chooseOption("Reason", "Bounce");
 		fireEvent.change(screen.getByLabelText("Reason detail"), { target: { value: "550 unknown" } });
 		fireEvent.change(screen.getByLabelText("Notes"), { target: { value: "Spring send" } });
 		fireEvent.change(screen.getByLabelText("Expires on"), { target: { value: "2027-01-01" } });

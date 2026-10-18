@@ -9,6 +9,14 @@ import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -55,8 +63,7 @@ const FAMILY_OF_EVENT: Record<string, string> = {
 	unsubscribed: "negative_feedback",
 };
 
-export const FILTER_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none";
+export const FILTER_CLASS = "h-10 w-full rounded-lg";
 const FIELD_LABEL = "text-xs font-medium text-neutral-400";
 
 type Filters = { email: string; eventType: string; since: string };
@@ -98,7 +105,7 @@ export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {
 		setOffset(0);
 		setFilters({
 			email: String(form.get("email") ?? "").trim(),
-			eventType: String(form.get("event_type") ?? ""),
+			eventType: fromSelect(String(form.get("event_type") ?? "")),
 			since: String(form.get("since") ?? ""),
 		});
 	}
@@ -125,19 +132,19 @@ export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {
 					<Label className={FIELD_LABEL} htmlFor="outcome-event-type">
 						Event type
 					</Label>
-					<select
-						className={FILTER_CLASS}
-						defaultValue=""
-						id="outcome-event-type"
-						name="event_type"
-					>
-						<option value="">All events</option>
-						{PROVIDER_EVENT_TYPES.map((value) => (
-							<option key={value} value={value}>
-								{outcomeType.label(value)}
-							</option>
-						))}
-					</select>
+					<Select defaultValue={ALL} name="event_type">
+						<SelectTrigger className={FILTER_CLASS} id="outcome-event-type">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All events</SelectItem>
+							{PROVIDER_EVENT_TYPES.map((value) => (
+								<SelectItem key={value} value={value}>
+									{outcomeType.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="outcome-since">

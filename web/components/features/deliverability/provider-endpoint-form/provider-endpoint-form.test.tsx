@@ -8,6 +8,7 @@ import { OutcomesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProviderEndpointForm } from "./provider-endpoint-form";
+import { chooseOption } from "@/quality/test-support/select";
 
 const endpoint = {
 	endpoint_id: "2cb867f0-70d2-4538-af2d-afeb45151c63",
@@ -76,7 +77,7 @@ describe("ProviderEndpointForm", () => {
 		renderForm();
 
 		fireEvent.change(screen.getByLabelText("Label"), { target: { value: "Mailgun" } });
-		fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "mailgun" } });
+		await chooseOption("Provider", "Mailgun");
 		expect(screen.getByLabelText("Mailgun signing key")).toBeInTheDocument();
 		fireEvent.click(screen.getByRole("button", { name: "Create paused endpoint" }));
 

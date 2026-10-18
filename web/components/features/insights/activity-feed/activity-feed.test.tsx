@@ -8,6 +8,7 @@ import { EventsApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ActivityFeed } from "./activity-feed";
+import { chooseOption } from "@/quality/test-support/select";
 
 function renderFeed() {
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -71,7 +72,7 @@ describe("ActivityFeed", () => {
 			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 })),
 		);
 
-		fireEvent.change(screen.getByLabelText("Event type"), { target: { value: "task.completed" } });
+		await chooseOption("Event type", "Row checked");
 		fireEvent.change(screen.getByLabelText("Actor"), { target: { value: "api" } });
 		fireEvent.change(screen.getByLabelText("Job ID"), { target: { value: "18" } });
 		fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-10-01" } });

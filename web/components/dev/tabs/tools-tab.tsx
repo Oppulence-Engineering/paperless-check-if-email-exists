@@ -36,7 +36,7 @@ function ToggleRow({
 	onChange: (next: boolean) => void;
 }) {
 	return (
-		<label
+		<Label
 			style={{
 				display: "grid",
 				gridTemplateColumns: "1fr auto",
@@ -50,7 +50,7 @@ function ToggleRow({
 				<div style={{ opacity: 0.6, marginTop: 2, lineHeight: 1.4 }}>{description}</div>
 			</div>
 			<Checkbox checked={checked} onCheckedChange={onChange} />
-		</label>
+		</Label>
 	);
 }
 

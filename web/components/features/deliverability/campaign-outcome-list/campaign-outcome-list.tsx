@@ -9,6 +9,14 @@ import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -81,7 +89,7 @@ export function CampaignOutcomeList({ className, ...props }: CampaignOutcomeList
 		setOffset(0);
 		setFilters({
 			email: value("email"),
-			type: value("type"),
+			type: fromSelect(value("type")),
 			source: value("source"),
 			since: value("since"),
 		});
@@ -107,14 +115,19 @@ export function CampaignOutcomeList({ className, ...props }: CampaignOutcomeList
 					<Label className={FIELD_LABEL} htmlFor="campaign-filter-type">
 						Result type
 					</Label>
-					<select className={FILTER_CLASS} defaultValue="" id="campaign-filter-type" name="type">
-						<option value="">All results</option>
-						{CAMPAIGN_TYPES.map((value) => (
-							<option key={value} value={value}>
-								{outcomeType.label(value)}
-							</option>
-						))}
-					</select>
+					<Select defaultValue={ALL} name="type">
+						<SelectTrigger className={FILTER_CLASS} id="campaign-filter-type">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All results</SelectItem>
+							{CAMPAIGN_TYPES.map((value) => (
+								<SelectItem key={value} value={value}>
+									{outcomeType.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="campaign-filter-source">

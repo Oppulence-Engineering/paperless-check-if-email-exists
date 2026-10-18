@@ -8,6 +8,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { saveFile } from "@/lib/downloads";
 
 import { SuppressionsPanel } from "./suppressions-panel";
+import { chooseOption } from "@/quality/test-support/select";
 
 vi.mock("@/lib/downloads", () => ({ saveFile: vi.fn() }));
 
@@ -75,9 +76,9 @@ it("shows every entry field, filters, and pages through the list", async () => {
 		expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 })),
 	);
 
-	fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "bounce" } });
-	fireEvent.change(screen.getByLabelText("Status"), { target: { value: "all" } });
-	fireEvent.change(screen.getByLabelText("Source"), { target: { value: "outcome" } });
+	await chooseOption("Reason", "Bounce");
+	await chooseOption("Status", "All statuses");
+	await chooseOption("Source", "Delivery feedback");
 	fireEvent.click(screen.getByLabelText("Include expired entries"));
 	await waitFor(() =>
 		expect(list).toHaveBeenLastCalledWith({

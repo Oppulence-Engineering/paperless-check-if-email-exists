@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SAMPLE_CHECK_RESULT } from "@/lib/verification/check-result";
 
 import { JobRows } from "./job-rows";
+import { chooseOption } from "@/quality/test-support/select";
 
 describe("JobRows", () => {
 	afterEach(() => {
@@ -62,13 +63,13 @@ describe("JobRows", () => {
 			state: "completed",
 		});
 
-		fireEvent.change(screen.getByLabelText("Category"), { target: { value: "valid" } });
+		await chooseOption("Category", "Valid");
 		expect(screen.queryByRole("button", { name: "gone@example.com" })).not.toBeInTheDocument();
 
 		fireEvent.click(screen.getByRole("button", { name: "maya@brightlane.co" }));
 		expect(await screen.findByRole("dialog")).toHaveTextContent("Recommendation");
 
-		fireEvent.change(screen.getByLabelText("Row state"), { target: { value: "failed" } });
+		await chooseOption("Row state", "Failed");
 		await waitFor(() =>
 			expect(results).toHaveBeenCalledWith(expect.objectContaining({ state: "failed" })),
 		);

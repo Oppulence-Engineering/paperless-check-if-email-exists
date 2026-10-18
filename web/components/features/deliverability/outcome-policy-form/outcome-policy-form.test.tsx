@@ -8,6 +8,7 @@ import { TenantApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OutcomePolicyForm } from "./outcome-policy-form";
+import { chooseOption } from "@/quality/test-support/select";
 
 const saved = {
 	id: 3,
@@ -42,8 +43,8 @@ describe("OutcomePolicyForm", () => {
 		fireEvent.change(screen.getByLabelText("Name"), { target: { value: "strict" } });
 		fireEvent.click(screen.getByLabelText("Use as the default policy"));
 		fireEvent.change(screen.getByLabelText("Soft bounce events in"), { target: { value: "2" } });
-		fireEvent.change(screen.getByLabelText("Delivered"), { target: { value: "suppress_after" } });
-		fireEvent.change(screen.getByLabelText("Clicked"), { target: { value: "informational" } });
+		await chooseOption("Delivered", "Suppress after repeats");
+		await chooseOption("Clicked", "Record only");
 		expect(
 			screen.getByText(
 				"Add the address to the suppression list after 2 of these events in 30 days.",
@@ -87,7 +88,7 @@ describe("OutcomePolicyForm", () => {
 			},
 		});
 
-		expect(screen.getByLabelText("Hard bounce")).toHaveValue("informational");
+		expect(screen.getByLabelText("Hard bounce")).toHaveTextContent("Record only");
 		expect(screen.getByLabelText("Event age in days")).toHaveValue(45);
 		fireEvent.click(screen.getByRole("button", { name: "Save policy" }));
 

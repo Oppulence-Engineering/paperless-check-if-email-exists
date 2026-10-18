@@ -660,6 +660,29 @@ mod operation_id_tests {
 	}
 
 	#[test]
+	fn every_discriminator_mapping_resolves() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		for (name, schema) in schemas.as_object().expect("schemas") {
+			let Some(mapping) = schema["discriminator"]["mapping"].as_object() else {
+				continue;
+			};
+			for target in mapping.values() {
+				let target = target
+					.as_str()
+					.expect("mapping target")
+					.trim_start_matches("#/components/schemas/");
+				assert!(
+					schemas.get(target).is_some(),
+					"{} maps to the missing schema {}",
+					name,
+					target
+				);
+			}
+		}
+	}
+
+	#[test]
 	fn every_operation_has_a_unique_id() {
 		let spec = super::build_spec().expect("OpenAPI spec");
 		let mut ids = HashSet::new();
@@ -918,6 +941,39 @@ fn set_schema_discriminator(
 				"mapping": mapping,
 			}),
 		);
+	}
+}
+
+/// Moves each inline `oneOf` variant of a schema into the component that its
+/// discriminator mapping names, so every mapping target exists. The SDK
+/// generators already use these names for the inline variants.
+fn name_discriminated_variants(spec: &mut Value, schema_name: &str, property_name: &str) {
+	let Some(schema) = schemas_mut(spec).get(schema_name).cloned() else {
+		return;
+	};
+	let (Some(mapping), Some(variants)) = (
+		schema["discriminator"]["mapping"].as_object(),
+		schema["oneOf"].as_array(),
+	) else {
+		return;
+	};
+	let mut one_of = Vec::new();
+	for variant in variants {
+		let target = variant["properties"][property_name]["enum"][0]
+			.as_str()
+			.and_then(|value| mapping.get(value))
+			.and_then(Value::as_str);
+		match target {
+			Some(target) => {
+				let name = target.trim_start_matches("#/components/schemas/");
+				insert_schema(spec, name, variant.clone());
+				one_of.push(json!({ "$ref": target }));
+			}
+			None => one_of.push(variant.clone()),
+		}
+	}
+	if let Some(schema) = schemas_mut(spec).get_mut(schema_name) {
+		schema["oneOf"] = Value::Array(one_of);
 	}
 }
 
@@ -2974,6 +3030,7 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"bucket": "#/components/schemas/PipelineSource_oneOf_3",
 		}),
 	);
+	name_discriminated_variants(spec, "PipelineSource", "type");
 	set_schema_example(
 		spec,
 		"PipelineDeliveryConfig",
