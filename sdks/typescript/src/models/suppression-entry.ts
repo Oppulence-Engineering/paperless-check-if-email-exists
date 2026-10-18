@@ -28,7 +28,19 @@ export interface SuppressionEntry {
      * @type {string}
      * @memberof SuppressionEntry
      */
+    'canonical_email': string;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
     'created_at': string;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'created_by'?: string | null;
     /**
      *
      * @type {string}
@@ -37,10 +49,28 @@ export interface SuppressionEntry {
     'email': string;
     /**
      *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'expires_at'?: string | null;
+    /**
+     *
      * @type {number}
      * @memberof SuppressionEntry
      */
     'id': number;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'last_seen_at'?: string | null;
+    /**
+     *
+     * @type {{ [key: string]: any; }}
+     * @memberof SuppressionEntry
+     */
+    'metadata': { [key: string]: any; };
     /**
      *
      * @type {string}
@@ -58,5 +88,41 @@ export interface SuppressionEntry {
      * @type {string}
      * @memberof SuppressionEntry
      */
+    'reason_code'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'reason_detail'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
     'source'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'source_ref'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'source_type'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'status': string;
+    /**
+     *
+     * @type {string}
+     * @memberof SuppressionEntry
+     */
+    'updated_at': string;
 }

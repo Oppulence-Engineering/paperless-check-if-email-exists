@@ -534,11 +534,18 @@ import {
 const configuration = new Configuration();
 const apiInstance = new OutcomesApi(configuration);
 
-const { status, data } = await apiInstance.v1UploadCampaignOutcomes();
+let file: File; // (default to undefined)
+
+const { status, data } = await apiInstance.v1UploadCampaignOutcomes(
+    file
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **file** | [**File**] |  | defaults to undefined|
 
 
 ### Return type
@@ -551,7 +558,7 @@ This endpoint does not have any parameters.
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: multipart/form-data
  - **Accept**: application/json
 
 

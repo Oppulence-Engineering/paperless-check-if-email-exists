@@ -10,4 +10,5 @@
 
 export interface SuppressionDeleteResponse {
   deleted: boolean;
+  status: string;
 }

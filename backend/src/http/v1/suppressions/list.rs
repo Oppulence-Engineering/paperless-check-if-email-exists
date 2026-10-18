@@ -76,7 +76,7 @@ async fn http_handler(
 		  AND ($4::TEXT IS NULL OR source_type = $4)
 		  AND ($5::TEXT IS NULL OR source_ref = $5)
 		  AND ($6::BOOLEAN = true OR expires_at IS NULL OR expires_at > NOW())
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC, id DESC
 		LIMIT $7 OFFSET $8
 		"#,
 	)

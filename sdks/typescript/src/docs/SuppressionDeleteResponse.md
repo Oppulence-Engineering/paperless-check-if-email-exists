@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **deleted** | **boolean** |  | [required]
+**status** | **string** |  | [required]
 
 ## Example
 
@@ -14,6 +15,7 @@ import { SuppressionDeleteResponse } from '@oppulence/reacher-sdk';
 
 const instance: SuppressionDeleteResponse = {
     deleted: true,
+    status: 'example',
 };
 ```
 

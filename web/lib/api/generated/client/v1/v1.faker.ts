@@ -44,9 +44,8 @@ import type {
   SmtpDetails,
   SuppressionCheckResponse,
   SuppressionDeleteResponse,
+  SuppressionEventListResponse,
   SuppressionListResponse,
-  V1ImportSuppressions200,
-  V1ListSuppressionEvents200,
   V1SourceQuality200,
 } from "../model";
 
@@ -973,9 +972,32 @@ export const getV1ListSuppressionsResponseMock = (
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
   ).map(() => ({
+    canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    created_by: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    expires_at: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        null,
+      ]),
+      undefined,
+    ]),
     id: faker.number.int(),
+    last_seen_at: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.date.past().toISOString().slice(0, 19) + "Z",
+        null,
+      ]),
+      undefined,
+    ]),
+    metadata: {},
     notes: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -984,6 +1006,20 @@ export const getV1ListSuppressionsResponseMock = (
       undefined,
     ]),
     reason: faker.helpers.arrayElement(Object.values(SuppressionReason)),
+    reason_code: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    reason_detail: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
     source: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -991,6 +1027,22 @@ export const getV1ListSuppressionsResponseMock = (
       ]),
       undefined,
     ]),
+    source_ref: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    source_type: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   })),
   total: faker.number.int(),
   ...overrideResponse,
@@ -1015,6 +1067,13 @@ export const getV1AddSuppressionsResponseMock = (
 export const getV1CheckSuppressionResponseMock = (
   overrideResponse: Partial<Extract<SuppressionCheckResponse, object>> = {},
 ): SuppressionCheckResponse => ({
+  canonical_email: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
   created_at: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -1022,11 +1081,71 @@ export const getV1CheckSuppressionResponseMock = (
     ]),
     undefined,
   ]),
+  created_by: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  expires_at: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
+    ]),
+    undefined,
+  ]),
+  id: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  metadata: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([null]),
+    undefined,
+  ]),
   reason: faker.helpers.arrayElement([
-    faker.helpers.arrayElement(Object.values(SuppressionReason)),
+    faker.helpers.arrayElement([
+      faker.helpers.arrayElement(Object.values(SuppressionReason)),
+      null,
+    ]),
+    undefined,
+  ]),
+  reason_code: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  reason_detail: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
     undefined,
   ]),
   source: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  source_ref: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  source_type: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
       null,
@@ -1040,15 +1159,97 @@ export const getV1CheckSuppressionResponseMock = (
 export const getV1ExportSuppressionsResponseMock = (): ArrayBuffer =>
   new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
 
-export const getV1ImportSuppressionsResponseMock =
-  (): V1ImportSuppressions200 => ({});
+export const getV1ImportSuppressionsResponseMock = (
+  overrideResponse: Partial<Extract<AddSuppressionsResponse, object>> = {},
+): AddSuppressionsResponse => ({
+  added: faker.number.int(),
+  duplicates: faker.number.int(),
+  entry_ids: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => faker.number.int()),
+    undefined,
+  ]),
+  updated: faker.helpers.arrayElement([faker.number.int(), undefined]),
+  ...overrideResponse,
+});
 
 export const getV1DeleteSuppressionResponseMock = (
   overrideResponse: Partial<Extract<SuppressionDeleteResponse, object>> = {},
 ): SuppressionDeleteResponse => ({
   deleted: faker.datatype.boolean(),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });
 
-export const getV1ListSuppressionEventsResponseMock =
-  (): V1ListSuppressionEvents200 => ({});
+export const getV1ListSuppressionEventsResponseMock = (
+  overrideResponse: Partial<Extract<SuppressionEventListResponse, object>> = {},
+): SuppressionEventListResponse => ({
+  events: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    actor_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    actor_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    entry_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    from_status: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    id: faker.number.int(),
+    metadata: {},
+    reason_code: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    reason_detail: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    source_ref: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    source_type: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    to_status: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});

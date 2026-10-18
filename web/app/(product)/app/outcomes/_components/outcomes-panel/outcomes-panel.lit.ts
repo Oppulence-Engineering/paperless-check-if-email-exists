@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=component
- * Review delivery feedback and manage provider endpoints.
+ * Shows provider events, campaign results, provider endpoints, and outcome policies.
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const OutcomesPanelLit = OutcomesPanelLitSchema.parse({
 	domain: "",
 	owner: "route",
 	client: true,
-	summary: "Review delivery feedback and manage provider endpoints.",
+	summary: "Shows provider events, campaign results, provider endpoints, and outcome policies.",
 	schemas: ["app/(product)/app/outcomes/_components/outcomes-panel/outcomes-panel.schema.ts"],
 	files: [
 		"app/(product)/app/outcomes/_components/outcomes-panel/outcomes-panel.tsx",

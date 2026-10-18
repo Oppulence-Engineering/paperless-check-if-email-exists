@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **is_default** | **boolean** |  | [optional]
 **name** | **string** |  | [required]
-**rules** | **any** |  | [optional]
+**rules** | [**OutcomePolicyRules**](OutcomePolicyRules.md) |  | [optional]
 
 ## Example
 

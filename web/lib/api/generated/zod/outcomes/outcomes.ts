@@ -91,6 +91,10 @@ export const V1PostCampaignOutcomesDefaultResponse = zod.object({
   error: zod.string(),
 });
 
+export const V1UploadCampaignOutcomesBody = zod.strictObject({
+  file: zod.instanceof(File),
+});
+
 export const v1UploadCampaignOutcomes202ResponseAcceptedMin = 0;
 
 export const v1UploadCampaignOutcomes202ResponseErrorsItemIndexMin = 0;

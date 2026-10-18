@@ -12,6 +12,7 @@ import type {
   CreateScorePolicyRequest,
   CreateTenantDomainRequest,
   ErrorEnvelope,
+  OutcomePolicyDeleteResponse,
   OutcomePolicyListResponse,
   OutcomePolicyView,
   ScorePolicyListResponse,
@@ -739,7 +740,7 @@ export const v1CreateOutcomePolicy = async (
 };
 
 export type v1DeleteOutcomePolicyResponse200 = {
-  data: void;
+  data: OutcomePolicyDeleteResponse;
   status: 200;
 };
 
@@ -777,7 +778,7 @@ export const v1DeleteOutcomePolicy = async (
 
   const data: v1DeleteOutcomePolicyResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,

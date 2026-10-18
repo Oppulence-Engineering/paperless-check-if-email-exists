@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream;
@@ -65,6 +65,7 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let format = query.format.as_deref().unwrap_or("csv");
 	if format != "csv" {

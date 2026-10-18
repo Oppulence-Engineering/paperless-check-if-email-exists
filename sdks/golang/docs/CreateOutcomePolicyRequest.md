@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **IsDefault** | Pointer to **bool** |  | [optional]
 **Name** | **string** |  | [required]
-**Rules** | Pointer to **interface{}** |  | [optional]
+**Rules** | Pointer to [**OutcomePolicyRules**](OutcomePolicyRules.md) |  | [optional]
 
 ## Methods
 
@@ -74,20 +74,20 @@ SetName sets Name field to given value.
 
 ### GetRules
 
-`func (o *CreateOutcomePolicyRequest) GetRules() interface{}`
+`func (o *CreateOutcomePolicyRequest) GetRules() OutcomePolicyRules`
 
 GetRules returns the Rules field if non-nil, zero value otherwise.
 
 ### GetRulesOk
 
-`func (o *CreateOutcomePolicyRequest) GetRulesOk() (*interface{}, bool)`
+`func (o *CreateOutcomePolicyRequest) GetRulesOk() (*OutcomePolicyRules, bool)`
 
 GetRulesOk returns a tuple with the Rules field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRules
 
-`func (o *CreateOutcomePolicyRequest) SetRules(v interface{})`
+`func (o *CreateOutcomePolicyRequest) SetRules(v OutcomePolicyRules)`
 
 SetRules sets Rules field to given value.
 
@@ -96,5 +96,6 @@ SetRules sets Rules field to given value.
 `func (o *CreateOutcomePolicyRequest) HasRules() bool`
 
 HasRules returns a boolean if a field has been set.
+
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

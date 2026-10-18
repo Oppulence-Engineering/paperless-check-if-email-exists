@@ -1535,9 +1535,14 @@ export const V1ListSuppressionsQueryParams = zod.object({
 export const V1ListSuppressions200Response = zod.object({
   entries: zod.array(
     zod.object({
+      canonical_email: zod.string(),
       created_at: zod.iso.datetime({ offset: true }),
+      created_by: zod.string().nullish(),
       email: zod.string(),
+      expires_at: zod.iso.datetime({ offset: true }).nullish(),
       id: zod.int(),
+      last_seen_at: zod.iso.datetime({ offset: true }).nullish(),
+      metadata: zod.record(zod.string(), zod.unknown()),
       notes: zod.string().nullish(),
       reason: zod.enum([
         "manual",
@@ -1548,7 +1553,13 @@ export const V1ListSuppressions200Response = zod.object({
         "complaint",
         "auto_invalid",
       ]),
+      reason_code: zod.string().nullish(),
+      reason_detail: zod.string().nullish(),
       source: zod.string().nullish(),
+      source_ref: zod.string().nullish(),
+      source_type: zod.string().nullish(),
+      status: zod.string(),
+      updated_at: zod.iso.datetime({ offset: true }),
     }),
   ),
   total: zod.int(),
@@ -1602,7 +1613,44 @@ export const V1CheckSuppressionQueryParams = zod.object({
 });
 
 export const V1CheckSuppression200Response = zod.object({
+  canonical_email: zod.string().nullish(),
   created_at: zod.iso.datetime({ offset: true }).nullish(),
+  created_by: zod.string().nullish(),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  id: zod.int().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+  reason: zod
+    .union([
+      zod.enum([
+        "manual",
+        "bounce",
+        "invalid",
+        "spam_trap",
+        "unsubscribe",
+        "complaint",
+        "auto_invalid",
+      ]),
+      zod.null(),
+    ])
+    .optional(),
+  reason_code: zod.string().nullish(),
+  reason_detail: zod.string().nullish(),
+  source: zod.string().nullish(),
+  source_ref: zod.string().nullish(),
+  source_type: zod.string().nullish(),
+  status: zod.string().nullish(),
+  suppressed: zod.boolean(),
+});
+
+export const V1CheckSuppressionDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary Export suppressions
+ */
+export const V1ExportSuppressionsQueryParams = zod.object({
+  format: zod.enum(["csv"]).optional(),
   reason: zod
     .enum([
       "manual",
@@ -1614,17 +1662,12 @@ export const V1CheckSuppression200Response = zod.object({
       "auto_invalid",
     ])
     .optional(),
-  source: zod.string().nullish(),
-  suppressed: zod.boolean(),
+  status: zod.string().optional(),
+  source_type: zod.string().optional(),
+  source_ref: zod.string().optional(),
+  include_expired: zod.coerce.boolean().optional(),
 });
 
-export const V1CheckSuppressionDefaultResponse = zod.object({
-  error: zod.string(),
-});
-
-/**
- * @summary Export suppressions
- */
 export const V1ExportSuppressions200Response = zod.unknown();
 
 export const V1ExportSuppressionsDefaultResponse = zod.object({
@@ -1634,12 +1677,34 @@ export const V1ExportSuppressionsDefaultResponse = zod.object({
 /**
  * @summary Import suppressions
  */
-export const V1ImportSuppressionsBody = zod.record(zod.string(), zod.unknown());
+export const V1ImportSuppressionsBody = zod.strictObject({
+  emails: zod.array(zod.string()),
+  expires_at: zod.iso.datetime({ offset: true }).nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).optional(),
+  notes: zod.string().nullish(),
+  reason: zod
+    .enum([
+      "manual",
+      "bounce",
+      "invalid",
+      "spam_trap",
+      "unsubscribe",
+      "complaint",
+      "auto_invalid",
+    ])
+    .optional(),
+  reason_detail: zod.string().nullish(),
+  source: zod.string().nullish(),
+  source_ref: zod.string().nullish(),
+  source_type: zod.string().nullish(),
+});
 
-export const V1ImportSuppressions200Response = zod.record(
-  zod.string(),
-  zod.unknown(),
-);
+export const V1ImportSuppressions200Response = zod.object({
+  added: zod.int(),
+  duplicates: zod.int(),
+  entry_ids: zod.array(zod.int()).optional(),
+  updated: zod.int().optional(),
+});
 
 export const V1ImportSuppressionsDefaultResponse = zod.object({
   error: zod.string(),
@@ -1654,6 +1719,7 @@ export const V1DeleteSuppressionParams = zod.object({
 
 export const V1DeleteSuppression200Response = zod.object({
   deleted: zod.boolean(),
+  status: zod.string(),
 });
 
 export const V1DeleteSuppressionDefaultResponse = zod.object({
@@ -1667,10 +1733,38 @@ export const V1ListSuppressionEventsParams = zod.object({
   id: zod.coerce.number().int(),
 });
 
-export const V1ListSuppressionEvents200Response = zod.record(
-  zod.string(),
-  zod.unknown(),
-);
+export const v1ListSuppressionEventsQueryLimitMax = 200;
+
+export const V1ListSuppressionEventsQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .int()
+    .max(v1ListSuppressionEventsQueryLimitMax)
+    .optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListSuppressionEvents200Response = zod.object({
+  events: zod.array(
+    zod.object({
+      actor_id: zod.string().nullish(),
+      actor_type: zod.string(),
+      canonical_email: zod.string(),
+      created_at: zod.iso.datetime({ offset: true }),
+      entry_id: zod.int().nullish(),
+      event_type: zod.string(),
+      from_status: zod.string().nullish(),
+      id: zod.int(),
+      metadata: zod.record(zod.string(), zod.unknown()),
+      reason_code: zod.string().nullish(),
+      reason_detail: zod.string().nullish(),
+      source_ref: zod.string().nullish(),
+      source_type: zod.string().nullish(),
+      to_status: zod.string().nullish(),
+    }),
+  ),
+  total: zod.int(),
+});
 
 export const V1ListSuppressionEventsDefaultResponse = zod.object({
   error: zod.string(),

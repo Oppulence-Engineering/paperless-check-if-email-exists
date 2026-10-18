@@ -5,12 +5,13 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Deleted** | **bool** |  | [required]
+**Status** | **string** |  | [required]
 
 ## Methods
 
 ### NewSuppressionDeleteResponse
 
-`func NewSuppressionDeleteResponse(deleted bool) *SuppressionDeleteResponse`
+`func NewSuppressionDeleteResponse(deleted bool, status string) *SuppressionDeleteResponse`
 
 NewSuppressionDeleteResponse instantiates a new SuppressionDeleteResponse object
 This constructor will assign default values to properties that have it defined,
@@ -43,6 +44,26 @@ and a boolean to check if the value has been set.
 `func (o *SuppressionDeleteResponse) SetDeleted(v bool)`
 
 SetDeleted sets Deleted field to given value.
+
+
+### GetStatus
+
+`func (o *SuppressionDeleteResponse) GetStatus() string`
+
+GetStatus returns the Status field if non-nil, zero value otherwise.
+
+### GetStatusOk
+
+`func (o *SuppressionDeleteResponse) GetStatusOk() (*string, bool)`
+
+GetStatusOk returns a tuple with the Status field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStatus
+
+`func (o *SuppressionDeleteResponse) SetStatus(v string)`
+
+SetStatus sets Status field to given value.
 
 
 
