@@ -34,7 +34,7 @@ it("shows live status and safe setup journeys", async () => {
 	expect(await screen.findByText("4.3.0")).toBeInTheDocument();
 	expect(screen.getByRole("link", { name: "Callback contract" })).toHaveAttribute(
 		"href",
-		"/developers/reference/v1_ingest_provider_outcomes",
+		"/developers/reference#tag/provider-callback/v1_ingest_provider_outcomes",
 	);
 	expect(screen.queryByRole("button", { name: /send.*callback/i })).not.toBeInTheDocument();
 });

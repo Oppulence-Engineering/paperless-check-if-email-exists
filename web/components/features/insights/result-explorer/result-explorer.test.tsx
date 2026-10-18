@@ -80,7 +80,10 @@ describe("ResultExplorer", () => {
 		} as never);
 		renderExplorer();
 
-		expect(await screen.findByRole("button", { name: "user1@example.com" })).toBeInTheDocument();
+		// The first page can take longer than the default 1 s when the whole suite runs.
+		expect(
+			await screen.findByRole("button", { name: "user1@example.com" }, { timeout: 5_000 }),
+		).toBeInTheDocument();
 		expect(screen.getAllByText("Fix, then send")).toHaveLength(2);
 		expect(screen.getByText("The domain may have a typo.")).toBeInTheDocument();
 		// Without decision reasons, the row shows the score reason codes.

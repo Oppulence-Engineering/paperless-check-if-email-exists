@@ -5,10 +5,10 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../operation-runner/operation-runner", () => ({
-	OperationRunner: ({ operations }: { operations: { id: string }[] }) => (
-		<div data-testid="tenant-operations">
-			{operations.map((operation) => operation.id).join(",")}
+vi.mock("@/components/features/developer-portal/api-reference/api-reference", () => ({
+	ApiReference: ({ document, surface }: { document: { paths: object }; surface: string }) => (
+		<div data-surface={surface} data-testid="api-reference">
+			{Object.keys(document.paths).join(",")}
 		</div>
 	),
 }));
@@ -16,13 +16,15 @@ vi.mock("../operation-runner/operation-runner", () => ({
 import { ApiExplorerPanel } from "./api-explorer-panel";
 
 describe("ApiExplorerPanel", () => {
-	it("forwards accessible section props and renders its content", () => {
-		render(<ApiExplorerPanel aria-label="Example api-explorer-panel">Content</ApiExplorerPanel>);
+	it("shows the workspace operations in the API reference", () => {
+		render(<ApiExplorerPanel aria-label="Example api-explorer-panel" />);
 
 		const component = screen.getByRole("region", { name: "Example api-explorer-panel" });
 		expect(component).toHaveAttribute("data-slot", "api-explorer-panel");
 		expect(screen.getByRole("heading", { name: "API explorer", level: 1 })).toBeInTheDocument();
-		expect(screen.getByTestId("tenant-operations")).toHaveTextContent("v1_check_email");
-		expect(screen.getByTestId("tenant-operations")).not.toHaveTextContent("list_tenants");
+		const reference = screen.getByTestId("api-reference");
+		expect(reference).toHaveAttribute("data-surface", "workspace");
+		expect(reference).toHaveTextContent("/v1/check_email");
+		expect(reference).not.toHaveTextContent("/v1/admin");
 	});
 });

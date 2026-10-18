@@ -16,9 +16,12 @@ type OperationDocument = {
 };
 
 type Contract = {
+	info: { version: string };
 	paths: Record<string, Partial<Record<Method, OperationDocument>>>;
 	security: Record<string, unknown[]>[];
-	components: { schemas: Record<string, unknown> };
+	components: Record<string, Record<string, unknown>> & {
+		securitySchemes: Record<string, unknown>;
+	};
 };
 
 const spec = contract as unknown as Contract;
@@ -38,7 +41,7 @@ export const families = [
 	"System",
 ] as const;
 
-export type Family = (typeof families)[number];
+type Family = (typeof families)[number];
 
 function familyFor(path: string): Family | undefined {
 	if (["/healthz", "/readyz", "/version", "/openapi.json"].includes(path)) return "System";
@@ -227,10 +230,6 @@ if (new Set(operations.map((operation) => operation.id)).size !== operations.len
 	throw new Error("Duplicate API operationId in developer portal contract");
 }
 
-export function operationById(id: string): PortalOperation | undefined {
-	return operations.find((operation) => operation.id === id);
-}
-
 export function adminOperationFor(method: string, path: string[]): PortalOperation | undefined {
 	return operations.find((operation) => {
 		if (operation.audience !== "admin" || operation.method !== method) return false;
@@ -244,7 +243,198 @@ export function adminOperationFor(method: string, path: string[]): PortalOperati
 	});
 }
 
-export function schemaByRef(ref: string): unknown {
-	const name = ref.replace("#/components/schemas/", "");
-	return spec.components.schemas[name];
+/** What each family covers. Scalar shows it under the family heading. */
+const FAMILY_NOTES: Record<Family, string> = {
+	"Verification and finder":
+		"Check one address, find an address from a name and a domain, read the history of an address, and check the reputation of a domain.",
+	"Bulk and observability":
+		"Run bulk jobs, follow their progress, read the results, and query the audit log.",
+	"Lists and collaboration":
+		"Upload lists, review and clean them, compare two lists, and save segments.",
+	Suppressions:
+		"Keep the addresses that must not get mail, with a reason, an expiry, and an audit trail.",
+	"Feedback and providers":
+		"Send delivery outcomes and campaign results, and connect your email providers.",
+	Pipelines: "Check lists again on a schedule and deliver the results.",
+	"Workspace account":
+		"Manage API keys, sender domains, the webhook, usage, settings, and score policies.",
+	"Provider callback":
+		"Email providers call these endpoints with delivery events. Each call uses the delivery token of its endpoint, not an API key.",
+	Onboarding: "Check an address during sign-up, before a workspace exists.",
+	"Legacy v0":
+		"The first version of the API. It uses the x-reacher-secret header. New integrations use v1.",
+	System: "Health and readiness checks. They need no authentication.",
+	"Platform admin": "Platform operator endpoints.",
+};
+
+const WORKSPACE_GROUP = "Workspace API";
+
+const BEARER = {
+	type: "http",
+	scheme: "bearer",
+	description:
+		"Send `Authorization: Bearer <key>`. Create keys in [Developer settings](/app/settings?settings=developer). Each key has scopes.",
+};
+
+const PUBLIC_DESCRIPTION = `Check email addresses, clean lists, and protect your sender reputation over HTTP.
+
+1. Create an API key in [Developer settings](/app/settings?settings=developer).
+2. Send it as \`Authorization: Bearer <key>\`.
+3. Each key has scopes. Each operation shows the scope that it needs.
+
+The full contract is at [/openapi.json](/openapi.json).`;
+
+const WORKSPACE_DESCRIPTION = `Run the operations of your workspace from the browser.
+
+- **This workspace** sends each request with your signed-in session. You do not need a key.
+- **Public API** needs an API key from [Developer settings](/app/settings?settings=developer). Use it to test what your integration sends.
+
+The [public API reference](/developers/reference) has the same operations, with code samples for each language.`;
+
+function familySlug(family: Family): string {
+	return family.toLowerCase().replaceAll(" ", "-");
+}
+
+/**
+ * Every `#/components/<section>/<name>` reference in a value: `$ref` values
+ * and discriminator `mapping` values.
+ */
+function referencesIn(value: unknown, found: Set<string>): Set<string> {
+	if (typeof value === "string") {
+		if (value.startsWith("#/components/")) found.add(value);
+	} else if (Array.isArray(value)) {
+		for (const item of value) referencesIn(item, found);
+	} else if (value && typeof value === "object") {
+		for (const item of Object.values(value)) referencesIn(item, found);
+	}
+	return found;
+}
+
+function componentExists(ref: string): boolean {
+	const [section, name] = ref.replace("#/components/", "").split("/");
+	return spec.components[section]?.[name] !== undefined;
+}
+
+/**
+ * Drops discriminator mappings to schemas that the contract does not define.
+ * The backend contract maps PipelineSource to `PipelineSource_oneOf_*` names,
+ * but its variants are inline. Returns a copy; the contract does not change.
+ */
+function withoutDanglingMappings(component: unknown): unknown {
+	const discriminator = (component as { discriminator?: { mapping?: Record<string, string> } })
+		.discriminator;
+	if (!discriminator?.mapping) return component;
+	const mapping = Object.fromEntries(
+		Object.entries(discriminator.mapping).filter(([, ref]) => componentExists(ref)),
+	);
+	return { ...(component as object), discriminator: { ...discriminator, mapping } };
+}
+
+/** Keeps only the components that the paths reach, so admin models stay out. */
+function reachableComponents(paths: unknown): Record<string, Record<string, unknown>> {
+	const kept: Record<string, Record<string, unknown>> = {};
+	const pending = [...referencesIn(paths, new Set())];
+	const seen = new Set<string>();
+	while (pending.length > 0) {
+		const ref = pending.pop() as string;
+		if (seen.has(ref)) continue;
+		seen.add(ref);
+		if (!componentExists(ref)) continue;
+		const [section, name] = ref.replace("#/components/", "").split("/");
+		const component = withoutDanglingMappings(spec.components[section][name]);
+		kept[section] = { ...kept[section], [name]: component };
+		pending.push(...referencesIn(component, new Set()));
+	}
+	return kept;
+}
+
+/**
+ * The OpenAPI document that Scalar shows. "workspace" has the tenant
+ * operations for the signed-in explorer, with the session server first.
+ * "public" has every operation except the platform admin ones.
+ */
+export function referenceDocument(surface: "workspace" | "public"): Record<string, unknown> {
+	const included = operations.filter((operation) =>
+		surface === "workspace"
+			? operation.audience === "tenant"
+			: operation.audience !== "admin" && operation.path !== "/version",
+	);
+	const paths: Record<string, Record<string, unknown>> = {};
+	const schemeNames = new Set(["Authorization"]);
+	for (const operation of included) {
+		const method = operation.method.toLowerCase() as Method;
+		const source = spec.paths[operation.path][method] as OperationDocument &
+			Record<string, unknown>;
+		const destination = workflowDestination(operation);
+		const links = [
+			operation.scope ? `**API key scope:** \`${operation.scope}\`` : undefined,
+			`[${destination.label}](${destination.href})`,
+		]
+			.filter(Boolean)
+			.join(" · ");
+		// The workspace document makes the key optional on every tenant operation.
+		const security = surface === "workspace" ? undefined : source.security;
+		for (const requirement of security ?? []) {
+			for (const name of Object.keys(requirement)) schemeNames.add(name);
+		}
+		paths[operation.path] = {
+			...paths[operation.path],
+			[method]: {
+				...source,
+				tags: [operation.family],
+				description: [source.description, links].filter(Boolean).join("\n\n"),
+				security,
+			},
+		};
+	}
+
+	const used = families.filter((family) =>
+		included.some((operation) => operation.family === family),
+	);
+	const workspaceTags = used.filter((family) => audienceFor(family) === "tenant");
+	const otherTags = used.filter((family) => audienceFor(family) !== "tenant");
+	const securitySchemes = Object.fromEntries(
+		[...schemeNames].map((name) => [
+			name,
+			name === "Authorization" ? BEARER : spec.components.securitySchemes[name],
+		]),
+	);
+
+	return {
+		openapi: (contract as { openapi: string }).openapi,
+		info: {
+			title: surface === "workspace" ? "Workspace API" : "Verifier API",
+			version: spec.info.version,
+			description: surface === "workspace" ? WORKSPACE_DESCRIPTION : PUBLIC_DESCRIPTION,
+		},
+		servers:
+			surface === "workspace"
+				? [
+						{ url: "/api/backend", description: "This workspace (signed-in session)" },
+						{ url: "/", description: "Public API (API key)" },
+					]
+				: [{ url: "/", description: "Verifier API" }],
+		security: surface === "workspace" ? [{}, { Authorization: [] }] : [{ Authorization: [] }],
+		tags: used.map((family) => ({ name: family, description: FAMILY_NOTES[family] })),
+		"x-tagGroups": [
+			{ name: WORKSPACE_GROUP, tags: workspaceTags },
+			...(otherTags.length > 0
+				? [{ name: "Integrations, onboarding, and status", tags: otherTags }]
+				: []),
+		],
+		paths,
+		components: { ...reachableComponents(paths), securitySchemes },
+	};
+}
+
+/**
+ * The public reference link for an operation. Scalar names each operation
+ * `#tag/<family>/<operationId>`. Admin and unknown operations go to the index.
+ */
+export function referenceHref(operationId: string): string {
+	const operation = operations.find((item) => item.id === operationId);
+	if (!operation || operation.audience === "admin" || operation.path === "/version") {
+		return "/developers/reference";
+	}
+	return `/developers/reference#tag/${familySlug(operation.family)}/${operation.id}`;
 }

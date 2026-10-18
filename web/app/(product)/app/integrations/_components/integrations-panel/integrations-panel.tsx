@@ -119,7 +119,10 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 								<Link className={link} href="/app/settings?settings=developer">
 									Manage API keys
 								</Link>
-								<Link className={link} href="/developers/reference/v1_check_email_with_onboard">
+								<Link
+									className={link}
+									href="/developers/reference#tag/onboarding/v1_check_email_with_onboard"
+								>
 									Onboarding API contract
 								</Link>
 							</div>
@@ -144,10 +147,16 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 								<Link className={link} href="/app/outcomes">
 									Manage endpoints and outcomes
 								</Link>
-								<Link className={link} href="/developers/reference/v1_create_provider_endpoint">
+								<Link
+									className={link}
+									href="/developers/reference#tag/feedback-and-providers/v1_create_provider_endpoint"
+								>
 									Endpoint setup contract
 								</Link>
-								<Link className={link} href="/developers/reference/v1_ingest_provider_outcomes">
+								<Link
+									className={link}
+									href="/developers/reference#tag/provider-callback/v1_ingest_provider_outcomes"
+								>
 									Callback contract
 								</Link>
 							</div>
@@ -174,10 +183,13 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 						</Row>
 						<Row>
 							<div className="flex flex-wrap gap-4">
-								<Link className={link} href="/developers/reference/post_check_email">
+								<Link className={link} href="/developers/reference#tag/legacy-v0/post_check_email">
 									Legacy check
 								</Link>
-								<Link className={link} href="/developers/reference/v1_check_email">
+								<Link
+									className={link}
+									href="/developers/reference#tag/verification-and-finder/v1_check_email"
+								>
 									Current check
 								</Link>
 								<Link className={link} href="/app/jobs">
