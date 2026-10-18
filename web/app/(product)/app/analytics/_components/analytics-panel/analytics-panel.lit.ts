@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=component
- * Inspect verification results, activity, source quality, and domain risk.
+ * Inspect verification results, activity, and source quality.
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const AnalyticsPanelLit = AnalyticsPanelLitSchema.parse({
 	domain: "",
 	owner: "route",
 	client: true,
-	summary: "Inspect verification results, activity, source quality, and domain risk.",
+	summary: "Inspect verification results, activity, and source quality.",
 	schemas: ["app/(product)/app/analytics/_components/analytics-panel/analytics-panel.schema.ts"],
 	files: [
 		"app/(product)/app/analytics/_components/analytics-panel/analytics-panel.tsx",

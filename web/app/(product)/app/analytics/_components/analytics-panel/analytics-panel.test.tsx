@@ -12,7 +12,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-it("filters results and checks a domain in the same workspace", async () => {
+it("filters results", async () => {
 	const query = vi.spyOn(QueryApi.prototype, "v1QueryResults").mockResolvedValue({
 		data: {
 			results: [
@@ -26,15 +26,6 @@ it("filters results and checks a domain in the same workspace", async () => {
 	} as never);
 	vi.spyOn(V1Api.prototype, "v1SourceQuality").mockResolvedValue({
 		data: { sources: [] },
-	} as never);
-	const reputation = vi.spyOn(V1Api.prototype, "v1CheckReputation").mockResolvedValue({
-		data: {
-			domain: "example.com",
-			risk_level: "low",
-			score: 90,
-			cached: false,
-			blacklist_results: [],
-		},
 	} as never);
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	render(
@@ -51,10 +42,5 @@ it("filters results and checks a domain in the same workspace", async () => {
 			category: "valid",
 			safeToSend: undefined,
 		}),
-	);
-	fireEvent.change(screen.getByLabelText("Domain"), { target: { value: "example.com" } });
-	fireEvent.click(screen.getByRole("button", { name: "Check domain" }));
-	await waitFor(() =>
-		expect(reputation).toHaveBeenCalledWith({ reputationCheckRequest: { domain: "example.com" } }),
 	);
 });

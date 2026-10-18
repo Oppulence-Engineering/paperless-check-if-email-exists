@@ -4,7 +4,7 @@ import "client-only";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Configuration, EventsApi, QueryApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
@@ -71,7 +71,6 @@ export function AnalyticsPanel({ className, ...props }: AnalyticsPanelProps) {
 	const [eventOffset, setEventOffset] = useState(0);
 	const [jobInput, setJobInput] = useState("");
 	const [jobFilter, setJobFilter] = useState<number>();
-	const [domain, setDomain] = useState("");
 	const results = useQuery({
 		queryKey: workflowQueryKey("analytics-results", category, safe, resultOffset),
 		queryFn: async () =>
@@ -97,16 +96,12 @@ export function AnalyticsPanel({ className, ...props }: AnalyticsPanelProps) {
 		queryKey: workflowQueryKey("source-quality"),
 		queryFn: async () => sourcesSchema.parse((await v1Api.v1SourceQuality()).data),
 	});
-	const reputation = useMutation({
-		mutationFn: async () =>
-			(await v1Api.v1CheckReputation({ reputationCheckRequest: { domain: domain.trim() } })).data,
-	});
-	const error = [results, events, sources, reputation].find((request) => request.isError)?.error;
+	const error = [results, events, sources].find((request) => request.isError)?.error;
 	const filter =
 		"h-8 rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none";
 	return (
 		<Page
-			description="Explore results, job activity, source quality, and domain risk."
+			description="Explore results, job activity, and source quality."
 			title="Verification analytics"
 		>
 			<section
@@ -327,42 +322,6 @@ export function AnalyticsPanel({ className, ...props }: AnalyticsPanelProps) {
 							</Row>
 						)}
 					</Group>
-				</Section>
-				<Section title="Domain reputation">
-					<form
-						className="flex gap-2"
-						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-							event.preventDefault();
-							reputation.mutate();
-						}}
-					>
-						<Label className="sr-only" htmlFor="reputation-domain">
-							Domain
-						</Label>
-						<Input
-							className="h-10 rounded-lg"
-							id="reputation-domain"
-							required
-							placeholder="example.com"
-							value={domain}
-							onChange={(event) => {
-								setDomain(event.target.value);
-							}}
-						/>
-						<Button className="h-10 rounded-lg" type="submit" disabled={reputation.isPending}>
-							Check domain
-						</Button>
-					</form>
-					{reputation.data ? (
-						<Group>
-							<Row
-								description={`Reputation score ${String(reputation.data.score)} · ${reputation.data.cached ? "Cached" : "Fresh"} · ${String(reputation.data.blacklist_results.length)} blacklist checks`}
-								label={reputation.data.domain}
-							>
-								<Pill>{reputation.data.risk_level}</Pill>
-							</Row>
-						</Group>
-					) : null}
 				</Section>
 			</section>
 		</Page>

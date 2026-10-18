@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * @oppulence-gen kind=component
- * Workspace domain status and management.
+ * Workspace domain health, status, and management.
  *
  * Living Interface Template. This file is the contract, not the
  * implementation. Implementation lives in the siblings listed in `files`.
@@ -24,7 +24,7 @@ export const DomainsPanelLit = DomainsPanelLitSchema.parse({
 	domain: "",
 	owner: "route",
 	client: true,
-	summary: "Workspace domain status and management.",
+	summary: "Workspace domain health, status, and management.",
 	schemas: ["app/(product)/app/domains/_components/domains-panel/domains-panel.schema.ts"],
 	files: [
 		"app/(product)/app/domains/_components/domains-panel/domains-panel.tsx",
