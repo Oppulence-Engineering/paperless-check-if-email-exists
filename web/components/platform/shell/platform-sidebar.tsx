@@ -6,12 +6,11 @@ import { useState } from "react";
 
 import { WorkspaceSwitcher } from "@/components/features/workspaces/workspace-switcher/workspace-switcher";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuTrigger,
-} from "@oppulence/ui/components/dropdown-menu";
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@oppulence/ui/components/collapsible";
+import { DropdownMenuItem } from "@oppulence/ui/components/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@oppulence/ui/components/sheet";
 import {
 	Tooltip,
@@ -51,7 +50,7 @@ import { cn } from "@/lib/utils";
 
 import { surface } from "./shell-config";
 
-type SubItem = { href: string; label: string };
+type SubItem = { href: string; icon: Icon; label: string };
 type NavItem = { children?: SubItem[]; href: string; icon: Icon; label: string };
 
 /** Navigation groups follow the customer flows, not the API resources. */
@@ -94,6 +93,7 @@ const NAV_GROUPS: { items: NavItem[]; label?: string }[] = [
 			{
 				children: settingsSections.map((section) => ({
 					href: settingsHref(section.key),
+					icon: section.icon,
 					label: section.label,
 				})),
 				href: "/app/settings",
@@ -168,6 +168,52 @@ function SubNav({
 	);
 }
 
+/** The icon rail's version of SubNav: section icons under the parent, with tooltips. */
+function RailSubNav({
+	items,
+	label,
+	onNavigate,
+}: {
+	items: SubItem[];
+	label: string;
+	onNavigate?: () => void;
+}) {
+	const section = settingsSectionFromParam(useSearchParams().get("settings"));
+	// The rail list can be open on any page, so only mark a section on the settings page.
+	const current = usePathname() === "/app/settings" ? settingsHref(section.key) : null;
+	return (
+		<nav
+			aria-label={`Workspace ${label.toLowerCase()}`}
+			className="mt-1 grid gap-0.5 border-y border-white/[0.06] py-1"
+		>
+			{items.map(({ href, icon: Icon, label: itemLabel }) => {
+				const active = current === href;
+				return (
+					<Tooltip key={href}>
+						<TooltipTrigger asChild>
+							<Link
+								aria-current={active ? "page" : undefined}
+								aria-label={itemLabel}
+								className={cn(
+									"grid size-8 place-items-center rounded-lg border transition-colors",
+									active
+										? cn(surface.panel, surface.border, "text-white shadow-xs")
+										: "border-transparent text-neutral-500 hover:text-neutral-200",
+								)}
+								href={href}
+								onClick={onNavigate}
+							>
+								<Icon className="shrink-0" size={14} strokeWidth={1.8} />
+							</Link>
+						</TooltipTrigger>
+						<TooltipContent side="right">{itemLabel}</TooltipContent>
+					</Tooltip>
+				);
+			})}
+		</nav>
+	);
+}
+
 function NavLink({
 	collapsed,
 	item: { children, href, icon: Icon, label },
@@ -213,34 +259,32 @@ function NavLink({
 		);
 	}
 	if (children) {
-		// The rail has no room for sub-links, so they open beside it.
+		// The rail has no room for labels, so the section icons expand below.
 		return (
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<button
-						aria-label={label}
-						className={cn(
-							"grid size-8 cursor-pointer place-items-center rounded-lg border transition-colors",
-							active
-								? cn(surface.panel, surface.border, "text-white shadow-xs")
-								: "border-transparent text-neutral-500 hover:text-neutral-200 data-[state=open]:text-neutral-200",
-						)}
-						type="button"
-					>
-						<Icon className="shrink-0" size={16} strokeWidth={1.8} />
-					</button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="start" className="w-52" side="right" sideOffset={10}>
-					<DropdownMenuLabel className="text-xs text-muted-foreground">{label}</DropdownMenuLabel>
-					{children.map((child) => (
-						<DropdownMenuItem asChild key={child.href}>
-							<Link href={child.href} onClick={onNavigate}>
-								{child.label}
-							</Link>
-						</DropdownMenuItem>
-					))}
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<Collapsible defaultOpen={active}>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<CollapsibleTrigger asChild>
+							<button
+								aria-label={label}
+								className={cn(
+									"grid size-8 cursor-pointer place-items-center rounded-lg border transition-colors",
+									active
+										? cn(surface.panel, surface.border, "text-white shadow-xs")
+										: "border-transparent text-neutral-500 hover:text-neutral-200 data-[state=open]:text-neutral-200",
+								)}
+								type="button"
+							>
+								<Icon className="shrink-0" size={16} strokeWidth={1.8} />
+							</button>
+						</CollapsibleTrigger>
+					</TooltipTrigger>
+					<TooltipContent side="right">{label}</TooltipContent>
+				</Tooltip>
+				<CollapsibleContent>
+					<RailSubNav items={children} label={label} onNavigate={onNavigate} />
+				</CollapsibleContent>
+			</Collapsible>
 		);
 	}
 	return (
@@ -353,7 +397,7 @@ function Brand({ brand, collapsed }: { brand?: Branding; collapsed: boolean }) {
 
 /**
  * Desktop: a fixed icon rail that never expands; labels show as tooltips and
- * Settings opens its sections beside the rail. Mobile: a full drawer.
+ * Settings expands its section icons below it. Mobile: a full drawer.
  */
 export function PlatformSidebar({
 	brand,

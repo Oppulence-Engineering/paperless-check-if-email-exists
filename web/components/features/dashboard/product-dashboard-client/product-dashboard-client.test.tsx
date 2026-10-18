@@ -59,8 +59,12 @@ describe("ProductDashboardClient", () => {
 		// Pages bring their own landmark, so the shell must not add a second one.
 		expect(container.querySelectorAll("main")).toHaveLength(1);
 
-		fireEvent.pointerDown(screen.getByRole("button", { name: "Settings" }));
-		expect(await screen.findByRole("menuitem", { name: "Members" })).toHaveAttribute(
+		// Settings expands its sections below it in the rail, not in a menu.
+		const settings = screen.getByRole("button", { name: "Settings" });
+		expect(settings).toHaveAttribute("aria-expanded", "false");
+		fireEvent.click(settings);
+		expect(settings).toHaveAttribute("aria-expanded", "true");
+		expect(await screen.findByRole("link", { name: "Members" })).toHaveAttribute(
 			"href",
 			"/app/settings?settings=members",
 		);
