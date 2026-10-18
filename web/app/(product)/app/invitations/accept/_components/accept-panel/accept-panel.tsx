@@ -2,14 +2,8 @@ import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@oppulence/ui/components/card";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Row } from "@/components/platform/page-kit";
 
 import { type AcceptPanelPropsFields } from "./accept-panel.schema";
 
@@ -25,29 +19,33 @@ export type AcceptPanelProps = AcceptPanelPropsFields & ComponentPropsWithoutRef
 
 export function AcceptPanel({ className, invitationId, returnTo, ...props }: AcceptPanelProps) {
 	return (
-		<section
-			data-slot="accept-panel"
-			className={cn("grid min-h-full place-items-center p-6", className)}
-			{...props}
+		<Page
+			description="Review this action before joining the organization and switching your active workspace."
+			title="Accept organization invitation?"
+			width="sm"
 		>
-			<Card className="w-full max-w-lg">
-				<CardHeader>
-					<CardTitle>Accept organization invitation?</CardTitle>
-					<CardDescription>
-						Review this action before joining the organization and switching your active workspace.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="flex flex-wrap gap-3">
-					<form action="/api/auth/complete-invitation" method="post">
-						<input name="invitation" type="hidden" value={invitationId} />
-						<input name="return_to" type="hidden" value={returnTo} />
-						<Button type="submit">Accept invitation</Button>
-					</form>
-					<Button asChild variant="outline">
-						<Link href="/app/settings?settings=identity">Cancel</Link>
-					</Button>
-				</CardContent>
-			</Card>
-		</section>
+			<section
+				data-slot="accept-panel"
+				className={cn("flex flex-col gap-10", className)}
+				{...props}
+			>
+				<Group>
+					<Row>
+						<div className="flex flex-wrap justify-end gap-2">
+							<Button asChild className="rounded-lg" variant="outline">
+								<Link href="/app/settings?settings=identity">Cancel</Link>
+							</Button>
+							<form action="/api/auth/complete-invitation" method="post">
+								<input name="invitation" type="hidden" value={invitationId} />
+								<input name="return_to" type="hidden" value={returnTo} />
+								<Button className="rounded-lg" type="submit">
+									Accept invitation
+								</Button>
+							</form>
+						</div>
+					</Row>
+				</Group>
+			</section>
+		</Page>
 	);
 }

@@ -10,10 +10,11 @@ import Link from "next/link";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+
 import { type PipelinesPanelPropsFields } from "./pipelines-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `pipelines-panel.lit.ts`. */
@@ -134,40 +135,55 @@ export function PipelinesPanel({ className, ...props }: PipelinesPanelProps) {
 		},
 	});
 	const error = [list, detail, runs, run, create, action].find((request) => request.isError)?.error;
+	const field = "h-10 rounded-lg md:w-72";
 	return (
-		<section data-slot="pipelines-panel" className={cn("space-y-6", className)} {...props}>
-			<header>
-				<h1 className="text-3xl font-semibold">Pipelines</h1>
-				<p className="mt-2 text-muted-foreground">
-					Schedule verification, run it on demand, and inspect each delivery.
-				</p>
-			</header>
-			{error ? (
-				<p role="alert" className="text-destructive">
-					{error.message}
-				</p>
-			) : null}
-			{notice ? <p role="status">{notice}</p> : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Your pipelines</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{list.data?.pipelines.length ? (
-						<ul className="divide-y">
-							{list.data.pipelines.map((pipeline) => (
-								<li className="flex items-center justify-between gap-3 py-3" key={pipeline.id}>
-									<div>
-										<p className="font-medium">{pipeline.name}</p>
-										<p className="text-sm text-muted-foreground">
-											{pipeline.status} · Next{" "}
+		<Page
+			description="Schedule verification, run it on demand, and inspect each delivery."
+			title="Pipelines"
+		>
+			<section
+				data-slot="pipelines-panel"
+				className={cn("flex flex-col gap-10", className)}
+				{...props}
+			>
+				{error ? (
+					<p
+						role="alert"
+						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+					>
+						{error.message}
+					</p>
+				) : null}
+				{notice ? (
+					<p
+						role="status"
+						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
+					>
+						{notice}
+					</p>
+				) : null}
+				<Section title="Your pipelines">
+					<Group>
+						{list.data?.pipelines.length ? (
+							list.data.pipelines.map((pipeline) => (
+								<div
+									className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+									key={pipeline.id}
+								>
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-sm text-white">{pipeline.name}</p>
+										<p className="text-xs text-[#858585]">
+											Next{" "}
 											{pipeline.next_run_at
 												? new Date(pipeline.next_run_at).toLocaleString()
 												: "not scheduled"}
 										</p>
 									</div>
+									<Pill tone={pipeline.status === "active" ? "green" : "gray"}>
+										{pipeline.status}
+									</Pill>
 									<Button
-										variant="outline"
+										variant="secondary"
 										size="sm"
 										onClick={() => {
 											setSelectedId(pipeline.id);
@@ -178,271 +194,294 @@ export function PipelinesPanel({ className, ...props }: PipelinesPanelProps) {
 									>
 										Open
 									</Button>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p>No pipelines yet.</p>
-					)}
-				</CardContent>
-			</Card>
-			{detail.data ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>{detail.data.name}</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-5">
-						<p>
-							{detail.data.status} · {detail.data.source.type.replaceAll("_", " ")} ·{" "}
-							{detail.data.schedule.cron} ({detail.data.schedule.timezone})
-						</p>
-						<div className="flex flex-wrap gap-2">
-							<Button
-								variant="outline"
-								disabled={action.isPending || detail.data.status === "paused"}
-								onClick={() => {
-									action.mutate("pause");
-								}}
-							>
-								Pause
-							</Button>
-							<Button
-								variant="outline"
-								disabled={action.isPending || detail.data.status === "active"}
-								onClick={() => {
-									action.mutate("resume");
-								}}
-							>
-								Resume
-							</Button>
-							<Button
-								disabled={action.isPending}
-								onClick={() => {
-									if (window.confirm("Run this pipeline now?")) action.mutate("trigger");
-								}}
-							>
-								Run now
-							</Button>
-							<Button
-								variant="destructive"
-								disabled={action.isPending}
-								onClick={() => {
-									if (window.confirm("Delete this pipeline and stop future runs?"))
-										action.mutate("delete");
-								}}
-							>
-								Delete
-							</Button>
-						</div>
-						<form
-							className="flex gap-2"
-							onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-								event.preventDefault();
-								if (rename.trim()) action.mutate("rename");
-							}}
-						>
-							<Label className="sr-only" htmlFor="pipeline-rename">
-								Pipeline name
-							</Label>
-							<Input
-								id="pipeline-rename"
-								value={rename}
-								onChange={(event) => {
-									setRename(event.target.value);
-								}}
-							/>
-							<Button type="submit" variant="outline" disabled={action.isPending}>
-								Save name
-							</Button>
-						</form>
-						{detail.data.source.type === "push" ? (
-							<div className="space-y-2">
-								<Label htmlFor="pipeline-push">Push email addresses</Label>
-								<textarea
-									id="pipeline-push"
-									aria-label="Push email addresses"
-									className="min-h-24 w-full rounded border bg-background p-3"
-									value={pushRows}
-									onChange={(event) => {
-										setPushRows(event.target.value);
-									}}
-								/>
-								<Button
-									disabled={action.isPending || !pushRows.trim()}
-									onClick={() => {
-										action.mutate("push");
+								</div>
+							))
+						) : (
+							<Row>
+								<p className="text-sm text-[#858585]">No pipelines yet.</p>
+							</Row>
+						)}
+					</Group>
+				</Section>
+				{detail.data ? (
+					<Section
+						description={`${detail.data.status} · ${detail.data.source.type.replaceAll("_", " ")} · ${detail.data.schedule.cron} (${detail.data.schedule.timezone})`}
+						title={detail.data.name}
+					>
+						<Group>
+							<Row>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										className="rounded-lg"
+										variant="outline"
+										disabled={action.isPending || detail.data.status === "paused"}
+										onClick={() => {
+											action.mutate("pause");
+										}}
+									>
+										Pause
+									</Button>
+									<Button
+										className="rounded-lg"
+										variant="outline"
+										disabled={action.isPending || detail.data.status === "active"}
+										onClick={() => {
+											action.mutate("resume");
+										}}
+									>
+										Resume
+									</Button>
+									<Button
+										className="rounded-lg"
+										disabled={action.isPending}
+										onClick={() => {
+											if (window.confirm("Run this pipeline now?")) action.mutate("trigger");
+										}}
+									>
+										Run now
+									</Button>
+									<Button
+										className="rounded-lg"
+										variant="destructive"
+										disabled={action.isPending}
+										onClick={() => {
+											if (window.confirm("Delete this pipeline and stop future runs?"))
+												action.mutate("delete");
+										}}
+									>
+										Delete
+									</Button>
+								</div>
+							</Row>
+							<Row label={<Label htmlFor="pipeline-rename">Pipeline name</Label>}>
+								<form
+									className="flex w-full gap-2 md:justify-end"
+									onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+										event.preventDefault();
+										if (rename.trim()) action.mutate("rename");
 									}}
 								>
-									Push rows
-								</Button>
-							</div>
-						) : null}
-						<div>
-							<h3 className="font-semibold">Run history</h3>
-							{runs.data?.runs.length ? (
-								<ul className="divide-y">
-									{runs.data.runs.map((item) => (
-										<li className="flex items-center justify-between gap-3 py-3" key={item.id}>
-											<div>
-												<p>
-													Run {String(item.id)} · {item.status}
-												</p>
-												<p className="text-sm text-muted-foreground">
+									<Input
+										className={field}
+										id="pipeline-rename"
+										value={rename}
+										onChange={(event) => {
+											setRename(event.target.value);
+										}}
+									/>
+									<Button
+										className="h-10 rounded-lg"
+										type="submit"
+										variant="outline"
+										disabled={action.isPending}
+									>
+										Save name
+									</Button>
+								</form>
+							</Row>
+							{detail.data.source.type === "push" ? (
+								<Row
+									label={<Label htmlFor="pipeline-push">Push email addresses</Label>}
+									layout="stacked"
+								>
+									<div className="flex w-full flex-col gap-3">
+										<textarea
+											id="pipeline-push"
+											aria-label="Push email addresses"
+											className="min-h-24 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm dark:bg-input/30"
+											value={pushRows}
+											onChange={(event) => {
+												setPushRows(event.target.value);
+											}}
+										/>
+										<div className="flex justify-end">
+											<Button
+												className="rounded-lg"
+												disabled={action.isPending || !pushRows.trim()}
+												onClick={() => {
+													action.mutate("push");
+												}}
+											>
+												Push rows
+											</Button>
+										</div>
+									</div>
+								</Row>
+							) : null}
+						</Group>
+						<Section title="Run history">
+							<Group>
+								{runs.data?.runs.length ? (
+									runs.data.runs.map((item) => (
+										<div
+											className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+											key={item.id}
+										>
+											<div className="min-w-0 flex-1">
+												<p className="truncate text-sm text-white">Run {String(item.id)}</p>
+												<p className="text-xs text-[#858585]">
 													{new Date(item.created_at).toLocaleString()} · Delivery{" "}
 													{item.delivery_status}
 												</p>
 											</div>
+											<Pill>{item.status}</Pill>
 											<Button
 												size="sm"
-												variant="outline"
+												variant="secondary"
 												onClick={() => {
 													setSelectedRun(item.id);
 												}}
 											>
 												Inspect
 											</Button>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p>No runs yet.</p>
-							)}
-						</div>
-						<div className="flex gap-2">
-							<Button
-								size="sm"
-								variant="outline"
-								disabled={offset === 0}
-								onClick={() => {
-									setOffset(Math.max(0, offset - 20));
-								}}
-							>
-								Previous
-							</Button>
-							<Button
-								size="sm"
-								variant="outline"
-								disabled={!runs.data || offset + 20 >= runs.data.total}
-								onClick={() => {
-									setOffset(offset + 20);
-								}}
-							>
-								Next
-							</Button>
-						</div>
-						{run.data ? (
-							<div className="rounded border p-4">
-								<p className="font-semibold">
-									Run {String(run.data.id)} · {run.data.status}
-								</p>
-								<p>
-									Delivery: {run.data.delivery_status} · Billed: {run.data.billed_emails}
-								</p>
-								{run.data.error_message ? (
-									<p role="alert" className="text-destructive">
-										{run.data.error_message}
-									</p>
-								) : null}
-								{run.data.job_id ? (
-									<Link className="underline" href={`/app/jobs?job=${String(run.data.job_id)}`}>
-										View job results
-									</Link>
-								) : null}
+										</div>
+									))
+								) : (
+									<Row>
+										<p className="text-sm text-[#858585]">No runs yet.</p>
+									</Row>
+								)}
+							</Group>
+							<div className="flex justify-end gap-2">
+								<Button
+									className="rounded-lg"
+									size="sm"
+									variant="outline"
+									disabled={offset === 0}
+									onClick={() => {
+										setOffset(Math.max(0, offset - 20));
+									}}
+								>
+									Previous
+								</Button>
+								<Button
+									className="rounded-lg"
+									size="sm"
+									variant="outline"
+									disabled={!runs.data || offset + 20 >= runs.data.total}
+									onClick={() => {
+										setOffset(offset + 20);
+									}}
+								>
+									Next
+								</Button>
 							</div>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Create a pipeline</CardTitle>
-				</CardHeader>
-				<CardContent>
+							{run.data ? (
+								<Group>
+									<Row
+										description={`Delivery: ${run.data.delivery_status} · Billed: ${String(run.data.billed_emails)}`}
+										label={`Run ${String(run.data.id)} · ${run.data.status}`}
+									>
+										{run.data.job_id ? (
+											<Link
+												className="text-sm text-neutral-300 underline hover:text-white"
+												href={`/app/jobs?job=${String(run.data.job_id)}`}
+											>
+												View job results
+											</Link>
+										) : null}
+									</Row>
+									{run.data.error_message ? (
+										<Row>
+											<p role="alert" className="text-sm text-red-300">
+												{run.data.error_message}
+											</p>
+										</Row>
+									) : null}
+								</Group>
+							) : null}
+						</Section>
+					</Section>
+				) : null}
+				<Section
+					description="New pipelines start paused. Review the source and schedule before resuming."
+					title="Create a pipeline"
+				>
 					<form
-						className="grid gap-3 sm:grid-cols-2"
+						className="flex flex-col gap-4"
 						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 							event.preventDefault();
 							create.mutate();
 						}}
 					>
-						<div>
-							<Label htmlFor="pipeline-name">Name</Label>
-							<Input
-								id="pipeline-name"
-								required
-								value={name}
-								onChange={(event) => {
-									setName(event.target.value);
-								}}
-							/>
-						</div>
-						<div>
-							<Label htmlFor="pipeline-source">Source</Label>
-							<select
-								id="pipeline-source"
-								className="h-9 w-full rounded border bg-background px-3"
-								value={sourceType}
-								onChange={(event) => {
-									setSourceType(event.target.value === "push" ? "push" : "list_snapshot");
-								}}
-							>
-								<option value="list_snapshot">Saved list</option>
-								<option value="push">Push API</option>
-							</select>
-						</div>
-						{sourceType === "list_snapshot" ? (
-							<div>
-								<Label htmlFor="pipeline-list">List ID</Label>
+						<Group>
+							<Row label={<Label htmlFor="pipeline-name">Name</Label>}>
 								<Input
-									id="pipeline-list"
-									inputMode="numeric"
-									value={listId}
+									className={field}
+									id="pipeline-name"
+									required
+									value={name}
 									onChange={(event) => {
-										setListId(event.target.value);
+										setName(event.target.value);
 									}}
 								/>
-							</div>
-						) : (
-							<div>
-								<Label htmlFor="pipeline-token">Push token ID</Label>
-								<Input
-									id="pipeline-token"
-									value={tokenId}
+							</Row>
+							<Row label={<Label htmlFor="pipeline-source">Source</Label>}>
+								<select
+									id="pipeline-source"
+									className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72"
+									value={sourceType}
 									onChange={(event) => {
-										setTokenId(event.target.value);
+										setSourceType(event.target.value === "push" ? "push" : "list_snapshot");
+									}}
+								>
+									<option value="list_snapshot">Saved list</option>
+									<option value="push">Push API</option>
+								</select>
+							</Row>
+							{sourceType === "list_snapshot" ? (
+								<Row label={<Label htmlFor="pipeline-list">List ID</Label>}>
+									<Input
+										className={field}
+										id="pipeline-list"
+										inputMode="numeric"
+										value={listId}
+										onChange={(event) => {
+											setListId(event.target.value);
+										}}
+									/>
+								</Row>
+							) : (
+								<Row label={<Label htmlFor="pipeline-token">Push token ID</Label>}>
+									<Input
+										className={field}
+										id="pipeline-token"
+										value={tokenId}
+										onChange={(event) => {
+											setTokenId(event.target.value);
+										}}
+									/>
+								</Row>
+							)}
+							<Row label={<Label htmlFor="pipeline-cron">Cron schedule</Label>}>
+								<Input
+									className={field}
+									id="pipeline-cron"
+									value={cron}
+									onChange={(event) => {
+										setCron(event.target.value);
 									}}
 								/>
-							</div>
-						)}
-						<div>
-							<Label htmlFor="pipeline-cron">Cron schedule</Label>
-							<Input
-								id="pipeline-cron"
-								value={cron}
-								onChange={(event) => {
-									setCron(event.target.value);
-								}}
-							/>
+							</Row>
+							<Row label={<Label htmlFor="pipeline-timezone">Timezone</Label>}>
+								<Input
+									className={field}
+									id="pipeline-timezone"
+									value={timezone}
+									onChange={(event) => {
+										setTimezone(event.target.value);
+									}}
+								/>
+							</Row>
+						</Group>
+						<div className="flex justify-end">
+							<Button className="rounded-lg" type="submit" disabled={create.isPending}>
+								Create paused pipeline
+							</Button>
 						</div>
-						<div>
-							<Label htmlFor="pipeline-timezone">Timezone</Label>
-							<Input
-								id="pipeline-timezone"
-								value={timezone}
-								onChange={(event) => {
-									setTimezone(event.target.value);
-								}}
-							/>
-						</div>
-						<p className="text-sm text-muted-foreground sm:col-span-2">
-							New pipelines start paused. Review the source and schedule before resuming.
-						</p>
-						<Button type="submit" disabled={create.isPending}>
-							Create paused pipeline
-						</Button>
 					</form>
-				</CardContent>
-			</Card>
-		</section>
+				</Section>
+			</section>
+		</Page>
 	);
 }

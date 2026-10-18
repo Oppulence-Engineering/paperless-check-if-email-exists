@@ -10,10 +10,11 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+
 import { type SuppressionsPanelPropsFields } from "./suppressions-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `suppressions-panel.lit.ts`. */
@@ -119,75 +120,105 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 		(request) => request.isError,
 	)?.error;
 	return (
-		<section data-slot="suppressions-panel" className={cn("space-y-6", className)} {...props}>
-			<header>
-				<h1 className="text-3xl font-semibold">Suppressions</h1>
-				<p className="mt-2 text-muted-foreground">
-					Keep addresses out of sends and inspect why each entry was added.
-				</p>
-			</header>
-			{error ? (
-				<p role="alert" className="text-destructive">
-					{error.message}
-				</p>
-			) : null}
-			{notice ? <p role="status">{notice}</p> : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Suppressed addresses</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{entries.isPending ? <p role="status">Loading suppressions…</p> : null}
-					{entries.data?.entries.length ? (
-						<div className="overflow-x-auto">
-							<table className="w-full text-sm">
-								<thead>
-									<tr>
-										<th className="p-2 text-left">Address</th>
-										<th className="p-2 text-left">Reason</th>
-										<th className="p-2 text-left">Status</th>
-										<th className="p-2 text-left">Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									{entries.data.entries.map((entry) => (
-										<tr className="border-t" key={entry.id}>
-											<td className="p-2">{entry.email}</td>
-											<td className="p-2">{entry.reason}</td>
-											<td className="p-2">{entry.status}</td>
-											<td className="flex gap-2 p-2">
-												<Button
-													size="sm"
-													variant="outline"
-													onClick={() => {
-														setSelectedId(entry.id);
-													}}
-												>
-													Audit
-												</Button>
-												<Button
-													size="sm"
-													variant="ghost"
-													disabled={remove.isPending}
-													onClick={() => {
-														if (window.confirm(`Remove ${entry.email} from suppressions?`))
-															remove.mutate(entry.id);
-													}}
-												>
-													Remove
-												</Button>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					) : (
-						<p>No suppressions found.</p>
-					)}
-					<div className="flex items-center gap-3">
-						<span>{entries.data?.total ?? 0} total</span>
+		<Page
+			description="Keep addresses out of sends and inspect why each entry was added."
+			title="Suppressions"
+		>
+			<section
+				data-slot="suppressions-panel"
+				className={cn("flex flex-col gap-10", className)}
+				{...props}
+			>
+				{error ? (
+					<p
+						role="alert"
+						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+					>
+						{error.message}
+					</p>
+				) : null}
+				{notice ? (
+					<p
+						role="status"
+						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
+					>
+						{notice}
+					</p>
+				) : null}
+				<Section
+					actions={
 						<Button
+							className="rounded-lg"
+							size="sm"
+							variant="outline"
+							disabled={exportCsv.isPending}
+							onClick={() => {
+								exportCsv.mutate();
+							}}
+						>
+							Export CSV
+						</Button>
+					}
+					title="Suppressed addresses"
+				>
+					<Group>
+						{entries.isPending ? (
+							<Row>
+								<p className="text-sm text-[#858585]" role="status">
+									Loading suppressions…
+								</p>
+							</Row>
+						) : null}
+						{entries.data?.entries.length ? (
+							<>
+								<div className="px-5 py-3 text-xs font-medium text-[#858585]">
+									{entries.data.total} total
+								</div>
+								{entries.data.entries.map((entry) => (
+									<div
+										className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+										key={entry.id}
+									>
+										<div className="min-w-0 flex-1">
+											<p className="truncate text-sm text-white">{entry.email}</p>
+											<p className="text-xs text-[#858585] capitalize">{entry.reason}</p>
+										</div>
+										<Pill>{entry.status}</Pill>
+										<div className="flex items-center gap-2">
+											<Button
+												size="sm"
+												variant="secondary"
+												onClick={() => {
+													setSelectedId(entry.id);
+												}}
+											>
+												Audit
+											</Button>
+											<Button
+												className="text-red-400 hover:text-red-300"
+												size="sm"
+												variant="ghost"
+												disabled={remove.isPending}
+												onClick={() => {
+													if (window.confirm(`Remove ${entry.email} from suppressions?`))
+														remove.mutate(entry.id);
+												}}
+											>
+												Remove
+											</Button>
+										</div>
+									</div>
+								))}
+							</>
+						) : entries.isPending ? null : (
+							<Row>
+								<p className="text-sm text-[#858585]">No suppressions found.</p>
+							</Row>
+						)}
+					</Group>
+					<div className="flex justify-end gap-2">
+						<Button
+							className="rounded-lg"
 							size="sm"
 							variant="outline"
 							disabled={offset === 0}
@@ -198,6 +229,7 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 							Previous
 						</Button>
 						<Button
+							className="rounded-lg"
 							size="sm"
 							variant="outline"
 							disabled={!entries.data || offset + 20 >= entries.data.total}
@@ -207,114 +239,101 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 						>
 							Next
 						</Button>
-						<Button
-							size="sm"
-							variant="outline"
-							disabled={exportCsv.isPending}
-							onClick={() => {
-								exportCsv.mutate();
-							}}
-						>
-							Export CSV
-						</Button>
 					</div>
-				</CardContent>
-			</Card>
-			{selectedId ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>Decision history for entry {String(selectedId)}</CardTitle>
-					</CardHeader>
-					<CardContent>
-						{events.data?.events.length ? (
-							<ol className="space-y-2">
-								{events.data.events.map((event) => (
-									<li className="rounded border p-2 text-sm" key={event.id}>
-										{event.event_type} · {event.actor_type} ·{" "}
-										{new Date(event.created_at).toLocaleString()}
-									</li>
-								))}
-							</ol>
-						) : (
-							<p>No events recorded.</p>
-						)}
-					</CardContent>
-				</Card>
-			) : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Check an address</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					<form
-						className="flex gap-2"
-						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-							event.preventDefault();
-							setCheckEmail(checkInput.trim());
-						}}
-					>
-						<Label className="sr-only" htmlFor="suppression-email">
-							Email address
-						</Label>
-						<Input
-							id="suppression-email"
-							type="email"
-							required
-							value={checkInput}
-							onChange={(event) => {
-								setCheckInput(event.target.value);
-							}}
-						/>
-						<Button type="submit">Check</Button>
-					</form>
-					{check.data ? (
-						<p role="status">
-							{check.data.suppressed ? "Suppressed" : "Not suppressed"}
-							{check.data.reason ? ` · ${check.data.reason}` : ""}
-						</p>
-					) : null}
-				</CardContent>
-			</Card>
-			<Card>
-				<CardHeader>
-					<CardTitle>Add or import</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					<Label htmlFor="suppression-batch">Addresses, one per line</Label>
-					<textarea
-						id="suppression-batch"
-						aria-label="Addresses"
-						className="min-h-32 w-full rounded border bg-background p-3"
-						value={batch}
-						onChange={(event) => {
-							setBatch(event.target.value);
-						}}
-					/>
-					<Label htmlFor="suppression-reason">Reason</Label>
-					<select
-						id="suppression-reason"
-						className="h-9 w-full rounded border bg-background px-3"
-						value={reason}
-						onChange={(event) => {
-							const parsed = reasonSchema.safeParse(event.target.value);
-							if (parsed.success) setReason(parsed.data);
-						}}
-					>
-						<option value="manual">Manual</option>
-						<option value="bounce">Bounce</option>
-						<option value="complaint">Complaint</option>
-						<option value="unsubscribe">Unsubscribe</option>
-					</select>
-					<div className="flex gap-2">
-						<Button
-							disabled={save.isPending || !batch.trim()}
-							onClick={() => {
-								save.mutate("add");
-							}}
+				</Section>
+				{selectedId ? (
+					<Section title={`Decision history for entry ${String(selectedId)}`}>
+						<Group>
+							{events.data?.events.length ? (
+								events.data.events.map((event) => (
+									<div className="px-5 py-4 text-sm text-white" key={event.id}>
+										{event.event_type}{" "}
+										<span className="text-xs text-[#858585]">
+											· {event.actor_type} · {new Date(event.created_at).toLocaleString()}
+										</span>
+									</div>
+								))
+							) : (
+								<Row>
+									<p className="text-sm text-[#858585]">No events recorded.</p>
+								</Row>
+							)}
+						</Group>
+					</Section>
+				) : null}
+				<form
+					onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+						event.preventDefault();
+						setCheckEmail(checkInput.trim());
+					}}
+				>
+					<Group>
+						<Row
+							description={
+								check.data ? (
+									<span role="status">
+										{check.data.suppressed ? "Suppressed" : "Not suppressed"}
+										{check.data.reason ? ` · ${check.data.reason}` : ""}
+									</span>
+								) : undefined
+							}
+							label="Check an address"
 						>
-							Add
-						</Button>
+							<Label className="sr-only" htmlFor="suppression-email">
+								Email address
+							</Label>
+							<Input
+								className="h-10 rounded-lg"
+								id="suppression-email"
+								type="email"
+								required
+								value={checkInput}
+								onChange={(event) => {
+									setCheckInput(event.target.value);
+								}}
+							/>
+							<Button className="h-10 rounded-lg" type="submit">
+								Check
+							</Button>
+						</Row>
+					</Group>
+				</form>
+				<Section title="Add or import">
+					<Group>
+						<Row
+							label={<Label htmlFor="suppression-batch">Addresses, one per line</Label>}
+							layout="stacked"
+						>
+							<textarea
+								id="suppression-batch"
+								aria-label="Addresses"
+								className="min-h-32 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm dark:bg-input/30"
+								value={batch}
+								onChange={(event) => {
+									setBatch(event.target.value);
+								}}
+							/>
+						</Row>
+						<Row label={<Label htmlFor="suppression-reason">Reason</Label>}>
+							<select
+								id="suppression-reason"
+								className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72"
+								value={reason}
+								onChange={(event) => {
+									const parsed = reasonSchema.safeParse(event.target.value);
+									if (parsed.success) setReason(parsed.data);
+								}}
+							>
+								<option value="manual">Manual</option>
+								<option value="bounce">Bounce</option>
+								<option value="complaint">Complaint</option>
+								<option value="unsubscribe">Unsubscribe</option>
+							</select>
+						</Row>
+					</Group>
+					<div className="flex justify-end gap-2">
 						<Button
+							className="rounded-lg"
 							variant="outline"
 							disabled={save.isPending || !batch.trim()}
 							onClick={() => {
@@ -323,9 +342,18 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 						>
 							Import batch
 						</Button>
+						<Button
+							className="rounded-lg"
+							disabled={save.isPending || !batch.trim()}
+							onClick={() => {
+								save.mutate("add");
+							}}
+						>
+							Add
+						</Button>
 					</div>
-				</CardContent>
-			</Card>
-		</section>
+				</Section>
+			</section>
+		</Page>
 	);
 }

@@ -10,10 +10,11 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+
 import { type DomainsPanelPropsFields } from "./domains-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `domains-panel.lit.ts`. */
@@ -96,43 +97,59 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 	const error = [me, domains, detail, create, update, remove].find(
 		(request) => request.isError,
 	)?.error;
+	const field = "h-10 rounded-lg md:w-72";
 	return (
-		<section data-slot="domains-panel" className={cn("space-y-6", className)} {...props}>
-			<header>
-				<h1 className="text-3xl font-semibold">Workspace domains</h1>
-				<p className="mt-2 text-muted-foreground">
-					Manage domains used by this workspace and review their verification state.
-				</p>
-			</header>
-			{me.data ? (
-				<p className="text-sm">
-					{me.data.tenant_name} · {me.data.plan_tier} · {me.data.status}
-				</p>
-			) : null}
-			{error ? (
-				<p role="alert" className="text-destructive">
-					{error.message}
-				</p>
-			) : null}
-			{notice ? <p role="status">{notice}</p> : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Domains</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{domains.data?.domains.length ? (
-						<ul className="divide-y">
-							{domains.data.domains.map((item) => (
-								<li className="flex items-center justify-between gap-3 py-3" key={item.domain}>
-									<div>
-										<p className="font-medium">{item.domain}</p>
-										<p className="text-sm text-muted-foreground">
-											{item.is_verified ? "Verified" : "Unverified"} ·{" "}
-											{item.is_active ? "Active" : "Inactive"}
-										</p>
+		<Page
+			description="Manage domains used by this workspace and review their verification state."
+			title="Workspace domains"
+		>
+			<section
+				data-slot="domains-panel"
+				className={cn("flex flex-col gap-10", className)}
+				{...props}
+			>
+				{error ? (
+					<p
+						role="alert"
+						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+					>
+						{error.message}
+					</p>
+				) : null}
+				{notice ? (
+					<p
+						role="status"
+						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
+					>
+						{notice}
+					</p>
+				) : null}
+				<Section
+					description={
+						me.data
+							? `${me.data.tenant_name} · ${me.data.plan_tier} · ${me.data.status}`
+							: undefined
+					}
+					title="Domains"
+				>
+					<Group>
+						{domains.data?.domains.length ? (
+							domains.data.domains.map((item) => (
+								<div
+									className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+									key={item.domain}
+								>
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-sm text-white">{item.domain}</p>
 									</div>
+									<Pill tone={item.is_verified ? "green" : "yellow"}>
+										{item.is_verified ? "Verified" : "Unverified"}
+									</Pill>
+									<Pill tone={item.is_active ? "blue" : "gray"}>
+										{item.is_active ? "Active" : "Inactive"}
+									</Pill>
 									<Button
-										variant="outline"
+										variant="secondary"
 										size="sm"
 										onClick={() => {
 											setSelected(item.domain);
@@ -141,113 +158,120 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 									>
 										Manage
 									</Button>
-								</li>
-							))}
-						</ul>
-					) : (
-						<p>No domains added.</p>
-					)}
-				</CardContent>
-			</Card>
-			{detail.data ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>{detail.data.domain}</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<p>
-							{detail.data.is_verified ? "Verified" : "Unverified"} ·{" "}
-							{detail.data.is_active ? "Active" : "Inactive"} · Added{" "}
-							{new Date(detail.data.created_at).toLocaleDateString()}
-						</p>
-						<div className="flex gap-2">
-							<Button
-								variant="outline"
-								disabled={update.isPending || (!detail.data.is_verified && !detail.data.is_active)}
-								onClick={() => {
-									update.mutate({ isActive: !detail.data.is_active });
-								}}
-							>
-								{detail.data.is_active ? "Deactivate" : "Activate verified domain"}
-							</Button>
-							<Button
-								variant="destructive"
-								disabled={remove.isPending}
-								onClick={() => {
-									if (window.confirm(`Remove ${detail.data.domain} from this workspace?`))
-										remove.mutate();
-								}}
-							>
-								Remove
-							</Button>
-						</div>
-						<form
-							className="flex gap-2"
-							onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-								event.preventDefault();
-								update.mutate({ notes: editNotes.trim() });
-							}}
-						>
-							<Label className="sr-only" htmlFor="domain-notes-edit">
-								Notes
-							</Label>
-							<Input
-								id="domain-notes-edit"
-								value={editNotes}
-								onChange={(event) => {
-									setEditNotes(event.target.value);
-								}}
-							/>
-							<Button type="submit" variant="outline" disabled={update.isPending}>
-								Save notes
-							</Button>
-						</form>
-					</CardContent>
-				</Card>
-			) : null}
-			<Card>
-				<CardHeader>
-					<CardTitle>Add a domain</CardTitle>
-				</CardHeader>
-				<CardContent>
+								</div>
+							))
+						) : (
+							<Row>
+								<p className="text-sm text-[#858585]">No domains added.</p>
+							</Row>
+						)}
+					</Group>
+				</Section>
+				{detail.data ? (
+					<Section
+						description={`${detail.data.is_verified ? "Verified" : "Unverified"} · ${detail.data.is_active ? "Active" : "Inactive"} · Added ${new Date(detail.data.created_at).toLocaleDateString()}`}
+						title={detail.data.domain}
+					>
+						<Group>
+							<Row>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										className="rounded-lg"
+										variant="outline"
+										disabled={
+											update.isPending || (!detail.data.is_verified && !detail.data.is_active)
+										}
+										onClick={() => {
+											update.mutate({ isActive: !detail.data.is_active });
+										}}
+									>
+										{detail.data.is_active ? "Deactivate" : "Activate verified domain"}
+									</Button>
+									<Button
+										className="rounded-lg"
+										variant="destructive"
+										disabled={remove.isPending}
+										onClick={() => {
+											if (window.confirm(`Remove ${detail.data.domain} from this workspace?`))
+												remove.mutate();
+										}}
+									>
+										Remove
+									</Button>
+								</div>
+							</Row>
+							<Row label={<Label htmlFor="domain-notes-edit">Notes</Label>}>
+								<form
+									className="flex w-full gap-2 md:justify-end"
+									onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+										event.preventDefault();
+										update.mutate({ notes: editNotes.trim() });
+									}}
+								>
+									<Input
+										className={field}
+										id="domain-notes-edit"
+										value={editNotes}
+										onChange={(event) => {
+											setEditNotes(event.target.value);
+										}}
+									/>
+									<Button
+										className="h-10 rounded-lg"
+										type="submit"
+										variant="outline"
+										disabled={update.isPending}
+									>
+										Save notes
+									</Button>
+								</form>
+							</Row>
+						</Group>
+					</Section>
+				) : null}
+				<Section
+					description="New domains start inactive. Verify ownership before activating."
+					title="Add a domain"
+				>
 					<form
-						className="grid gap-3 sm:grid-cols-2"
+						className="flex flex-col gap-4"
 						onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 							event.preventDefault();
 							create.mutate();
 						}}
 					>
-						<div>
-							<Label htmlFor="new-domain">Domain</Label>
-							<Input
-								id="new-domain"
-								required
-								placeholder="example.com"
-								value={domain}
-								onChange={(event) => {
-									setDomain(event.target.value);
-								}}
-							/>
+						<Group>
+							<Row label={<Label htmlFor="new-domain">Domain</Label>}>
+								<Input
+									className={field}
+									id="new-domain"
+									required
+									placeholder="example.com"
+									value={domain}
+									onChange={(event) => {
+										setDomain(event.target.value);
+									}}
+								/>
+							</Row>
+							<Row label={<Label htmlFor="new-domain-notes">Notes</Label>}>
+								<Input
+									className={field}
+									id="new-domain-notes"
+									value={notes}
+									onChange={(event) => {
+										setNotes(event.target.value);
+									}}
+								/>
+							</Row>
+						</Group>
+						<div className="flex justify-end">
+							<Button className="rounded-lg" type="submit" disabled={create.isPending}>
+								Add inactive domain
+							</Button>
 						</div>
-						<div>
-							<Label htmlFor="new-domain-notes">Notes</Label>
-							<Input
-								id="new-domain-notes"
-								value={notes}
-								onChange={(event) => {
-									setNotes(event.target.value);
-								}}
-							/>
-						</div>
-						<p className="text-sm text-muted-foreground sm:col-span-2">
-							New domains start inactive. Verify ownership before activating.
-						</p>
-						<Button type="submit" disabled={create.isPending}>
-							Add inactive domain
-						</Button>
 					</form>
-				</CardContent>
-			</Card>
-		</section>
+				</Section>
+			</section>
+		</Page>
 	);
 }

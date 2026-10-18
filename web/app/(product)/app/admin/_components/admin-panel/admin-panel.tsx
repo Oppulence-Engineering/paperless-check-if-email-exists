@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Row } from "@/components/platform/page-kit";
 
 import { type AdminPanelPropsFields } from "./admin-panel.schema";
 
@@ -23,47 +24,45 @@ const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
 export function AdminPanel({ tenants, className, ...props }: AdminPanelProps) {
 	return (
-		<section className={cn("settings-page", className)} data-slot="admin-panel" {...props}>
-			<header className="settings-page-intro">
-				<h1 className="settings-page-title">Tenants</h1>
-				<p className="settings-page-description">
-					Every workspace on this deployment. Access is limited to the platform admin allowlist and
-					every visit is written to the identity audit trail.
-				</p>
-				<Link href="/app/admin/api" className="text-sm underline">
+		<Page
+			actions={
+				<Link href="/app/admin/api" className="text-sm text-[#858585] hover:text-neutral-200">
 					Open the Rust platform API console
 				</Link>
-			</header>
-
-			<div className="settings-panel">
-				<div className="settings-row" data-header>
-					<p className="settings-row-label">
+			}
+			description="Every workspace on this deployment. Access is limited to the platform admin allowlist and every visit is written to the identity audit trail."
+			title="Tenants"
+		>
+			<section className={cn("flex flex-col gap-10", className)} data-slot="admin-panel" {...props}>
+				<Group>
+					<div className="px-5 py-3 text-xs font-medium text-[#858585]">
 						{tenants.length} {tenants.length === 1 ? "workspace" : "workspaces"}
-					</p>
-				</div>
-				{tenants.length === 0 ? (
-					<div className="settings-row">
-						<p className="settings-row-description">No workspaces yet.</p>
 					</div>
-				) : (
-					tenants.map((tenant) => (
-						<div className="settings-row" key={tenant.id}>
-							<div className="settings-row-copy">
-								<p className="settings-row-label">{tenant.name}</p>
-								<p className="settings-row-description font-mono">{tenant.slug}</p>
-							</div>
-							<div className="flex shrink-0 items-center gap-4">
-								<span className="settings-row-description">
+					{tenants.length === 0 ? (
+						<Row>
+							<p className="text-sm text-[#858585]">No workspaces yet.</p>
+						</Row>
+					) : (
+						tenants.map((tenant) => (
+							<div
+								className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+								key={tenant.id}
+							>
+								<div className="min-w-0 flex-1">
+									<p className="truncate text-sm text-white">{tenant.name}</p>
+									<p className="truncate font-mono text-xs text-[#858585]">{tenant.slug}</p>
+								</div>
+								<span className="text-xs text-[#858585]">
 									{tenant.memberCount} {tenant.memberCount === 1 ? "member" : "members"}
 								</span>
-								<span className="settings-row-description font-mono">
+								<span className="hidden font-mono text-xs text-[#858585] md:block">
 									{dateFormat.format(tenant.createdAt)}
 								</span>
 							</div>
-						</div>
-					))
-				)}
-			</div>
-		</section>
+						))
+					)}
+				</Group>
+			</section>
+		</Page>
 	);
 }

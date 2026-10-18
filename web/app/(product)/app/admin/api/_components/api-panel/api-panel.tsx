@@ -1,6 +1,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 import { cn } from "@oppulence/ui/lib/utils";
+import { Page } from "@/components/platform/page-kit";
 import { operations } from "@/lib/developer-portal/operations";
 
 import { PlatformOperationRunner } from "../platform-operation-runner/platform-operation-runner";
@@ -34,23 +35,19 @@ export function ApiPanel({ className, ...props }: ApiPanelProps) {
 			].includes(operation.id),
 		}));
 	return (
-		<section
-			data-slot="api-panel"
-			className={cn("mx-auto flex w-full max-w-6xl flex-col gap-6 p-6", className)}
-			{...props}
+		<Page
+			description="Restricted Rust control plane. Each request is audited. Mutations require a reason, confirmation, and recent TOTP or passkey verification."
+			title="Platform operations"
 		>
-			<header>
-				<h1 className="text-2xl font-semibold">Platform operations</h1>
-				<p className="mt-2 text-sm text-muted-foreground">
-					Restricted Rust control plane. Each request is audited. Mutations require a reason,
-					confirmation, and recent TOTP or passkey verification.
-				</p>
-			</header>
-			{process.env.RCH__HEADER_SECRET?.trim() ? (
-				<PlatformOperationRunner operations={adminOperations} />
-			) : (
-				<p role="status">The platform API is not configured on this deployment.</p>
-			)}
-		</section>
+			<section data-slot="api-panel" className={cn("flex flex-col gap-10", className)} {...props}>
+				{process.env.RCH__HEADER_SECRET?.trim() ? (
+					<PlatformOperationRunner operations={adminOperations} />
+				) : (
+					<p className="text-sm text-[#858585]" role="status">
+						The platform API is not configured on this deployment.
+					</p>
+				)}
+			</section>
+		</Page>
 	);
 }

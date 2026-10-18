@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `suppressions.lit.ts`.
  */
 export default function SuppressionsLoading() {
-	return <DashboardRouteFallback label="Loading Suppressions…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Suppressions…" />
+		</main>
+	);
 }

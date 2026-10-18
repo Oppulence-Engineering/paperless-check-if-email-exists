@@ -21,7 +21,7 @@ describe("ApiExplorerPanel", () => {
 
 		const component = screen.getByRole("region", { name: "Example api-explorer-panel" });
 		expect(component).toHaveAttribute("data-slot", "api-explorer-panel");
-		expect(component).toHaveTextContent("API explorer");
+		expect(screen.getByRole("heading", { name: "API explorer", level: 1 })).toBeInTheDocument();
 		expect(screen.getByTestId("tenant-operations")).toHaveTextContent("v1_check_email");
 		expect(screen.getByTestId("tenant-operations")).not.toHaveTextContent("list_tenants");
 	});

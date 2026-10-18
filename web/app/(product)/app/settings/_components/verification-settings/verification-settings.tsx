@@ -11,13 +11,7 @@ import { z } from "zod";
 
 import { Alert, AlertDescription } from "@oppulence/ui/components/alert";
 import { Button } from "@oppulence/ui/components/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@oppulence/ui/components/card";
+import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import {
@@ -28,6 +22,7 @@ import {
 	SelectValue,
 } from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
 
 import {
 	V1GetTenantSettings200Response,
@@ -248,415 +243,456 @@ export function VerificationSettings({
 		}, "Webhook saved.");
 	}
 
+	const fieldClass = "h-10 rounded-lg md:w-72";
+	const value = "text-sm font-medium text-white tabular-nums";
 	return (
 		<section
 			data-slot="verification-settings"
-			className={cn("space-y-4 pb-10", className)}
+			className={cn("flex flex-col gap-10", className)}
 			{...props}
 		>
-			<header className="settings-page-intro">
-				<h1 className="settings-page-title">{heading[0]}</h1>
-				<p className="settings-page-description">{heading[1]}</p>
-			</header>
-			{error ? (
-				<Alert variant="destructive">
-					<AlertDescription>{error}</AlertDescription>
-				</Alert>
-			) : null}
-			{notice ? (
-				<Alert role="status">
-					<AlertDescription>{notice}</AlertDescription>
-				</Alert>
-			) : null}
-			{showUsage ? (
-				<>
-					{usage.isError ? (
+			<Section description={heading[1]} title={heading[0]}>
+				<div className="flex flex-col gap-10">
+					{error ? (
 						<Alert variant="destructive">
-							<AlertDescription>
-								Usage is unavailable.{" "}
-								<Button size="sm" variant="ghost" onClick={() => void usage.refetch()}>
-									Retry
-								</Button>
-							</AlertDescription>
+							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					) : null}
-					<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
-						<CardHeader className="gap-1.5 px-5">
-							<CardTitle className="text-sm">Usage</CardTitle>
-							<CardDescription className="text-xs">
-								Current verification allowance for this workspace.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="grid gap-2 px-5 text-sm sm:grid-cols-2">
-							{usage.isPending ? (
-								<p>Loading usage…</p>
-							) : usage.data ? (
-								<>
-									<p>
-										Plan: <strong>{usage.data.plan_tier}</strong>
-									</p>
-									<p>
-										Used this period:{" "}
-										<strong>{usage.data.used_this_period.toLocaleString()}</strong>
-									</p>
-									<p>
-										Monthly limit:{" "}
-										<strong>
-											{usage.data.quota_unlimited
-												? "Unlimited"
-												: usage.data.monthly_email_limit?.toLocaleString()}
-										</strong>
-									</p>
-									<p>
-										Remaining:{" "}
-										<strong>
-											{usage.data.quota_unlimited
-												? "Unlimited"
-												: usage.data.quota_remaining?.toLocaleString()}
-										</strong>
-									</p>
-									<p className="sm:col-span-2">
-										Resets:{" "}
-										<time dateTime={usage.data.period_reset_at}>
-											{new Date(usage.data.period_reset_at).toLocaleString()}
-										</time>
-									</p>
-								</>
+					{notice ? (
+						<Alert role="status">
+							<AlertDescription>{notice}</AlertDescription>
+						</Alert>
+					) : null}
+					{showUsage ? (
+						<>
+							{usage.isError ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										Usage is unavailable.{" "}
+										<Button size="sm" variant="ghost" onClick={() => void usage.refetch()}>
+											Retry
+										</Button>
+									</AlertDescription>
+								</Alert>
 							) : null}
-						</CardContent>
-					</Card>
-					<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
-						<CardHeader className="gap-1.5 px-5">
-							<CardTitle className="text-sm">Plan</CardTitle>
-							<CardDescription className="text-xs">
-								Change the plan or manage payment for this workspace.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="px-5">
-							<BillingPlan
-								billingEnabled={billingEnabled}
-								canManage={canManage}
-								chosen={chosenPlan}
-								error={billingError}
-								onManage={() =>
-									void billingRedirect(() =>
-										authClient.subscription.billingPortal({
-											referenceId: organizationId,
-											customerType: "organization",
-											returnUrl: "/app/settings?settings=usage",
-										}),
-									)
-								}
-								onUpgrade={(next) =>
-									void billingRedirect(() =>
-										authClient.subscription.upgrade({
-											plan: next,
-											referenceId: organizationId,
-											customerType: "organization",
-											successUrl: "/app/settings?settings=usage&billing=success",
-											cancelUrl: "/app/settings?settings=usage",
-										}),
-									)
-								}
-								pending={billingPending}
-								plan={plan}
-							/>
-						</CardContent>
-					</Card>
-				</>
-			) : null}
-			{canManage && showDefaults ? (
-				<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
-					<CardHeader className="gap-1.5 px-5">
-						<CardTitle className="text-sm">Verification defaults</CardTitle>
-						<CardDescription className="text-xs">
-							Completed check and finder results are removed hourly after this period. Choose the
-							default policy for checks.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-4 px-5">
-						{settings.isError ? (
-							<Alert variant="destructive">
-								<AlertDescription>
-									Settings are unavailable.{" "}
-									<Button size="sm" variant="ghost" onClick={() => void settings.refetch()}>
-										Retry
-									</Button>
-								</AlertDescription>
-							</Alert>
-						) : null}
-						{settings.isPending ? (
-							<p className="text-sm">Loading settings…</p>
-						) : settings.data ? (
-							<form
-								className="grid gap-4 sm:grid-cols-2"
-								key={[
-									settings.data.result_retention_days,
-									settings.data.default_policy_mode,
-									settings.data.approval_excellent_threshold,
-									settings.data.approval_good_threshold,
-								].join(":")}
-								onSubmit={(event) => void submitSettings(event)}
+							<Group>
+								{usage.isPending ? (
+									<Row>
+										<p className="text-sm text-[#858585]">Loading usage…</p>
+									</Row>
+								) : usage.data ? (
+									<>
+										<Row label="Plan" layout="inline">
+											<span className={value}>{usage.data.plan_tier}</span>
+										</Row>
+										<Row label="Used this period" layout="inline">
+											<span className={value}>{usage.data.used_this_period.toLocaleString()}</span>
+										</Row>
+										<Row label="Monthly limit" layout="inline">
+											<span className={value}>
+												{usage.data.quota_unlimited
+													? "Unlimited"
+													: usage.data.monthly_email_limit?.toLocaleString()}
+											</span>
+										</Row>
+										<Row label="Remaining" layout="inline">
+											<span className={value}>
+												{usage.data.quota_unlimited
+													? "Unlimited"
+													: usage.data.quota_remaining?.toLocaleString()}
+											</span>
+										</Row>
+										<Row label="Resets" layout="inline">
+											<time className={value} dateTime={usage.data.period_reset_at}>
+												{new Date(usage.data.period_reset_at).toLocaleString()}
+											</time>
+										</Row>
+									</>
+								) : null}
+							</Group>
+							<Section
+								description="Change the plan or manage payment for this workspace."
+								title="Plan"
 							>
-								<div className="space-y-2">
-									<Label htmlFor="result-retention">Result retention (days)</Label>
-									<Input
-										id="result-retention"
-										name="retention"
-										type="number"
-										min={1}
-										step={1}
-										defaultValue={settings.data.result_retention_days}
-										required
+								<Group>
+									<BillingPlan
+										billingEnabled={billingEnabled}
+										canManage={canManage}
+										chosen={chosenPlan}
+										error={billingError}
+										onManage={() =>
+											void billingRedirect(() =>
+												authClient.subscription.billingPortal({
+													referenceId: organizationId,
+													customerType: "organization",
+													returnUrl: "/app/settings?settings=usage",
+												}),
+											)
+										}
+										onUpgrade={(next) =>
+											void billingRedirect(() =>
+												authClient.subscription.upgrade({
+													plan: next,
+													referenceId: organizationId,
+													customerType: "organization",
+													successUrl: "/app/settings?settings=usage&billing=success",
+													cancelUrl: "/app/settings?settings=usage",
+												}),
+											)
+										}
+										pending={billingPending}
+										plan={plan}
 									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="default-policy">Default policy</Label>
-									<Select defaultValue={settings.data.default_policy_mode} name="policy" required>
-										<SelectTrigger className="w-full" id="default-policy">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{policyModes.map(([value, label]) => (
-												<SelectItem key={value} value={value}>
-													{label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="approval-excellent">Excellent list (% safe to send)</Label>
-									<Input
-										id="approval-excellent"
-										name="excellent"
-										type="number"
-										min={0}
-										max={100}
-										step={0.1}
-										defaultValue={settings.data.approval_excellent_threshold}
-										required
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="approval-good">Good list (% safe to send)</Label>
-									<Input
-										id="approval-good"
-										name="good"
-										type="number"
-										min={0}
-										max={100}
-										step={0.1}
-										defaultValue={settings.data.approval_good_threshold}
-										required
-									/>
-									<p className="text-muted-foreground text-xs">
-										A job below this value is not ready to send.
-									</p>
-								</div>
-								<Button
-									className="sm:col-span-2 sm:justify-self-start"
-									disabled={busy}
-									type="submit"
+								</Group>
+							</Section>
+						</>
+					) : null}
+					{canManage && showDefaults ? (
+						<Section
+							description="Completed check and finder results are removed hourly after this period. Choose the default policy for checks."
+							title="Verification defaults"
+						>
+							{settings.isError ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										Settings are unavailable.{" "}
+										<Button size="sm" variant="ghost" onClick={() => void settings.refetch()}>
+											Retry
+										</Button>
+									</AlertDescription>
+								</Alert>
+							) : null}
+							{settings.isPending ? (
+								<Group>
+									<Row>
+										<p className="text-sm text-[#858585]">Loading settings…</p>
+									</Row>
+								</Group>
+							) : settings.data ? (
+								<form
+									className="flex flex-col gap-4"
+									key={[
+										settings.data.result_retention_days,
+										settings.data.default_policy_mode,
+										settings.data.approval_excellent_threshold,
+										settings.data.approval_good_threshold,
+									].join(":")}
+									onSubmit={(event) => void submitSettings(event)}
 								>
-									Save verification defaults
-								</Button>
-							</form>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
-			{showDefaults ? (
-				<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
-					<CardHeader className="gap-1.5 px-5">
-						<CardTitle className="text-sm">Reverification schedule</CardTitle>
-						<CardDescription className="text-xs">
-							Track stale-address checks and the next scheduled batch.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-2 px-5 text-sm">
-						{reverification.isPending ? <p role="status">Loading reverification status…</p> : null}
-						{reverification.isError ? (
-							<p role="alert">{requestError(reverification.error)}</p>
-						) : null}
-						{reverification.data ? (
-							<>
-								<p>{reverification.data.enabled ? "Enabled" : "Disabled"}</p>
-								{reverification.data.next_run_at ? (
-									<p>Next run: {new Date(reverification.data.next_run_at).toLocaleString()}</p>
-								) : null}
-								{reverification.data.emails_requeued != null ? (
-									<p>Addresses requeued: {reverification.data.emails_requeued}</p>
-								) : null}
-								{canManage ? (
-									<form
-										className="grid gap-4 pt-2 sm:grid-cols-3"
-										key={[
-											reverification.data.enabled,
-											reverification.data.staleness_days,
-											reverification.data.batch_size,
-										].join(":")}
-										onSubmit={submitReverification}
-									>
-										<label className="flex items-center gap-2 sm:col-span-3">
-											<input
-												defaultChecked={reverification.data.enabled}
-												name="reverification-enabled"
-												type="checkbox"
-											/>
-											Re-check results on a schedule
-										</label>
-										<div className="space-y-2">
-											<Label htmlFor="reverification-staleness">Re-check after (days)</Label>
+									<Group>
+										<Row label={<Label htmlFor="result-retention">Result retention (days)</Label>}>
 											<Input
-												defaultValue={reverification.data.staleness_days ?? 30}
-												id="reverification-staleness"
-												max={365}
-												min={1}
-												name="staleness"
-												required
+												className={fieldClass}
+												id="result-retention"
+												name="retention"
 												type="number"
+												min={1}
+												step={1}
+												defaultValue={settings.data.result_retention_days}
+												required
 											/>
-										</div>
-										<div className="space-y-2">
-											<Label htmlFor="reverification-batch">Addresses per run</Label>
+										</Row>
+										<Row label={<Label htmlFor="default-policy">Default policy</Label>}>
+											<Select
+												defaultValue={settings.data.default_policy_mode}
+												name="policy"
+												required
+											>
+												<SelectTrigger
+													className="h-10 w-full rounded-lg md:w-72"
+													id="default-policy"
+												>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{policyModes.map(([mode, label]) => (
+														<SelectItem key={mode} value={mode}>
+															{label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</Row>
+										<Row
+											label={
+												<Label htmlFor="approval-excellent">Excellent list (% safe to send)</Label>
+											}
+										>
 											<Input
-												defaultValue={reverification.data.batch_size ?? 100}
-												id="reverification-batch"
-												max={1000}
-												min={1}
-												name="batch"
-												required
+												className={fieldClass}
+												id="approval-excellent"
+												name="excellent"
 												type="number"
+												min={0}
+												max={100}
+												step={0.1}
+												defaultValue={settings.data.approval_excellent_threshold}
+												required
 											/>
-										</div>
-										<div className="flex items-end">
-											<Button disabled={saveReverification.isPending} type="submit">
-												Save re-check schedule
-											</Button>
-										</div>
+										</Row>
+										<Row
+											description="A job below this value is not ready to send."
+											label={<Label htmlFor="approval-good">Good list (% safe to send)</Label>}
+										>
+											<Input
+												className={fieldClass}
+												id="approval-good"
+												name="good"
+												type="number"
+												min={0}
+												max={100}
+												step={0.1}
+												defaultValue={settings.data.approval_good_threshold}
+												required
+											/>
+										</Row>
+									</Group>
+									<div className="flex justify-end">
+										<Button className="rounded-lg" disabled={busy} type="submit">
+											Save verification defaults
+										</Button>
+									</div>
+								</form>
+							) : null}
+						</Section>
+					) : null}
+					{showDefaults ? (
+						<Section
+							description="Track stale-address checks and the next scheduled batch."
+							title="Reverification schedule"
+						>
+							<form
+								className="flex flex-col gap-4"
+								key={[
+									reverification.data?.enabled,
+									reverification.data?.staleness_days,
+									reverification.data?.batch_size,
+								].join(":")}
+								onSubmit={submitReverification}
+							>
+								<Group>
+									{reverification.isPending ? (
+										<Row>
+											<p className="text-sm text-[#858585]" role="status">
+												Loading reverification status…
+											</p>
+										</Row>
+									) : null}
+									{reverification.isError ? (
+										<Row>
+											<p className="text-sm text-red-300" role="alert">
+												{requestError(reverification.error)}
+											</p>
+										</Row>
+									) : null}
+									{reverification.data ? (
+										<Row
+											description={[
+												reverification.data.next_run_at
+													? `Next run: ${new Date(reverification.data.next_run_at).toLocaleString()}`
+													: null,
+												reverification.data.emails_requeued != null
+													? `Addresses requeued: ${String(reverification.data.emails_requeued)}`
+													: null,
+												!canManage && reverification.data.staleness_days
+													? `Staleness threshold: ${String(reverification.data.staleness_days)} days`
+													: null,
+											]
+												.filter(Boolean)
+												.join(" · ")}
+											label="Status"
+											layout="inline"
+										>
+											<Pill tone={reverification.data.enabled ? "green" : "gray"}>
+												{reverification.data.enabled ? "Enabled" : "Disabled"}
+											</Pill>
+										</Row>
+									) : null}
+									{reverification.data && canManage ? (
+										<>
+											<Row
+												label={
+													<Label htmlFor="reverification-enabled">
+														Re-check results on a schedule
+													</Label>
+												}
+												layout="inline"
+											>
+												<Checkbox
+													defaultChecked={reverification.data.enabled}
+													id="reverification-enabled"
+													name="reverification-enabled"
+													value="on"
+												/>
+											</Row>
+											<Row
+												label={
+													<Label htmlFor="reverification-staleness">Re-check after (days)</Label>
+												}
+											>
+												<Input
+													className={fieldClass}
+													defaultValue={reverification.data.staleness_days ?? 30}
+													id="reverification-staleness"
+													max={365}
+													min={1}
+													name="staleness"
+													required
+													type="number"
+												/>
+											</Row>
+											<Row label={<Label htmlFor="reverification-batch">Addresses per run</Label>}>
+												<Input
+													className={fieldClass}
+													defaultValue={reverification.data.batch_size ?? 100}
+													id="reverification-batch"
+													max={1000}
+													min={1}
+													name="batch"
+													required
+													type="number"
+												/>
+											</Row>
+										</>
+									) : null}
+								</Group>
+								{reverification.data && canManage ? (
+									<>
 										{saveReverification.isError ? (
-											<p className="sm:col-span-3" role="alert">
+											<p className="text-sm text-red-300" role="alert">
 												{requestError(saveReverification.error)}
 											</p>
 										) : null}
+										<div className="flex justify-end">
+											<Button
+												className="rounded-lg"
+												disabled={saveReverification.isPending}
+												type="submit"
+											>
+												Save re-check schedule
+											</Button>
+										</div>
+									</>
+								) : null}
+							</form>
+						</Section>
+					) : null}
+					{canManage && showWebhook ? (
+						<Section
+							description="Send pipeline run summaries to an HTTPS endpoint. The signing secret is never shown again."
+							title="Webhook"
+						>
+							{webhook.isError ? (
+								<Alert variant="destructive">
+									<AlertDescription>
+										Webhook settings are unavailable.{" "}
+										<Button size="sm" variant="ghost" onClick={() => void webhook.refetch()}>
+											Retry
+										</Button>
+									</AlertDescription>
+								</Alert>
+							) : null}
+							{webhook.isPending ? (
+								<Group>
+									<Row>
+										<p className="text-sm text-[#858585]">Loading webhook…</p>
+									</Row>
+								</Group>
+							) : webhook.data ? (
+								<>
+									<form
+										className="flex flex-col gap-4"
+										key={webhook.data.default_webhook_url ?? ""}
+										onSubmit={(event) => void submitWebhook(event)}
+									>
+										<Group>
+											<Row label={<Label htmlFor="webhook-url">Webhook URL</Label>}>
+												<Input
+													className={fieldClass}
+													id="webhook-url"
+													name="url"
+													type="url"
+													pattern="https://.*"
+													placeholder="https://example.com/webhook"
+													defaultValue={webhook.data.default_webhook_url ?? ""}
+												/>
+											</Row>
+											<Row
+												description={
+													webhook.data.webhook_signing_secret_configured
+														? "A signing secret is configured."
+														: "No signing secret is configured."
+												}
+												label={<Label htmlFor="webhook-secret">Signing secret</Label>}
+											>
+												<Input
+													className={fieldClass}
+													id="webhook-secret"
+													name="secret"
+													type="password"
+													autoComplete="new-password"
+													placeholder={
+														webhook.data.webhook_signing_secret_configured
+															? "Configured — leave blank to keep"
+															: "Optional"
+													}
+												/>
+											</Row>
+										</Group>
+										<div className="flex flex-wrap justify-end gap-2">
+											{webhook.data.default_webhook_url ||
+											webhook.data.webhook_signing_secret_configured ? (
+												<Button
+													className="rounded-lg"
+													disabled={busy}
+													type="button"
+													variant="destructive"
+													onClick={() => {
+														if (window.confirm("Clear the webhook URL and signing secret?"))
+															void run(() => clearWebhook.mutateAsync(), "Webhook cleared.");
+													}}
+												>
+													Clear webhook
+												</Button>
+											) : null}
+											{webhook.data.webhook_signing_secret_configured ? (
+												<Button
+													className="rounded-lg"
+													disabled={busy}
+													type="button"
+													variant="outline"
+													onClick={() =>
+														void run(
+															() =>
+																saveWebhook.mutateAsync({
+																	webhook_signing_secret: null,
+																}),
+															"Signing secret removed.",
+														)
+													}
+												>
+													Remove signing secret
+												</Button>
+											) : null}
+											<Button className="rounded-lg" disabled={busy} type="submit">
+												Save webhook
+											</Button>
+										</div>
 									</form>
-								) : reverification.data.staleness_days ? (
-									<p>Staleness threshold: {reverification.data.staleness_days} days</p>
-								) : null}
-							</>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
-			{canManage && showWebhook ? (
-				<Card className="gap-5 rounded-none border-primary/10 bg-background/80 py-5 shadow-none">
-					<CardHeader className="gap-1.5 px-5">
-						<CardTitle className="text-sm">Webhook</CardTitle>
-						<CardDescription className="text-xs">
-							Send pipeline run summaries to an HTTPS endpoint. The signing secret is never shown
-							again.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-4 px-5">
-						{webhook.isError ? (
-							<Alert variant="destructive">
-								<AlertDescription>
-									Webhook settings are unavailable.{" "}
-									<Button size="sm" variant="ghost" onClick={() => void webhook.refetch()}>
-										Retry
-									</Button>
-								</AlertDescription>
-							</Alert>
-						) : null}
-						{webhook.isPending ? (
-							<p className="text-sm">Loading webhook…</p>
-						) : webhook.data ? (
-							<>
-								<form
-									className="grid gap-4"
-									key={webhook.data.default_webhook_url ?? ""}
-									onSubmit={(event) => void submitWebhook(event)}
-								>
-									<div className="space-y-2">
-										<Label htmlFor="webhook-url">Webhook URL</Label>
-										<Input
-											id="webhook-url"
-											name="url"
-											type="url"
-											pattern="https://.*"
-											placeholder="https://example.com/webhook"
-											defaultValue={webhook.data.default_webhook_url ?? ""}
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="webhook-secret">Signing secret</Label>
-										<Input
-											id="webhook-secret"
-											name="secret"
-											type="password"
-											autoComplete="new-password"
-											placeholder={
-												webhook.data.webhook_signing_secret_configured
-													? "Configured — leave blank to keep"
-													: "Optional"
-											}
-										/>
-										<p className="text-xs text-muted-foreground">
-											{webhook.data.webhook_signing_secret_configured
-												? "A signing secret is configured."
-												: "No signing secret is configured."}
-										</p>
-									</div>
-									<Button disabled={busy} type="submit" className="justify-self-start">
-										Save webhook
-									</Button>
-								</form>
-								{webhook.data.webhook_signing_secret_configured ? (
-									<Button
-										disabled={busy}
-										size="sm"
-										variant="outline"
-										onClick={() =>
-											void run(
-												() =>
-													saveWebhook.mutateAsync({
-														webhook_signing_secret: null,
-													}),
-												"Signing secret removed.",
-											)
-										}
-									>
-										Remove signing secret
-									</Button>
-								) : null}
-								{webhook.data.default_webhook_url ||
-								webhook.data.webhook_signing_secret_configured ? (
-									<Button
-										disabled={busy}
-										size="sm"
-										variant="destructive"
-										onClick={() => {
-											if (window.confirm("Clear the webhook URL and signing secret?"))
-												void run(() => clearWebhook.mutateAsync(), "Webhook cleared.");
-										}}
-									>
-										Clear webhook
-									</Button>
-								) : null}
-							</>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
-			{!canManage && (showDefaults || showWebhook) ? (
-				<Alert>
-					<AlertDescription>
-						An organization owner or administrator can change verification defaults and webhooks.
-						Usage is available to all members.
-					</AlertDescription>
-				</Alert>
-			) : null}
+								</>
+							) : null}
+						</Section>
+					) : null}
+					{!canManage && (showDefaults || showWebhook) ? (
+						<Alert>
+							<AlertDescription>
+								An organization owner or administrator can change verification defaults and
+								webhooks. Usage is available to all members.
+							</AlertDescription>
+						</Alert>
+					) : null}
+				</div>
+			</Section>
 		</section>
 	);
 }
