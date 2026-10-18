@@ -7,6 +7,14 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { FILTER_CLASS } from "@/components/features/deliverability/outcome-events/outcome-events";
@@ -47,7 +55,8 @@ export function ResultFilters({ className, filters, onApply, ...props }: ResultF
 	function apply(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
 		const form = new FormData(event.currentTarget);
-		const text = (key: string) => String(form.get(key) ?? "").trim() || undefined;
+		// fromSelect turns the "Any" select item back into an empty value.
+		const text = (key: string) => fromSelect(String(form.get(key) ?? "").trim()) || undefined;
 		const number = (key: string) => {
 			const value = text(key);
 			return value === undefined ? undefined : Number(value);
@@ -81,19 +90,19 @@ export function ResultFilters({ className, filters, onApply, ...props }: ResultF
 			<Label className={FIELD_LABEL} htmlFor={`result-filter-${name}`}>
 				{label}
 			</Label>
-			<select
-				className={FILTER_CLASS}
-				defaultValue={value ?? ""}
-				id={`result-filter-${name}`}
-				name={name}
-			>
-				<option value="">Any</option>
-				{options.map(([key, text]) => (
-					<option key={key} value={key}>
-						{text}
-					</option>
-				))}
-			</select>
+			<Select defaultValue={value || ALL} name={name}>
+				<SelectTrigger className={FILTER_CLASS} id={`result-filter-${name}`}>
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectItem value={ALL}>Any</SelectItem>
+					{options.map(([key, text]) => (
+						<SelectItem key={key} value={key}>
+							{text}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
 		</div>
 	);
 

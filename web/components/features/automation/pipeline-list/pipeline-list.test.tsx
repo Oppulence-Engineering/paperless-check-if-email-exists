@@ -8,6 +8,7 @@ import { PipelinesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PipelineList } from "./pipeline-list";
+import { chooseOption } from "@/quality/test-support/select";
 
 const base = {
 	tenant_id: "9a8b3676-6178-5756-9e7d-1172c6bd5408",
@@ -92,9 +93,7 @@ describe("PipelineList", () => {
 		list.mockResolvedValue({ data: { pipelines: [pipelines[1]], total: 1 } } as never);
 		renderList();
 
-		fireEvent.change(await screen.findByLabelText("Pipeline status"), {
-			target: { value: "paused" },
-		});
+		await chooseOption("Pipeline status", "Paused");
 		await waitFor(() =>
 			expect(list).toHaveBeenLastCalledWith({ status: "paused", limit: 20, offset: 0 }),
 		);

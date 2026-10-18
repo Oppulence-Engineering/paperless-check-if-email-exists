@@ -15,6 +15,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -50,8 +58,7 @@ import { type JobRowsPropsFields } from "./job-rows.schema";
 export type JobRowsProps = JobRowsPropsFields & ComponentPropsWithoutRef<"section">;
 
 const jobsApi = new JobsApi(new Configuration({ basePath: "/api/backend" }));
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none sm:w-48";
+const SELECT_CLASS = "h-10 w-full rounded-lg sm:w-48";
 
 export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 	const [state, setState] = useState("completed");
@@ -80,20 +87,23 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Row state
 					</Label>
-					<select
-						className={SELECT_CLASS}
-						id={`rows-state-${String(jobId)}`}
-						onChange={(event) => {
-							setState(event.target.value);
+					<Select
+						onValueChange={(value) => {
+							setState(value);
 						}}
 						value={state}
 					>
-						{taskState.values.map((value) => (
-							<option key={value} value={value}>
-								{taskState.label(value)}
-							</option>
-						))}
-					</select>
+						<SelectTrigger className={SELECT_CLASS} id={`rows-state-${String(jobId)}`}>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{taskState.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{taskState.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label
@@ -102,21 +112,24 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Category
 					</Label>
-					<select
-						className={SELECT_CLASS}
-						id={`rows-category-${String(jobId)}`}
-						onChange={(event) => {
-							setFilter(event.target.value);
+					<Select
+						onValueChange={(value) => {
+							setFilter(fromSelect(value));
 						}}
-						value={filter}
+						value={filter || ALL}
 					>
-						<option value="">All categories</option>
-						{category.values.map((value) => (
-							<option key={value} value={value}>
-								{category.label(value)}
-							</option>
-						))}
-					</select>
+						<SelectTrigger className={SELECT_CLASS} id={`rows-category-${String(jobId)}`}>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={ALL}>All categories</SelectItem>
+							{category.values.map((value) => (
+								<SelectItem key={value} value={value}>
+									{category.label(value)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 			</div>
 			{pages.isError ? (
@@ -152,15 +165,16 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 									<tr className="border-b border-border/60" key={row.id}>
 										<td className="py-2 pr-4">
 											{row.result ? (
-												<button
-													className="text-left whitespace-nowrap text-white underline-offset-4 hover:underline"
+												<Button
+													className="h-auto justify-start p-0 text-left text-white"
 													onClick={() => {
 														setOpen(row);
 													}}
 													type="button"
+													variant="link"
 												>
 													{row.result.input || `Row ${String(row.id)}`}
-												</button>
+												</Button>
 											) : (
 												<span className="text-white">Row {row.id}</span>
 											)}

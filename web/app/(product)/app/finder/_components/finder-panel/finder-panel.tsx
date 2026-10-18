@@ -13,6 +13,13 @@ import { z } from "zod";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
 import { ProviderDetails } from "@/components/features/verification/provider-details/provider-details";
@@ -171,17 +178,20 @@ export function FinderPanel({ initialJobId, className, ...props }: FinderPanelPr
 									<Label className="text-xs font-medium text-neutral-400" htmlFor="finder-strategy">
 										Search strategy
 									</Label>
-									<select
-										id="finder-strategy"
-										className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
+									<Select
 										value={strategy}
-										onChange={(event) => {
-											setStrategy(event.target.value === "waterfall" ? "waterfall" : "parallel");
+										onValueChange={(value) => {
+											setStrategy(value === "waterfall" ? "waterfall" : "parallel");
 										}}
 									>
-										<option value="parallel">Check all patterns</option>
-										<option value="waterfall">Best patterns first</option>
-									</select>
+										<SelectTrigger id="finder-strategy" className="h-10 w-full rounded-lg">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="parallel">Check all patterns</SelectItem>
+											<SelectItem value="waterfall">Best patterns first</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
 							</div>
 							<div className="flex justify-end">

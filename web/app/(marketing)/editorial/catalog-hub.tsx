@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
 import { PageHero } from "@/components/platform/landing/blocks";
 import { MONO, MUTED, Section } from "@/components/platform/landing/primitives";
 import { ArrowUpRight, MagnifyingGlass } from "@/lib/icons";
@@ -86,20 +88,20 @@ export function CatalogHub({
 							))}
 						</ul>
 					</nav>
-					<label className="relative w-full lg:w-[320px]">
+					<Label className="relative w-full font-normal lg:w-[320px]">
 						<span className="sr-only">Search {active.label.toLowerCase()}</span>
 						<MagnifyingGlass
 							aria-hidden="true"
 							className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#858585]"
 						/>
-						<input
-							className="h-11 w-full rounded-full border border-white/10 bg-[#090909] pr-4 pl-10 text-[15px] text-white placeholder:text-[#858585] focus:border-white/30 focus:outline-none"
+						<Input
+							className="h-11 w-full rounded-full border border-white/10 bg-[#090909] pr-4 pl-10 text-[15px] text-white placeholder:text-[#858585] focus:border-white/30 focus:outline-none md:text-[15px] dark:bg-[#090909]"
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder={`Search ${active.label.toLowerCase()}`}
 							type="search"
 							value={query}
 						/>
-					</label>
+					</Label>
 				</div>
 
 				{visible.length === 0 ? (

@@ -8,6 +8,7 @@ import { TenantApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { conditionText, ScorePolicyForm } from "./score-policy-form";
+import { chooseOption } from "@/quality/test-support/select";
 
 const saved = {
 	id: 3,
@@ -52,7 +53,7 @@ describe("ScorePolicyForm", () => {
 			target: { value: "25" },
 		});
 		fireEvent.click(screen.getByLabelText("Suppress: Invalid"));
-		fireEvent.change(screen.getByLabelText("Send: Safe to send"), { target: { value: "true" } });
+		await chooseOption("Send: Safe to send", "Safe to send");
 		fireEvent.change(screen.getByLabelText("Send: Reason codes"), {
 			target: { value: "deliverable, free_provider" },
 		});

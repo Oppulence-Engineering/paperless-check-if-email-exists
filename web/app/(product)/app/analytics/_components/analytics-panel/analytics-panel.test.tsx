@@ -6,6 +6,7 @@ import { EventsApi, ListsApi, QueryApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { AnalyticsPanel } from "./analytics-panel";
+import { chooseOption } from "@/quality/test-support/select";
 
 let query: ReturnType<typeof vi.spyOn>;
 
@@ -52,7 +53,7 @@ it("filters results", async () => {
 		screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
 	).toEqual(["Result explorer", "Job activity", "Source quality"]);
 	expect(await screen.findByText("a@example.com")).toBeInTheDocument();
-	fireEvent.change(screen.getByLabelText("Category"), { target: { value: "valid" } });
+	await chooseOption("Category", "Valid");
 	await waitFor(() =>
 		expect(query).toHaveBeenCalledWith({
 			limit: 20,

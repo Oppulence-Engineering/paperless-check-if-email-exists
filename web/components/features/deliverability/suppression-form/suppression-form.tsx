@@ -10,6 +10,13 @@ import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
@@ -33,8 +40,7 @@ const api = new V1Api(new Configuration({ basePath: "/api/backend" }));
 /** The API takes a maximum of 10,000 addresses in one request (suppressions/add.rs). */
 const BATCH_SIZE = 10_000;
 const LABEL_CLASS = "text-xs font-medium text-neutral-400";
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none";
+const SELECT_CLASS = "h-10 w-full rounded-lg";
 
 /** Splits one CSV line into cells. Quoted cells can contain commas and "" quotes. */
 function cells(line: string): string[] {
@@ -193,13 +199,18 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				<Label className={LABEL_CLASS} htmlFor={`${id}-reason`}>
 					Reason
 				</Label>
-				<select className={SELECT_CLASS} defaultValue="manual" id={`${id}-reason`} name="reason">
-					{suppressionReason.values.map((value) => (
-						<option key={value} value={value}>
-							{suppressionReason.label(value)}
-						</option>
-					))}
-				</select>
+				<Select defaultValue="manual" name="reason">
+					<SelectTrigger className={SELECT_CLASS} id={`${id}-reason`}>
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{suppressionReason.values.map((value) => (
+							<SelectItem key={value} value={value}>
+								{suppressionReason.label(value)}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 			<div className="flex flex-col gap-1.5">
 				<Label className={LABEL_CLASS} htmlFor={`${id}-detail`}>

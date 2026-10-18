@@ -9,6 +9,14 @@ import { Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Label } from "@oppulence/ui/components/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
@@ -35,8 +43,7 @@ export type ListExportProps = ListExportPropsFields & ComponentPropsWithoutRef<"
 const config = new Configuration({ basePath: "/api/backend" });
 const listsApi = new ListsApi(config);
 const v1Api = new V1Api(config);
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72";
+const SELECT_CLASS = "h-10 w-full rounded-lg md:w-72";
 
 /** Remediation export files the backend can build (backend/src/http/v1/lists/remediation.rs). */
 const PARTITIONS = {
@@ -142,43 +149,48 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 			>
 				<Group>
 					<Row label={<Label htmlFor={`clean-filter-${String(listId)}`}>Rows to include</Label>}>
-						<select
-							className={SELECT_CLASS}
-							id={`clean-filter-${String(listId)}`}
-							onChange={(event) => {
-								setFilter(event.target.value);
+						<Select
+							onValueChange={(value) => {
+								setFilter(fromSelect(value));
 							}}
-							value={filter}
+							value={filter || ALL}
 						>
-							<option value="">All rows</option>
-							{category.values.map((value) => (
-								<option key={value} value={value}>
-									{category.label(value)} only
-								</option>
-							))}
-							<option value="newly_invalid">Newly invalid since an earlier list</option>
-						</select>
+							<SelectTrigger className={SELECT_CLASS} id={`clean-filter-${String(listId)}`}>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={ALL}>All rows</SelectItem>
+								{category.values.map((value) => (
+									<SelectItem key={value} value={value}>
+										{category.label(value)} only
+									</SelectItem>
+								))}
+								<SelectItem value="newly_invalid">Newly invalid since an earlier list</SelectItem>
+							</SelectContent>
+						</Select>
 					</Row>
 					{filter === "newly_invalid" ? (
 						<Row
 							description="Only completed lists can be the baseline."
 							label={<Label htmlFor={`clean-base-${String(listId)}`}>Earlier list</Label>}
 						>
-							<select
-								className={SELECT_CLASS}
-								id={`clean-base-${String(listId)}`}
-								onChange={(event) => {
-									setBaseListId(event.target.value);
+							<Select
+								onValueChange={(value) => {
+									setBaseListId(value);
 								}}
 								value={baseListId}
 							>
-								<option value="">Choose a list</option>
-								{earlierLists.map((list) => (
-									<option key={list.id} value={list.id}>
-										{list.name}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className={SELECT_CLASS} id={`clean-base-${String(listId)}`}>
+									<SelectValue placeholder="Choose a list" />
+								</SelectTrigger>
+								<SelectContent>
+									{earlierLists.map((list) => (
+										<SelectItem key={list.id} value={String(list.id)}>
+											{list.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</Row>
 					) : null}
 					<Row>
@@ -307,20 +319,23 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 						<Row
 							label={<Label htmlFor={`export-partition-${String(listId)}`}>Rows to export</Label>}
 						>
-							<select
-								className={SELECT_CLASS}
-								id={`export-partition-${String(listId)}`}
-								onChange={(event) => {
-									setPartition(event.target.value as keyof typeof PARTITIONS);
+							<Select
+								onValueChange={(value) => {
+									setPartition(value as keyof typeof PARTITIONS);
 								}}
 								value={partition}
 							>
-								{Object.entries(PARTITIONS).map(([value, label]) => (
-									<option key={value} value={value}>
-										{label}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className={SELECT_CLASS} id={`export-partition-${String(listId)}`}>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.entries(PARTITIONS).map(([value, label]) => (
+										<SelectItem key={value} value={value}>
+											{label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</Row>
 						<Row>
 							<div className="flex justify-end">

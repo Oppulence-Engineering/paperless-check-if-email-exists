@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Button, cn, Tooltip } from "@sim/emcn";
 import { Mic, Paperclip, Plus, Slash, X } from "@sim/emcn/icons";
+import { Textarea } from "@oppulence/ui/components/textarea";
 import { HeroChatReply } from "./hero-chat-reply";
 import { HeroToolCallItem } from "./hero-tool-call-item";
 import { HeroChatWelcome } from "../hero-chat-welcome/hero-chat-welcome";
@@ -275,7 +276,7 @@ export function HeroChatLoop({
 						</Button>
 					</div>
 				)}
-				<textarea
+				<Textarea
 					ref={textareaRef}
 					value={composerValue}
 					rows={welcome ? 2 : 1}
@@ -290,7 +291,9 @@ export function HeroChatLoop({
 						}
 					}}
 					className={cn(
+						// The trailing overrides undo the Textarea defaults, so the composer keeps its bare look.
 						"m-0 block max-h-[96px] w-full resize-none overflow-y-auto border-0 bg-transparent px-1 py-1 font-body text-[14px] text-[var(--text-primary)] leading-[24px] tracking-[-0.015em] outline-none placeholder:text-[var(--text-muted)] focus-visible:ring-0 focus-visible:ring-offset-0",
+						"field-sizing-fixed rounded-none shadow-none md:text-[14px] dark:bg-transparent",
 						welcome ? "min-h-[56px]" : "min-h-[32px]",
 					)}
 				/>

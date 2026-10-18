@@ -19,6 +19,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@oppulence/ui/components/select";
+import { ALL, fromSelect } from "@/lib/select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { SuppressionAudit } from "@/components/features/deliverability/suppression-audit/suppression-audit";
 import { SuppressionForm } from "@/components/features/deliverability/suppression-form/suppression-form";
@@ -39,8 +47,7 @@ export type SuppressionsPanelProps = SuppressionsPanelPropsFields &
 const api = new V1Api(new Configuration({ basePath: "/api/backend" }));
 const PAGE_SIZE = 20;
 const LABEL_CLASS = "text-xs font-medium text-neutral-400";
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none sm:w-44";
+const SELECT_CLASS = "h-10 w-full rounded-lg sm:w-44";
 
 function date(value: string | null | undefined, empty: string): string {
 	return value ? new Date(value).toLocaleString() : empty;
@@ -187,61 +194,70 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-status">
 								Status
 							</Label>
-							<select
-								className={SELECT_CLASS}
-								id="suppression-filter-status"
+							<Select
 								value={filters.status}
-								onChange={(event) => {
-									filter({ status: event.target.value });
+								onValueChange={(value) => {
+									filter({ status: value });
 								}}
 							>
-								{suppressionStatus.values.map((value) => (
-									<option key={value} value={value}>
-										{suppressionStatus.label(value)}
-									</option>
-								))}
-								<option value="all">All statuses</option>
-							</select>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-status">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{suppressionStatus.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionStatus.label(value)}
+										</SelectItem>
+									))}
+									<SelectItem value="all">All statuses</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-reason">
 								Reason
 							</Label>
-							<select
-								className={SELECT_CLASS}
-								id="suppression-filter-reason"
-								value={filters.reason}
-								onChange={(event) => {
-									filter({ reason: event.target.value });
+							<Select
+								value={filters.reason || ALL}
+								onValueChange={(value) => {
+									filter({ reason: fromSelect(value) });
 								}}
 							>
-								<option value="">All reasons</option>
-								{suppressionReason.values.map((value) => (
-									<option key={value} value={value}>
-										{suppressionReason.label(value)}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-reason">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={ALL}>All reasons</SelectItem>
+									{suppressionReason.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionReason.label(value)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-source">
 								Source
 							</Label>
-							<select
-								className={SELECT_CLASS}
-								id="suppression-filter-source"
-								value={filters.sourceType}
-								onChange={(event) => {
-									filter({ sourceType: event.target.value });
+							<Select
+								value={filters.sourceType || ALL}
+								onValueChange={(value) => {
+									filter({ sourceType: fromSelect(value) });
 								}}
 							>
-								<option value="">All sources</option>
-								{suppressionSource.values.map((value) => (
-									<option key={value} value={value}>
-										{suppressionSource.label(value)}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className={SELECT_CLASS} id="suppression-filter-source">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={ALL}>All sources</SelectItem>
+									{suppressionSource.values.map((value) => (
+										<SelectItem key={value} value={value}>
+											{suppressionSource.label(value)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 						<Label
 							className="flex h-10 items-center gap-2 text-sm text-neutral-300"
