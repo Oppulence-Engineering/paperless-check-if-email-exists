@@ -1,49 +1,30 @@
-import Link from "next/link";
-
 import {
-	ArrowRight,
-	BookOpen,
-	CheckCircle,
-	Code,
-	Key,
-	LinkSimple,
-	ListChecks,
-	LockSimple,
-	SealCheck,
-	ShieldCheck,
-	UserCircle,
-} from "@/lib/icons";
+	ControlGrid,
+	HeroStage,
+	LinkCards as LinkCardGrid,
+	PageHero,
+} from "@/components/platform/landing/blocks";
+import {
+	CONTAINER,
+	MONO,
+	MUTED,
+	Section,
+	SectionIntro,
+	Stage,
+	Tag,
+	Window,
+} from "@/components/platform/landing/primitives";
+import { CheckCircle, Key, LinkSimple, LockSimple, ShieldCheck, UserCircle } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 import { guidePages, homepageFaqs } from "../catalog";
 import { productPage, type PlatformPage } from "../marketing-data";
-import { ContactForm } from "./contact-form";
+import { CONTACT_EMAIL, ContactForm } from "./contact-form";
 import { CheckPipeline } from "./graphics";
 import { FeatureBento, SortedList, Teams } from "./home";
 import { ApiKeysMock, FixPlanTableMock, RetentionMock } from "./mocks";
-import {
-	CenteredHero,
-	ChecklistCard,
-	CtaBand,
-	FaqSection,
-	NumberedPoints,
-	LinkCards,
-	PageHero,
-	StepCards,
-} from "./page-kit";
-import {
-	AppWindow,
-	ButtonLink,
-	Card,
-	Container,
-	Display,
-	Eyebrow,
-	IconTile,
-	Lead,
-	Muted,
-	Section,
-	Stage,
-} from "./ui";
+import { ChecklistCard, FaqSection, LinkCards, NumberedPoints, StepCards } from "./page-kit";
+import { AppWindow, ButtonLink, Display, Lead } from "./ui";
 
 const PLATFORMS = ["SendGrid", "Mailgun", "Postmark", "Amazon SES"] as const;
 
@@ -53,12 +34,20 @@ export function EditorialProduct() {
 	return (
 		<>
 			<PageHero
-				chip="Email verification"
-				eyebrow="Product"
-				lede={productPage.description}
-				title={productPage.title}
-				visual={<CheckPipeline fig="1" />}
-			/>
+				body={productPage.description}
+				eyebrow={{ label: productPage.eyebrow }}
+				lead={productPage.title}
+				primary={{
+					href: productPage.ctaHref ?? "/sign-up",
+					label: productPage.ctaLabel ?? "Start free",
+				}}
+			>
+				<HeroStage>
+					<div className="w-full min-w-0 max-w-[760px]">
+						<CheckPipeline />
+					</div>
+				</HeroStage>
+			</PageHero>
 			<StepCards
 				steps={[
 					{
@@ -84,10 +73,6 @@ export function EditorialProduct() {
 			<FeatureBento />
 			<Teams />
 			<FaqSection faqs={homepageFaqs} />
-			<CtaBand
-				lede="Start with 100 free checks a month."
-				title="Send only to addresses that exist."
-			/>
 		</>
 	);
 }
@@ -98,19 +83,17 @@ export function EditorialWeb({ page }: { page: PlatformPage }) {
 	return (
 		<>
 			<PageHero
-				chip={page.name}
-				eyebrow="Product"
-				lede={page.lede}
+				body={page.lede}
+				eyebrow={{ label: page.name, parent: "Product", href: "/product" }}
+				lead={page.title}
 				primary={page.cta ?? { label: "Start free", href: "/sign-up" }}
-				title={page.title}
-				visual={
-					<Stage className="flex min-h-[340px] items-center justify-center">
-						<AppWindow className="w-full max-w-[520px]" title="Fix plan · October newsletter">
-							<FixPlanTableMock />
-						</AppWindow>
-					</Stage>
-				}
-			/>
+			>
+				<HeroStage>
+					<AppWindow className="max-w-[520px]" title="Fix plan · October newsletter">
+						<FixPlanTableMock />
+					</AppWindow>
+				</HeroStage>
+			</PageHero>
 			<SortedList />
 			<NumberedPoints
 				eyebrow="In the workspace"
@@ -132,10 +115,6 @@ export function EditorialWeb({ page }: { page: PlatformPage }) {
 					})),
 				]}
 				title="What is included."
-			/>
-			<CtaBand
-				lede="Invite your team and clean your first list today."
-				title="Bring your lists into one place."
 			/>
 		</>
 	);
@@ -164,7 +143,12 @@ const SECURITY_CARDS = [
 		title: "No email sent",
 		body: "A check never delivers a message to the recipient.",
 	},
-] as const;
+	{
+		icon: Key,
+		title: "Retention you choose",
+		body: "Choose how many days results are kept in your workspace.",
+	},
+];
 
 export const securityFaqs = [
 	{
@@ -185,103 +169,58 @@ export const securityFaqs = [
 export function EditorialSecurity() {
 	return (
 		<>
-			<section className="bg-[var(--ed-bg)] px-4 pt-8 pb-16 sm:px-6 lg:px-8">
-				<div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-3xl border border-[var(--ed-line)] bg-[var(--ed-bg)] text-white">
-					<div className="relative grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-[1fr_0.95fr]">
-						<div>
-							<h1 className="ed-display text-[40px] leading-[1.12] sm:text-[52px]">
-								Your lists stay yours.{" "}
-								<span className="text-white/60">Inside your organization.</span>
-							</h1>
-							<p className="ed-sans mt-5 max-w-[46ch] text-[15px] leading-[1.6] font-[450] text-white/75">
-								Every list, result, and key is scoped to your organization. You choose how long
-								results are kept, and server credentials never reach the browser.
-							</p>
-							<div className="mt-8 flex flex-wrap gap-2.5">
-								<ButtonLink href="/sign-up" variant="inverse">
-									Start free
-								</ButtonLink>
-							</div>
-						</div>
-						<Stage className="flex items-center justify-center">
-							<div className="w-full max-w-[360px]">
-								<RetentionMock />
-							</div>
-						</Stage>
+			<PageHero
+				body="Every list, result, and key is scoped to your organization. You choose how long results are kept, and server credentials never reach the browser."
+				eyebrow={{ label: "Security" }}
+				lead="Your lists stay yours."
+				primary={{ href: "/sign-up", label: "Start free" }}
+				trail="Inside your organization."
+			>
+				<HeroStage>
+					<div className="w-full max-w-[360px]">
+						<RetentionMock />
 					</div>
-					<div className="relative border-t border-white/10 px-8 py-6 text-center sm:px-12">
-						<p className="ed-mono text-[10px] tracking-[0.3em] text-white/50 uppercase">
-							Works with your email platform
-						</p>
-						<p className="ed-sans mt-3 flex flex-wrap justify-center gap-x-10 gap-y-1 text-[17px] font-medium text-white/80">
-							{PLATFORMS.map((name) => (
-								<span key={name}>{name}</span>
-							))}
-						</p>
-					</div>
-				</div>
-			</section>
-
-			<Section className="pt-6 sm:pt-8 lg:pt-10">
-				<Container>
-					<Eyebrow>How it is built</Eyebrow>
-					<Display className="mt-2 max-w-[20ch]" size="lg">
-						Protection built in. <Muted>Not added later.</Muted>
-					</Display>
-					<div className="mt-12 grid gap-3 lg:grid-cols-[1.2fr_1fr]">
-						<Stage className="flex min-h-[340px] items-center justify-center">
-							<div className="w-full max-w-[460px]">
-								<ApiKeysMock />
-								<p className="ed-sans mt-4 text-center text-[13px] text-white/90">
-									Give each key only the scopes it needs. Revoke it at any time.
-								</p>
-							</div>
-						</Stage>
-						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-							{SECURITY_CARDS.slice(0, 2).map((card) => (
-								<Card className="p-6" key={card.title}>
-									<IconTile tone="accent">
-										<card.icon aria-hidden="true" />
-									</IconTile>
-									<h3 className="ed-sans mt-8 text-[16px] font-medium text-[var(--ed-ink)]">
-										{card.title}
-									</h3>
-									<p className="ed-sans mt-2 text-[13.5px] leading-[1.55] text-[var(--ed-body)]">
-										{card.body}
-									</p>
-								</Card>
-							))}
-						</div>
-					</div>
-					<div className="mt-3 grid gap-3 md:grid-cols-3">
-						{SECURITY_CARDS.slice(2).map((card) => (
-							<Card className="p-6" key={card.title}>
-								<IconTile tone="good">
-									<card.icon aria-hidden="true" />
-								</IconTile>
-								<h3 className="ed-sans mt-8 text-[16px] font-medium text-[var(--ed-ink)]">
-									{card.title}
-								</h3>
-								<p className="ed-sans mt-2 text-[13.5px] leading-[1.55] text-[var(--ed-body)]">
-									{card.body}
-								</p>
-							</Card>
+				</HeroStage>
+				<div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+					<p className={cn("text-[15px]", MUTED)}>Works with your email platform</p>
+					<ul className="flex flex-wrap items-center gap-x-7 gap-y-3">
+						{PLATFORMS.map((name) => (
+							<li className="text-[15px] text-white/55" key={name}>
+								{name}
+							</li>
 						))}
-						<Card className="flex flex-col justify-between p-6">
-							<div>
-								<IconTile tone="warn">
-									<Key aria-hidden="true" />
-								</IconTile>
-								<h3 className="ed-sans mt-8 text-[16px] font-medium text-[var(--ed-ink)]">
-									Retention you choose
-								</h3>
-								<p className="ed-sans mt-2 text-[13.5px] leading-[1.55] text-[var(--ed-body)]">
-									Choose how many days results are kept in your workspace.
-								</p>
-							</div>
-						</Card>
-					</div>
-				</Container>
+					</ul>
+				</div>
+			</PageHero>
+
+			<Section>
+				<SectionIntro
+					label="How it is built"
+					lead="Protection built in."
+					trail="Not added later."
+				/>
+				<div className="mt-24 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+					<Stage className="min-h-[340px] items-center px-5 py-10 sm:p-12" variant={2}>
+						<div className="w-full max-w-[460px]">
+							<ApiKeysMock />
+							<p className="mt-4 text-center text-[13px] text-white/90">
+								Give each key only the scopes it needs. Revoke it at any time.
+							</p>
+						</div>
+					</Stage>
+					<ul className="grid gap-4">
+						{SECURITY_CARDS.slice(0, 2).map(({ body, icon: Icon, title }) => (
+							<li className="flex flex-col bg-[#111] p-8 sm:p-10" key={title}>
+								<Icon aria-hidden="true" className="size-5 text-white/80" strokeWidth={1.5} />
+								<h3 className="mt-12 text-[22px] tracking-[-0.015em] text-white">{title}</h3>
+								<p className={cn("mt-3 text-base leading-[1.6]", MUTED)}>{body}</p>
+							</li>
+						))}
+					</ul>
+				</div>
+				<div className="mt-4">
+					<ControlGrid items={SECURITY_CARDS.slice(2)} />
+				</div>
 			</Section>
 			<FaqSection faqs={securityFaqs} />
 			<LinkCards
@@ -303,10 +242,6 @@ export function EditorialSecurity() {
 					},
 				]}
 			/>
-			<CtaBand
-				title="Questions about security?"
-				lede="Tell us what your review needs, and we will answer it."
-			/>
 		</>
 	);
 }
@@ -316,21 +251,19 @@ export function EditorialSecurity() {
 export function EditorialContact() {
 	return (
 		<>
-			<CenteredHero
-				eyebrow="Contact"
-				lede="Ask about checks, results, or your account."
-				sans
-				title={
-					<>
-						Questions? <Muted>Send us a note.</Muted>
-					</>
-				}
-			/>
-			<section className="bg-[var(--ed-bg)] px-4 pb-10 sm:px-6 lg:px-8">
-				<Stage className="mx-auto max-w-[1120px] py-14 sm:py-16">
-					<ContactForm />
-				</Stage>
-			</section>
+			<PageHero
+				body="Ask about checks, results, or your account."
+				eyebrow={{ label: "Contact" }}
+				lead="Questions?"
+				secondary={null}
+				trail="Send us a note."
+			>
+				<HeroStage>
+					<Window className="w-full max-w-[520px]" title={CONTACT_EMAIL}>
+						<ContactForm className="p-5 sm:p-6" />
+					</Window>
+				</HeroStage>
+			</PageHero>
 			<LinkCards
 				eyebrow="Other ways to reach us"
 				items={[
@@ -377,48 +310,34 @@ function formatDate(value?: string) {
 export function EditorialChangelog({ entries }: { entries: ChangelogEntry[] }) {
 	return (
 		<>
-			<CenteredHero
-				eyebrow="Changelog"
-				lede="Product changes, newest first."
-				sans
-				title={
-					<>
-						What changed. <Muted>And when.</Muted>
-					</>
-				}
+			<PageHero
+				body="Product changes, newest first."
+				eyebrow={{ label: "Changelog" }}
+				lead="What changed."
+				trail="And when."
 			/>
-			<Section className="pt-4 sm:pt-6 lg:pt-8">
-				<Container>
-					<ol className="border-t border-[var(--ed-line)]">
-						{entries.map((entry) => (
-							<li
-								className="grid gap-4 border-b border-[var(--ed-line)] py-8 md:grid-cols-[200px_1fr]"
-								key={entry.title}
+			<div className={cn(CONTAINER, "pb-24 sm:pb-32")}>
+				<ol className="border-t border-[#212121]">
+					{entries.map((entry) => (
+						<li
+							className="grid gap-2 border-b border-[#212121] py-6 sm:grid-cols-[140px_1fr_1.4fr] sm:items-baseline sm:gap-8"
+							key={entry.title}
+						>
+							<time
+								className={cn(MONO, "text-[12px] tracking-[0.06em] uppercase", MUTED)}
+								dateTime={entry.date}
 							>
-								<div>
-									<time
-										className="ed-mono text-[11px] tracking-[0.15em] text-[var(--ed-muted)] uppercase"
-										dateTime={entry.date}
-									>
-										{formatDate(entry.date)}
-									</time>
-								</div>
-								<div>
-									<span className="ed-sans inline-flex rounded-full border border-[var(--ed-line)] px-2.5 py-0.5 text-[11.5px] text-[var(--ed-body)]">
-										{entry.version}
-									</span>
-									<h2 className="ed-display mt-3 text-[24px] leading-[1.3] text-[var(--ed-ink)]">
-										{entry.title}
-									</h2>
-									<p className="ed-sans mt-2 max-w-[62ch] text-[15px] leading-[1.6] font-[450] text-[var(--ed-body)]">
-										{entry.body}
-									</p>
-								</div>
-							</li>
-						))}
-					</ol>
-				</Container>
-			</Section>
+								{formatDate(entry.date)}
+							</time>
+							<div>
+								<Tag>{entry.version}</Tag>
+								<h2 className="mt-3 text-lg text-white">{entry.title}</h2>
+							</div>
+							<p className={cn("text-base", MUTED)}>{entry.body}</p>
+						</li>
+					))}
+				</ol>
+			</div>
 		</>
 	);
 }
@@ -428,15 +347,11 @@ export function EditorialChangelog({ entries }: { entries: ChangelogEntry[] }) {
 export function EditorialResources() {
 	return (
 		<>
-			<CenteredHero
-				eyebrow="Resources"
-				lede="Guides, integrations, security, and product updates."
-				sans
-				title={
-					<>
-						Resources. <Muted>For cleaner sending.</Muted>
-					</>
-				}
+			<PageHero
+				body="Guides, integrations, security, and product updates."
+				eyebrow={{ label: "Resources" }}
+				lead="Resources."
+				trail="For cleaner sending."
 			/>
 			<LinkCards
 				eyebrow="Start here"
@@ -481,7 +396,6 @@ export function EditorialResources() {
 					description: page.description,
 				}))}
 			/>
-			<CtaBand lede="Start with 100 free checks a month." title="Ready to clean a list?" />
 		</>
 	);
 }
@@ -489,46 +403,33 @@ export function EditorialResources() {
 /* ---------- 404 ---------- */
 
 export function EditorialNotFound() {
-	const cards = [
-		{ label: "Home", href: "/", icon: SealCheck },
-		{ label: "Features", href: "/features", icon: ListChecks },
-		{ label: "Guides", href: "/guides", icon: BookOpen },
-		{ label: "API reference", href: "/developers", icon: Code },
-	];
 	return (
-		<Section>
-			<Container>
-				<div className="grid gap-6 md:grid-cols-2">
-					<p className="ed-display text-[28px] text-[var(--ed-ink)]">404</p>
-					<div>
-						<h1 className="ed-display text-[28px] leading-[1.35] text-[var(--ed-ink)]">
-							<Muted>Sorry.</Muted> We can’t find the page you’re looking for.
-						</h1>
-						<ButtonLink className="mt-6" href="/">
-							Go to the home page
-						</ButtonLink>
-					</div>
+		<section className={cn(CONTAINER, "pt-16 pb-24 sm:pt-24 sm:pb-32")}>
+			<div className="grid gap-6 md:grid-cols-2 md:gap-8">
+				<p className="text-[26px] leading-[1.3] tracking-[-0.02em] text-white sm:text-[30px]">
+					404
+				</p>
+				<div>
+					<h1 className="text-[26px] leading-[1.35] tracking-[-0.02em] text-balance text-white sm:text-[30px]">
+						<span className={MUTED}>Sorry.</span> We can’t find the page you’re looking for.
+					</h1>
+					<ButtonLink className="mt-10" href="/">
+						Go to the home page
+					</ButtonLink>
 				</div>
-				<div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-					{cards.map((card) => (
-						<Link
-							className="group flex aspect-[4/3] flex-col justify-between rounded-2xl border border-[var(--ed-line)] bg-[var(--ed-subtle)] p-5 transition-colors hover:bg-[var(--ed-panel)]"
-							href={card.href}
-							key={card.href}
-						>
-							<card.icon aria-hidden="true" className="size-8 text-[var(--ed-faint)]" />
-							<span className="ed-sans flex items-center justify-between text-[16px] text-[var(--ed-ink)]">
-								{card.label}
-								<ArrowRight
-									aria-hidden="true"
-									className="size-4 transition-transform group-hover:translate-x-0.5"
-								/>
-							</span>
-						</Link>
-					))}
-				</div>
-			</Container>
-		</Section>
+			</div>
+			<div className="mt-24">
+				<LinkCardGrid
+					columns={4}
+					items={[
+						{ label: "Home", href: "/" },
+						{ label: "Features", href: "/features" },
+						{ label: "Guides", href: "/guides" },
+						{ label: "API reference", href: "/developers" },
+					]}
+				/>
+			</div>
+		</section>
 	);
 }
 
@@ -544,29 +445,28 @@ export function EditorialBillingStatus({
 	actions: { href: string; label: string; variant?: "primary" | "outline" }[];
 }) {
 	return (
-		<Section>
-			<Container className="flex flex-col items-center text-center">
-				<IconTile className="size-12" tone="accent">
-					<ShieldCheck aria-hidden="true" />
-				</IconTile>
-				<Display as="h1" className="mt-6" size="md">
-					{title}
-				</Display>
-				<Lead className="mx-auto mt-4">{lede}</Lead>
-				<div className="mt-8 flex flex-wrap justify-center gap-2.5">
-					{actions.map((action) => (
-						<ButtonLink
-							href={action.href}
-							key={action.href}
-							variant={action.variant === "outline" ? "secondary" : "primary"}
-						>
-							{action.label}
-						</ButtonLink>
-					))}
-				</div>
-			</Container>
-		</Section>
+		<section
+			className={cn(
+				CONTAINER,
+				"flex flex-col items-center pt-16 pb-24 text-center sm:pt-24 sm:pb-32",
+			)}
+		>
+			<ShieldCheck aria-hidden="true" className="size-6 text-white/80" strokeWidth={1.5} />
+			<Display as="h1" className="mt-8" size="xl">
+				{title}
+			</Display>
+			<Lead className="mx-auto mt-6">{lede}</Lead>
+			<div className="mt-8 flex flex-wrap justify-center gap-3">
+				{actions.map((action) => (
+					<ButtonLink
+						href={action.href}
+						key={action.href}
+						variant={action.variant === "outline" ? "secondary" : "primary"}
+					>
+						{action.label}
+					</ButtonLink>
+				))}
+			</div>
+		</section>
 	);
 }
-
-export const editorialClass = cn;

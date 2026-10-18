@@ -11,10 +11,11 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
+
 import { type JobsPanelPropsFields } from "./jobs-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `jobs-panel.lit.ts`. */
@@ -245,32 +246,28 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 	].find((request) => request.isError)?.error;
 
 	return (
-		<section data-slot="jobs-panel" className={cn("space-y-6", className)} {...props}>
-			<header>
-				<h1 className="text-3xl font-semibold">Bulk jobs</h1>
-				<p className="mt-2 text-muted-foreground">
-					Create a batch, then review progress, results, failures, and delivery readiness.
-				</p>
-			</header>
-			<div className="grid gap-6 lg:grid-cols-2">
-				<Card>
-					<CardHeader>
-						<CardTitle>Create a job</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<form
-							className="space-y-4"
-							onSubmit={(event) => {
-								event.preventDefault();
-								create.mutate();
-							}}
-						>
-							<div className="space-y-2">
-								<Label htmlFor="bulk-emails">Email addresses</Label>
+		<Page
+			description="Create a batch, then review progress, results, failures, and delivery readiness."
+			title="Bulk jobs"
+		>
+			<section data-slot="jobs-panel" className={cn("flex flex-col gap-10", className)} {...props}>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						create.mutate();
+					}}
+				>
+					<Group>
+						<Row>
+							<h3 className="text-sm font-medium text-white">Create a job</h3>
+							<div className="flex flex-col gap-1.5">
+								<Label className="text-xs font-medium text-neutral-400" htmlFor="bulk-emails">
+									Email addresses
+								</Label>
 								<textarea
 									id="bulk-emails"
 									aria-label="Email addresses"
-									className="min-h-32 w-full rounded border border-border bg-background p-3"
+									className="min-h-32 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm dark:bg-input/30"
 									placeholder="One address per line"
 									required
 									value={input}
@@ -279,288 +276,349 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 									}}
 								/>
 							</div>
-							<div className="space-y-2">
-								<Label htmlFor="bulk-source">Source label (optional)</Label>
-								<Input
-									id="bulk-source"
-									value={source}
-									onChange={(event) => {
-										setSource(event.target.value);
-									}}
-								/>
+							<div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+								<div className="flex flex-col gap-1.5">
+									<Label className="text-xs font-medium text-neutral-400" htmlFor="bulk-source">
+										Source label (optional)
+									</Label>
+									<Input
+										className="h-10 rounded-lg"
+										id="bulk-source"
+										value={source}
+										onChange={(event) => {
+											setSource(event.target.value);
+										}}
+									/>
+								</div>
+								<Button className="h-10 rounded-lg" type="submit" disabled={create.isPending}>
+									Create job
+								</Button>
 							</div>
-							<Button type="submit" disabled={create.isPending}>
-								Create job
-							</Button>
-						</form>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader>
-						<CardTitle>Find a job</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<form className="flex gap-2" onSubmit={openJob}>
+						</Row>
+					</Group>
+				</form>
+				<form onSubmit={openJob}>
+					<Group>
+						<Row
+							description={
+								<>
+									List uploads also create jobs.{" "}
+									<Link href="/app/lists" className="underline">
+										View lists
+									</Link>
+								</>
+							}
+							label="Find a job"
+							layout="inline"
+						>
 							<Input
 								aria-label="Job ID"
+								className="h-10 rounded-lg md:w-40"
 								inputMode="numeric"
 								value={lookup}
 								onChange={(event) => {
 									setLookup(event.target.value);
 								}}
 							/>
-							<Button variant="outline" type="submit">
+							<Button className="h-10 rounded-lg" variant="outline" type="submit">
 								Open
 							</Button>
-						</form>
-						<p className="mt-3 text-sm text-muted-foreground">
-							List uploads also create jobs.{" "}
-							<Link href="/app/lists" className="underline">
-								View lists
-							</Link>
-						</p>
-					</CardContent>
-				</Card>
-			</div>
-			{validation || requestError ? (
-				<p role="alert" className="text-sm text-destructive">
-					{validation || requestError?.message}
-				</p>
-			) : null}
-			{notice ? (
-				<p role="status" className="text-sm text-emerald-700">
-					{notice}{" "}
-					<Link href={`/app/jobs?job=${String(jobId)}`} className="underline">
-						Share this job
-					</Link>
-				</p>
-			) : null}
-			{jobId ? (
-				<Card>
-					<CardHeader>
-						<CardTitle>Job {String(jobId)}</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-5">
-						{status.isPending ? <p role="status">Loading job…</p> : null}
-						{status.data ? (
-							<div className="space-y-3">
-								<div className="flex flex-wrap items-center gap-3">
-									<span className="rounded-full bg-muted px-3 py-1 text-sm">
-										{status.data.status}
-									</span>
-									<span>{status.data.total_records} records</span>
-									<Button
-										size="sm"
-										variant="outline"
-										onClick={() => {
-											void queryClient.invalidateQueries({
-												queryKey: key,
-											});
-										}}
-									>
-										Refresh
-									</Button>
-								</div>
-								<div className="grid gap-2 sm:grid-cols-4">
-									{Object.entries(status.data.task_summary).map(([label, count]) => (
-										<div className="rounded border p-3" key={label}>
-											<p className="text-xs text-muted-foreground">{label.replaceAll("_", " ")}</p>
-											<p className="text-xl font-semibold">{count}</p>
+						</Row>
+					</Group>
+				</form>
+				{validation || requestError ? (
+					<p
+						role="alert"
+						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+					>
+						{validation || requestError?.message}
+					</p>
+				) : null}
+				{notice ? (
+					<p
+						role="status"
+						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
+					>
+						{notice}{" "}
+						<Link href={`/app/jobs?job=${String(jobId)}`} className="underline">
+							Share this job
+						</Link>
+					</p>
+				) : null}
+				{jobId ? (
+					<Section
+						actions={
+							<Button
+								className="rounded-lg"
+								size="sm"
+								variant="outline"
+								onClick={() => {
+									void queryClient.invalidateQueries({
+										queryKey: key,
+									});
+								}}
+							>
+								Refresh
+							</Button>
+						}
+						title={`Job ${String(jobId)}`}
+					>
+						<Group>
+							{status.isPending ? (
+								<Row>
+									<p className="text-sm text-[#858585]" role="status">
+										Loading job…
+									</p>
+								</Row>
+							) : null}
+							{status.data ? (
+								<>
+									<div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4">
+										<Pill>{status.data.status}</Pill>
+										<span className="min-w-0 flex-1 text-sm text-white">
+											{status.data.total_records} records
+										</span>
+										<div className="flex items-center gap-2">
+											<Button
+												size="sm"
+												variant="secondary"
+												disabled={
+													action.isPending ||
+													["completed", "cancelled"].includes(status.data.status)
+												}
+												onClick={() => {
+													changeJob("cancel");
+												}}
+											>
+												Cancel
+											</Button>
+											<Button
+												size="sm"
+												variant="secondary"
+												disabled={
+													action.isPending ||
+													!(
+														status.data.task_summary.failed ||
+														status.data.task_summary.dead_lettered
+													)
+												}
+												onClick={() => {
+													changeJob("retry");
+												}}
+											>
+												Retry failed
+											</Button>
 										</div>
-									))}
-								</div>
-								<div className="flex gap-2">
-									<Button
-										size="sm"
-										variant="outline"
-										disabled={
-											action.isPending || ["completed", "cancelled"].includes(status.data.status)
-										}
-										onClick={() => {
-											changeJob("cancel");
-										}}
-									>
-										Cancel
-									</Button>
-									<Button
-										size="sm"
-										variant="outline"
-										disabled={
-											action.isPending ||
-											!(status.data.task_summary.failed || status.data.task_summary.dead_lettered)
-										}
-										onClick={() => {
-											changeJob("retry");
-										}}
-									>
-										Retry failed
-									</Button>
-								</div>
-							</div>
-						) : null}
-						<nav aria-label="Job views" className="flex flex-wrap gap-2">
+									</div>
+									<Row>
+										<div className="grid gap-3 sm:grid-cols-4">
+											{Object.entries(status.data.task_summary).map(([label, count]) => (
+												<div
+													className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]"
+													key={label}
+												>
+													<p className="text-xs text-[#858585]">{label.replaceAll("_", " ")}</p>
+													<p className="mt-1 text-xl font-medium text-white">{count}</p>
+												</div>
+											))}
+										</div>
+									</Row>
+								</>
+							) : null}
+						</Group>
+						<div
+							aria-label="Job views"
+							className="inline-flex w-fit flex-wrap rounded-lg bg-white/[0.03] p-0.5 ring-1 ring-white/[0.08]"
+							role="group"
+						>
 							{tabs.map((item) => (
-								<Button
-									type="button"
-									size="sm"
+								<button
+									aria-pressed={tab === item}
+									className={cn(
+										"rounded-md px-3 py-1 text-sm font-medium transition-colors",
+										tab === item
+											? "bg-white/[0.08] text-white"
+											: "text-[#858585] hover:text-neutral-200",
+									)}
 									key={item}
-									variant={tab === item ? "default" : "outline"}
 									onClick={() => {
 										setTab(item);
 									}}
+									type="button"
 								>
 									{item[0].toUpperCase() + item.slice(1)}
-								</Button>
+								</button>
 							))}
-						</nav>
-						{tab === "progress" && progress.data ? (
-							<div>
-								<p>{progress.data.total_processed} processed</p>
-								<p className="text-sm text-muted-foreground">
-									{Object.entries(progress.data.summary)
+						</div>
+						<Group>
+							{tab === "progress" && progress.data ? (
+								<Row
+									description={Object.entries(progress.data.summary)
 										.map(([label, count]) => `${label.replaceAll("_", " ")}: ${String(count)}`)
 										.join(" · ")}
-								</p>
-							</div>
-						) : null}
-						{tab === "results" ? (
-							<div className="space-y-3">
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={download.isPending}
-									onClick={() => {
-										download.mutate("results");
-									}}
-								>
-									Download results CSV
-								</Button>
-								{bulkResults.data ? (
-									<p className="text-sm text-muted-foreground">
-										{bulkResults.data.results.length} verified outputs in this batch.
-									</p>
-								) : null}
-								{results.data?.results.length ? (
-									<div className="overflow-x-auto">
-										<table className="w-full text-sm">
-											<thead>
-												<tr>
-													<th className="p-2 text-left">Email</th>
-													<th className="p-2 text-left">State</th>
-													<th className="p-2 text-left">Reachability</th>
-													<th className="p-2 text-left">Error</th>
-												</tr>
-											</thead>
-											<tbody>
-												{results.data.results.map((row) => (
-													<tr className="border-t" key={row.id}>
-														<td className="p-2">{row.result?.input ?? `Row ${String(row.id)}`}</td>
-														<td className="p-2">{row.task_state}</td>
-														<td className="p-2">{row.result?.is_reachable ?? "—"}</td>
-														<td className="p-2">{row.error ?? "—"}</td>
+									label={`${String(progress.data.total_processed)} processed`}
+								/>
+							) : null}
+							{tab === "results" ? (
+								<Row>
+									<div className="flex flex-wrap items-center justify-between gap-3">
+										{bulkResults.data ? (
+											<p className="text-sm text-[#858585]">
+												{bulkResults.data.results.length} verified outputs in this batch.
+											</p>
+										) : (
+											<span />
+										)}
+										<Button
+											size="sm"
+											variant="secondary"
+											disabled={download.isPending}
+											onClick={() => {
+												download.mutate("results");
+											}}
+										>
+											Download results CSV
+										</Button>
+									</div>
+									{results.data?.results.length ? (
+										<div className="overflow-x-auto">
+											<table className="w-full text-left text-sm">
+												<thead>
+													<tr className="border-b border-border">
+														<th className="py-2 pr-4 font-medium text-foreground">Email</th>
+														<th className="py-2 pr-4 font-medium text-foreground">State</th>
+														<th className="py-2 pr-4 font-medium text-foreground">Reachability</th>
+														<th className="py-2 font-medium text-foreground">Error</th>
 													</tr>
-												))}
-											</tbody>
-										</table>
+												</thead>
+												<tbody>
+													{results.data.results.map((row) => (
+														<tr className="border-b border-border/60" key={row.id}>
+															<td className="py-2 pr-4 text-foreground">
+																{row.result?.input ?? `Row ${String(row.id)}`}
+															</td>
+															<td className="py-2 pr-4 text-muted-foreground">{row.task_state}</td>
+															<td className="py-2 pr-4 text-muted-foreground">
+																{row.result?.is_reachable ?? "—"}
+															</td>
+															<td className="py-2 text-muted-foreground">{row.error ?? "—"}</td>
+														</tr>
+													))}
+												</tbody>
+											</table>
+										</div>
+									) : (
+										<p className="text-sm text-[#858585]">No results yet.</p>
+									)}
+									<div className="flex justify-end">
+										<Button
+											className="rounded-lg"
+											size="sm"
+											variant="outline"
+											disabled={!results.data?.has_more || !results.data.next_cursor}
+											onClick={() => {
+												setCursor(results.data?.next_cursor ?? undefined);
+											}}
+										>
+											Next results
+										</Button>
 									</div>
-								) : (
-									<p>No results yet.</p>
-								)}
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={!results.data?.has_more || !results.data.next_cursor}
-									onClick={() => {
-										setCursor(results.data?.next_cursor ?? undefined);
-									}}
+								</Row>
+							) : null}
+							{tab === "events" ? (
+								<>
+									{events.data?.events.length ? (
+										events.data.events.map((event) => (
+											<div className="px-5 py-4 text-sm text-white" key={event.id}>
+												{event.event_type}{" "}
+												<span className="text-xs text-[#858585]">
+													· {new Date(event.created_at).toLocaleString()}
+												</span>
+											</div>
+										))
+									) : (
+										<Row>
+											<p className="text-sm text-[#858585]">No events yet.</p>
+										</Row>
+									)}
+									<div className="flex justify-end px-5 py-3">
+										<Button
+											className="rounded-lg"
+											size="sm"
+											variant="outline"
+											disabled={!events.data || eventOffset + 50 >= events.data.total}
+											onClick={() => {
+												setEventOffset(eventOffset + 50);
+											}}
+										>
+											More events
+										</Button>
+									</div>
+								</>
+							) : null}
+							{tab === "failures" ? (
+								<>
+									<Row
+										label={`${String(failures.data?.failures_total ?? 0)} failed rows · ${String(failures.data?.retry_summary.retryable_rows ?? 0)} retryable · ${String(failures.data?.retry_summary.permanent_failures ?? 0)} permanent`}
+										layout="inline"
+									>
+										<Button
+											size="sm"
+											variant="secondary"
+											disabled={download.isPending}
+											onClick={() => {
+												download.mutate("failures");
+											}}
+										>
+											Download failure report
+										</Button>
+									</Row>
+									{failures.data?.failure_breakdown.map((item) => (
+										<div
+											className="flex items-center justify-between gap-4 px-5 py-4 text-sm"
+											key={item.error}
+										>
+											<span className="min-w-0 truncate text-white">{item.error}</span>
+											<span className="text-[#858585]">{String(item.count)}</span>
+										</div>
+									))}
+								</>
+							) : null}
+							{tab === "approval" && approval.data ? (
+								<Row
+									description={`${String(approval.data.safe_to_send_count)} safe addresses (${String(approval.data.safe_to_send_pct)}%)`}
+									label={approval.data.ready_to_send ? "Ready to send" : "Review before sending"}
 								>
-									Next results
-								</Button>
-							</div>
-						) : null}
-						{tab === "events" ? (
-							<div className="space-y-3">
-								{events.data?.events.length ? (
-									<ol className="space-y-2">
-										{events.data.events.map((event) => (
-											<li className="rounded border p-3 text-sm" key={event.id}>
-												{event.event_type} · {new Date(event.created_at).toLocaleString()}
-											</li>
+									<p className="text-sm text-neutral-300">{approval.data.recommendation}</p>
+								</Row>
+							) : null}
+							{tab === "latency" && latency.data ? (
+								<Row>
+									<div className="grid gap-3 sm:grid-cols-4">
+										{[
+											["Completed", latency.data.total_completed],
+											["Median", latency.data.p50_duration_ms],
+											["P95", latency.data.p95_duration_ms],
+											["P99", latency.data.p99_duration_ms],
+										].map(([label, value]) => (
+											<div
+												className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]"
+												key={label}
+											>
+												<p className="text-xs text-[#858585]">{label}</p>
+												<p className="mt-1 text-xl font-medium text-white">
+													{String(value)}
+													{label === "Completed" ? "" : " ms"}
+												</p>
+											</div>
 										))}
-									</ol>
-								) : (
-									<p>No events yet.</p>
-								)}
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={!events.data || eventOffset + 50 >= events.data.total}
-									onClick={() => {
-										setEventOffset(eventOffset + 50);
-									}}
-								>
-									More events
-								</Button>
-							</div>
-						) : null}
-						{tab === "failures" ? (
-							<div className="space-y-3">
-								<p>
-									{failures.data?.failures_total ?? 0} failed rows ·{" "}
-									{failures.data?.retry_summary.retryable_rows ?? 0} retryable ·{" "}
-									{failures.data?.retry_summary.permanent_failures ?? 0} permanent
-								</p>
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={download.isPending}
-									onClick={() => {
-										download.mutate("failures");
-									}}
-								>
-									Download failure report
-								</Button>
-								{failures.data?.failure_breakdown.map((item) => (
-									<p className="rounded border p-2 text-sm" key={item.error}>
-										{item.error}: {String(item.count)}
-									</p>
-								))}
-							</div>
-						) : null}
-						{tab === "approval" && approval.data ? (
-							<div>
-								<p className="font-medium">
-									{approval.data.ready_to_send ? "Ready to send" : "Review before sending"}
-								</p>
-								<p>{approval.data.recommendation}</p>
-								<p className="text-sm">
-									{approval.data.safe_to_send_count} safe addresses (
-									{approval.data.safe_to_send_pct}
-									%)
-								</p>
-							</div>
-						) : null}
-						{tab === "latency" && latency.data ? (
-							<div className="grid gap-2 sm:grid-cols-4">
-								{[
-									["Completed", latency.data.total_completed],
-									["Median", latency.data.p50_duration_ms],
-									["P95", latency.data.p95_duration_ms],
-									["P99", latency.data.p99_duration_ms],
-								].map(([label, value]) => (
-									<div className="rounded border p-3" key={label}>
-										<p className="text-xs">{label}</p>
-										<p>
-											{String(value)}
-											{label === "Completed" ? "" : " ms"}
-										</p>
 									</div>
-								))}
-							</div>
-						) : null}
-					</CardContent>
-				</Card>
-			) : null}
-		</section>
+								</Row>
+							) : null}
+						</Group>
+					</Section>
+				) : null}
+			</section>
+		</Page>
 	);
 }

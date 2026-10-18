@@ -128,10 +128,13 @@ export function DeleteAccountRow({ email }: { email: string }) {
 	}
 
 	return (
-		<div className="settings-row" data-slot="delete-account-row">
-			<div className="settings-row-copy">
-				<p className="settings-row-label">Delete account</p>
-				<p className="settings-row-description">
+		<div
+			className="flex flex-row items-center justify-between gap-4 p-5"
+			data-slot="delete-account-row"
+		>
+			<div className="min-w-0">
+				<p className="text-sm font-medium text-white">Delete account</p>
+				<p className="mt-0.5 text-xs text-[#858585]">
 					Permanently delete your account, your data, and your subscription.
 				</p>
 			</div>
@@ -191,13 +194,13 @@ export function DeleteAccountRow({ email }: { email: string }) {
 								<li>You are signed out, and you cannot sign in to this account again.</li>
 							</ul>
 							<div className="flex flex-col gap-2 px-4">
-								<div className="rounded-none border p-3">
+								<div className="rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
 									<p className="text-sm font-medium">Verify your identity</p>
 									<p className="mt-1 text-sm text-muted-foreground">
 										We will send a one-time code to {email}. Verification is valid for 15 minutes.
 									</p>
 									{verified ? (
-										<p className="mt-3 text-sm font-medium text-emerald-700" role="status">
+										<p className="mt-3 text-sm font-medium text-emerald-300" role="status">
 											Identity verified
 										</p>
 									) : codeSent ? (

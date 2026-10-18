@@ -1,4 +1,4 @@
-import { DM_Mono, Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import localFont from "next/font/local";
 
 import { cn } from "@/lib/utils";
@@ -6,38 +6,25 @@ import { cn } from "@/lib/utils";
 /**
  * Root font variables loaded once in `app/layout.tsx`.
  *
- * Marketing and auth add the shared mono stack from this module; product
- * and dashboard code read the root defaults via CSS tokens.
+ * Every surface uses Geist Sans and Geist Mono, as screenshot-studio does.
+ * Inter stays for legacy classes that still name it.
  */
 const fontSans = Geist({
 	variable: "--font-geist-sans",
 	subsets: ["latin"],
 	display: "swap",
-	preload: false,
 });
 
 const fontMono = Geist_Mono({
 	variable: "--font-geist-mono",
 	subsets: ["latin"],
 	display: "swap",
-	preload: false,
 });
 
 const fontInter = Inter({
 	variable: "--font-inter",
 	subsets: ["latin"],
 	weight: ["400", "500", "600"],
-	display: "swap",
-});
-
-/**
- * Shared public-site stacks. Instantiated once so marketing, legal, and auth
- * do not each download their own next/font copy of the same family.
- */
-const marketingMono = DM_Mono({
-	variable: "--font-marketing-mono",
-	weight: ["400", "500"],
-	subsets: ["latin"],
 	display: "swap",
 	preload: false,
 });
@@ -61,17 +48,3 @@ export const fontVariables = cn(
 	fontInter.variable,
 	fontDisplay.variable,
 );
-
-/**
- * Public-site sans: variable Inter with optical sizes, so large headings use
- * the display cut and body text can sit at weight 450.
- */
-const marketingSans = Inter({
-	variable: "--font-marketing-sans",
-	subsets: ["latin"],
-	axes: ["opsz"],
-	display: "swap",
-	preload: false,
-});
-
-export const marketingFontVariables = cn(marketingMono.variable, marketingSans.variable);

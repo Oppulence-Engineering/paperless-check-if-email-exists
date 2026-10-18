@@ -1,4 +1,12 @@
-import { Check } from "@/lib/icons";
+import { Mark, PageHero, RowTable } from "@/components/platform/landing/blocks";
+import { CtaLink } from "@/components/platform/landing/cta-link";
+import {
+	Check,
+	MONO,
+	MUTED,
+	Section,
+	SectionIntro,
+} from "@/components/platform/landing/primitives";
 import { cn } from "@/lib/utils";
 
 import { pricingPlans } from "../marketing-data";
@@ -6,8 +14,7 @@ import {
 	PRICING_COMPARISON_SECTIONS,
 	type PricingColumn,
 } from "../sim-landing/subpages/pricing-comparison-data";
-import { CenteredHero, CheckRow, CtaBand, FaqSection, StepCards } from "./page-kit";
-import { ButtonLink, Container, Muted } from "./ui";
+import { FaqSection, StepCards } from "./page-kit";
 
 export const pricingFaqs = [
 	{
@@ -34,158 +41,149 @@ export const pricingFaqs = [
 	},
 ];
 
-const CARD_TONE = ["muted", "highlight", "plain", "dark"] as const;
-const CARD_LABEL = ["To try it", "Most teams", "At volume", "For large senders"];
+const ROWS = PRICING_COMPARISON_SECTIONS.flatMap((section) => section.rows);
 
-/** Rows that apply to one plan: usage values and included features. */
-function planRows(column: PricingColumn) {
-	const rows: string[] = [];
-	for (const section of PRICING_COMPARISON_SECTIONS) {
-		for (const row of section.rows) {
-			const value = row.values[column];
-			if (value === true) rows.push(row.label);
-			else if (typeof value === "string" && value) rows.push(`${value} ${row.label.toLowerCase()}`);
-		}
-	}
-	return rows;
+/** Limits such as checks and seats: rows whose values are text. */
+const ALLOWANCES = ROWS.filter((row) => row.values.every((value) => typeof value === "string"));
+
+/** Included features: rows whose values are yes or no. */
+const FEATURES = ROWS.filter((row) => row.values.every((value) => typeof value === "boolean"));
+
+/** Features a plan has that the plan before it does not. The first plan lists all of its features. */
+function featuresFor(column: PricingColumn): string[] {
+	return FEATURES.filter(
+		(row) => row.values[column] === true && (column === 0 || row.values[column - 1] !== true),
+	).map((row) => row.label);
 }
 
-function PlanCard({ index }: { index: number }) {
-	const plan = pricingPlans[index];
-	const tone = CARD_TONE[index] ?? "plain";
-	const dark = tone === "dark";
+const FACTS = [
+	"No email sent during checks",
+	"Duplicates in a list count once",
+	"Prices in US dollars",
+];
+
+/** Plan columns after screenshot-studio `PlanCards`: price, limits, and what each plan adds. */
+export function PlanCards() {
 	return (
-		<article
-			className={cn(
-				"relative flex flex-col rounded-3xl border p-6",
-				tone === "muted" && "border-[var(--ed-line)] bg-[var(--ed-subtle)]",
-				tone === "highlight" &&
-					"border-[var(--ed-accent)] bg-[var(--ed-bg)] shadow-[var(--ed-shadow)]",
-				tone === "plain" && "border-[var(--ed-line)] bg-[var(--ed-bg)]",
-				dark && "border-[var(--ed-line)] bg-[var(--ed-subtle)] text-white",
-			)}
-		>
-			<div className="flex items-center justify-between">
-				<p className={cn("ed-sans text-[12px]", dark ? "text-white/60" : "text-[var(--ed-muted)]")}>
-					{CARD_LABEL[index]}
-				</p>
-				{plan.recommended ? (
-					<span className="ed-sans rounded-full border border-[var(--ed-accent)]/30 bg-[var(--ed-accent-soft)] px-2.5 py-0.5 text-[11px] text-[var(--ed-accent)]">
-						Recommended
-					</span>
-				) : null}
-			</div>
-			<h2
-				className={cn(
-					"ed-sans mt-1 text-[18px] font-medium",
-					dark ? "text-white" : "text-[var(--ed-ink)]",
-				)}
-			>
-				{plan.name}
-			</h2>
-			<p className="mt-8 flex items-baseline gap-1.5">
-				<span
-					className={cn(
-						"ed-display text-[44px] leading-none font-[400]",
-						dark ? "text-white" : "text-[var(--ed-ink)]",
-					)}
-				>
-					{plan.price}
-				</span>
-				{plan.period ? (
-					<span
-						className={cn("ed-sans text-[13px]", dark ? "text-white/60" : "text-[var(--ed-muted)]")}
-					>
-						/ month
-					</span>
-				) : null}
-			</p>
-			<p
-				className={cn("ed-sans mt-2 text-[13px]", dark ? "text-white/70" : "text-[var(--ed-good)]")}
-			>
-				{plan.note}
-			</p>
-			<p
-				className={cn(
-					"ed-sans mt-3 min-h-[40px] text-[13.5px] leading-[1.5]",
-					dark ? "text-white/70" : "text-[var(--ed-body)]",
-				)}
-			>
-				{plan.description}
-			</p>
-			<ButtonLink
-				arrow
-				className="mt-6 w-full"
-				href={plan.ctaHref}
-				size="md"
-				variant={dark ? "inverse" : tone === "highlight" ? "accent" : "secondary"}
-			>
-				{plan.ctaLabel}
-			</ButtonLink>
-			<ul
-				className={cn(
-					"mt-6 flex flex-col gap-2.5 border-t pt-6",
-					dark ? "border-white/10" : "border-[var(--ed-line)]",
-				)}
-			>
-				{planRows(index as PricingColumn).map((row) => (
-					<li
+		<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{pricingPlans.map((plan, index) => {
+				const column = index as PricingColumn;
+				const previous = index === 0 ? null : pricingPlans[index - 1];
+				const features = featuresFor(column);
+				return (
+					<div
 						className={cn(
-							"ed-sans flex gap-2.5 text-[13px] leading-[1.45]",
-							dark ? "text-white/85" : "text-[var(--ed-body)]",
+							"flex flex-col p-6",
+							plan.recommended ? "bg-[#181818] ring-1 ring-white/15" : "bg-[#111]",
 						)}
-						key={row}
+						key={plan.name}
 					>
-						<span
-							className={cn(
-								"mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full",
-								dark
-									? "bg-white/15 text-white"
-									: "bg-[var(--ed-accent-soft)] text-[var(--ed-accent)]",
-							)}
-						>
-							<Check aria-hidden="true" className="size-2.5" />
+						<div className="flex items-center justify-between">
+							<h3 className="text-2xl tracking-[-0.015em] text-white">{plan.name}</h3>
+							{plan.recommended ? (
+								<span
+									className={cn(
+										MONO,
+										"rounded-full bg-white px-2 py-0.5 text-[10px] tracking-[0.06em] text-black uppercase",
+									)}
+								>
+									Most teams
+								</span>
+							) : null}
+						</div>
+						<p className={cn("mt-1 min-h-[56px] text-[17px] leading-snug", MUTED)}>
+							{plan.description}
+						</p>
+						<p className="mt-8 text-[30px] leading-none tracking-[-0.03em] text-white">
+							{plan.price}
+							{plan.period ? (
+								<span className={cn("ml-1 text-[15px] tracking-normal", MUTED)}>{plan.period}</span>
+							) : null}
+						</p>
+						<p className={cn("mt-2 text-[15px]", MUTED)}>{plan.note}</p>
+						<CtaLink
+							className="mt-6 justify-center"
+							href={plan.ctaHref}
+							label={plan.ctaLabel}
+							tone="secondary"
+						/>
+						<dl className="mt-8 space-y-2.5 border-t border-[#212121] pt-6 text-[15px]">
+							{ALLOWANCES.map((row) => (
+								<div className="flex items-baseline justify-between gap-4" key={row.label}>
+									<dt className={MUTED}>{row.label}</dt>
+									<dd className={cn(MONO, "text-[13px] text-white")}>{row.values[column]}</dd>
+								</div>
+							))}
+						</dl>
+						<div className="mt-6 flex-1 border-t border-[#212121] pt-6">
+							{previous ? (
+								<p className={cn("mb-3 text-[13px]", MUTED)}>
+									Everything in {previous.name}
+									{features.length > 0 ? ", plus" : null}
+								</p>
+							) : null}
+							<ul className="space-y-3">
+								{features.map((feature) => (
+									<li className="flex items-start gap-3 text-[15px] text-white/85" key={feature}>
+										<Check className="mt-0.5" />
+										{feature}
+									</li>
+								))}
+							</ul>
+						</div>
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+/** Every limit and feature side by side. */
+function PlanComparison() {
+	return (
+		<RowTable
+			caption="Plan comparison"
+			head={["", ...pricingPlans.map((plan) => plan.name)]}
+			rows={ROWS.map((row) => ({
+				label: row.label,
+				cells: row.values.map((value, index) =>
+					typeof value === "string" ? (
+						<span className={cn(MONO, "text-[13px] text-white")} key={index}>
+							{value}
 						</span>
-						{row}
-					</li>
-				))}
-			</ul>
-		</article>
+					) : (
+						<Mark key={index} value={value} />
+					),
+				),
+			}))}
+		/>
 	);
 }
 
 export function EditorialPricing() {
 	return (
 		<>
-			<CenteredHero
-				eyebrow="Pricing"
-				lede="Every plan includes scores, reason codes, suppressions, and delivery feedback. No email is sent during a check."
-				sans
-				title={
-					<>
-						Start free. <Muted>Grow when you send more.</Muted>
-					</>
-				}
-			/>
-			<section className="bg-[var(--ed-bg)] pb-10">
-				<Container wide>
-					<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-						{pricingPlans.map((plan, index) => (
-							<PlanCard index={index} key={plan.name} />
-						))}
-					</div>
-					<div className="mt-3 rounded-2xl border border-[var(--ed-line)] px-5 py-4">
-						<CheckRow
-							items={[
-								"No email sent during checks",
-								"Duplicates in a list count once",
-								"Prices in US dollars",
-								"Contact us for paid plans",
-							]}
-						/>
-					</div>
-				</Container>
-			</section>
+			<PageHero
+				body="Every plan includes scores, reason codes, suppressions, and delivery feedback. No email is sent during a check."
+				eyebrow={{ label: "Pricing" }}
+				lead="Start free."
+				trail="Grow when you send more."
+			>
+				<PlanCards />
+				<ul className="mt-4 grid grid-cols-1 gap-px overflow-hidden border border-[#212121] bg-[#212121] sm:grid-cols-3">
+					{FACTS.map((fact) => (
+						<li className="bg-[#090909] px-5 py-5 text-[15px] text-white/80" key={fact}>
+							{fact}
+						</li>
+					))}
+				</ul>
+			</PageHero>
+			<Section>
+				<SectionIntro label="Compare" lead="Compare plans" />
+				<div className="mt-24">
+					<PlanComparison />
+				</div>
+			</Section>
 			<StepCards
 				eyebrow="How checks are counted"
 				steps={[
@@ -204,8 +202,7 @@ export function EditorialPricing() {
 				]}
 				title="You pay for addresses, not files."
 			/>
-			<FaqSection faqs={pricingFaqs} title="Questions about pricing." />
-			<CtaBand lede="Start with 100 free checks a month." title="Clean your next list for free." />
+			<FaqSection faqs={pricingFaqs} />
 		</>
 	);
 }

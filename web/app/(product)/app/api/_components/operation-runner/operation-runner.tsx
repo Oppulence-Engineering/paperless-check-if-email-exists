@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useId, useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 
 import { dashboardRequest, redirectBrowserIfUnauthorized } from "@/lib/auth/dashboard-fetch";
+import { Button } from "@oppulence/ui/components/button";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { type OperationRunnerPropsFields } from "./operation-runner.schema";
@@ -129,13 +130,16 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 		>
 			<form
 				onSubmit={submit}
-				className="flex flex-col gap-4 rounded-lg border border-border bg-background p-5"
+				className="flex flex-col gap-4 rounded-2xl bg-white/[0.015] p-5 ring-1 ring-white/[0.08]"
 			>
-				<label htmlFor={`${formId}-operation`} className="flex flex-col gap-2 text-sm">
+				<label
+					htmlFor={`${formId}-operation`}
+					className="flex flex-col gap-1.5 text-sm text-neutral-400"
+				>
 					Operation
 					<select
 						id={`${formId}-operation`}
-						className="rounded border border-border bg-background p-2"
+						className="h-10 rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
 						value={id}
 						onChange={(event) => {
 							setId(event.target.value);
@@ -158,25 +162,28 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 				</label>
 				{selected ? (
 					<>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-sm text-[#858585]">
 							{selected.description ?? selected.id} · Scope:{" "}
 							{selected.scope ?? "authenticated workspace"}
 						</p>
-						<Link className="text-sm underline" href={`/developers/reference/${selected.id}`}>
+						<Link
+							className="text-sm text-neutral-300 underline hover:text-white"
+							href={`/developers/reference/${selected.id}`}
+						>
 							Request and response schema
 						</Link>
 						{pathParams.map((name) => (
 							<label
 								key={name}
 								htmlFor={`${formId}-path-${name}`}
-								className="flex flex-col gap-1 text-sm"
+								className="flex flex-col gap-1.5 text-sm text-neutral-400"
 							>
 								{name}
 								<input
 									id={`${formId}-path-${name}`}
 									aria-label={name}
 									required
-									className="rounded border border-border bg-background p-2"
+									className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
 									value={values[name] ?? ""}
 									onChange={(event) => {
 										setValues({ ...values, [name]: event.target.value });
@@ -184,12 +191,15 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 								/>
 							</label>
 						))}
-						<label htmlFor={`${formId}-query`} className="flex flex-col gap-1 text-sm">
+						<label
+							htmlFor={`${formId}-query`}
+							className="flex flex-col gap-1.5 text-sm text-neutral-400"
+						>
 							Query string
 							<input
 								id={`${formId}-query`}
 								aria-label="Query string"
-								className="rounded border border-border bg-background p-2"
+								className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
 								placeholder="page=1&limit=50"
 								value={query}
 								onChange={(event) => {
@@ -198,12 +208,15 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 							/>
 						</label>
 						{media === "application/json" ? (
-							<label htmlFor={`${formId}-body`} className="flex flex-col gap-1 text-sm">
+							<label
+								htmlFor={`${formId}-body`}
+								className="flex flex-col gap-1.5 text-sm text-neutral-400"
+							>
 								JSON body
 								<textarea
 									id={`${formId}-body`}
 									aria-label="JSON body"
-									className="min-h-40 rounded border border-border bg-background p-2 font-mono text-xs"
+									className="min-h-40 rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs text-white dark:bg-input/30"
 									spellCheck={false}
 									value={body}
 									onChange={(event) => {
@@ -214,7 +227,10 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 						) : null}
 						{media === "multipart/form-data" ? (
 							<>
-								<label htmlFor={`${formId}-file`} className="flex flex-col gap-1 text-sm">
+								<label
+									htmlFor={`${formId}-file`}
+									className="flex flex-col gap-1.5 text-sm text-neutral-400"
+								>
 									CSV file
 									<input
 										id={`${formId}-file`}
@@ -231,13 +247,13 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 									<label
 										key={name}
 										htmlFor={`${formId}-field-${name}`}
-										className="flex flex-col gap-1 text-sm"
+										className="flex flex-col gap-1.5 text-sm text-neutral-400"
 									>
 										{name}
 										<input
 											id={`${formId}-field-${name}`}
 											aria-label={name}
-											className="rounded border border-border bg-background p-2"
+											className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
 											value={values[name] ?? ""}
 											onChange={(event) => {
 												setValues({ ...values, [name]: event.target.value });
@@ -248,7 +264,9 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 							</>
 						) : null}
 						<details>
-							<summary className="cursor-pointer text-sm">Request headers</summary>
+							<summary className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-200">
+								Request headers
+							</summary>
 							<div className="mt-3 grid gap-3">
 								{[
 									"x-idempotency-key",
@@ -260,13 +278,13 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 									<label
 										key={name}
 										htmlFor={`${formId}-header-${name}`}
-										className="flex flex-col gap-1 text-sm"
+										className="flex flex-col gap-1.5 text-sm text-neutral-400"
 									>
 										{name}
 										<input
 											id={`${formId}-header-${name}`}
 											aria-label={name}
-											className="rounded border border-border bg-background p-2"
+											className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
 											value={headers[name] ?? ""}
 											onChange={(event) => {
 												setHeaders({ ...headers, [name]: event.target.value });
@@ -276,31 +294,29 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 								))}
 							</div>
 						</details>
-						<button
-							type="submit"
-							disabled={mutation.isPending}
-							className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-						>
+						<Button className="rounded-lg" type="submit" disabled={mutation.isPending}>
 							{mutation.isPending ? "Running…" : `Run ${selected.method}`}
-						</button>
+						</Button>
 					</>
 				) : null}
 			</form>
 			<div
 				aria-live="polite"
-				className="min-h-64 rounded-lg border border-border bg-background p-5"
+				className="min-h-64 rounded-2xl bg-white/[0.015] p-5 ring-1 ring-white/[0.08]"
 			>
-				<h2 className="mb-3 text-base font-semibold">Response</h2>
+				<h2 className="mb-3 text-sm font-medium text-white">Response</h2>
 				{mutation.isError ? (
-					<pre className="overflow-auto whitespace-pre-wrap text-sm text-destructive">
+					<pre className="overflow-auto whitespace-pre-wrap text-sm text-red-300">
 						{mutation.error instanceof Error ? mutation.error.message : "Request failed"}
 					</pre>
 				) : null}
 				{mutation.isSuccess ? (
-					<pre className="overflow-auto whitespace-pre-wrap font-mono text-xs">{mutation.data}</pre>
+					<pre className="overflow-auto whitespace-pre-wrap font-mono text-xs text-neutral-300">
+						{mutation.data}
+					</pre>
 				) : null}
 				{mutation.isIdle ? (
-					<p className="text-sm text-muted-foreground">
+					<p className="text-sm text-[#858585]">
 						Select an operation and run it to see the result.
 					</p>
 				) : null}

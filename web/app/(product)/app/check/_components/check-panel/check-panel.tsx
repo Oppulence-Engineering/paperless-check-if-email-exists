@@ -11,11 +11,11 @@ import {
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@oppulence/ui/components/card";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { cn } from "@oppulence/ui/lib/utils";
+import { Group, Page, Pill, Row, Section, type PillTone } from "@/components/platform/page-kit";
 import { useV1CheckEmail } from "@/hooks/queries/use-v1-check-email";
 
 import { type CheckPanelPropsFields } from "./check-panel.schema";
@@ -28,6 +28,13 @@ import { type CheckPanelPropsFields } from "./check-panel.schema";
  * persist, or read cookies. Owned by `check-panel.lit.ts`.
  */
 export type CheckPanelProps = CheckPanelPropsFields & ComponentPropsWithoutRef<"section">;
+
+const CATEGORY_TONES: Record<string, PillTone> = {
+	invalid: "red",
+	risky: "yellow",
+	unknown: "gray",
+	valid: "green",
+};
 
 export function CheckPanel({ className, ...props }: CheckPanelProps) {
 	const [email, setEmail] = useState("");
@@ -49,123 +56,133 @@ export function CheckPanel({ className, ...props }: CheckPanelProps) {
 
 	const result = check.data;
 	return (
-		<section
-			data-slot="check-panel"
-			className={cn("mx-auto max-w-4xl space-y-8", className)}
-			{...props}
+		<Page
+			description="Review reachability, delivery risk, and the signals behind the result."
+			title="Check an email address"
+			width="md"
 		>
-			<div>
-				<p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Verification</p>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight">Check an email address</h1>
-				<p className="mt-3 text-muted-foreground">
-					Review reachability, delivery risk, and the signals behind the result.
-				</p>
-			</div>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Single address check</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form
-						className="flex flex-col gap-4 sm:flex-row sm:items-end"
-						noValidate
-						onSubmit={submit}
+			<section data-slot="check-panel" className={cn("flex flex-col gap-10", className)} {...props}>
+				<Group>
+					<Row>
+						<h3 className="text-sm font-medium text-white">Single address check</h3>
+						<form
+							className="flex flex-col gap-3 sm:flex-row sm:items-end"
+							noValidate
+							onSubmit={submit}
+						>
+							<div className="flex flex-1 flex-col gap-1.5">
+								<Label className="text-xs font-medium text-neutral-400" htmlFor="email-to-check">
+									Email address
+								</Label>
+								<Input
+									autoComplete="off"
+									className="h-10 rounded-lg"
+									id="email-to-check"
+									aria-describedby={inputError ? "email-to-check-error" : undefined}
+									aria-invalid={Boolean(inputError)}
+									onChange={(event) => {
+										setEmail(event.target.value);
+										setInputError(null);
+										check.reset();
+									}}
+									placeholder="name@example.com"
+									required
+									type="email"
+									value={email}
+								/>
+							</div>
+							<Label
+								className="flex h-10 items-center gap-2 text-sm text-neutral-400"
+								htmlFor="use-sample-result"
+							>
+								<Checkbox
+									checked={sample}
+									id="use-sample-result"
+									onCheckedChange={(checked) => {
+										setSample(checked === true);
+									}}
+								/>
+								Use sample result
+							</Label>
+							<Button className="h-10 rounded-lg" disabled={check.isPending} type="submit">
+								{check.isPending ? "Checking…" : "Check email"}
+							</Button>
+						</form>
+						{inputError ? (
+							<p className="text-sm text-red-300" id="email-to-check-error" role="alert">
+								{inputError}
+							</p>
+						) : null}
+					</Row>
+				</Group>
+				{check.isError ? (
+					<p
+						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
+						role="alert"
 					>
-						<div className="flex-1 space-y-2">
-							<Label htmlFor="email-to-check">Email address</Label>
-							<Input
-								autoComplete="off"
-								id="email-to-check"
-								aria-describedby={inputError ? "email-to-check-error" : undefined}
-								aria-invalid={Boolean(inputError)}
-								onChange={(event) => {
-									setEmail(event.target.value);
-									setInputError(null);
-									check.reset();
-								}}
-								placeholder="name@example.com"
-								required
-								type="email"
-								value={email}
-							/>
-							{inputError ? (
-								<p className="text-sm text-destructive" id="email-to-check-error" role="alert">
-									{inputError}
-								</p>
-							) : null}
-						</div>
-						<Label className="flex items-center gap-2 text-sm" htmlFor="use-sample-result">
-							<Checkbox
-								checked={sample}
-								id="use-sample-result"
-								onCheckedChange={(checked) => {
-									setSample(checked === true);
-								}}
-							/>
-							Use sample result
-						</Label>
-						<Button disabled={check.isPending} type="submit">
-							{check.isPending ? "Checking…" : "Check email"}
-						</Button>
-					</form>
-					{check.isError ? (
-						<p className="mt-4 text-sm text-destructive" role="alert">
-							{check.error.message || "We could not check this address. Try again."}
-						</p>
-					) : null}
-				</CardContent>
-			</Card>
+						{check.error.message || "We could not check this address. Try again."}
+					</p>
+				) : null}
 
-			{result ? (
-				<>
-					<Card aria-live="polite">
-						<CardHeader>
-							<CardTitle className="flex flex-wrap items-center justify-between gap-3">
-								<span>{result.input}</span>
-								<span className="rounded-full bg-muted px-3 py-1 text-sm capitalize">
-									{result.score.category}
-								</span>
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="grid gap-5 sm:grid-cols-3">
-							<div>
-								<p className="text-sm text-muted-foreground">Reachability</p>
-								<p className="mt-1 font-semibold capitalize">{result.is_reachable}</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Safe to send</p>
-								<p className="mt-1 font-semibold">{result.score.safe_to_send ? "Yes" : "No"}</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Quality score</p>
-								<p className="mt-1 font-semibold">{result.score.score}/100</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Syntax</p>
-								<p className="mt-1 font-semibold">
-									{result.syntax.is_valid_syntax ? "Valid" : "Invalid"}
-								</p>
-							</div>
-							{result.score.reason_codes.length > 0 ? (
-								<div className="sm:col-span-3">
-									<p className="text-sm text-muted-foreground">Reasons</p>
-									<p className="mt-1 text-sm">{result.score.reason_codes.join(", ")}</p>
-								</div>
-							) : null}
-						</CardContent>
-					</Card>
-					<Card>
-						<CardHeader>
-							<CardTitle>All check details</CardTitle>
-						</CardHeader>
-						<CardContent className="text-sm">
-							<ResultValue value={result} />
-						</CardContent>
-					</Card>
-				</>
-			) : null}
-		</section>
+				{result ? (
+					<>
+						<div aria-live="polite">
+							<Section
+								actions={
+									<Pill tone={CATEGORY_TONES[result.score.category]}>
+										<span className="capitalize">{result.score.category}</span>
+									</Pill>
+								}
+								title={result.input}
+							>
+								<Group>
+									<Row>
+										<dl className="grid gap-5 sm:grid-cols-4">
+											<div>
+												<dt className="text-xs text-[#858585]">Reachability</dt>
+												<dd className="mt-1 text-sm font-medium text-white capitalize">
+													{result.is_reachable}
+												</dd>
+											</div>
+											<div>
+												<dt className="text-xs text-[#858585]">Safe to send</dt>
+												<dd className="mt-1 text-sm font-medium text-white">
+													{result.score.safe_to_send ? "Yes" : "No"}
+												</dd>
+											</div>
+											<div>
+												<dt className="text-xs text-[#858585]">Quality score</dt>
+												<dd className="mt-1 text-sm font-medium text-white">
+													{result.score.score}/100
+												</dd>
+											</div>
+											<div>
+												<dt className="text-xs text-[#858585]">Syntax</dt>
+												<dd className="mt-1 text-sm font-medium text-white">
+													{result.syntax.is_valid_syntax ? "Valid" : "Invalid"}
+												</dd>
+											</div>
+										</dl>
+									</Row>
+									{result.score.reason_codes.length > 0 ? (
+										<Row description={result.score.reason_codes.join(", ")} label="Reasons" />
+									) : null}
+								</Group>
+							</Section>
+						</div>
+						<Section title="All check details">
+							<Group>
+								<Row>
+									<div className="text-sm">
+										<ResultValue value={result} />
+									</div>
+								</Row>
+							</Group>
+						</Section>
+					</>
+				) : null}
+			</section>
+		</Page>
 	);
 }
 
@@ -188,11 +205,11 @@ export function ResultValue({ value }: { value: unknown }): ReactNode {
 		const entries = Object.entries(value as Record<string, unknown>);
 		if (entries.length === 0) return "None";
 		return (
-			<dl className="divide-y divide-border">
+			<dl className="divide-y divide-white/[0.07]">
 				{entries.map(([key, field]) => (
 					<div className="grid gap-2 py-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)]" key={key}>
-						<dt className="font-medium break-words">{key.replaceAll("_", " ")}</dt>
-						<dd className="min-w-0 break-words text-muted-foreground">
+						<dt className="font-medium break-words text-white">{key.replaceAll("_", " ")}</dt>
+						<dd className="min-w-0 break-words text-[#858585]">
 							<ResultValue value={field} />
 						</dd>
 					</div>

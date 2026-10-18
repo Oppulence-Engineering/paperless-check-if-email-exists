@@ -56,7 +56,9 @@ import { type WorkspaceSwitcherPropsFields } from "./workspace-switcher.schema";
  */
 export type WorkspaceSwitcherProps = WorkspaceSwitcherPropsFields &
 	ComponentPropsWithoutRef<"section"> & {
+		align?: "end" | "start";
 		menuContainer?: HTMLElement | null;
+		side?: "bottom" | "right" | "top";
 		trigger?: ReactElement;
 	};
 
@@ -88,10 +90,12 @@ function slugify(value: string): string {
 
 export function WorkspaceSwitcher({
 	activeWorkspaceId,
+	align = "start",
 	children,
 	className,
 	menuContainer,
 	planLabel,
+	side,
 	trigger,
 	workspaces,
 	...props
@@ -201,19 +205,16 @@ export function WorkspaceSwitcher({
 					)}
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
-					align="start"
+					align={align}
 					aria-label={integrated ? "Account and workspace menu" : "Workspace menu"}
-					className={cn(
-						"p-1.5",
-						integrated ? "app-shell w-[292px] rounded-none" : "w-[272px] rounded-[8px]",
-					)}
+					className={integrated ? "w-64 p-2" : "w-[272px] p-1.5"}
 					container={menuContainer}
-					side={integrated ? "top" : "bottom"}
+					side={side ?? (integrated ? "top" : "bottom")}
 					sideOffset={integrated ? 8 : 6}
 				>
 					{activeWorkspace ? (
 						<DropdownMenuGroup aria-label="Workspaces">
-							<DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-primary/40">
+							<DropdownMenuLabel className="px-2 text-xs font-medium text-muted-foreground">
 								Workspaces
 							</DropdownMenuLabel>
 							{workspaces.map((workspace) => {
@@ -223,7 +224,7 @@ export function WorkspaceSwitcher({
 									<DropdownMenuItem
 										aria-busy={switching || undefined}
 										aria-current={active ? "true" : undefined}
-										className="min-h-11 gap-2.5 rounded-[6px] px-2 active:scale-[0.98]"
+										className="min-h-11 gap-2.5 px-2"
 										disabled={Boolean(switchingTo)}
 										key={workspace.id}
 										onSelect={() => void switchWorkspace(workspace.id)}
@@ -261,20 +262,19 @@ export function WorkspaceSwitcher({
 							) : null}
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
-								className="rounded-[6px]"
 								disabled={Boolean(switchingTo)}
 								onSelect={() => setCreateOpen(true)}
 							>
 								<Plus />
 								Create workspace
 							</DropdownMenuItem>
-							<DropdownMenuItem asChild className="rounded-[6px]">
+							<DropdownMenuItem asChild>
 								<Link href={settingsHref("workspace")}>
 									<GearSix />
 									Manage workspaces
 								</Link>
 							</DropdownMenuItem>
-							<DropdownMenuItem asChild className="rounded-[6px]">
+							<DropdownMenuItem asChild>
 								<Link href={settingsHref("members")}>
 									<Buildings />
 									Members and access
@@ -286,7 +286,7 @@ export function WorkspaceSwitcher({
 						<>
 							<DropdownMenuSeparator />
 							<DropdownMenuGroup aria-label="Settings and developer tools">
-								<DropdownMenuLabel className="px-2 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-primary/40">
+								<DropdownMenuLabel className="px-2 text-xs font-medium text-muted-foreground">
 									Settings
 								</DropdownMenuLabel>
 								{[
@@ -296,7 +296,7 @@ export function WorkspaceSwitcher({
 									{ key: "usage", label: "Usage", icon: ChartLineUp },
 									{ key: "webhooks", label: "Webhooks", icon: Plugs },
 								].map((item) => (
-									<DropdownMenuItem asChild className="rounded-[6px]" key={item.key}>
+									<DropdownMenuItem asChild key={item.key}>
 										<Link href={settingsHref(item.key)}>
 											<item.icon />
 											{item.label}
@@ -315,7 +315,7 @@ export function WorkspaceSwitcher({
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<Dialog onOpenChange={handleCreateOpenChange} open={createOpen}>
-				<DialogContent className="rounded-none sm:max-w-md">
+				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
 						<DialogTitle>Create a workspace</DialogTitle>
 						<DialogDescription>
@@ -346,7 +346,7 @@ export function WorkspaceSwitcher({
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="new-workspace-slug">Workspace handle</Label>
-							<div className="flex items-center rounded-none border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring/50">
+							<div className="flex items-center rounded-lg border border-input bg-transparent px-3 focus-within:ring-2 focus-within:ring-ring/50 dark:bg-input/30">
 								<Input
 									aria-describedby="new-workspace-slug-help"
 									className="border-0 px-0 font-mono shadow-none focus-visible:ring-0"

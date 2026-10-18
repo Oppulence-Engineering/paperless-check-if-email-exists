@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `history.lit.ts`.
  */
 export default function HistoryLoading() {
-	return <DashboardRouteFallback label="Loading Verification history…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Verification history…" />
+		</main>
+	);
 }

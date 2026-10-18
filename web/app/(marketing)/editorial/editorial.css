@@ -1,60 +1,29 @@
 /*
- * Public-site theme: the polar.sh marketing theme (dark only).
- * Palette, surfaces, and radius come from polar.sh (polarsource/polar,
- * Apache-2.0): polar-950 page, polar-900/800 surfaces, polar-700 hairlines,
- * white headings, polar-400 text, Polar blue-600 accent.
- * The marketing and legal shells carry the `dark` class, so these values
- * apply on every public page.
+ * Public-site theme: the screenshot-studio landing palette (dark only).
+ * The marketing shell carries the `ed-root` class. These tokens feed the
+ * figures, mocks, and long-form blocks; page chrome uses Tailwind classes.
  */
-.sim-landing-root {
+.ed-root {
 	--ed-bg: #090909;
 	--ed-subtle: #111111;
 	--ed-panel: #181818;
 	--ed-ink: #ffffff;
 	--ed-ink-strong: #ffffff;
-	--ed-body: #d9d9d9;
+	--ed-body: rgb(255 255 255 / 0.65);
 	--ed-muted: #858585;
 	--ed-faint: #757575;
 	--ed-line: #212121;
 	--ed-line-soft: rgb(33 33 33 / 0.7);
-	--ed-accent: #3080ff;
-	--ed-accent-soft: rgb(21 93 252 / 0.16);
-	--ed-good: #4ade80;
-	--ed-good-soft: rgb(74 222 128 / 0.1);
-	--ed-warn: #fbbf24;
+	--ed-accent: #ffffff;
+	--ed-accent-soft: rgb(255 255 255 / 0.08);
+	--ed-good: #6ee7b7;
+	--ed-good-soft: rgb(52 211 153 / 0.15);
+	--ed-warn: #fde68a;
 	--ed-warn-soft: rgb(251 191 36 / 0.1);
 	--ed-bad: #f87171;
 	--ed-bad-soft: rgb(248 113 113 / 0.1);
-	--ed-header-glass: rgb(9 9 9 / 0.8);
-	--ed-fig: #9db8ff;
-	--ed-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.8);
-	background: var(--ed-bg);
-	color: var(--ed-muted);
-	-webkit-font-smoothing: antialiased;
-}
-
-/* The page behind the scroll port matches the Polar page color. */
-html:has(.sim-marketing-site.dark),
-body:has(.sim-marketing-site.dark) {
-	background: #090909;
-	color-scheme: dark;
-}
-
-/* Public pages render at full size, like polar.sh; the 0.8 zoom is for the product app. */
-body:has(.sim-marketing-site.dark) {
-	--app-zoom: 1;
-	--app-vh: 100svh;
-}
-
-.sm-site.sim-marketing-site.marketing-polar.dark {
-	--background: #090909;
-	--foreground: #ffffff;
-	--border: #212121;
-	--card: #111111;
-	--card-foreground: #ffffff;
-	--muted-foreground: #858585;
-	background: #090909;
-	color-scheme: dark;
+	--ed-fig: #6ee7b7;
+	--ed-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.75);
 }
 
 /*
@@ -183,36 +152,11 @@ body:has(.sim-marketing-site.dark) {
 	}
 }
 
-/* The platform marquee on the home page. */
-@keyframes ed-marquee {
-	to {
-		transform: translateX(-50%);
-	}
-}
-
-.ed-marquee {
-	animation: ed-marquee 40s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.ed-marquee {
-		animation: none;
-	}
-}
-
-/*
- * Figure plates, drawn like the plates on playbookmedia.io: plain black
- * ground, hairline frame, mono labels, hatch fills, and thin strokes.
- */
-.ed-sheet {
-	border: 1px solid rgb(255 255 255 / 0.12);
-	background-color: #090909;
-}
-
+/* Mono labels inside figures, as in the landing MONO labels. */
 .ed-fig-label {
 	font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-	font-size: 10.5px;
-	letter-spacing: 0.1em;
+	font-size: 11px;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
 }
 

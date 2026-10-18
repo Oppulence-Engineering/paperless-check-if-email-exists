@@ -2,7 +2,6 @@ import {
 	AddressBook,
 	Buildings,
 	ChartLineUp,
-	GearSix,
 	Key,
 	Palette,
 	Plugs,
@@ -25,16 +24,9 @@ export const settingsSections: {
 	key: string;
 	label: string;
 	description: string;
-	group: (typeof settingsGroups)[number]["key"] | null;
+	group: (typeof settingsGroups)[number]["key"];
 	icon: Icon;
 }[] = [
-	{
-		key: "overview",
-		label: "Settings",
-		description: "Everything that shapes your workspace and account.",
-		group: null,
-		icon: GearSix,
-	},
 	{
 		key: "workspace",
 		label: "Workspace",
@@ -114,10 +106,12 @@ export const settingsSections: {
 	},
 ];
 
+/** Like Shots, a missing, old ("overview"), or unknown key opens the first section. */
 export function settingsSectionFromParam(value: string | null | undefined) {
 	return settingsSections.find((section) => section.key === value) ?? settingsSections[0];
 }
 
+/** "overview" names the bare settings URL, which shows the first section. */
 export function settingsHref(key: string) {
 	return key === "overview" ? "/app/settings" : `/app/settings?settings=${key}`;
 }

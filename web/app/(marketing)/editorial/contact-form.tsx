@@ -2,14 +2,16 @@
 
 import type { FormEvent } from "react";
 
+import { ctaClassName } from "@/components/platform/landing/cta-link";
+import { MUTED } from "@/components/platform/landing/primitives";
 import { cn } from "@/lib/utils";
 
-const CONTACT_EMAIL = "hello@oppulence.io";
+export const CONTACT_EMAIL = "hello@oppulence.io";
 
 const FIELD =
-	"ed-sans h-10 w-full rounded-xl border border-[var(--ed-line)] bg-[var(--ed-bg)] px-3 text-[14px] text-[var(--ed-ink)] placeholder:text-[var(--ed-faint)] focus:border-[var(--ed-ink)] focus:outline-none";
+	"h-11 w-full rounded-xl border border-white/10 bg-[#090909] px-4 text-[15px] text-white placeholder:text-[#858585] focus:border-white/30 focus:outline-none";
 
-const LABEL = "ed-sans mb-1.5 block text-[12.5px] text-[var(--ed-ink)]";
+const LABEL = "mb-2 block text-[13px] text-white/85";
 
 /**
  * Contact form without a backend: submitting opens the visitor's email app
@@ -27,7 +29,7 @@ export function ContactForm({ className }: { className?: string }) {
 	}
 
 	return (
-		<form className={cn("mx-auto grid w-full max-w-[460px] gap-4", className)} onSubmit={onSubmit}>
+		<form className={cn("grid w-full gap-4", className)} onSubmit={onSubmit}>
 			<div className="grid grid-cols-2 gap-3">
 				<div>
 					<label className={LABEL} htmlFor="contact-first">
@@ -74,19 +76,16 @@ export function ContactForm({ className }: { className?: string }) {
 					Question
 				</label>
 				<textarea
-					className={cn(FIELD, "h-28 resize-none py-2")}
+					className={cn(FIELD, "h-28 resize-none py-3")}
 					id="contact-details"
 					name="details"
 					placeholder="Your question"
 				/>
 			</div>
-			<button
-				className="ed-sans h-10 w-full rounded-full bg-[var(--ed-ink-strong)] text-[14px] font-[550] text-[var(--ed-bg)] transition-opacity hover:opacity-90"
-				type="submit"
-			>
+			<button className={cn(ctaClassName("primary"), "w-full justify-center")} type="submit">
 				Send
 			</button>
-			<p className="ed-sans text-[12px] text-[var(--ed-muted)]">
+			<p className={cn("text-[13px]", MUTED)}>
 				Sending opens your email app with this message to {CONTACT_EMAIL}.
 			</p>
 		</form>

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { ArrowLeft, ArrowRight } from "@/lib/icons";
+import { CONTAINER, MONO, MUTED } from "@/components/platform/landing/primitives";
+import { ArrowRight } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 import { JsonLd } from "../marketing-primitives";
 import { articleJsonLd, breadcrumbJsonLd } from "../metadata";
 import { LinkCards } from "./page-kit";
-import { Container, Display, Muted, Section } from "./ui";
 
 export type BlogPostItem = {
 	slug: string;
@@ -28,6 +28,8 @@ function formatDate(date?: string) {
 	});
 }
 
+const PILL = "rounded-full px-3 py-1.5 text-[13px] capitalize transition-colors duration-150";
+
 /** Blog index and category pages. */
 export function EditorialBlogIndex({
 	title,
@@ -43,19 +45,38 @@ export function EditorialBlogIndex({
 	posts: BlogPostItem[];
 }) {
 	return (
-		<Section className="pt-16 sm:pt-20 lg:pt-24">
-			<Container>
-				<Display as="h1" size="lg">
-					{title} <Muted>{subtitle}</Muted>
-				</Display>
+		<>
+			<section className={cn(CONTAINER, "pt-16 pb-24 sm:pt-24 sm:pb-32")}>
+				<p
+					className={cn(
+						MONO,
+						"flex items-center gap-2 text-[12px] tracking-[0.08em] uppercase",
+						MUTED,
+					)}
+				>
+					{activeCategory ? (
+						<>
+							<Link
+								className="inline-flex items-center transition-colors hover:text-white"
+								href="/blog"
+							>
+								Blog
+							</Link>
+							<span aria-hidden="true">/</span>
+						</>
+					) : null}
+					<span className="text-white">{activeCategory ?? "Blog"}</span>
+				</p>
+				<h1 className="mt-8 text-[40px] leading-[1] tracking-[-0.035em] text-balance sm:text-[56px] lg:text-[64px]">
+					<span className="block text-white">{title}</span>{" "}
+					<span className={cn("block", MUTED)}>{subtitle}</span>
+				</h1>
 				{categories.length > 0 ? (
-					<nav aria-label="Categories" className="mt-8 flex flex-wrap gap-2">
+					<nav aria-label="Categories" className="mt-10 flex flex-wrap gap-1">
 						<Link
 							className={cn(
-								"ed-sans rounded-full border px-3.5 py-1.5 text-[13px] capitalize transition-colors",
-								!activeCategory
-									? "border-[var(--ed-ink)] bg-[var(--ed-ink)] text-[var(--ed-bg)]"
-									: "border-[var(--ed-line)] text-[var(--ed-body)] hover:bg-[var(--ed-subtle)]",
+								PILL,
+								!activeCategory ? "bg-white/[0.09] text-white" : "text-[#858585] hover:text-white",
 							)}
 							href="/blog"
 						>
@@ -64,10 +85,10 @@ export function EditorialBlogIndex({
 						{categories.map((category) => (
 							<Link
 								className={cn(
-									"ed-sans rounded-full border px-3.5 py-1.5 text-[13px] capitalize transition-colors",
+									PILL,
 									activeCategory === category.label
-										? "border-[var(--ed-ink)] bg-[var(--ed-ink)] text-[var(--ed-bg)]"
-										: "border-[var(--ed-line)] text-[var(--ed-body)] hover:bg-[var(--ed-subtle)]",
+										? "bg-white/[0.09] text-white"
+										: "text-[#858585] hover:text-white",
 								)}
 								href={category.href}
 								key={category.href}
@@ -77,35 +98,43 @@ export function EditorialBlogIndex({
 						))}
 					</nav>
 				) : null}
-				<ul className="mt-12 border-t border-[var(--ed-line)]">
+			</section>
+			<div className={cn(CONTAINER, "pb-24 sm:pb-32")}>
+				<ul className="border-t border-[#212121]">
 					{posts.length === 0 ? (
-						<li className="ed-sans py-10 text-[15px] text-[var(--ed-muted)]">
-							No posts in this category yet.
-						</li>
+						<li className={cn("py-10 text-lg", MUTED)}>No posts in this category yet.</li>
 					) : (
 						posts.map((post) => (
-							<li className="border-b border-[var(--ed-line)]" key={post.slug}>
+							<li className="border-b border-[#212121]" key={post.slug}>
 								<Link
-									className="group grid gap-3 py-8 md:grid-cols-[1fr_200px] md:items-center"
+									className="group grid gap-3 py-8 md:grid-cols-[1fr_240px] md:items-baseline md:gap-8"
 									href={post.href}
 								>
 									<span>
-										<span className="ed-display block text-[24px] leading-[1.3] text-[var(--ed-ink)]">
+										<span className="block text-2xl tracking-[-0.02em] text-white">
 											{post.title}
 										</span>
 										{post.description ? (
-											<span className="ed-sans mt-1.5 block max-w-[60ch] text-[15px] leading-[1.55] font-[450] text-[var(--ed-muted)]">
+											<span
+												className={cn("mt-2 block max-w-[60ch] text-base leading-[1.55]", MUTED)}
+											>
 												{post.description}
 											</span>
 										) : null}
 									</span>
-									<span className="ed-sans flex items-center justify-between gap-3 text-[13px] text-[var(--ed-muted)] md:justify-end">
-										<span className="capitalize">{post.category}</span>
+									<span
+										className={cn(
+											MONO,
+											"flex items-center justify-between gap-3 text-[12px] tracking-[0.06em] uppercase md:justify-end",
+											MUTED,
+										)}
+									>
+										<span>{post.category}</span>
 										<span aria-hidden="true">·</span>
 										<span>{formatDate(post.date)}</span>
 										<ArrowRight
 											aria-hidden="true"
-											className="size-4 transition-transform group-hover:translate-x-0.5"
+											className="size-4 text-white transition-transform group-hover:translate-x-0.5"
 										/>
 									</span>
 								</Link>
@@ -113,8 +142,8 @@ export function EditorialBlogIndex({
 						))
 					)}
 				</ul>
-			</Container>
-		</Section>
+			</div>
+		</>
 	);
 }
 
@@ -154,39 +183,46 @@ export function EditorialArticleView({
 					],
 				)}
 			/>
-			<article className="bg-[var(--ed-bg)] pt-14 pb-10 sm:pt-20">
-				<Container className="max-w-[760px]">
-					<Link
-						className="ed-sans inline-flex items-center gap-1.5 text-[13px] text-[var(--ed-muted)] hover:text-[var(--ed-ink)]"
-						href="/blog"
+			<article className={cn(CONTAINER, "pt-16 pb-24 sm:pt-24 sm:pb-32")}>
+				<div className="mx-auto max-w-[760px]">
+					<p
+						className={cn(
+							MONO,
+							"flex items-center gap-2 text-[12px] tracking-[0.08em] uppercase",
+							MUTED,
+						)}
 					>
-						<ArrowLeft aria-hidden="true" className="size-3.5" /> Blog
-					</Link>
-					<p className="ed-sans mt-8 flex items-center gap-2 text-[13px] text-[var(--ed-muted)]">
+						<Link
+							className="inline-flex items-center transition-colors hover:text-white"
+							href="/blog"
+						>
+							Blog
+						</Link>
+						<span aria-hidden="true">/</span>
 						{categoryHref && category ? (
-							<Link className="capitalize hover:text-[var(--ed-ink)]" href={categoryHref}>
+							<Link className="transition-colors hover:text-white" href={categoryHref}>
 								{category}
 							</Link>
 						) : (
-							<span className="capitalize">{eyebrow}</span>
+							<span>{eyebrow}</span>
 						)}
 						{date ? (
 							<>
 								<span aria-hidden="true">·</span>
-								<time dateTime={date}>{formatDate(date)}</time>
+								<time className="text-white" dateTime={date}>
+									{formatDate(date)}
+								</time>
 							</>
 						) : null}
 					</p>
-					<Display as="h1" className="mt-3" size="lg">
+					<h1 className="mt-8 text-[40px] leading-[1.05] tracking-[-0.035em] text-balance text-white sm:text-[56px]">
 						{title}
-					</Display>
+					</h1>
 					{description ? (
-						<p className="ed-sans mt-4 text-[18px] leading-[1.55] font-[450] text-[var(--ed-muted)]">
-							{description}
-						</p>
+						<p className="mt-6 text-lg leading-[1.5] text-white/65">{description}</p>
 					) : null}
-					<div className="ed-prose mt-12 border-t border-[var(--ed-line)] pt-10">{children}</div>
-				</Container>
+					<div className="ed-prose mt-12 border-t border-[#212121] pt-10">{children}</div>
+				</div>
 			</article>
 			{related && related.length > 0 ? <LinkCards items={related} /> : null}
 		</>

@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `domains.lit.ts`.
  */
 export default function DomainsLoading() {
-	return <DashboardRouteFallback label="Loading Domains…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Domains…" />
+		</main>
+	);
 }

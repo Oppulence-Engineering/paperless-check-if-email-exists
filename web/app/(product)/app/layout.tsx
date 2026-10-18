@@ -6,8 +6,6 @@ import { branding } from "@/lib/auth/branding";
 import { getAuthRuntimeConfig } from "@/lib/auth/config";
 import { workspacePlan } from "@/lib/billing/workspace-plan";
 
-import "../../product-theme.css";
-import "../product-sim-theme.css";
 import { ProductDashboardClient } from "@/components/features/dashboard/product-dashboard-client/product-dashboard-client";
 
 // Authentication must complete before response headers are committed so an
@@ -44,7 +42,12 @@ export default async function ProductLayout({ children }: { children: ReactNode 
 		>
 			{/* The dashboard is shared route UI, so it belongs in the layout. Next
           preserves this instance while replacing the leaf page slot below. */}
-			<ProductDashboardClient brand={brand} initialSession={initialSession} workspaces={workspaces}>
+			<ProductDashboardClient
+				brand={brand}
+				devBadgeOffset={process.env.NODE_ENV === "development"}
+				initialSession={initialSession}
+				workspaces={workspaces}
+			>
 				{children}
 			</ProductDashboardClient>
 		</QueryProvider>

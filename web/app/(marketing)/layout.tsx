@@ -1,5 +1,3 @@
-import { marketingFontVariables } from "@/lib/fonts";
-
 import { MarketingLayoutClient } from "./marketing-layout-client";
 
 import "./editorial/editorial.css";
@@ -7,13 +5,9 @@ import "./editorial/editorial.css";
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,
-	themeColor: "#000000",
+	themeColor: "#090909",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-	return (
-		<div className={marketingFontVariables}>
-			<MarketingLayoutClient>{children}</MarketingLayoutClient>
-		</div>
-	);
+	return <MarketingLayoutClient>{children}</MarketingLayoutClient>;
 }

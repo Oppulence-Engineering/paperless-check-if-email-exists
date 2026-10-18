@@ -6,5 +6,9 @@ import { DashboardRouteFallback } from "@/lib/query/prefetch-hydration";
  * Owned by `jobs.lit.ts`.
  */
 export default function JobsLoading() {
-	return <DashboardRouteFallback label="Loading Jobs…" />;
+	return (
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<DashboardRouteFallback label="Loading Jobs…" />
+		</main>
+	);
 }

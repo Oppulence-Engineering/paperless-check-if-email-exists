@@ -16,18 +16,17 @@ export default function ApiExplorerError({
 	reset: () => void;
 }) {
 	return (
-		<section
-			className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center"
-			role="alert"
-		>
-			<WarningCircleIcon aria-hidden className="size-8 text-destructive" />
-			<div>
-				<h1 className="font-semibold">API explorer could not be loaded</h1>
-				<p className="mt-1 text-sm text-muted-foreground">Try the request again.</p>
-			</div>
-			<Button type="button" onClick={reset}>
-				Try again
-			</Button>
-		</section>
+		<main className="flex min-h-[60vh] items-center justify-center px-6">
+			<section className="flex max-w-md flex-col items-center gap-4 text-center" role="alert">
+				<WarningCircleIcon aria-hidden className="size-8 text-destructive" />
+				<div>
+					<h1 className="text-lg font-medium text-white">API explorer could not be loaded</h1>
+					<p className="mt-1 text-sm text-[#858585]">Try the request again.</p>
+				</div>
+				<Button className="rounded-lg" type="button" onClick={reset}>
+					Try again
+				</Button>
+			</section>
+		</main>
 	);
 }

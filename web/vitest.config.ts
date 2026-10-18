@@ -53,7 +53,7 @@ export default defineConfig({
 			"date-fns": path.join(root, "node_modules/date-fns"),
 			sonner: path.join(root, "node_modules/sonner"),
 			"next-themes": path.join(root, "node_modules/next-themes"),
-			"@phosphor-icons/react": path.join(root, "node_modules/@phosphor-icons/react"),
+			"@hugeicons/react": path.join(root, "node_modules/@hugeicons/react/dist/esm/index.js"),
 			clsx: path.join(root, "node_modules/clsx"),
 			"tailwind-merge": path.join(root, "node_modules/tailwind-merge"),
 			"server-only": path.join(root, "quality/test-support/server-only.ts"),
