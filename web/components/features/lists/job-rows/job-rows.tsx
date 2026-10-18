@@ -15,6 +15,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -50,8 +51,7 @@ import { type JobRowsPropsFields } from "./job-rows.schema";
 export type JobRowsProps = JobRowsPropsFields & ComponentPropsWithoutRef<"section">;
 
 const jobsApi = new JobsApi(new Configuration({ basePath: "/api/backend" }));
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none sm:w-48";
+const SELECT_CLASS = "h-10 w-full rounded-lg sm:w-48";
 
 export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 	const [state, setState] = useState("completed");
@@ -80,7 +80,7 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Row state
 					</Label>
-					<select
+					<NativeSelect
 						className={SELECT_CLASS}
 						id={`rows-state-${String(jobId)}`}
 						onChange={(event) => {
@@ -89,11 +89,11 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 						value={state}
 					>
 						{taskState.values.map((value) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{taskState.label(value)}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label
@@ -102,7 +102,7 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					>
 						Category
 					</Label>
-					<select
+					<NativeSelect
 						className={SELECT_CLASS}
 						id={`rows-category-${String(jobId)}`}
 						onChange={(event) => {
@@ -110,13 +110,13 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 						}}
 						value={filter}
 					>
-						<option value="">All categories</option>
+						<NativeSelectOption value="">All categories</NativeSelectOption>
 						{category.values.map((value) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{category.label(value)}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 			</div>
 			{pages.isError ? (

@@ -9,6 +9,7 @@ import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -119,18 +120,18 @@ export function OutcomeEntry({ className, ...props }: OutcomeEntryProps) {
 						<Label className={FIELD_LABEL} htmlFor="event-type">
 							Event
 						</Label>
-						<select
+						<NativeSelect
 							className={FILTER_CLASS}
 							defaultValue="delivered"
 							id="event-type"
 							name="event_type"
 						>
 							{PROVIDER_EVENT_TYPES.map((value) => (
-								<option key={value} value={value}>
+								<NativeSelectOption key={value} value={value}>
 									{outcomeType.label(value)}
-								</option>
+								</NativeSelectOption>
 							))}
-						</select>
+						</NativeSelect>
 					</div>
 					<div className="flex flex-col gap-1.5">
 						<Label className={FIELD_LABEL} htmlFor="event-occurred-at">

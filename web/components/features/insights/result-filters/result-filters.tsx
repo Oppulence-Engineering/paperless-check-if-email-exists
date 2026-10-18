@@ -7,6 +7,7 @@ import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "re
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { FILTER_CLASS } from "@/components/features/deliverability/outcome-events/outcome-events";
@@ -81,19 +82,19 @@ export function ResultFilters({ className, filters, onApply, ...props }: ResultF
 			<Label className={FIELD_LABEL} htmlFor={`result-filter-${name}`}>
 				{label}
 			</Label>
-			<select
+			<NativeSelect
 				className={FILTER_CLASS}
 				defaultValue={value ?? ""}
 				id={`result-filter-${name}`}
 				name={name}
 			>
-				<option value="">Any</option>
+				<NativeSelectOption value="">Any</NativeSelectOption>
 				{options.map(([key, text]) => (
-					<option key={key} value={key}>
+					<NativeSelectOption key={key} value={key}>
 						{text}
-					</option>
+					</NativeSelectOption>
 				))}
-			</select>
+			</NativeSelect>
 		</div>
 	);
 

@@ -9,6 +9,7 @@ import { Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row, Section } from "@/components/platform/page-kit";
@@ -35,8 +36,7 @@ export type ListExportProps = ListExportPropsFields & ComponentPropsWithoutRef<"
 const config = new Configuration({ basePath: "/api/backend" });
 const listsApi = new ListsApi(config);
 const v1Api = new V1Api(config);
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72";
+const SELECT_CLASS = "h-10 w-full rounded-lg md:w-72";
 
 /** Remediation export files the backend can build (backend/src/http/v1/lists/remediation.rs). */
 const PARTITIONS = {
@@ -142,7 +142,7 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 			>
 				<Group>
 					<Row label={<Label htmlFor={`clean-filter-${String(listId)}`}>Rows to include</Label>}>
-						<select
+						<NativeSelect
 							className={SELECT_CLASS}
 							id={`clean-filter-${String(listId)}`}
 							onChange={(event) => {
@@ -150,21 +150,23 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 							}}
 							value={filter}
 						>
-							<option value="">All rows</option>
+							<NativeSelectOption value="">All rows</NativeSelectOption>
 							{category.values.map((value) => (
-								<option key={value} value={value}>
+								<NativeSelectOption key={value} value={value}>
 									{category.label(value)} only
-								</option>
+								</NativeSelectOption>
 							))}
-							<option value="newly_invalid">Newly invalid since an earlier list</option>
-						</select>
+							<NativeSelectOption value="newly_invalid">
+								Newly invalid since an earlier list
+							</NativeSelectOption>
+						</NativeSelect>
 					</Row>
 					{filter === "newly_invalid" ? (
 						<Row
 							description="Only completed lists can be the baseline."
 							label={<Label htmlFor={`clean-base-${String(listId)}`}>Earlier list</Label>}
 						>
-							<select
+							<NativeSelect
 								className={SELECT_CLASS}
 								id={`clean-base-${String(listId)}`}
 								onChange={(event) => {
@@ -172,13 +174,13 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 								}}
 								value={baseListId}
 							>
-								<option value="">Choose a list</option>
+								<NativeSelectOption value="">Choose a list</NativeSelectOption>
 								{earlierLists.map((list) => (
-									<option key={list.id} value={list.id}>
+									<NativeSelectOption key={list.id} value={list.id}>
 										{list.name}
-									</option>
+									</NativeSelectOption>
 								))}
-							</select>
+							</NativeSelect>
 						</Row>
 					) : null}
 					<Row>
@@ -307,7 +309,7 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 						<Row
 							label={<Label htmlFor={`export-partition-${String(listId)}`}>Rows to export</Label>}
 						>
-							<select
+							<NativeSelect
 								className={SELECT_CLASS}
 								id={`export-partition-${String(listId)}`}
 								onChange={(event) => {
@@ -316,11 +318,11 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 								value={partition}
 							>
 								{Object.entries(PARTITIONS).map(([value, label]) => (
-									<option key={value} value={value}>
+									<NativeSelectOption key={value} value={value}>
 										{label}
-									</option>
+									</NativeSelectOption>
 								))}
-							</select>
+							</NativeSelect>
 						</Row>
 						<Row>
 							<div className="flex justify-end">

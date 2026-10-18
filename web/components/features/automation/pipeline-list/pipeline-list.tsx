@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Configuration, PipelinesApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -94,7 +95,7 @@ export function PipelineList({ className, selectedId, onOpen, ...props }: Pipeli
 				</p>
 			) : null}
 			{empty ? null : (
-				<select
+				<NativeSelect
 					aria-label="Pipeline status"
 					className={cn(FILTER_CLASS, "sm:w-48")}
 					onChange={(event) => {
@@ -104,10 +105,10 @@ export function PipelineList({ className, selectedId, onOpen, ...props }: Pipeli
 					}}
 					value={status}
 				>
-					<option value="">All statuses</option>
-					<option value="active">Active</option>
-					<option value="paused">Paused</option>
-				</select>
+					<NativeSelectOption value="">All statuses</NativeSelectOption>
+					<NativeSelectOption value="active">Active</NativeSelectOption>
+					<NativeSelectOption value="paused">Paused</NativeSelectOption>
+				</NativeSelect>
 			)}
 			{empty ? (
 				<EmptyState

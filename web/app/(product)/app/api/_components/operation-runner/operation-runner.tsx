@@ -8,6 +8,10 @@ import { useId, useState, type ComponentPropsWithoutRef, type SyntheticEvent } f
 
 import { dashboardRequest, redirectBrowserIfUnauthorized } from "@/lib/auth/dashboard-fetch";
 import { Button } from "@oppulence/ui/components/button";
+import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
+import { Textarea } from "@oppulence/ui/components/textarea";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { type OperationRunnerPropsFields } from "./operation-runner.schema";
@@ -132,14 +136,14 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 				onSubmit={submit}
 				className="flex flex-col gap-4 rounded-2xl bg-white/[0.015] p-5 ring-1 ring-white/[0.08]"
 			>
-				<label
+				<Label
 					htmlFor={`${formId}-operation`}
-					className="flex flex-col gap-1.5 text-sm text-neutral-400"
+					className="flex-col items-stretch gap-1.5 text-neutral-400"
 				>
 					Operation
-					<select
+					<NativeSelect
 						id={`${formId}-operation`}
-						className="h-10 rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
+						className="h-10 rounded-lg"
 						value={id}
 						onChange={(event) => {
 							setId(event.target.value);
@@ -154,12 +158,12 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 						}}
 					>
 						{operations.map((operation) => (
-							<option key={operation.id} value={operation.id}>
+							<NativeSelectOption key={operation.id} value={operation.id}>
 								{operation.method} {operation.path}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
-				</label>
+					</NativeSelect>
+				</Label>
 				{selected ? (
 					<>
 						<p className="text-sm text-[#858585]">
@@ -173,66 +177,66 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 							Request and response schema
 						</Link>
 						{pathParams.map((name) => (
-							<label
+							<Label
 								key={name}
 								htmlFor={`${formId}-path-${name}`}
-								className="flex flex-col gap-1.5 text-sm text-neutral-400"
+								className="flex-col items-stretch gap-1.5 text-neutral-400"
 							>
 								{name}
-								<input
+								<Input
 									id={`${formId}-path-${name}`}
 									aria-label={name}
 									required
-									className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
+									className="h-10 rounded-lg"
 									value={values[name] ?? ""}
 									onChange={(event) => {
 										setValues({ ...values, [name]: event.target.value });
 									}}
 								/>
-							</label>
+							</Label>
 						))}
-						<label
+						<Label
 							htmlFor={`${formId}-query`}
-							className="flex flex-col gap-1.5 text-sm text-neutral-400"
+							className="flex-col items-stretch gap-1.5 text-neutral-400"
 						>
 							Query string
-							<input
+							<Input
 								id={`${formId}-query`}
 								aria-label="Query string"
-								className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
+								className="h-10 rounded-lg"
 								placeholder="page=1&limit=50"
 								value={query}
 								onChange={(event) => {
 									setQuery(event.target.value);
 								}}
 							/>
-						</label>
+						</Label>
 						{media === "application/json" ? (
-							<label
+							<Label
 								htmlFor={`${formId}-body`}
-								className="flex flex-col gap-1.5 text-sm text-neutral-400"
+								className="flex-col items-stretch gap-1.5 text-neutral-400"
 							>
 								JSON body
-								<textarea
+								<Textarea
 									id={`${formId}-body`}
 									aria-label="JSON body"
-									className="min-h-40 rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs text-white dark:bg-input/30"
+									className="min-h-40 rounded-lg font-mono text-xs md:text-xs"
 									spellCheck={false}
 									value={body}
 									onChange={(event) => {
 										setBody(event.target.value);
 									}}
 								/>
-							</label>
+							</Label>
 						) : null}
 						{media === "multipart/form-data" ? (
 							<>
-								<label
+								<Label
 									htmlFor={`${formId}-file`}
-									className="flex flex-col gap-1.5 text-sm text-neutral-400"
+									className="flex-col items-stretch gap-1.5 text-neutral-400"
 								>
 									CSV file
-									<input
+									<Input
 										id={`${formId}-file`}
 										aria-label="CSV file"
 										required
@@ -242,24 +246,24 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 											setFile(event.target.files?.[0] ?? null);
 										}}
 									/>
-								</label>
+								</Label>
 								{["name", "email_column", "source_key"].map((name) => (
-									<label
+									<Label
 										key={name}
 										htmlFor={`${formId}-field-${name}`}
-										className="flex flex-col gap-1.5 text-sm text-neutral-400"
+										className="flex-col items-stretch gap-1.5 text-neutral-400"
 									>
 										{name}
-										<input
+										<Input
 											id={`${formId}-field-${name}`}
 											aria-label={name}
-											className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
+											className="h-10 rounded-lg"
 											value={values[name] ?? ""}
 											onChange={(event) => {
 												setValues({ ...values, [name]: event.target.value });
 											}}
 										/>
-									</label>
+									</Label>
 								))}
 							</>
 						) : null}
@@ -275,22 +279,22 @@ export function OperationRunner({ operations, className, ...props }: OperationRu
 									"x-continuation-token",
 									"range",
 								].map((name) => (
-									<label
+									<Label
 										key={name}
 										htmlFor={`${formId}-header-${name}`}
-										className="flex flex-col gap-1.5 text-sm text-neutral-400"
+										className="flex-col items-stretch gap-1.5 text-neutral-400"
 									>
 										{name}
-										<input
+										<Input
 											id={`${formId}-header-${name}`}
 											aria-label={name}
-											className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-white dark:bg-input/30"
+											className="h-10 rounded-lg"
 											value={headers[name] ?? ""}
 											onChange={(event) => {
 												setHeaders({ ...headers, [name]: event.target.value });
 											}}
 										/>
-									</label>
+									</Label>
 								))}
 							</div>
 						</details>

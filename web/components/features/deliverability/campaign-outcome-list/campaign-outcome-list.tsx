@@ -9,6 +9,7 @@ import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -107,14 +108,19 @@ export function CampaignOutcomeList({ className, ...props }: CampaignOutcomeList
 					<Label className={FIELD_LABEL} htmlFor="campaign-filter-type">
 						Result type
 					</Label>
-					<select className={FILTER_CLASS} defaultValue="" id="campaign-filter-type" name="type">
-						<option value="">All results</option>
+					<NativeSelect
+						className={FILTER_CLASS}
+						defaultValue=""
+						id="campaign-filter-type"
+						name="type"
+					>
+						<NativeSelectOption value="">All results</NativeSelectOption>
 						{CAMPAIGN_TYPES.map((value) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{outcomeType.label(value)}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="campaign-filter-source">

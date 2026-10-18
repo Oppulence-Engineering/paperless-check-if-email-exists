@@ -9,6 +9,7 @@ import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill } from "@/components/platform/page-kit";
@@ -55,8 +56,7 @@ const FAMILY_OF_EVENT: Record<string, string> = {
 	unsubscribed: "negative_feedback",
 };
 
-export const FILTER_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none";
+export const FILTER_CLASS = "h-10 w-full rounded-lg";
 const FIELD_LABEL = "text-xs font-medium text-neutral-400";
 
 type Filters = { email: string; eventType: string; since: string };
@@ -125,19 +125,19 @@ export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {
 					<Label className={FIELD_LABEL} htmlFor="outcome-event-type">
 						Event type
 					</Label>
-					<select
+					<NativeSelect
 						className={FILTER_CLASS}
 						defaultValue=""
 						id="outcome-event-type"
 						name="event_type"
 					>
-						<option value="">All events</option>
+						<NativeSelectOption value="">All events</NativeSelectOption>
 						{PROVIDER_EVENT_TYPES.map((value) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{outcomeType.label(value)}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="outcome-since">

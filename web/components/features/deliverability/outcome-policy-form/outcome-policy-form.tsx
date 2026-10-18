@@ -11,6 +11,7 @@ import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -204,7 +205,7 @@ export function OutcomePolicyForm({
 							<Label className={FIELD_LABEL} htmlFor={`rule-${event}`}>
 								{label}
 							</Label>
-							<select
+							<NativeSelect
 								className={FILTER_CLASS}
 								id={`rule-${event}`}
 								onChange={(change) => {
@@ -214,11 +215,11 @@ export function OutcomePolicyForm({
 								value={rule.action}
 							>
 								{ruleAction.values.map((value) => (
-									<option key={value} value={value}>
+									<NativeSelectOption key={value} value={value}>
 										{ruleAction.label(value)}
-									</option>
+									</NativeSelectOption>
 								))}
-							</select>
+							</NativeSelect>
 							{rule.action === "suppress_after" ? (
 								<div className="flex flex-wrap items-center gap-2">
 									<Input

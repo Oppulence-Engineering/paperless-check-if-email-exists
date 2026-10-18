@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { Input } from "@oppulence/ui/components/input";
 import type { Family, PortalOperation } from "@/lib/developer-portal/operations";
 
 import { DocsSection, bodyClassName, cardSurface } from "../docs-kit";
@@ -29,13 +30,13 @@ export function OperationIndex({
 				<label className="text-sm font-medium text-neutral-300" htmlFor="api-operation-search">
 					Find an operation
 				</label>
-				<input
+				<Input
 					id="api-operation-search"
 					type="search"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
 					placeholder="Method, path, or operation ID"
-					className="block h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+					className="h-10 rounded-lg"
 				/>
 			</div>
 			{matching.length === 0 ? <p className={bodyClassName}>No matching operations.</p> : null}

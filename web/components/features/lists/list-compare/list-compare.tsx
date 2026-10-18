@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Configuration, ListsApi } from "@oppulence/reacher-sdk";
 
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row } from "@/components/platform/page-kit";
@@ -73,21 +74,21 @@ export function ListCompare({ className, listId, ...props }: ListCompareProps) {
 					description="Both lists must be complete. Each group shows up to 50 addresses."
 					label={<Label htmlFor={`compare-base-${String(listId)}`}>Compare with</Label>}
 				>
-					<select
-						className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none md:w-72"
+					<NativeSelect
+						className="h-10 w-full rounded-lg md:w-72"
 						id={`compare-base-${String(listId)}`}
 						onChange={(event) => {
 							setBaseListId(event.target.value);
 						}}
 						value={baseListId}
 					>
-						<option value="">Choose an earlier list</option>
+						<NativeSelectOption value="">Choose an earlier list</NativeSelectOption>
 						{earlierLists.map((list) => (
-							<option key={list.id} value={list.id}>
+							<NativeSelectOption key={list.id} value={list.id}>
 								{list.name}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</Row>
 			</Group>
 			{diff.isError ? (

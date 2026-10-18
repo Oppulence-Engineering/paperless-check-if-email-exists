@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Row, Section } from "@/components/platform/page-kit";
 import { type PlatformOperationRunnerPropsFields } from "./platform-operation-runner.schema";
@@ -397,17 +398,17 @@ export function PlatformOperationRunner({
 								<Label className="text-xs font-medium text-neutral-400" htmlFor="operator-status">
 									Status
 								</Label>
-								<select
+								<NativeSelect
 									id="operator-status"
-									className="h-9 rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
+									className="h-9 rounded-lg"
 									value={status}
 									onChange={(event) => {
 										setStatus(event.target.value);
 									}}
 								>
-									<option value="active">Active</option>
-									<option value="suspended">Suspended</option>
-								</select>
+									<NativeSelectOption value="active">Active</NativeSelectOption>
+									<NativeSelectOption value="suspended">Suspended</NativeSelectOption>
+								</NativeSelect>
 								<Button
 									variant="outline"
 									disabled={action.isPending}

@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
 import { ProviderDetails } from "@/components/features/verification/provider-details/provider-details";
@@ -171,17 +172,17 @@ export function FinderPanel({ initialJobId, className, ...props }: FinderPanelPr
 									<Label className="text-xs font-medium text-neutral-400" htmlFor="finder-strategy">
 										Search strategy
 									</Label>
-									<select
+									<NativeSelect
 										id="finder-strategy"
-										className="h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none"
+										className="h-10 w-full rounded-lg"
 										value={strategy}
 										onChange={(event) => {
 											setStrategy(event.target.value === "waterfall" ? "waterfall" : "parallel");
 										}}
 									>
-										<option value="parallel">Check all patterns</option>
-										<option value="waterfall">Best patterns first</option>
-									</select>
+										<NativeSelectOption value="parallel">Check all patterns</NativeSelectOption>
+										<NativeSelectOption value="waterfall">Best patterns first</NativeSelectOption>
+									</NativeSelect>
 								</div>
 							</div>
 							<div className="flex justify-end">

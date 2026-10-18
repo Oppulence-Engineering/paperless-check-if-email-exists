@@ -17,6 +17,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -147,7 +148,7 @@ export function ResultExplorer({
 					<Label className={FIELD_LABEL} htmlFor="explorer-category">
 						Category
 					</Label>
-					<select
+					<NativeSelect
 						className={FILTER_CLASS}
 						id="explorer-category"
 						onChange={(event) => {
@@ -155,19 +156,19 @@ export function ResultExplorer({
 						}}
 						value={filters.category ?? ""}
 					>
-						<option value="">All</option>
+						<NativeSelectOption value="">All</NativeSelectOption>
 						{category.values.map((value) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{category.label(value)}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 				<div className="flex w-full flex-col gap-1.5 sm:w-36">
 					<Label className={FIELD_LABEL} htmlFor="explorer-safe">
 						Safe to send
 					</Label>
-					<select
+					<NativeSelect
 						className={FILTER_CLASS}
 						id="explorer-safe"
 						onChange={(event) => {
@@ -176,10 +177,10 @@ export function ResultExplorer({
 						}}
 						value={filters.safeToSend === undefined ? "" : filters.safeToSend ? "yes" : "no"}
 					>
-						<option value="">Any</option>
-						<option value="yes">Yes</option>
-						<option value="no">No</option>
-					</select>
+						<NativeSelectOption value="">Any</NativeSelectOption>
+						<NativeSelectOption value="yes">Yes</NativeSelectOption>
+						<NativeSelectOption value="no">No</NativeSelectOption>
+					</NativeSelect>
 				</div>
 				<Button
 					className="h-10 rounded-lg"

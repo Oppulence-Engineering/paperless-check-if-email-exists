@@ -17,6 +17,7 @@ import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -200,7 +201,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 						<Input {...text("name")} required />
 					</Field>
 					<Field id="pipeline-source" label="Source">
-						<select
+						<NativeSelect
 							className={FILTER_CLASS}
 							id="pipeline-source"
 							onChange={(event) => {
@@ -211,9 +212,9 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 							}}
 							value={values.source}
 						>
-							<option value="list_snapshot">Saved list</option>
-							<option value="push">Push API</option>
-						</select>
+							<NativeSelectOption value="list_snapshot">Saved list</NativeSelectOption>
+							<NativeSelectOption value="push">Push API</NativeSelectOption>
+						</NativeSelect>
 					</Field>
 					{scheduled ? (
 						<Field

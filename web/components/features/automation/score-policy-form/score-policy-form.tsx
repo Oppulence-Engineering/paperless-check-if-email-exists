@@ -12,6 +12,7 @@ import { Button } from "@oppulence/ui/components/button";
 import { Checkbox } from "@oppulence/ui/components/checkbox";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import {
@@ -268,7 +269,7 @@ export function ScorePolicyForm({ className, onSaved, policy, ...props }: ScoreP
 								<Label className={FIELD_LABEL} htmlFor={`${id}-safe`}>
 									{prefix}Safe to send
 								</Label>
-								<select
+								<NativeSelect
 									className={FILTER_CLASS}
 									id={`${id}-safe`}
 									onChange={(event) => {
@@ -276,10 +277,10 @@ export function ScorePolicyForm({ className, onSaved, policy, ...props }: ScoreP
 									}}
 									value={draft.safe}
 								>
-									<option value="">Any</option>
-									<option value="true">Safe to send</option>
-									<option value="false">Not safe to send</option>
-								</select>
+									<NativeSelectOption value="">Any</NativeSelectOption>
+									<NativeSelectOption value="true">Safe to send</NativeSelectOption>
+									<NativeSelectOption value="false">Not safe to send</NativeSelectOption>
+								</NativeSelect>
 							</div>
 							<div className="flex flex-col gap-1.5">
 								<Label className={FIELD_LABEL} htmlFor={`${id}-reasons`}>

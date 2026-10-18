@@ -19,6 +19,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@oppulence/ui/components/sheet";
+import { NativeSelect, NativeSelectOption } from "@oppulence/ui/components/native-select";
 import { cn } from "@oppulence/ui/lib/utils";
 import { SuppressionAudit } from "@/components/features/deliverability/suppression-audit/suppression-audit";
 import { SuppressionForm } from "@/components/features/deliverability/suppression-form/suppression-form";
@@ -39,8 +40,7 @@ export type SuppressionsPanelProps = SuppressionsPanelPropsFields &
 const api = new V1Api(new Configuration({ basePath: "/api/backend" }));
 const PAGE_SIZE = 20;
 const LABEL_CLASS = "text-xs font-medium text-neutral-400";
-const SELECT_CLASS =
-	"h-10 w-full rounded-lg bg-white/[0.03] px-2 text-sm text-neutral-200 ring-1 ring-white/[0.08] outline-none sm:w-44";
+const SELECT_CLASS = "h-10 w-full rounded-lg sm:w-44";
 
 function date(value: string | null | undefined, empty: string): string {
 	return value ? new Date(value).toLocaleString() : empty;
@@ -187,7 +187,7 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-status">
 								Status
 							</Label>
-							<select
+							<NativeSelect
 								className={SELECT_CLASS}
 								id="suppression-filter-status"
 								value={filters.status}
@@ -196,18 +196,18 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 								}}
 							>
 								{suppressionStatus.values.map((value) => (
-									<option key={value} value={value}>
+									<NativeSelectOption key={value} value={value}>
 										{suppressionStatus.label(value)}
-									</option>
+									</NativeSelectOption>
 								))}
-								<option value="all">All statuses</option>
-							</select>
+								<NativeSelectOption value="all">All statuses</NativeSelectOption>
+							</NativeSelect>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-reason">
 								Reason
 							</Label>
-							<select
+							<NativeSelect
 								className={SELECT_CLASS}
 								id="suppression-filter-reason"
 								value={filters.reason}
@@ -215,19 +215,19 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 									filter({ reason: event.target.value });
 								}}
 							>
-								<option value="">All reasons</option>
+								<NativeSelectOption value="">All reasons</NativeSelectOption>
 								{suppressionReason.values.map((value) => (
-									<option key={value} value={value}>
+									<NativeSelectOption key={value} value={value}>
 										{suppressionReason.label(value)}
-									</option>
+									</NativeSelectOption>
 								))}
-							</select>
+							</NativeSelect>
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label className={LABEL_CLASS} htmlFor="suppression-filter-source">
 								Source
 							</Label>
-							<select
+							<NativeSelect
 								className={SELECT_CLASS}
 								id="suppression-filter-source"
 								value={filters.sourceType}
@@ -235,13 +235,13 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 									filter({ sourceType: event.target.value });
 								}}
 							>
-								<option value="">All sources</option>
+								<NativeSelectOption value="">All sources</NativeSelectOption>
 								{suppressionSource.values.map((value) => (
-									<option key={value} value={value}>
+									<NativeSelectOption key={value} value={value}>
 										{suppressionSource.label(value)}
-									</option>
+									</NativeSelectOption>
 								))}
-							</select>
+							</NativeSelect>
 						</div>
 						<Label
 							className="flex h-10 items-center gap-2 text-sm text-neutral-300"
