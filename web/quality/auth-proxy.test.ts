@@ -9,7 +9,7 @@ const auth = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth/session", () => auth);
 
-import { proxyBackendAPI } from "@/lib/auth/proxy";
+import { backendProxyHeaders, proxyBackendAPI } from "@/lib/auth/proxy";
 
 const session = {
 	user: { id: "user-1" },
@@ -71,6 +71,11 @@ describe("backend proxy", () => {
 		);
 		expect(response.status).toBe(403);
 		expect(auth.getAuthorizedSession).not.toHaveBeenCalled();
+	});
+
+	it("forwards the idempotency key that a pipeline push needs", () => {
+		const headers = backendProxyHeaders(new Headers({ "idempotency-key": "batch-1" }));
+		expect(headers.get("idempotency-key")).toBe("batch-1");
 	});
 
 	it("replaces browser supplied identity and authorization headers", async () => {

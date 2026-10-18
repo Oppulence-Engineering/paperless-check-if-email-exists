@@ -29,6 +29,8 @@ const FORWARDED_REQUEST_HEADERS = [
 	"accept",
 	"accept-language",
 	"content-type",
+	// POST /v1/pipelines/{id}/push requires it (backend/src/http/v1/pipelines.rs).
+	"idempotency-key",
 	"if-match",
 	"if-none-match",
 	"last-event-id",
