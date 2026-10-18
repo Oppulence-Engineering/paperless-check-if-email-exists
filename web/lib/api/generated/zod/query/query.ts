@@ -30,6 +30,6 @@ export const V1QueryResultsQueryParams = zod.object({
 
 export const V1QueryResults200Response = zod.unknown();
 
-export const V1QueryResultsDefaultResponse = zod.strictObject({
+export const V1QueryResultsDefaultResponse = zod.object({
   error: zod.string(),
 });

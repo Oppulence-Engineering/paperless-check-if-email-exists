@@ -1,36 +1,25 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { VerificationApi } from "@oppulence/reacher-sdk";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { OutcomesApi, V1Api, VerificationApi } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 import { HistoryPanel } from "./history-panel";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+	cleanup();
+	vi.restoreAllMocks();
+});
 
-it("looks up an address with the SDK and renders its history", async () => {
+function search(history: unknown[]) {
 	const lookup = vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
-		data: {
-			email: "user@example.com",
-			total: 1,
-			history: [
-				{
-					job_id: 4,
-					score: 86,
-					category: "safe",
-					sub_reason: null,
-					safe_to_send: true,
-					reason_codes: ["mx_found"],
-					recommendation_action: null,
-					recommendation: null,
-					policy_mode: null,
-					policy_decision: null,
-					policy_evaluation: null,
-					is_reachable: "safe",
-					completed_at: "2026-09-22T12:00:00Z",
-				},
-			],
-		},
+		data: { email: "user@example.com", total: history.length, history },
+	} as never);
+	vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
+		data: { limit: 50, offset: 0, outcomes: [] },
+	} as never);
+	vi.spyOn(V1Api.prototype, "v1CheckSuppression").mockResolvedValue({
+		data: { suppressed: false },
 	} as never);
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	render(
@@ -42,6 +31,36 @@ it("looks up an address with the SDK and renders its history", async () => {
 		target: { value: "USER@example.com" },
 	});
 	fireEvent.click(screen.getByRole("button", { name: "Search" }));
-	expect(await screen.findByText("mx_found")).toBeInTheDocument();
+	return lookup;
+}
+
+it("looks up an address with the SDK and renders its history", async () => {
+	const lookup = search([
+		{
+			job_id: 4,
+			task_id: 41,
+			score: 86,
+			category: "valid",
+			previous_category: "risky",
+			previous_score: 60,
+			reason_codes: ["deliverable"],
+			recommendation_action: "send",
+			policy_decision: "review",
+			is_reachable: "safe",
+			completed_at: "2026-09-22T12:00:00Z",
+		},
+	]);
+	expect(await screen.findByText("The mailbox accepts mail")).toBeInTheDocument();
+	expect(screen.getByText("Policy: Review")).toBeInTheDocument();
+	expect(screen.getByText("Changed from Risky to Valid")).toBeInTheDocument();
+	expect(screen.getByRole("link", { name: "Open job 4" })).toHaveAttribute(
+		"href",
+		"/app/jobs?job=4",
+	);
 	expect(lookup).toHaveBeenCalledWith({ email: "user@example.com", limit: 50 }, expect.any(Object));
+});
+
+it("says when the address has no earlier results", async () => {
+	search([]);
+	expect(await screen.findByText("No earlier results for this address.")).toBeInTheDocument();
 });

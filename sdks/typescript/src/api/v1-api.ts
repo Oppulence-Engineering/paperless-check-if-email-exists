@@ -317,11 +317,12 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
          * @param {File} file
          * @param {string | null} [emailColumn]
          * @param {string | null} [name]
+         * @param {number | null} [policyId]
          * @param {string | null} [sourceKey] Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateList: async (file: File, emailColumn?: string | null, name?: string | null, sourceKey?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1CreateList: async (file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'file' is not null or undefined
             assertParamExists('v1CreateList', 'file', file)
             const localVarPath = `/v1/lists`;
@@ -351,6 +352,10 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
 
             if (name !== undefined) {
                 localVarFormParams.append('name', name as any);
+            }
+
+            if (policyId !== undefined) {
+                localVarFormParams.append('policy_id', policyId as any);
             }
 
             if (sourceKey !== undefined) {
@@ -450,10 +455,12 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
          * @param {number} listId List identifier
          * @param {string} [filter]
          * @param {string} [format]
+         * @param {number} [segmentId]
+         * @param {number} [changedSinceListId]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1DownloadList: async (listId: number, filter?: string, format?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1DownloadList: async (listId: number, filter?: string, format?: string, segmentId?: number, changedSinceListId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'listId' is not null or undefined
             assertParamExists('v1DownloadList', 'listId', listId)
             const localVarPath = `/v1/lists/{list_id}/download`
@@ -478,6 +485,14 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
 
             if (format !== undefined) {
                 localVarQueryParameter['format'] = format;
+            }
+
+            if (segmentId !== undefined) {
+                localVarQueryParameter['segment_id'] = segmentId;
+            }
+
+            if (changedSinceListId !== undefined) {
+                localVarQueryParameter['changed_since_list_id'] = changedSinceListId;
             }
 
 
@@ -1025,12 +1040,13 @@ export const V1ApiFp = function(configuration?: Configuration) {
          * @param {File} file
          * @param {string | null} [emailColumn]
          * @param {string | null} [name]
+         * @param {number | null} [policyId]
          * @param {string | null} [sourceKey] Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1CreateList(file: File, emailColumn?: string | null, name?: string | null, sourceKey?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListUploadResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateList(file, emailColumn, name, sourceKey, options);
+        async v1CreateList(file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListUploadResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateList(file, emailColumn, name, policyId, sourceKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1CreateList']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1067,11 +1083,13 @@ export const V1ApiFp = function(configuration?: Configuration) {
          * @param {number} listId List identifier
          * @param {string} [filter]
          * @param {string} [format]
+         * @param {number} [segmentId]
+         * @param {number} [changedSinceListId]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1DownloadList(listId: number, filter?: string, format?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DownloadList(listId, filter, format, options);
+        async v1DownloadList(listId: number, filter?: string, format?: string, segmentId?: number, changedSinceListId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1DownloadList(listId, filter, format, segmentId, changedSinceListId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1DownloadList']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1301,7 +1319,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          * @throws {RequiredError}
          */
         v1CreateList(requestParameters: V1ApiV1CreateListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListUploadResponse> {
-            return localVarFp.v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.sourceKey, options).then((request) => request(axios, basePath));
+            return localVarFp.v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1331,7 +1349,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          * @throws {RequiredError}
          */
         v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
-            return localVarFp.v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, options).then((request) => request(axios, basePath));
+            return localVarFp.v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, requestParameters.segmentId, requestParameters.changedSinceListId, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1784,6 +1802,13 @@ export interface V1ApiV1CreateListRequest {
     readonly name?: string | null
 
     /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1CreateList
+     */
+    readonly policyId?: number | null
+
+    /**
      * Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
      * @type {string}
      * @memberof V1ApiV1CreateList
@@ -1845,6 +1870,20 @@ export interface V1ApiV1DownloadListRequest {
      * @memberof V1ApiV1DownloadList
      */
     readonly format?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1DownloadList
+     */
+    readonly segmentId?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1DownloadList
+     */
+    readonly changedSinceListId?: number
 }
 
 /**
@@ -2096,7 +2135,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      * @memberof V1Api
      */
     public v1CreateList(requestParameters: V1ApiV1CreateListRequest, options?: RawAxiosRequestConfig) {
-        return V1ApiFp(this.configuration).v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.sourceKey, options).then((request) => request(this.axios, this.basePath));
+        return V1ApiFp(this.configuration).v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2132,7 +2171,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      * @memberof V1Api
      */
     public v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig) {
-        return V1ApiFp(this.configuration).v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, options).then((request) => request(this.axios, this.basePath));
+        return V1ApiFp(this.configuration).v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, requestParameters.segmentId, requestParameters.changedSinceListId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

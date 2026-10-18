@@ -10,6 +10,66 @@
 import * as zod from "zod";
 
 /**
+ * @summary GET /v1/alerts
+ */
+export const V1ListAlertsQueryParams = zod.object({
+  status: zod.string().optional(),
+  type: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListAlerts200Response = zod.object({
+  alerts: zod.array(
+    zod.object({
+      body: zod.string().nullish(),
+      canonical_email: zod.string(),
+      change_event_id: zod.int().nullish(),
+      created_at: zod.iso.datetime({ offset: true }),
+      id: zod.int(),
+      metadata: zod.unknown(),
+      status: zod.string(),
+      title: zod.string(),
+      type: zod.string(),
+      updated_at: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListAlertsDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary PATCH /v1/alerts/{alert_id}
+ */
+export const V1UpdateAlertParams = zod.object({
+  alert_id: zod.coerce.number().int().describe("Alert identifier"),
+});
+
+export const V1UpdateAlertBody = zod.strictObject({
+  status: zod.string(),
+});
+
+export const V1UpdateAlert200Response = zod.object({
+  body: zod.string().nullish(),
+  canonical_email: zod.string(),
+  change_event_id: zod.int().nullish(),
+  created_at: zod.iso.datetime({ offset: true }),
+  id: zod.int(),
+  metadata: zod.unknown(),
+  status: zod.string(),
+  title: zod.string(),
+  type: zod.string(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1UpdateAlertDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
  * Returns the verification history timeline for a specific email address.
  * @summary GET /v1/emails/{email}/history
  */
@@ -21,28 +81,39 @@ export const V1EmailHistoryQueryParams = zod.object({
   limit: zod.coerce.number().int().optional(),
 });
 
-export const V1EmailHistory200Response = zod.strictObject({
+export const V1EmailHistory200Response = zod.object({
   email: zod.string(),
   history: zod.array(
-    zod.strictObject({
+    zod.object({
       category: zod.string().nullish(),
+      change_type: zod.string().nullish(),
       completed_at: zod.iso.datetime({ offset: true }).nullish(),
       is_reachable: zod.string().nullish(),
       job_id: zod.int().nullish(),
+      list_id: zod.int().nullish(),
+      pipeline_run_id: zod.int().nullish(),
       policy_decision: zod.string().nullish(),
       policy_evaluation: zod.unknown().optional(),
       policy_mode: zod.string().nullish(),
+      previous_category: zod.string().nullish(),
+      previous_list_id: zod.int().nullish(),
+      previous_pipeline_run_id: zod.int().nullish(),
+      previous_reason_codes: zod.array(zod.string()).nullish(),
+      previous_safe_to_send: zod.boolean().nullish(),
+      previous_score: zod.int().nullish(),
+      previous_task_id: zod.int().nullish(),
       reason_codes: zod.array(zod.string()).nullish(),
       recommendation: zod.unknown().optional(),
       recommendation_action: zod.string().nullish(),
       safe_to_send: zod.boolean().nullish(),
       score: zod.int().nullish(),
       sub_reason: zod.string().nullish(),
+      task_id: zod.int(),
     }),
   ),
   total: zod.int(),
 });
 
-export const V1EmailHistoryDefaultResponse = zod.strictObject({
+export const V1EmailHistoryDefaultResponse = zod.object({
   error: zod.string(),
 });

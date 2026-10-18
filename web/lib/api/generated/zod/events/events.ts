@@ -25,6 +25,6 @@ export const V1ListEventsQueryParams = zod.object({
 
 export const V1ListEvents200Response = zod.unknown();
 
-export const V1ListEventsDefaultResponse = zod.strictObject({
+export const V1ListEventsDefaultResponse = zod.object({
   error: zod.string(),
 });

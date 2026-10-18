@@ -46,7 +46,8 @@ function familyFor(path: string): Family | undefined {
 	if (path.startsWith("/v1/admin/")) return "Platform admin";
 	if (path === "/v1/check-email-with-onboard") return "Onboarding";
 	if (path.startsWith("/v1/inbound/providers/")) return "Provider callback";
-	if (path.startsWith("/v1/me")) return "Workspace account";
+	if (["/v1/me", "/v1/score-policies"].some((prefix) => path.startsWith(prefix)))
+		return "Workspace account";
 	if (
 		[
 			"/v1/check_email",
@@ -54,6 +55,7 @@ function familyFor(path: string): Family | undefined {
 			"/v1/find_email",
 			"/v1/reputation/",
 			"/v1/reverification",
+			"/v1/alerts",
 		].some((prefix) => path.startsWith(prefix))
 	)
 		return "Verification and finder";
@@ -63,10 +65,17 @@ function familyFor(path: string): Family | undefined {
 		)
 	)
 		return "Bulk and observability";
-	if (["/v1/lists", "/v1/comments"].some((prefix) => path.startsWith(prefix)))
+	if (["/v1/lists", "/v1/comments", "/v1/segments"].some((prefix) => path.startsWith(prefix)))
 		return "Lists and collaboration";
 	if (path.startsWith("/v1/suppressions")) return "Suppressions";
-	if (["/v1/outcomes", "/v1/provider-endpoints"].some((prefix) => path.startsWith(prefix)))
+	if (
+		[
+			"/v1/outcomes",
+			"/v1/provider-endpoints",
+			"/v1/campaign-outcomes",
+			"/v1/outcome-policies",
+		].some((prefix) => path.startsWith(prefix))
+	)
 		return "Feedback and providers";
 	if (path.startsWith("/v1/pipelines")) return "Pipelines";
 }
@@ -102,6 +111,7 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 				return { href: "/app/settings?settings=verification", label: "Open re-check settings" };
 			if (operation.path.startsWith("/v1/reputation/"))
 				return { href: "/app/analytics", label: "Open domain reputation" };
+			if (operation.path.startsWith("/v1/alerts")) return { href: "/app", label: "Open alerts" };
 			return { href: "/app/check", label: "Open verification" };
 		case "Bulk and observability":
 			return ["/v1/events", "/v1/query", "/v1/sources/"].some((prefix) =>
@@ -110,6 +120,8 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 				? { href: "/app/analytics", label: "Open analytics" }
 				: { href: "/app/jobs", label: "Open bulk jobs" };
 		case "Lists and collaboration":
+			if (operation.path.startsWith("/v1/segments"))
+				return { href: "/app/analytics", label: "Open saved segments" };
 			return { href: "/app/lists", label: "Open lists" };
 		case "Suppressions":
 			return { href: "/app/suppressions", label: "Open suppressions" };
@@ -156,13 +168,17 @@ function scopeFor(path: string, method: Uppercase<Method>): string | undefined {
 		return method === "GET" ? "pipelines.read" : "pipelines.write";
 	}
 	const route = path.split("/")[2];
-	if (["check_email", "emails"].includes(route)) return "verify";
+	if (["check_email", "emails", "alerts"].includes(route)) return "verify";
 	if (["bulk", "jobs", "events", "query", "sources"].includes(route)) return "bulk";
 	if (route === "find_email") return "find";
-	if (route === "lists") return "lists";
+	if (["lists", "segments"].includes(route)) return "lists";
+	if (route === "campaign-outcomes") return method === "GET" ? "outcomes.read" : "outcomes.write";
 	if (["suppressions", "outcomes"].includes(route)) return "suppressions";
 	if (route === "reputation") return "reputation";
-	if (["provider-endpoints", "reverification"].includes(route)) return "settings";
+	if (
+		["provider-endpoints", "reverification", "score-policies", "outcome-policies"].includes(route)
+	)
+		return "settings";
 	if (route === "me") {
 		const resource = path.split("/")[3];
 		if (resource === "api-keys") return "admin";

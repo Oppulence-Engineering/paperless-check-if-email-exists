@@ -15,7 +15,7 @@ import * as zod from "zod";
  */
 export const V1Me200Response = zod.unknown();
 
-export const V1MeDefaultResponse = zod.strictObject({
+export const V1MeDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -25,7 +25,7 @@ export const V1MeDefaultResponse = zod.strictObject({
  */
 export const ListTenantApiKeys200Response = zod.unknown();
 
-export const ListTenantApiKeysDefaultResponse = zod.strictObject({
+export const ListTenantApiKeysDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -41,7 +41,7 @@ export const CreateTenantApiKeyBody = zod.strictObject({
 
 export const CreateTenantApiKey201Response = zod.unknown();
 
-export const CreateTenantApiKeyDefaultResponse = zod.strictObject({
+export const CreateTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -55,7 +55,7 @@ export const RevokeTenantApiKeyParams = zod.object({
 
 export const RevokeTenantApiKey200Response = zod.unknown();
 
-export const RevokeTenantApiKeyDefaultResponse = zod.strictObject({
+export const RevokeTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -69,7 +69,7 @@ export const GetTenantApiKeyParams = zod.object({
 
 export const GetTenantApiKey200Response = zod.unknown();
 
-export const GetTenantApiKeyDefaultResponse = zod.strictObject({
+export const GetTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -89,6 +89,6 @@ export const UpdateTenantApiKeyBody = zod.strictObject({
 
 export const UpdateTenantApiKey200Response = zod.unknown();
 
-export const UpdateTenantApiKeyDefaultResponse = zod.strictObject({
+export const UpdateTenantApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });

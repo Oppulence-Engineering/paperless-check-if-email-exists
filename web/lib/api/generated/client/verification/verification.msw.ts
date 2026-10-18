@@ -10,11 +10,67 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { V1EmailHistory200 } from "../model";
+import type { AlertListResponse, AlertView, V1EmailHistory200 } from "../model";
 
-import { getV1EmailHistoryResponseMock } from "./verification.faker";
+import {
+  getV1EmailHistoryResponseMock,
+  getV1ListAlertsResponseMock,
+  getV1UpdateAlertResponseMock,
+} from "./verification.faker";
 
-export { getV1EmailHistoryResponseMock } from "./verification.faker";
+export {
+  getV1ListAlertsResponseMock,
+  getV1UpdateAlertResponseMock,
+  getV1EmailHistoryResponseMock,
+} from "./verification.faker";
+
+export const getV1ListAlertsMockHandler = (
+  overrideResponse?:
+    | AlertListResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<AlertListResponse> | AlertListResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/alerts",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListAlertsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1UpdateAlertMockHandler = (
+  overrideResponse?:
+    | AlertView
+    | ((
+        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+      ) => Promise<AlertView> | AlertView),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch(
+    "*/v1/alerts/:alertId",
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateAlertResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
 export const getV1EmailHistoryMockHandler = (
   overrideResponse?:
@@ -39,4 +95,8 @@ export const getV1EmailHistoryMockHandler = (
     options,
   );
 };
-export const getVerificationMock = () => [getV1EmailHistoryMockHandler()];
+export const getVerificationMock = () => [
+  getV1ListAlertsMockHandler(),
+  getV1UpdateAlertMockHandler(),
+  getV1EmailHistoryMockHandler(),
+];

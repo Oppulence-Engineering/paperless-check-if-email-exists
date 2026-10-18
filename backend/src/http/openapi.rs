@@ -235,9 +235,16 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 			.or_insert_with(|| Value::Array(Vec::new()))
 			.as_array_mut()
 			.expect("tags array");
+		// Match tags by name. A spec with two tags of the same name is invalid,
+		// so the generated tag replaces a base tag with a different description.
 		for tag in generated_tags {
-			if !base_tags.iter().any(|existing| existing == tag) {
-				base_tags.push(tag.clone());
+			let name = tag.get("name");
+			match base_tags
+				.iter_mut()
+				.find(|existing| existing.get("name") == name)
+			{
+				Some(existing) => *existing = tag.clone(),
+				None => base_tags.push(tag.clone()),
 			}
 		}
 	}
@@ -471,6 +478,63 @@ fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: V
 mod operation_id_tests {
 	use serde_json::json;
 	use std::collections::HashSet;
+
+	#[test]
+	fn every_tag_name_is_unique() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut names = HashSet::new();
+		for tag in spec["tags"].as_array().expect("tags") {
+			let name = tag["name"].as_str().expect("tag name");
+			assert!(names.insert(name), "duplicate tag: {}", name);
+		}
+	}
+
+	#[test]
+	fn provider_and_campaign_outcomes_keep_their_own_schemas() {
+		// Two Rust types once shared the OutcomeView name, and the spec kept
+		// only one shape for both list endpoints.
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = |path: &str| {
+			spec["paths"][path]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+				["$ref"]
+				.as_str()
+				.map(str::to_owned)
+		};
+		assert_eq!(
+			schema("/v1/outcomes").as_deref(),
+			Some("#/components/schemas/OutcomeListResponse")
+		);
+		assert_eq!(
+			schema("/v1/campaign-outcomes").as_deref(),
+			Some("#/components/schemas/CampaignOutcomeListResponse")
+		);
+		let provider = &spec["components"]["schemas"]["OutcomeView"]["properties"];
+		assert!(
+			provider.get("event_type").is_some(),
+			"provider outcomes lost event_type"
+		);
+	}
+
+	#[test]
+	fn core_error_matches_the_check_output() {
+		let output = check_if_email_exists::CheckEmailOutput {
+			smtp: Err(check_if_email_exists::smtp::SmtpError::Timeout(
+				std::time::Duration::from_secs(1),
+			)),
+			..Default::default()
+		};
+		let sent = serde_json::to_value(&output).expect("check output");
+		assert!(
+			sent["smtp"]["error"]["type"].is_string(),
+			"{}",
+			sent["smtp"]
+		);
+
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = &spec["components"]["schemas"]["CoreError"];
+		assert_eq!(schema["required"], json!(["error"]));
+		assert_eq!(schema["properties"]["error"]["required"], json!(["type"]));
+	}
 
 	#[test]
 	fn every_operation_has_a_unique_id() {
@@ -1111,6 +1175,69 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				}
 			},
 			"required": ["score", "category", "confidence", "action", "model_version", "scored_at", "risk_factors"]
+		}),
+	);
+	// Matches core::smtp::SmtpDebugVerifMethod. The Smtp variant also sends the
+	// host and the SMTP settings; strict clients reject the result without them.
+	insert_schema(
+		spec,
+		"VerifMethod",
+		json!({
+			"type": "object",
+			"title": "VerifMethod",
+			"description": "The method used for email verification.",
+			"properties": {
+				"type": {
+					"type": "string",
+					"enum": ["Smtp", "Headless", "Api", "Skipped"],
+					"description": "The method used for the email verification."
+				},
+				"host": { "type": "string", "description": "The mail server host the check connected to. Only for Smtp." },
+				"verif_method": {
+					"type": "object",
+					"description": "The SMTP settings the check used. Only for Smtp.",
+					"properties": {
+						"from_email": { "type": "string" },
+						"hello_name": { "type": "string" },
+						"proxy": { "type": "string", "nullable": true },
+						"smtp_port": { "type": "integer", "format": "int32", "minimum": 0 },
+						"smtp_timeout": {
+							"nullable": true,
+							"allOf": [{ "$ref": "#/components/schemas/Duration" }]
+						},
+						"retries": { "type": "integer", "format": "int32", "minimum": 0 }
+					}
+				}
+			},
+			"required": ["type"]
+		}),
+	);
+	// Matches the custom Serialize of core::CheckEmailOutput. It wraps each
+	// misc, mx, and smtp error in an "error" field. Some errors send an
+	// object as the message, so the message has no type.
+	insert_schema(
+		spec,
+		"CoreError",
+		json!({
+			"type": "object",
+			"title": "CoreError",
+			"description": "The error that one part of the check returned instead of its details.",
+			"properties": {
+				"error": {
+					"type": "object",
+					"properties": {
+						"type": { "type": "string", "description": "The type of error." },
+						"message": { "description": "The error details. Usually a string." }
+					},
+					"required": ["type"]
+				},
+				"description": {
+					"type": "string",
+					"enum": ["IpBlacklisted", "NeedsRDNS"],
+					"description": "The category of an SMTP error, when it is known."
+				}
+			},
+			"required": ["error"]
 		}),
 	);
 	insert_schema(

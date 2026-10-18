@@ -42,6 +42,7 @@ import {
 	Plugs,
 	SignOut,
 	SlidersHorizontal,
+	SquaresFour,
 	Target,
 	Task,
 	type Icon,
@@ -53,25 +54,43 @@ import { surface } from "./shell-config";
 type SubItem = { href: string; label: string };
 type NavItem = { children?: SubItem[]; href: string; icon: Icon; label: string };
 
+/** Navigation groups follow the customer flows, not the API resources. */
 const NAV_GROUPS: { items: NavItem[]; label?: string }[] = [
+	{ items: [{ href: "/app", icon: SquaresFour, label: "Overview" }] },
 	{
 		items: [
-			{ href: "/app/check", icon: MailValidation, label: "Check email" },
-			{ href: "/app/finder", icon: MailSearch, label: "Find email" },
-			{ href: "/app/jobs", icon: Task, label: "Jobs" },
-			{ href: "/app/lists", icon: ListBullets, label: "Lists" },
-			{ href: "/app/suppressions", icon: MailBlock, label: "Suppressions" },
-			{ href: "/app/pipelines", icon: FlowArrow, label: "Pipelines" },
-			{ href: "/app/outcomes", icon: Target, label: "Outcomes" },
-			{ href: "/app/domains", icon: Internet, label: "Domains" },
-			{ href: "/app/analytics", icon: Analytics, label: "Analytics" },
+			{ href: "/app/check", icon: MailValidation, label: "Check an address" },
+			{ href: "/app/finder", icon: MailSearch, label: "Find an address" },
+			{ href: "/app/history", icon: ClockCounterClockwise, label: "Address history" },
 		],
+		label: "Verify",
 	},
 	{
 		items: [
-			{ href: "/app/history", icon: ClockCounterClockwise, label: "History" },
+			{ href: "/app/lists", icon: ListBullets, label: "Lists" },
+			{ href: "/app/jobs", icon: Task, label: "Bulk jobs" },
+		],
+		label: "Lists",
+	},
+	{
+		items: [
+			{ href: "/app/domains", icon: Internet, label: "Sender domains" },
+			{ href: "/app/suppressions", icon: MailBlock, label: "Suppressions" },
+			{ href: "/app/outcomes", icon: Target, label: "Delivery feedback" },
+		],
+		label: "Deliverability",
+	},
+	{
+		items: [
+			{ href: "/app/pipelines", icon: FlowArrow, label: "Pipelines" },
 			{ href: "/app/integrations", icon: Plugs, label: "Integrations" },
 			{ href: "/app/api", icon: Api, label: "API explorer" },
+		],
+		label: "Automation",
+	},
+	{ items: [{ href: "/app/analytics", icon: Analytics, label: "Insights" }], label: "Insights" },
+	{
+		items: [
 			{
 				children: settingsSections.map((section) => ({
 					href: settingsHref(section.key),
@@ -87,6 +106,8 @@ const NAV_GROUPS: { items: NavItem[]; label?: string }[] = [
 ];
 
 function isActive(pathname: string, href: string): boolean {
+	// Every product route starts with /app, so Overview needs an exact match.
+	if (href === "/app") return pathname === href;
 	return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -314,7 +335,7 @@ function Brand({ brand, collapsed }: { brand?: Branding; collapsed: boolean }) {
 		<Link
 			aria-label={collapsed ? name : undefined}
 			className="flex min-w-0 items-center gap-2.5"
-			href="/app/check"
+			href="/app"
 		>
 			<img
 				alt=""
@@ -359,7 +380,8 @@ export function PlatformSidebar({
 			>
 				<Brand brand={brand} collapsed />
 
-				<div className="mt-5 flex-1">
+				{/* The nav scrolls on short screens, so the switcher stays visible. */}
+				<div className="scrollbar-hide mt-5 min-h-0 flex-1 overflow-y-auto">
 					<Navigation collapsed />
 				</div>
 
@@ -400,7 +422,7 @@ export function PlatformSidebar({
 						<div className="px-2 py-1">
 							<Brand brand={brand} collapsed={false} />
 						</div>
-						<div className="mt-6 flex-1">
+						<div className="mt-6 min-h-0 flex-1 overflow-y-auto">
 							<Navigation collapsed={false} onNavigate={() => setMobileOpen(false)} />
 						</div>
 						<div className={cn("border-t border-white/[0.06] pt-2", devBadgeOffset && "mb-24")}>

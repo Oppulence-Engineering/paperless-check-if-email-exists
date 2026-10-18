@@ -13,23 +13,33 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { CoreErrorError } from './core-error-error';
 
 /**
- * Details of an error encountered during the verification process.
+ * The error that one part of the check returned instead of its details.
  * @export
  * @interface CoreError
  */
 export interface CoreError {
     /**
-     * A human-readable description of the error.
+     * The category of an SMTP error, when it is known.
      * @type {string}
      * @memberof CoreError
      */
-    'message': string;
+    'description'?: CoreErrorDescriptionEnum;
     /**
-     * The type of error.
-     * @type {string}
+     *
+     * @type {CoreErrorError}
      * @memberof CoreError
      */
-    'type': string;
+    'error': CoreErrorError;
 }
+
+export const CoreErrorDescriptionEnum = {
+    IpBlacklisted: 'IpBlacklisted',
+    NeedsRdns: 'NeedsRDNS'
+} as const;
+
+export type CoreErrorDescriptionEnum = typeof CoreErrorDescriptionEnum[keyof typeof CoreErrorDescriptionEnum];

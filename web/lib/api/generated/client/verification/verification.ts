@@ -8,9 +8,13 @@
  * OpenAPI spec version: 4.3.0
  */
 import type {
+  AlertListResponse,
+  AlertView,
   ErrorEnvelope,
+  UpdateAlertRequest,
   V1EmailHistory200,
   V1EmailHistoryParams,
+  V1ListAlertsParams,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -54,6 +58,113 @@ export type HTTPStatusCodes =
   | HTTPStatusCode3xx
   | HTTPStatusCode4xx
   | HTTPStatusCode5xx;
+
+export type v1ListAlertsResponse200 = {
+  data: AlertListResponse;
+  status: 200;
+};
+
+export type v1ListAlertsResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListAlertsResponseSuccess = v1ListAlertsResponse200 & {
+  headers: Headers;
+};
+export type v1ListAlertsResponseError = v1ListAlertsResponseDefault & {
+  headers: Headers;
+};
+
+export type v1ListAlertsResponse =
+  v1ListAlertsResponseSuccess | v1ListAlertsResponseError;
+
+export const getV1ListAlertsUrl = (params?: V1ListAlertsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/alerts?${stringifiedParams}`
+    : `/v1/alerts`;
+};
+
+/**
+ * @summary GET /v1/alerts
+ */
+export const v1ListAlerts = async (
+  params?: V1ListAlertsParams,
+  options?: RequestInit,
+): Promise<v1ListAlertsResponse> => {
+  const res = await fetch(getV1ListAlertsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListAlertsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListAlertsResponse;
+};
+
+export type v1UpdateAlertResponse200 = {
+  data: AlertView;
+  status: 200;
+};
+
+export type v1UpdateAlertResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1UpdateAlertResponseSuccess = v1UpdateAlertResponse200 & {
+  headers: Headers;
+};
+export type v1UpdateAlertResponseError = v1UpdateAlertResponseDefault & {
+  headers: Headers;
+};
+
+export type v1UpdateAlertResponse =
+  v1UpdateAlertResponseSuccess | v1UpdateAlertResponseError;
+
+export const getV1UpdateAlertUrl = (alertId: number) => {
+  return `/v1/alerts/${alertId}`;
+};
+
+/**
+ * @summary PATCH /v1/alerts/{alert_id}
+ */
+export const v1UpdateAlert = async (
+  alertId: number,
+  updateAlertRequest: UpdateAlertRequest,
+  options?: RequestInit,
+): Promise<v1UpdateAlertResponse> => {
+  const res = await fetch(getV1UpdateAlertUrl(alertId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateAlertRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1UpdateAlertResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1UpdateAlertResponse;
+};
 
 export type v1EmailHistoryResponse200 = {
   data: V1EmailHistory200;

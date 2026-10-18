@@ -21,7 +21,7 @@ export const V1ListCommentsQueryParams = zod.object({
 
 export const V1ListComments200Response = zod.unknown();
 
-export const V1ListCommentsDefaultResponse = zod.strictObject({
+export const V1ListCommentsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -37,7 +37,7 @@ export const V1CreateCommentBody = zod.strictObject({
 
 export const V1CreateComment201Response = zod.unknown();
 
-export const V1CreateCommentDefaultResponse = zod.strictObject({
+export const V1CreateCommentDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -50,6 +50,6 @@ export const V1DeleteCommentParams = zod.object({
 
 export const V1DeleteComment200Response = zod.unknown();
 
-export const V1DeleteCommentDefaultResponse = zod.strictObject({
+export const V1DeleteCommentDefaultResponse = zod.object({
   error: zod.string(),
 });

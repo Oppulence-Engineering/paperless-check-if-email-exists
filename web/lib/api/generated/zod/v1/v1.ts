@@ -30,12 +30,12 @@ export const V1CreateBulkJobBody = zod.strictObject({
   webhook: zod.record(zod.string(), zod.unknown()).nullish(),
 });
 
-export const V1CreateBulkJob200Response = zod.strictObject({
+export const V1CreateBulkJob200Response = zod.object({
   job_id: zod.int(),
   source_key: zod.string().nullish(),
 });
 
-export const V1CreateBulkJobDefaultResponse = zod.strictObject({
+export const V1CreateBulkJobDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -62,7 +62,7 @@ export const V1CheckEmailWithOnboardBody = zod.strictObject({
 
 export const V1CheckEmailWithOnboard201Response = zod.unknown();
 
-export const V1CheckEmailWithOnboardDefaultResponse = zod.strictObject({
+export const V1CheckEmailWithOnboardDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -164,14 +164,27 @@ export const v1CheckEmail200ResponseBounceRiskOneConfidenceMax = 1;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMin = 0;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMax = 100;
 
+export const v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
+export const v1CheckEmail200ResponseScoreCatchAllConfidenceMin = 0;
+export const v1CheckEmail200ResponseScoreCatchAllConfidenceMax = 100;
+
+export const v1CheckEmail200ResponseScoreConfidenceMin = 0;
+export const v1CheckEmail200ResponseScoreConfidenceMax = 100;
+
+export const v1CheckEmail200ResponseScorePartialConfidenceConfidenceMin = 0;
+export const v1CheckEmail200ResponseScorePartialConfidenceConfidenceMax = 100;
+
 export const v1CheckEmail200ResponseScoreScoreMin = 0;
 export const v1CheckEmail200ResponseScoreScoreMax = 100;
 
 export const V1CheckEmail200Response = zod
-  .strictObject({
+  .object({
     bounce_risk: zod
       .union([
-        zod.strictObject({
+        zod.object({
           action: zod.enum([
             "send",
             "send_with_caution",
@@ -185,7 +198,7 @@ export const V1CheckEmail200Response = zod
             .max(v1CheckEmail200ResponseBounceRiskOneConfidenceMax),
           model_version: zod.string(),
           risk_factors: zod.array(
-            zod.strictObject({
+            zod.object({
               contribution: zod.int(),
               description: zod.string(),
               direction: zod.enum(["increases_risk", "decreases_risk"]),
@@ -205,12 +218,12 @@ export const V1CheckEmail200Response = zod
         "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
       ),
     debug: zod
-      .strictObject({
+      .object({
         backend_name: zod
           .string()
           .describe("The name of the backend that performed the verification."),
         duration: zod
-          .strictObject({
+          .object({
             nanos: zod.number().describe("Duration in nanoseconds."),
             secs: zod.number().describe("Duration in seconds."),
           })
@@ -221,12 +234,53 @@ export const V1CheckEmail200Response = zod
           .string()
           .describe("The timestamp when the email verification ended."),
         smtp: zod
-          .strictObject({
+          .object({
             verif_method: zod
-              .strictObject({
+              .object({
+                host: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The mail server host the check connected to. Only for Smtp.",
+                  ),
                 type: zod
                   .enum(["Smtp", "Headless", "Api", "Skipped"])
                   .describe("The method used for the email verification."),
+                verif_method: zod
+                  .object({
+                    from_email: zod.string().optional(),
+                    hello_name: zod.string().optional(),
+                    proxy: zod.string().nullish(),
+                    retries: zod
+                      .int()
+                      .min(
+                        v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin,
+                      )
+                      .optional(),
+                    smtp_port: zod
+                      .int()
+                      .min(
+                        v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                      )
+                      .optional(),
+                    smtp_timeout: zod
+                      .union([
+                        zod
+                          .object({
+                            nanos: zod
+                              .number()
+                              .describe("Duration in nanoseconds."),
+                            secs: zod.number().describe("Duration in seconds."),
+                          })
+                          .describe(
+                            "An object representing a duration in seconds and nanoseconds.",
+                          ),
+                        zod.null(),
+                      ])
+                      .optional(),
+                  })
+                  .optional()
+                  .describe("The SMTP settings the check used. Only for Smtp."),
               })
               .optional()
               .describe("The method used for email verification."),
@@ -248,7 +302,7 @@ export const V1CheckEmail200Response = zod
     misc: zod
       .union([
         zod
-          .strictObject({
+          .object({
             gravatar_url: zod
               .string()
               .nullable()
@@ -271,21 +325,28 @@ export const V1CheckEmail200Response = zod
           })
           .describe("Additional information about the email account."),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Additional information about the email account."),
     mx: zod
       .union([
         zod
-          .strictObject({
+          .object({
             accepts_mail: zod
               .boolean()
               .describe("Indicates if the mail server accepts emails."),
@@ -297,14 +358,21 @@ export const V1CheckEmail200Response = zod
           })
           .describe("Details about the mail server's MX records."),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Details obtained from querying the mail server's MX records."),
@@ -345,15 +413,34 @@ export const V1CheckEmail200Response = zod
       .optional(),
     provider_rules_applied: zod.boolean(),
     recommendation: zod.unknown().optional(),
-    score: zod.strictObject({
+    score: zod.object({
       age_days: zod.int().optional(),
+      catch_all: zod
+        .object({
+          confidence: zod
+            .int()
+            .min(v1CheckEmail200ResponseScoreCatchAllConfidenceMin)
+            .max(v1CheckEmail200ResponseScoreCatchAllConfidenceMax),
+          factors: zod.array(zod.string()),
+          severity: zod.enum(["low", "medium", "high"]),
+        })
+        .optional(),
       catch_all_severity: zod
-        .enum(["low", "high"])
+        .enum(["low", "medium", "high"])
         .optional()
         .describe(
-          "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+          "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
         ),
       category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+      confidence: zod
+        .int()
+        .min(v1CheckEmail200ResponseScoreConfidenceMin)
+        .max(v1CheckEmail200ResponseScoreConfidenceMax)
+        .optional(),
+      confidence_factors: zod.array(zod.string()).optional(),
+      confidence_level: zod
+        .enum(["high", "medium", "low", "very_low"])
+        .optional(),
       domain_suggestion: zod
         .string()
         .optional()
@@ -369,6 +456,23 @@ export const V1CheckEmail200Response = zod
         .describe(
           "Canonical form of the email after alias\/plus-address normalization",
         ),
+      partial_confidence: zod
+        .object({
+          classification: zod.enum([
+            "transient",
+            "policy_block",
+            "timeout",
+            "network",
+            "ambiguous_response",
+            "smtp_unreachable",
+          ]),
+          confidence: zod
+            .int()
+            .min(v1CheckEmail200ResponseScorePartialConfidenceConfidenceMin)
+            .max(v1CheckEmail200ResponseScorePartialConfidenceConfidenceMax),
+          factors: zod.array(zod.string()),
+        })
+        .optional(),
       reason_codes: zod.array(
         zod.enum([
           "deliverable",
@@ -397,6 +501,21 @@ export const V1CheckEmail200Response = zod
           "unknown_deliverability",
           "free_provider",
           "possible_typo",
+          "provider_reputation",
+          "tenant_history_positive",
+          "tenant_history_inconsistent",
+          "catch_all_low_confidence",
+          "catch_all_medium_confidence",
+          "catch_all_high_risk",
+          "partial_confidence",
+          "transient_smtp",
+          "smtp_policy_block",
+          "smtp_timeout",
+          "smtp_network",
+          "smtp_ambiguous",
+          "outcome_hard_bounce",
+          "outcome_complaint",
+          "outcome_engagement",
         ]),
       ),
       safe_to_send: zod.boolean(),
@@ -404,7 +523,7 @@ export const V1CheckEmail200Response = zod
         .int()
         .min(v1CheckEmail200ResponseScoreScoreMin)
         .max(v1CheckEmail200ResponseScoreScoreMax),
-      signals: zod.strictObject({
+      signals: zod.object({
         has_domain_suggestion: zod.boolean(),
         has_mx_records: zod.boolean(),
         is_disposable: zod.boolean(),
@@ -447,7 +566,7 @@ export const V1CheckEmail200Response = zod
     smtp: zod
       .union([
         zod
-          .strictObject({
+          .object({
             can_connect_smtp: zod
               .boolean()
               .describe(
@@ -476,19 +595,26 @@ export const V1CheckEmail200Response = zod
             "Results from SMTP connection attempts to the mail server.",
           ),
         zod
-          .strictObject({
-            message: zod
-              .string()
-              .describe("A human-readable description of the error."),
-            type: zod.string().describe("The type of error."),
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
           })
           .describe(
-            "Details of an error encountered during the verification process.",
+            "The error that one part of the check returned instead of its details.",
           ),
       ])
       .describe("Results from connecting to the mail server via SMTP."),
     syntax: zod
-      .strictObject({
+      .object({
         address: zod.string().nullable(),
         domain: zod.string().describe("The domain part of the email address."),
         is_valid_syntax: zod
@@ -504,7 +630,7 @@ export const V1CheckEmail200Response = zod
   })
   .describe("The result of the email verification process.");
 
-export const V1CheckEmailDefaultResponse = zod.strictObject({
+export const V1CheckEmailDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -525,14 +651,14 @@ export const V1FindEmailBody = zod.strictObject({
     ),
 });
 
-export const V1FindEmail202Response = zod.strictObject({
+export const V1FindEmail202Response = zod.object({
   bulk_job_id: zod.int(),
   candidates_checked: zod.int(),
   job_id: zod.int(),
   status: zod.string(),
 });
 
-export const V1FindEmailDefaultResponse = zod.strictObject({
+export const V1FindEmailDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -552,13 +678,26 @@ export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneConfidenc
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMax = 100;
 
+export const v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMax = 100;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMax = 100;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin = 0;
+export const v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax = 100;
+
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreScoreMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreScoreMax = 100;
 
-export const V1GetFindEmail200Response = zod.strictObject({
+export const V1GetFindEmail200Response = zod.object({
   best_match: zod
     .union([
-      zod.strictObject({
+      zod.object({
         confidence: zod.string(),
         email: zod.string(),
         pattern: zod.string(),
@@ -573,11 +712,11 @@ export const V1GetFindEmail200Response = zod.strictObject({
   domain_is_catch_all: zod.boolean(),
   job_id: zod.int(),
   results: zod.array(
-    zod.strictObject({
+    zod.object({
       category: zod.enum(["valid", "risky", "unknown", "invalid"]),
       confidence: zod
         .union([
-          zod.strictObject({
+          zod.object({
             factors: zod.array(zod.string()),
             level: zod.enum(["high", "medium", "low", "very_low"]),
             score: zod
@@ -598,10 +737,10 @@ export const V1GetFindEmail200Response = zod.strictObject({
       result: zod
         .union([
           zod
-            .strictObject({
+            .object({
               bounce_risk: zod
                 .union([
-                  zod.strictObject({
+                  zod.object({
                     action: zod.enum([
                       "send",
                       "send_with_caution",
@@ -625,7 +764,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
                       ),
                     model_version: zod.string(),
                     risk_factors: zod.array(
-                      zod.strictObject({
+                      zod.object({
                         contribution: zod.int(),
                         description: zod.string(),
                         direction: zod.enum([
@@ -652,14 +791,14 @@ export const V1GetFindEmail200Response = zod.strictObject({
                   "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
                 ),
               debug: zod
-                .strictObject({
+                .object({
                   backend_name: zod
                     .string()
                     .describe(
                       "The name of the backend that performed the verification.",
                     ),
                   duration: zod
-                    .strictObject({
+                    .object({
                       nanos: zod.number().describe("Duration in nanoseconds."),
                       secs: zod.number().describe("Duration in seconds."),
                     })
@@ -672,13 +811,58 @@ export const V1GetFindEmail200Response = zod.strictObject({
                       "The timestamp when the email verification ended.",
                     ),
                   smtp: zod
-                    .strictObject({
+                    .object({
                       verif_method: zod
-                        .strictObject({
+                        .object({
+                          host: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The mail server host the check connected to. Only for Smtp.",
+                            ),
                           type: zod
                             .enum(["Smtp", "Headless", "Api", "Skipped"])
                             .describe(
                               "The method used for the email verification.",
+                            ),
+                          verif_method: zod
+                            .object({
+                              from_email: zod.string().optional(),
+                              hello_name: zod.string().optional(),
+                              proxy: zod.string().nullish(),
+                              retries: zod
+                                .int()
+                                .min(
+                                  v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin,
+                                )
+                                .optional(),
+                              smtp_port: zod
+                                .int()
+                                .min(
+                                  v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                                )
+                                .optional(),
+                              smtp_timeout: zod
+                                .union([
+                                  zod
+                                    .object({
+                                      nanos: zod
+                                        .number()
+                                        .describe("Duration in nanoseconds."),
+                                      secs: zod
+                                        .number()
+                                        .describe("Duration in seconds."),
+                                    })
+                                    .describe(
+                                      "An object representing a duration in seconds and nanoseconds.",
+                                    ),
+                                  zod.null(),
+                                ])
+                                .optional(),
+                            })
+                            .optional()
+                            .describe(
+                              "The SMTP settings the check used. Only for Smtp.",
                             ),
                         })
                         .optional()
@@ -705,7 +889,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
               misc: zod
                 .union([
                   zod
-                    .strictObject({
+                    .object({
                       gravatar_url: zod
                         .string()
                         .nullable()
@@ -732,21 +916,30 @@ export const V1GetFindEmail200Response = zod.strictObject({
                       "Additional information about the email account.",
                     ),
                   zod
-                    .strictObject({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                    .object({
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe("Additional information about the email account."),
               mx: zod
                 .union([
                   zod
-                    .strictObject({
+                    .object({
                       accepts_mail: zod
                         .boolean()
                         .describe(
@@ -760,14 +953,23 @@ export const V1GetFindEmail200Response = zod.strictObject({
                     })
                     .describe("Details about the mail server's MX records."),
                   zod
-                    .strictObject({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                    .object({
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe(
@@ -810,15 +1012,42 @@ export const V1GetFindEmail200Response = zod.strictObject({
                 .optional(),
               provider_rules_applied: zod.boolean(),
               recommendation: zod.unknown().optional(),
-              score: zod.strictObject({
+              score: zod.object({
                 age_days: zod.int().optional(),
+                catch_all: zod
+                  .object({
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMin,
+                      )
+                      .max(
+                        v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                    severity: zod.enum(["low", "medium", "high"]),
+                  })
+                  .optional(),
                 catch_all_severity: zod
-                  .enum(["low", "high"])
+                  .enum(["low", "medium", "high"])
                   .optional()
                   .describe(
-                    "Severity tier for catch-all domains. low=free provider with no other negative signal; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+                    "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
                   ),
                 category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+                confidence: zod
+                  .int()
+                  .min(
+                    v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMin,
+                  )
+                  .max(
+                    v1GetFindEmail200ResponseResultsItemResultOneScoreConfidenceMax,
+                  )
+                  .optional(),
+                confidence_factors: zod.array(zod.string()).optional(),
+                confidence_level: zod
+                  .enum(["high", "medium", "low", "very_low"])
+                  .optional(),
                 domain_suggestion: zod
                   .string()
                   .optional()
@@ -834,6 +1063,27 @@ export const V1GetFindEmail200Response = zod.strictObject({
                   .describe(
                     "Canonical form of the email after alias\/plus-address normalization",
                   ),
+                partial_confidence: zod
+                  .object({
+                    classification: zod.enum([
+                      "transient",
+                      "policy_block",
+                      "timeout",
+                      "network",
+                      "ambiguous_response",
+                      "smtp_unreachable",
+                    ]),
+                    confidence: zod
+                      .int()
+                      .min(
+                        v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMin,
+                      )
+                      .max(
+                        v1GetFindEmail200ResponseResultsItemResultOneScorePartialConfidenceConfidenceMax,
+                      ),
+                    factors: zod.array(zod.string()),
+                  })
+                  .optional(),
                 reason_codes: zod.array(
                   zod.enum([
                     "deliverable",
@@ -862,6 +1112,21 @@ export const V1GetFindEmail200Response = zod.strictObject({
                     "unknown_deliverability",
                     "free_provider",
                     "possible_typo",
+                    "provider_reputation",
+                    "tenant_history_positive",
+                    "tenant_history_inconsistent",
+                    "catch_all_low_confidence",
+                    "catch_all_medium_confidence",
+                    "catch_all_high_risk",
+                    "partial_confidence",
+                    "transient_smtp",
+                    "smtp_policy_block",
+                    "smtp_timeout",
+                    "smtp_network",
+                    "smtp_ambiguous",
+                    "outcome_hard_bounce",
+                    "outcome_complaint",
+                    "outcome_engagement",
                   ]),
                 ),
                 safe_to_send: zod.boolean(),
@@ -873,7 +1138,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
                   .max(
                     v1GetFindEmail200ResponseResultsItemResultOneScoreScoreMax,
                   ),
-                signals: zod.strictObject({
+                signals: zod.object({
                   has_domain_suggestion: zod.boolean(),
                   has_mx_records: zod.boolean(),
                   is_disposable: zod.boolean(),
@@ -916,7 +1181,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
               smtp: zod
                 .union([
                   zod
-                    .strictObject({
+                    .object({
                       can_connect_smtp: zod
                         .boolean()
                         .describe(
@@ -945,21 +1210,30 @@ export const V1GetFindEmail200Response = zod.strictObject({
                       "Results from SMTP connection attempts to the mail server.",
                     ),
                   zod
-                    .strictObject({
-                      message: zod
-                        .string()
-                        .describe("A human-readable description of the error."),
-                      type: zod.string().describe("The type of error."),
+                    .object({
+                      description: zod
+                        .enum(["IpBlacklisted", "NeedsRDNS"])
+                        .optional()
+                        .describe(
+                          "The category of an SMTP error, when it is known.",
+                        ),
+                      error: zod.object({
+                        message: zod
+                          .unknown()
+                          .optional()
+                          .describe("The error details. Usually a string."),
+                        type: zod.string().describe("The type of error."),
+                      }),
                     })
                     .describe(
-                      "Details of an error encountered during the verification process.",
+                      "The error that one part of the check returned instead of its details.",
                     ),
                 ])
                 .describe(
                   "Results from connecting to the mail server via SMTP.",
                 ),
               syntax: zod
-                .strictObject({
+                .object({
                   address: zod.string().nullable(),
                   domain: zod
                     .string()
@@ -1005,7 +1279,7 @@ export const V1GetFindEmail200Response = zod.strictObject({
   status: zod.string(),
 });
 
-export const V1GetFindEmailDefaultResponse = zod.strictObject({
+export const V1GetFindEmailDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1017,9 +1291,9 @@ export const V1ListListsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const V1ListLists200Response = zod.strictObject({
+export const V1ListLists200Response = zod.object({
   lists: zod.array(
-    zod.strictObject({
+    zod.object({
       completed_at: zod.iso.datetime({ offset: true }).nullable(),
       created_at: zod.iso.datetime({ offset: true }),
       email_column: zod.string(),
@@ -1034,7 +1308,7 @@ export const V1ListLists200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListListsDefaultResponse = zod.strictObject({
+export const V1ListListsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1045,6 +1319,7 @@ export const V1CreateListBody = zod.strictObject({
   email_column: zod.string().nullish(),
   file: zod.instanceof(File),
   name: zod.string().nullish(),
+  policy_id: zod.int().nullish(),
   source_key: zod
     .string()
     .nullish()
@@ -1053,7 +1328,7 @@ export const V1CreateListBody = zod.strictObject({
     ),
 });
 
-export const V1CreateList202Response = zod.strictObject({
+export const V1CreateList202Response = zod.object({
   email_column: zod.string(),
   job_id: zod.int(),
   list_id: zod.int(),
@@ -1061,7 +1336,7 @@ export const V1CreateList202Response = zod.strictObject({
   total_rows: zod.int(),
 });
 
-export const V1CreateListDefaultResponse = zod.strictObject({
+export const V1CreateListDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1072,11 +1347,11 @@ export const V1DeleteListParams = zod.object({
   list_id: zod.coerce.number().int().describe("List identifier"),
 });
 
-export const V1DeleteList200Response = zod.strictObject({
+export const V1DeleteList200Response = zod.object({
   deleted: zod.boolean(),
 });
 
-export const V1DeleteListDefaultResponse = zod.strictObject({
+export const V1DeleteListDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1087,15 +1362,16 @@ export const V1GetListParams = zod.object({
   list_id: zod.coerce.number().int().describe("List identifier"),
 });
 
-export const V1GetList200Response = zod.strictObject({
+export const V1GetList200Response = zod.object({
   deduplicated_count: zod.int().nullish(),
   email_column: zod.string(),
   id: zod.int(),
   job_id: zod.int(),
   name: zod.string(),
+  policy_id: zod.int().nullish(),
   source_key: zod.string().nullish(),
   status: zod.string(),
-  summary: zod.strictObject({
+  summary: zod.object({
     total_invalid: zod.int(),
     total_processed: zod.int(),
     total_risky: zod.int(),
@@ -1106,7 +1382,7 @@ export const V1GetList200Response = zod.strictObject({
   unique_emails: zod.int().nullish(),
 });
 
-export const V1GetListDefaultResponse = zod.strictObject({
+export const V1GetListDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1120,11 +1396,13 @@ export const V1DownloadListParams = zod.object({
 export const V1DownloadListQueryParams = zod.object({
   filter: zod.string().optional(),
   format: zod.string().optional(),
+  segment_id: zod.coerce.number().int().optional(),
+  changed_since_list_id: zod.coerce.number().int().optional(),
 });
 
 export const V1DownloadList200Response = zod.unknown();
 
-export const V1DownloadListDefaultResponse = zod.strictObject({
+export const V1DownloadListDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1143,16 +1421,16 @@ export const V1CheckReputationBody = zod.strictObject({
 export const v1CheckReputation200ResponseScoreMin = 0;
 export const v1CheckReputation200ResponseScoreMax = 100;
 
-export const V1CheckReputation200Response = zod.strictObject({
+export const V1CheckReputation200Response = zod.object({
   blacklist_results: zod.array(
-    zod.strictObject({
+    zod.object({
       listed: zod.boolean(),
       lookup_time_ms: zod.int(),
       provider: zod.string(),
     }),
   ),
   cached: zod.boolean(),
-  dns_records: zod.strictObject({
+  dns_records: zod.object({
     dmarc_policy: zod.string().nullish(),
     has_dkim: zod.boolean(),
     has_dmarc: zod.boolean(),
@@ -1162,7 +1440,7 @@ export const V1CheckReputation200Response = zod.strictObject({
     spf_valid: zod.boolean(),
   }),
   domain: zod.string(),
-  domain_info: zod.strictObject({
+  domain_info: zod.object({
     created_at: zod.string().nullish(),
     domain_age_days: zod.int().nullish(),
     registrar: zod.string().nullish(),
@@ -1174,7 +1452,7 @@ export const V1CheckReputation200Response = zod.strictObject({
     .max(v1CheckReputation200ResponseScoreMax),
 });
 
-export const V1CheckReputationDefaultResponse = zod.strictObject({
+export const V1CheckReputationDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1196,7 +1474,7 @@ export const V1UpdateReverificationBody = zod
     "Turns scheduled re-checks on or off for the workspace and sets how old a\nresult may get before it is checked again.",
   );
 
-export const V1UpdateReverification200Response = zod.strictObject({
+export const V1UpdateReverification200Response = zod.object({
   batch_size: zod.int().optional(),
   emails_requeued: zod.int().optional(),
   enabled: zod.boolean(),
@@ -1208,14 +1486,14 @@ export const V1UpdateReverification200Response = zod.strictObject({
 
 export const V1UpdateReverification400Response = zod.unknown();
 
-export const V1UpdateReverificationDefaultResponse = zod.strictObject({
+export const V1UpdateReverificationDefaultResponse = zod.object({
   error: zod.string(),
 });
 
 /**
  * @summary GET /v1/reverification/status
  */
-export const V1ReverificationStatus200Response = zod.strictObject({
+export const V1ReverificationStatus200Response = zod.object({
   batch_size: zod.int().optional(),
   emails_requeued: zod.int().optional(),
   enabled: zod.boolean(),
@@ -1225,7 +1503,7 @@ export const V1ReverificationStatus200Response = zod.strictObject({
   staleness_days: zod.int().optional(),
 });
 
-export const V1ReverificationStatusDefaultResponse = zod.strictObject({
+export const V1ReverificationStatusDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1237,7 +1515,7 @@ export const V1SourceQuality200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1SourceQualityDefaultResponse = zod.strictObject({
+export const V1SourceQualityDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1254,9 +1532,9 @@ export const V1ListSuppressionsQueryParams = zod.object({
   include_expired: zod.coerce.boolean().optional(),
 });
 
-export const V1ListSuppressions200Response = zod.strictObject({
+export const V1ListSuppressions200Response = zod.object({
   entries: zod.array(
-    zod.strictObject({
+    zod.object({
       created_at: zod.iso.datetime({ offset: true }),
       email: zod.string(),
       id: zod.int(),
@@ -1276,7 +1554,7 @@ export const V1ListSuppressions200Response = zod.strictObject({
   total: zod.int(),
 });
 
-export const V1ListSuppressionsDefaultResponse = zod.strictObject({
+export const V1ListSuppressionsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1305,14 +1583,14 @@ export const V1AddSuppressionsBody = zod.strictObject({
   source_type: zod.string().nullish(),
 });
 
-export const V1AddSuppressions200Response = zod.strictObject({
+export const V1AddSuppressions200Response = zod.object({
   added: zod.int(),
   duplicates: zod.int(),
   entry_ids: zod.array(zod.int()).optional(),
   updated: zod.int().optional(),
 });
 
-export const V1AddSuppressionsDefaultResponse = zod.strictObject({
+export const V1AddSuppressionsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1323,7 +1601,7 @@ export const V1CheckSuppressionQueryParams = zod.object({
   email: zod.string(),
 });
 
-export const V1CheckSuppression200Response = zod.strictObject({
+export const V1CheckSuppression200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }).nullish(),
   reason: zod
     .enum([
@@ -1340,7 +1618,7 @@ export const V1CheckSuppression200Response = zod.strictObject({
   suppressed: zod.boolean(),
 });
 
-export const V1CheckSuppressionDefaultResponse = zod.strictObject({
+export const V1CheckSuppressionDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1349,7 +1627,7 @@ export const V1CheckSuppressionDefaultResponse = zod.strictObject({
  */
 export const V1ExportSuppressions200Response = zod.unknown();
 
-export const V1ExportSuppressionsDefaultResponse = zod.strictObject({
+export const V1ExportSuppressionsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1363,7 +1641,7 @@ export const V1ImportSuppressions200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1ImportSuppressionsDefaultResponse = zod.strictObject({
+export const V1ImportSuppressionsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1374,11 +1652,11 @@ export const V1DeleteSuppressionParams = zod.object({
   id: zod.coerce.number().int().describe("Suppression entry identifier"),
 });
 
-export const V1DeleteSuppression200Response = zod.strictObject({
+export const V1DeleteSuppression200Response = zod.object({
   deleted: zod.boolean(),
 });
 
-export const V1DeleteSuppressionDefaultResponse = zod.strictObject({
+export const V1DeleteSuppressionDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -1394,6 +1672,6 @@ export const V1ListSuppressionEvents200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1ListSuppressionEventsDefaultResponse = zod.strictObject({
+export const V1ListSuppressionEventsDefaultResponse = zod.object({
   error: zod.string(),
 });

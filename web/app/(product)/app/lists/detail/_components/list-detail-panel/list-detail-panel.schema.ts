@@ -10,6 +10,8 @@ import { z } from "zod";
  */
 export const ListDetailPanelPropsSchema = z.object({
 	listId: z.number().int().positive().optional(),
+	/** True right after an upload, so the page confirms that the API accepted the list. */
+	accepted: z.boolean().optional(),
 });
 
 export type ListDetailPanelPropsFields = z.infer<typeof ListDetailPanelPropsSchema>;

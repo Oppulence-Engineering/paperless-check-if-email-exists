@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use warp::http::StatusCode;
 use warp::Filter;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -51,6 +52,15 @@ struct Response {
 	total: i64,
 }
 
+/// Warp gives the raw path segment, so `a%40b.co` must become `a@b.co`
+/// before the lookup. Clients encode the `@` in the path.
+fn decode_email_segment(segment: &str) -> Option<String> {
+	percent_encoding::percent_decode_str(segment)
+		.decode_utf8()
+		.ok()
+		.map(|email| email.into_owned())
+}
+
 async fn http_handler(
 	email: String,
 	tenant_ctx: TenantContext,
@@ -59,6 +69,12 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::VERIFY)?;
 
+	let email = decode_email_segment(&email).ok_or_else(|| {
+		ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"The email in the path is not valid UTF-8",
+		)
+	})?;
 	let limit = query.limit.unwrap_or(50).clamp(0, 200);
 	let email_lower = email.to_lowercase();
 	let canonical_email = crate::http::v1::lists::canonicalize::canonicalize_email(&email)
@@ -251,4 +267,22 @@ pub fn v1_email_history(
 		.and(warp::query::<Query>())
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::decode_email_segment;
+
+	#[test]
+	fn decodes_an_encoded_at_sign() {
+		assert_eq!(
+			decode_email_segment("a.lovelace%40gmail.com").as_deref(),
+			Some("a.lovelace@gmail.com")
+		);
+		assert_eq!(
+			decode_email_segment("plain@example.com").as_deref(),
+			Some("plain@example.com")
+		);
+		assert_eq!(decode_email_segment("bad%FF"), None);
+	}
 }

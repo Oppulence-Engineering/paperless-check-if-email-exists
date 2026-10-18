@@ -15,10 +15,16 @@ import {
  * Client query hook for V1 list lists. Keys, staleTime, and the fetcher stay in
  * non-client modules. Owned by `use-v1-list-lists.lit.ts`.
  */
-export function useV1ListLists(query?: V1ListListsQuery) {
+export function useV1ListLists(
+	query?: V1ListListsQuery,
+	pollWhile?: (data: Awaited<ReturnType<typeof fetchV1ListLists>>) => boolean,
+) {
 	return useQuery({
 		queryKey: v1ListListsKeys.list(query),
 		queryFn: ({ signal }) => fetchV1ListLists(query, signal),
 		staleTime: V1_LIST_LISTS_STALE_TIME,
+		// Poll every 5 seconds while the caller says the data can still change.
+		refetchInterval: (current) =>
+			current.state.data && pollWhile?.(current.state.data) ? 5_000 : false,
 	});
 }

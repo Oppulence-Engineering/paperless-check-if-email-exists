@@ -27,6 +27,7 @@ type ListDetailResponse struct {
 	Id int32 `json:"id"`
 	JobId int32 `json:"job_id"`
 	Name string `json:"name"`
+	PolicyId NullableInt64 `json:"policy_id,omitempty"`
 	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	Summary ListSummary `json:"summary"`
@@ -196,6 +197,48 @@ func (o *ListDetailResponse) GetNameOk() (*string, bool) {
 // SetName sets field value
 func (o *ListDetailResponse) SetName(v string) {
 	o.Name = v
+}
+
+// GetPolicyId returns the PolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetPolicyId() int64 {
+	if o == nil || IsNil(o.PolicyId.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.PolicyId.Get()
+}
+
+// GetPolicyIdOk returns a tuple with the PolicyId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListDetailResponse) GetPolicyIdOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PolicyId.Get(), o.PolicyId.IsSet()
+}
+
+// HasPolicyId returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasPolicyId() bool {
+	if o != nil && o.PolicyId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPolicyId gets a reference to the given NullableInt64 and assigns it to the PolicyId field.
+func (o *ListDetailResponse) SetPolicyId(v int64) {
+	o.PolicyId.Set(&v)
+}
+// SetPolicyIdNil sets the value for PolicyId to be an explicit nil
+func (o *ListDetailResponse) SetPolicyIdNil() {
+	o.PolicyId.Set(nil)
+}
+
+// UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
+func (o *ListDetailResponse) UnsetPolicyId() {
+	o.PolicyId.Unset()
 }
 
 // GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -371,6 +414,9 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["job_id"] = o.JobId
 	toSerialize["name"] = o.Name
+	if o.PolicyId.IsSet() {
+		toSerialize["policy_id"] = o.PolicyId.Get()
+	}
 	if o.SourceKey.IsSet() {
 		toSerialize["source_key"] = o.SourceKey.Get()
 	}

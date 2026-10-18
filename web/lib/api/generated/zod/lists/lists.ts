@@ -10,6 +10,171 @@
 import * as zod from "zod";
 
 /**
+ * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
+ */
+export const V1DiffListsParams = zod.object({
+  base_list_id: zod.coerce.number().int().describe("Base list identifier"),
+  compare_list_id: zod.coerce
+    .number()
+    .int()
+    .describe("Compare list identifier"),
+});
+
+export const v1DiffListsQueryLimitMin = 0;
+
+export const v1DiffListsQueryOffsetMin = 0;
+
+export const V1DiffListsQueryParams = zod.object({
+  limit: zod.coerce.number().int().min(v1DiffListsQueryLimitMin).optional(),
+  offset: zod.coerce.number().int().min(v1DiffListsQueryOffsetMin).optional(),
+});
+
+export const V1DiffLists200Response = zod.object({
+  added: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  base_list_id: zod.int(),
+  compare_list_id: zod.int(),
+  degraded: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  improved: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  newly_invalid: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  newly_risky: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  newly_safe: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  removed: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+  unchanged: zod.object({
+    count: zod.int(),
+    rows: zod.array(
+      zod.object({
+        base_category: zod.string().nullish(),
+        base_row_index: zod.int().nullish(),
+        base_score: zod.int().nullish(),
+        base_task_id: zod.int().nullish(),
+        canonical_email: zod.string(),
+        change_type: zod.string(),
+        compare_category: zod.string().nullish(),
+        compare_row_index: zod.int().nullish(),
+        compare_score: zod.int().nullish(),
+        compare_task_id: zod.int().nullish(),
+      }),
+    ),
+  }),
+});
+
+export const V1DiffListsDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
  * Returns a quality benchmark report for a list.
  * @summary GET /v1/lists/{list_id}/quality
  */
@@ -19,7 +184,7 @@ export const V1ListQualityParams = zod.object({
 
 export const V1ListQuality200Response = zod.unknown();
 
-export const V1ListQualityDefaultResponse = zod.strictObject({
+export const V1ListQualityDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -40,7 +205,7 @@ export const V1CreateRemediationExport200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1CreateRemediationExportDefaultResponse = zod.strictObject({
+export const V1CreateRemediationExportDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -54,7 +219,7 @@ export const V1DownloadRemediationExportParams = zod.object({
 
 export const V1DownloadRemediationExport200Response = zod.unknown();
 
-export const V1DownloadRemediationExportDefaultResponse = zod.strictObject({
+export const V1DownloadRemediationExportDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -70,7 +235,7 @@ export const V1GetRemediationPlan200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1GetRemediationPlanDefaultResponse = zod.strictObject({
+export const V1GetRemediationPlanDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -91,6 +256,114 @@ export const V1CreateRemediationPlan200Response = zod.record(
   zod.unknown(),
 );
 
-export const V1CreateRemediationPlanDefaultResponse = zod.strictObject({
+export const V1CreateRemediationPlanDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary GET /v1/segments
+ */
+export const V1ListSavedSegmentsQueryParams = zod.object({
+  scope: zod.string().optional(),
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListSavedSegments200Response = zod.object({
+  segments: zod.array(
+    zod.object({
+      created_at: zod.iso.datetime({ offset: true }),
+      filter: zod.unknown(),
+      id: zod.int(),
+      name: zod.string(),
+      scope: zod.string(),
+      updated_at: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListSavedSegmentsDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary POST /v1/segments
+ */
+export const V1CreateSavedSegmentBody = zod.strictObject({
+  filter: zod.unknown().optional(),
+  name: zod.string(),
+  scope: zod.string().optional(),
+});
+
+export const V1CreateSavedSegment201Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  filter: zod.unknown(),
+  id: zod.int(),
+  name: zod.string(),
+  scope: zod.string(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1CreateSavedSegmentDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary DELETE /v1/segments/{segment_id}
+ */
+export const V1DeleteSavedSegmentParams = zod.object({
+  segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
+});
+
+export const V1DeleteSavedSegment200Response = zod.unknown();
+
+export const V1DeleteSavedSegmentDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary GET /v1/segments/{segment_id}
+ */
+export const V1GetSavedSegmentParams = zod.object({
+  segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
+});
+
+export const V1GetSavedSegment200Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  filter: zod.unknown(),
+  id: zod.int(),
+  name: zod.string(),
+  scope: zod.string(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1GetSavedSegmentDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary PATCH /v1/segments/{segment_id}
+ */
+export const V1UpdateSavedSegmentParams = zod.object({
+  segment_id: zod.coerce.number().int().describe("Saved segment identifier"),
+});
+
+export const V1UpdateSavedSegmentBody = zod.strictObject({
+  filter: zod.unknown().optional(),
+  name: zod.string().nullish(),
+  scope: zod.string().nullish(),
+});
+
+export const V1UpdateSavedSegment200Response = zod.object({
+  created_at: zod.iso.datetime({ offset: true }),
+  filter: zod.unknown(),
+  id: zod.int(),
+  name: zod.string(),
+  scope: zod.string(),
+  updated_at: zod.iso.datetime({ offset: true }),
+});
+
+export const V1UpdateSavedSegmentDefaultResponse = zod.object({
   error: zod.string(),
 });

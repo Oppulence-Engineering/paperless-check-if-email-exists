@@ -12,8 +12,8 @@ Name | Type | Description | Notes
 **is_disposable** | **boolean** | Indicates if the email address is from a known disposable email provider. | [optional]
 **is_role_account** | **boolean** | Indicates if the email address is a role-based account. | [optional]
 **is_spam_trap_domain** | **boolean** |  | [optional]
-**message** | **string** | A human-readable description of the error. | [optional]
-**type** | **string** | The type of error. | [optional]
+**description** | **string** | The category of an SMTP error, when it is known. | [optional]
+**error** | [**CoreErrorError**](CoreErrorError.md) |  | [optional]
 
 ## Example
 
@@ -27,8 +27,8 @@ const instance: CheckEmailOutputMisc = {
     is_disposable: true,
     is_role_account: true,
     is_spam_trap_domain: true,
-    message: 'example',
-    type: 'example',
+    description: 'example',
+    error: {} as any,
 };
 ```
 

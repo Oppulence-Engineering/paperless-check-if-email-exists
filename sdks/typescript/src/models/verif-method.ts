@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { VerifMethodVerifMethod } from './verif-method-verif-method';
 
 /**
  * The method used for email verification.
@@ -21,11 +24,23 @@
  */
 export interface VerifMethod {
     /**
+     * The mail server host the check connected to. Only for Smtp.
+     * @type {string}
+     * @memberof VerifMethod
+     */
+    'host'?: string;
+    /**
      * The method used for the email verification.
      * @type {string}
      * @memberof VerifMethod
      */
     'type': VerifMethodTypeEnum;
+    /**
+     *
+     * @type {VerifMethodVerifMethod}
+     * @memberof VerifMethod
+     */
+    'verif_method'?: VerifMethodVerifMethod;
 }
 
 export const VerifMethodTypeEnum = {

@@ -44,12 +44,17 @@ describe("ProductDashboardClient", () => {
 		);
 
 		expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "Check email" })).toHaveAttribute(
+		expect(screen.getByRole("link", { name: "Check an address" })).toHaveAttribute(
 			"aria-current",
 			"page",
 		);
 		expect(screen.getByRole("link", { name: "Lists" })).toHaveAttribute("href", "/app/lists");
-		expect(screen.getByRole("link", { name: "History" })).toHaveAttribute("href", "/app/history");
+		expect(screen.getByRole("link", { name: "Address history" })).toHaveAttribute(
+			"href",
+			"/app/history",
+		);
+		// Overview matches /app exactly, so it is not current on /app/check.
+		expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
 		expect(screen.getByRole("heading", { name: "Check an email address" })).toBeVisible();
 		// Pages bring their own landmark, so the shell must not add a second one.
 		expect(container.querySelectorAll("main")).toHaveLength(1);

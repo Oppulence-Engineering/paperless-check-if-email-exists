@@ -51,8 +51,8 @@ tags:
   name: Query
 - description: Collaboration annotation endpoints; experimental
   name: Comments
-- description: "Normalized provider outcomes, suppression feedback, and authenticated\
-    \ provider adapters"
+- description: "Normalized provider outcomes, suppression feedback, authenticated\
+    \ provider adapters, and campaign outcome ingestion"
   name: Outcomes
 paths:
   /healthz:
@@ -938,6 +938,91 @@ paths:
       summary: "POST /v1/admin/tenants/{tenant_id}/quota/reset"
       tags:
       - Admin
+  /v1/alerts:
+    get:
+      operationId: v1_list_alerts
+      parameters:
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertListResponse"
+          description: Tenant alert inbox
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: GET /v1/alerts
+      tags:
+      - Verification
+  /v1/alerts/{alert_id}:
+    patch:
+      operationId: v1_update_alert
+      parameters:
+      - description: Alert identifier
+        explode: false
+        in: path
+        name: alert_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAlertRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertView"
+          description: Updated alert
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "PATCH /v1/alerts/{alert_id}"
+      tags:
+      - Verification
   /v1/bulk:
     post:
       description: Creates a tenant-scoped bulk job for async processing.
@@ -1061,6 +1146,111 @@ paths:
       summary: "GET /v1/bulk/{job_id}/results"
       tags:
       - Jobs
+  /v1/campaign-outcomes:
+    get:
+      operationId: v1_list_campaign_outcomes
+      parameters:
+      - explode: true
+        in: query
+        name: email
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: source
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: since
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignOutcomeListResponse"
+          description: List of outcomes
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Outcomes
+    post:
+      operationId: v1_post_campaign_outcomes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestOutcomesRequest"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestOutcomesResponse"
+          description: Outcomes accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Outcomes
+  /v1/campaign-outcomes/upload:
+    post:
+      operationId: v1_upload_campaign_outcomes
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestOutcomesResponse"
+          description: Outcomes ingested via CSV
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Outcomes
   /v1/check-email-with-onboard:
     post:
       operationId: v1_check_email_with_onboard
@@ -1836,6 +2026,60 @@ paths:
       summary: POST /v1/lists
       tags:
       - v1
+  /v1/lists/{base_list_id}/diff/{compare_list_id}:
+    get:
+      operationId: v1_diff_lists
+      parameters:
+      - description: Base list identifier
+        explode: false
+        in: path
+        name: base_list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - description: Compare list identifier
+        explode: false
+        in: path
+        name: compare_list_id
+        required: true
+        schema:
+          format: int32
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDiffResponse"
+          description: List diff
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "GET /v1/lists/{base_list_id}/diff/{compare_list_id}"
+      tags:
+      - Lists
   /v1/lists/{list_id}:
     delete:
       operationId: v1_delete_list
@@ -1919,6 +2163,22 @@ paths:
         required: false
         schema:
           type: string
+        style: form
+      - explode: true
+        in: query
+        name: segment_id
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: changed_since_list_id
+        required: false
+        schema:
+          format: int32
+          type: integer
         style: form
       responses:
         "200":
@@ -2477,6 +2737,148 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelope"
           description: Request error
       summary: PATCH /v1/me/webhook
+      tags:
+      - Tenant
+  /v1/outcome-policies:
+    get:
+      operationId: v1_list_outcome_policies
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomePolicyListResponse"
+          description: Outcome policies
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Tenant
+    post:
+      operationId: v1_create_outcome_policy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOutcomePolicyRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomePolicyView"
+          description: Outcome policy created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Tenant
+  /v1/outcome-policies/{policy_id}:
+    delete:
+      operationId: v1_delete_outcome_policy
+      parameters:
+      - description: Outcome policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Outcome policy deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Tenant
+    get:
+      operationId: v1_get_outcome_policy
+      parameters:
+      - description: Outcome policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomePolicyView"
+          description: Outcome policy
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - Tenant
+    patch:
+      operationId: v1_update_outcome_policy
+      parameters:
+      - description: Outcome policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOutcomePolicyRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomePolicyView"
+          description: Outcome policy updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
       tags:
       - Tenant
   /v1/outcomes:
@@ -3520,6 +3922,307 @@ paths:
       summary: GET /v1/reverification/status
       tags:
       - v1
+  /v1/score-policies:
+    get:
+      operationId: v1_list_score_policies
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePolicyListResponse"
+          description: Score policies
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: GET /v1/score-policies
+      tags:
+      - Tenant
+    post:
+      operationId: v1_create_score_policy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScorePolicyRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePolicyView"
+          description: Score policy created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: POST /v1/score-policies
+      tags:
+      - Tenant
+  /v1/score-policies/{policy_id}:
+    delete:
+      operationId: v1_delete_score_policy
+      parameters:
+      - description: Score policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Score policy deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "DELETE /v1/score-policies/{policy_id}"
+      tags:
+      - Tenant
+    get:
+      operationId: v1_get_score_policy
+      parameters:
+      - description: Score policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePolicyView"
+          description: Score policy
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "GET /v1/score-policies/{policy_id}"
+      tags:
+      - Tenant
+    patch:
+      operationId: v1_update_score_policy
+      parameters:
+      - description: Score policy identifier
+        explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScorePolicyRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorePolicyView"
+          description: Score policy updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "PATCH /v1/score-policies/{policy_id}"
+      tags:
+      - Tenant
+  /v1/segments:
+    get:
+      operationId: v1_list_saved_segments
+      parameters:
+      - explode: true
+        in: query
+        name: scope
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSegmentListResponse"
+          description: Saved segments
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: GET /v1/segments
+      tags:
+      - Lists
+    post:
+      operationId: v1_create_saved_segment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSavedSegmentRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSegmentView"
+          description: Saved segment created
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: POST /v1/segments
+      tags:
+      - Lists
+  /v1/segments/{segment_id}:
+    delete:
+      operationId: v1_delete_saved_segment
+      parameters:
+      - description: Saved segment identifier
+        explode: false
+        in: path
+        name: segment_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: Saved segment deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "DELETE /v1/segments/{segment_id}"
+      tags:
+      - Lists
+    get:
+      operationId: v1_get_saved_segment
+      parameters:
+      - description: Saved segment identifier
+        explode: false
+        in: path
+        name: segment_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSegmentView"
+          description: Saved segment
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "GET /v1/segments/{segment_id}"
+      tags:
+      - Lists
+    patch:
+      operationId: v1_update_saved_segment
+      parameters:
+      - description: Saved segment identifier
+        explode: false
+        in: path
+        name: segment_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSavedSegmentRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSegmentView"
+          description: Saved segment updated
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      summary: "PATCH /v1/segments/{segment_id}"
+      tags:
+      - Lists
   /v1/sources/quality:
     get:
       operationId: v1_source_quality
@@ -4260,6 +4963,90 @@ components:
           nullable: true
           type: string
       type: object
+    AlertListResponse:
+      example:
+        alerts:
+        - canonical_email: canonical_email
+          metadata: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          change_event_id: 0
+          id: 6
+          body: body
+          title: title
+          type: type
+          status: status
+        - canonical_email: canonical_email
+          metadata: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          change_event_id: 0
+          id: 6
+          body: body
+          title: title
+          type: type
+          status: status
+        total: 1
+      properties:
+        alerts:
+          items:
+            $ref: "#/components/schemas/AlertView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - alerts
+      - total
+      type: object
+    AlertView:
+      example:
+        canonical_email: canonical_email
+        metadata: ""
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        created_at: 2000-01-23T04:56:07.000+00:00
+        change_event_id: 0
+        id: 6
+        body: body
+        title: title
+        type: type
+        status: status
+      properties:
+        body:
+          nullable: true
+          type: string
+        canonical_email:
+          type: string
+        change_event_id:
+          format: int64
+          nullable: true
+          type: integer
+        created_at:
+          format: date-time
+          type: string
+        id:
+          format: int64
+          type: integer
+        metadata: {}
+        status:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - canonical_email
+      - created_at
+      - id
+      - metadata
+      - status
+      - title
+      - type
+      - updated_at
+      type: object
     ApprovalCategoryBreakdown:
       example:
         valid: 5
@@ -4485,6 +5272,14 @@ components:
             start_time: start_time
             smtp:
               verif_method:
+                verif_method:
+                  proxy: proxy
+                  retries: 0
+                  from_email: from_email
+                  smtp_port: 0
+                  hello_name: hello_name
+                  smtp_timeout: ""
+                host: host
                 type: Smtp
             backend_name: backend_name
             end_time: end_time
@@ -4505,12 +5300,32 @@ components:
           policy_evaluation: ""
           input: input
           score:
+            age_days: 5
+            confidence_factors:
+            - confidence_factors
+            - confidence_factors
+            catch_all_severity: low
+            partial_confidence:
+              confidence: 93
+              classification: transient
+              factors:
+              - factors
+              - factors
+            confidence: 70
+            confidence_level: high
+            catch_all:
+              severity: low
+              confidence: 23
+              factors:
+              - factors
+              - factors
+            freshness: fresh
+            safe_to_send: true
+            sub_reason: deliverable
             reason_codes:
             - deliverable
             - deliverable
-            age_days: 1
-            score: 59
-            catch_all_severity: low
+            score: 36
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -4529,10 +5344,7 @@ components:
             verified_at: 2000-01-23T04:56:07.000+00:00
             domain_suggestion: domain_suggestion
             category: valid
-            freshness: fresh
             normalized_email: normalized_email
-            safe_to_send: true
-            sub_reason: deliverable
           provider: gmail
           bounce_risk: ""
           syntax:
@@ -4558,6 +5370,14 @@ components:
             start_time: start_time
             smtp:
               verif_method:
+                verif_method:
+                  proxy: proxy
+                  retries: 0
+                  from_email: from_email
+                  smtp_port: 0
+                  hello_name: hello_name
+                  smtp_timeout: ""
+                host: host
                 type: Smtp
             backend_name: backend_name
             end_time: end_time
@@ -4578,12 +5398,32 @@ components:
           policy_evaluation: ""
           input: input
           score:
+            age_days: 5
+            confidence_factors:
+            - confidence_factors
+            - confidence_factors
+            catch_all_severity: low
+            partial_confidence:
+              confidence: 93
+              classification: transient
+              factors:
+              - factors
+              - factors
+            confidence: 70
+            confidence_level: high
+            catch_all:
+              severity: low
+              confidence: 23
+              factors:
+              - factors
+              - factors
+            freshness: fresh
+            safe_to_send: true
+            sub_reason: deliverable
             reason_codes:
             - deliverable
             - deliverable
-            age_days: 1
-            score: 59
-            catch_all_severity: low
+            score: 36
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -4602,10 +5442,7 @@ components:
             verified_at: 2000-01-23T04:56:07.000+00:00
             domain_suggestion: domain_suggestion
             category: valid
-            freshness: fresh
             normalized_email: normalized_email
-            safe_to_send: true
-            sub_reason: deliverable
           provider: gmail
           bounce_risk: ""
           syntax:
@@ -4631,6 +5468,108 @@ components:
       required:
       - results
       type: object
+    CampaignOutcomeListResponse:
+      example:
+        total: 6
+        outcomes:
+        - occurred_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 0
+          policy_action: policy_action
+          source: source
+          type: type
+          campaign_id: campaign_id
+          email: email
+        - occurred_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 0
+          policy_action: policy_action
+          source: source
+          type: type
+          campaign_id: campaign_id
+          email: email
+      properties:
+        outcomes:
+          items:
+            $ref: "#/components/schemas/CampaignOutcomeView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - outcomes
+      - total
+      type: object
+    CampaignOutcomeView:
+      example:
+        occurred_at: 2000-01-23T04:56:07.000+00:00
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 0
+        policy_action: policy_action
+        source: source
+        type: type
+        campaign_id: campaign_id
+        email: email
+      properties:
+        campaign_id:
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        email:
+          type: string
+        id:
+          format: int64
+          type: integer
+        occurred_at:
+          format: date-time
+          type: string
+        policy_action:
+          nullable: true
+          type: string
+        source:
+          nullable: true
+          type: string
+        type:
+          type: string
+      required:
+      - created_at
+      - email
+      - id
+      - occurred_at
+      - type
+      type: object
+    CatchAllScore:
+      example:
+        severity: low
+        confidence: 23
+        factors:
+        - factors
+        - factors
+      properties:
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        factors:
+          items:
+            type: string
+          type: array
+        severity:
+          $ref: "#/components/schemas/CatchAllSeverity"
+      required:
+      - confidence
+      - factors
+      - severity
+      type: object
+    CatchAllSeverity:
+      enum:
+      - low
+      - medium
+      - high
+      type: string
     CheckEmailInputProxy:
       description: Proxy configuration for email verification.
       example:
@@ -4672,6 +5611,14 @@ components:
           start_time: start_time
           smtp:
             verif_method:
+              verif_method:
+                proxy: proxy
+                retries: 0
+                from_email: from_email
+                smtp_port: 0
+                hello_name: hello_name
+                smtp_timeout: ""
+              host: host
               type: Smtp
           backend_name: backend_name
           end_time: end_time
@@ -4692,12 +5639,32 @@ components:
         policy_evaluation: ""
         input: input
         score:
+          age_days: 5
+          confidence_factors:
+          - confidence_factors
+          - confidence_factors
+          catch_all_severity: low
+          partial_confidence:
+            confidence: 93
+            classification: transient
+            factors:
+            - factors
+            - factors
+          confidence: 70
+          confidence_level: high
+          catch_all:
+            severity: low
+            confidence: 23
+            factors:
+            - factors
+            - factors
+          freshness: fresh
+          safe_to_send: true
+          sub_reason: deliverable
           reason_codes:
           - deliverable
           - deliverable
-          age_days: 1
-          score: 59
-          catch_all_severity: low
+          score: 36
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -4716,10 +5683,7 @@ components:
           verified_at: 2000-01-23T04:56:07.000+00:00
           domain_suggestion: domain_suggestion
           category: valid
-          freshness: fresh
           normalized_email: normalized_email
-          safe_to_send: true
-          sub_reason: deliverable
         provider: gmail
         bounce_risk: ""
         syntax:
@@ -4892,22 +5856,28 @@ components:
       - level
       - score
       type: object
+    ConfidenceLevel:
+      enum:
+      - high
+      - medium
+      - low
+      - very_low
+      type: string
     CoreError:
-      description: Details of an error encountered during the verification process.
+      description: The error that one part of the check returned instead of its details.
       properties:
-        message:
-          description: A human-readable description of the error.
+        description:
+          description: "The category of an SMTP error, when it is known."
+          enum:
+          - IpBlacklisted
+          - NeedsRDNS
           type: string
-        type:
-          description: The type of error.
-          type: string
+        error:
+          $ref: "#/components/schemas/CoreError_error"
       required:
-      - message
-      - type
+      - error
       title: CoreError
       type: object
-      x-stoplight:
-        id: a872ead6474cd
     CreateApiKeyRequest:
       example:
         expires_at: expires_at
@@ -4950,6 +5920,20 @@ components:
           type: integer
       required:
       - body
+      type: object
+    CreateOutcomePolicyRequest:
+      example:
+        name: name
+        rules: ""
+        is_default: true
+      properties:
+        is_default:
+          type: boolean
+        name:
+          type: string
+        rules: {}
+      required:
+      - name
       type: object
     CreatePipelineInput:
       example:
@@ -5016,6 +6000,34 @@ components:
       - label
       - provider
       type: object
+    CreateSavedSegmentRequest:
+      example:
+        filter: ""
+        scope: scope
+        name: name
+      properties:
+        filter: {}
+        name:
+          type: string
+        scope:
+          type: string
+      required:
+      - name
+      type: object
+    CreateScorePolicyRequest:
+      example:
+        name: name
+        rules: ""
+        is_default: true
+      properties:
+        is_default:
+          type: boolean
+        name:
+          type: string
+        rules: {}
+      required:
+      - name
+      type: object
     CreateTenantDomainRequest:
       example:
         is_active: true
@@ -5041,6 +6053,14 @@ components:
         start_time: start_time
         smtp:
           verif_method:
+            verif_method:
+              proxy: proxy
+              retries: 0
+              from_email: from_email
+              smtp_port: 0
+              hello_name: hello_name
+              smtp_timeout: ""
+            host: host
             type: Smtp
         backend_name: backend_name
         end_time: end_time
@@ -5078,6 +6098,14 @@ components:
       description: "SMTP details used for debugging, including the verification method."
       example:
         verif_method:
+          verif_method:
+            proxy: proxy
+            retries: 0
+            from_email: from_email
+            smtp_port: 0
+            hello_name: hello_name
+            smtp_timeout: ""
+          host: host
           type: Smtp
       properties:
         verif_method:
@@ -5094,6 +6122,93 @@ components:
           type: boolean
       required:
       - deleted
+      type: object
+    DiffGroup:
+      example:
+        count: 0
+        rows:
+        - base_row_index: 6
+          base_task_id: 5
+          canonical_email: canonical_email
+          base_score: 1
+          compare_score: 2
+          compare_row_index: 5
+          base_category: base_category
+          change_type: change_type
+          compare_task_id: 7
+          compare_category: compare_category
+        - base_row_index: 6
+          base_task_id: 5
+          canonical_email: canonical_email
+          base_score: 1
+          compare_score: 2
+          compare_row_index: 5
+          base_category: base_category
+          change_type: change_type
+          compare_task_id: 7
+          compare_category: compare_category
+      properties:
+        count:
+          format: int64
+          type: integer
+        rows:
+          items:
+            $ref: "#/components/schemas/DiffRow"
+          type: array
+      required:
+      - count
+      - rows
+      type: object
+    DiffRow:
+      example:
+        base_row_index: 6
+        base_task_id: 5
+        canonical_email: canonical_email
+        base_score: 1
+        compare_score: 2
+        compare_row_index: 5
+        base_category: base_category
+        change_type: change_type
+        compare_task_id: 7
+        compare_category: compare_category
+      properties:
+        base_category:
+          nullable: true
+          type: string
+        base_row_index:
+          format: int32
+          nullable: true
+          type: integer
+        base_score:
+          format: int32
+          nullable: true
+          type: integer
+        base_task_id:
+          format: int32
+          nullable: true
+          type: integer
+        canonical_email:
+          type: string
+        change_type:
+          type: string
+        compare_category:
+          nullable: true
+          type: string
+        compare_row_index:
+          format: int32
+          nullable: true
+          type: integer
+        compare_score:
+          format: int32
+          nullable: true
+          type: integer
+        compare_task_id:
+          format: int32
+          nullable: true
+          type: integer
+      required:
+      - canonical_email
+      - change_type
       type: object
     DnsRecordResults:
       example:
@@ -5177,12 +6292,32 @@ components:
       type: string
     EmailScore:
       example:
+        age_days: 5
+        confidence_factors:
+        - confidence_factors
+        - confidence_factors
+        catch_all_severity: low
+        partial_confidence:
+          confidence: 93
+          classification: transient
+          factors:
+          - factors
+          - factors
+        confidence: 70
+        confidence_level: high
+        catch_all:
+          severity: low
+          confidence: 23
+          factors:
+          - factors
+          - factors
+        freshness: fresh
+        safe_to_send: true
+        sub_reason: deliverable
         reason_codes:
         - deliverable
         - deliverable
-        age_days: 1
-        score: 59
-        catch_all_severity: low
+        score: 36
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -5201,24 +6336,36 @@ components:
         verified_at: 2000-01-23T04:56:07.000+00:00
         domain_suggestion: domain_suggestion
         category: valid
-        freshness: fresh
         normalized_email: normalized_email
-        safe_to_send: true
-        sub_reason: deliverable
       properties:
         age_days:
           format: int64
           type: integer
+        catch_all:
+          $ref: "#/components/schemas/CatchAllScore"
         catch_all_severity:
           description: "Severity tier for catch-all domains. low=free provider with\
-            \ no other negative signal; high=corporate domain, or any catch-all carrying\
+            \ no other negative signal; medium=contextual score insights softened\
+            \ a corporate catch-all; high=corporate domain, or any catch-all carrying\
             \ another negative signal. Only the high tier blocks safe_to_send."
           enum:
           - low
+          - medium
           - high
           type: string
         category:
           $ref: "#/components/schemas/EmailCategory"
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        confidence_factors:
+          items:
+            type: string
+          type: array
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevel"
         domain_suggestion:
           description: Suggested corrected email when a likely domain typo is detected
           type: string
@@ -5227,6 +6374,8 @@ components:
         normalized_email:
           description: Canonical form of the email after alias/plus-address normalization
           type: string
+        partial_confidence:
+          $ref: "#/components/schemas/PartialConfidence"
         reason_codes:
           items:
             $ref: "#/components/schemas/ReasonCode"
@@ -5455,8 +6604,13 @@ components:
     HistoryEntry:
       example:
         policy_mode: policy_mode
+        list_id: 6
         is_reachable: is_reachable
+        previous_category: previous_category
+        previous_score: 2
         recommendation: ""
+        change_type: change_type
+        task_id: 3
         policy_evaluation: ""
         safe_to_send: true
         sub_reason: sub_reason
@@ -5465,12 +6619,23 @@ components:
         - reason_codes
         - reason_codes
         completed_at: 2000-01-23T04:56:07.000+00:00
-        score: 6
+        previous_reason_codes:
+        - previous_reason_codes
+        - previous_reason_codes
+        score: 9
         job_id: 0
         policy_decision: policy_decision
+        pipeline_run_id: 1
         category: category
+        previous_list_id: 5
+        previous_task_id: 7
+        previous_safe_to_send: true
+        previous_pipeline_run_id: 5
       properties:
         category:
+          nullable: true
+          type: string
+        change_type:
           nullable: true
           type: string
         completed_at:
@@ -5484,6 +6649,14 @@ components:
           format: int32
           nullable: true
           type: integer
+        list_id:
+          format: int32
+          nullable: true
+          type: integer
+        pipeline_run_id:
+          format: int64
+          nullable: true
+          type: integer
         policy_decision:
           nullable: true
           type: string
@@ -5491,6 +6664,33 @@ components:
         policy_mode:
           nullable: true
           type: string
+        previous_category:
+          nullable: true
+          type: string
+        previous_list_id:
+          format: int32
+          nullable: true
+          type: integer
+        previous_pipeline_run_id:
+          format: int64
+          nullable: true
+          type: integer
+        previous_reason_codes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        previous_safe_to_send:
+          nullable: true
+          type: boolean
+        previous_score:
+          format: int32
+          nullable: true
+          type: integer
+        previous_task_id:
+          format: int32
+          nullable: true
+          type: integer
         reason_codes:
           items:
             type: string
@@ -5510,6 +6710,11 @@ components:
         sub_reason:
           nullable: true
           type: string
+        task_id:
+          format: int32
+          type: integer
+      required:
+      - task_id
       type: object
     HotmailB2BVerifMethod:
       description: Enumeration describing the method used to verify Hotmail B2B emails.
@@ -5561,6 +6766,113 @@ components:
       - receipt_id
       - rejected
       - unmatched
+      type: object
+    IngestOutcome:
+      description: One outcome event ingested via API or CSV.
+      example:
+        occurred_at: 2000-01-23T04:56:07.000+00:00
+        metadata: ""
+        source: source
+        type: delivered
+        campaign_id: campaign_id
+        email: email
+      properties:
+        campaign_id:
+          nullable: true
+          type: string
+        email:
+          type: string
+        metadata: {}
+        occurred_at:
+          format: date-time
+          type: string
+        source:
+          nullable: true
+          type: string
+        type:
+          $ref: "#/components/schemas/OutcomeType"
+      required:
+      - email
+      - occurred_at
+      - type
+      type: object
+    IngestOutcomesRequest:
+      example:
+        outcomes:
+        - occurred_at: 2000-01-23T04:56:07.000+00:00
+          metadata: ""
+          source: source
+          type: delivered
+          campaign_id: campaign_id
+          email: email
+        - occurred_at: 2000-01-23T04:56:07.000+00:00
+          metadata: ""
+          source: source
+          type: delivered
+          campaign_id: campaign_id
+          email: email
+      properties:
+        outcomes:
+          items:
+            $ref: "#/components/schemas/IngestOutcome"
+          type: array
+      required:
+      - outcomes
+      type: object
+    IngestOutcomesResponse:
+      example:
+        policy_id: 1
+        rejected: 0
+        accepted: 0
+        suppressed: 0
+        errors:
+        - index: 0
+          message: message
+          email: email
+        - index: 0
+          message: message
+          email: email
+      properties:
+        accepted:
+          minimum: 0
+          type: integer
+        errors:
+          items:
+            $ref: "#/components/schemas/IngestRowError"
+          type: array
+        policy_id:
+          format: int64
+          type: integer
+        rejected:
+          minimum: 0
+          type: integer
+        suppressed:
+          minimum: 0
+          type: integer
+      required:
+      - accepted
+      - errors
+      - policy_id
+      - rejected
+      - suppressed
+      type: object
+    IngestRowError:
+      example:
+        index: 0
+        message: message
+        email: email
+      properties:
+        email:
+          type: string
+        index:
+          minimum: 0
+          type: integer
+        message:
+          type: string
+      required:
+      - email
+      - index
+      - message
       type: object
     JobResultPageResponse:
       example:
@@ -5633,15 +6945,16 @@ components:
       example:
         email_column: email_column
         summary:
-          total_unknown: 7
-          total_processed: 5
+          total_unknown: 9
+          total_processed: 2
           total_invalid: 5
-          total_valid: 9
-          total_risky: 2
+          total_valid: 3
+          total_risky: 7
+        policy_id: 5
         deduplicated_count: 0
         job_id: 1
-        unique_emails: 2
-        total_rows: 3
+        unique_emails: 4
+        total_rows: 2
         name: name
         id: 6
         source_key: source_key
@@ -5661,6 +6974,10 @@ components:
           type: integer
         name:
           type: string
+        policy_id:
+          format: int64
+          nullable: true
+          type: integer
         source_key:
           nullable: true
           type: string
@@ -5683,6 +7000,229 @@ components:
       - status
       - summary
       - total_rows
+      type: object
+    ListDiffResponse:
+      example:
+        base_list_id: 9
+        improved:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        newly_invalid:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        removed:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        added:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        compare_list_id: 3
+        unchanged:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        newly_safe:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        newly_risky:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+        degraded:
+          count: 0
+          rows:
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+          - base_row_index: 6
+            base_task_id: 5
+            canonical_email: canonical_email
+            base_score: 1
+            compare_score: 2
+            compare_row_index: 5
+            base_category: base_category
+            change_type: change_type
+            compare_task_id: 7
+            compare_category: compare_category
+      properties:
+        added:
+          $ref: "#/components/schemas/DiffGroup"
+        base_list_id:
+          format: int32
+          type: integer
+        compare_list_id:
+          format: int32
+          type: integer
+        degraded:
+          $ref: "#/components/schemas/DiffGroup"
+        improved:
+          $ref: "#/components/schemas/DiffGroup"
+        newly_invalid:
+          $ref: "#/components/schemas/DiffGroup"
+        newly_risky:
+          $ref: "#/components/schemas/DiffGroup"
+        newly_safe:
+          $ref: "#/components/schemas/DiffGroup"
+        removed:
+          $ref: "#/components/schemas/DiffGroup"
+        unchanged:
+          $ref: "#/components/schemas/DiffGroup"
+      required:
+      - added
+      - base_list_id
+      - compare_list_id
+      - degraded
+      - improved
+      - newly_invalid
+      - newly_risky
+      - newly_safe
+      - removed
+      - unchanged
       type: object
     ListItem:
       example:
@@ -5914,11 +7454,11 @@ components:
       type: object
     ListSummary:
       example:
-        total_unknown: 7
-        total_processed: 5
+        total_unknown: 9
+        total_processed: 2
         total_invalid: 5
-        total_valid: 9
-        total_risky: 2
+        total_valid: 3
+        total_risky: 7
       properties:
         total_invalid:
           format: int64
@@ -5953,6 +7493,10 @@ components:
         name:
           nullable: true
           type: string
+        policy_id:
+          format: int64
+          nullable: true
+          type: integer
         source_key:
           description: "Optional source key used for source quality analytics, for\
             \ example apollo, hubspot, salesforce, signup_form, csv_vendor."
@@ -6225,6 +7769,78 @@ components:
       - offset
       - outcomes
       type: object
+    OutcomePolicyListResponse:
+      example:
+        total: 6
+        policies:
+        - updated_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          rules: ""
+          id: 0
+          is_default: true
+        - updated_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          rules: ""
+          id: 0
+          is_default: true
+      properties:
+        policies:
+          items:
+            $ref: "#/components/schemas/OutcomePolicyView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - policies
+      - total
+      type: object
+    OutcomePolicyView:
+      example:
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        rules: ""
+        id: 0
+        is_default: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        id:
+          format: int64
+          type: integer
+        is_default:
+          type: boolean
+        name:
+          type: string
+        rules: {}
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - id
+      - is_default
+      - name
+      - rules
+      - updated_at
+      type: object
+    OutcomeType:
+      description: |-
+        SQL enum mirror. Must stay in sync with `outcome_type` in
+        `migrations/20260510000001_campaign_outcomes.up.sql`.
+      enum:
+      - delivered
+      - hard_bounce
+      - soft_bounce
+      - complaint
+      - open
+      - click
+      - unsubscribe
+      type: string
     OutcomeView:
       example:
         provider_event_id: provider_event_id
@@ -6298,6 +7914,30 @@ components:
       - occurred_at
       - provider
       type: object
+    PartialConfidence:
+      example:
+        confidence: 93
+        classification: transient
+        factors:
+        - factors
+        - factors
+      properties:
+        classification:
+          $ref: "#/components/schemas/SmtpUncertaintyClass"
+        confidence:
+          format: int32
+          maximum: 100
+          minimum: 0
+          type: integer
+        factors:
+          items:
+            type: string
+          type: array
+      required:
+      - classification
+      - confidence
+      - factors
+      type: object
     PipelineDeliveryConfig:
       example:
         dashboard: true
@@ -6350,6 +7990,10 @@ components:
       properties:
         missed_run_window_hours:
           format: int32
+          type: integer
+        policy_id:
+          format: int64
+          nullable: true
           type: integer
       type: object
     PipelineRunResultLocation:
@@ -6895,6 +8539,21 @@ components:
       - unknown_deliverability
       - free_provider
       - possible_typo
+      - provider_reputation
+      - tenant_history_positive
+      - tenant_history_inconsistent
+      - catch_all_low_confidence
+      - catch_all_medium_confidence
+      - catch_all_high_risk
+      - partial_confidence
+      - transient_smtp
+      - smtp_policy_block
+      - smtp_timeout
+      - smtp_network
+      - smtp_ambiguous
+      - outcome_hard_bounce
+      - outcome_complaint
+      - outcome_engagement
       type: string
     RecommendedAction:
       enum:
@@ -7049,6 +8708,124 @@ components:
       - direction
       - signal
       type: object
+    SavedSegmentListResponse:
+      example:
+        total: 6
+        segments:
+        - filter: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          scope: scope
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 0
+        - filter: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          scope: scope
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: 0
+      properties:
+        segments:
+          items:
+            $ref: "#/components/schemas/SavedSegmentView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - segments
+      - total
+      type: object
+    SavedSegmentView:
+      example:
+        filter: ""
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        scope: scope
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 0
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        filter: {}
+        id:
+          format: int64
+          type: integer
+        name:
+          type: string
+        scope:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - filter
+      - id
+      - name
+      - scope
+      - updated_at
+      type: object
+    ScorePolicyListResponse:
+      example:
+        total: 6
+        policies:
+        - updated_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          rules: ""
+          id: 0
+          is_default: true
+        - updated_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          created_at: 2000-01-23T04:56:07.000+00:00
+          rules: ""
+          id: 0
+          is_default: true
+      properties:
+        policies:
+          items:
+            $ref: "#/components/schemas/ScorePolicyView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - policies
+      - total
+      type: object
+    ScorePolicyView:
+      example:
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        name: name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        rules: ""
+        id: 0
+        is_default: true
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        id:
+          format: int64
+          type: integer
+        is_default:
+          type: boolean
+        name:
+          type: string
+        rules: {}
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - id
+      - is_default
+      - name
+      - rules
+      - updated_at
+      type: object
     ScoringSignals:
       example:
         smtp_is_deliverable: true
@@ -7142,6 +8919,15 @@ components:
       - is_disabled
       title: SmtpDetails
       type: object
+    SmtpUncertaintyClass:
+      enum:
+      - transient
+      - policy_block
+      - timeout
+      - network
+      - ambiguous_response
+      - smtp_unreachable
+      type: string
     SubReason:
       enum:
       - deliverable
@@ -7450,6 +9236,15 @@ components:
       - run_id
       - status
       type: object
+    UpdateAlertRequest:
+      example:
+        status: status
+      properties:
+        status:
+          type: string
+      required:
+      - status
+      type: object
     UpdateApiKeyRequest:
       example:
         expires_at: expires_at
@@ -7469,6 +9264,20 @@ components:
             type: string
           nullable: true
           type: array
+      type: object
+    UpdateOutcomePolicyRequest:
+      example:
+        name: name
+        rules: ""
+        is_default: true
+      properties:
+        is_default:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
+        rules: {}
       type: object
     UpdatePipelineInput:
       example:
@@ -7567,6 +9376,34 @@ components:
       - enabled
       - staleness_days
       type: object
+    UpdateSavedSegmentRequest:
+      example:
+        filter: ""
+        scope: scope
+        name: name
+      properties:
+        filter: {}
+        name:
+          nullable: true
+          type: string
+        scope:
+          nullable: true
+          type: string
+      type: object
+    UpdateScorePolicyRequest:
+      example:
+        name: name
+        rules: ""
+        is_default: true
+      properties:
+        is_default:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
+        rules: {}
+      type: object
     UpdateTenantDomainRequest:
       example:
         is_active: true
@@ -7637,8 +9474,19 @@ components:
     VerifMethod:
       description: The method used for email verification.
       example:
+        verif_method:
+          proxy: proxy
+          retries: 0
+          from_email: from_email
+          smtp_port: 0
+          hello_name: hello_name
+          smtp_timeout: ""
+        host: host
         type: Smtp
       properties:
+        host:
+          description: The mail server host the check connected to. Only for Smtp.
+          type: string
         type:
           description: The method used for the email verification.
           enum:
@@ -7647,14 +9495,12 @@ components:
           - Api
           - Skipped
           type: string
-          x-stoplight:
-            id: 4ogsz639tcdb6
+        verif_method:
+          $ref: "#/components/schemas/VerifMethod_verif_method"
       required:
       - type
       title: VerifMethod
       type: object
-      x-stoplight:
-        id: 9xw9e1jwti230
     Webhook:
       description: "Configuration for a webhook to receive email verification results.\
         \ The method will be POST, and the body will contain the email verification\
@@ -7685,11 +9531,16 @@ components:
       type: string
     v1_email_history_200_response:
       example:
-        total: 1
+        total: 2
         history:
         - policy_mode: policy_mode
+          list_id: 6
           is_reachable: is_reachable
+          previous_category: previous_category
+          previous_score: 2
           recommendation: ""
+          change_type: change_type
+          task_id: 3
           policy_evaluation: ""
           safe_to_send: true
           sub_reason: sub_reason
@@ -7698,13 +9549,26 @@ components:
           - reason_codes
           - reason_codes
           completed_at: 2000-01-23T04:56:07.000+00:00
-          score: 6
+          previous_reason_codes:
+          - previous_reason_codes
+          - previous_reason_codes
+          score: 9
           job_id: 0
           policy_decision: policy_decision
+          pipeline_run_id: 1
           category: category
+          previous_list_id: 5
+          previous_task_id: 7
+          previous_safe_to_send: true
+          previous_pipeline_run_id: 5
         - policy_mode: policy_mode
+          list_id: 6
           is_reachable: is_reachable
+          previous_category: previous_category
+          previous_score: 2
           recommendation: ""
+          change_type: change_type
+          task_id: 3
           policy_evaluation: ""
           safe_to_send: true
           sub_reason: sub_reason
@@ -7713,10 +9577,18 @@ components:
           - reason_codes
           - reason_codes
           completed_at: 2000-01-23T04:56:07.000+00:00
-          score: 6
+          previous_reason_codes:
+          - previous_reason_codes
+          - previous_reason_codes
+          score: 9
           job_id: 0
           policy_decision: policy_decision
+          pipeline_run_id: 1
           category: category
+          previous_list_id: 5
+          previous_task_id: 7
+          previous_safe_to_send: true
+          previous_pipeline_run_id: 5
         email: email
       properties:
         email:
@@ -7748,6 +9620,16 @@ components:
       oneOf:
       - $ref: "#/components/schemas/SmtpDetails"
       - $ref: "#/components/schemas/CoreError"
+    CoreError_error:
+      properties:
+        message:
+          description: The error details. Usually a string.
+        type:
+          description: The type of error.
+          type: string
+      required:
+      - type
+      type: object
     PipelineSource_oneOf:
       properties:
         list_id:
@@ -7818,6 +9700,36 @@ components:
       - bucket
       - provider
       - type
+      type: object
+    VerifMethod_verif_method:
+      description: The SMTP settings the check used. Only for Smtp.
+      example:
+        proxy: proxy
+        retries: 0
+        from_email: from_email
+        smtp_port: 0
+        hello_name: hello_name
+        smtp_timeout: ""
+      properties:
+        from_email:
+          type: string
+        hello_name:
+          type: string
+        proxy:
+          nullable: true
+          type: string
+        retries:
+          format: int32
+          minimum: 0
+          type: integer
+        smtp_port:
+          format: int32
+          minimum: 0
+          type: integer
+        smtp_timeout:
+          allOf:
+          - $ref: "#/components/schemas/Duration"
+          nullable: true
       type: object
   securitySchemes:
     AdminSecret:

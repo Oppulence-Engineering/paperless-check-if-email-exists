@@ -31,6 +31,12 @@ export interface HistoryEntry {
      * @type {string}
      * @memberof HistoryEntry
      */
+    'change_type'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof HistoryEntry
+     */
     'completed_at'?: string | null;
     /**
      *
@@ -44,6 +50,18 @@ export interface HistoryEntry {
      * @memberof HistoryEntry
      */
     'job_id'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'list_id'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'pipeline_run_id'?: number | null;
     /**
      *
      * @type {string}
@@ -62,6 +80,48 @@ export interface HistoryEntry {
      * @memberof HistoryEntry
      */
     'policy_mode'?: string | null;
+    /**
+     *
+     * @type {string}
+     * @memberof HistoryEntry
+     */
+    'previous_category'?: string | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'previous_list_id'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'previous_pipeline_run_id'?: number | null;
+    /**
+     *
+     * @type {Array<string>}
+     * @memberof HistoryEntry
+     */
+    'previous_reason_codes'?: Array<string> | null;
+    /**
+     *
+     * @type {boolean}
+     * @memberof HistoryEntry
+     */
+    'previous_safe_to_send'?: boolean | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'previous_score'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'previous_task_id'?: number | null;
     /**
      *
      * @type {Array<string>}
@@ -98,4 +158,10 @@ export interface HistoryEntry {
      * @memberof HistoryEntry
      */
     'sub_reason'?: string | null;
+    /**
+     *
+     * @type {number}
+     * @memberof HistoryEntry
+     */
+    'task_id': number;
 }

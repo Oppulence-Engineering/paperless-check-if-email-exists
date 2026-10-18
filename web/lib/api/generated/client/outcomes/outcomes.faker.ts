@@ -10,13 +10,89 @@
 import { faker } from "@faker-js/faker";
 
 import type {
+  CampaignOutcomeListResponse,
   InboundOutcomeResponse,
+  IngestOutcomesResponse,
   OutcomeIngestResponse,
   OutcomeListResponse,
   ProviderDeleteResponse,
   ProviderEndpointListResponse,
   ProviderEndpointView,
 } from "../model";
+
+export const getV1ListCampaignOutcomesResponseMock = (
+  overrideResponse: Partial<Extract<CampaignOutcomeListResponse, object>> = {},
+): CampaignOutcomeListResponse => ({
+  outcomes: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    campaign_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    id: faker.number.int(),
+    occurred_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    policy_action: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    source: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});
+
+export const getV1PostCampaignOutcomesResponseMock = (
+  overrideResponse: Partial<Extract<IngestOutcomesResponse, object>> = {},
+): IngestOutcomesResponse => ({
+  accepted: faker.number.int({ min: 0 }),
+  errors: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    index: faker.number.int({ min: 0 }),
+    message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  policy_id: faker.number.int(),
+  rejected: faker.number.int({ min: 0 }),
+  suppressed: faker.number.int({ min: 0 }),
+  ...overrideResponse,
+});
+
+export const getV1UploadCampaignOutcomesResponseMock = (
+  overrideResponse: Partial<Extract<IngestOutcomesResponse, object>> = {},
+): IngestOutcomesResponse => ({
+  accepted: faker.number.int({ min: 0 }),
+  errors: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    index: faker.number.int({ min: 0 }),
+    message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  policy_id: faker.number.int(),
+  rejected: faker.number.int({ min: 0 }),
+  suppressed: faker.number.int({ min: 0 }),
+  ...overrideResponse,
+});
 
 export const getV1IngestProviderOutcomesResponseMock = (
   overrideResponse: Partial<Extract<InboundOutcomeResponse, object>> = {},

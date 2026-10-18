@@ -17,6 +17,8 @@ export interface ListDetailResponse {
   job_id: number;
   name: string;
   /** @nullable */
+  policy_id?: number | null;
+  /** @nullable */
   source_key?: string | null;
   status: string;
   summary: ListSummary;

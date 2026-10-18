@@ -85,6 +85,10 @@ export const getV1ListPipelinesResponseMock = (
         faker.number.int(),
         undefined,
       ]),
+      policy_id: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([faker.number.int(), null]),
+        undefined,
+      ]),
     },
     schedule: {
       cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -207,6 +211,10 @@ export const getV1CreatePipelineResponseMock = (
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
+      undefined,
+    ]),
+    policy_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
   },
@@ -338,6 +346,10 @@ export const getV1GetPipelineResponseMock = (
       faker.number.int(),
       undefined,
     ]),
+    policy_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -460,6 +472,10 @@ export const getV1UpdatePipelineResponseMock = (
       faker.number.int(),
       undefined,
     ]),
+    policy_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -580,6 +596,10 @@ export const getV1PausePipelineResponseMock = (
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
+      undefined,
+    ]),
+    policy_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
   },
@@ -713,6 +733,10 @@ export const getV1ResumePipelineResponseMock = (
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
+      undefined,
+    ]),
+    policy_id: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
       undefined,
     ]),
   },

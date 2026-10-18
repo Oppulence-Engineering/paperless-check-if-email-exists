@@ -20,10 +20,10 @@ export const ListAllApiKeysQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const ListAllApiKeys200Response = zod.strictObject({
+export const ListAllApiKeys200Response = zod.object({
   api_keys: zod
     .array(
-      zod.strictObject({
+      zod.object({
         created_at: zod.iso.datetime({ offset: true }).optional(),
         expires_at: zod.iso.datetime({ offset: true }).nullish(),
         id: zod.uuid().optional(),
@@ -39,7 +39,7 @@ export const ListAllApiKeys200Response = zod.strictObject({
   total: zod.int().optional(),
 });
 
-export const ListAllApiKeysDefaultResponse = zod.strictObject({
+export const ListAllApiKeysDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -53,10 +53,10 @@ export const ListTenantsQueryParams = zod.object({
   offset: zod.coerce.number().int().optional(),
 });
 
-export const ListTenants200Response = zod.strictObject({
+export const ListTenants200Response = zod.object({
   tenants: zod
     .array(
-      zod.strictObject({
+      zod.object({
         contact_email: zod.email().optional(),
         created_at: zod.iso.datetime({ offset: true }).optional(),
         default_webhook_url: zod.string().nullish(),
@@ -79,7 +79,7 @@ export const ListTenants200Response = zod.strictObject({
   total: zod.int().optional(),
 });
 
-export const ListTenantsDefaultResponse = zod.strictObject({
+export const ListTenantsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -102,7 +102,7 @@ export const CreateTenantBody = zod.strictObject({
   webhook_signing_secret: zod.string().nullish(),
 });
 
-export const CreateTenant201Response = zod.strictObject({
+export const CreateTenant201Response = zod.object({
   contact_email: zod.email().optional(),
   created_at: zod.iso.datetime({ offset: true }).optional(),
   default_webhook_url: zod.string().nullish(),
@@ -121,7 +121,7 @@ export const CreateTenant201Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const CreateTenantDefaultResponse = zod.strictObject({
+export const CreateTenantDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -135,7 +135,7 @@ export const DeleteTenantParams = zod.object({
 
 export const DeleteTenant200Response = zod.unknown();
 
-export const DeleteTenantDefaultResponse = zod.strictObject({
+export const DeleteTenantDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -147,7 +147,7 @@ export const GetTenantParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const GetTenant200Response = zod.strictObject({
+export const GetTenant200Response = zod.object({
   contact_email: zod.email().optional(),
   created_at: zod.iso.datetime({ offset: true }).optional(),
   default_webhook_url: zod.string().nullish(),
@@ -166,7 +166,7 @@ export const GetTenant200Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const GetTenantDefaultResponse = zod.strictObject({
+export const GetTenantDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -193,7 +193,7 @@ export const UpdateTenantBody = zod.strictObject({
   webhook_signing_secret: zod.string().nullish(),
 });
 
-export const UpdateTenant200Response = zod.strictObject({
+export const UpdateTenant200Response = zod.object({
   contact_email: zod.email().optional(),
   created_at: zod.iso.datetime({ offset: true }).optional(),
   default_webhook_url: zod.string().nullish(),
@@ -212,7 +212,7 @@ export const UpdateTenant200Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const UpdateTenantDefaultResponse = zod.strictObject({
+export const UpdateTenantDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -224,10 +224,10 @@ export const ListApiKeysParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const ListApiKeys200Response = zod.strictObject({
+export const ListApiKeys200Response = zod.object({
   api_keys: zod
     .array(
-      zod.strictObject({
+      zod.object({
         created_at: zod.iso.datetime({ offset: true }).optional(),
         expires_at: zod.iso.datetime({ offset: true }).nullish(),
         id: zod.uuid().optional(),
@@ -242,7 +242,7 @@ export const ListApiKeys200Response = zod.strictObject({
     .optional(),
 });
 
-export const ListApiKeysDefaultResponse = zod.strictObject({
+export const ListApiKeysDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -260,20 +260,25 @@ export const CreateApiKeyBody = zod.strictObject({
   scopes: zod.array(zod.string()).optional(),
 });
 
-export const CreateApiKey201Response = zod.strictObject({
-  created_at: zod.iso.datetime({ offset: true }).optional(),
-  expires_at: zod.iso.datetime({ offset: true }).nullish(),
-  id: zod.uuid().optional(),
-  key_prefix: zod.string().optional(),
-  last_used_at: zod.iso.datetime({ offset: true }).nullish(),
-  name: zod.string().optional(),
-  scopes: zod.array(zod.string()).optional(),
-  status: zod.string().optional(),
-  tenant_id: zod.uuid().optional(),
-  key: zod.string().describe("Plaintext key returned only at creation."),
-});
+export const CreateApiKey201Response = zod
+  .object({
+    created_at: zod.iso.datetime({ offset: true }).optional(),
+    expires_at: zod.iso.datetime({ offset: true }).nullish(),
+    id: zod.uuid().optional(),
+    key_prefix: zod.string().optional(),
+    last_used_at: zod.iso.datetime({ offset: true }).nullish(),
+    name: zod.string().optional(),
+    scopes: zod.array(zod.string()).optional(),
+    status: zod.string().optional(),
+    tenant_id: zod.uuid().optional(),
+  })
+  .and(
+    zod.object({
+      key: zod.string().describe("Plaintext key returned only at creation."),
+    }),
+  );
 
-export const CreateApiKeyDefaultResponse = zod.strictObject({
+export const CreateApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -288,7 +293,7 @@ export const RevokeApiKeyParams = zod.object({
 
 export const RevokeApiKey200Response = zod.unknown();
 
-export const RevokeApiKeyDefaultResponse = zod.strictObject({
+export const RevokeApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -301,7 +306,7 @@ export const GetApiKeyParams = zod.object({
   key_id: zod.uuid().describe("API key identifier"),
 });
 
-export const GetApiKey200Response = zod.strictObject({
+export const GetApiKey200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }).optional(),
   expires_at: zod.iso.datetime({ offset: true }).nullish(),
   id: zod.uuid().optional(),
@@ -313,7 +318,7 @@ export const GetApiKey200Response = zod.strictObject({
   tenant_id: zod.uuid().optional(),
 });
 
-export const GetApiKeyDefaultResponse = zod.strictObject({
+export const GetApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -332,7 +337,7 @@ export const UpdateApiKeyBody = zod.strictObject({
   scopes: zod.array(zod.string()).optional(),
 });
 
-export const UpdateApiKey200Response = zod.strictObject({
+export const UpdateApiKey200Response = zod.object({
   created_at: zod.iso.datetime({ offset: true }).optional(),
   expires_at: zod.iso.datetime({ offset: true }).nullish(),
   id: zod.uuid().optional(),
@@ -344,7 +349,7 @@ export const UpdateApiKey200Response = zod.strictObject({
   tenant_id: zod.uuid().optional(),
 });
 
-export const UpdateApiKeyDefaultResponse = zod.strictObject({
+export const UpdateApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -359,7 +364,7 @@ export const ReactivateApiKeyParams = zod.object({
 
 export const ReactivateApiKey200Response = zod.unknown();
 
-export const ReactivateApiKeyDefaultResponse = zod.strictObject({
+export const ReactivateApiKeyDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -371,7 +376,7 @@ export const GetTenantQuotaParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const GetTenantQuota200Response = zod.strictObject({
+export const GetTenantQuota200Response = zod.object({
   monthly_email_limit: zod.int().nullish(),
   name: zod.string().optional(),
   period_reset_at: zod.iso.datetime({ offset: true }).optional(),
@@ -381,7 +386,7 @@ export const GetTenantQuota200Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const GetTenantQuotaDefaultResponse = zod.strictObject({
+export const GetTenantQuotaDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -397,7 +402,7 @@ export const UpdateTenantQuotaBody = zod.strictObject({
   monthly_email_limit: zod.int().nullable(),
 });
 
-export const UpdateTenantQuota200Response = zod.strictObject({
+export const UpdateTenantQuota200Response = zod.object({
   monthly_email_limit: zod.int().nullish(),
   name: zod.string().optional(),
   period_reset_at: zod.iso.datetime({ offset: true }).optional(),
@@ -407,7 +412,7 @@ export const UpdateTenantQuota200Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const UpdateTenantQuotaDefaultResponse = zod.strictObject({
+export const UpdateTenantQuotaDefaultResponse = zod.object({
   error: zod.string(),
 });
 
@@ -419,7 +424,7 @@ export const ResetTenantQuotaParams = zod.object({
   tenant_id: zod.string().describe("Tenant identifier"),
 });
 
-export const ResetTenantQuota200Response = zod.strictObject({
+export const ResetTenantQuota200Response = zod.object({
   monthly_email_limit: zod.int().nullish(),
   name: zod.string().optional(),
   period_reset_at: zod.iso.datetime({ offset: true }).optional(),
@@ -429,6 +434,6 @@ export const ResetTenantQuota200Response = zod.strictObject({
   used_this_period: zod.int().optional(),
 });
 
-export const ResetTenantQuotaDefaultResponse = zod.strictObject({
+export const ResetTenantQuotaDefaultResponse = zod.object({
   error: zod.string(),
 });

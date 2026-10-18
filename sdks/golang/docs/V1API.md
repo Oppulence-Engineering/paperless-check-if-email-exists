@@ -420,7 +420,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateList
 
-> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
+> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 
 POST /v1/lists
 
@@ -440,11 +440,12 @@ func main() {
 	file := os.NewFile(1234, "some_file") // *os.File |
 	emailColumn := "emailColumn_example" // string |  (optional)
 	name := "name_example" // string |  (optional)
+	policyId := int64(789) // int64 |  (optional)
 	sourceKey := "sourceKey_example" // string | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).SourceKey(sourceKey).Execute()
+	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -468,6 +469,7 @@ Name | Type | Description  | Notes
  **file** | ***os.File** |  |
  **emailColumn** | **string** |  |
  **name** | **string** |  |
+ **policyId** | **int64** |  |
  **sourceKey** | **string** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. |
 
 ### Return type
@@ -626,7 +628,7 @@ Name | Type | Description  | Notes
 
 ## V1DownloadList
 
-> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).Execute()
+> *os.File V1DownloadList(ctx, listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
 
 GET /v1/lists/{list_id}/download
 
@@ -646,10 +648,12 @@ func main() {
 	listId := int32(56) // int32 | List identifier
 	filter := "filter_example" // string |  (optional)
 	format := "format_example" // string |  (optional)
+	segmentId := int64(789) // int64 |  (optional)
+	changedSinceListId := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).Execute()
+	resp, r, err := apiClient.V1API.V1DownloadList(context.Background(), listId).Filter(filter).Format(format).SegmentId(segmentId).ChangedSinceListId(changedSinceListId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1DownloadList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -677,6 +681,8 @@ Name | Type | Description  | Notes
 
  **filter** | **string** |  |
  **format** | **string** |  |
+ **segmentId** | **int64** |  |
+ **changedSinceListId** | **int32** |  |
 
 ### Return type
 

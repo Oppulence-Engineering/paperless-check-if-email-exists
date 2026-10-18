@@ -22,7 +22,13 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { AlertListResponse } from '../models';
+// @ts-ignore
+import type { AlertView } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
+// @ts-ignore
+import type { UpdateAlertRequest } from '../models';
 // @ts-ignore
 import type { V1EmailHistory200Response } from '../models';
 /**
@@ -73,6 +79,102 @@ export const VerificationApiAxiosParamCreator = function (configuration?: Config
                 options: localVarRequestOptions,
             };
         },
+        /**
+         *
+         * @summary GET /v1/alerts
+         * @param {string} [status]
+         * @param {string} [type]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListAlerts: async (status?: string, type?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/alerts`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (type !== undefined) {
+                localVarQueryParameter['type'] = type;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary PATCH /v1/alerts/{alert_id}
+         * @param {number} alertId Alert identifier
+         * @param {UpdateAlertRequest} updateAlertRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateAlert: async (alertId: number, updateAlertRequest: UpdateAlertRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'alertId' is not null or undefined
+            assertParamExists('v1UpdateAlert', 'alertId', alertId)
+            // verify required parameter 'updateAlertRequest' is not null or undefined
+            assertParamExists('v1UpdateAlert', 'updateAlertRequest', updateAlertRequest)
+            const localVarPath = `/v1/alerts/{alert_id}`
+                .replace(`{${"alert_id"}}`, encodeURIComponent(String(alertId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateAlertRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -97,6 +199,36 @@ export const VerificationApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1EmailHistory']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         *
+         * @summary GET /v1/alerts
+         * @param {string} [status]
+         * @param {string} [type]
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListAlerts(status?: string, type?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AlertListResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListAlerts(status, type, limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1ListAlerts']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary PATCH /v1/alerts/{alert_id}
+         * @param {number} alertId Alert identifier
+         * @param {UpdateAlertRequest} updateAlertRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1UpdateAlert(alertId: number, updateAlertRequest: UpdateAlertRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AlertView>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateAlert(alertId, updateAlertRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1UpdateAlert']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -117,6 +249,26 @@ export const VerificationApiFactory = function (configuration?: Configuration, b
         v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response> {
             return localVarFp.v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
+        /**
+         *
+         * @summary GET /v1/alerts
+         * @param {VerificationApiV1ListAlertsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListAlerts(requestParameters: VerificationApiV1ListAlertsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<AlertListResponse> {
+            return localVarFp.v1ListAlerts(requestParameters.status, requestParameters.type, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary PATCH /v1/alerts/{alert_id}
+         * @param {VerificationApiV1UpdateAlertRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1UpdateAlert(requestParameters: VerificationApiV1UpdateAlertRequest, options?: RawAxiosRequestConfig): AxiosPromise<AlertView> {
+            return localVarFp.v1UpdateAlert(requestParameters.alertId, requestParameters.updateAlertRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -135,6 +287,26 @@ export interface VerificationApiInterface {
      * @memberof VerificationApiInterface
      */
     v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response>;
+
+    /**
+     *
+     * @summary GET /v1/alerts
+     * @param {VerificationApiV1ListAlertsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApiInterface
+     */
+    v1ListAlerts(requestParameters?: VerificationApiV1ListAlertsRequest, options?: RawAxiosRequestConfig): AxiosPromise<AlertListResponse>;
+
+    /**
+     *
+     * @summary PATCH /v1/alerts/{alert_id}
+     * @param {VerificationApiV1UpdateAlertRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApiInterface
+     */
+    v1UpdateAlert(requestParameters: VerificationApiV1UpdateAlertRequest, options?: RawAxiosRequestConfig): AxiosPromise<AlertView>;
 
 }
 
@@ -160,6 +332,62 @@ export interface VerificationApiV1EmailHistoryRequest {
 }
 
 /**
+ * Request parameters for v1ListAlerts operation in VerificationApi.
+ * @export
+ * @interface VerificationApiV1ListAlertsRequest
+ */
+export interface VerificationApiV1ListAlertsRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof VerificationApiV1ListAlerts
+     */
+    readonly status?: string
+
+    /**
+     *
+     * @type {string}
+     * @memberof VerificationApiV1ListAlerts
+     */
+    readonly type?: string
+
+    /**
+     *
+     * @type {number}
+     * @memberof VerificationApiV1ListAlerts
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof VerificationApiV1ListAlerts
+     */
+    readonly offset?: number
+}
+
+/**
+ * Request parameters for v1UpdateAlert operation in VerificationApi.
+ * @export
+ * @interface VerificationApiV1UpdateAlertRequest
+ */
+export interface VerificationApiV1UpdateAlertRequest {
+    /**
+     * Alert identifier
+     * @type {number}
+     * @memberof VerificationApiV1UpdateAlert
+     */
+    readonly alertId: number
+
+    /**
+     *
+     * @type {UpdateAlertRequest}
+     * @memberof VerificationApiV1UpdateAlert
+     */
+    readonly updateAlertRequest: UpdateAlertRequest
+}
+
+/**
  * VerificationApi - object-oriented interface
  * @export
  * @class VerificationApi
@@ -176,5 +404,29 @@ export class VerificationApi extends BaseAPI implements VerificationApiInterface
      */
     public v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig) {
         return VerificationApiFp(this.configuration).v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary GET /v1/alerts
+     * @param {VerificationApiV1ListAlertsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApi
+     */
+    public v1ListAlerts(requestParameters: VerificationApiV1ListAlertsRequest = {}, options?: RawAxiosRequestConfig) {
+        return VerificationApiFp(this.configuration).v1ListAlerts(requestParameters.status, requestParameters.type, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary PATCH /v1/alerts/{alert_id}
+     * @param {VerificationApiV1UpdateAlertRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApi
+     */
+    public v1UpdateAlert(requestParameters: VerificationApiV1UpdateAlertRequest, options?: RawAxiosRequestConfig) {
+        return VerificationApiFp(this.configuration).v1UpdateAlert(requestParameters.alertId, requestParameters.updateAlertRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }

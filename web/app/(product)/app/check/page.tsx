@@ -30,7 +30,7 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
 }
 
 async function CheckRouteContent({ searchParams }: CheckPageProps) {
-	const raw = await searchParams;
-	checkSearchParamsCache.parse(raw);
-	return <CheckPanel />;
+	const { email } = checkSearchParamsCache.parse(await searchParams);
+	// The key starts a new panel for each `?email=`, so a suggestion link checks the new address.
+	return <CheckPanel initialEmail={email ?? undefined} key={email ?? ""} />;
 }

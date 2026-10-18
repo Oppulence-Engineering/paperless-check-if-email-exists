@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **id** | **number** |  | [required]
 **job_id** | **number** |  | [required]
 **name** | **string** |  | [required]
+**policy_id** | **number** |  | [optional]
 **source_key** | **string** |  | [optional]
 **status** | **string** |  | [required]
 **summary** | [**ListSummary**](ListSummary.md) |  | [required]
@@ -27,6 +28,7 @@ const instance: ListDetailResponse = {
     id: 0,
     job_id: 0,
     name: 'Weekly Cleanup',
+    policy_id: 0,
     source_key: 'example',
     status: 'example',
     summary: {} as any,
