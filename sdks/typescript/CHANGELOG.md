@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **api:** describe check errors as the backend sends them ([474ecdb](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/474ecdb9116a970b956eb36e7f904e229562495a))
+* **api:** describe the pipeline, policy, API key, and insights contracts ([6beb5d8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6beb5d8c71c433ab376c60e79d3e152da1e46bbf))
+* **api:** describe the suppression, outcome policy, and upload contracts ([f45809d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f45809d59060d09be97e99e330799c2d8d98b7bc))
+* **api:** document the SMTP fields of the check debug output ([1f80d78](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1f80d78ed0e55e4d6d708dae3d86eb2f7e9d8fb9))
+* **api:** keep separate schemas for provider and campaign outcomes ([f56e22d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f56e22d7a2449e2681fb2515b610eed873f04b5f))
+* **api:** publish the full contract and repair the check result schema ([e534828](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e5348286e51148aae53fa781cd3114adda7d5983))
+
 ## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-16)
 
 

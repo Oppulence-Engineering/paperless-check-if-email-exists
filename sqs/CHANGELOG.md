@@ -1,5 +1,7 @@
 # Changelog
 
+## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-18)
+
 ## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-16)
 
 
