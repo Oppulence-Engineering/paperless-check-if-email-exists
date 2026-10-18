@@ -830,7 +830,7 @@ Refer to `backend/backend_config.toml` for the canonical schema and to `docs/sel
 
 ## CI/CD & Release Flow
 
-- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds and smokes the combined web, API, and worker image, pushes it to GHCR, then deploys its immutable SHA tag through `deploy-helm-direct-template.yml`. `develop` targets `paperless-staging`; version tags target `paperless-production`. Deployment requires the Better Auth and Resend secrets listed in the workflow.
+- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds and smokes the combined web, API, and worker image, pushes it to GHCR, then deploys its immutable SHA tag through `deploy-helm-direct-template.yml`. A merge to `develop` deploys to `paperless-staging`. A merge to `master` deploys to `paperless-production`. Deployment requires the Better Auth and Resend secrets listed in the workflow.
 - **CLI release pipeline**: `.github/workflows/deploy_cli.yml` builds the CLI binaries, signs them, and attaches artifacts to GitHub releases. Update this workflow when the CLI requires new targets or toolchains.
 - **Reusable Helm template**: `.github/workflows/deploy-helm-direct-template.yml` constructs kubeconfig material straight from GitHub secrets (`HELM_DIRECT_*`). Any service in the org can inherit it by pointing `uses:` to the template and passing chart metadata plus image overrides.
 - **Secret overrides**: The same template now accepts newline-delimited `secret_env_overrides` so deployments inject `config.secretEnv.*` values (e.g., `RCH__PROXY__PORT`) straight from GitHub Secrets without duplicating scripts across repos.
