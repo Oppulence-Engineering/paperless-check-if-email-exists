@@ -1,3 +1,6 @@
+/* Scalar's API reference layers come first, so the app's Tailwind layers win. */
+@layer scalar-base, scalar-theme, scalar-config, theme, base, components, utilities;
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@oppulence/ui/product-system.css";
