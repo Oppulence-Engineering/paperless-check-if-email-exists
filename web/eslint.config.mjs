@@ -178,6 +178,23 @@ const config = [
 		},
 	},
 	{
+		// Form fields come from @oppulence/ui, so they share one look and one set of states.
+		// The Sim landing port and the AI Elements registry copy keep their own fields.
+		files: ["**/*.{jsx,tsx}"],
+		ignores: ["**/*.test.tsx", "app/(marketing)/sim-landing/**", "components/ai-elements/**"],
+		rules: {
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector:
+						"JSXOpeningElement[name.name=/^(input|select|textarea)$/]:not(:has(JSXAttribute[name.name='type'][value.value='hidden']))",
+					message:
+						'Use Input, Select, or Textarea from @oppulence/ui. Raw fields are only for type="hidden".',
+				},
+			],
+		},
+	},
+	{
 		files: ["quality/eslint-plugin.test.ts"],
 		rules: Object.fromEntries(
 			Object.keys(oppulenceWeb.rules).map((rule) => [`oppulence-web/${rule}`, "off"]),
