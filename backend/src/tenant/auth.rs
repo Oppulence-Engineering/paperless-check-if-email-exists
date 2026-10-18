@@ -4,7 +4,7 @@ use crate::tenant::models::{PlanTier, TenantStatus};
 use anyhow::{bail, Result};
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
-use rand::Rng;
+use rand::RngExt;
 use sha2::Sha256;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -20,7 +20,7 @@ fn get_hmac_secret() -> Option<String> {
 
 /// Generate a new API key. Returns (full_key, key_prefix, key_hash).
 pub fn generate_api_key() -> (String, String, String) {
-	let random_bytes: [u8; 16] = rand::thread_rng().gen();
+	let random_bytes: [u8; 16] = rand::rng().random();
 	let random_hex = hex::encode(random_bytes);
 	let full_key = format!("{}{}", API_KEY_PREFIX, random_hex);
 	// Use 24-char prefix to capture 15 random hex chars for better key identification

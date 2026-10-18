@@ -5,7 +5,7 @@ use async_smtp::{SmtpClient, SmtpTransport};
 use fast_socks5::client::Config;
 use fast_socks5::{client::Socks5Stream, Result};
 use rand::rngs::SmallRng;
-use rand::{distributions::Alphanumeric, Rng, SeedableRng};
+use rand::{distr::Alphanumeric, RngExt};
 use std::iter;
 use std::str::FromStr;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
@@ -231,7 +231,7 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	}
 
 	// Create a random 15-char alphanumerical string.
-	let mut rng = SmallRng::from_entropy();
+	let mut rng: SmallRng = rand::make_rng();
 	let random_email: String = iter::repeat_with(|| rng.sample(Alphanumeric))
 		.map(char::from)
 		.take(15)
