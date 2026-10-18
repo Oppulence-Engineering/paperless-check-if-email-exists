@@ -60,7 +60,7 @@ async fn connect_to_smtp_host(
 		Some(proxy) => {
 			let mut config = Config::default();
 			if let Some(timeout_ms) = proxy.timeout_ms {
-				config.set_connect_timeout(timeout_ms / 1000);
+				config.set_connect_timeout(std::time::Duration::from_millis(timeout_ms));
 			}
 
 			let socks_stream =

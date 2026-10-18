@@ -3,7 +3,7 @@ use crate::tenant::context::TenantContext;
 use crate::tenant::models::{PlanTier, TenantStatus};
 use anyhow::{bail, Result};
 use chrono::Utc;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use rand::Rng;
 use sha2::Sha256;
 use sqlx::PgPool;

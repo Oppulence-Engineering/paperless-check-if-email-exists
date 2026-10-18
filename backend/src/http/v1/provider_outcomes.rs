@@ -10,7 +10,7 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, TimeZone, Utc};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use openssl::hash::MessageDigest;
 use openssl::memcmp;
 use openssl::sign::Verifier;
