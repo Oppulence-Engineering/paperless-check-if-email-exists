@@ -67,9 +67,12 @@ impl PostgresStorage {
 		db_url: &str,
 		read_replica_url: Option<&str>,
 		extra: Option<serde_json::Value>,
+		max_connections: u32,
 	) -> Result<Self, StorageError> {
 		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
-		let pg_pool = Self::configured_pool_options().connect(db_url).await?;
+		let pg_pool = Self::configured_pool_options(max_connections)
+			.connect(db_url)
+			.await?;
 
 		sqlx::migrate!("./migrations").run(&pg_pool).await?;
 
@@ -78,7 +81,9 @@ impl PostgresStorage {
 		let read_pool = match read_replica_url {
 			Some(url) if !url.is_empty() => {
 				info!(target: LOG_TARGET, "Connecting to read replica");
-				Self::configured_pool_options().connect(url).await?
+				Self::configured_pool_options(max_connections)
+					.connect(url)
+					.await?
 			}
 			_ => pg_pool.clone(),
 		};
@@ -90,8 +95,9 @@ impl PostgresStorage {
 		})
 	}
 
-	fn configured_pool_options() -> PgPoolOptions {
+	fn configured_pool_options(max_connections: u32) -> PgPoolOptions {
 		PgPoolOptions::new()
+			.max_connections(max_connections)
 			.acquire_timeout(Duration::from_secs(3))
 			.test_before_acquire(true)
 	}

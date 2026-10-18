@@ -85,6 +85,13 @@ pub struct BackendConfig {
 	/// Configuration on where to store the email verification results.
 	pub storage: Option<StorageConfig>,
 
+	/// The most connections that each Postgres pool of this process opens.
+	/// Staging and production share a small Postgres cluster, so keep it low.
+	///
+	/// Env variable: RCH__DB_MAX_CONNECTIONS
+	#[serde(default = "default_db_max_connections")]
+	pub db_max_connections: u32,
+
 	/// Whether to enable the Commercial License Trial. Setting this to true
 	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
 
@@ -144,6 +151,7 @@ impl BackendConfig {
 			sentry_dsn: None,
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),
+			db_max_connections: default_db_max_connections(),
 			commercial_license_trial: None,
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
@@ -237,6 +245,7 @@ impl BackendConfig {
 					&config.db_url,
 					config.read_replica_url.as_deref(),
 					config.extra.clone(),
+					self.db_max_connections,
 				)
 				.await
 				.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
@@ -396,6 +405,10 @@ pub struct PipelinesConfig {
 	pub max_missed_run_age_hours: i32,
 	#[serde(default = "default_pipeline_min_interval_seconds")]
 	pub min_interval_seconds: i32,
+}
+
+fn default_db_max_connections() -> u32 {
+	5
 }
 
 fn default_pipeline_tick_seconds() -> u64 {
@@ -817,6 +830,16 @@ type = "smtp"
 		);
 		env::remove_var("RCH__BOUNCE_RISK__ENABLED");
 		env::remove_var("RCH__BOUNCE_RISK__CONFIG_PATH");
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_db_max_connections() {
+		assert_eq!(load_config().await.unwrap().db_max_connections, 5);
+		env::set_var("RCH__DB_MAX_CONNECTIONS", "3");
+		let cfg = load_config().await.unwrap();
+		env::remove_var("RCH__DB_MAX_CONNECTIONS");
+		assert_eq!(cfg.db_max_connections, 3);
 	}
 
 	#[tokio::test]
