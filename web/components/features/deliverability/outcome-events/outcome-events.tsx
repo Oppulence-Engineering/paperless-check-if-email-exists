@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
+import { DatePicker } from "@oppulence/ui/components/date-picker";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import {
@@ -150,7 +151,7 @@ export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {
 					<Label className={FIELD_LABEL} htmlFor="outcome-since">
 						Since
 					</Label>
-					<Input className="h-10 rounded-lg" id="outcome-since" name="since" type="date" />
+					<DatePicker className="h-10 rounded-lg" id="outcome-since" name="since" />
 				</div>
 				<Button className="h-10 rounded-lg" type="submit">
 					Search

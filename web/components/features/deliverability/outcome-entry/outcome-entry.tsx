@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Configuration, OutcomesApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
+import { DateTimePicker } from "@oppulence/ui/components/date-time-picker";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import {
@@ -49,6 +50,7 @@ function text(form: FormData, name: string): string {
 export function OutcomeEntry({ className, ...props }: OutcomeEntryProps) {
 	const client = useQueryClient();
 	const [notice, setNotice] = useState("");
+	const [occurredAt, setOccurredAt] = useState("");
 	const ingest = useMutation({
 		mutationFn: async (form: FormData) => {
 			const occurredAt = text(form, "occurred_at");
@@ -92,6 +94,7 @@ export function OutcomeEntry({ className, ...props }: OutcomeEntryProps) {
 		ingest.mutate(new FormData(formElement), {
 			onSuccess: () => {
 				formElement.reset();
+				setOccurredAt("");
 			},
 		});
 	}
@@ -143,11 +146,13 @@ export function OutcomeEntry({ className, ...props }: OutcomeEntryProps) {
 						<Label className={FIELD_LABEL} htmlFor="event-occurred-at">
 							Occurred at
 						</Label>
-						<Input
-							className="h-10 rounded-lg"
+						{/* The picker sends an ISO time, which the submit handler accepts. */}
+						<input name="occurred_at" type="hidden" value={occurredAt} />
+						<DateTimePicker
+							aria-label="Occurred at"
 							id="event-occurred-at"
-							name="occurred_at"
-							type="datetime-local"
+							onChange={setOccurredAt}
+							value={occurredAt}
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5">

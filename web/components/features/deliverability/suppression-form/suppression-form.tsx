@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Configuration, V1Api } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
+import { DatePicker } from "@oppulence/ui/components/date-picker";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
@@ -233,12 +234,11 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				<Label className={LABEL_CLASS} htmlFor={`${id}-expires`}>
 					Expires on
 				</Label>
-				<Input
+				<DatePicker
 					aria-describedby={`${id}-expires-hint`}
 					className="h-10 rounded-lg"
 					id={`${id}-expires`}
 					name="expires"
-					type="date"
 				/>
 				<p className="text-xs text-[#858585]" id={`${id}-expires-hint`}>
 					Leave empty to keep the addresses suppressed with no end date.
