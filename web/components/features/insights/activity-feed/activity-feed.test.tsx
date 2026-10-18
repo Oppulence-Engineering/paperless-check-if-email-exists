@@ -8,6 +8,7 @@ import { EventsApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ActivityFeed } from "./activity-feed";
+import { chooseDate } from "@/quality/test-support/date";
 import { chooseOption } from "@/quality/test-support/select";
 
 function renderFeed() {
@@ -75,8 +76,8 @@ describe("ActivityFeed", () => {
 		await chooseOption("Event type", "Row checked");
 		fireEvent.change(screen.getByLabelText("Actor"), { target: { value: "api" } });
 		fireEvent.change(screen.getByLabelText("Job ID"), { target: { value: "18" } });
-		fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-10-01" } });
-		fireEvent.change(screen.getByLabelText("To"), { target: { value: "2026-10-18" } });
+		await chooseDate("From", "2026-10-01");
+		await chooseDate("To", "2026-10-18");
 		fireEvent.click(screen.getByRole("button", { name: "Filter" }));
 		await waitFor(() =>
 			expect(list).toHaveBeenLastCalledWith({

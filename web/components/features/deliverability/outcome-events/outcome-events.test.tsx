@@ -8,6 +8,7 @@ import { OutcomesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OutcomeEvents } from "./outcome-events";
+import { chooseDate } from "@/quality/test-support/date";
 import { chooseOption } from "@/quality/test-support/select";
 
 function event(id: number, extra: Record<string, unknown> = {}) {
@@ -72,7 +73,7 @@ describe("OutcomeEvents", () => {
 		);
 
 		await chooseOption("Event type", "Complaint");
-		fireEvent.change(screen.getByLabelText("Since"), { target: { value: "2026-10-01" } });
+		await chooseDate("Since", "2026-10-01");
 		fireEvent.click(screen.getByRole("button", { name: "Search" }));
 		await waitFor(() =>
 			expect(list).toHaveBeenLastCalledWith({

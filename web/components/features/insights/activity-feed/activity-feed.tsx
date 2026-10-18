@@ -8,6 +8,7 @@ import { Configuration, EventsApi } from "@oppulence/reacher-sdk";
 import Link from "next/link";
 
 import { Button } from "@oppulence/ui/components/button";
+import { DatePicker } from "@oppulence/ui/components/date-picker";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import {
@@ -163,13 +164,13 @@ export function ActivityFeed({ className, ...props }: ActivityFeedProps) {
 					<Label className={FIELD_LABEL} htmlFor="activity-since">
 						From
 					</Label>
-					<Input className="h-10 rounded-lg" id="activity-since" name="since" type="date" />
+					<DatePicker className="h-10 rounded-lg" id="activity-since" name="since" />
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label className={FIELD_LABEL} htmlFor="activity-until">
 						To
 					</Label>
-					<Input className="h-10 rounded-lg" id="activity-until" name="until" type="date" />
+					<DatePicker className="h-10 rounded-lg" id="activity-until" name="until" />
 				</div>
 				<Button className="h-10 rounded-lg" type="submit" variant="outline">
 					Filter

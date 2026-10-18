@@ -8,6 +8,7 @@ import { OutcomesApi } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OutcomeEntry } from "./outcome-entry";
+import { chooseDate } from "@/quality/test-support/date";
 import { chooseOption } from "@/quality/test-support/select";
 
 describe("OutcomeEntry", () => {
@@ -29,9 +30,8 @@ describe("OutcomeEntry", () => {
 
 		fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@example.com" } });
 		await chooseOption("Event", "Bounced");
-		fireEvent.change(screen.getByLabelText("Occurred at"), {
-			target: { value: "2026-10-01T10:30" },
-		});
+		await chooseDate("Occurred at", "2026-10-01");
+		fireEvent.change(screen.getByLabelText("Time"), { target: { value: "10:30" } });
 		fireEvent.change(screen.getByLabelText("Source key"), { target: { value: "newsletter" } });
 		fireEvent.change(screen.getByLabelText("Campaign"), { target: { value: "spring" } });
 		fireEvent.click(screen.getByRole("button", { name: "Record outcome" }));
