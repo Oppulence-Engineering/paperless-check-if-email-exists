@@ -133,6 +133,10 @@ export const postCheckEmail200ResponseBounceRiskOneConfidenceMax = 1;
 export const postCheckEmail200ResponseBounceRiskOneScoreMin = 0;
 export const postCheckEmail200ResponseBounceRiskOneScoreMax = 100;
 
+export const postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
 export const postCheckEmail200ResponseScoreCatchAllConfidenceMin = 0;
 export const postCheckEmail200ResponseScoreCatchAllConfidenceMax = 100;
 
@@ -202,9 +206,50 @@ export const PostCheckEmail200Response = zod
           .strictObject({
             verif_method: zod
               .strictObject({
+                host: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The mail server host the check connected to. Only for Smtp.",
+                  ),
                 type: zod
                   .enum(["Smtp", "Headless", "Api", "Skipped"])
                   .describe("The method used for the email verification."),
+                verif_method: zod
+                  .strictObject({
+                    from_email: zod.string().optional(),
+                    hello_name: zod.string().optional(),
+                    proxy: zod.string().nullish(),
+                    retries: zod
+                      .int()
+                      .min(
+                        postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin,
+                      )
+                      .optional(),
+                    smtp_port: zod
+                      .int()
+                      .min(
+                        postCheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                      )
+                      .optional(),
+                    smtp_timeout: zod
+                      .union([
+                        zod
+                          .strictObject({
+                            nanos: zod
+                              .number()
+                              .describe("Duration in nanoseconds."),
+                            secs: zod.number().describe("Duration in seconds."),
+                          })
+                          .describe(
+                            "An object representing a duration in seconds and nanoseconds.",
+                          ),
+                        zod.null(),
+                      ])
+                      .optional(),
+                  })
+                  .optional()
+                  .describe("The SMTP settings the check used. Only for Smtp."),
               })
               .optional()
               .describe("The method used for email verification."),

@@ -6,7 +6,9 @@ The method used for email verification.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**host** | **string** | The mail server host the check connected to. Only for Smtp. | [optional]
 **type** | **string** | The method used for the email verification. | [required]
+**verif_method** | [**VerifMethodVerifMethod**](VerifMethodVerifMethod.md) |  | [optional]
 
 ## Example
 
@@ -14,7 +16,9 @@ Name | Type | Description | Notes
 import { VerifMethod } from '@oppulence/reacher-sdk';
 
 const instance: VerifMethod = {
+    host: 'example',
     type: 'example',
+    verif_method: {} as any,
 };
 ```
 

@@ -55,6 +55,10 @@ export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneConfidenceMax
 export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneScoreMin = 0;
 export const v1GetBulkJobResults200ResponseResultsItemBounceRiskOneScoreMax = 100;
 
+export const v1GetBulkJobResults200ResponseResultsItemDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1GetBulkJobResults200ResponseResultsItemDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
 export const v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMin = 0;
 export const v1GetBulkJobResults200ResponseResultsItemScoreCatchAllConfidenceMax = 100;
 
@@ -142,9 +146,54 @@ export const V1GetBulkJobResults200Response = zod.strictObject({
               .strictObject({
                 verif_method: zod
                   .strictObject({
+                    host: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The mail server host the check connected to. Only for Smtp.",
+                      ),
                     type: zod
                       .enum(["Smtp", "Headless", "Api", "Skipped"])
                       .describe("The method used for the email verification."),
+                    verif_method: zod
+                      .strictObject({
+                        from_email: zod.string().optional(),
+                        hello_name: zod.string().optional(),
+                        proxy: zod.string().nullish(),
+                        retries: zod
+                          .int()
+                          .min(
+                            v1GetBulkJobResults200ResponseResultsItemDebugSmtpVerifMethodVerifMethodRetriesMin,
+                          )
+                          .optional(),
+                        smtp_port: zod
+                          .int()
+                          .min(
+                            v1GetBulkJobResults200ResponseResultsItemDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                          )
+                          .optional(),
+                        smtp_timeout: zod
+                          .union([
+                            zod
+                              .strictObject({
+                                nanos: zod
+                                  .number()
+                                  .describe("Duration in nanoseconds."),
+                                secs: zod
+                                  .number()
+                                  .describe("Duration in seconds."),
+                              })
+                              .describe(
+                                "An object representing a duration in seconds and nanoseconds.",
+                              ),
+                            zod.null(),
+                          ])
+                          .optional(),
+                      })
+                      .optional()
+                      .describe(
+                        "The SMTP settings the check used. Only for Smtp.",
+                      ),
                   })
                   .optional()
                   .describe("The method used for email verification."),
@@ -654,6 +703,10 @@ export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneConfiden
 export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneScoreMin = 0;
 export const v1GetJobResults200ResponseResultsItemResultOneBounceRiskOneScoreMax = 100;
 
+export const v1GetJobResults200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1GetJobResults200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
 export const v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMin = 0;
 export const v1GetJobResults200ResponseResultsItemResultOneScoreCatchAllConfidenceMax = 100;
 
@@ -753,10 +806,55 @@ export const V1GetJobResults200Response = zod.strictObject({
                     .strictObject({
                       verif_method: zod
                         .strictObject({
+                          host: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The mail server host the check connected to. Only for Smtp.",
+                            ),
                           type: zod
                             .enum(["Smtp", "Headless", "Api", "Skipped"])
                             .describe(
                               "The method used for the email verification.",
+                            ),
+                          verif_method: zod
+                            .strictObject({
+                              from_email: zod.string().optional(),
+                              hello_name: zod.string().optional(),
+                              proxy: zod.string().nullish(),
+                              retries: zod
+                                .int()
+                                .min(
+                                  v1GetJobResults200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin,
+                                )
+                                .optional(),
+                              smtp_port: zod
+                                .int()
+                                .min(
+                                  v1GetJobResults200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                                )
+                                .optional(),
+                              smtp_timeout: zod
+                                .union([
+                                  zod
+                                    .strictObject({
+                                      nanos: zod
+                                        .number()
+                                        .describe("Duration in nanoseconds."),
+                                      secs: zod
+                                        .number()
+                                        .describe("Duration in seconds."),
+                                    })
+                                    .describe(
+                                      "An object representing a duration in seconds and nanoseconds.",
+                                    ),
+                                  zod.null(),
+                                ])
+                                .optional(),
+                            })
+                            .optional()
+                            .describe(
+                              "The SMTP settings the check used. Only for Smtp.",
                             ),
                         })
                         .optional()

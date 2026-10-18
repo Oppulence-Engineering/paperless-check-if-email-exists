@@ -159,5 +159,6 @@ export * from './update-tenant-settings-request';
 export * from './update-webhook-request';
 export * from './v1-email-history200-response';
 export * from './verif-method';
+export * from './verif-method-verif-method';
 export * from './webhook';
 export * from './yahoo-verif-method';

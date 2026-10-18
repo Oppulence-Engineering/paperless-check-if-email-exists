@@ -4120,20 +4120,53 @@
 			"VerifMethod": {
 				"description": "The method used for email verification.",
 				"properties": {
+					"host": {
+						"description": "The mail server host the check connected to. Only for Smtp.",
+						"type": "string"
+					},
 					"type": {
 						"description": "The method used for the email verification.",
 						"enum": ["Smtp", "Headless", "Api", "Skipped"],
-						"x-stoplight": {
-							"id": "4ogsz639tcdb6"
-						}
+						"type": "string"
+					},
+					"verif_method": {
+						"description": "The SMTP settings the check used. Only for Smtp.",
+						"properties": {
+							"from_email": {
+								"type": "string"
+							},
+							"hello_name": {
+								"type": "string"
+							},
+							"proxy": {
+								"nullable": true,
+								"type": "string"
+							},
+							"retries": {
+								"format": "int32",
+								"minimum": 0,
+								"type": "integer"
+							},
+							"smtp_port": {
+								"format": "int32",
+								"minimum": 0,
+								"type": "integer"
+							},
+							"smtp_timeout": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/Duration"
+									}
+								],
+								"nullable": true
+							}
+						},
+						"type": "object"
 					}
 				},
 				"required": ["type"],
 				"title": "VerifMethod",
-				"type": "object",
-				"x-stoplight": {
-					"id": "9xw9e1jwti230"
-				}
+				"type": "object"
 			},
 			"Webhook": {
 				"description": "Configuration for a webhook to receive email verification results. The method will be POST, and the body will contain the email verification response.",

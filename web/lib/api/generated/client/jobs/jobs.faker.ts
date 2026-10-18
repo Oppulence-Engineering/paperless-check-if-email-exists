@@ -152,12 +152,54 @@ export const getV1GetBulkJobResultsResponseMock = (
             smtp: {
               verif_method: faker.helpers.arrayElement([
                 {
+                  host: faker.helpers.arrayElement([
+                    faker.string.alpha({ length: { min: 10, max: 20 } }),
+                    undefined,
+                  ]),
                   type: faker.helpers.arrayElement([
                     "Smtp",
                     "Headless",
                     "Api",
                     "Skipped",
                   ] as const),
+                  verif_method: faker.helpers.arrayElement([
+                    {
+                      from_email: faker.helpers.arrayElement([
+                        faker.string.alpha({ length: { min: 10, max: 20 } }),
+                        undefined,
+                      ]),
+                      hello_name: faker.helpers.arrayElement([
+                        faker.string.alpha({ length: { min: 10, max: 20 } }),
+                        undefined,
+                      ]),
+                      proxy: faker.helpers.arrayElement([
+                        faker.helpers.arrayElement([
+                          faker.string.alpha({ length: { min: 10, max: 20 } }),
+                          null,
+                        ]),
+                        undefined,
+                      ]),
+                      retries: faker.helpers.arrayElement([
+                        faker.number.int({ min: 0 }),
+                        undefined,
+                      ]),
+                      smtp_port: faker.helpers.arrayElement([
+                        faker.number.int({ min: 0 }),
+                        undefined,
+                      ]),
+                      smtp_timeout: faker.helpers.arrayElement([
+                        faker.helpers.arrayElement([
+                          {
+                            nanos: faker.number.float({ fractionDigits: 2 }),
+                            secs: faker.number.float({ fractionDigits: 2 }),
+                          },
+                          null,
+                        ]),
+                        undefined,
+                      ]),
+                    },
+                    undefined,
+                  ]),
                 },
                 undefined,
               ]),
@@ -482,12 +524,56 @@ export const getV1GetJobResultsResponseMock = (
               smtp: {
                 verif_method: faker.helpers.arrayElement([
                   {
+                    host: faker.helpers.arrayElement([
+                      faker.string.alpha({ length: { min: 10, max: 20 } }),
+                      undefined,
+                    ]),
                     type: faker.helpers.arrayElement([
                       "Smtp",
                       "Headless",
                       "Api",
                       "Skipped",
                     ] as const),
+                    verif_method: faker.helpers.arrayElement([
+                      {
+                        from_email: faker.helpers.arrayElement([
+                          faker.string.alpha({ length: { min: 10, max: 20 } }),
+                          undefined,
+                        ]),
+                        hello_name: faker.helpers.arrayElement([
+                          faker.string.alpha({ length: { min: 10, max: 20 } }),
+                          undefined,
+                        ]),
+                        proxy: faker.helpers.arrayElement([
+                          faker.helpers.arrayElement([
+                            faker.string.alpha({
+                              length: { min: 10, max: 20 },
+                            }),
+                            null,
+                          ]),
+                          undefined,
+                        ]),
+                        retries: faker.helpers.arrayElement([
+                          faker.number.int({ min: 0 }),
+                          undefined,
+                        ]),
+                        smtp_port: faker.helpers.arrayElement([
+                          faker.number.int({ min: 0 }),
+                          undefined,
+                        ]),
+                        smtp_timeout: faker.helpers.arrayElement([
+                          faker.helpers.arrayElement([
+                            {
+                              nanos: faker.number.float({ fractionDigits: 2 }),
+                              secs: faker.number.float({ fractionDigits: 2 }),
+                            },
+                            null,
+                          ]),
+                          undefined,
+                        ]),
+                      },
+                      undefined,
+                    ]),
                   },
                   undefined,
                 ]),

@@ -164,6 +164,10 @@ export const v1CheckEmail200ResponseBounceRiskOneConfidenceMax = 1;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMin = 0;
 export const v1CheckEmail200ResponseBounceRiskOneScoreMax = 100;
 
+export const v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
 export const v1CheckEmail200ResponseScoreCatchAllConfidenceMin = 0;
 export const v1CheckEmail200ResponseScoreCatchAllConfidenceMax = 100;
 
@@ -233,9 +237,50 @@ export const V1CheckEmail200Response = zod
           .strictObject({
             verif_method: zod
               .strictObject({
+                host: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The mail server host the check connected to. Only for Smtp.",
+                  ),
                 type: zod
                   .enum(["Smtp", "Headless", "Api", "Skipped"])
                   .describe("The method used for the email verification."),
+                verif_method: zod
+                  .strictObject({
+                    from_email: zod.string().optional(),
+                    hello_name: zod.string().optional(),
+                    proxy: zod.string().nullish(),
+                    retries: zod
+                      .int()
+                      .min(
+                        v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin,
+                      )
+                      .optional(),
+                    smtp_port: zod
+                      .int()
+                      .min(
+                        v1CheckEmail200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                      )
+                      .optional(),
+                    smtp_timeout: zod
+                      .union([
+                        zod
+                          .strictObject({
+                            nanos: zod
+                              .number()
+                              .describe("Duration in nanoseconds."),
+                            secs: zod.number().describe("Duration in seconds."),
+                          })
+                          .describe(
+                            "An object representing a duration in seconds and nanoseconds.",
+                          ),
+                        zod.null(),
+                      ])
+                      .optional(),
+                  })
+                  .optional()
+                  .describe("The SMTP settings the check used. Only for Smtp."),
               })
               .optional()
               .describe("The method used for email verification."),
@@ -612,6 +657,10 @@ export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneConfidenc
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneBounceRiskOneScoreMax = 100;
 
+export const v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMin = 0;
 export const v1GetFindEmail200ResponseResultsItemResultOneScoreCatchAllConfidenceMax = 100;
 
@@ -744,10 +793,55 @@ export const V1GetFindEmail200Response = zod.strictObject({
                     .strictObject({
                       verif_method: zod
                         .strictObject({
+                          host: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The mail server host the check connected to. Only for Smtp.",
+                            ),
                           type: zod
                             .enum(["Smtp", "Headless", "Api", "Skipped"])
                             .describe(
                               "The method used for the email verification.",
+                            ),
+                          verif_method: zod
+                            .strictObject({
+                              from_email: zod.string().optional(),
+                              hello_name: zod.string().optional(),
+                              proxy: zod.string().nullish(),
+                              retries: zod
+                                .int()
+                                .min(
+                                  v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodRetriesMin,
+                                )
+                                .optional(),
+                              smtp_port: zod
+                                .int()
+                                .min(
+                                  v1GetFindEmail200ResponseResultsItemResultOneDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                                )
+                                .optional(),
+                              smtp_timeout: zod
+                                .union([
+                                  zod
+                                    .strictObject({
+                                      nanos: zod
+                                        .number()
+                                        .describe("Duration in nanoseconds."),
+                                      secs: zod
+                                        .number()
+                                        .describe("Duration in seconds."),
+                                    })
+                                    .describe(
+                                      "An object representing a duration in seconds and nanoseconds.",
+                                    ),
+                                  zod.null(),
+                                ])
+                                .optional(),
+                            })
+                            .optional()
+                            .describe(
+                              "The SMTP settings the check used. Only for Smtp.",
                             ),
                         })
                         .optional()

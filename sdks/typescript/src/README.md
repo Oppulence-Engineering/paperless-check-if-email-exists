@@ -344,6 +344,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)
  - [V1EmailHistory200Response](docs/V1EmailHistory200Response.md)
  - [VerifMethod](docs/VerifMethod.md)
+ - [VerifMethodVerifMethod](docs/VerifMethodVerifMethod.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)
 

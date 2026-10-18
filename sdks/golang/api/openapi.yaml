@@ -5272,6 +5272,14 @@ components:
             start_time: start_time
             smtp:
               verif_method:
+                verif_method:
+                  proxy: proxy
+                  retries: 0
+                  from_email: from_email
+                  smtp_port: 0
+                  hello_name: hello_name
+                  smtp_timeout: ""
+                host: host
                 type: Smtp
             backend_name: backend_name
             end_time: end_time
@@ -5292,22 +5300,22 @@ components:
           policy_evaluation: ""
           input: input
           score:
-            age_days: 1
+            age_days: 5
             confidence_factors:
             - confidence_factors
             - confidence_factors
             catch_all_severity: low
             partial_confidence:
-              confidence: 23
+              confidence: 93
               classification: transient
               factors:
               - factors
               - factors
-            confidence: 56
+            confidence: 70
             confidence_level: high
             catch_all:
               severity: low
-              confidence: 59
+              confidence: 23
               factors:
               - factors
               - factors
@@ -5317,7 +5325,7 @@ components:
             reason_codes:
             - deliverable
             - deliverable
-            score: 70
+            score: 36
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -5362,6 +5370,14 @@ components:
             start_time: start_time
             smtp:
               verif_method:
+                verif_method:
+                  proxy: proxy
+                  retries: 0
+                  from_email: from_email
+                  smtp_port: 0
+                  hello_name: hello_name
+                  smtp_timeout: ""
+                host: host
                 type: Smtp
             backend_name: backend_name
             end_time: end_time
@@ -5382,22 +5398,22 @@ components:
           policy_evaluation: ""
           input: input
           score:
-            age_days: 1
+            age_days: 5
             confidence_factors:
             - confidence_factors
             - confidence_factors
             catch_all_severity: low
             partial_confidence:
-              confidence: 23
+              confidence: 93
               classification: transient
               factors:
               - factors
               - factors
-            confidence: 56
+            confidence: 70
             confidence_level: high
             catch_all:
               severity: low
-              confidence: 59
+              confidence: 23
               factors:
               - factors
               - factors
@@ -5407,7 +5423,7 @@ components:
             reason_codes:
             - deliverable
             - deliverable
-            score: 70
+            score: 36
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -5455,7 +5471,7 @@ components:
     CatchAllScore:
       example:
         severity: low
-        confidence: 59
+        confidence: 23
         factors:
         - factors
         - factors
@@ -5523,6 +5539,14 @@ components:
           start_time: start_time
           smtp:
             verif_method:
+              verif_method:
+                proxy: proxy
+                retries: 0
+                from_email: from_email
+                smtp_port: 0
+                hello_name: hello_name
+                smtp_timeout: ""
+              host: host
               type: Smtp
           backend_name: backend_name
           end_time: end_time
@@ -5543,22 +5567,22 @@ components:
         policy_evaluation: ""
         input: input
         score:
-          age_days: 1
+          age_days: 5
           confidence_factors:
           - confidence_factors
           - confidence_factors
           catch_all_severity: low
           partial_confidence:
-            confidence: 23
+            confidence: 93
             classification: transient
             factors:
             - factors
             - factors
-          confidence: 56
+          confidence: 70
           confidence_level: high
           catch_all:
             severity: low
-            confidence: 59
+            confidence: 23
             factors:
             - factors
             - factors
@@ -5568,7 +5592,7 @@ components:
           reason_codes:
           - deliverable
           - deliverable
-          score: 70
+          score: 36
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -5958,6 +5982,14 @@ components:
         start_time: start_time
         smtp:
           verif_method:
+            verif_method:
+              proxy: proxy
+              retries: 0
+              from_email: from_email
+              smtp_port: 0
+              hello_name: hello_name
+              smtp_timeout: ""
+            host: host
             type: Smtp
         backend_name: backend_name
         end_time: end_time
@@ -5995,6 +6027,14 @@ components:
       description: "SMTP details used for debugging, including the verification method."
       example:
         verif_method:
+          verif_method:
+            proxy: proxy
+            retries: 0
+            from_email: from_email
+            smtp_port: 0
+            hello_name: hello_name
+            smtp_timeout: ""
+          host: host
           type: Smtp
       properties:
         verif_method:
@@ -6181,22 +6221,22 @@ components:
       type: string
     EmailScore:
       example:
-        age_days: 1
+        age_days: 5
         confidence_factors:
         - confidence_factors
         - confidence_factors
         catch_all_severity: low
         partial_confidence:
-          confidence: 23
+          confidence: 93
           classification: transient
           factors:
           - factors
           - factors
-        confidence: 56
+        confidence: 70
         confidence_level: high
         catch_all:
           severity: low
-          confidence: 59
+          confidence: 23
           factors:
           - factors
           - factors
@@ -6206,7 +6246,7 @@ components:
         reason_codes:
         - deliverable
         - deliverable
-        score: 70
+        score: 36
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -7751,7 +7791,7 @@ components:
       type: object
     PartialConfidence:
       example:
-        confidence: 23
+        confidence: 93
         classification: transient
         factors:
         - factors
@@ -9309,8 +9349,19 @@ components:
     VerifMethod:
       description: The method used for email verification.
       example:
+        verif_method:
+          proxy: proxy
+          retries: 0
+          from_email: from_email
+          smtp_port: 0
+          hello_name: hello_name
+          smtp_timeout: ""
+        host: host
         type: Smtp
       properties:
+        host:
+          description: The mail server host the check connected to. Only for Smtp.
+          type: string
         type:
           description: The method used for the email verification.
           enum:
@@ -9319,14 +9370,12 @@ components:
           - Api
           - Skipped
           type: string
-          x-stoplight:
-            id: 4ogsz639tcdb6
+        verif_method:
+          $ref: "#/components/schemas/VerifMethod_verif_method"
       required:
       - type
       title: VerifMethod
       type: object
-      x-stoplight:
-        id: 9xw9e1jwti230
     Webhook:
       description: "Configuration for a webhook to receive email verification results.\
         \ The method will be POST, and the body will contain the email verification\
@@ -9516,6 +9565,36 @@ components:
       - bucket
       - provider
       - type
+      type: object
+    VerifMethod_verif_method:
+      description: The SMTP settings the check used. Only for Smtp.
+      example:
+        proxy: proxy
+        retries: 0
+        from_email: from_email
+        smtp_port: 0
+        hello_name: hello_name
+        smtp_timeout: ""
+      properties:
+        from_email:
+          type: string
+        hello_name:
+          type: string
+        proxy:
+          nullable: true
+          type: string
+        retries:
+          format: int32
+          minimum: 0
+          type: integer
+        smtp_port:
+          format: int32
+          minimum: 0
+          type: integer
+        smtp_timeout:
+          allOf:
+          - $ref: "#/components/schemas/Duration"
+          nullable: true
       type: object
   securitySchemes:
     AdminSecret:

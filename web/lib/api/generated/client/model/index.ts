@@ -208,6 +208,7 @@ export * from "./v1QueryResultsParams";
 export * from "./v1SourceQuality200";
 export * from "./verifMethod";
 export * from "./verifMethodType";
+export * from "./verifMethodVerifMethod";
 export * from "./webhook";
 export * from "./webhookExtra";
 export * from "./yahooVerifMethod";

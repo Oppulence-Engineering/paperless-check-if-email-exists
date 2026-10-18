@@ -1130,6 +1130,41 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["score", "category", "confidence", "action", "model_version", "scored_at", "risk_factors"]
 		}),
 	);
+	// Matches core::smtp::SmtpDebugVerifMethod. The Smtp variant also sends the
+	// host and the SMTP settings; strict clients reject the result without them.
+	insert_schema(
+		spec,
+		"VerifMethod",
+		json!({
+			"type": "object",
+			"title": "VerifMethod",
+			"description": "The method used for email verification.",
+			"properties": {
+				"type": {
+					"type": "string",
+					"enum": ["Smtp", "Headless", "Api", "Skipped"],
+					"description": "The method used for the email verification."
+				},
+				"host": { "type": "string", "description": "The mail server host the check connected to. Only for Smtp." },
+				"verif_method": {
+					"type": "object",
+					"description": "The SMTP settings the check used. Only for Smtp.",
+					"properties": {
+						"from_email": { "type": "string" },
+						"hello_name": { "type": "string" },
+						"proxy": { "type": "string", "nullable": true },
+						"smtp_port": { "type": "integer", "format": "int32", "minimum": 0 },
+						"smtp_timeout": {
+							"nullable": true,
+							"allOf": [{ "$ref": "#/components/schemas/Duration" }]
+						},
+						"retries": { "type": "integer", "format": "int32", "minimum": 0 }
+					}
+				}
+			},
+			"required": ["type"]
+		}),
+	);
 	insert_schema(
 		spec,
 		"EmailScore",

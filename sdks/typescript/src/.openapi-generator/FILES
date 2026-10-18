@@ -197,6 +197,7 @@ docs/V0Api.md
 docs/V1Api.md
 docs/V1EmailHistory200Response.md
 docs/VerifMethod.md
+docs/VerifMethodVerifMethod.md
 docs/VerificationApi.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
@@ -363,6 +364,7 @@ models/update-tenant-domain-request.ts
 models/update-tenant-settings-request.ts
 models/update-webhook-request.ts
 models/v1-email-history200-response.ts
+models/verif-method-verif-method.ts
 models/verif-method.ts
 models/webhook.ts
 models/yahoo-verif-method.ts
