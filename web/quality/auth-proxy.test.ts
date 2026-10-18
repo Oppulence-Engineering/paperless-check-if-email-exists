@@ -9,7 +9,7 @@ const auth = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth/session", () => auth);
 
-import { backendProxyHeaders, proxyBackendAPI } from "@/lib/auth/proxy";
+import { proxyBackendAPI } from "@/lib/auth/proxy";
 
 const session = {
 	user: { id: "user-1" },
@@ -73,9 +73,42 @@ describe("backend proxy", () => {
 		expect(auth.getAuthorizedSession).not.toHaveBeenCalled();
 	});
 
-	it("forwards the idempotency key that a pipeline push needs", () => {
-		const headers = backendProxyHeaders(new Headers({ "idempotency-key": "batch-1" }));
-		expect(headers.get("idempotency-key")).toBe("batch-1");
+	it("forwards the idempotency key that a pipeline push needs", async () => {
+		const upstream = vi.fn((...args: [RequestInfo | URL, RequestInit?]) => {
+			expect(args.length).toBeGreaterThan(0);
+			return Promise.resolve(Response.json({ run_id: 1 }, { status: 202 }));
+		});
+		vi.stubGlobal("fetch", upstream);
+		const response = await proxyBackendAPI(
+			new NextRequest("https://app.example.test/api/backend/v1/pipelines/4/push", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					"idempotency-key": "batch-0001",
+					origin: "https://app.example.test",
+				},
+				body: JSON.stringify({ rows: [] }),
+			}),
+			["v1", "pipelines", "4", "push"],
+		);
+		expect(response.status).toBe(202);
+		const headers = new Headers(upstream.mock.calls[0]?.[1]?.headers);
+		expect(headers.get("idempotency-key")).toBe("batch-0001");
+	});
+
+	it("rejects an invalid idempotency key before contacting the backend", async () => {
+		const upstream = vi.fn();
+		vi.stubGlobal("fetch", upstream);
+		const response = await proxyBackendAPI(
+			new NextRequest("https://app.example.test/api/backend/v1/pipelines/4/push", {
+				method: "POST",
+				headers: { "idempotency-key": "short", origin: "https://app.example.test" },
+				body: "{}",
+			}),
+			["v1", "pipelines", "4", "push"],
+		);
+		expect(response.status).toBe(400);
+		expect(upstream).not.toHaveBeenCalled();
 	});
 
 	it("replaces browser supplied identity and authorization headers", async () => {

@@ -171,9 +171,9 @@ export async function proxyBackendAPI(request: NextRequest, path: string[]): Pro
 	}
 
 	const headers = backendProxyHeaders(request.headers);
-	const idempotencyKey = headers.get("x-idempotency-key");
+	const idempotencyKeys = [headers.get("x-idempotency-key"), headers.get("idempotency-key")];
 	const entityTag = headers.get("if-match");
-	if (idempotencyKey && !IdempotencyKeySchema.safeParse(idempotencyKey).success) {
+	if (idempotencyKeys.some((key) => key && !IdempotencyKeySchema.safeParse(key).success)) {
 		return errorResponse(400, "invalid idempotency key", "invalid_idempotency_key");
 	}
 	if (entityTag && !EntityTagSchema.safeParse(entityTag).success) {
