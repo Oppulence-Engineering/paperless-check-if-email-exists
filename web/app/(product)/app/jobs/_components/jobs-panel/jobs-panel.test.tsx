@@ -18,14 +18,22 @@ it("turns pasted addresses into one bulk job and opens its progress", async () =
 		.mockResolvedValue({ data: { job_id: 9 } } as never);
 	vi.spyOn(JobsApi.prototype, "v1GetJobStatus").mockResolvedValue({
 		data: {
+			job_id: 9,
 			status: "running",
 			total_records: 2,
+			created_at: "2026-10-18T04:00:00Z",
 			task_summary: { queued: 2, completed: 0 },
 		},
 	} as never);
 	vi.spyOn(JobsApi.prototype, "v1GetBulkJobProgress").mockResolvedValue({
-		data: { total_processed: 0, summary: { total_safe: 0 } },
+		data: { created_at: "2026-10-18T04:00:00Z", total_records: 2, total_processed: 0 },
 	} as never);
+	// gitleaks reads the method name as a key.
+	const getJobResults = vi.spyOn(JobsApi.prototype, "v1GetJobResults"); // gitleaks:allow
+	getJobResults.mockResolvedValue({
+		data: { has_more: false, next_cursor: null, results: [] },
+	} as never);
+	vi.spyOn(JobsApi.prototype, "v1JobApprovalChecklist").mockRejectedValue(new Error("Not ready"));
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
@@ -48,6 +56,8 @@ it("turns pasted addresses into one bulk job and opens its progress", async () =
 	);
 	expect(await screen.findByText(/Job 9 created/)).toBeInTheDocument();
 	expect(await screen.findByText("2 records")).toBeInTheDocument();
+	expect(screen.getByText("Running")).toBeInTheDocument();
+	expect(await screen.findByText(/0 of 2 rows checked/)).toBeInTheDocument();
 	expect(screen.getByRole("link", { name: "Share this job" })).toHaveAttribute(
 		"href",
 		"/app/jobs?job=9",

@@ -32,5 +32,7 @@ export default function ListDetailPage({ searchParams }: ListDetailPageProps) {
 async function ListDetailRouteContent({ searchParams }: ListDetailPageProps) {
 	const raw = await searchParams;
 	const id = z.coerce.number().int().positive().safeParse(raw.list);
-	return <ListDetailPanel listId={id.success ? id.data : undefined} />;
+	return (
+		<ListDetailPanel accepted={raw.accepted === "1"} listId={id.success ? id.data : undefined} />
+	);
 }
