@@ -1,7 +1,7 @@
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import {
 	operationById,
@@ -10,6 +10,8 @@ import {
 	workflowDestination,
 	type PortalOperation,
 } from "@/lib/developer-portal/operations";
+
+import { CodeBlock, DocsPage, DocsSection, bodyClassName, linkClassName } from "../../docs-kit";
 
 type Props = { params: Promise<{ operationId: string }> };
 
@@ -68,7 +70,16 @@ function curlExample(operation: PortalOperation): string | undefined {
 	return lines.join(" \\\n");
 }
 
-export default async function OperationPage({ params }: Props) {
+// params is runtime data for unknown IDs, so it resolves under Suspense.
+export default function OperationPage({ params }: Props) {
+	return (
+		<Suspense fallback={null}>
+			<OperationContent params={params} />
+		</Suspense>
+	);
+}
+
+async function OperationContent({ params }: Props) {
 	const operation = operationById((await params).operationId);
 	if (!operation) notFound();
 	const body = bodyContent(operation);
@@ -76,75 +87,81 @@ export default async function OperationPage({ params }: Props) {
 	const workflow = workflowDestination(operation);
 
 	return (
-		<DocsPage>
-			<DocsTitle>
-				{operation.method} {operation.path}
-			</DocsTitle>
-			<DocsDescription>{operation.description ?? operation.summary}</DocsDescription>
-			<DocsBody>
-				<p>
-					<strong>Family:</strong> {operation.family} · <strong>Operation ID:</strong>{" "}
-					<code>{operation.id}</code>
-				</p>
-				<h2>Access</h2>
-				<p>{accessText(operation)}</p>
-				<p>
-					<Link href={workflow.href}>{workflow.label}</Link>
-				</p>
-				{operation.audience === "tenant" ? (
-					<p>
-						<strong>Required scope:</strong> {operation.scope ?? "any authenticated workspace key"}
+		<DocsPage
+			lead={operation.description ?? operation.summary}
+			title={
+				<span className="font-mono text-2xl sm:text-3xl">
+					{operation.method} {operation.path}
+				</span>
+			}
+		>
+			<p className={bodyClassName}>
+				<Link className={linkClassName} href="/developers/reference">
+					API reference
+				</Link>{" "}
+				· {operation.family} · <code>{operation.id}</code>
+			</p>
+			<DocsSection title="Access">
+				<div className="space-y-3">
+					<p className={bodyClassName}>{accessText(operation)}</p>
+					<p className={bodyClassName}>
+						<Link className={linkClassName} href={workflow.href}>
+							{workflow.label}
+						</Link>
 					</p>
-				) : null}
-				{operation.audience === "tenant" ? (
-					<p>
-						Create a key in <Link href="/app/settings?settings=developer">Developer settings</Link>.
-						Set <code>API_BASE_URL</code> to the current app origin.
-					</p>
-				) : null}
-				{example ? (
-					<>
-						<h2>Request example</h2>
-						<pre>
-							<code>{example}</code>
-						</pre>
-					</>
-				) : null}
-				{operation.path.includes("{") ? (
-					<p>
-						Replace each <code>{"{parameter}"}</code> segment in the path with its URL-encoded
-						value.
-					</p>
-				) : null}
-				{operation.parameters.length > 0 ? (
-					<>
-						<h2>Parameters</h2>
-						<pre>
-							<code>{JSON.stringify(operation.parameters, null, 2)}</code>
-						</pre>
-					</>
-				) : null}
-				{Object.entries(body).map(([media, content]) => (
-					<section key={media}>
-						<h2>Request body · {media}</h2>
-						<pre>
-							<code>{JSON.stringify(documentedSchema(content.schema), null, 2)}</code>
-						</pre>
-					</section>
-				))}
-				<h2>Responses</h2>
-				{Object.entries(operation.responses).map(([status, response]) => (
-					<section key={status}>
-						<h3>{status}</h3>
-						<pre>
-							<code>{JSON.stringify(response, null, 2)}</code>
-						</pre>
-					</section>
-				))}
-				<p>
-					<Link href="/openapi.json">Download the full OpenAPI contract</Link>
+					{operation.audience === "tenant" ? (
+						<p className={bodyClassName}>
+							<strong className="font-medium text-foreground">Required scope:</strong>{" "}
+							{operation.scope ?? "any authenticated workspace key"}
+						</p>
+					) : null}
+					{operation.audience === "tenant" ? (
+						<p className={bodyClassName}>
+							Create a key in{" "}
+							<Link className={linkClassName} href="/app/settings?settings=developer">
+								Developer settings
+							</Link>
+							. Set <code>API_BASE_URL</code> to the current app origin.
+						</p>
+					) : null}
+				</div>
+			</DocsSection>
+			{example ? (
+				<DocsSection title="Request example">
+					<CodeBlock>{example}</CodeBlock>
+					{operation.path.includes("{") ? (
+						<p className={`mt-3 ${bodyClassName}`}>
+							Replace each <code>{"{parameter}"}</code> segment in the path with its URL-encoded
+							value.
+						</p>
+					) : null}
+				</DocsSection>
+			) : null}
+			{operation.parameters.length > 0 ? (
+				<DocsSection title="Parameters">
+					<CodeBlock>{JSON.stringify(operation.parameters, null, 2)}</CodeBlock>
+				</DocsSection>
+			) : null}
+			{Object.entries(body).map(([media, content]) => (
+				<DocsSection key={media} title={`Request body · ${media}`}>
+					<CodeBlock>{JSON.stringify(documentedSchema(content.schema), null, 2)}</CodeBlock>
+				</DocsSection>
+			))}
+			<DocsSection title="Responses">
+				<div className="space-y-6">
+					{Object.entries(operation.responses).map(([status, response]) => (
+						<div key={status}>
+							<h3 className="mb-2 text-base font-medium text-foreground">{status}</h3>
+							<CodeBlock>{JSON.stringify(response, null, 2)}</CodeBlock>
+						</div>
+					))}
+				</div>
+				<p className={`mt-6 ${bodyClassName}`}>
+					<Link className={linkClassName} href="/openapi.json">
+						Download the full OpenAPI contract
+					</Link>
 				</p>
-			</DocsBody>
+			</DocsSection>
 		</DocsPage>
 	);
 }
