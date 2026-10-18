@@ -42,8 +42,7 @@
 - **Serverless**: AWS Lambda + SQS (alternative deployment)
 
 ### Licensing
-- **Open Source**: AGPL-3.0 (copyleft, requires source disclosure)
-- **Commercial**: Available for proprietary use without AGPL obligations
+- **MIT** (see `LICENSE.md`). Upstream Reacher moved from AGPL-3.0 to MIT in 0.11.8.
 
 ---
 
@@ -133,7 +132,7 @@ check-if-email-exists/
 ├── README.md                   # Project documentation
 ├── Makefile                    # Build shortcuts
 ├── .env.example                # Environment variable template
-└── LICENSE                     # AGPL-3.0 license
+└── LICENSE.md                  # MIT license
 ```
 
 ### Crate Dependency Graph

@@ -3235,6 +3235,13 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 			"version".to_string(),
 			Value::String(env!("CARGO_PKG_VERSION").to_string()),
 		);
+		info.insert(
+			"license".to_string(),
+			json!({
+				"name": "MIT",
+				"url": "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/LICENSE.md"
+			}),
+		);
 	}
 	Ok(spec)
 }

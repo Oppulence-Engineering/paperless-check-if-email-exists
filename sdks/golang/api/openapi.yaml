@@ -9,8 +9,8 @@ info:
 
     Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
   license:
-    name: AGPL-3.0 OR Commercial
-    url: https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md
+    name: MIT
+    url: https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/LICENSE.md
   termsOfService: https://github.com/reacherhq/policies/blob/master/terms/index.fr.md
   title: Reacher
   version: 4.3.0
