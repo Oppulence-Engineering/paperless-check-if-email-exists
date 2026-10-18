@@ -165,15 +165,16 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 									<tr className="border-b border-border/60" key={row.id}>
 										<td className="py-2 pr-4">
 											{row.result ? (
-												<button
-													className="text-left whitespace-nowrap text-white underline-offset-4 hover:underline"
+												<Button
+													className="h-auto justify-start p-0 text-left text-white"
 													onClick={() => {
 														setOpen(row);
 													}}
 													type="button"
+													variant="link"
 												>
 													{row.result.input || `Row ${String(row.id)}`}
-												</button>
+												</Button>
 											) : (
 												<span className="text-white">Row {row.id}</span>
 											)}

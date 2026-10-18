@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 
+import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
 import { Label } from "@oppulence/ui/components/label";
 import { Textarea } from "@oppulence/ui/components/textarea";
@@ -86,9 +87,9 @@ export function ContactForm({ className }: { className?: string }) {
 					placeholder="Your question"
 				/>
 			</div>
-			<button className={cn(ctaClassName("primary"), "w-full justify-center")} type="submit">
+			<Button className={cn(ctaClassName("primary"), "w-full justify-center")} type="submit">
 				Send
-			</button>
+			</Button>
 			<p className={cn("text-[13px]", MUTED)}>
 				Sending opens your email app with this message to {CONTACT_EMAIL}.
 			</p>

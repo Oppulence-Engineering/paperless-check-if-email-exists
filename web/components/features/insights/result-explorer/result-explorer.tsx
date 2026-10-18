@@ -263,15 +263,16 @@ export function ResultExplorer({
 									return (
 										<tr className="border-b border-border/60 align-top" key={row.id}>
 											<td className="py-2 pr-4">
-												<button
-													className="text-left break-all text-white underline-offset-4 hover:underline"
+												<Button
+													className="h-auto justify-start p-0 text-left break-all whitespace-normal text-white"
 													onClick={() => {
 														setOpen(row);
 													}}
 													type="button"
+													variant="link"
 												>
 													{row.email || `Result ${String(row.id)}`}
-												</button>
+												</Button>
 											</td>
 											<td className="py-2 pr-4 text-white">{row.score ?? "—"}</td>
 											<td className="py-2 pr-4">
