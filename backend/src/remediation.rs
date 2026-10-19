@@ -244,7 +244,12 @@ pub fn render_remediation_csv(
 		"_reacher_original_email".to_string(),
 		"_reacher_effective_email".to_string(),
 	]);
-	writer.write_record(&header)?;
+	// Header names come from the uploaded file as well.
+	writer.write_record(
+		header
+			.iter()
+			.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+	)?;
 
 	for row in rows
 		.iter()
@@ -265,7 +270,11 @@ pub fn render_remediation_csv(
 		record.push(row.confidence.to_string());
 		record.push(email_value(&row.before, email_column));
 		record.push(email_value(&row.after, email_column));
-		writer.write_record(&record)?;
+		writer.write_record(
+			record
+				.iter()
+				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+		)?;
 	}
 
 	writer.into_inner().map_err(|err| err.into_error().into())
@@ -478,6 +487,31 @@ mod tests {
 		let row = classify_row(row, &RemediationOptions::default());
 		assert_eq!(row.classification, RemediationClassification::Review);
 		assert_eq!(row.rule_id, "role_account");
+	}
+
+	#[test]
+	fn rendered_csv_opens_uploaded_formulas_as_text() {
+		let mut input = base_row("=1+2@example.com");
+		input.original.insert(
+			"name".to_string(),
+			Value::String("=HYPERLINK(\"x\")".into()),
+		);
+		let row = classify_row(input, &RemediationOptions::default());
+		let headers = ["email".to_string(), "name".to_string(), "=cmd".to_string()];
+		let bytes =
+			render_remediation_csv(&headers, "email", &[row], RemediationPartition::Safe).unwrap();
+		let mut reader = csv::ReaderBuilder::new()
+			.has_headers(false)
+			.from_reader(bytes.as_slice());
+		let records: Vec<_> = reader.records().map(Result::unwrap).collect();
+		assert_eq!(records.len(), 2);
+		for record in records {
+			assert!(
+				record.iter().all(|cell| !cell.starts_with('=')),
+				"{:?}",
+				record
+			);
+		}
 	}
 
 	#[test]

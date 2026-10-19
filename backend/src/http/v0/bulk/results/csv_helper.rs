@@ -180,9 +180,10 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 			smtp_is_catch_all,
 			smtp_is_deliverable,
 			smtp_is_disabled,
-			syntax_domain,
+			// Both are split from the input address.
+			syntax_domain: crate::http::csv_shared::spreadsheet_safe(&syntax_domain),
 			syntax_is_valid_syntax,
-			syntax_username,
+			syntax_username: crate::http::csv_shared::spreadsheet_safe(&syntax_username),
 			error,
 		})
 	}
@@ -266,6 +267,27 @@ mod tests {
 		let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
 		assert!(data.contains("test@example.com"));
 		assert!(data.contains("safe"));
+
+		// `=1+2@x.com` is a valid address, and its local part comes back as
+		// syntax.username: both cells must open as text, not as formulas.
+		let mut json = valid_json();
+		json["input"] = serde_json::json!("=1+2@x.com");
+		json["syntax"]["username"] = serde_json::json!("=1+2");
+		let csv: JobResultCsvResponse = CsvWrapper(json).try_into().unwrap();
+		let mut wtr = csv::WriterBuilder::new()
+			.has_headers(false)
+			.from_writer(vec![]);
+		wtr.serialize(&csv).unwrap();
+		let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+		let mut reader = csv::ReaderBuilder::new()
+			.has_headers(false)
+			.from_reader(data.as_bytes());
+		let record = reader.records().next().unwrap().unwrap();
+		assert!(
+			record.iter().all(|cell| !cell.starts_with('=')),
+			"{:?}",
+			record
+		);
 	}
 
 	#[test]
