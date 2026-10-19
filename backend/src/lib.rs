@@ -14,6 +14,7 @@ pub mod reputation;
 pub mod reverification;
 pub mod sandbox;
 pub mod scoring;
+pub mod smtp_egress;
 pub mod storage;
 pub mod suppression;
 pub mod tenant;
