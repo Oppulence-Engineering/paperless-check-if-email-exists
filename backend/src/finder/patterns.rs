@@ -7,16 +7,39 @@ pub struct Candidate {
 	pub pattern: String,
 }
 
+/// Latin letters that NFKD does not decompose into an ASCII base letter plus
+/// combining marks. Without this map the ASCII filter in `normalize_name`
+/// silently drops them, turning "Łukasz" into "ukasz".
+fn transliterate(c: char) -> Option<&'static str> {
+	Some(match c {
+		'ł' => "l",
+		'ø' => "o",
+		'ß' => "ss",
+		'æ' => "ae",
+		'œ' => "oe",
+		'đ' => "d",
+		'þ' => "th",
+		'ð' => "d",
+		'ı' => "i",
+		_ => return None,
+	})
+}
+
 pub fn normalize_name(input: &str) -> String {
-	input
+	let mut normalized = String::with_capacity(input.len());
+	for c in input
 		.trim()
 		.nfkd()
 		.filter(|c| !is_combining_mark(*c))
-		.collect::<String>()
-		.to_lowercase()
-		.chars()
-		.filter(|c| c.is_ascii_alphanumeric())
-		.collect()
+		.flat_map(char::to_lowercase)
+	{
+		match transliterate(c) {
+			Some(replacement) => normalized.push_str(replacement),
+			None if c.is_ascii_alphanumeric() => normalized.push(c),
+			None => {}
+		}
+	}
+	normalized
 }
 
 pub fn normalize_domain(input: &str) -> String {
@@ -103,5 +126,30 @@ mod tests {
 		assert!(accent
 			.iter()
 			.any(|candidate| candidate.email == "john.doe@example.com"));
+	}
+
+	#[test]
+	fn normalization_transliterates_letters_without_a_decomposition() {
+		// These letters have no NFKD decomposition into an ASCII base letter, so
+		// stripping combining marks alone would drop them from the local part.
+		let cases = [
+			("Łukasz", "lukasz"),
+			("Bjørn", "bjorn"),
+			("Weiß", "weiss"),
+			("Ærø", "aero"),
+			("Œuvre", "oeuvre"),
+			("Đorđe", "dorde"),
+			("Þór", "thor"),
+			("Guðrún", "gudrun"),
+			("Işık", "isik"),
+		];
+		for (input, expected) in cases {
+			assert_eq!(
+				normalize_name(input),
+				expected,
+				"normalize_name({:?})",
+				input
+			);
+		}
 	}
 }
