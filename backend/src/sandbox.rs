@@ -12,7 +12,10 @@ use hickory_resolver::{
 };
 
 fn sandbox_mx(domain: &str) -> MxDetails {
-	let domain = Name::from_ascii(domain).expect("sandbox domain is valid");
+	// The domain comes from the request and need not be a valid DNS name
+	// (`a@exa mple.com`); it only names the query of this mock answer.
+	let domain = Name::from_ascii(domain)
+		.unwrap_or_else(|_| Name::from_ascii("example.com.").expect("static name is valid"));
 	let exchange = Name::from_ascii("mail.example.com.").expect("sandbox MX is valid");
 	MxDetails::from(MxLookup::from(Lookup::from_rdata(
 		Query::query(domain, RecordType::MX),
@@ -178,6 +181,13 @@ mod tests {
 	fn sandbox_valid_domain() {
 		let result = sandbox_check("test@valid.example.com");
 		assert_eq!(result.is_reachable, Reachable::Safe);
+		// A domain that is not a DNS name gets the default scenario
+		// instead of panicking the request.
+		assert_eq!(
+			sandbox_check("a@exa mple.com").is_reachable,
+			Reachable::Safe
+		);
+		assert_eq!(sandbox_check("a@b..com").is_reachable, Reachable::Safe);
 		assert!(crate::scoring::compute_score(&result).safe_to_send);
 	}
 

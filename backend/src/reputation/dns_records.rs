@@ -4,7 +4,9 @@ use hickory_resolver::lookup::Lookup;
 use hickory_resolver::proto::rr::RData;
 use hickory_resolver::TokioResolver;
 
-/// The strings of all TXT records in a lookup.
+/// The value of each TXT record in a lookup. A record longer than 255 bytes
+/// arrives as several character-strings; SPF (RFC 7208 section 3.3) and
+/// DMARC read the record as their concatenation.
 fn txt_strings(lookup: &Lookup) -> Vec<String> {
 	lookup
 		.answers()
@@ -13,9 +15,14 @@ fn txt_strings(lookup: &Lookup) -> Vec<String> {
 			RData::TXT(txt) => Some(txt),
 			_ => None,
 		})
-		.flat_map(|txt| txt.txt_data.iter())
-		.filter_map(|bytes| std::str::from_utf8(bytes).ok())
-		.map(ToOwned::to_owned)
+		.filter_map(|txt| {
+			let bytes: Vec<u8> = txt
+				.txt_data
+				.iter()
+				.flat_map(|chunk| chunk.iter().copied())
+				.collect();
+			String::from_utf8(bytes).ok()
+		})
 		.collect()
 }
 

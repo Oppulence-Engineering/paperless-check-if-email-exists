@@ -110,17 +110,18 @@ fn recommended_action(
 		return RecommendedAction::FixThenSend;
 	}
 
-	if matches!(
+	// Bounce risk can only soften a send. A policy that asks for review,
+	// suppression or a drop stays in force whatever the bounce risk says.
+	let bounce_risk_cautions = matches!(
 		input.bounce_risk.map(|risk| &risk.category),
 		Some(BounceRiskCategory::Medium)
 	) || matches!(
 		input.bounce_risk.map(|risk| &risk.action),
 		Some(BounceRecommendedAction::SendWithCaution)
-	) {
-		return RecommendedAction::SendWithCaution;
-	}
+	);
 
 	match policy_decision {
+		PolicyDecision::Send if bounce_risk_cautions => RecommendedAction::SendWithCaution,
 		PolicyDecision::Send => RecommendedAction::Send,
 		PolicyDecision::Review => RecommendedAction::Review,
 		PolicyDecision::Suppress => RecommendedAction::Suppress,
@@ -281,6 +282,17 @@ mod tests {
 		let (recommendation, policy) = evaluate(&input(&score));
 		assert_eq!(recommendation.action, RecommendedAction::Review);
 		assert_eq!(policy.decision, PolicyDecision::Review);
+
+		// A medium bounce risk does not turn the policy's review into a send.
+		let risk = bounce_risk(
+			BounceRiskCategory::Medium,
+			BounceRecommendedAction::SendWithCaution,
+		);
+		let (recommendation, _) = evaluate(&DecisionInput {
+			bounce_risk: Some(&risk),
+			..input(&score)
+		});
+		assert_eq!(recommendation.action, RecommendedAction::Review);
 	}
 
 	#[test]

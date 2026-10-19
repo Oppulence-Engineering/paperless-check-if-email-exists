@@ -89,8 +89,10 @@ pub fn catch_all_severity(signals: &ScoringSignals) -> Option<CatchAllSeverity> 
 		return None;
 	}
 
+	// Core reports every catch-all as Risky, so `Safe` can never be required
+	// here; the other causes of Risky are each excluded below.
 	let otherwise_clean = signals.valid_syntax
-		&& matches!(signals.reachable, Reachable::Safe)
+		&& !matches!(signals.reachable, Reachable::Invalid | Reachable::Unknown)
 		&& signals.has_mx_records
 		&& !signals.smtp_error
 		&& signals.smtp_can_connect
@@ -529,8 +531,12 @@ pub fn compute_score_with_context(
 			InsightCatchAllSeverity::Medium => 12,
 			InsightCatchAllSeverity::High => 25,
 		};
-		// The legacy scorer already applied a flat -15 catch-all penalty.
-		adjustment += 15 - severity_penalty;
+		// Replace the legacy scorer's catch-all penalty with this one.
+		let legacy_penalty = match catch_all_severity(&score.signals) {
+			Some(CatchAllSeverity::Low) => 10,
+			_ => 15,
+		};
+		adjustment += legacy_penalty - severity_penalty;
 		contextual_codes.push(
 			match catch_all.severity {
 				InsightCatchAllSeverity::Low => "catch_all_low_confidence",
@@ -979,7 +985,13 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		.unwrap_or(false);
 
 	let smtp_error = output.smtp.is_err();
-	let smtp_ok = output.smtp.as_ref().ok();
+	// When the MX lookup itself fails (a resolver timeout, SERVFAIL), core
+	// stops before SMTP and leaves the default SMTP block, whose
+	// `is_deliverable` is false. That is not an answer from a mail server,
+	// so it must not read as "undeliverable"; the result is scored as the
+	// unknown it is.
+	let smtp_attempted = output.mx.is_ok();
+	let smtp_ok = output.smtp.as_ref().ok().filter(|_| smtp_attempted);
 	let misc_ok = output.misc.as_ref().ok();
 
 	ScoringSignals {
@@ -1133,6 +1145,15 @@ mod tests {
 		assert_eq!(score.category, EmailCategory::Unknown);
 		assert_eq!(score.sub_reason, SubReason::NoMx);
 		assert!(!score.safe_to_send);
+
+		// What core returns when the MX lookup fails before SMTP runs: the
+		// default SMTP block, whose `is_deliverable` is false. A DNS timeout
+		// says nothing about the mailbox.
+		output.is_reachable = Reachable::Unknown;
+		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails::default());
+		let score = compute_score(&output);
+		assert_eq!(score.category, EmailCategory::Unknown);
+		assert_ne!(score.sub_reason, SubReason::SmtpUndeliverable);
 	}
 
 	#[test]
@@ -1268,7 +1289,8 @@ mod tests {
 	fn catch_all_signals(is_free_provider: bool) -> ScoringSignals {
 		ScoringSignals {
 			valid_syntax: true,
-			reachable: Reachable::Safe,
+			// What core reports for every catch-all domain.
+			reachable: Reachable::Risky,
 			has_mx_records: true,
 			smtp_error: false,
 			smtp_can_connect: true,
@@ -1311,7 +1333,7 @@ mod tests {
 		// list it in catch_all_severity, add the case here and this fails.
 		let mutators: [(&str, SignalMutator); 13] = [
 			("valid_syntax", |s| s.valid_syntax = false),
-			("reachable_risky", |s| s.reachable = Reachable::Risky),
+			("reachable_invalid", |s| s.reachable = Reachable::Invalid),
 			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
 			("smtp_error", |s| s.smtp_error = true),
 			("smtp_is_deliverable", |s| s.smtp_is_deliverable = false),
