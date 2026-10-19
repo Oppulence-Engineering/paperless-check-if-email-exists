@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -22,8 +22,11 @@ var _ MappedNullable = &VerifMethod{}
 
 // VerifMethod The method used for email verification.
 type VerifMethod struct {
+	// The mail server host the check connected to. Only for Smtp.
+	Host *string `json:"host,omitempty"`
 	// The method used for the email verification.
 	Type string `json:"type"`
+	VerifMethod *VerifMethodVerifMethod `json:"verif_method,omitempty"`
 }
 
 type _VerifMethod VerifMethod
@@ -44,6 +47,38 @@ func NewVerifMethod(type_ string) *VerifMethod {
 func NewVerifMethodWithDefaults() *VerifMethod {
 	this := VerifMethod{}
 	return &this
+}
+
+// GetHost returns the Host field value if set, zero value otherwise.
+func (o *VerifMethod) GetHost() string {
+	if o == nil || IsNil(o.Host) {
+		var ret string
+		return ret
+	}
+	return *o.Host
+}
+
+// GetHostOk returns a tuple with the Host field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *VerifMethod) GetHostOk() (*string, bool) {
+	if o == nil || IsNil(o.Host) {
+		return nil, false
+	}
+	return o.Host, true
+}
+
+// HasHost returns a boolean if a field has been set.
+func (o *VerifMethod) HasHost() bool {
+	if o != nil && !IsNil(o.Host) {
+		return true
+	}
+
+	return false
+}
+
+// SetHost gets a reference to the given string and assigns it to the Host field.
+func (o *VerifMethod) SetHost(v string) {
+	o.Host = &v
 }
 
 // GetType returns the Type field value
@@ -70,6 +105,38 @@ func (o *VerifMethod) SetType(v string) {
 	o.Type = v
 }
 
+// GetVerifMethod returns the VerifMethod field value if set, zero value otherwise.
+func (o *VerifMethod) GetVerifMethod() VerifMethodVerifMethod {
+	if o == nil || IsNil(o.VerifMethod) {
+		var ret VerifMethodVerifMethod
+		return ret
+	}
+	return *o.VerifMethod
+}
+
+// GetVerifMethodOk returns a tuple with the VerifMethod field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *VerifMethod) GetVerifMethodOk() (*VerifMethodVerifMethod, bool) {
+	if o == nil || IsNil(o.VerifMethod) {
+		return nil, false
+	}
+	return o.VerifMethod, true
+}
+
+// HasVerifMethod returns a boolean if a field has been set.
+func (o *VerifMethod) HasVerifMethod() bool {
+	if o != nil && !IsNil(o.VerifMethod) {
+		return true
+	}
+
+	return false
+}
+
+// SetVerifMethod gets a reference to the given VerifMethodVerifMethod and assigns it to the VerifMethod field.
+func (o *VerifMethod) SetVerifMethod(v VerifMethodVerifMethod) {
+	o.VerifMethod = &v
+}
+
 func (o VerifMethod) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -80,7 +147,13 @@ func (o VerifMethod) MarshalJSON() ([]byte, error) {
 
 func (o VerifMethod) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Host) {
+		toSerialize["host"] = o.Host
+	}
 	toSerialize["type"] = o.Type
+	if !IsNil(o.VerifMethod) {
+		toSerialize["verif_method"] = o.VerifMethod
+	}
 	return toSerialize, nil
 }
 
@@ -155,5 +228,3 @@ func (v *NullableVerifMethod) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

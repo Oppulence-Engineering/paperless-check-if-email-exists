@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use super::error::StorageError;
 use crate::http::v1::lists::canonicalize::canonicalize_email;
 use crate::scoring::compute_score;
@@ -22,10 +6,11 @@ use crate::scoring::response::{
 };
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskError};
 use check_if_email_exists::{CheckEmailOutput, LOG_TARGET};
+use chrono::{DateTime, Utc};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -50,6 +35,15 @@ struct SuccessColumns {
 	bounce_risk_action: Option<String>,
 	bounce_risk_model_version: Option<String>,
 	bounce_risk_signals: Option<serde_json::Value>,
+	recommendation: Option<serde_json::Value>,
+	recommendation_action: Option<String>,
+	recommendation_confidence: Option<String>,
+	recommendation_priority: Option<String>,
+	policy_mode: Option<String>,
+	policy_profile_key: Option<String>,
+	policy_evaluation: Option<serde_json::Value>,
+	policy_decision: Option<String>,
+	policy_evaluated_at: Option<DateTime<Utc>>,
 }
 
 impl PostgresStorage {
@@ -57,9 +51,12 @@ impl PostgresStorage {
 		db_url: &str,
 		read_replica_url: Option<&str>,
 		extra: Option<serde_json::Value>,
+		max_connections: u32,
 	) -> Result<Self, StorageError> {
 		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
-		let pg_pool = Self::configured_pool_options().connect(db_url).await?;
+		let pg_pool = Self::configured_pool_options(max_connections)
+			.connect(db_url)
+			.await?;
 
 		sqlx::migrate!("./migrations").run(&pg_pool).await?;
 
@@ -68,7 +65,9 @@ impl PostgresStorage {
 		let read_pool = match read_replica_url {
 			Some(url) if !url.is_empty() => {
 				info!(target: LOG_TARGET, "Connecting to read replica");
-				Self::configured_pool_options().connect(url).await?
+				Self::configured_pool_options(max_connections)
+					.connect(url)
+					.await?
 			}
 			_ => pg_pool.clone(),
 		};
@@ -80,8 +79,9 @@ impl PostgresStorage {
 		})
 	}
 
-	fn configured_pool_options() -> PgPoolOptions {
+	fn configured_pool_options(max_connections: u32) -> PgPoolOptions {
 		PgPoolOptions::new()
+			.max_connections(max_connections)
 			.acquire_timeout(Duration::from_secs(3))
 			.test_before_acquire(true)
 	}
@@ -152,8 +152,8 @@ impl PostgresStorage {
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError> {
-		if let Some(db_id) = task_db_id {
-			let upd = sqlx::query(
+		let task_result_id = if let Some(db_id) = task_db_id {
+			let updated_id = sqlx::query_scalar(
 				r#"
 				UPDATE v1_task_result
 				SET payload = $1,
@@ -173,8 +173,20 @@ impl PostgresStorage {
 				    bounce_risk_action = $14,
 				    bounce_risk_model_version = $15,
 				    bounce_risk_signals = $16,
+				    recommendation = $17,
+				    recommendation_action = $18,
+				    recommendation_confidence = $19,
+				    recommendation_priority = $20,
+				    policy_mode = $21,
+				    policy_profile_key = $22,
+				    policy_evaluation = $23,
+				    policy_decision = $24,
+				    policy_evaluated_at = $25,
+				    task_state = 'completed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
-				WHERE id = $17
+				WHERE id = $26
+				RETURNING id
 				"#,
 			)
 			.bind(payload_json)
@@ -193,16 +205,41 @@ impl PostgresStorage {
 			.bind(&columns.bounce_risk_action)
 			.bind(&columns.bounce_risk_model_version)
 			.bind(&columns.bounce_risk_signals)
+			.bind(&columns.recommendation)
+			.bind(&columns.recommendation_action)
+			.bind(&columns.recommendation_confidence)
+			.bind(&columns.recommendation_priority)
+			.bind(&columns.policy_mode)
+			.bind(&columns.policy_profile_key)
+			.bind(&columns.policy_evaluation)
+			.bind(&columns.policy_decision)
+			.bind(columns.policy_evaluated_at)
 			.bind(db_id)
-			.execute(&self.pg_pool)
+			.fetch_optional(&self.pg_pool)
 			.await?;
-			if upd.rows_affected() == 0 {
+			if let Some(updated_id) = updated_id {
+				updated_id
+			} else {
 				self.insert_success(task, payload_json, tenant_id, columns, extra)
-					.await?;
+					.await?
 			}
 		} else {
 			self.insert_success(task, payload_json, tenant_id, columns, extra)
-				.await?;
+				.await?
+		};
+
+		if let Err(err) = crate::list_intelligence::record_verification_change_event(
+			&self.pg_pool,
+			task_result_id,
+		)
+		.await
+		{
+			warn!(
+				target: LOG_TARGET,
+				task_result_id = task_result_id,
+				error = ?err,
+				"Failed to record verification change event"
+			);
 		}
 
 		Ok(())
@@ -215,22 +252,30 @@ impl PostgresStorage {
 		tenant_id: Option<Uuid>,
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
-	) -> Result<(), StorageError> {
-		sqlx::query(
+	) -> Result<i32, StorageError> {
+		let id = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (
 				payload, job_id, extra, result, tenant_id,
 				score, score_category, sub_reason, safe_to_send, reason_codes,
 				canonical_email,
 				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
-				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals
+				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
+				recommendation, recommendation_action, recommendation_confidence,
+				recommendation_priority, policy_mode, policy_profile_key,
+				policy_evaluation, policy_decision, policy_evaluated_at,
+				task_state, completed_at
 			)
 			VALUES (
 				$1, $2, $3, $4, $5,
 				$6, $7, $8, $9, $10,
 				$11,
 				$12, $13, $14,
-				$15, $16, $17
+				$15, $16, $17,
+				$18, $19, $20,
+				$21, $22, $23,
+				$24, $25, $26,
+				'completed'::task_state, NOW()
 			)
 			RETURNING id
 			"#,
@@ -255,10 +300,19 @@ impl PostgresStorage {
 		.bind(&columns.bounce_risk_action)
 		.bind(&columns.bounce_risk_model_version)
 		.bind(&columns.bounce_risk_signals)
+		.bind(&columns.recommendation)
+		.bind(&columns.recommendation_action)
+		.bind(&columns.recommendation_confidence)
+		.bind(&columns.recommendation_priority)
+		.bind(&columns.policy_mode)
+		.bind(&columns.policy_profile_key)
+		.bind(&columns.policy_evaluation)
+		.bind(&columns.policy_decision)
+		.bind(columns.policy_evaluated_at)
 		.fetch_one(&self.pg_pool)
 		.await?;
 
-		Ok(())
+		Ok(id)
 	}
 
 	async fn store_error(
@@ -281,6 +335,7 @@ impl PostgresStorage {
 				    error = $3,
 				    tenant_id = $4,
 				    canonical_email = COALESCE($5, canonical_email),
+				    result = NULL,
 				    score = NULL,
 				    score_category = NULL,
 				    sub_reason = NULL,
@@ -291,7 +346,19 @@ impl PostgresStorage {
 				    bounce_risk_confidence = NULL,
 				    bounce_risk_action = NULL,
 				    bounce_risk_model_version = NULL,
-				    bounce_risk_signals = NULL
+				    bounce_risk_signals = NULL,
+				    recommendation = NULL,
+				    recommendation_action = NULL,
+				    recommendation_confidence = NULL,
+				    recommendation_priority = NULL,
+				    policy_mode = NULL,
+				    policy_profile_key = NULL,
+				    policy_evaluation = NULL,
+				    policy_decision = NULL,
+				    policy_evaluated_at = NULL,
+				    task_state = 'failed'::task_state,
+				    completed_at = COALESCE(completed_at, NOW()),
+				    updated_at = NOW()
 				WHERE id = $6
 				"#,
 			)
@@ -326,8 +393,11 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		sqlx::query(
 			r#"
-			INSERT INTO v1_task_result (payload, job_id, extra, error, tenant_id, canonical_email)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO v1_task_result (
+				payload, job_id, extra, error, tenant_id, canonical_email,
+				task_state, completed_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, 'failed'::task_state, NOW())
 			RETURNING id
 			"#,
 		)
@@ -380,6 +450,15 @@ fn success_columns_from_output(
 		bounce_risk_action: None,
 		bounce_risk_model_version: None,
 		bounce_risk_signals: None,
+		recommendation: None,
+		recommendation_action: None,
+		recommendation_confidence: None,
+		recommendation_priority: None,
+		policy_mode: None,
+		policy_profile_key: None,
+		policy_evaluation: None,
+		policy_decision: None,
+		policy_evaluated_at: None,
 	})
 }
 
@@ -420,5 +499,52 @@ fn success_columns_from_prepared(
 			.as_ref()
 			.map(|risk| risk.model_version.clone()),
 		bounce_risk_signals: response.bounce_risk_signals.clone(),
+		recommendation: response
+			.recommendation
+			.as_ref()
+			.map(serde_json::to_value)
+			.transpose()?,
+		recommendation_action: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.action))
+			.transpose()?,
+		recommendation_confidence: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.confidence))
+			.transpose()?,
+		recommendation_priority: response
+			.recommendation
+			.as_ref()
+			.map(|recommendation| serialize_enum(&recommendation.priority))
+			.transpose()?,
+		policy_mode: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| serialize_enum(&policy.mode))
+			.transpose()?,
+		policy_profile_key: response
+			.policy_evaluation
+			.as_ref()
+			.and_then(|policy| policy.policy_profile_key.clone()),
+		policy_evaluation: response
+			.policy_evaluation
+			.as_ref()
+			.map(serde_json::to_value)
+			.transpose()?,
+		policy_decision: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| serialize_enum(&policy.decision))
+			.transpose()?,
+		policy_evaluated_at: response
+			.policy_evaluation
+			.as_ref()
+			.map(|policy| policy.evaluated_at),
 	})
+}
+
+fn serialize_enum<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Error> {
+	Ok(serde_json::to_string(value)?.trim_matches('"').to_string())
 }

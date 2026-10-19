@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -22,11 +22,13 @@ var _ MappedNullable = &DebugDetails{}
 
 // DebugDetails struct for DebugDetails
 type DebugDetails struct {
+	// The name of the backend that performed the verification.
+	BackendName string `json:"backend_name"`
 	Duration Duration `json:"duration"`
 	// The timestamp when the email verification ended.
 	EndTime string `json:"end_time"`
-	// The name of the server that performed the verification.
-	ServerName string `json:"server_name"`
+	// The version of the backend that performed the verification, e.g. \"4.3.0\".
+	ReacherVersion *string `json:"reacher_version,omitempty"`
 	Smtp DebugDetailsSmtp `json:"smtp"`
 	// The timestamp when the email verification started.
 	StartTime string `json:"start_time"`
@@ -38,11 +40,11 @@ type _DebugDetails DebugDetails
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDebugDetails(duration Duration, endTime string, serverName string, smtp DebugDetailsSmtp, startTime string) *DebugDetails {
+func NewDebugDetails(backendName string, duration Duration, endTime string, smtp DebugDetailsSmtp, startTime string) *DebugDetails {
 	this := DebugDetails{}
+	this.BackendName = backendName
 	this.Duration = duration
 	this.EndTime = endTime
-	this.ServerName = serverName
 	this.Smtp = smtp
 	this.StartTime = startTime
 	return &this
@@ -54,6 +56,30 @@ func NewDebugDetails(duration Duration, endTime string, serverName string, smtp 
 func NewDebugDetailsWithDefaults() *DebugDetails {
 	this := DebugDetails{}
 	return &this
+}
+
+// GetBackendName returns the BackendName field value
+func (o *DebugDetails) GetBackendName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.BackendName
+}
+
+// GetBackendNameOk returns a tuple with the BackendName field value
+// and a boolean to check if the value has been set.
+func (o *DebugDetails) GetBackendNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.BackendName, true
+}
+
+// SetBackendName sets field value
+func (o *DebugDetails) SetBackendName(v string) {
+	o.BackendName = v
 }
 
 // GetDuration returns the Duration field value
@@ -104,28 +130,36 @@ func (o *DebugDetails) SetEndTime(v string) {
 	o.EndTime = v
 }
 
-// GetServerName returns the ServerName field value
-func (o *DebugDetails) GetServerName() string {
-	if o == nil {
+// GetReacherVersion returns the ReacherVersion field value if set, zero value otherwise.
+func (o *DebugDetails) GetReacherVersion() string {
+	if o == nil || IsNil(o.ReacherVersion) {
 		var ret string
 		return ret
 	}
-
-	return o.ServerName
+	return *o.ReacherVersion
 }
 
-// GetServerNameOk returns a tuple with the ServerName field value
+// GetReacherVersionOk returns a tuple with the ReacherVersion field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DebugDetails) GetServerNameOk() (*string, bool) {
-	if o == nil {
+func (o *DebugDetails) GetReacherVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.ReacherVersion) {
 		return nil, false
 	}
-	return &o.ServerName, true
+	return o.ReacherVersion, true
 }
 
-// SetServerName sets field value
-func (o *DebugDetails) SetServerName(v string) {
-	o.ServerName = v
+// HasReacherVersion returns a boolean if a field has been set.
+func (o *DebugDetails) HasReacherVersion() bool {
+	if o != nil && !IsNil(o.ReacherVersion) {
+		return true
+	}
+
+	return false
+}
+
+// SetReacherVersion gets a reference to the given string and assigns it to the ReacherVersion field.
+func (o *DebugDetails) SetReacherVersion(v string) {
+	o.ReacherVersion = &v
 }
 
 // GetSmtp returns the Smtp field value
@@ -186,9 +220,12 @@ func (o DebugDetails) MarshalJSON() ([]byte, error) {
 
 func (o DebugDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["backend_name"] = o.BackendName
 	toSerialize["duration"] = o.Duration
 	toSerialize["end_time"] = o.EndTime
-	toSerialize["server_name"] = o.ServerName
+	if !IsNil(o.ReacherVersion) {
+		toSerialize["reacher_version"] = o.ReacherVersion
+	}
 	toSerialize["smtp"] = o.Smtp
 	toSerialize["start_time"] = o.StartTime
 	return toSerialize, nil
@@ -199,9 +236,9 @@ func (o *DebugDetails) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"backend_name",
 		"duration",
 		"end_time",
-		"server_name",
 		"smtp",
 		"start_time",
 	}
@@ -269,5 +306,3 @@ func (v *NullableDebugDetails) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

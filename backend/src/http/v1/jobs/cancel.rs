@@ -1,7 +1,7 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::PgPool;
@@ -21,6 +21,8 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	// Use a transaction with SELECT FOR UPDATE to prevent TOCTOU races
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
@@ -81,6 +83,16 @@ async fn http_handler(
 	.map_err(ReacherResponseError::from)?;
 
 	let tasks_cancelled = result.rows_affected() as i64;
+
+	// Cancel any in-flight delayed rechecks for this job so the scheduler
+	// won't republish them after cancellation.
+	sqlx::query(
+		"UPDATE verification_delayed_rechecks SET status = 'cancelled', last_error = 'job cancelled', updated_at = NOW() WHERE job_id = $1 AND status IN ('scheduled', 'publishing')"
+	)
+	.bind(job_id)
+	.execute(&mut *tx)
+	.await
+	.map_err(ReacherResponseError::from)?;
 
 	// Check if all tasks are now terminal. If so, finalize to cancelled.
 	let non_terminal: i64 = sqlx::query_scalar(

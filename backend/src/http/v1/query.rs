@@ -22,6 +22,9 @@ struct QueryParams {
 	job_id: Option<i32>,
 	since: Option<String>,
 	until: Option<String>,
+	recommendation_action: Option<String>,
+	policy_mode: Option<String>,
+	policy_decision: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -34,6 +37,11 @@ struct ResultRow {
 	sub_reason: Option<String>,
 	safe_to_send: Option<bool>,
 	reason_codes: Option<Vec<String>>,
+	recommendation_action: Option<String>,
+	recommendation: Option<serde_json::Value>,
+	policy_mode: Option<String>,
+	policy_decision: Option<String>,
+	policy_evaluation: Option<serde_json::Value>,
 	task_state: String,
 	completed_at: Option<DateTime<Utc>>,
 	created_at: DateTime<Utc>,
@@ -93,6 +101,9 @@ async fn http_handler(
 		  AND ($6::INTEGER IS NULL OR job_id = $6)
 		  AND ($7::TIMESTAMPTZ IS NULL OR completed_at >= $7)
 		  AND ($8::TIMESTAMPTZ IS NULL OR completed_at <= $8)
+		  AND ($9::TEXT IS NULL OR recommendation_action = $9)
+		  AND ($10::TEXT IS NULL OR policy_mode = $10)
+		  AND ($11::TEXT IS NULL OR policy_decision = $11)
 		"#,
 	)
 	.bind(tenant_ctx.tenant_id)
@@ -103,6 +114,9 @@ async fn http_handler(
 	.bind(query.job_id)
 	.bind(since)
 	.bind(until)
+	.bind(&query.recommendation_action)
+	.bind(&query.policy_mode)
+	.bind(&query.policy_decision)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -118,6 +132,11 @@ async fn http_handler(
 			sub_reason,
 			safe_to_send,
 			reason_codes,
+			recommendation_action,
+			recommendation,
+			policy_mode,
+			policy_decision,
+			policy_evaluation,
 			task_state::TEXT AS task_state,
 			completed_at,
 			created_at
@@ -130,8 +149,11 @@ async fn http_handler(
 		  AND ($6::INTEGER IS NULL OR job_id = $6)
 		  AND ($7::TIMESTAMPTZ IS NULL OR completed_at >= $7)
 		  AND ($8::TIMESTAMPTZ IS NULL OR completed_at <= $8)
+		  AND ($9::TEXT IS NULL OR recommendation_action = $9)
+		  AND ($10::TEXT IS NULL OR policy_mode = $10)
+		  AND ($11::TEXT IS NULL OR policy_decision = $11)
 		ORDER BY completed_at DESC NULLS LAST
-		LIMIT $9 OFFSET $10
+		LIMIT $12 OFFSET $13
 		"#,
 	)
 	.bind(tenant_ctx.tenant_id)
@@ -142,6 +164,9 @@ async fn http_handler(
 	.bind(query.job_id)
 	.bind(since)
 	.bind(until)
+	.bind(&query.recommendation_action)
+	.bind(&query.policy_mode)
+	.bind(&query.policy_decision)
 	.bind(limit)
 	.bind(offset)
 	.fetch_all(&pg_pool)
@@ -159,6 +184,11 @@ async fn http_handler(
 			sub_reason: r.get("sub_reason"),
 			safe_to_send: r.get("safe_to_send"),
 			reason_codes: r.get("reason_codes"),
+			recommendation_action: r.get("recommendation_action"),
+			recommendation: r.get("recommendation"),
+			policy_mode: r.get("policy_mode"),
+			policy_decision: r.get("policy_decision"),
+			policy_evaluation: r.get("policy_evaluation"),
 			task_state: r.get("task_state"),
 			completed_at: r.get("completed_at"),
 			created_at: r.get("created_at"),

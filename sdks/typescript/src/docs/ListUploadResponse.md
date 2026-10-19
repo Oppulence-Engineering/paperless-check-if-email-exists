@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **email_column** | **string** |  | [required]
 **job_id** | **number** |  | [required]
 **list_id** | **number** |  | [required]
+**source_key** | **string** |  | [optional]
 **total_rows** | **number** |  | [required]
 
 ## Example
@@ -19,6 +20,7 @@ const instance: ListUploadResponse = {
     email_column: 'example',
     job_id: 0,
     list_id: 0,
+    source_key: 'example',
     total_rows: 0,
 };
 ```

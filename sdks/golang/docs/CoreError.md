@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Message** | **string** | A human-readable description of the error. | [required]
-**Type** | **string** | The type of error. | [required]
+**Description** | Pointer to **string** | The category of an SMTP error, when it is known. | [optional]
+**Error** | [**CoreErrorError**](CoreErrorError.md) |  | [required]
 
 ## Methods
 
 ### NewCoreError
 
-`func NewCoreError(message string, type_ string) *CoreError`
+`func NewCoreError(error_ CoreErrorError) *CoreError`
 
 NewCoreError instantiates a new CoreError object
 This constructor will assign default values to properties that have it defined,
@@ -26,44 +26,49 @@ NewCoreErrorWithDefaults instantiates a new CoreError object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetMessage
+### GetDescription
 
-`func (o *CoreError) GetMessage() string`
+`func (o *CoreError) GetDescription() string`
 
-GetMessage returns the Message field if non-nil, zero value otherwise.
+GetDescription returns the Description field if non-nil, zero value otherwise.
 
-### GetMessageOk
+### GetDescriptionOk
 
-`func (o *CoreError) GetMessageOk() (*string, bool)`
+`func (o *CoreError) GetDescriptionOk() (*string, bool)`
 
-GetMessageOk returns a tuple with the Message field if it's non-nil, zero value otherwise
+GetDescriptionOk returns a tuple with the Description field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetMessage
+### SetDescription
 
-`func (o *CoreError) SetMessage(v string)`
+`func (o *CoreError) SetDescription(v string)`
 
-SetMessage sets Message field to given value.
+SetDescription sets Description field to given value.
 
+### HasDescription
 
-### GetType
+`func (o *CoreError) HasDescription() bool`
 
-`func (o *CoreError) GetType() string`
+HasDescription returns a boolean if a field has been set.
 
-GetType returns the Type field if non-nil, zero value otherwise.
+### GetError
 
-### GetTypeOk
+`func (o *CoreError) GetError() CoreErrorError`
 
-`func (o *CoreError) GetTypeOk() (*string, bool)`
+GetError returns the Error field if non-nil, zero value otherwise.
 
-GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+### GetErrorOk
+
+`func (o *CoreError) GetErrorOk() (*CoreErrorError, bool)`
+
+GetErrorOk returns a tuple with the Error field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetType
+### SetError
 
-`func (o *CoreError) SetType(v string)`
+`func (o *CoreError) SetError(v CoreErrorError)`
 
-SetType sets Type field to given value.
+SetError sets Error field to given value.
 
 
 

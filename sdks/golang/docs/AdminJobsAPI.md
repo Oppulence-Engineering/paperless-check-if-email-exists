@@ -1,6 +1,6 @@
 # \AdminJobsAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -51,7 +51,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Job identifier | 
+**jobId** | **int32** | Job identifier |
 
 ### Other Parameters
 
@@ -68,12 +68,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -82,7 +82,7 @@ Name | Type | Description  | Notes
 
 ## GetJobEvents
 
-> GetJobEvents(ctx, jobId).Execute()
+> GetJobEvents(ctx, jobId).Limit(limit).Offset(offset).Execute()
 
 GET /v1/admin/jobs/{job_id}/events
 
@@ -102,10 +102,12 @@ import (
 
 func main() {
 	jobId := int32(56) // int32 | Job identifier
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminJobsAPI.GetJobEvents(context.Background(), jobId).Execute()
+	r, err := apiClient.AdminJobsAPI.GetJobEvents(context.Background(), jobId).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminJobsAPI.GetJobEvents``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -119,7 +121,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Job identifier | 
+**jobId** | **int32** | Job identifier |
 
 ### Other Parameters
 
@@ -129,6 +131,8 @@ Other parameters are passed through a pointer to a apiGetJobEventsRequest struct
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -136,12 +140,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -150,7 +154,7 @@ Name | Type | Description  | Notes
 
 ## GetJobResults
 
-> GetJobResults(ctx, jobId).Execute()
+> GetJobResults(ctx, jobId).Limit(limit).Offset(offset).State(state).Execute()
 
 GET /v1/admin/jobs/{job_id}/results
 
@@ -170,10 +174,13 @@ import (
 
 func main() {
 	jobId := int32(56) // int32 | Job identifier
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
+	state := "state_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminJobsAPI.GetJobResults(context.Background(), jobId).Execute()
+	r, err := apiClient.AdminJobsAPI.GetJobResults(context.Background(), jobId).Limit(limit).Offset(offset).State(state).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminJobsAPI.GetJobResults``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -187,7 +194,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Job identifier | 
+**jobId** | **int32** | Job identifier |
 
 ### Other Parameters
 
@@ -197,6 +204,9 @@ Other parameters are passed through a pointer to a apiGetJobResultsRequest struc
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
+ **state** | **string** |  |
 
 ### Return type
 
@@ -204,12 +214,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -218,7 +228,7 @@ Name | Type | Description  | Notes
 
 ## ListJobs
 
-> ListJobs(ctx).Execute()
+> ListJobs(ctx).Status(status).TenantId(tenantId).Limit(limit).Offset(offset).Execute()
 
 GET /v1/admin/jobs
 
@@ -237,10 +247,14 @@ import (
 )
 
 func main() {
+	status := "status_example" // string |  (optional)
+	tenantId := "tenantId_example" // string |  (optional)
+	limit := int32(56) // int32 |  (optional)
+	offset := int32(56) // int32 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminJobsAPI.ListJobs(context.Background()).Execute()
+	r, err := apiClient.AdminJobsAPI.ListJobs(context.Background()).Status(status).TenantId(tenantId).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminJobsAPI.ListJobs``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -250,12 +264,19 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiListJobsRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **status** | **string** |  |
+ **tenantId** | **string** |  |
+ **limit** | **int32** |  |
+ **offset** | **int32** |  |
 
 ### Return type
 
@@ -263,12 +284,12 @@ Other parameters are passed through a pointer to a apiListJobsRequest struct via
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -277,7 +298,7 @@ Other parameters are passed through a pointer to a apiListJobsRequest struct via
 
 ## ListTenantJobs
 
-> ListTenantJobs(ctx, tenantId).Execute()
+> ListTenantJobs(ctx, tenantId).Status(status).Limit(limit).Offset(offset).Execute()
 
 GET /v1/admin/tenants/{tenant_id}/jobs
 
@@ -297,10 +318,13 @@ import (
 
 func main() {
 	tenantId := "tenantId_example" // string | Tenant identifier
+	status := "status_example" // string |  (optional)
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AdminJobsAPI.ListTenantJobs(context.Background(), tenantId).Execute()
+	r, err := apiClient.AdminJobsAPI.ListTenantJobs(context.Background(), tenantId).Status(status).Limit(limit).Offset(offset).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AdminJobsAPI.ListTenantJobs``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -314,7 +338,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**tenantId** | **string** | Tenant identifier | 
+**tenantId** | **string** | Tenant identifier |
 
 ### Other Parameters
 
@@ -324,6 +348,9 @@ Other parameters are passed through a pointer to a apiListTenantJobsRequest stru
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **status** | **string** |  |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -331,14 +358,13 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[Authorization](../README.md#Authorization)
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

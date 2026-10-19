@@ -11,8 +11,8 @@ Name | Type | Description | Notes
 **is_catch_all** | **boolean** | Indicates if the email address is a catch-all address. | [optional]
 **is_deliverable** | **boolean** | Indicates if an email sent to this address is deliverable. | [optional]
 **is_disabled** | **boolean** | Indicates if the email address has been disabled by the provider. | [optional]
-**message** | **string** | A human-readable description of the error. | [optional]
-**type** | **string** | The type of error. | [optional]
+**description** | **string** | The category of an SMTP error, when it is known. | [optional]
+**error** | [**CoreErrorError**](CoreErrorError.md) |  | [optional]
 
 ## Example
 
@@ -25,8 +25,8 @@ const instance: CheckEmailOutputSmtp = {
     is_catch_all: true,
     is_deliverable: true,
     is_disabled: true,
-    message: 'example',
-    type: 'example',
+    description: 'example',
+    error: {} as any,
 };
 ```
 

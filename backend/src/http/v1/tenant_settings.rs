@@ -1,29 +1,48 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
+use crate::http::v1::jobs::approval_checklist::DEFAULT_THRESHOLDS;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::pipelines::validate_webhook_url;
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use utoipa::ToSchema;
 use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 struct UpdateTenantSettingsRequest {
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub default_webhook_url: Option<Option<String>>,
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
+	pub default_policy_mode: Option<String>,
+	/// Safe-to-send percentage for an excellent list. Set it with `approval_good_threshold`.
+	pub approval_excellent_threshold: Option<f64>,
+	/// Safe-to-send percentage for a good list. Must be below the excellent threshold.
+	pub approval_good_threshold: Option<f64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 struct UpdateWebhookRequest {
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub default_webhook_url: Option<Option<String>>,
+	#[serde(default, deserialize_with = "present_nullable_string")]
 	pub webhook_signing_secret: Option<Option<String>>,
 }
 
-#[derive(Debug, Serialize)]
+fn present_nullable_string<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	Option::<String>::deserialize(deserializer).map(Some)
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantSettingsResponse {
 	pub tenant_id: Uuid,
 	pub name: String,
@@ -33,9 +52,12 @@ struct TenantSettingsResponse {
 	pub period_reset_at: String,
 	pub result_retention_days: i32,
 	pub default_webhook_url: Option<String>,
+	pub default_policy_mode: String,
+	pub approval_excellent_threshold: f64,
+	pub approval_good_threshold: f64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantWebhookResponse {
 	pub tenant_id: Uuid,
 	pub tenant_name: String,
@@ -43,7 +65,7 @@ struct TenantWebhookResponse {
 	pub webhook_signing_secret_configured: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 struct TenantUsageResponse {
 	pub tenant_id: Uuid,
 	pub tenant_name: String,
@@ -72,6 +94,8 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
@@ -80,7 +104,20 @@ fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> 
 	})
 }
 
+fn validate_webhook_setting(value: &Option<Option<String>>) -> Result<(), warp::Rejection> {
+	if let Some(Some(url)) = value {
+		validate_webhook_url(url).map_err(|error| {
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, error.to_string())
+		})?;
+	}
+	Ok(())
+}
+
 fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
+	let thresholds = row
+		.get::<Option<f64>, _>("approval_excellent_threshold")
+		.zip(row.get::<Option<f64>, _>("approval_good_threshold"))
+		.unwrap_or(DEFAULT_THRESHOLDS);
 	TenantSettingsResponse {
 		tenant_id: row.get("id"),
 		name: row.get("name"),
@@ -90,6 +127,9 @@ fn row_to_settings(row: &sqlx::postgres::PgRow) -> TenantSettingsResponse {
 		period_reset_at: row.get::<DateTime<Utc>, _>("period_reset_at").to_rfc3339(),
 		result_retention_days: row.get("result_retention_days"),
 		default_webhook_url: row.get("default_webhook_url"),
+		default_policy_mode: row.get("default_policy_mode"),
+		approval_excellent_threshold: thresholds.0,
+		approval_good_threshold: thresholds.1,
 	}
 }
 
@@ -115,7 +155,7 @@ async fn settings_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let row = sqlx::query(
-		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url \
+		"SELECT id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode, approval_excellent_threshold, approval_good_threshold \
 		 FROM tenants WHERE id = $1",
 	)
 	.bind(tenant_id)
@@ -150,6 +190,8 @@ async fn webhook_handler(
 }
 
 async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	let limit = tenant_ctx.monthly_email_limit;
 	let quota_unlimited = limit.is_none() || limit.unwrap_or(0) <= 0;
 	let quota_remaining = match limit {
@@ -187,6 +229,9 @@ async fn update_settings_handler(
 	if body.default_webhook_url.is_none()
 		&& body.webhook_signing_secret.is_none()
 		&& body.result_retention_days.is_none()
+		&& body.default_policy_mode.is_none()
+		&& body.approval_excellent_threshold.is_none()
+		&& body.approval_good_threshold.is_none()
 	{
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -204,6 +249,14 @@ async fn update_settings_handler(
 			.into());
 		}
 	}
+	if let Some(mode) = &body.default_policy_mode {
+		validate_policy_mode(mode)?;
+	}
+	validate_webhook_setting(&body.default_webhook_url)?;
+	let thresholds = validate_thresholds(
+		body.approval_excellent_threshold,
+		body.approval_good_threshold,
+	)?;
 
 	let mut sets = Vec::new();
 	let mut idx = 2u32;
@@ -218,11 +271,23 @@ async fn update_settings_handler(
 	}
 	if body.result_retention_days.is_some() {
 		sets.push(format!("result_retention_days = ${}", idx));
+		idx += 1;
+	}
+	if body.default_policy_mode.is_some() {
+		sets.push(format!("default_policy_mode = ${}", idx));
+		idx += 1;
+	}
+	if thresholds.is_some() {
+		sets.push(format!(
+			"approval_excellent_threshold = ${}, approval_good_threshold = ${}",
+			idx,
+			idx + 1
+		));
 	}
 
 	let sql = format!(
 		"UPDATE tenants SET {} WHERE id = $1 \
-		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url",
+		 RETURNING id, name, slug, monthly_email_limit, used_this_period, period_reset_at, result_retention_days, default_webhook_url, COALESCE(default_policy_mode, 'deliverability') AS default_policy_mode, approval_excellent_threshold, approval_good_threshold",
 		sets.join(", ")
 	);
 
@@ -235,6 +300,12 @@ async fn update_settings_handler(
 	}
 	if let Some(v) = body.result_retention_days {
 		query = query.bind(v);
+	}
+	if let Some(v) = body.default_policy_mode {
+		query = query.bind(v);
+	}
+	if let Some((excellent, good)) = thresholds {
+		query = query.bind(excellent).bind(good);
 	}
 
 	let row = query
@@ -252,6 +323,42 @@ async fn update_settings_handler(
 	Ok(warp::reply::json(&row_to_settings(&row)))
 }
 
+/// Both thresholds are set together, from 0 to 100, with excellent above good.
+fn validate_thresholds(
+	excellent: Option<f64>,
+	good: Option<f64>,
+) -> Result<Option<(f64, f64)>, warp::Rejection> {
+	match (excellent, good) {
+		(None, None) => Ok(None),
+		(Some(e), Some(g)) if (0.0..=100.0).contains(&e) && (0.0..=100.0).contains(&g) && e > g => {
+			Ok(Some((e, g)))
+		}
+		_ => Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Set approval_excellent_threshold and approval_good_threshold together, from 0 to 100, with excellent above good",
+		)
+		.into()),
+	}
+}
+
+fn validate_policy_mode(mode: &str) -> Result<(), warp::Rejection> {
+	if matches!(
+		mode,
+		"growth" | "deliverability" | "signup_protection" | "enterprise_strict" | "custom"
+	) {
+		Ok(())
+	} else {
+		Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			format!(
+				"Invalid default_policy_mode '{}'. Must be one of: growth, deliverability, signup_protection, enterprise_strict, custom",
+				mode
+			),
+		)
+		.into())
+	}
+}
+
 async fn update_webhook_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
@@ -266,13 +373,21 @@ async fn update_webhook_handler(
 		)
 		.into());
 	}
+	validate_webhook_setting(&body.default_webhook_url)?;
+	let update_url = body.default_webhook_url.is_some();
+	let update_secret = body.webhook_signing_secret.is_some();
 
 	let row = sqlx::query(
-		"UPDATE tenants SET default_webhook_url = $2, webhook_signing_secret = $3 WHERE id = $1 \
+		"UPDATE tenants SET \
+		 default_webhook_url = CASE WHEN $2 THEN $3 ELSE default_webhook_url END, \
+		 webhook_signing_secret = CASE WHEN $4 THEN $5 ELSE webhook_signing_secret END \
+		 WHERE id = $1 \
 		 RETURNING id, name, default_webhook_url, webhook_signing_secret",
 	)
 	.bind(tenant_id)
+	.bind(update_url)
 	.bind(body.default_webhook_url)
+	.bind(update_secret)
 	.bind(body.webhook_signing_secret)
 	.fetch_optional(&pg_pool)
 	.await
@@ -321,7 +436,7 @@ async fn clear_webhook_handler(
 	get,
 	path = "/v1/me/settings",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant settings")),
+	responses((status = 200, description = "Tenant settings", body = TenantSettingsResponse)),
 )]
 pub fn v1_get_tenant_settings(
 	config: Arc<BackendConfig>,
@@ -341,7 +456,7 @@ pub fn v1_get_tenant_settings(
 	get,
 	path = "/v1/me/webhook",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant webhook state")),
+	responses((status = 200, description = "Tenant webhook state", body = TenantWebhookResponse)),
 )]
 pub fn v1_get_tenant_webhook(
 	config: Arc<BackendConfig>,
@@ -361,7 +476,8 @@ pub fn v1_get_tenant_webhook(
 	patch,
 	path = "/v1/me/webhook",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant webhook updated")),
+	request_body = UpdateWebhookRequest,
+	responses((status = 200, description = "Tenant webhook updated", body = TenantWebhookResponse)),
 )]
 pub fn v1_update_tenant_webhook(
 	config: Arc<BackendConfig>,
@@ -402,7 +518,8 @@ pub fn v1_clear_tenant_webhook(
 	patch,
 	path = "/v1/me/settings",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant settings updated")),
+	request_body = UpdateTenantSettingsRequest,
+	responses((status = 200, description = "Tenant settings updated", body = TenantSettingsResponse)),
 )]
 pub fn v1_update_tenant_settings(
 	config: Arc<BackendConfig>,
@@ -423,7 +540,7 @@ pub fn v1_update_tenant_settings(
 	get,
 	path = "/v1/me/usage",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant usage summary")),
+	responses((status = 200, description = "Tenant usage summary", body = TenantUsageResponse)),
 )]
 pub fn v1_get_tenant_usage(
 	config: Arc<BackendConfig>,
@@ -433,4 +550,53 @@ pub fn v1_get_tenant_usage(
 		.and(resolve_tenant(Arc::clone(&config)))
 		.and_then(usage_handler)
 		.with(warp::log("reacher_backend::v1::tenant::usage"))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn webhook_patch_distinguishes_omitted_and_null_fields() {
+		let update: UpdateWebhookRequest =
+			serde_json::from_str(r#"{"default_webhook_url":"https://example.com/hook"}"#).unwrap();
+		assert_eq!(
+			update.default_webhook_url,
+			Some(Some("https://example.com/hook".into()))
+		);
+		assert_eq!(update.webhook_signing_secret, None);
+
+		let clear: UpdateWebhookRequest =
+			serde_json::from_str(r#"{"webhook_signing_secret":null}"#).unwrap();
+		assert_eq!(clear.webhook_signing_secret, Some(None));
+		assert_eq!(clear.default_webhook_url, None);
+		let settings: UpdateTenantSettingsRequest =
+			serde_json::from_str(r#"{"default_webhook_url":null}"#).unwrap();
+		assert_eq!(settings.default_webhook_url, Some(None));
+	}
+
+	#[test]
+	fn settings_scope_is_required() {
+		let mut context =
+			TenantContext::legacy(crate::config::ThrottleConfig::new_without_throttle());
+		context.is_legacy = false;
+		context.tenant_id = Some(Uuid::nil());
+		context.scopes = vec![scope::VERIFY.into()];
+		assert!(ensure_tenant_id(context.clone()).is_err());
+		context.scopes = vec![scope::SETTINGS.into()];
+		assert_eq!(ensure_tenant_id(context).unwrap(), Uuid::nil());
+	}
+
+	#[test]
+	fn thresholds_are_set_together_and_in_order() {
+		assert_eq!(validate_thresholds(None, None).unwrap(), None);
+		assert_eq!(
+			validate_thresholds(Some(85.0), Some(60.0)).unwrap(),
+			Some((85.0, 60.0))
+		);
+		assert!(validate_thresholds(Some(85.0), None).is_err());
+		assert!(validate_thresholds(Some(60.0), Some(60.0)).is_err());
+		assert!(validate_thresholds(Some(101.0), Some(60.0)).is_err());
+		assert!(validate_thresholds(Some(50.0), Some(-1.0)).is_err());
+	}
 }

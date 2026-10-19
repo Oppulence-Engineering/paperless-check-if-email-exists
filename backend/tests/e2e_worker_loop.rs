@@ -58,8 +58,8 @@ mod worker_loop_tests {
 		let json = serde_json::to_vec(task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default()
@@ -75,7 +75,7 @@ mod worker_loop_tests {
 	/// Purge the queue so tests are isolated.
 	async fn purge(channel: &lapin::Channel) {
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 	}
 
@@ -136,7 +136,7 @@ mod worker_loop_tests {
 		publish(&pub_channel, &task, 1).await;
 
 		// Start the worker
-		run_worker(Arc::clone(&config)).await.unwrap();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
 
 		// Wait for processing
 		tokio::time::sleep(std::time::Duration::from_secs(5)).await;
@@ -155,6 +155,8 @@ mod worker_loop_tests {
 			"Expected completed or dead_lettered, got: {}",
 			state
 		);
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
 	}
 
 	// ── Test: cancellation path in consumer ─────────────
@@ -209,7 +211,7 @@ mod worker_loop_tests {
 		publish(&pub_channel, &task, 1).await;
 
 		// Start worker
-		run_worker(Arc::clone(&config)).await.unwrap();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
 		tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
 		// Task should be cancelled (skipped by consumer)
@@ -227,6 +229,8 @@ mod worker_loop_tests {
 			"Expected cancelled/completed/dead_lettered, got: {}",
 			state
 		);
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
 	}
 
 	// ── Test: throttle path — single shot rejected ──────
@@ -253,7 +257,7 @@ mod worker_loop_tests {
 		// Create a reply queue to receive the throttle error
 		let reply_queue = pub_channel
 			.queue_declare(
-				"",
+				"".into(),
 				QueueDeclareOptions {
 					auto_delete: true,
 					exclusive: true,
@@ -278,8 +282,8 @@ mod worker_loop_tests {
 			let json = serde_json::to_vec(&task).unwrap();
 			pub_channel
 				.basic_publish(
-					"",
-					CHECK_EMAIL_QUEUE,
+					"".into(),
+					CHECK_EMAIL_QUEUE.into(),
 					BasicPublishOptions::default(),
 					&json,
 					BasicProperties::default()
@@ -295,13 +299,13 @@ mod worker_loop_tests {
 		}
 
 		// Start worker
-		run_worker(Arc::clone(&config)).await.unwrap();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
 		tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
 		// Queue should have been drained (messages processed or rejected)
 		let q = pub_channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				QueueDeclareOptions {
 					passive: true,
 					..Default::default()
@@ -317,6 +321,8 @@ mod worker_loop_tests {
 			"Queue should be mostly drained, got {} messages",
 			q.message_count()
 		);
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
 	}
 
 	// ── Test: throttle path — bulk requeued ─────────────
@@ -362,13 +368,13 @@ mod worker_loop_tests {
 		}
 
 		// Start worker
-		run_worker(Arc::clone(&config)).await.unwrap();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
 		tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
 		// Verify the queue was consumed (messages processed or requeued)
 		let q = pub_channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				QueueDeclareOptions {
 					passive: true,
 					..Default::default()
@@ -383,6 +389,8 @@ mod worker_loop_tests {
 			"Queue should have been consumed, got {} messages",
 			q.message_count()
 		);
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
 	}
 
 	// ── Test: do_check_email_work retry path with DB ────
@@ -441,7 +449,7 @@ mod worker_loop_tests {
 		};
 		publish(&pub_channel, &task, 1).await;
 
-		run_worker(Arc::clone(&config)).await.unwrap();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
 		tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
 		// Verify state changed
@@ -464,5 +472,7 @@ mod worker_loop_tests {
 				.unwrap();
 
 		assert!(event_count >= 1, "At least one event should be recorded");
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
 	}
 }

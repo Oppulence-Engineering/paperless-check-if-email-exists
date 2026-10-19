@@ -3,11 +3,13 @@
   "release-type": "rust",
   "changelog-path": "CHANGELOG.md",
   "include-component-in-tag": false,
-  "pull-request-header": "chore: release ${version}",
   "sequential-calls": true,
-  "group-pull-request-title-pattern": "chore: release ${version}",
+  "group-pull-request-title-pattern": "chore: release ${branch}",
   "plugins": [
-    "cargo-workspace",
+    {
+      "type": "cargo-workspace",
+      "merge": false
+    },
     {
       "type": "linked-versions",
       "groupName": "reacher",
@@ -48,10 +50,9 @@
     "sdks/golang": {
       "component": "sdk-golang",
       "release-type": "go",
-      "package-name": "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang",
+      "package-name": "github.com/Oppulence-Engineering/check-if-email-exists/sdks/golang/v4",
       "path": "sdks/golang",
       "skip-github-release": true
     }
   }
 }
-

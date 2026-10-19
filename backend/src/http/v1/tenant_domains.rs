@@ -1,6 +1,6 @@
 use crate::config::BackendConfig;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -25,14 +25,14 @@ struct TenantDomainsListResponse {
 	pub domains: Vec<TenantDomainResponse>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct CreateTenantDomainRequest {
 	pub domain: String,
 	pub is_active: Option<bool>,
 	pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct UpdateTenantDomainRequest {
 	pub domain: Option<String>,
 	pub is_active: Option<bool>,
@@ -57,6 +57,8 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<uuid::Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::SETTINGS)?;
+
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
@@ -335,6 +337,7 @@ pub fn v1_list_tenant_domains(
 	post,
 	path = "/v1/me/domains",
 	tag = "Tenant",
+	request_body = CreateTenantDomainRequest,
 	responses((status = 201, description = "Tenant domain created")),
 )]
 pub fn v1_create_tenant_domain(
@@ -377,6 +380,7 @@ pub fn v1_get_tenant_domain(
 	patch,
 	path = "/v1/me/domains/{domain}",
 	tag = "Tenant",
+	request_body = UpdateTenantDomainRequest,
 	params(("domain" = String, Path, description = "Domain identifier")),
 	responses((status = 200, description = "Tenant domain updated")),
 )]

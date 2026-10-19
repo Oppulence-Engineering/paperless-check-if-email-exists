@@ -13,7 +13,7 @@
 
 ## Repository Scope
 
-This repository is strongest as a backend/API engine for email verification and list hygiene workflows. The supported core in this codebase is:
+This repository contains the email verification backend, workers, SDKs, CLI, and the Next.js web application in [`web/`](./web). The supported core is:
 
 - single email verification
 - bulk jobs and CSV list cleaning
@@ -21,11 +21,19 @@ This repository is strongest as a backend/API engine for email verification and 
 - scheduled re-verification and pipelines
 - tenant auth, quotas, job approval, and email history
 
-The hosted Reacher dashboard is a separate product surface and is not part of this repository.
+The web application uses Better Auth for identity and the existing Rust API for product data. See the [web guide](./web/README.md).
 
 ## 👉 Live Demo: https://reacher.email
 
-The open-source backend can also be used through the hosted Reacher SaaS. That hosted dashboard experience is separate from this repo's backend and worker implementation.
+The open-source backend can also be used through the hosted Reacher SaaS. The hosted service is separate from this repository's self-hosted application.
+
+## Run the full application locally
+
+Install Rust, Node.js 24, pnpm 9.15.4, and Docker. Run `make dev` from the repository root. It starts the existing Compose PostgreSQL and RabbitMQ services, applies Better Auth migrations, starts the Rust API on `127.0.0.1:8081`, and serves the Next.js app on `http://localhost:3000`. The local sign-in code is `123456`. Both the frontend and Rust API reload on source changes.
+
+The Rust API still supports its existing standalone commands such as `make run` and `make run-with-worker`. The web app calls it through the same-origin `/api/backend/*` route. Browser requests carry a Better Auth session; Next.js sends a short-lived JWT to the Rust API, which verifies the signature and organization role. The SDK is generated from [`backend/openapi.json`](./backend/openapi.json).
+
+For production, build the combined image with `docker build -t check-if-email-exists .`. CI publishes it as `ghcr.io/oppulence-engineering/check-if-email-exists`. It contains the Rust API, worker, and Next.js runtime, and exposes port 3000. PostgreSQL and RabbitMQ remain external services. Set `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `SCIM_CREDENTIAL_HASH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM`, `RCH__HEADER_SECRET`, `RCH__WORKER__RABBITMQ__URL`, and `BACKEND_JWT_AUDIENCE` at runtime. Use independent random secrets and a public HTTPS `BETTER_AUTH_URL`. The container checks `/readyz`; `/healthz` checks only the web process. Workspace API-key clients call tenant `/v1/*` routes on the same public host. Platform admin, legacy v0, and self-service onboarding routes are not available through the public gateway. The [web guide](./web/README.md) has an example request and verification commands.
 
 ## Get Started
 
@@ -409,16 +417,12 @@ sequenceDiagram
                 Core_Lib->>Core_Lib: Misc Checks
                 Core_Lib-->>Worker_Process: CheckEmailOutput
 
-                alt Result is Unknown
-                    Worker_Process->>RabbitMQ: Reject (requeue=true)
-                else Success or Error
-                    Worker_Process->>RabbitMQ: ACK
-                    Worker_Process->>Storage: store()
-                    Storage->>Postgres: INSERT result
-                    Worker_Process->>RabbitMQ: Send reply
-                    RabbitMQ-->>HTTP_Server: Success reply
-                    HTTP_Server-->>Client: 200 OK + JSON
-                end
+                Worker_Process->>RabbitMQ: ACK
+                Worker_Process->>Storage: store()
+                Storage->>Postgres: INSERT result
+                Worker_Process->>RabbitMQ: Send reply
+                RabbitMQ-->>HTTP_Server: Success reply
+                HTTP_Server-->>Client: 200 OK + JSON
             end
         end
         ThrottleManager->>ThrottleManager: increment_counters()
@@ -481,9 +485,9 @@ graph TB
     TASK_PROCESSOR --> EMAIL_CHECKER
     EMAIL_CHECKER --> RESULT_HANDLER
 
-    RESULT_HANDLER -->|Unknown Result| UNKNOWN_REJECT{First Attempt?}
-    UNKNOWN_REJECT -->|Yes| QUEUE
-    UNKNOWN_REJECT -->|No| ACK
+    RESULT_HANDLER -->|Unknown Result| PARTIAL_CONFIDENCE[Store Partial Confidence]
+    PARTIAL_CONFIDENCE --> DELAYED_RECHECK[Schedule Delayed Recheck]
+    DELAYED_RECHECK --> ACK
 
     RESULT_HANDLER -->|Success/Error| ACK[ACK Message]
     ACK --> STORAGE
@@ -538,9 +542,13 @@ sequenceDiagram
         Worker->>Core: check_email()
         Core-->>Worker: CheckEmailOutput
 
-        alt Result is Unknown (first attempt)
-            Worker->>RabbitMQ: Reject (requeue=true)
-            RabbitMQ->>Worker: Redeliver
+        alt Result is Unknown and retry budget remains
+            Worker->>RabbitMQ: ACK
+            Worker->>Storage: store(task, partial confidence result)
+            Storage->>Postgres: INSERT/UPDATE v1_task_result
+            Worker->>Webhook: POST webhook URL (if configured)
+            Webhook-->>Worker: Response
+            Worker->>Postgres: schedule delayed recheck
         else Success/Error
             Worker->>RabbitMQ: ACK
             Worker->>Storage: store(task, result)
@@ -571,6 +579,117 @@ sequenceDiagram
     Postgres->>Postgres: INSERT INTO email_results<br/>{job_id, result}
     Postgres->>Postgres: Job complete
 ```
+
+### Delayed Recheck for Unknown Results
+
+When a bulk-job verification returns `Reachable::Unknown` (greylisting, transient SMTP failure,
+ambiguous response, etc.) the worker no longer rejects the RabbitMQ message with `requeue=true`.
+Instead it ACKs the message, persists a partial result with a confidence score and reason classification,
+and writes a row into `verification_delayed_rechecks` scheduled to be republished after a greylist window.
+A background scheduler polls every `poll_interval_seconds` (30s by default), atomically claims due
+rechecks with `FOR UPDATE SKIP LOCKED`, and republishes them onto the bulk queue. A separate cleanup
+task purges terminal (`published`/`failed`/`cancelled`) rows after `retention_days`.
+
+For the default `RetryPolicy` the windows are **5 minutes** for the first recheck and **15 minutes**
+for the second; a custom policy uses exponential backoff (`backoff_seconds * backoff_multiplier^(n-1)`).
+Bounded by `RetryPolicy.max_retries`. Cancelling a job (`POST /v1/jobs/{id}/cancel`) flips any
+scheduled or in-flight rechecks for that job to `cancelled` in the same transaction.
+
+The verification response now exposes `score.partial_confidence` for these cases:
+
+```json
+"score": {
+  "score": 55,
+  "category": "risky",
+  "confidence": 62,
+  "confidence_level": "medium",
+  "partial_confidence": {
+    "confidence": 62,
+    "classification": "timeout",
+    "factors": ["mx_records_present", "tenant_history_safe", "domain_age_old"]
+  }
+}
+```
+
+`classification` is one of `transient`, `policy_block`, `timeout`, `network`, `ambiguous_response`,
+or `smtp_unreachable`. Knobs live in the `[delayed_recheck]` config block — `enable`, `poll_interval_seconds`,
+`batch_size`, `stale_publishing_seconds`, `publish_retry_seconds`, `max_publish_attempts`, `retention_days`,
+and `cleanup_interval_seconds`. Set `enable = false` to fall back to plain ACK-and-store on Unknown.
+
+### Campaign Outcome Feedback Loop
+
+Customers send us outcome events from their ESPs (delivered, hard_bounce, soft_bounce, complaint, open, click,
+unsubscribe) and the platform uses those signals to (1) automatically maintain the suppression list and (2) feed
+ground truth into future verifications via `OutcomeContext` on the scoring path. A real hard bounce reported by
+the ESP **overrides** SMTP heuristics: the next verification of that address will return `category=invalid` with
+a 95-confidence score regardless of what the SMTP probe says. Engagement signals (delivered/open/click) provide
+positive pressure on the score.
+
+Three customer touchpoints — everything else is automatic:
+
+**1. Provision an API key with the new scope** (reuses existing `PATCH /v1/me/api-keys/{id}`):
+
+```json
+{ "scopes": ["bulk", "lists", "outcomes.write"] }
+```
+
+**2. (Optional) Create an outcome policy.** A sensible default is created lazily on first ingest if the tenant
+hasn't defined one. Full CRUD lives at `/v1/outcome-policies`:
+
+```json
+POST /v1/outcome-policies
+{
+  "name": "production",
+  "is_default": true,
+  "rules": {
+    "hard_bounce":  { "action": "suppress", "score_override": "invalid" },
+    "complaint":    { "action": "suppress_and_unsubscribe", "score_override": "invalid" },
+    "soft_bounce":  { "action": "suppress_after", "threshold_count": 3, "threshold_window_days": 30 },
+    "unsubscribe":  { "action": "suppress" },
+    "delivered":    { "action": "score_boost", "boost": 5 },
+    "open":         { "action": "score_boost", "boost": 3 },
+    "click":        { "action": "score_boost", "boost": 8 },
+    "outcome_ttl_days": 90
+  }
+}
+```
+
+**3. Send outcomes — pick whichever fits the customer's stack.**
+
+Direct push (recommended for live integrations):
+
+```json
+POST /v1/outcomes
+{
+  "outcomes": [
+    {"email":"a@x.com","type":"hard_bounce","occurred_at":"2026-05-10T12:00:00Z","source":"sendgrid","campaign_id":"camp_42"},
+    {"email":"b@y.com","type":"complaint","occurred_at":"2026-05-10T12:01:00Z","source":"sendgrid"},
+    {"email":"c@z.com","type":"open","occurred_at":"2026-05-10T12:02:00Z","source":"sendgrid"}
+  ]
+}
+→ 202 { "accepted": 3, "rejected": 0, "suppressed": 2, "policy_id": 17, "errors": [] }
+```
+
+Idempotent on `(tenant_id, canonical_email, outcome_type, occurred_at, source)` so re-sends are safe.
+
+CSV backfill (for one-time imports from ESP exports):
+
+```
+POST /v1/outcomes/upload    (multipart/form-data; field name: file)
+```
+
+CSV columns: `email,outcome_type,occurred_at,source,campaign_id` (last two optional).
+
+Inspect ingested data:
+
+```
+GET /v1/outcomes?email=a@x.com&since=2026-04-01
+GET /v1/outcomes?source=sendgrid&type=hard_bounce&limit=100
+```
+
+The verification response now exposes the signal back to clients via two new `score.reason_codes`:
+`outcome_hard_bounce` / `outcome_complaint` (when an outcome forced the category) and `outcome_engagement`
+(when delivered/open/click boosted the score).
 
 ### Component Interaction Diagram
 
@@ -649,17 +768,7 @@ Many online services (https://hunter.io, https://verify-email.org, https://email
 - **Collaboration & AI assistance** – shared workspaces, fine-grained permissions, and AI-generated persona summaries or icebreakers based on enriched data.
 ## License
 
-`check-if-email-exists`'s source code is provided under a **dual license model**.
-
-### Commercial license
-
-If you want to use `check-if-email-exists` to develop commercial sites, tools, and applications, the Commercial License is the appropriate license. With this option, your source code is kept proprietary. Purchase a `check-if-email-exists` Commercial License at https://reacher.email/pricing.
-
-### Open source license
-
-If you are creating an open-source application under a license compatible with the GNU Affero GPL License v3, you may use `check-if-email-exists` under the terms of the [AGPL-3.0](./LICENSE.AGPL).
-
-[➡️ Read more](https://docs.reacher.email/self-hosting/licensing) about Reacher's license.
+`check-if-email-exists`'s source code is provided under the [MIT License](./LICENSE.md).
 
 ## 🔨 Build From Source
 
@@ -711,7 +820,7 @@ Refer to `backend/backend_config.toml` for the canonical schema and to `docs/sel
 
 ## CI/CD & Release Flow
 
-- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds the backend image with `docker/build-push-action`, pushes it to GHCR, then defers Helm deployment to the reusable workflow (`deploy-helm-direct-template.yml`). Tagging a release (`v*.*.*`) automatically publishes the image and rolls out the chart to the `paperless` namespace.
+- **Docker build + Helm deploy**: `.github/workflows/deploy_backend.yml` builds and smokes the combined web, API, and worker image, pushes it to GHCR, then deploys its immutable SHA tag through `deploy-helm-direct-template.yml`. A merge to `develop` deploys to `paperless-staging`. A merge to `master` deploys to `paperless-production`. Deployment requires the Better Auth and Resend secrets listed in the workflow.
 - **CLI release pipeline**: `.github/workflows/deploy_cli.yml` builds the CLI binaries, signs them, and attaches artifacts to GitHub releases. Update this workflow when the CLI requires new targets or toolchains.
 - **Reusable Helm template**: `.github/workflows/deploy-helm-direct-template.yml` constructs kubeconfig material straight from GitHub secrets (`HELM_DIRECT_*`). Any service in the org can inherit it by pointing `uses:` to the template and passing chart metadata plus image overrides.
 - **Secret overrides**: The same template now accepts newline-delimited `secret_env_overrides` so deployments inject `config.secretEnv.*` values (e.g., `RCH__PROXY__PORT`) straight from GitHub Secrets without duplicating scripts across repos.

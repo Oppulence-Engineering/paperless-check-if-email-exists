@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -25,6 +25,8 @@ struct ListItem {
 	status: String,
 	total_rows: i32,
 	email_column: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 	created_at: String,
 	completed_at: Option<String>,
 }
@@ -40,6 +42,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::LISTS)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let limit = query.limit.unwrap_or(50).min(200);
 	let offset = query.offset.unwrap_or(0);
@@ -52,6 +56,7 @@ async fn http_handler(
 			status::TEXT AS status,
 			total_rows,
 			email_column,
+			source_key,
 			created_at,
 			completed_at
 		FROM v1_lists
@@ -82,6 +87,7 @@ async fn http_handler(
 				status: sqlx::Row::get(&row, "status"),
 				total_rows: sqlx::Row::get(&row, "total_rows"),
 				email_column: sqlx::Row::get(&row, "email_column"),
+				source_key: sqlx::Row::get(&row, "source_key"),
 				created_at: sqlx::Row::get::<DateTime<Utc>, _>(&row, "created_at").to_rfc3339(),
 				completed_at: sqlx::Row::get::<Option<DateTime<Utc>>, _>(&row, "completed_at")
 					.map(|value| value.to_rfc3339()),

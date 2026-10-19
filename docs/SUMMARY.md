@@ -16,15 +16,25 @@
   * [Manage scaling yourself](self-hosting/scaling-for-production/option-1-manage-scaling-yourself.md)
   * [Option 1: RabbitMQ-based Queue Architecture](self-hosting/scaling-for-production/option-2-rabbitmq-based-queue-architecture.md)
 * [Licensing](self-hosting/licensing/README.md)
-  * [Commercial License Trial](self-hosting/licensing/commercial-license-trial.md)
 * [Proxies](self-hosting/proxies/README.md)
   * [Multiple Proxies](self-hosting/proxies/multiple-proxies.md)
 * [Reacher Configuration](self-hosting/reacher-configuration-v0.10.md)
 * [Debugging Reacher](self-hosting/debugging-reacher.md)
 
+## Integrations
+
+* [Connecting your ESP to the outcome feedback loop](integrations/outcome-feedback-loop.md)
+
 ## Advanced
 
 * [Customer Feature Backlog](advanced/customer-feature-backlog.md)
+* [Decision Policies](advanced/decision-policies.md)
+* [List Remediation](advanced/list-remediation.md)
+* [Suppression Intelligence](advanced/suppression-intelligence.md)
+* [Outcome Ingestion](advanced/outcome-ingestion.md)
+* [Push Pipelines](advanced/push-pipelines.md)
+* [Source Quality](advanced/source-quality.md)
+* [Job Observability](advanced/job-observability.md)
 * [RFCs](rfcs/README.md)
   * [RFC 0001: Native Provider Webhooks and Outcome Adapters](rfcs/0001-native-provider-webhooks-and-outcome-adapters.md)
   * [RFC 0002: Deliverability Feedback and Recommendations](rfcs/0002-deliverability-feedback-and-recommendations.md)

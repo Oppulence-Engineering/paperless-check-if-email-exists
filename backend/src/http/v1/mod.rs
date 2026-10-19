@@ -1,22 +1,8 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 pub mod account_api_keys;
 pub mod admin;
+pub mod alerts;
 pub mod bulk;
+pub mod campaign_outcomes;
 pub mod check_email;
 pub mod comments;
 pub mod email_history;
@@ -26,10 +12,16 @@ pub mod jobs;
 pub mod lists;
 pub mod me;
 pub mod onboard;
+pub mod outcome_policies;
+pub mod outcomes;
 pub mod pipelines;
+pub mod provider_outcomes;
 pub mod query;
 pub mod reputation;
 pub mod reverification;
+pub mod saved_segments;
+pub mod score_policies;
+pub mod source_quality;
 pub mod suppressions;
 pub mod tenant_domains;
 pub mod tenant_settings;

@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/oppulence-engineering/check-if-email-exists-backend
+  repository: ghcr.io/oppulence-engineering/check-if-email-exists
   pullPolicy: Always
   tag: "latest"
   digest: ""
@@ -26,6 +26,7 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 8080
+  webPort: 3000
 
 ingress:
   enabled: false
@@ -40,27 +41,34 @@ ingress:
 
 resources:
   requests:
-    cpu: 5m
-    memory: 32Mi
+    cpu: 250m
+    memory: 512Mi
   limits:
-    cpu: 500m
-    memory: 256Mi
+    cpu: "2"
+    memory: 2Gi
 
 livenessProbe:
   httpGet:
-    path: /version
-    port: http
+    path: /healthz
+    port: web
 readinessProbe:
+  timeoutSeconds: 5
   httpGet:
-    path: /version
-    port: http
+    path: /readyz
+    port: web
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: web
+  periodSeconds: 10
+  failureThreshold: 30
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 2
   targetCPUUtilizationPercentage: 95
-  targetMemoryUtilizationPercentage: 95
+  targetMemoryUtilizationPercentage: null
 
 config:
   createConfigMap: true
@@ -69,12 +77,28 @@ config:
   env:
     RUST_LOG: reacher=info
     SQLX_OFFLINE: "true"
-    RCH__BACKEND_NAME: backend-kubernetes
+    RCH__BACKEND_NAME: full-stack-kubernetes
     RCH__HTTP_HOST: 0.0.0.0
+    RCH__HTTP_PORT: "8081"
+    BACKEND_JWT_AUDIENCE: check-if-email-exists-api
     RCH__WORKER__ENABLE: "true"
+    # The re-check and pipeline schedulers claim due rows atomically, so
+    # running them in every cluster does not run a schedule twice.
+    RCH__REVERIFICATION__ENABLE: "true"
+    RCH__PIPELINES__ENABLE: "true"
     RCH__WORKER__THROTTLE__MAX_REQUESTS_PER_DAY: "8640000"
     RCH__WEBDRIVER_ADDR: http://localhost:9515
   secretEnv:
+    DATABASE_URL: ""
+    BETTER_AUTH_URL: ""
+    BETTER_AUTH_SECRET: ""
+    SCIM_CREDENTIAL_HASH_SECRET: ""
+    RESEND_API_KEY: ""
+    RESEND_FROM: ""
+    STRIPE_SECRET_KEY: ""
+    STRIPE_WEBHOOK_SECRET: ""
+    STRIPE_PRICE_STARTER: ""
+    STRIPE_PRICE_PROFESSIONAL: ""
     RCH__STORAGE__POSTGRES__DB_URL: ""
     RCH__STORAGE__POSTGRES__READ_REPLICA_URL: ""
     RCH__WORKER__RABBITMQ__URL: ""
@@ -83,6 +107,7 @@ config:
     RCH__PROXY__USERNAME: ""
     RCH__PROXY__PASSWORD: ""
     RCH__HEADER_SECRET: ""
+    PLATFORM_ADMIN_EMAILS: ""
     RCH__SENTRY_DSN: ""
 
 extraEnv: []

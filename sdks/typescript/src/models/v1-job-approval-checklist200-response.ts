@@ -15,58 +15,57 @@
 
 
 /**
- * 
+ *
  * @export
  * @interface V1JobApprovalChecklist200Response
  */
 export interface V1JobApprovalChecklist200Response {
     /**
-     * 
+     *
      * @type {object}
      * @memberof V1JobApprovalChecklist200Response
      */
     'categories'?: object;
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1JobApprovalChecklist200Response
      */
     'job_id'?: number;
     /**
-     * 
+     *
      * @type {boolean}
      * @memberof V1JobApprovalChecklist200Response
      */
     'ready_to_send'?: boolean;
     /**
-     * 
+     *
      * @type {string}
      * @memberof V1JobApprovalChecklist200Response
      */
     'recommendation'?: string;
     /**
-     * 
+     *
      * @type {object}
      * @memberof V1JobApprovalChecklist200Response
      */
     'risk_flags'?: object;
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1JobApprovalChecklist200Response
      */
     'safe_to_send_count'?: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1JobApprovalChecklist200Response
      */
     'safe_to_send_pct'?: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof V1JobApprovalChecklist200Response
      */
     'total_records'?: number;
 }
-

@@ -1,7 +1,7 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
@@ -26,10 +26,12 @@ struct Response {
 	emails_requeued: Option<i32>,
 }
 
-async fn http_handler(
+pub(super) async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::VERIFY)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 
 	let row = sqlx::query(
@@ -70,7 +72,7 @@ async fn http_handler(
 }
 
 /// Pool-only filter that doesn't require worker mode.
-fn with_pg_pool(
+pub(super) fn with_pg_pool(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (PgPool,), Error = warp::Rejection> + Clone {
 	warp::any().and_then(move || {

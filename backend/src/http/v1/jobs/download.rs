@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::http::csv_shared::{csv_rows, ndjson_rows, TaskResultRecord, CSV_HEADER};
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::tenant::context::{scope, TenantContext};
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
@@ -11,9 +11,10 @@ use serde::Deserialize;
 use sqlx::{PgPool, Row};
 use std::io;
 use std::sync::Arc;
+use sync_wrapper::SyncStream;
 use warp::http::{Response, StatusCode};
-use warp::hyper::Body;
 use warp::Filter;
+use warp::Reply;
 
 const BATCH_SIZE: i64 = 500;
 
@@ -45,6 +46,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	let job_exists = sqlx::query(
 		"SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)",
 	)
@@ -92,33 +95,38 @@ async fn http_handler(
 		ResponseFormat::Json => "ndjson",
 	};
 
-	let body = Body::wrap_stream(stream::unfold(state, |mut state| async move {
-		if matches!(state.format, ResponseFormat::Csv) && !state.header_sent {
-			state.header_sent = true;
-			return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
-		}
-
-		match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
-			Ok(records) if records.is_empty() => None,
-			Ok(records) => {
-				state.last_id = records
-					.last()
-					.map(|record| record.id)
-					.unwrap_or(state.last_id);
-
-				let chunk = match state.format {
-					ResponseFormat::Csv => csv_rows(&records)
-						.map(Bytes::from)
-						.map_err(|err| io::Error::other(err.to_string())),
-					ResponseFormat::Json => ndjson_rows(&records)
-						.map(Bytes::from)
-						.map_err(|err| io::Error::other(err.to_string())),
-				};
-				Some((chunk, state))
+	let body = warp::reply::stream(SyncStream::new(stream::unfold(
+		state,
+		|mut state| async move {
+			if matches!(state.format, ResponseFormat::Csv) && !state.header_sent {
+				state.header_sent = true;
+				return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
 			}
-			Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
-		}
-	}));
+
+			match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
+				Ok(records) if records.is_empty() => None,
+				Ok(records) => {
+					state.last_id = records
+						.last()
+						.map(|record| record.id)
+						.unwrap_or(state.last_id);
+
+					let chunk = match state.format {
+						ResponseFormat::Csv => csv_rows(&records)
+							.map(Bytes::from)
+							.map_err(|err| io::Error::other(err.to_string())),
+						ResponseFormat::Json => ndjson_rows(&records)
+							.map(Bytes::from)
+							.map_err(|err| io::Error::other(err.to_string())),
+					};
+					Some((chunk, state))
+				}
+				Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
+			}
+		},
+	)))
+	.into_response()
+	.into_body();
 
 	let response = Response::builder()
 		.header("Content-Type", content_type)
@@ -154,7 +162,9 @@ async fn fetch_batch(
 ) -> Result<Vec<TaskResultRecord>, ReacherResponseError> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at,
+		       recommendation, recommendation_action, recommendation_confidence, recommendation_priority,
+		       policy_mode, policy_evaluation, policy_decision
 		FROM v1_task_result
 		WHERE job_id = $1 AND id > $2
 		ORDER BY id ASC
@@ -181,6 +191,13 @@ async fn fetch_batch(
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
 			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
+			recommendation: row.get("recommendation"),
+			recommendation_action: row.get("recommendation_action"),
+			recommendation_confidence: row.get("recommendation_confidence"),
+			recommendation_priority: row.get("recommendation_priority"),
+			policy_mode: row.get("policy_mode"),
+			policy_evaluation: row.get("policy_evaluation"),
+			policy_decision: row.get("policy_decision"),
 		})
 		.collect())
 }

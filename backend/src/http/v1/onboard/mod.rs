@@ -10,7 +10,7 @@ use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct OnboardRequest {
 	/// Email address to verify.
 	pub email_to_verify: String,
@@ -209,6 +209,7 @@ async fn onboard_handler(
 	post,
 	path = "/v1/check-email-with-onboard",
 	tag = "v1",
+	request_body = OnboardRequest,
 	responses((status = 201, description = "Tenant onboarded and email verified"))
 )]
 pub fn v1_check_email_with_onboard(

@@ -1,6 +1,8 @@
 use crate::config::BounceRiskConfig;
 use crate::http::v1::lists::canonicalize::canonicalize_email;
-use crate::reputation::checker::{fetch_domain_info_with_client, validate_public_domain_target};
+use crate::reputation::checker::{
+	fetch_domain_info_with_client, rdap_client_builder, validate_public_domain_target,
+};
 use crate::reputation::dns_records::check_dns_records;
 use crate::reputation::models::{DnsRecordResults, DomainInfo};
 use crate::scoring::EmailScore;
@@ -500,9 +502,8 @@ async fn collect_domain_signals(
 	let mut rdap_refreshed = false;
 	let mut infra_refreshed = false;
 
-	let rdap_client = reqwest::Client::builder()
+	let rdap_client = rdap_client_builder()
 		.timeout(Duration::from_millis(runtime.network_timeout_ms))
-		.redirect(reqwest::redirect::Policy::none())
 		.build()?;
 
 	if domain_info.is_none() {
@@ -573,8 +574,8 @@ fn collect_mx_signals(output: &CheckEmailOutput) -> (Option<String>, Option<i32>
 	let records: Vec<_> = lookup.iter().collect();
 	let provider = records
 		.iter()
-		.min_by_key(|record| record.preference())
-		.map(|record| derive_provider_from_mx_host(record.exchange().to_string().as_str()));
+		.min_by_key(|record| record.preference)
+		.map(|record| derive_provider_from_mx_host(record.exchange.to_string().as_str()));
 
 	let mx_count = Some(records.len() as i32);
 	let mx_priority_spread = if records.is_empty() {
@@ -582,11 +583,11 @@ fn collect_mx_signals(output: &CheckEmailOutput) -> (Option<String>, Option<i32>
 	} else {
 		let min = records
 			.iter()
-			.map(|record| i32::from(record.preference()))
+			.map(|record| i32::from(record.preference))
 			.min();
 		let max = records
 			.iter()
-			.map(|record| i32::from(record.preference()))
+			.map(|record| i32::from(record.preference))
 			.max();
 		match (min, max) {
 			(Some(min), Some(max)) => Some(max - min),

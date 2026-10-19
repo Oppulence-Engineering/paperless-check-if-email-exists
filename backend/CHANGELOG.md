@@ -1,5 +1,44 @@
 # Changelog
 
+## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **api:** check the suppression scope and keep suppression paging stable ([0fa0330](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/0fa033034e10515a0f33f0413473693a4b2161a9))
+* **api:** decode the email in the history path ([5728714](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/57287148cb80220bd24a45b83f5b143829e43486))
+* **api:** describe check errors as the backend sends them ([474ecdb](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/474ecdb9116a970b956eb36e7f904e229562495a))
+* **api:** describe the pipeline, policy, API key, and insights contracts ([6beb5d8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/6beb5d8c71c433ab376c60e79d3e152da1e46bbf))
+* **api:** describe the suppression, outcome policy, and upload contracts ([f45809d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f45809d59060d09be97e99e330799c2d8d98b7bc))
+* **api:** document the SMTP fields of the check debug output ([1f80d78](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1f80d78ed0e55e4d6d708dae3d86eb2f7e9d8fb9))
+* **api:** fill in the domain age and registrar from RDAP ([f95fec4](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f95fec48490fa0f25319be5a38429ff88c9848c1))
+* **api:** fill in the domain age and registrar from RDAP ([60025b0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/60025b0678e88c9c9b6976b10568cae8a70b145a))
+* **api:** give PipelineSource variants the schemas its mapping names ([25f8687](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/25f8687e7ebec15ff105ac162cb0e675b2133635))
+* **api:** give PipelineSource variants the schemas its mapping names ([8723ca9](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8723ca9d712cc4e7cdf17ef586f3879815f615f0))
+* **api:** keep separate schemas for provider and campaign outcomes ([f56e22d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f56e22d7a2449e2681fb2515b610eed873f04b5f))
+* **api:** let staging and production migrate to the develop schema ([d811d23](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d811d233dcee13b4ce83f6254f1dd4b9908316f4))
+* **api:** let staging and production migrate to the develop schema ([e0da86d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e0da86d6fde8f6a15b337a1ec5bc306a90953431))
+* **api:** publish the full contract and repair the check result schema ([e534828](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e5348286e51148aae53fa781cd3114adda7d5983))
+* open fewer Postgres connections in each pod ([4cba073](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4cba073c9563fb66eb136f68cebcc84f15f718f1))
+* open fewer Postgres connections in each pod ([cab0bc0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/cab0bc07f120dfafd9d9b0c111b0b9ed3a4c7ec3))
+
+## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-16)
+
+
+### Features
+
+* add email intelligence pipelines and outcomes ([b1cc368](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b1cc3684ca799904a5079451ebe349a916efcb48))
+* add email intelligence pipelines and provider outcomes ([760f654](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/760f6546336b77f510d0a2d8215b21d3dc87e993))
+* ship combined app and tenant API ([#51](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/51)) ([a013bfb](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/a013bfb8f6709777848d5e1fe91c63c648bc86ea))
+
+
+### Bug Fixes
+
+* allow slower JWKS fetch on cold start ([4ce65b8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4ce65b84de8e28f52c329d6a647baccc323e3cb7))
+* backport worker recovery without staging schema changes ([#66](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/66)) ([e80f7e1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e80f7e1d66947d47c2742b342b1cc12d40d6cecb))
+* restart Paperless when its RabbitMQ consumer fails ([#61](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/61)) ([36270bd](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/36270bdeab6e1c989a51d3891bacc76e9641a8a3))
+* unblock worker image releases and prevent throttle panics ([#63](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/63)) ([129ee33](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/129ee33ec55421c0cea929af963307c41da35148))
+
 ## [4.1.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.0.0...v4.1.0) (2026-03-21)
 
 

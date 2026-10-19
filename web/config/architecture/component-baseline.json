@@ -1,0 +1,14 @@
+{
+	"schemaVersion": 1,
+	"standardPaths": ["components/features/", "/_components/"],
+	"managedPaths": [
+		"components/ai-elements/",
+		"components/auth/",
+		"components/dev/",
+		"components/legal/",
+		"components/platform/",
+		"components/providers/",
+		"components/sim/"
+	],
+	"legacyFiles": []
+}

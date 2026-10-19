@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 #[cfg(test)]
 mod tests {
 	use std::sync::Arc;
@@ -428,6 +412,30 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK);
+	}
+
+	#[tokio::test]
+	async fn test_scalar_docs_no_auth_required() {
+		for path in ["/docs", "/scalar"] {
+			let resp = request()
+				.path(path)
+				.method("GET")
+				.reply(&create_routes(create_backend_config("foobar")))
+				.await;
+
+			assert_eq!(resp.status(), StatusCode::OK);
+			let content_type = resp
+				.headers()
+				.get("content-type")
+				.and_then(|value| value.to_str().ok())
+				.unwrap_or("");
+			assert!(content_type.starts_with("text/html"));
+
+			let body = String::from_utf8_lossy(resp.body());
+			assert!(body.contains("Scalar.createApiReference"));
+			assert!(body.contains("@scalar/api-reference"));
+			assert!(body.contains("url: '/openapi.json'"));
+		}
 	}
 
 	#[tokio::test]

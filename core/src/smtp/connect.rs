@@ -1,19 +1,3 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use async_recursion::async_recursion;
 use async_smtp::commands::{MailCommand, RcptCommand};
 use async_smtp::extension::ClientId;
@@ -21,7 +5,7 @@ use async_smtp::{SmtpClient, SmtpTransport};
 use fast_socks5::client::Config;
 use fast_socks5::{client::Socks5Stream, Result};
 use rand::rngs::SmallRng;
-use rand::{distributions::Alphanumeric, Rng, SeedableRng};
+use rand::{distr::Alphanumeric, RngExt};
 use std::iter;
 use std::str::FromStr;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
@@ -76,7 +60,7 @@ async fn connect_to_smtp_host(
 		Some(proxy) => {
 			let mut config = Config::default();
 			if let Some(timeout_ms) = proxy.timeout_ms {
-				config.set_connect_timeout(timeout_ms / 1000);
+				config.set_connect_timeout(std::time::Duration::from_millis(timeout_ms));
 			}
 
 			let socks_stream =
@@ -176,6 +160,13 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			// lowercase.
 			let err_string = err.to_string().to_lowercase();
 
+			// Greylisting is a temporary deferral, it says nothing about the
+			// mailbox. Return the error as-is so that the check is retried,
+			// and eventually reported as unknown.
+			if parser::is_greylisted(&err_string) {
+				return Err(SmtpError::AsyncSmtpError(err));
+			}
+
 			// Check if the email account has been disabled or blocked.
 			if parser::is_disabled_account(&err_string) {
 				return Ok(Deliverability {
@@ -240,12 +231,12 @@ async fn smtp_is_catch_all<S: AsyncBufRead + AsyncWrite + Unpin + Send>(
 	}
 
 	// Create a random 15-char alphanumerical string.
-	let mut rng = SmallRng::from_entropy();
+	let mut rng: SmallRng = rand::make_rng();
 	let random_email: String = iter::repeat_with(|| rng.sample(Alphanumeric))
 		.map(char::from)
 		.take(15)
 		.collect();
-	let random_email = EmailAddress::new(format!("{}@{}", random_email, domain))?;
+	let random_email = EmailAddress::new(format!("{random_email}@{domain}"))?;
 
 	check_email_deliverability(smtp_transport, &random_email)
 		.await

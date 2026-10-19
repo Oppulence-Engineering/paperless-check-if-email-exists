@@ -1,0 +1,19 @@
+import { {{orvalSchema}} } from "{{orvalImport}}";
+
+/**
+ * @oppulence-gen kind={{artifactKind}}
+ * Validates one {{title}} WebSocket message with the backend-owned Orval schema.
+ * Owned by `use-{{name}}.lit.ts`.
+ */
+export function parse{{pascalName}}Event(event: MessageEvent) {
+  if (typeof event.data !== "string") {
+    throw new Error("{{title}} realtime messages must be JSON text");
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(event.data);
+  } catch {
+    throw new Error("{{title}} realtime message is not valid JSON");
+  }
+  return {{orvalSchema}}.parse(value);
+}

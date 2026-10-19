@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -39,7 +39,8 @@ type PipelineRunView struct {
 	PipelineId int64 `json:"pipeline_id"`
 	ResultLocation NullablePipelineRunResultLocation `json:"result_location,omitempty"`
 	ScheduledFor NullableTime `json:"scheduled_for,omitempty"`
-	SourceSnapshot PipelineSource `json:"source_snapshot"`
+	// The source that the run used. Its shape depends on the source type and the run state.
+	SourceSnapshot map[string]interface{} `json:"source_snapshot"`
 	StartedAt NullableTime `json:"started_at,omitempty"`
 	Stats PipelineRunStats `json:"stats"`
 	Status PipelineRunStatus `json:"status"`
@@ -54,7 +55,7 @@ type _PipelineRunView PipelineRunView
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot PipelineSource, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView {
+func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot map[string]interface{}, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView {
 	this := PipelineRunView{}
 	this.BilledEmails = billedEmails
 	this.CreatedAt = createdAt
@@ -644,9 +645,9 @@ func (o *PipelineRunView) UnsetScheduledFor() {
 }
 
 // GetSourceSnapshot returns the SourceSnapshot field value
-func (o *PipelineRunView) GetSourceSnapshot() PipelineSource {
+func (o *PipelineRunView) GetSourceSnapshot() map[string]interface{} {
 	if o == nil {
-		var ret PipelineSource
+		var ret map[string]interface{}
 		return ret
 	}
 
@@ -655,15 +656,15 @@ func (o *PipelineRunView) GetSourceSnapshot() PipelineSource {
 
 // GetSourceSnapshotOk returns a tuple with the SourceSnapshot field value
 // and a boolean to check if the value has been set.
-func (o *PipelineRunView) GetSourceSnapshotOk() (*PipelineSource, bool) {
+func (o *PipelineRunView) GetSourceSnapshotOk() (map[string]interface{}, bool) {
 	if o == nil {
-		return nil, false
+		return map[string]interface{}{}, false
 	}
-	return &o.SourceSnapshot, true
+	return o.SourceSnapshot, true
 }
 
 // SetSourceSnapshot sets field value
-func (o *PipelineRunView) SetSourceSnapshot(v PipelineSource) {
+func (o *PipelineRunView) SetSourceSnapshot(v map[string]interface{}) {
 	o.SourceSnapshot = v
 }
 
@@ -969,5 +970,3 @@ func (v *NullablePipelineRunView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

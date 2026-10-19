@@ -29,7 +29,7 @@ mod consume_coverage {
 		// Verify queue exists via passive declare
 		let q = channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				lapin::options::QueueDeclareOptions {
 					passive: true,
 					..Default::default()
@@ -147,7 +147,7 @@ mod do_work_coverage {
 		let channel = setup_rabbit_mq("dowork-rt", &config).await.unwrap();
 		// Purge queue first
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 
 		let task = CheckEmailTask {
@@ -170,8 +170,8 @@ mod do_work_coverage {
 		let json = serde_json::to_vec(&task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default()
@@ -185,8 +185,8 @@ mod do_work_coverage {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"dowork-con",
+				CHECK_EMAIL_QUEUE.into(),
+				"dowork-con".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -834,7 +834,7 @@ mod do_check_email_work_coverage {
 
 		// Purge queue
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 
 		// Create a job and task in DB
@@ -869,8 +869,8 @@ mod do_check_email_work_coverage {
 		let json = serde_json::to_vec(&task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default().with_content_type("application/json".into()),
@@ -883,8 +883,8 @@ mod do_check_email_work_coverage {
 		// Consume to get a real Delivery
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"dowork-test",
+				CHECK_EMAIL_QUEUE.into(),
+				"dowork-test".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -939,7 +939,7 @@ mod do_check_email_work_coverage {
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-dl", &rmq_config).await.unwrap());
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 
 		let job_id: i32 = sqlx::query("INSERT INTO v1_bulk_job (total_records, status) VALUES (1, 'running'::job_state) RETURNING id")
@@ -974,8 +974,8 @@ mod do_check_email_work_coverage {
 		let json = serde_json::to_vec(&task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default().with_content_type("application/json".into()),
@@ -987,8 +987,8 @@ mod do_check_email_work_coverage {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"dowork-dl-test",
+				CHECK_EMAIL_QUEUE.into(),
+				"dowork-dl-test".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -1078,13 +1078,13 @@ mod do_check_email_work_retry_coverage {
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-ss", &rmq_config).await.unwrap());
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 
 		// Create a reply queue for SingleShot RPC
 		let reply_queue = channel
 			.queue_declare(
-				"",
+				"".into(),
 				QueueDeclareOptions {
 					auto_delete: true,
 					durable: false,
@@ -1109,8 +1109,8 @@ mod do_check_email_work_retry_coverage {
 		let json = serde_json::to_vec(&task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default()
@@ -1125,8 +1125,8 @@ mod do_check_email_work_retry_coverage {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"dowork-ss-con",
+				CHECK_EMAIL_QUEUE.into(),
+				"dowork-ss-con".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -1155,7 +1155,7 @@ mod do_check_email_work_retry_coverage {
 		};
 		let channel = Arc::new(setup_rabbit_mq("dowork-retry", &rmq_config).await.unwrap());
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 
 		let job_id: i32 = sqlx::query("INSERT INTO v1_bulk_job (total_records, status) VALUES (1, 'running'::job_state) RETURNING id")
@@ -1189,8 +1189,8 @@ mod do_check_email_work_retry_coverage {
 		let json = serde_json::to_vec(&task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default().with_content_type("application/json".into()),
@@ -1202,8 +1202,8 @@ mod do_check_email_work_retry_coverage {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"dowork-retry-con",
+				CHECK_EMAIL_QUEUE.into(),
+				"dowork-retry-con".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -1266,9 +1266,10 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_new_connects_and_migrates() {
-		let storage = PostgresStorage::new(&db_url().await, None, None)
+		let storage = PostgresStorage::new(&db_url().await, None, None, 3)
 			.await
 			.unwrap();
+		assert_eq!(storage.pg_pool.options().get_max_connections(), 3);
 		// Verify we can query
 		let row = sqlx::query("SELECT 1 as v")
 			.fetch_one(&storage.pg_pool)
@@ -1281,7 +1282,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_ok_result() {
-		let storage = PostgresStorage::new(&db_url().await, None, None)
+		let storage = PostgresStorage::new(&db_url().await, None, None, 5)
 			.await
 			.unwrap();
 		let task = make_task(None);
@@ -1296,12 +1297,13 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_err_result() {
-		let storage = PostgresStorage::new(&db_url().await, None, None)
+		let storage = PostgresStorage::new(&db_url().await, None, None, 5)
 			.await
 			.unwrap();
 		let task = make_task(None);
-		let err: Result<CheckEmailOutput, TaskError> =
-			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
+		let err: Result<CheckEmailOutput, TaskError> = Err(TaskError::Lapin(lapin::Error::from(
+			lapin::ErrorKind::InvalidChannel(0),
+		)));
 		storage.store(&task, &err, None).await.unwrap();
 	}
 
@@ -1309,7 +1311,7 @@ mod postgres_storage_coverage {
 	#[serial]
 	async fn test_store_with_extra() {
 		let extra = Some(serde_json::json!({"key": "value"}));
-		let storage = PostgresStorage::new(&db_url().await, None, extra.clone())
+		let storage = PostgresStorage::new(&db_url().await, None, extra.clone(), 5)
 			.await
 			.unwrap();
 		assert_eq!(storage.get_extra(), extra);
@@ -1326,7 +1328,7 @@ mod postgres_storage_coverage {
 	#[tokio::test]
 	#[serial]
 	async fn test_store_with_tenant_id() {
-		let storage = PostgresStorage::new(&db_url().await, None, None)
+		let storage = PostgresStorage::new(&db_url().await, None, None, 5)
 			.await
 			.unwrap();
 		// Create a tenant

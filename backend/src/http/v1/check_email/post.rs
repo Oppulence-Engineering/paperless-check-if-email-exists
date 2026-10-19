@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! This file implements the `POST /v1/check_email` endpoint.
 
 use bytes::Bytes;
@@ -24,11 +8,11 @@ use warp::http::header::CONTENT_TYPE;
 use warp::Filter;
 
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::shared::check_email::handle_check_email;
 use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 use warp::Reply;
 
 /// The main endpoint handler — delegates to shared check_email logic.
@@ -38,6 +22,8 @@ async fn http_handler(
 	idempotency_key: Option<String>,
 	body: Bytes,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::VERIFY)?;
+
 	let request_body = body.clone();
 	let body: CheckEmailRequest =
 		serde_json::from_slice(&request_body).map_err(ReacherResponseError::from)?;

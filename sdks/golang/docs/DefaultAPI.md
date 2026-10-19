@@ -53,7 +53,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | The unique bulk verification job ID | 
+**jobId** | **int32** | The unique bulk verification job ID |
 
 ### Other Parameters
 
@@ -125,7 +125,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **string** | The unique bulk verification job ID | 
+**jobId** | **string** | The unique bulk verification job ID |
 
 ### Other Parameters
 
@@ -136,7 +136,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **limit** | **int32** | The number of results to return. | [default to 50]
- **offset** | **int32** | The offset from which to return the results, equivalent to the number of elements in the array to skip. | 
+ **offset** | **int32** | The offset from which to return the results, equivalent to the number of elements in the array to skip. |
 
 ### Return type
 
@@ -203,8 +203,8 @@ Other parameters are passed through a pointer to a apiPostV0CheckEmailRequest st
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authorization** | **string** | Your personal Reacher API key | 
- **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) | Request object containing all parameters necessary for an email verification. | 
+ **authorization** | **string** | Your personal Reacher API key |
+ **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) | Request object containing all parameters necessary for an email verification. |
 
 ### Return type
 
@@ -270,7 +270,7 @@ Other parameters are passed through a pointer to a apiPostV1BulkRequest struct v
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **postV1BulkRequest** | [**PostV1BulkRequest**](PostV1BulkRequest.md) |  | 
+ **postV1BulkRequest** | [**PostV1BulkRequest**](PostV1BulkRequest.md) |  |
 
 ### Return type
 
@@ -336,7 +336,7 @@ Other parameters are passed through a pointer to a apiPostV1CheckEmailRequest st
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) | Request object containing all parameters necessary for an email verification. | 
+ **checkEmailRequest** | [**CheckEmailRequest**](CheckEmailRequest.md) | Request object containing all parameters necessary for an email verification. |
 
 ### Return type
 
@@ -354,4 +354,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

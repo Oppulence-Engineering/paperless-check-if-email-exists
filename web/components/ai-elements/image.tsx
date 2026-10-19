@@ -1,0 +1,17 @@
+/* eslint-disable @next/next/no-img-element */
+import { cn } from "@/lib/utils";
+import type { Experimental_GeneratedImage } from "ai";
+
+export type ImageProps = Experimental_GeneratedImage & {
+	className?: string;
+	alt?: string;
+};
+
+export const Image = ({ alt = "Generated image", base64, mediaType, ...props }: ImageProps) => (
+	<img
+		{...props}
+		alt={alt}
+		className={cn("h-auto max-w-full overflow-hidden rounded-none", props.className)}
+		src={`data:${mediaType};base64,${base64}`}
+	/>
+);

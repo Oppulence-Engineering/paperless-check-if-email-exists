@@ -1,0 +1,31 @@
+import { describe, expect, it{{#unless hasBody}}, vi{{/unless}} } from "vitest";
+
+{{#if hasMsw}}import { {{mswMock}} } from "{{mswImport}}";
+{{/if}}
+import { {{orvalSchema}} } from "{{orvalImport}}";
+{{#unless hasBody}}import type { RequestJsonFn } from "@/lib/api/request-json";
+{{/unless}}
+
+import { {{camelName}}Path{{#unless hasBody}}, {{loadName}}{{/unless}} } from "./mutate-{{name}}";
+
+describe("{{fetchName}} transport", () => {
+{{#if hasMsw}}  it("accepts the Orval response fixture without a cast", () => {
+    expect({{orvalSchema}}.parse({{mswMock}}())).toEqual({{orvalSchema}}.parse({{mswMock}}()));
+  });
+
+{{/if}}  it("binds the Orval write path and response schema", {{#unless hasBody}}async {{/unless}}() => {
+    expect({{camelName}}Path({{#if hasPathParams}}{{pathParamsSamples}}{{/if}})).toContain("/");
+    expect({{orvalSchema}}).toBeDefined();
+{{#unless hasBody}}    const payload = {{orvalSchema}}.parse({{#if hasMsw}}{{mswMock}}(){{else}}{}{{/if}});
+    const request = vi.fn(async (input: Parameters<RequestJsonFn>[0]) => input.schema.parse(payload));
+    await {{loadName}}(request{{#if hasPathParams}}, {{pathParamsSamples}}{{/if}});
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: {{camelName}}Path({{#if hasPathParams}}{{pathParamsSamples}}{{/if}}),
+        method: "{{httpMethod}}",
+        schema: {{orvalSchema}},
+      }),
+    );
+{{/unless}}
+  });
+});

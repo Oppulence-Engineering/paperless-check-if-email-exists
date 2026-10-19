@@ -1,31 +1,13 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-use check_if_email_exists::CheckEmailOutput;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use reacher_backend::config::{load_config, BackendConfig};
 use reacher_backend::http::CheckEmailRequest;
-use reacher_backend::storage::commercial_license_trial::send_to_reacher;
 use reacher_backend::worker::do_work::{
 	check_email_and_send_result_with_config, CheckEmailJobId, CheckEmailTask, TaskWebhook,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::sync::Arc;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use tracing_subscriber::EnvFilter;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -34,6 +16,8 @@ const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 // create our own struct to deserialize the message.
 #[derive(Debug, Deserialize)]
 struct SQSMessage {
+	#[serde(default, rename = "messageId")]
+	message_id: Option<String>,
 	body: String,
 }
 
@@ -42,6 +26,18 @@ struct SQSMessage {
 struct SQSPayload {
 	#[serde(rename = "Records")]
 	records: Vec<SQSMessage>,
+}
+
+#[derive(Debug, Serialize)]
+struct SQSBatchResponse {
+	#[serde(rename = "batchItemFailures")]
+	batch_item_failures: Vec<SQSBatchItemFailure>,
+}
+
+#[derive(Debug, Serialize)]
+struct SQSBatchItemFailure {
+	#[serde(rename = "itemIdentifier")]
+	item_identifier: String,
 }
 
 /// This is like CheckEmailTask, but where the input is a CheckEmailRequest
@@ -89,15 +85,56 @@ async fn main() -> Result<(), Error> {
 	Ok(())
 }
 
-async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Error> {
+async fn handler(event: LambdaEvent<SQSPayload>) -> Result<SQSBatchResponse, Error> {
 	let (request, _context) = event.into_parts();
-	// Since we're only fetching a single message, we can safely unwrap here.
-	let message = request.records.first().expect("No messages in the event");
-	let task: CheckEmailPartialTask = serde_json::from_str(&message.body)?;
-	info!(email = ?task.input.to_email, "Processing task");
+	if request.records.is_empty() {
+		return Ok(SQSBatchResponse {
+			batch_item_failures: Vec::new(),
+		});
+	}
 
 	let backend_config = Arc::new(load_config().await?);
 	debug!("{:#?}", backend_config);
+	let total_records = request.records.len();
+	let mut processed = 0_usize;
+	let mut batch_item_failures = Vec::new();
+
+	for (index, message) in request.records.into_iter().enumerate() {
+		let item_identifier = message
+			.message_id
+			.clone()
+			.unwrap_or_else(|| format!("record-{index}"));
+		if let Err(error) = process_sqs_message(message, Arc::clone(&backend_config)).await {
+			warn!(
+				item_identifier = item_identifier,
+				error = ?error,
+				"Failed to process SQS record"
+			);
+			batch_item_failures.push(SQSBatchItemFailure { item_identifier });
+		} else {
+			processed += 1;
+		}
+	}
+
+	info!(
+		processed = processed,
+		failed = batch_item_failures.len(),
+		total = total_records,
+		"Processed SQS batch"
+	);
+
+	Ok(SQSBatchResponse {
+		batch_item_failures,
+	})
+}
+
+async fn process_sqs_message(
+	message: SQSMessage,
+	backend_config: Arc<BackendConfig>,
+) -> Result<(), Error> {
+	let storage = backend_config.get_storage_adapter();
+	let task: CheckEmailPartialTask = serde_json::from_str(&message.body)?;
+	info!(email = ?task.input.to_email, "Processing task");
 
 	let task = task.into_check_email_task(backend_config.clone());
 	let task = &task;
@@ -114,39 +151,28 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<CheckEmailOutput, Err
 	}
 
 	// TODO:
-	// - Refactor storing the result and sending to Reacher, it's duplicated
-	// code from the backend.
+	// - Refactor storing the result, it's duplicated code from the backend.
 	// - Add throttling, again using backend code.
-
-	// Store the result.
-	let storage = backend_config.get_storage_adapter();
 	match &worker_output {
 		Ok(success) => {
 			storage
 				.store_prepared(task, success, storage.get_extra())
 				.await?;
-
-			// If we're in the Commercial License Trial, we also store the
-			// result by sending it to back to Reacher.
-			send_to_reacher(backend_config.clone(), &task.input.to_email, Ok(success)).await?;
 		}
 		Err(error) => {
 			storage
 				.store_error(task, error, storage.get_extra())
 				.await?;
 
-			send_to_reacher::<reacher_backend::scoring::response::PreparedCheckEmailSuccess>(
-				backend_config.clone(),
-				&task.input.to_email,
-				Err(error),
-			)
-			.await?;
+			if error.is_retryable() {
+				return Err(
+					std::io::Error::new(std::io::ErrorKind::Other, error.to_string()).into(),
+				);
+			}
 		}
 	}
 
-	worker_output
-		.map(|success| success.output)
-		.map_err(Error::from)
+	Ok(())
 }
 
 async fn run_and_wait_chromedriver() -> Result<(), Error> {

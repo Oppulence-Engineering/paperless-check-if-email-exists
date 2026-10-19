@@ -1,19 +1,3 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! `check-if-email-exists` lets you check if an email address exists without
 //! sending any email.
 //!
@@ -106,6 +90,9 @@ pub use util::sentry::*;
 /// The target where to log check-if-email-exists logs.
 pub const LOG_TARGET: &str = "reacher";
 
+/// The version of Reacher, as defined in Cargo.toml.
+pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 static INIT: Once = Once::new();
 
 /// check-if-email-exists uses rustls for its TLS connections. This function
@@ -156,6 +143,7 @@ fn build_debug_details(
 			.unwrap_or(Duration::from_secs(0)),
 		smtp,
 		backend_name: backend_name.to_string(),
+		reacher_version: CARGO_PKG_VERSION.into(),
 	}
 }
 
@@ -321,10 +309,10 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		.as_ref()
 		.expect("If lookup is error, we already returned. qed.")
 		.iter()
-		.min_by_key(|a| a.preference())
+		.min_by_key(|a| a.preference)
 		.expect("There should be at least one MX record after filtering.");
 	let host = mx_records;
-	let mx_host = host.exchange().to_string();
+	let mx_host = host.exchange.to_string();
 
 	if detected_provider.is_none() {
 		detected_provider = detect_provider(&my_syntax.domain, Some(&mx_host));
@@ -365,7 +353,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 			.address
 			.as_ref()
 			.expect("We already checked that the email has valid format. qed."),
-		host.exchange(),
+		&host.exchange,
 		my_syntax.domain.as_ref(),
 		input,
 	)

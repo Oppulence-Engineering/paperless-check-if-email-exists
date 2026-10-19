@@ -1,20 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-pub mod commercial_license_trial;
 pub mod error;
 pub mod postgres;
 
@@ -112,8 +95,9 @@ mod tests {
 	async fn test_noop_store_with_error_succeeds() {
 		let adapter = StorageAdapter::Noop;
 		let task = make_task();
-		let output: Result<CheckEmailOutput, TaskError> =
-			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
+		let output: Result<CheckEmailOutput, TaskError> = Err(TaskError::Lapin(
+			lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)),
+		));
 		let result = adapter.store(&task, &output, None).await;
 		assert!(result.is_ok());
 	}

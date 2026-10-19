@@ -37,7 +37,7 @@ spec:
               service:
                 name: {{ include "check-if-email-exists.fullname" $ }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  number: {{ $.Values.service.webPort }}
           {{- end }}
     {{- end }}
 {{- end }}

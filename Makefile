@@ -14,6 +14,10 @@ TEST_AMQP_URL ?= amqp://guest:guest@127.0.0.1:35672
 # Run
 ###############################################################################
 
+.PHONY: dev
+dev:
+	bash scripts/dev.sh
+
 # Run the backend without worker mode, i.e. only enabling single-shot
 # verifications via the /v1/check_email endpoint.
 .PHONY: run
@@ -27,10 +31,6 @@ run-with-worker: export RCH__WORKER__ENABLE=true
 run-with-worker: export RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@localhost:5672
 run-with-worker: export RCH__STORAGE__POSTGRES__DB_URL=postgresql://localhost/reacherdb
 run-with-worker: run
-
-.PHONY: run-with-commercial-license-trial
-run-with-commercial-license-trial: export RCH__COMMERCIAL_LICENSE_TRIAL__URL=http://localhost:3000/api/v1/commercial_license_trial
-run-with-commercial-license-trial: run
 
 # Bring up the full Docker Compose stack and run an end-to-end email verification.
 .PHONY: deploy-and-test

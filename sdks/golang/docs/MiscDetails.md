@@ -4,16 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**GravatarUrl** | Pointer to **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional]
+**GravatarUrl** | **NullableString** | URL to the Gravatar profile picture associated with the email, if available and requested. | [required]
+**Haveibeenpwned** | **NullableBool** |  | [required]
 **IsB2c** | **bool** | Is this a B2C email address? | [required]
 **IsDisposable** | **bool** | Indicates if the email address is from a known disposable email provider. | [required]
 **IsRoleAccount** | **bool** | Indicates if the email address is a role-based account. | [required]
+**IsSpamTrapDomain** | **bool** |  | [required]
 
 ## Methods
 
 ### NewMiscDetails
 
-`func NewMiscDetails(isB2c bool, isDisposable bool, isRoleAccount bool) *MiscDetails`
+`func NewMiscDetails(gravatarUrl NullableString, haveibeenpwned NullableBool, isB2c bool, isDisposable bool, isRoleAccount bool, isSpamTrapDomain bool) *MiscDetails`
 
 NewMiscDetails instantiates a new MiscDetails object
 This constructor will assign default values to properties that have it defined,
@@ -47,11 +49,26 @@ and a boolean to check if the value has been set.
 
 SetGravatarUrl sets GravatarUrl field to given value.
 
-### HasGravatarUrl
 
-`func (o *MiscDetails) HasGravatarUrl() bool`
+### GetHaveibeenpwned
 
-HasGravatarUrl returns a boolean if a field has been set.
+`func (o *MiscDetails) GetHaveibeenpwned() bool`
+
+GetHaveibeenpwned returns the Haveibeenpwned field if non-nil, zero value otherwise.
+
+### GetHaveibeenpwnedOk
+
+`func (o *MiscDetails) GetHaveibeenpwnedOk() (*bool, bool)`
+
+GetHaveibeenpwnedOk returns a tuple with the Haveibeenpwned field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHaveibeenpwned
+
+`func (o *MiscDetails) SetHaveibeenpwned(v bool)`
+
+SetHaveibeenpwned sets Haveibeenpwned field to given value.
+
 
 ### GetIsB2c
 
@@ -111,6 +128,26 @@ and a boolean to check if the value has been set.
 `func (o *MiscDetails) SetIsRoleAccount(v bool)`
 
 SetIsRoleAccount sets IsRoleAccount field to given value.
+
+
+### GetIsSpamTrapDomain
+
+`func (o *MiscDetails) GetIsSpamTrapDomain() bool`
+
+GetIsSpamTrapDomain returns the IsSpamTrapDomain field if non-nil, zero value otherwise.
+
+### GetIsSpamTrapDomainOk
+
+`func (o *MiscDetails) GetIsSpamTrapDomainOk() (*bool, bool)`
+
+GetIsSpamTrapDomainOk returns a tuple with the IsSpamTrapDomain field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsSpamTrapDomain
+
+`func (o *MiscDetails) SetIsSpamTrapDomain(v bool)`
+
+SetIsSpamTrapDomain sets IsSpamTrapDomain field to given value.
 
 
 

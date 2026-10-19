@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "@oppulence/ui/product-system.css";
+
+@source "../vendor/oppulence/ui/src/**/*.{ts,tsx}";

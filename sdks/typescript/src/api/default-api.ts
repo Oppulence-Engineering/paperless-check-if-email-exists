@@ -66,7 +66,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -113,7 +113,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -151,7 +151,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             if (authorization != null) {
@@ -170,7 +170,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * Initiate a bulk email verification.
          * @summary /v1/bulk
-         * @param {PostV1BulkRequest} [postV1BulkRequest] 
+         * @param {PostV1BulkRequest} [postV1BulkRequest]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -191,7 +191,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -228,7 +228,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -297,7 +297,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         /**
          * Initiate a bulk email verification.
          * @summary /v1/bulk
-         * @param {PostV1BulkRequest} [postV1BulkRequest] 
+         * @param {PostV1BulkRequest} [postV1BulkRequest]
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -513,7 +513,7 @@ export interface DefaultApiPostV0CheckEmailRequest {
  */
 export interface DefaultApiPostV1BulkRequest {
     /**
-     * 
+     *
      * @type {PostV1BulkRequest}
      * @memberof DefaultApiPostV1Bulk
      */
@@ -602,4 +602,3 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
         return DefaultApiFp(this.configuration).postV1CheckEmail(requestParameters.checkEmailRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
-

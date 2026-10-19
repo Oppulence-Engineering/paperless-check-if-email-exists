@@ -16,6 +16,13 @@ pub struct TaskResultRecord {
 	pub safe_to_send: Option<bool>,
 	pub reason_codes: Option<Vec<String>>,
 	pub completed_at: Option<DateTime<Utc>>,
+	pub recommendation: Option<Value>,
+	pub recommendation_action: Option<String>,
+	pub recommendation_confidence: Option<String>,
+	pub recommendation_priority: Option<String>,
+	pub policy_mode: Option<String>,
+	pub policy_evaluation: Option<Value>,
+	pub policy_decision: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -37,10 +44,17 @@ pub struct CsvDownloadRow {
 	pub verified_at: Option<String>,
 	pub age_days: Option<i64>,
 	pub freshness: Option<String>,
+	pub recommended_action: Option<String>,
+	pub recommendation_confidence: Option<String>,
+	pub recommendation_priority: Option<String>,
+	pub recommendation_reasons: Option<String>,
+	pub policy_mode: Option<String>,
+	pub policy_decision: Option<String>,
+	pub policy_reasons: Option<String>,
 }
 
 pub const CSV_HEADER: &str =
-	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness\n";
+	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness,recommended_action,recommendation_confidence,recommendation_priority,recommendation_reasons,policy_mode,policy_decision,policy_reasons\n";
 
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
@@ -98,6 +112,10 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 				.join("|")
 		})
 		.or_else(|| record.reason_codes.as_ref().map(|codes| codes.join("|")));
+	let recommendation =
+		result_value(record, &["recommendation"]).or(record.recommendation.as_ref());
+	let policy_evaluation =
+		result_value(record, &["policy_evaluation"]).or(record.policy_evaluation.as_ref());
 
 	let (verified_at, age_days, freshness) = match record.completed_at {
 		Some(ts) => {
@@ -141,6 +159,33 @@ pub fn csv_row(record: &TaskResultRecord) -> CsvDownloadRow {
 		verified_at,
 		age_days,
 		freshness,
+		recommended_action: recommendation
+			.and_then(|value| value.get("action"))
+			.and_then(Value::as_str)
+			.map(ToOwned::to_owned)
+			.or_else(|| record.recommendation_action.clone()),
+		recommendation_confidence: recommendation
+			.and_then(|value| value.get("confidence"))
+			.and_then(Value::as_str)
+			.map(ToOwned::to_owned)
+			.or_else(|| record.recommendation_confidence.clone()),
+		recommendation_priority: recommendation
+			.and_then(|value| value.get("priority"))
+			.and_then(Value::as_str)
+			.map(ToOwned::to_owned)
+			.or_else(|| record.recommendation_priority.clone()),
+		recommendation_reasons: recommendation.and_then(compact_reason_codes),
+		policy_mode: policy_evaluation
+			.and_then(|value| value.get("mode"))
+			.and_then(Value::as_str)
+			.map(ToOwned::to_owned)
+			.or_else(|| record.policy_mode.clone()),
+		policy_decision: policy_evaluation
+			.and_then(|value| value.get("decision"))
+			.and_then(Value::as_str)
+			.map(ToOwned::to_owned)
+			.or_else(|| record.policy_decision.clone()),
+		policy_reasons: policy_evaluation.and_then(compact_reason_codes),
 	}
 }
 
@@ -187,6 +232,16 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 			}
 			map.insert("score".into(), Value::Object(score));
 		}
+		if !map.contains_key("recommendation") {
+			if let Some(value) = &record.recommendation {
+				map.insert("recommendation".into(), value.clone());
+			}
+		}
+		if !map.contains_key("policy_evaluation") {
+			if let Some(value) = &record.policy_evaluation {
+				map.insert("policy_evaluation".into(), value.clone());
+			}
+		}
 
 		// Inject freshness into the score sub-object
 		if let Some(completed_at) = record.completed_at {
@@ -195,6 +250,19 @@ pub fn ndjson_line(record: &TaskResultRecord) -> Result<Vec<u8>, serde_json::Err
 	}
 
 	serde_json::to_vec(&line)
+}
+
+fn compact_reason_codes(value: &Value) -> Option<String> {
+	let reasons = value.get("reasons")?.as_array()?;
+	let codes = reasons
+		.iter()
+		.filter_map(|reason| reason.get("code").and_then(Value::as_str))
+		.collect::<Vec<_>>();
+	if codes.is_empty() {
+		None
+	} else {
+		Some(codes.join("|"))
+	}
 }
 
 fn payload_input(payload: &Value) -> Option<String> {
@@ -237,10 +305,64 @@ mod tests {
 			safe_to_send: None,
 			reason_codes: None,
 			completed_at: None,
+			recommendation: None,
+			recommendation_action: None,
+			recommendation_confidence: None,
+			recommendation_priority: None,
+			policy_mode: None,
+			policy_evaluation: None,
+			policy_decision: None,
 		});
 
 		assert_eq!(row.input, "user@example.com");
 		assert_eq!(row.score, Some(95));
 		assert_eq!(row.category.as_deref(), Some("valid"));
+	}
+
+	#[test]
+	fn csv_row_uses_persisted_decision_columns() {
+		let row = csv_row(&TaskResultRecord {
+			id: 1,
+			payload: serde_json::json!({"input": {"to_email": "user@example.com"}}),
+			result: Some(serde_json::json!({
+				"input": "user@example.com",
+				"is_reachable": "safe",
+				"score": {"score": 95, "category": "valid", "sub_reason": "deliverable", "safe_to_send": true}
+			})),
+			error: None,
+			score: None,
+			score_category: None,
+			sub_reason: None,
+			safe_to_send: None,
+			reason_codes: None,
+			completed_at: None,
+			recommendation: Some(serde_json::json!({
+				"action": "send_with_caution",
+				"confidence": "medium",
+				"priority": "high",
+				"reasons": [{"code": "catch_all_corporate_domain"}]
+			})),
+			recommendation_action: None,
+			recommendation_confidence: None,
+			recommendation_priority: None,
+			policy_mode: Some("deliverability".to_string()),
+			policy_evaluation: Some(serde_json::json!({
+				"mode": "deliverability",
+				"decision": "review",
+				"reasons": [{"code": "safe_to_send_false"}]
+			})),
+			policy_decision: None,
+		});
+
+		assert_eq!(row.recommended_action.as_deref(), Some("send_with_caution"));
+		assert_eq!(row.recommendation_confidence.as_deref(), Some("medium"));
+		assert_eq!(row.recommendation_priority.as_deref(), Some("high"));
+		assert_eq!(
+			row.recommendation_reasons.as_deref(),
+			Some("catch_all_corporate_domain")
+		);
+		assert_eq!(row.policy_mode.as_deref(), Some("deliverability"));
+		assert_eq!(row.policy_decision.as_deref(), Some("review"));
+		assert_eq!(row.policy_reasons.as_deref(), Some("safe_to_send_false"));
 	}
 }

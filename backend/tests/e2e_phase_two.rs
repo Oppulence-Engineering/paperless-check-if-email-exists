@@ -116,10 +116,13 @@ mod tests {
 		})
 	}
 
-	fn spawn_server(config: Arc<BackendConfig>) -> String {
-		let routes = create_routes(config);
-		let (addr, server) = warp::serve(routes).bind_ephemeral(([127, 0, 0, 1], 0));
-		tokio::task::spawn(server);
+	async fn spawn_server(config: Arc<BackendConfig>) -> String {
+		let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+			.await
+			.unwrap();
+		let addr = listener.local_addr().unwrap();
+		let server = warp::serve(create_routes(config)).incoming(listener);
+		tokio::task::spawn(server.run());
 		format!("http://{}", addr)
 	}
 
@@ -517,7 +520,7 @@ mod tests {
 		let tenant_id = insert_tenant(db.pool(), "lists-roundtrip", Some(100), 0).await;
 		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url, "phase2").await;
-		let server_url = spawn_server(Arc::clone(&config));
+		let server_url = spawn_server(Arc::clone(&config)).await;
 		let client = reqwest::Client::new();
 		let csv = "name,email,company\nAlice,alice@example.com,Acme\nBob,,Widgets";
 		let upload = client
@@ -783,7 +786,7 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
-	async fn test_v1_lists_upload_enforces_free_plan_row_limit() {
+	async fn test_v1_lists_upload_enforces_plan_row_limit() {
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
 		let tenant_id: uuid::Uuid = sqlx::query_scalar(
@@ -791,11 +794,11 @@ mod tests {
 			INSERT INTO tenants (
 				name, slug, contact_email, plan_tier, status, monthly_email_limit, used_this_period
 			)
-			VALUES ($1, $2, $3, 'free', 'active', $4, 0)
+			VALUES ($1, $2, $3, 'professional', 'active', $4, 0)
 			RETURNING id
 			"#,
 		)
-		.bind("Free Plan List Tenant")
+		.bind("Professional Plan List Tenant")
 		.bind("lists-free-limit")
 		.bind("lists-free-limit@test.com")
 		.bind(10_000_i32)
@@ -804,11 +807,12 @@ mod tests {
 		.unwrap();
 		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url, "phase2").await;
-		let server_url = spawn_server(config);
+		let server_url = spawn_server(config).await;
 		let client = reqwest::Client::new();
 
 		let mut csv = String::from("name,email\n");
-		for index in 0..1001 {
+		// Professional allows 50,000 rows; API keys need Professional or Enterprise.
+		for index in 0..50_001 {
 			csv.push_str(&format!("User {index},user{index}@example.com\n"));
 		}
 
@@ -831,7 +835,7 @@ mod tests {
 		let status = upload.status();
 		let body = upload.text().await.unwrap();
 		assert_eq!(status, reqwest::StatusCode::BAD_REQUEST, "{}", body);
-		assert!(body.contains("plan allows 1000"), "{}", body);
+		assert!(body.contains("plan allows 50000"), "{}", body);
 
 		let list_count: i64 =
 			sqlx::query_scalar("SELECT COUNT(*) FROM v1_lists WHERE tenant_id = $1")

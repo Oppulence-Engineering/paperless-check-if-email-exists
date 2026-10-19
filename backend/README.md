@@ -58,7 +58,11 @@ The backend is configured via its [`backend_config.toml`](./backend_config.toml)
 
 ## API Documentation
 
-See the full [OpenAPI documentation](https://docs.reacher.email/advanced/openapi).
+When the backend is running, the local Scalar API reference is available at
+`http://localhost:8080/docs` and `http://localhost:8080/scalar`. Both views are
+backed by the runtime OpenAPI document at `http://localhost:8080/openapi.json`.
+
+See the full hosted [OpenAPI documentation](https://docs.reacher.email/advanced/openapi).
 
 ## Build From Source
 

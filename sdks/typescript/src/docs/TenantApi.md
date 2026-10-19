@@ -1,17 +1,27 @@
 # TenantApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**v1ClearTenantWebhook**](#v1cleartenantwebhook) | **DELETE** /v1/me/webhook | DELETE /v1/me/webhook|
+|[**v1CreateOutcomePolicy**](#v1createoutcomepolicy) | **POST** /v1/outcome-policies | |
+|[**v1CreateScorePolicy**](#v1createscorepolicy) | **POST** /v1/score-policies | POST /v1/score-policies|
 |[**v1CreateTenantDomain**](#v1createtenantdomain) | **POST** /v1/me/domains | POST /v1/me/domains|
+|[**v1DeleteOutcomePolicy**](#v1deleteoutcomepolicy) | **DELETE** /v1/outcome-policies/{policy_id} | |
+|[**v1DeleteScorePolicy**](#v1deletescorepolicy) | **DELETE** /v1/score-policies/{policy_id} | DELETE /v1/score-policies/{policy_id}|
 |[**v1DeleteTenantDomain**](#v1deletetenantdomain) | **DELETE** /v1/me/domains/{domain} | DELETE /v1/me/domains/{domain}|
+|[**v1GetOutcomePolicy**](#v1getoutcomepolicy) | **GET** /v1/outcome-policies/{policy_id} | |
+|[**v1GetScorePolicy**](#v1getscorepolicy) | **GET** /v1/score-policies/{policy_id} | GET /v1/score-policies/{policy_id}|
 |[**v1GetTenantDomain**](#v1gettenantdomain) | **GET** /v1/me/domains/{domain} | GET /v1/me/domains/{domain}|
 |[**v1GetTenantSettings**](#v1gettenantsettings) | **GET** /v1/me/settings | GET /v1/me/settings|
 |[**v1GetTenantUsage**](#v1gettenantusage) | **GET** /v1/me/usage | GET /v1/me/usage|
 |[**v1GetTenantWebhook**](#v1gettenantwebhook) | **GET** /v1/me/webhook | GET /v1/me/webhook|
+|[**v1ListOutcomePolicies**](#v1listoutcomepolicies) | **GET** /v1/outcome-policies | |
+|[**v1ListScorePolicies**](#v1listscorepolicies) | **GET** /v1/score-policies | GET /v1/score-policies|
 |[**v1ListTenantDomains**](#v1listtenantdomains) | **GET** /v1/me/domains | GET /v1/me/domains|
+|[**v1UpdateOutcomePolicy**](#v1updateoutcomepolicy) | **PATCH** /v1/outcome-policies/{policy_id} | |
+|[**v1UpdateScorePolicy**](#v1updatescorepolicy) | **PATCH** /v1/score-policies/{policy_id} | PATCH /v1/score-policies/{policy_id}|
 |[**v1UpdateTenantDomain**](#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}|
 |[**v1UpdateTenantSettings**](#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings|
 |[**v1UpdateTenantWebhook**](#v1updatetenantwebhook) | **PATCH** /v1/me/webhook | PATCH /v1/me/webhook|
@@ -50,18 +60,123 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook cleared |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CreateOutcomePolicy**
+> OutcomePolicyView v1CreateOutcomePolicy(createOutcomePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    CreateOutcomePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let createOutcomePolicyRequest: CreateOutcomePolicyRequest; //
+
+const { status, data } = await apiInstance.v1CreateOutcomePolicy(
+    createOutcomePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createOutcomePolicyRequest** | **CreateOutcomePolicyRequest**|  | |
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** | Outcome policy created |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1CreateScorePolicy**
+> ScorePolicyView v1CreateScorePolicy(createScorePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    CreateScorePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let createScorePolicyRequest: CreateScorePolicyRequest; //
+
+const { status, data } = await apiInstance.v1CreateScorePolicy(
+    createScorePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createScorePolicyRequest** | **CreateScorePolicyRequest**|  | |
+
+
+### Return type
+
+**ScorePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** | Score policy created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CreateTenantDomain**
-> v1CreateTenantDomain()
+> v1CreateTenantDomain(createTenantDomainRequest)
 
 Add a domain for the authenticated tenant.
 
@@ -70,17 +185,25 @@ Add a domain for the authenticated tenant.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    CreateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1CreateTenantDomain();
+let createTenantDomainRequest: CreateTenantDomainRequest; //
+
+const { status, data } = await apiInstance.v1CreateTenantDomain(
+    createTenantDomainRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createTenantDomainRequest** | **CreateTenantDomainRequest**|  | |
 
 
 ### Return type
@@ -93,14 +216,117 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | Tenant domain created |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1DeleteOutcomePolicy**
+> OutcomePolicyDeleteResponse v1DeleteOutcomePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1DeleteOutcomePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyDeleteResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy deleted |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1DeleteScorePolicy**
+> ScorePolicyDeleteResponse v1DeleteScorePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Score policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1DeleteScorePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Score policy identifier | defaults to undefined|
+
+
+### Return type
+
+**ScorePolicyDeleteResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Score policy deleted |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -145,13 +371,116 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain deleted |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetOutcomePolicy**
+> OutcomePolicyView v1GetOutcomePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1GetOutcomePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetScorePolicy**
+> ScorePolicyView v1GetScorePolicy()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Score policy identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1GetScorePolicy(
+    policyId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **policyId** | [**number**] | Score policy identifier | defaults to undefined|
+
+
+### Return type
+
+**ScorePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Score policy |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -196,18 +525,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain details |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantSettings**
-> v1GetTenantSettings()
+> TenantSettingsResponse v1GetTenantSettings()
 
 Get tenant runtime settings and default operational behavior.
 
@@ -231,7 +561,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantSettingsResponse**
 
 ### Authorization
 
@@ -240,18 +570,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant settings |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantUsage**
-> v1GetTenantUsage()
+> TenantUsageResponse v1GetTenantUsage()
 
 Return current tenant usage and quota summary.
 
@@ -275,7 +606,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantUsageResponse**
 
 ### Authorization
 
@@ -284,18 +615,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant usage summary |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantWebhook**
-> v1GetTenantWebhook()
+> TenantWebhookResponse v1GetTenantWebhook()
 
 Get masked tenant webhook integration state.
 
@@ -319,7 +651,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantWebhookResponse**
 
 ### Authorization
 
@@ -328,13 +660,122 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook state |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListOutcomePolicies**
+> OutcomePolicyListResponse v1ListOutcomePolicies()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ListOutcomePolicies(
+    limit,
+    offset
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyListResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policies |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListScorePolicies**
+> ScorePolicyListResponse v1ListScorePolicies()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ListScorePolicies(
+    limit,
+    offset
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**ScorePolicyListResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Score policies |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -372,18 +813,129 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domains list |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1UpdateOutcomePolicy**
+> OutcomePolicyView v1UpdateOutcomePolicy(updateOutcomePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    UpdateOutcomePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Outcome policy identifier (default to undefined)
+let updateOutcomePolicyRequest: UpdateOutcomePolicyRequest; //
+
+const { status, data } = await apiInstance.v1UpdateOutcomePolicy(
+    policyId,
+    updateOutcomePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateOutcomePolicyRequest** | **UpdateOutcomePolicyRequest**|  | |
+| **policyId** | [**number**] | Outcome policy identifier | defaults to undefined|
+
+
+### Return type
+
+**OutcomePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Outcome policy updated |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1UpdateScorePolicy**
+> ScorePolicyView v1UpdateScorePolicy(updateScorePolicyRequest)
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration,
+    UpdateScorePolicyRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let policyId: number; //Score policy identifier (default to undefined)
+let updateScorePolicyRequest: UpdateScorePolicyRequest; //
+
+const { status, data } = await apiInstance.v1UpdateScorePolicy(
+    policyId,
+    updateScorePolicyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateScorePolicyRequest** | **UpdateScorePolicyRequest**|  | |
+| **policyId** | [**number**] | Score policy identifier | defaults to undefined|
+
+
+### Return type
+
+**ScorePolicyView**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Score policy updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantDomain**
-> v1UpdateTenantDomain()
+> v1UpdateTenantDomain(updateTenantDomainRequest)
 
 Update the domain value, status, verification state, or metadata notes.
 
@@ -392,16 +944,19 @@ Update the domain value, status, verification state, or metadata notes.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateTenantDomainRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
 let domain: string; //Domain identifier (default to undefined)
+let updateTenantDomainRequest: UpdateTenantDomainRequest; //
 
 const { status, data } = await apiInstance.v1UpdateTenantDomain(
-    domain
+    domain,
+    updateTenantDomainRequest
 );
 ```
 
@@ -409,6 +964,7 @@ const { status, data } = await apiInstance.v1UpdateTenantDomain(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **updateTenantDomainRequest** | **UpdateTenantDomainRequest**|  | |
 | **domain** | [**string**] | Domain identifier | defaults to undefined|
 
 
@@ -422,19 +978,20 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant domain updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantSettings**
-> v1UpdateTenantSettings()
+> TenantSettingsResponse v1UpdateTenantSettings(updateTenantSettingsRequest)
 
 Update tenant settings such as retention, default webhook URL, or secret.
 
@@ -443,22 +1000,30 @@ Update tenant settings such as retention, default webhook URL, or secret.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateTenantSettingsRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1UpdateTenantSettings();
+let updateTenantSettingsRequest: UpdateTenantSettingsRequest; //
+
+const { status, data } = await apiInstance.v1UpdateTenantSettings(
+    updateTenantSettingsRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateTenantSettingsRequest** | **UpdateTenantSettingsRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**TenantSettingsResponse**
 
 ### Authorization
 
@@ -466,19 +1031,20 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant settings updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantWebhook**
-> v1UpdateTenantWebhook()
+> TenantWebhookResponse v1UpdateTenantWebhook(updateWebhookRequest)
 
 Update tenant webhook URL and signing secret.
 
@@ -487,22 +1053,30 @@ Update tenant webhook URL and signing secret.
 ```typescript
 import {
     TenantApi,
-    Configuration
+    Configuration,
+    UpdateWebhookRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new TenantApi(configuration);
 
-const { status, data } = await apiInstance.v1UpdateTenantWebhook();
+let updateWebhookRequest: UpdateWebhookRequest; //
+
+const { status, data } = await apiInstance.v1UpdateTenantWebhook(
+    updateWebhookRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **updateWebhookRequest** | **UpdateWebhookRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**TenantWebhookResponse**
 
 ### Authorization
 
@@ -510,14 +1084,14 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

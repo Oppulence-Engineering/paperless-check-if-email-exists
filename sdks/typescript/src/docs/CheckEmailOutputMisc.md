@@ -7,11 +7,13 @@ Additional information about the email account.
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **gravatar_url** | **string** | URL to the Gravatar profile picture associated with the email, if available and requested. | [optional]
+**haveibeenpwned** | **boolean** |  | [optional]
 **is_b2c** | **boolean** | Is this a B2C email address? | [optional]
 **is_disposable** | **boolean** | Indicates if the email address is from a known disposable email provider. | [optional]
 **is_role_account** | **boolean** | Indicates if the email address is a role-based account. | [optional]
-**message** | **string** | A human-readable description of the error. | [optional]
-**type** | **string** | The type of error. | [optional]
+**is_spam_trap_domain** | **boolean** |  | [optional]
+**description** | **string** | The category of an SMTP error, when it is known. | [optional]
+**error** | [**CoreErrorError**](CoreErrorError.md) |  | [optional]
 
 ## Example
 
@@ -20,11 +22,13 @@ import { CheckEmailOutputMisc } from '@oppulence/reacher-sdk';
 
 const instance: CheckEmailOutputMisc = {
     gravatar_url: 'example',
+    haveibeenpwned: true,
     is_b2c: true,
     is_disposable: true,
     is_role_account: true,
-    message: 'example',
-    type: 'example',
+    is_spam_trap_domain: true,
+    description: 'example',
+    error: {} as any,
 };
 ```
 

@@ -35,6 +35,8 @@ pub mod scope {
 	pub const PIPELINES_READ: &str = "pipelines.read";
 	pub const PIPELINES_WRITE: &str = "pipelines.write";
 	pub const PIPELINES_TRIGGER: &str = "pipelines.trigger";
+	pub const OUTCOMES_READ: &str = "outcomes.read";
+	pub const OUTCOMES_WRITE: &str = "outcomes.write";
 	pub const ADMIN: &str = "admin";
 }
 

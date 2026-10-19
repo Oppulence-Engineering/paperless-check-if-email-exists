@@ -1,0 +1,16 @@
+.next/
+.code-review-graph/
+public/mockServiceWorker.js
+coverage/
+charts/*/templates/*.yaml
+config/deployment/*.toml
+config/generate/templates/
+lib/api/generated/
+node_modules/
+vendor/
+sim-port/
+pnpm-lock.yaml
+playwright-report/
+test-results/
+.playwright-mcp/
+.check-email-contracts-*/

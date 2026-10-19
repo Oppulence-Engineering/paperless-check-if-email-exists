@@ -3,3 +3,29 @@ replicaCount: 1
 
 autoscaling:
   enabled: false
+
+# Staging was reserving 512Mi on each of three clusters (1.5 Gi) while using
+# about 0.5 Gi; production only needs 0.1 Gi. 256Mi per pod reserves 768Mi
+# across the three clusters, and the 512Mi limit still covers a pod that
+# spikes to the observed 0.5 Gi. CPU stays inherited from values.yaml.
+resources:
+  requests:
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+config:
+  env:
+    NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
+    # Staging and production share one Postgres cluster with about 47
+    # connections. Staging pods open fewer connections than production pods.
+    RCH__DB_MAX_CONNECTIONS: "3"
+    DATABASE_POOL_MAX: "2"
+
+# The Resend key comes from Infisical, as in values.production.yaml.
+extraEnv:
+  - name: RESEND_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: paperless-sim-app-secrets
+        key: RESEND_API_KEY

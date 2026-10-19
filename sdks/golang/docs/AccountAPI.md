@@ -1,6 +1,6 @@
 # \AccountAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 ## CreateTenantApiKey
 
-> CreateTenantApiKey(ctx).Execute()
+> TenantCreatedApiKey CreateTenantApiKey(ctx).CreateApiKeyRequest(createApiKeyRequest).Execute()
 
 POST /v1/me/api-keys
 
@@ -34,29 +34,36 @@ import (
 )
 
 func main() {
+	createApiKeyRequest := *openapiclient.NewCreateApiKeyRequest() // CreateApiKeyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.CreateTenantApiKey(context.Background()).Execute()
+	resp, r, err := apiClient.AccountAPI.CreateTenantApiKey(context.Background()).CreateApiKeyRequest(createApiKeyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.CreateTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `CreateTenantApiKey`: TenantCreatedApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AccountAPI.CreateTenantApiKey`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiCreateTenantApiKeyRequest struct via the builder pattern
 
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createApiKeyRequest** | [**CreateApiKeyRequest**](CreateApiKeyRequest.md) |  |
+
 ### Return type
 
- (empty response body)
+[**TenantCreatedApiKey**](TenantCreatedApiKey.md)
 
 ### Authorization
 
@@ -64,8 +71,8 @@ Other parameters are passed through a pointer to a apiCreateTenantApiKeyRequest 
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -74,7 +81,7 @@ Other parameters are passed through a pointer to a apiCreateTenantApiKeyRequest 
 
 ## GetTenantApiKey
 
-> GetTenantApiKey(ctx, keyId).Execute()
+> TenantApiKey GetTenantApiKey(ctx, keyId).Execute()
 
 GET /v1/me/api-keys/{key_id}
 
@@ -97,11 +104,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.GetTenantApiKey(context.Background(), keyId).Execute()
+	resp, r, err := apiClient.AccountAPI.GetTenantApiKey(context.Background(), keyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.GetTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `GetTenantApiKey`: TenantApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AccountAPI.GetTenantApiKey`: %v\n", resp)
 }
 ```
 
@@ -111,7 +120,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -124,7 +133,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**TenantApiKey**](TenantApiKey.md)
 
 ### Authorization
 
@@ -133,7 +142,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -142,7 +151,7 @@ Name | Type | Description  | Notes
 
 ## ListTenantApiKeys
 
-> ListTenantApiKeys(ctx).Execute()
+> TenantApiKeyList ListTenantApiKeys(ctx).Execute()
 
 GET /v1/me/api-keys
 
@@ -164,11 +173,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.ListTenantApiKeys(context.Background()).Execute()
+	resp, r, err := apiClient.AccountAPI.ListTenantApiKeys(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.ListTenantApiKeys``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `ListTenantApiKeys`: TenantApiKeyList
+	fmt.Fprintf(os.Stdout, "Response from `AccountAPI.ListTenantApiKeys`: %v\n", resp)
 }
 ```
 
@@ -183,7 +194,7 @@ Other parameters are passed through a pointer to a apiListTenantApiKeysRequest s
 
 ### Return type
 
- (empty response body)
+[**TenantApiKeyList**](TenantApiKeyList.md)
 
 ### Authorization
 
@@ -192,7 +203,7 @@ Other parameters are passed through a pointer to a apiListTenantApiKeysRequest s
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -201,7 +212,7 @@ Other parameters are passed through a pointer to a apiListTenantApiKeysRequest s
 
 ## RevokeTenantApiKey
 
-> RevokeTenantApiKey(ctx, keyId).Execute()
+> TenantApiKeyRevokeResponse RevokeTenantApiKey(ctx, keyId).Execute()
 
 DELETE /v1/me/api-keys/{key_id}
 
@@ -224,11 +235,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.RevokeTenantApiKey(context.Background(), keyId).Execute()
+	resp, r, err := apiClient.AccountAPI.RevokeTenantApiKey(context.Background(), keyId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.RevokeTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `RevokeTenantApiKey`: TenantApiKeyRevokeResponse
+	fmt.Fprintf(os.Stdout, "Response from `AccountAPI.RevokeTenantApiKey`: %v\n", resp)
 }
 ```
 
@@ -238,7 +251,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -251,7 +264,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**TenantApiKeyRevokeResponse**](TenantApiKeyRevokeResponse.md)
 
 ### Authorization
 
@@ -260,7 +273,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -269,7 +282,7 @@ Name | Type | Description  | Notes
 
 ## UpdateTenantApiKey
 
-> UpdateTenantApiKey(ctx, keyId).Execute()
+> TenantApiKey UpdateTenantApiKey(ctx, keyId).UpdateApiKeyRequest(updateApiKeyRequest).Execute()
 
 PATCH /v1/me/api-keys/{key_id}
 
@@ -289,14 +302,17 @@ import (
 
 func main() {
 	keyId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // string | API key identifier
+	updateApiKeyRequest := *openapiclient.NewUpdateApiKeyRequest() // UpdateApiKeyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.AccountAPI.UpdateTenantApiKey(context.Background(), keyId).Execute()
+	resp, r, err := apiClient.AccountAPI.UpdateTenantApiKey(context.Background(), keyId).UpdateApiKeyRequest(updateApiKeyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AccountAPI.UpdateTenantApiKey``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `UpdateTenantApiKey`: TenantApiKey
+	fmt.Fprintf(os.Stdout, "Response from `AccountAPI.UpdateTenantApiKey`: %v\n", resp)
 }
 ```
 
@@ -306,7 +322,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** | API key identifier | 
+**keyId** | **string** | API key identifier |
 
 ### Other Parameters
 
@@ -316,10 +332,11 @@ Other parameters are passed through a pointer to a apiUpdateTenantApiKeyRequest 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
+ **updateApiKeyRequest** | [**UpdateApiKeyRequest**](UpdateApiKeyRequest.md) |  |
 
 ### Return type
 
- (empty response body)
+[**TenantApiKey**](TenantApiKey.md)
 
 ### Authorization
 
@@ -327,8 +344,8 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -387,9 +404,8 @@ Other parameters are passed through a pointer to a apiV1MeRequest struct via the
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

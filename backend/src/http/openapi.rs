@@ -12,6 +12,29 @@ use crate::http::v1::tenant_domains;
 use crate::http::v1::tenant_settings;
 
 const BASE_OPENAPI: &str = include_str!("../../openapi.json");
+const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
+<html>
+	<head>
+		<title>Reacher API Reference</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			body {
+				margin: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+		<script>
+			Scalar.createApiReference('#app', {
+				url: '/openapi.json',
+			})
+		</script>
+	</body>
+</html>
+"#;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -44,7 +67,13 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::lists::get_detail::v1_get_list,
 		crate::http::v1::lists::quality::v1_list_quality,
 		crate::http::v1::lists::download::v1_download_list,
+		crate::http::v1::lists::diff::v1_diff_lists,
 		crate::http::v1::lists::delete::v1_delete_list,
+		crate::http::v1::saved_segments::v1_create_saved_segment,
+		crate::http::v1::saved_segments::v1_list_saved_segments,
+		crate::http::v1::saved_segments::v1_get_saved_segment,
+		crate::http::v1::saved_segments::v1_update_saved_segment,
+		crate::http::v1::saved_segments::v1_delete_saved_segment,
 		crate::http::v1::pipelines::v1_create_pipeline,
 		crate::http::v1::pipelines::v1_list_pipelines,
 		crate::http::v1::pipelines::v1_get_pipeline,
@@ -53,6 +82,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::pipelines::v1_pause_pipeline,
 		crate::http::v1::pipelines::v1_resume_pipeline,
 		crate::http::v1::pipelines::v1_trigger_pipeline,
+		crate::http::v1::pipelines::v1_push_pipeline,
 		crate::http::v1::pipelines::v1_list_pipeline_runs,
 		crate::http::v1::pipelines::v1_get_pipeline_run,
 		crate::http::v1::reputation::check::v1_check_reputation,
@@ -61,13 +91,26 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		crate::http::v1::suppressions::check::v1_check_suppression,
 		crate::http::v1::suppressions::delete::v1_delete_suppression,
 		crate::http::v1::reverification::status::v1_reverification_status,
+		crate::http::v1::reverification::update::v1_update_reverification,
 		crate::http::v1::events::v1_list_events,
+		crate::http::v1::alerts::v1_list_alerts,
+		crate::http::v1::alerts::v1_update_alert,
 		crate::http::v1::email_history::v1_email_history,
 		crate::http::v1::query::v1_query_results,
 		crate::http::v1::comments::v1_create_comment,
 		crate::http::v1::comments::v1_list_comments,
 		crate::http::v1::comments::v1_delete_comment,
 		crate::http::v1::me::v1_me,
+		crate::http::v1::outcomes::v1_ingest_outcomes,
+		crate::http::v1::outcomes::v1_list_outcomes,
+		crate::http::v1::campaign_outcomes::v1_post_outcomes,
+		crate::http::v1::campaign_outcomes::v1_upload_outcomes,
+		crate::http::v1::campaign_outcomes::v1_list_outcomes,
+		crate::http::v1::provider_outcomes::v1_list_provider_endpoints,
+		crate::http::v1::provider_outcomes::v1_create_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_update_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_delete_provider_endpoint,
+		crate::http::v1::provider_outcomes::v1_ingest_provider_outcomes,
 		account_api_keys::get_api_key,
 		account_api_keys::list_api_keys,
 		account_api_keys::create_api_key,
@@ -94,6 +137,16 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		tenant_settings::v1_update_tenant_webhook,
 		tenant_settings::v1_clear_tenant_webhook,
 		tenant_settings::v1_get_tenant_usage,
+		crate::http::v1::score_policies::v1_create_score_policy,
+		crate::http::v1::score_policies::v1_list_score_policies,
+		crate::http::v1::score_policies::v1_get_score_policy,
+		crate::http::v1::score_policies::v1_update_score_policy,
+		crate::http::v1::score_policies::v1_delete_score_policy,
+		crate::http::v1::outcome_policies::v1_create_outcome_policy,
+		crate::http::v1::outcome_policies::v1_list_outcome_policies,
+		crate::http::v1::outcome_policies::v1_get_outcome_policy,
+		crate::http::v1::outcome_policies::v1_update_outcome_policy,
+		crate::http::v1::outcome_policies::v1_delete_outcome_policy,
 		tenant_domains::v1_list_tenant_domains,
 		tenant_domains::v1_create_tenant_domain,
 		tenant_domains::v1_get_tenant_domain,
@@ -121,6 +174,7 @@ const BASE_OPENAPI: &str = include_str!("../../openapi.json");
 		(name = "Events", description = "Advanced audit log endpoints"),
 		(name = "Query", description = "Advanced historical query endpoints; experimental for large reporting workloads"),
 		(name = "Comments", description = "Collaboration annotation endpoints; experimental"),
+		(name = "Outcomes", description = "Normalized provider outcomes, suppression feedback, authenticated provider adapters, and campaign outcome ingestion"),
 	)
 )]
 struct BackendApiDoc;
@@ -131,7 +185,45 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 		generated.get("paths").and_then(Value::as_object),
 	) {
 		for (path, value) in generated_paths {
-			base_paths.insert(path.clone(), value.clone());
+			let mut merged = value.clone();
+			if let Some(existing) = base_paths.get(path) {
+				for method in ["get", "post", "put", "patch", "delete"] {
+					if let (Some(source), Some(target)) = (
+						existing.get(method).and_then(Value::as_object),
+						merged.get_mut(method).and_then(Value::as_object_mut),
+					) {
+						for field in ["operationId", "security"] {
+							if let Some(value) = source.get(field) {
+								target.insert(field.to_string(), value.clone());
+							}
+						}
+						for field in ["requestBody", "parameters"] {
+							if !target.contains_key(field) {
+								if let Some(value) = source.get(field) {
+									target.insert(field.to_string(), value.clone());
+								}
+							}
+						}
+						if let (Some(source_responses), Some(target_responses)) = (
+							source.get("responses").and_then(Value::as_object),
+							target.get_mut("responses").and_then(Value::as_object_mut),
+						) {
+							for (status, response) in source_responses {
+								if let Some(content) = response.get("content") {
+									target_responses
+										.entry(status.clone())
+										.or_insert_with(|| json!({}))
+										.as_object_mut()
+										.expect("response object")
+										.entry("content")
+										.or_insert_with(|| content.clone());
+								}
+							}
+						}
+					}
+				}
+			}
+			base_paths.insert(path.clone(), merged);
 		}
 	}
 
@@ -143,9 +235,16 @@ fn merge_openapi(base: &mut Value, generated: Value) {
 			.or_insert_with(|| Value::Array(Vec::new()))
 			.as_array_mut()
 			.expect("tags array");
+		// Match tags by name. A spec with two tags of the same name is invalid,
+		// so the generated tag replaces a base tag with a different description.
 		for tag in generated_tags {
-			if !base_tags.iter().any(|existing| existing == tag) {
-				base_tags.push(tag.clone());
+			let name = tag.get("name");
+			match base_tags
+				.iter_mut()
+				.find(|existing| existing.get("name") == name)
+			{
+				Some(existing) => *existing = tag.clone(),
+				None => base_tags.push(tag.clone()),
 			}
 		}
 	}
@@ -353,6 +452,454 @@ fn set_response(spec: &mut Value, path: &str, method: &str, status: &str, respon
 	}
 }
 
+fn upsert_operation(spec: &mut Value, path: &str, method: &str, mut operation: Value) {
+	let path_item = paths_mut(spec)
+		.entry(path.to_string())
+		.or_insert_with(|| json!({}))
+		.as_object_mut()
+		.expect("path item object");
+	for field in ["operationId", "security", "requestBody", "parameters"] {
+		if let Some(value) = path_item
+			.get(method)
+			.and_then(|existing| existing.get(field))
+			.cloned()
+		{
+			operation
+				.as_object_mut()
+				.expect("operation object")
+				.entry(field)
+				.or_insert(value);
+		}
+	}
+	path_item.insert(method.to_string(), operation);
+}
+
+#[cfg(test)]
+mod operation_id_tests {
+	use serde_json::json;
+	use std::collections::HashSet;
+
+	#[test]
+	fn every_tag_name_is_unique() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut names = HashSet::new();
+		for tag in spec["tags"].as_array().expect("tags") {
+			let name = tag["name"].as_str().expect("tag name");
+			assert!(names.insert(name), "duplicate tag: {}", name);
+		}
+	}
+
+	#[test]
+	fn provider_and_campaign_outcomes_keep_their_own_schemas() {
+		// Two Rust types once shared the OutcomeView name, and the spec kept
+		// only one shape for both list endpoints.
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = |path: &str| {
+			spec["paths"][path]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+				["$ref"]
+				.as_str()
+				.map(str::to_owned)
+		};
+		assert_eq!(
+			schema("/v1/outcomes").as_deref(),
+			Some("#/components/schemas/OutcomeListResponse")
+		);
+		assert_eq!(
+			schema("/v1/campaign-outcomes").as_deref(),
+			Some("#/components/schemas/CampaignOutcomeListResponse")
+		);
+		let provider = &spec["components"]["schemas"]["OutcomeView"]["properties"];
+		assert!(
+			provider.get("event_type").is_some(),
+			"provider outcomes lost event_type"
+		);
+	}
+
+	#[test]
+	fn core_error_matches_the_check_output() {
+		let output = check_if_email_exists::CheckEmailOutput {
+			smtp: Err(check_if_email_exists::smtp::SmtpError::Timeout(
+				std::time::Duration::from_secs(1),
+			)),
+			..Default::default()
+		};
+		let sent = serde_json::to_value(&output).expect("check output");
+		assert!(
+			sent["smtp"]["error"]["type"].is_string(),
+			"{}",
+			sent["smtp"]
+		);
+
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schema = &spec["components"]["schemas"]["CoreError"];
+		assert_eq!(schema["required"], json!(["error"]));
+		assert_eq!(schema["properties"]["error"]["required"], json!(["type"]));
+	}
+
+	#[test]
+	fn suppression_and_outcome_policy_contracts_match_the_handlers() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		// check.rs sends null fields when the address is not suppressed.
+		assert_eq!(
+			schemas["SuppressionCheckResponse"]["properties"]["reason"]["nullable"],
+			json!(true)
+		);
+		for field in ["status", "reason_detail", "expires_at", "last_seen_at"] {
+			assert!(
+				schemas["SuppressionEntry"]["properties"]
+					.get(field)
+					.is_some(),
+				"SuppressionEntry lost {}",
+				field
+			);
+		}
+
+		let rules = crate::outcomes::default_outcome_policy_rules_json();
+		let properties = &schemas["OutcomePolicyRules"]["properties"];
+		let actions = schemas["OutcomeRuleAction"]["properties"]["action"]["enum"]
+			.as_array()
+			.expect("action enum");
+		for (key, value) in rules.as_object().expect("rules object") {
+			assert!(properties.get(key).is_some(), "rules lost {}", key);
+			if let Some(action) = value.get("action") {
+				assert!(actions.contains(action), "unknown action {}", action);
+			}
+		}
+		assert!(
+			spec["paths"]["/v1/campaign-outcomes/upload"]["post"]["requestBody"]["content"]
+				["multipart/form-data"]
+				.is_object()
+		);
+	}
+
+	#[test]
+	fn pipeline_run_stats_use_the_keys_that_pipelines_writes() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let stats = &spec["components"]["schemas"]["PipelineRunStats"]["properties"];
+		// build_pipeline_run_stats and create_push_pipeline_run write these keys.
+		for key in [
+			"accepted_rows",
+			"job_id",
+			"list_id",
+			"total_valid",
+			"total_risky",
+			"total_unknown",
+			"total_invalid",
+			"total_processed",
+			"total_failed",
+			"billed_emails",
+		] {
+			assert!(stats.get(key).is_some(), "PipelineRunStats lost {}", key);
+		}
+		assert!(
+			spec["components"]["schemas"]["PipelineRunView"]["properties"]["source_snapshot"]
+				.get("$ref")
+				.is_none(),
+			"a push run snapshot is not a PipelineSource"
+		);
+	}
+
+	#[test]
+	fn segment_filter_matches_the_backend_validation() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let properties = &spec["components"]["schemas"]["SegmentFilter"]["properties"];
+		let sample = json!({
+			"category": ["valid", "risky"],
+			"change_type": "became_invalid",
+			"safe_to_send": true,
+			"is_role_account": false,
+			"is_disposable": false,
+			"is_catch_all": false,
+			"score_min": 0,
+			"score_max": 100,
+			"freshness_days_max": 30,
+			"reason_codes_any": ["role_account"],
+			"policy_decision": "send"
+		});
+		let mut schema_keys: Vec<&String> =
+			properties.as_object().expect("properties").keys().collect();
+		let mut sample_keys: Vec<&String> = sample.as_object().expect("sample").keys().collect();
+		schema_keys.sort();
+		sample_keys.sort();
+		assert_eq!(schema_keys, sample_keys);
+		crate::list_intelligence::validate_segment_filter(&sample)
+			.expect("the backend accepts every schema field");
+	}
+
+	#[test]
+	fn score_policy_rules_match_policy_rules() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		// PolicyRules rejects unknown fields, so this fails when a field in
+		// the schema does not exist in the Rust type.
+		let sample = json!({
+			"score_min": 1,
+			"score_max": 2,
+			"category": ["valid"],
+			"safe_to_send": true,
+			"reason_codes_any": ["role_account"]
+		});
+		let keys = |value: &serde_json::Value| {
+			let mut keys: Vec<String> =
+				value.as_object().expect("object").keys().cloned().collect();
+			keys.sort();
+			keys
+		};
+		assert_eq!(
+			keys(&schemas["ScorePolicyCondition"]["properties"]),
+			keys(&sample)
+		);
+		let rules = json!({ "send": sample, "review": sample, "suppress": sample });
+		assert_eq!(
+			keys(&schemas["ScorePolicyRules"]["properties"]),
+			keys(&rules)
+		);
+		serde_json::from_value::<crate::list_intelligence::PolicyRules>(rules)
+			.expect("PolicyRules accepts every schema field");
+	}
+
+	#[test]
+	fn every_discriminator_mapping_resolves() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let schemas = &spec["components"]["schemas"];
+		for (name, schema) in schemas.as_object().expect("schemas") {
+			let Some(mapping) = schema["discriminator"]["mapping"].as_object() else {
+				continue;
+			};
+			for target in mapping.values() {
+				let target = target
+					.as_str()
+					.expect("mapping target")
+					.trim_start_matches("#/components/schemas/");
+				assert!(
+					schemas.get(target).is_some(),
+					"{} maps to the missing schema {}",
+					name,
+					target
+				);
+			}
+		}
+	}
+
+	#[test]
+	fn every_operation_has_a_unique_id() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		let mut ids = HashSet::new();
+		for (path, path_item) in spec["paths"].as_object().expect("paths") {
+			for (method, operation) in path_item.as_object().expect("path item") {
+				if !["get", "post", "put", "patch", "delete"].contains(&method.as_str()) {
+					continue;
+				}
+				let id = operation["operationId"]
+					.as_str()
+					.unwrap_or_else(|| panic!("missing operationId: {} {}", method, path));
+				assert!(ids.insert(id), "duplicate operationId: {}", id);
+			}
+		}
+	}
+
+	#[test]
+	fn operation_security_matches_its_audience() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(spec["paths"]["/healthz"]["get"]["security"], json!([]));
+		assert_eq!(
+			spec["paths"]["/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}"]
+				["post"]["security"],
+			json!([])
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["security"],
+			json!([{ "AdminSecret": [] }])
+		);
+		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
+		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
+	}
+
+	#[test]
+	fn admin_contract_keeps_request_and_response_schemas() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["post"]["requestBody"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminCreateTenantRequest"
+		);
+		assert_eq!(
+			spec["paths"]["/v1/admin/tenants"]["get"]["responses"]["200"]["content"]
+				["application/json"]["schema"]["$ref"],
+			"#/components/schemas/AdminTenantList"
+		);
+	}
+
+	#[test]
+	fn json_write_routes_expose_their_request_bodies() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, method, schema) in [
+			("/v1/comments", "post", "CreateCommentRequest"),
+			("/v1/me/api-keys", "post", "CreateApiKeyRequest"),
+			("/v1/me/api-keys/{key_id}", "patch", "UpdateApiKeyRequest"),
+			("/v1/me/domains", "post", "CreateTenantDomainRequest"),
+			(
+				"/v1/me/domains/{domain}",
+				"patch",
+				"UpdateTenantDomainRequest",
+			),
+			("/v1/check-email-with-onboard", "post", "OnboardRequest"),
+		] {
+			assert_eq!(
+				spec["paths"][path][method]["requestBody"]["content"]["application/json"]["schema"]
+					["$ref"],
+				format!("#/components/schemas/{schema}"),
+				"{method} {path}"
+			);
+		}
+	}
+
+	#[test]
+	fn admin_job_queries_keep_their_parameters() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, expected) in [
+			("/v1/admin/jobs/{job_id}/events", &["limit", "offset"][..]),
+			(
+				"/v1/admin/jobs/{job_id}/results",
+				&["limit", "offset", "state"][..],
+			),
+			(
+				"/v1/admin/tenants/{tenant_id}/jobs",
+				&["status", "limit", "offset"][..],
+			),
+		] {
+			let names: Vec<_> = spec["paths"][path]["get"]["parameters"]
+				.as_array()
+				.expect("parameters")
+				.iter()
+				.filter(|parameter| parameter["in"] == "query")
+				.map(|parameter| parameter["name"].as_str().expect("parameter name"))
+				.collect();
+			assert_eq!(names, expected, "{path}");
+		}
+	}
+
+	#[test]
+	fn v1_default_errors_have_descriptions() {
+		let spec = super::build_spec().expect("OpenAPI spec");
+		for (path, item) in spec["paths"].as_object().expect("paths") {
+			if !path.starts_with("/v1/") {
+				continue;
+			}
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(operation) = item.get(method) {
+					assert!(
+						operation["responses"]["default"]["description"].is_string(),
+						"{method} {path}"
+					);
+				}
+			}
+		}
+	}
+}
+
+fn generic_object_schema() -> Value {
+	json!({
+		"type": "object",
+		"additionalProperties": true
+	})
+}
+
+fn generic_json_operation(tag: &str, summary: &str, description: &str) -> Value {
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}
+		}
+	})
+}
+
+fn generic_json_post_operation(tag: &str, summary: &str, description: &str) -> Value {
+	let mut operation = generic_json_operation(tag, summary, description);
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"requestBody".to_string(),
+			json!({
+				"required": true,
+				"content": {
+					"application/json": {
+						"schema": generic_object_schema()
+					}
+				}
+			}),
+		);
+	}
+	operation
+}
+
+fn with_path_parameters(mut operation: Value, parameters: &[(&str, &str)]) -> Value {
+	if let Some(map) = operation.as_object_mut() {
+		map.insert(
+			"parameters".to_string(),
+			Value::Array(
+				parameters
+					.iter()
+					.map(|(name, format)| {
+						json!({
+							"name": name,
+							"in": "path",
+							"required": true,
+							"schema": {
+								"type": "integer",
+								"format": format
+							}
+						})
+					})
+					.collect(),
+			),
+		);
+	}
+	operation
+}
+
+fn query_parameter(name: &str, schema: Value) -> Value {
+	json!({ "name": name, "in": "query", "required": false, "schema": schema })
+}
+
+fn download_operation(
+	tag: &str,
+	summary: &str,
+	description: &str,
+	content_types: &[&str],
+) -> Value {
+	let mut content = Map::new();
+	for content_type in content_types {
+		content.insert(
+			(*content_type).to_string(),
+			json!({
+				"schema": {
+					"type": "string",
+					"format": "binary"
+				}
+			}),
+		);
+	}
+	json!({
+		"tags": [tag],
+		"summary": summary,
+		"responses": {
+			"200": {
+				"description": description,
+				"content": content
+			}
+		}
+	})
+}
+
 fn set_schema_example(spec: &mut Value, schema_name: &str, example: Value) {
 	if let Some(schema) = schemas_mut(spec)
 		.get_mut(schema_name)
@@ -394,6 +941,39 @@ fn set_schema_discriminator(
 				"mapping": mapping,
 			}),
 		);
+	}
+}
+
+/// Moves each inline `oneOf` variant of a schema into the component that its
+/// discriminator mapping names, so every mapping target exists. The SDK
+/// generators already use these names for the inline variants.
+fn name_discriminated_variants(spec: &mut Value, schema_name: &str, property_name: &str) {
+	let Some(schema) = schemas_mut(spec).get(schema_name).cloned() else {
+		return;
+	};
+	let (Some(mapping), Some(variants)) = (
+		schema["discriminator"]["mapping"].as_object(),
+		schema["oneOf"].as_array(),
+	) else {
+		return;
+	};
+	let mut one_of = Vec::new();
+	for variant in variants {
+		let target = variant["properties"][property_name]["enum"][0]
+			.as_str()
+			.and_then(|value| mapping.get(value))
+			.and_then(Value::as_str);
+		match target {
+			Some(target) => {
+				let name = target.trim_start_matches("#/components/schemas/");
+				insert_schema(spec, name, variant.clone());
+				one_of.push(json!({ "$ref": target }));
+			}
+			None => one_of.push(variant.clone()),
+		}
+	}
+	if let Some(schema) = schemas_mut(spec).get_mut(schema_name) {
+		schema["oneOf"] = Value::Array(one_of);
 	}
 }
 
@@ -593,7 +1173,22 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"spam_trap",
 				"unknown_deliverability",
 				"free_provider",
-				"possible_typo"
+				"possible_typo",
+				"provider_reputation",
+				"tenant_history_positive",
+				"tenant_history_inconsistent",
+				"catch_all_low_confidence",
+				"catch_all_medium_confidence",
+				"catch_all_high_risk",
+				"partial_confidence",
+				"transient_smtp",
+				"smtp_policy_block",
+				"smtp_timeout",
+				"smtp_network",
+				"smtp_ambiguous",
+				"outcome_hard_bounce",
+				"outcome_complaint",
+				"outcome_engagement"
 			]
 		}),
 	);
@@ -642,6 +1237,69 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": ["fresh", "recent", "aging", "stale", "expired"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ConfidenceLevel",
+		json!({
+			"type": "string",
+			"enum": ["high", "medium", "low", "very_low"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllSeverity",
+		json!({
+			"type": "string",
+			"enum": ["low", "medium", "high"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SmtpUncertaintyClass",
+		json!({
+			"type": "string",
+			"enum": [
+				"transient",
+				"policy_block",
+				"timeout",
+				"network",
+				"ambiguous_response",
+				"smtp_unreachable"
+			]
+		}),
+	);
+	insert_schema(
+		spec,
+		"CatchAllScore",
+		json!({
+			"type": "object",
+			"properties": {
+				"severity": { "$ref": "#/components/schemas/CatchAllSeverity" },
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["severity", "confidence", "factors"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"PartialConfidence",
+		json!({
+			"type": "object",
+			"properties": {
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"classification": { "$ref": "#/components/schemas/SmtpUncertaintyClass" },
+				"factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"required": ["confidence", "classification", "factors"]
 		}),
 	);
 	insert_schema(
@@ -702,6 +1360,80 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"required": ["score", "category", "confidence", "action", "model_version", "scored_at", "risk_factors"]
 		}),
 	);
+	// core::DebugDetails sends the version that ran the check (upstream
+	// 0.11.10). Results stored before it do not have it, so it is optional.
+	set_schema_property(
+		spec,
+		"DebugDetails",
+		"reacher_version",
+		json!({
+			"type": "string",
+			"description": "The version of the backend that performed the verification, e.g. \"4.3.0\"."
+		}),
+	);
+	// Matches core::smtp::SmtpDebugVerifMethod. The Smtp variant also sends the
+	// host and the SMTP settings; strict clients reject the result without them.
+	insert_schema(
+		spec,
+		"VerifMethod",
+		json!({
+			"type": "object",
+			"title": "VerifMethod",
+			"description": "The method used for email verification.",
+			"properties": {
+				"type": {
+					"type": "string",
+					"enum": ["Smtp", "Headless", "Api", "Skipped"],
+					"description": "The method used for the email verification."
+				},
+				"host": { "type": "string", "description": "The mail server host the check connected to. Only for Smtp." },
+				"verif_method": {
+					"type": "object",
+					"description": "The SMTP settings the check used. Only for Smtp.",
+					"properties": {
+						"from_email": { "type": "string" },
+						"hello_name": { "type": "string" },
+						"proxy": { "type": "string", "nullable": true },
+						"smtp_port": { "type": "integer", "format": "int32", "minimum": 0 },
+						"smtp_timeout": {
+							"nullable": true,
+							"allOf": [{ "$ref": "#/components/schemas/Duration" }]
+						},
+						"retries": { "type": "integer", "format": "int32", "minimum": 0 }
+					}
+				}
+			},
+			"required": ["type"]
+		}),
+	);
+	// Matches the custom Serialize of core::CheckEmailOutput. It wraps each
+	// misc, mx, and smtp error in an "error" field. Some errors send an
+	// object as the message, so the message has no type.
+	insert_schema(
+		spec,
+		"CoreError",
+		json!({
+			"type": "object",
+			"title": "CoreError",
+			"description": "The error that one part of the check returned instead of its details.",
+			"properties": {
+				"error": {
+					"type": "object",
+					"properties": {
+						"type": { "type": "string", "description": "The type of error." },
+						"message": { "description": "The error details. Usually a string." }
+					},
+					"required": ["type"]
+				},
+				"description": {
+					"type": "string",
+					"enum": ["IpBlacklisted", "NeedsRDNS"],
+					"description": "The category of an SMTP error, when it is known."
+				}
+			},
+			"required": ["error"]
+		}),
+	);
 	insert_schema(
 		spec,
 		"EmailScore",
@@ -722,7 +1454,15 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"freshness": { "$ref": "#/components/schemas/Freshness" },
 				"domain_suggestion": { "type": "string", "description": "Suggested corrected email when a likely domain typo is detected" },
 				"normalized_email": { "type": "string", "description": "Canonical form of the email after alias/plus-address normalization" },
-				"catch_all_severity": { "type": "string", "enum": ["low", "high"], "description": "Severity tier for catch-all domains (low=free provider, high=corporate)" }
+				"confidence": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"confidence_level": { "$ref": "#/components/schemas/ConfidenceLevel" },
+				"confidence_factors": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"catch_all_severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send." },
+				"catch_all": { "$ref": "#/components/schemas/CatchAllScore" },
+				"partial_confidence": { "$ref": "#/components/schemas/PartialConfidence" }
 			},
 			"required": ["score", "category", "sub_reason", "safe_to_send", "reason_codes", "signals"]
 		}),
@@ -846,7 +1586,8 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"file": { "type": "string", "format": "binary" },
 				"name": { "type": "string", "nullable": true },
-				"email_column": { "type": "string", "nullable": true }
+				"email_column": { "type": "string", "nullable": true },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true }
 			},
 			"required": ["file"]
 		}),
@@ -876,9 +1617,11 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"original_filename": { "type": "string" },
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
-				"email_column": { "type": "string" }
+				"email_column": { "type": "string" },
+				"created_at": { "type": "string", "format": "date-time" },
+				"completed_at": { "type": "string", "format": "date-time", "nullable": true }
 			},
-			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column"]
+			"required": ["id", "name", "original_filename", "status", "total_rows", "email_column", "created_at", "completed_at"]
 		}),
 	);
 	insert_schema(
@@ -921,6 +1664,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"total_rows": { "type": "integer", "format": "int32" },
 				"email_column": { "type": "string" },
 				"summary": { "$ref": "#/components/schemas/ListSummary" },
+				"policy_id": { "type": "integer", "format": "int64", "nullable": true },
 				"unique_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"deduplicated_count": { "type": "integer", "format": "int32", "nullable": true }
 			},
@@ -1096,12 +1840,23 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"id": { "type": "integer", "format": "int32" },
 				"email": { "type": "string" },
+				"canonical_email": { "type": "string" },
+				"status": { "type": "string" },
 				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
 				"source": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
 				"notes": { "type": "string", "nullable": true },
-				"created_at": { "type": "string", "format": "date-time" }
+				"created_by": { "type": "string", "nullable": true },
+				"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+				"last_seen_at": { "type": "string", "format": "date-time", "nullable": true },
+				"metadata": generic_object_schema(),
+				"created_at": { "type": "string", "format": "date-time" },
+				"updated_at": { "type": "string", "format": "date-time" }
 			},
-			"required": ["id", "email", "reason", "created_at"]
+			"required": ["id", "email", "canonical_email", "status", "reason", "metadata", "created_at", "updated_at"]
 		}),
 	);
 	insert_schema(
@@ -1123,8 +1878,21 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"type": "object",
 			"properties": {
 				"suppressed": { "type": "boolean" },
-				"reason": { "$ref": "#/components/schemas/SuppressionReason" },
+				"id": { "type": "integer", "format": "int32", "nullable": true },
+				"canonical_email": { "type": "string", "nullable": true },
+				"status": { "type": "string", "nullable": true },
+				"reason": {
+					"nullable": true,
+					"allOf": [{ "$ref": "#/components/schemas/SuppressionReason" }]
+				},
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
 				"source": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
+				"created_by": { "type": "string", "nullable": true },
+				"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+				"metadata": { "type": "object", "additionalProperties": true, "nullable": true },
 				"created_at": { "type": "string", "format": "date-time", "nullable": true }
 			},
 			"required": ["suppressed"]
@@ -1136,9 +1904,357 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "object",
 			"properties": {
-				"deleted": { "type": "boolean" }
+				"deleted": { "type": "boolean" },
+				"status": { "type": "string" }
 			},
+			"required": ["deleted", "status"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionEvent",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int64" },
+				"entry_id": { "type": "integer", "format": "int32", "nullable": true },
+				"canonical_email": { "type": "string" },
+				"event_type": { "type": "string" },
+				"from_status": { "type": "string", "nullable": true },
+				"to_status": { "type": "string", "nullable": true },
+				"reason_code": { "type": "string", "nullable": true },
+				"reason_detail": { "type": "string", "nullable": true },
+				"source_type": { "type": "string", "nullable": true },
+				"source_ref": { "type": "string", "nullable": true },
+				"actor_type": { "type": "string" },
+				"actor_id": { "type": "string", "nullable": true },
+				"metadata": generic_object_schema(),
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "canonical_email", "event_type", "actor_type", "metadata", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"SuppressionEventListResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"events": { "type": "array", "items": { "$ref": "#/components/schemas/SuppressionEvent" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["events", "total"]
+		}),
+	);
+	// Matches outcomes::RuleAction, which serde tags by "action".
+	insert_schema(
+		spec,
+		"OutcomeRuleAction",
+		json!({
+			"type": "object",
+			"properties": {
+				"action": {
+					"type": "string",
+					"enum": ["suppress", "suppress_and_unsubscribe", "suppress_after", "score_boost", "informational"]
+				},
+				"score_override": { "type": "string" },
+				"threshold_count": { "type": "integer", "format": "int64" },
+				"threshold_window_days": { "type": "integer", "format": "int32" },
+				"boost": { "type": "integer", "format": "int32" }
+			},
+			"required": ["action"]
+		}),
+	);
+	// Matches outcomes::OutcomePolicyRules. Serde fills a missing field with
+	// its default, so no field is required.
+	let rule = json!({ "$ref": "#/components/schemas/OutcomeRuleAction" });
+	insert_schema(
+		spec,
+		"OutcomePolicyRules",
+		json!({
+			"type": "object",
+			"properties": {
+				"hard_bounce": rule,
+				"complaint": rule,
+				"soft_bounce": rule,
+				"unsubscribe": rule,
+				"delivered": rule,
+				"open": rule,
+				"click": rule,
+				"outcome_ttl_days": { "type": "integer", "format": "int32" }
+			}
+		}),
+	);
+	insert_schema(
+		spec,
+		"OutcomePolicyDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
 			"required": ["deleted"]
+		}),
+	);
+	// Matches ResultRow in http/v1/query.rs.
+	insert_schema(
+		spec,
+		"QueryResultRow",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int32" },
+				"job_id": { "type": "integer", "format": "int32", "nullable": true },
+				"email": { "type": "string", "nullable": true },
+				"score": { "type": "integer", "format": "int32", "nullable": true },
+				"category": { "type": "string", "nullable": true },
+				"sub_reason": { "type": "string", "nullable": true },
+				"safe_to_send": { "type": "boolean", "nullable": true },
+				"reason_codes": { "type": "array", "items": { "type": "string" }, "nullable": true },
+				"recommendation_action": { "type": "string", "nullable": true },
+				"recommendation": { "type": "object", "additionalProperties": true, "nullable": true },
+				"policy_mode": { "type": "string", "nullable": true },
+				"policy_decision": { "type": "string", "nullable": true },
+				"policy_evaluation": { "type": "object", "additionalProperties": true, "nullable": true },
+				"task_state": { "type": "string" },
+				"completed_at": { "type": "string", "format": "date-time", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "task_state", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"QueryResultList",
+		json!({
+			"type": "object",
+			"properties": {
+				"results": { "type": "array", "items": { "$ref": "#/components/schemas/QueryResultRow" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["results", "total"]
+		}),
+	);
+	// Matches Event in http/v1/events.rs.
+	insert_schema(
+		spec,
+		"AuditEvent",
+		json!({
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer", "format": "int64" },
+				"job_id": { "type": "integer", "format": "int32" },
+				"task_id": { "type": "integer", "format": "int32", "nullable": true },
+				"event_type": { "type": "string" },
+				"event_data": { "type": "object", "additionalProperties": true, "nullable": true },
+				"actor": { "type": "string", "nullable": true },
+				"created_at": { "type": "string", "format": "date-time" }
+			},
+			"required": ["id", "job_id", "event_type", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"AuditEventList",
+		json!({
+			"type": "object",
+			"properties": {
+				"events": { "type": "array", "items": { "$ref": "#/components/schemas/AuditEvent" } },
+				"total": { "type": "integer", "format": "int64" }
+			},
+			"required": ["events", "total"]
+		}),
+	);
+	// Matches SourceQualityRow in http/v1/source_quality.rs.
+	let mut quality = Map::new();
+	quality.insert("source_key".into(), json!({ "type": "string" }));
+	for count in [
+		"total_records",
+		"processed_records",
+		"valid_count",
+		"risky_count",
+		"unknown_count",
+		"invalid_count",
+		"safe_to_send_count",
+		"send_count",
+		"send_with_caution_count",
+		"review_count",
+		"suppress_count",
+		"drop_count",
+		"outcome_count",
+		"delivered_count",
+		"opened_count",
+		"clicked_count",
+		"bounced_count",
+		"complained_count",
+		"unsubscribed_count",
+	] {
+		quality.insert(
+			count.into(),
+			json!({ "type": "integer", "format": "int64" }),
+		);
+	}
+	for pct in [
+		"risky_pct",
+		"invalid_pct",
+		"unsafe_recommendation_pct",
+		"negative_outcome_pct",
+	] {
+		quality.insert(pct.into(), json!({ "type": "number", "format": "double" }));
+	}
+	quality.insert("quality_grade".into(), json!({ "type": "string" }));
+	quality.insert("summary".into(), json!({ "type": "string" }));
+	let quality_required: Vec<String> = quality.keys().cloned().collect();
+	insert_schema(
+		spec,
+		"SourceQualityRow",
+		json!({ "type": "object", "properties": quality, "required": quality_required }),
+	);
+	insert_schema(
+		spec,
+		"SourceQualityResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"sources": { "type": "array", "items": { "$ref": "#/components/schemas/SourceQualityRow" } }
+			},
+			"required": ["sources"]
+		}),
+	);
+	// Matches list_intelligence::validate_segment_filter, which rejects any
+	// other field.
+	let string_or_list = json!({
+		"oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+	});
+	insert_schema(
+		spec,
+		"SegmentFilter",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"category": string_or_list,
+				"change_type": string_or_list,
+				"safe_to_send": { "type": "boolean" },
+				"is_role_account": { "type": "boolean" },
+				"is_disposable": { "type": "boolean" },
+				"is_catch_all": { "type": "boolean" },
+				"score_min": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"score_max": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100 },
+				"freshness_days_max": { "type": "integer", "format": "int32", "minimum": 0 },
+				"reason_codes_any": { "type": "array", "items": { "type": "string" } },
+				"policy_decision": { "type": "string", "enum": ["send", "review", "suppress"] }
+			}
+		}),
+	);
+	insert_schema(
+		spec,
+		"SegmentScope",
+		json!({ "type": "string", "enum": ["lists", "tenant"] }),
+	);
+	insert_schema(
+		spec,
+		"SavedSegmentDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
+			"required": ["deleted"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"ScorePolicyDeleteResponse",
+		json!({
+			"type": "object",
+			"properties": { "deleted": { "type": "boolean" } },
+			"required": ["deleted"]
+		}),
+	);
+	// Matches list_intelligence::PolicyCondition. Serde rejects unknown fields.
+	insert_schema(
+		spec,
+		"ScorePolicyCondition",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"score_min": { "type": "integer", "format": "int32", "nullable": true },
+				"score_max": { "type": "integer", "format": "int32", "nullable": true },
+				"category": { "type": "array", "items": { "type": "string" }, "nullable": true },
+				"safe_to_send": { "type": "boolean", "nullable": true },
+				"reason_codes_any": { "type": "array", "items": { "type": "string" }, "nullable": true }
+			}
+		}),
+	);
+	// Matches list_intelligence::PolicyRules.
+	let condition = json!({
+		"nullable": true,
+		"allOf": [{ "$ref": "#/components/schemas/ScorePolicyCondition" }]
+	});
+	insert_schema(
+		spec,
+		"ScorePolicyRules",
+		json!({
+			"type": "object",
+			"additionalProperties": false,
+			"properties": { "send": condition, "review": condition, "suppress": condition }
+		}),
+	);
+	// Matches ApiKeyResponse in http/v1/account_api_keys.rs.
+	let api_key_properties = json!({
+		"id": { "type": "string", "format": "uuid" },
+		"tenant_id": { "type": "string", "format": "uuid" },
+		"key_prefix": { "type": "string" },
+		"name": { "type": "string" },
+		"scopes": { "type": "array", "items": { "type": "string" } },
+		"status": { "type": "string" },
+		"last_used_at": { "type": "string", "format": "date-time", "nullable": true },
+		"expires_at": { "type": "string", "format": "date-time", "nullable": true },
+		"created_at": { "type": "string", "format": "date-time" }
+	});
+	insert_schema(
+		spec,
+		"TenantApiKey",
+		json!({
+			"type": "object",
+			"properties": api_key_properties,
+			"required": ["id", "tenant_id", "key_prefix", "name", "scopes", "status", "created_at"]
+		}),
+	);
+	let mut created_properties = api_key_properties.clone();
+	created_properties["key"] =
+		json!({ "type": "string", "description": "The full key. The API shows it only once." });
+	if let Some(map) = created_properties.as_object_mut() {
+		map.remove("last_used_at");
+	}
+	insert_schema(
+		spec,
+		"TenantCreatedApiKey",
+		json!({
+			"type": "object",
+			"properties": created_properties,
+			"required": ["id", "tenant_id", "key", "key_prefix", "name", "scopes", "status", "created_at"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"TenantApiKeyList",
+		json!({
+			"type": "object",
+			"properties": {
+				"api_keys": { "type": "array", "items": { "$ref": "#/components/schemas/TenantApiKey" } }
+			},
+			"required": ["api_keys"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"TenantApiKeyRevokeResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"revoked": { "type": "boolean" },
+				"key_id": { "type": "string", "format": "uuid" }
+			},
+			"required": ["revoked", "key_id"]
 		}),
 	);
 	insert_schema(
@@ -1194,13 +2310,15 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"changed_only_export": { "type": "boolean", "nullable": true },
 				"selected_unique_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"skipped_unchanged": { "type": "integer", "format": "int32", "nullable": true },
-				"queued_emails": { "type": "integer", "format": "int32", "nullable": true },
-				"published_tasks": { "type": "integer", "format": "int32", "nullable": true },
-				"completed_tasks": { "type": "integer", "format": "int32", "nullable": true },
-				"valid": { "type": "integer", "format": "int32", "nullable": true },
-				"invalid": { "type": "integer", "format": "int32", "nullable": true },
-				"risky": { "type": "integer", "format": "int32", "nullable": true },
-				"unknown": { "type": "integer", "format": "int32", "nullable": true },
+				"accepted_rows": { "type": "integer", "format": "int32", "nullable": true },
+				"job_id": { "type": "integer", "format": "int32", "nullable": true },
+				"list_id": { "type": "integer", "format": "int32", "nullable": true },
+				"total_valid": { "type": "integer", "format": "int64", "nullable": true },
+				"total_risky": { "type": "integer", "format": "int64", "nullable": true },
+				"total_unknown": { "type": "integer", "format": "int64", "nullable": true },
+				"total_invalid": { "type": "integer", "format": "int64", "nullable": true },
+				"total_processed": { "type": "integer", "format": "int64", "nullable": true },
+				"total_failed": { "type": "integer", "format": "int64", "nullable": true },
 				"billed_emails": { "type": "integer", "format": "int32", "nullable": true },
 				"source_name": { "type": "string", "nullable": true },
 				"source_filename": { "type": "string", "nullable": true },
@@ -1213,6 +2331,47 @@ fn add_phase_two_schemas(spec: &mut Value) {
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
+	insert_schema(
+		spec,
+		"BulkCreateRequest",
+		json!({
+			"type": "object",
+			"properties": {
+				"input": {
+					"type": "array",
+					"items": { "type": "string", "format": "email" }
+				},
+				"webhook": {
+					"type": "object",
+					"nullable": true,
+					"additionalProperties": true
+				},
+				"source_key": {
+					"type": "string",
+					"nullable": true,
+					"description": "Optional source key used for source quality analytics."
+				},
+				"source": {
+					"type": "string",
+					"nullable": true,
+					"description": "Alias for source_key."
+				}
+			},
+			"required": ["input"]
+		}),
+	);
+	insert_schema(
+		spec,
+		"BulkCreateResponse",
+		json!({
+			"type": "object",
+			"properties": {
+				"job_id": { "type": "integer", "format": "int32" },
+				"source_key": { "type": "string", "nullable": true }
+			},
+			"required": ["job_id"]
+		}),
+	);
 	set_request_body(
 		spec,
 		"/v0/check_email",
@@ -1242,6 +2401,21 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("CheckEmailOutput", "Email verification result"),
+	);
+	set_request_body(
+		spec,
+		"/v1/bulk",
+		"post",
+		"application/json",
+		"BulkCreateRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v1/bulk",
+		"post",
+		"200",
+		json_response("BulkCreateResponse", "Bulk job created"),
 	);
 
 	set_response(
@@ -1349,6 +2523,75 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		binary_response("Cleaned list CSV download", "text/csv"),
 	);
+	set_schema_property(
+		spec,
+		"ListUploadRequest",
+		"source_key",
+		json!({
+			"type": "string",
+			"nullable": true,
+			"description": "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor."
+		}),
+	);
+	set_schema_property(
+		spec,
+		"ListUploadResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListItem",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"ListDetailResponse",
+		"source_key",
+		json!({ "type": "string", "nullable": true }),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
+		"post",
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-plan",
+		"get",
+		with_path_parameters(
+			generic_json_operation("Lists", "Get remediation plan", "Remediation plan"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports",
+		"post",
+		with_path_parameters(
+			generic_json_post_operation("Lists", "Create remediation export", "Remediation export"),
+			&[("list_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+		"get",
+		with_path_parameters(
+			download_operation(
+				"Lists",
+				"Download remediation export",
+				"Remediation export CSV",
+				&["text/csv"],
+			),
+			&[("list_id", "int32"), ("export_id", "int64")],
+		),
+	);
 
 	set_request_body(
 		spec,
@@ -1402,6 +2645,261 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		json_response("SuppressionDeleteResponse", "Suppression entry deleted"),
 	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"reason_detail",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_type",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"source_ref",
+		json!({ "type": "string", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"expires_at",
+		json!({ "type": "string", "format": "date-time", "nullable": true }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsRequest",
+		"metadata",
+		generic_object_schema(),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"updated",
+		json!({ "type": "integer", "format": "int64" }),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"entry_ids",
+		json!({ "type": "array", "items": { "type": "integer", "format": "int32" } }),
+	);
+	// Import uses the add handler, so it takes and returns the same bodies.
+	upsert_operation(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		generic_json_post_operation("v1", "Import suppressions", "Suppression entries imported"),
+	);
+	set_request_body(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		"application/json",
+		"AddSuppressionsRequest",
+		true,
+	);
+	set_response(
+		spec,
+		"/v1/suppressions/import",
+		"post",
+		"200",
+		json_response("AddSuppressionsResponse", "Suppression entries imported"),
+	);
+	let mut export = download_operation(
+		"v1",
+		"Export suppressions",
+		"Suppression export CSV",
+		&["text/csv"],
+	);
+	export["parameters"] = json!([
+		query_parameter("format", json!({ "type": "string", "enum": ["csv"] })),
+		query_parameter(
+			"reason",
+			json!({ "$ref": "#/components/schemas/SuppressionReason" })
+		),
+		query_parameter("status", json!({ "type": "string" })),
+		query_parameter("source_type", json!({ "type": "string" })),
+		query_parameter("source_ref", json!({ "type": "string" })),
+		query_parameter("include_expired", json!({ "type": "boolean" })),
+	]);
+	upsert_operation(spec, "/v1/suppressions/export", "get", export);
+	let mut events = with_path_parameters(
+		generic_json_operation("v1", "List suppression events", "Suppression event list"),
+		&[("id", "int32")],
+	);
+	if let Some(parameters) = events["parameters"].as_array_mut() {
+		parameters.push(query_parameter(
+			"limit",
+			json!({ "type": "integer", "format": "int64", "maximum": 200 }),
+		));
+		parameters.push(query_parameter(
+			"offset",
+			json!({ "type": "integer", "format": "int64" }),
+		));
+	}
+	upsert_operation(spec, "/v1/suppressions/{id}/events", "get", events);
+	set_response(
+		spec,
+		"/v1/suppressions/{id}/events",
+		"get",
+		"200",
+		json_response("SuppressionEventListResponse", "Suppression event list"),
+	);
+	// The rules follow outcomes::OutcomePolicyRules; storage keeps them as loose JSON.
+	for schema in [
+		"OutcomePolicyView",
+		"CreateOutcomePolicyRequest",
+		"UpdateOutcomePolicyRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"rules",
+			json!({ "$ref": "#/components/schemas/OutcomePolicyRules" }),
+		);
+	}
+	set_response(
+		spec,
+		"/v1/outcome-policies/{policy_id}",
+		"delete",
+		"200",
+		json_response("OutcomePolicyDeleteResponse", "Outcome policy deleted"),
+	);
+	for schema in [
+		"ScorePolicyView",
+		"CreateScorePolicyRequest",
+		"UpdateScorePolicyRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"rules",
+			json!({ "$ref": "#/components/schemas/ScorePolicyRules" }),
+		);
+	}
+	set_response(
+		spec,
+		"/v1/score-policies/{policy_id}",
+		"delete",
+		"200",
+		json_response("ScorePolicyDeleteResponse", "Score policy deleted"),
+	);
+	for schema in [
+		"SavedSegmentView",
+		"CreateSavedSegmentRequest",
+		"UpdateSavedSegmentRequest",
+	] {
+		set_schema_property(
+			spec,
+			schema,
+			"filter",
+			json!({ "$ref": "#/components/schemas/SegmentFilter" }),
+		);
+	}
+	for (schema, scope) in [
+		(
+			"SavedSegmentView",
+			json!({ "$ref": "#/components/schemas/SegmentScope" }),
+		),
+		(
+			"CreateSavedSegmentRequest",
+			json!({ "$ref": "#/components/schemas/SegmentScope" }),
+		),
+		(
+			"UpdateSavedSegmentRequest",
+			json!({ "nullable": true, "allOf": [{ "$ref": "#/components/schemas/SegmentScope" }] }),
+		),
+	] {
+		set_schema_property(spec, schema, "scope", scope);
+	}
+	for (path, method, status, schema, description) in [
+		(
+			"/v1/query",
+			"get",
+			"200",
+			"QueryResultList",
+			"Filtered verification results",
+		),
+		(
+			"/v1/events",
+			"get",
+			"200",
+			"AuditEventList",
+			"Audit log events",
+		),
+		(
+			"/v1/segments/{segment_id}",
+			"delete",
+			"200",
+			"SavedSegmentDeleteResponse",
+			"Saved segment deleted",
+		),
+		(
+			"/v1/me/api-keys",
+			"get",
+			"200",
+			"TenantApiKeyList",
+			"API key list",
+		),
+		(
+			"/v1/me/api-keys",
+			"post",
+			"201",
+			"TenantCreatedApiKey",
+			"API key created",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"get",
+			"200",
+			"TenantApiKey",
+			"API key details",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"patch",
+			"200",
+			"TenantApiKey",
+			"API key updated",
+		),
+		(
+			"/v1/me/api-keys/{key_id}",
+			"delete",
+			"200",
+			"TenantApiKeyRevokeResponse",
+			"API key revoked",
+		),
+	] {
+		set_response(
+			spec,
+			path,
+			method,
+			status,
+			json_response(schema, description),
+		);
+	}
+	// The handler reads the CSV from a multipart part named "file".
+	if let Some(operation) = operation_mut(spec, "/v1/campaign-outcomes/upload", "post") {
+		operation.insert(
+			"requestBody".to_string(),
+			json!({
+				"required": true,
+				"content": {
+					"multipart/form-data": {
+						"schema": {
+							"type": "object",
+							"properties": { "file": { "type": "string", "format": "binary" } },
+							"required": ["file"]
+						}
+					}
+				}
+			}),
+		);
+	}
 	set_response(
 		spec,
 		"/v1/jobs/{job_id}/retry",
@@ -1464,10 +2962,61 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"200",
 		json_response("ApprovalChecklistResponse", "Pre-send approval checklist"),
 	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-center",
+		"get",
+		with_path_parameters(
+			generic_json_operation("Jobs", "Get job failure center", "Job failure center"),
+			&[("job_id", "int32")],
+		),
+	);
+	upsert_operation(
+		spec,
+		"/v1/jobs/{job_id}/failure-report",
+		"get",
+		with_path_parameters(
+			download_operation(
+				"Jobs",
+				"Download job failure report",
+				"Job failure report stream",
+				&["text/csv", "application/x-ndjson"],
+			),
+			&[("job_id", "int32")],
+		),
+	);
+	let mut source_quality =
+		generic_json_operation("v1", "List source quality", "Source quality analytics");
+	source_quality["parameters"] = json!([
+		query_parameter("source_key", json!({ "type": "string" })),
+		query_parameter(
+			"min_records",
+			json!({ "type": "integer", "format": "int64" })
+		),
+		query_parameter("limit", json!({ "type": "integer", "format": "int64" })),
+	]);
+	upsert_operation(spec, "/v1/sources/quality", "get", source_quality);
+	set_response(
+		spec,
+		"/v1/sources/quality",
+		"get",
+		"200",
+		json_response("SourceQualityResponse", "Source quality analytics"),
+	);
 	set_response(
 		spec,
 		"/v1/reverification/status",
 		"get",
+		"200",
+		json_response(
+			"ReverificationStatusResponse",
+			"Reverification schedule status",
+		),
+	);
+	set_response(
+		spec,
+		"/v1/reverification",
+		"put",
 		"200",
 		json_response(
 			"ReverificationStatusResponse",
@@ -1492,6 +3041,7 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"bucket": "#/components/schemas/PipelineSource_oneOf_3",
 		}),
 	);
+	name_discriminated_variants(spec, "PipelineSource", "type");
 	set_schema_example(
 		spec,
 		"PipelineDeliveryConfig",
@@ -1600,12 +3150,16 @@ fn augment_phase_two_openapi(spec: &mut Value) {
 			"error_message": Value::Null,
 		}),
 	);
+	// A push run first stores {source, push_batch_id, source_key}, and the
+	// run replaces it when it reads its source (pipelines.rs).
 	set_schema_property(
 		spec,
 		"PipelineRunView",
 		"source_snapshot",
 		json!({
-			"$ref": "#/components/schemas/PipelineSource"
+			"type": "object",
+			"additionalProperties": true,
+			"description": "The source that the run used. Its shape depends on the source type and the run state."
 		}),
 	);
 	set_schema_property(
@@ -1635,9 +3189,60 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 		serde_json::to_value(BackendApiDoc::openapi()).map_err(ReacherResponseError::from)?;
 
 	merge_openapi(&mut spec, generated_spec);
+	// These generic names were emitted by an earlier outcomes contract. Keeping
+	// them in the self-hosted base spec produces stale SDK models indefinitely.
+	for stale_schema in ["Request", "Response"] {
+		schemas_mut(&mut spec).remove(stale_schema);
+	}
 	normalize_nullable_types(&mut spec);
 	strip_unsupported_schema_keywords(&mut spec);
 	augment_phase_two_openapi(&mut spec);
+	insert_schema(
+		&mut spec,
+		"ErrorEnvelope",
+		json!({
+			"type": "object",
+			"required": ["error"],
+			"properties": { "error": { "type": "string" } }
+		}),
+	);
+	for (path, item) in paths_mut(&mut spec).iter_mut() {
+		if !path.starts_with("/v1/") {
+			continue;
+		}
+		if let Some(item) = item.as_object_mut() {
+			for method in ["get", "post", "put", "patch", "delete"] {
+				if let Some(responses) = item
+					.get_mut(method)
+					.and_then(|operation| operation.get_mut("responses"))
+					.and_then(Value::as_object_mut)
+				{
+					let default = responses.entry("default").or_insert_with(|| json!({
+						"description": "Request error",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } }
+					}));
+					default
+						.as_object_mut()
+						.expect("default response object")
+						.entry("description")
+						.or_insert_with(|| json!("Request error"));
+				}
+			}
+		}
+	}
+	if let Some(info) = spec.get_mut("info").and_then(Value::as_object_mut) {
+		info.insert(
+			"version".to_string(),
+			Value::String(env!("CARGO_PKG_VERSION").to_string()),
+		);
+		info.insert(
+			"license".to_string(),
+			json!({
+				"name": "MIT",
+				"url": "https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/LICENSE.md"
+			}),
+		);
+	}
 	Ok(spec)
 }
 
@@ -1658,5 +3263,18 @@ pub fn openapi_spec() -> impl Filter<Extract = (impl warp::Reply,), Error = warp
 			build_spec()
 				.map(|v| warp::reply::json(&v))
 				.map_err(|e| warp::reject::custom(e))
+		})
+}
+
+/// Serve Scalar API documentation backed by the runtime OpenAPI document.
+pub fn scalar_docs() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone
+{
+	warp::path("docs")
+		.or(warp::path("scalar"))
+		.unify()
+		.and(warp::path::end())
+		.and(warp::get())
+		.map(|| {
+			warp::reply::with_header(SCALAR_DOCS_HTML, "Content-Type", "text/html; charset=utf-8")
 		})
 }

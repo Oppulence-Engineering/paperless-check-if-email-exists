@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use crate::bounce_risk::BounceRiskService;
 use crate::storage::{postgres::PostgresStorage, StorageAdapter};
 use crate::throttle::ThrottleManager;
@@ -36,6 +20,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::warn;
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JwtAuthConfig {
+	pub jwks_url: String,
+	pub issuer: String,
+	pub audience: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
@@ -67,6 +58,8 @@ pub struct BackendConfig {
 	pub http_port: u16,
 	/// Shared secret between a trusted client and the backend.
 	pub header_secret: Option<String>,
+	/// Optional Better Auth resource-server verification. Legacy API keys remain supported.
+	pub auth: Option<JwtAuthConfig>,
 	/// Sentry DSN to report errors to
 	pub sentry_dsn: Option<String>,
 
@@ -76,8 +69,12 @@ pub struct BackendConfig {
 	/// Configuration on where to store the email verification results.
 	pub storage: Option<StorageConfig>,
 
-	/// Whether to enable the Commercial License Trial. Setting this to true
-	pub commercial_license_trial: Option<CommercialLicenseTrialConfig>,
+	/// The most connections that each Postgres pool of this process opens.
+	/// Staging and production share a small Postgres cluster, so keep it low.
+	///
+	/// Env variable: RCH__DB_MAX_CONNECTIONS
+	#[serde(default = "default_db_max_connections")]
+	pub db_max_connections: u32,
 
 	/// Throttle configuration for all requests
 	pub throttle: ThrottleConfig,
@@ -89,6 +86,10 @@ pub struct BackendConfig {
 	/// Scheduled pipeline configuration
 	#[serde(default)]
 	pub pipelines: PipelinesConfig,
+
+	/// Delayed-recheck scheduler configuration (handles bulk Unknown retries).
+	#[serde(default)]
+	pub delayed_recheck: DelayedRecheckConfig,
 	/// Bounce-risk enrichment configuration.
 	#[serde(default)]
 	pub bounce_risk: BounceRiskConfig,
@@ -127,13 +128,15 @@ impl BackendConfig {
 			http_host: "127.0.0.1".to_string(),
 			http_port: 8080,
 			header_secret: None,
+			auth: None,
 			sentry_dsn: None,
 			worker: WorkerConfig::default(),
 			storage: Some(StorageConfig::Noop),
-			commercial_license_trial: None,
+			db_max_connections: default_db_max_connections(),
 			throttle: ThrottleConfig::new_without_throttle(),
 			reverification: ReverificationConfig::default(),
 			pipelines: PipelinesConfig::default(),
+			delayed_recheck: DelayedRecheckConfig::default(),
 			bounce_risk: BounceRiskConfig::default(),
 			channel: None,
 			storage_adapter: Arc::new(StorageAdapter::Noop),
@@ -222,6 +225,7 @@ impl BackendConfig {
 					&config.db_url,
 					config.read_replica_url.as_deref(),
 					config.extra.clone(),
+					self.db_max_connections,
 				)
 				.await
 				.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
@@ -383,6 +387,10 @@ pub struct PipelinesConfig {
 	pub min_interval_seconds: i32,
 }
 
+fn default_db_max_connections() -> u32 {
+	5
+}
+
 fn default_pipeline_tick_seconds() -> u64 {
 	60
 }
@@ -425,6 +433,66 @@ impl Default for ReverificationConfig {
 			interval_seconds: default_reverification_interval(),
 			default_staleness_days: default_staleness_days(),
 			default_batch_size: default_reverification_batch_size(),
+		}
+	}
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct DelayedRecheckConfig {
+	#[serde(default = "default_delayed_recheck_enable")]
+	pub enable: bool,
+	#[serde(default = "default_delayed_recheck_poll_interval_seconds")]
+	pub poll_interval_seconds: u64,
+	#[serde(default = "default_delayed_recheck_batch_size")]
+	pub batch_size: i64,
+	#[serde(default = "default_delayed_recheck_stale_publishing_seconds")]
+	pub stale_publishing_seconds: i64,
+	#[serde(default = "default_delayed_recheck_publish_retry_seconds")]
+	pub publish_retry_seconds: i64,
+	#[serde(default = "default_delayed_recheck_max_publish_attempts")]
+	pub max_publish_attempts: i32,
+	#[serde(default = "default_delayed_recheck_retention_days")]
+	pub retention_days: i32,
+	#[serde(default = "default_delayed_recheck_cleanup_interval_seconds")]
+	pub cleanup_interval_seconds: u64,
+}
+
+fn default_delayed_recheck_enable() -> bool {
+	true
+}
+fn default_delayed_recheck_poll_interval_seconds() -> u64 {
+	30
+}
+fn default_delayed_recheck_batch_size() -> i64 {
+	100
+}
+fn default_delayed_recheck_stale_publishing_seconds() -> i64 {
+	300
+}
+fn default_delayed_recheck_publish_retry_seconds() -> i64 {
+	60
+}
+fn default_delayed_recheck_max_publish_attempts() -> i32 {
+	5
+}
+fn default_delayed_recheck_retention_days() -> i32 {
+	7
+}
+fn default_delayed_recheck_cleanup_interval_seconds() -> u64 {
+	3600
+}
+
+impl Default for DelayedRecheckConfig {
+	fn default() -> Self {
+		Self {
+			enable: default_delayed_recheck_enable(),
+			poll_interval_seconds: default_delayed_recheck_poll_interval_seconds(),
+			batch_size: default_delayed_recheck_batch_size(),
+			stale_publishing_seconds: default_delayed_recheck_stale_publishing_seconds(),
+			publish_retry_seconds: default_delayed_recheck_publish_retry_seconds(),
+			max_publish_attempts: default_delayed_recheck_max_publish_attempts(),
+			retention_days: default_delayed_recheck_retention_days(),
+			cleanup_interval_seconds: default_delayed_recheck_cleanup_interval_seconds(),
 		}
 	}
 }
@@ -498,12 +566,6 @@ pub struct PostgresConfig {
 	#[serde(default)]
 	pub read_replica_url: Option<String>,
 	pub extra: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct CommercialLicenseTrialConfig {
-	pub api_token: String,
-	pub url: String,
 }
 
 /// Load the worker configuration from the worker_config.toml file and from the
@@ -742,6 +804,16 @@ type = "smtp"
 		);
 		env::remove_var("RCH__BOUNCE_RISK__ENABLED");
 		env::remove_var("RCH__BOUNCE_RISK__CONFIG_PATH");
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_db_max_connections() {
+		assert_eq!(load_config().await.unwrap().db_max_connections, 5);
+		env::set_var("RCH__DB_MAX_CONNECTIONS", "3");
+		let cfg = load_config().await.unwrap();
+		env::remove_var("RCH__DB_MAX_CONNECTIONS");
+		assert_eq!(cfg.db_max_connections, 3);
 	}
 
 	#[tokio::test]

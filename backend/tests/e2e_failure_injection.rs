@@ -179,7 +179,7 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		.await
 		.expect("publisher channel");
 	let _ = publisher
-		.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+		.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 		.await;
 
 	let config = build_test_config(
@@ -212,8 +212,8 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		serde_json::from_slice(&task_json).expect("deserialize cloned task");
 	publisher
 		.basic_publish(
-			"",
-			CHECK_EMAIL_QUEUE,
+			"".into(),
+			CHECK_EMAIL_QUEUE.into(),
 			BasicPublishOptions::default(),
 			&task_json,
 			BasicProperties::default()
@@ -230,8 +230,8 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		.expect("consumer channel");
 	let mut deliveries = consumer
 		.basic_consume(
-			CHECK_EMAIL_QUEUE,
-			"mid-job-consumer",
+			CHECK_EMAIL_QUEUE.into(),
+			"mid-job-consumer".into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
@@ -318,6 +318,6 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 	assert_eq!(running_events, 0, "task should not remain stuck in running");
 
 	pool.close().await;
-	let _ = publisher.close(0, "test cleanup").await;
-	let _ = consumer.close(0, "test cleanup").await;
+	let _ = publisher.close(0, "test cleanup".into()).await;
+	let _ = consumer.close(0, "test cleanup".into()).await;
 }

@@ -44,15 +44,25 @@ enum PathProfile {
 	ListGet,
 	ListQuality,
 	ListDownload,
+	ListRemediationPlan,
+	ListRemediationExportCreate,
+	ListRemediationExportDownload,
+	ListRemediationDownload,
 	ListDelete,
+	ListDiff,
 	PipelineGet,
 	PipelinePatch,
 	PipelineDelete,
 	PipelinePause,
 	PipelineResume,
 	PipelineTrigger,
+	PipelinePush,
 	PipelineRuns,
 	PipelineRunGet,
+	ProviderEndpointPatch,
+	ProviderEndpointDelete,
+	ProviderInbound,
+	SuppressionEvents,
 	SuppressionDelete,
 	CommentDelete,
 	JobGet,
@@ -64,8 +74,20 @@ enum PathProfile {
 	JobRetryCancelled,
 	JobApproval,
 	JobLatency,
+	JobFailureCenter,
+	JobFailureReport,
 	JobCancelCompleted,
 	EmailHistory,
+	AlertPatch,
+	ScorePolicyGet,
+	ScorePolicyPatch,
+	ScorePolicyDelete,
+	OutcomePolicyGet,
+	OutcomePolicyPatch,
+	OutcomePolicyDelete,
+	SavedSegmentGet,
+	SavedSegmentPatch,
+	SavedSegmentDelete,
 	DomainGet,
 	DomainPatch,
 	DomainDelete,
@@ -105,12 +127,19 @@ enum BodyProfile {
 	JsonPipelinePatch,
 	JsonPipelineTrigger,
 	JsonPipelineTriggerConflict,
+	JsonPipelinePush,
+	JsonProviderEndpointCreate,
+	JsonProviderEndpointPatch,
+	JsonProviderInbound,
 	JsonReputationCheck,
 	JsonSuppressionsAdd,
+	JsonRemediationExportCreate,
+	JsonOutcomesIngest,
 	JsonV1BulkCreate,
 	JsonCommentsCreate,
 	JsonCommentsEmpty,
 	JsonMeSettingsPatch,
+	JsonReverificationUpdate,
 	JsonMeWebhookPatch,
 	JsonMeDomainCreate,
 	JsonMeDomainCreateDuplicate,
@@ -125,6 +154,15 @@ enum BodyProfile {
 	JsonAdminQuotaPatch,
 	JsonAdminApiKeyCreate,
 	JsonAdminApiKeyPatch,
+	JsonAlertPatch,
+	JsonScorePolicyCreate,
+	JsonScorePolicyPatch,
+	JsonOutcomePolicyCreate,
+	JsonOutcomePolicyPatch,
+	JsonCampaignOutcomesIngest,
+	MultipartOutcomesUpload,
+	JsonSavedSegmentCreate,
+	JsonSavedSegmentPatch,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -159,16 +197,32 @@ pub struct HarnessFixtures {
 	job_cancelled: i32,
 	finder_job: i32,
 	list_main: i32,
+	remediation_plan: i64,
 	list_delete: i32,
 	pipeline_main: i64,
 	pipeline_pause: i64,
 	pipeline_resume: i64,
 	pipeline_trigger: i64,
+	pipeline_push: i64,
 	pipeline_delete: i64,
 	pipeline_active_conflict: i64,
 	pipeline_run: i64,
+	provider_endpoint_patch: Uuid,
+	provider_endpoint_delete: Uuid,
+	provider_endpoint_inbound: Uuid,
+	remediation_export: i64,
 	suppression_id: i32,
 	comment_delete_id: i64,
+	alert_id: i64,
+	score_policy_get: i64,
+	score_policy_update: i64,
+	score_policy_delete: i64,
+	outcome_policy_get: i64,
+	outcome_policy_update: i64,
+	outcome_policy_delete: i64,
+	saved_segment_get: i64,
+	saved_segment_update: i64,
+	saved_segment_delete: i64,
 	self_api_key_get: Uuid,
 	self_api_key_update: Uuid,
 	self_api_key_delete: Uuid,
@@ -368,6 +422,56 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		false,
 	)
 	.await;
+	let change_event_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO verification_change_events (
+			tenant_id,
+			canonical_email,
+			current_task_result_id,
+			previous_task_result_id,
+			current_score,
+			previous_score,
+			current_category,
+			previous_category,
+			current_safe_to_send,
+			previous_safe_to_send,
+			current_reason_codes,
+			previous_reason_codes,
+			change_type
+		)
+		VALUES ($1, 'risky@example.com', $2, $3, 58, 95, 'risky', 'valid', false, true, $4, $5, 'became_risky')
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(main_task_2)
+	.bind(main_task_1)
+	.bind(vec!["catch_all".to_string()])
+	.bind(vec!["deliverable".to_string()])
+	.fetch_one(pool)
+	.await
+	.expect("insert change event failed");
+	let alert_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_alerts (
+			tenant_id,
+			type,
+			status,
+			change_event_id,
+			canonical_email,
+			title,
+			body,
+			metadata
+		)
+		VALUES ($1, 'became_risky', 'unread', $2, 'risky@example.com', 'Risk changed', 'Harness alert', '{}'::jsonb)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(change_event_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert alert failed");
 	let main_task_3 = insert_scored_task(
 		pool,
 		job_main,
@@ -609,6 +713,75 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		false,
 	)
 	.await;
+	sqlx::query("UPDATE v1_task_result SET source_key = 'harness-source' WHERE job_id = $1")
+		.bind(list_job)
+		.execute(pool)
+		.await
+		.expect("tag list source quality tasks failed");
+
+	let remediation_plan: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_remediation_plans (
+			tenant_id, list_id, job_id, status, rule_version, options,
+			result_state_digest, summary_counts, completed_at
+		)
+		VALUES (
+			$1, $2, $3, 'completed', 'remediation_v1',
+			'{"allow_partial":false,"apply_domain_typos":true,"normalize_emails":true,"deduplicate":true,"drop_suppressed":true}'::jsonb,
+			'harness-seed',
+			'{"fixed":0,"safe":1,"review":1,"drop":1}'::jsonb,
+			NOW()
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(list_main)
+	.bind(list_job)
+	.fetch_one(pool)
+	.await
+	.expect("insert remediation plan failed");
+
+	for (row_index, classification, email) in [
+		(0, "safe", "good@example.com"),
+		(1, "review", "risky@example.com"),
+		(2, "drop", "bad@example.com"),
+	] {
+		let row = serde_json::json!({"email": email, "name": "Harness"});
+		sqlx::query(
+			r#"
+			INSERT INTO v1_remediation_rows (
+				plan_id, tenant_id, list_id, row_index, classification, rule_id,
+				confidence, original_email, effective_email, before, after, reasons
+			)
+			VALUES ($1, $2, $3, $4, $5, 'harness_seed', 'high', $6, $6, $7, $7, '[]'::jsonb)
+			"#,
+		)
+		.bind(remediation_plan)
+		.bind(tenant.tenant_id)
+		.bind(list_main)
+		.bind(row_index)
+		.bind(classification)
+		.bind(email)
+		.bind(&row)
+		.execute(pool)
+		.await
+		.expect("insert remediation row failed");
+	}
+
+	let remediation_export: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_remediation_exports (tenant_id, plan_id, partitions, format)
+		VALUES ($1, $2, $3, 'csv')
+		RETURNING id
+		"#,
+	)
+	.bind(tenant.tenant_id)
+	.bind(remediation_plan)
+	.bind(vec!["safe_to_send".to_string()])
+	.fetch_one(pool)
+	.await
+	.expect("insert remediation export failed");
 
 	let list_delete_job = insert_job(pool, Some(tenant.tenant_id), 1, "completed").await;
 	let list_delete = insert_list(
@@ -681,6 +854,17 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		source.clone(),
 	)
 	.await;
+	let pipeline_push = insert_pipeline(
+		pool,
+		tenant.tenant_id,
+		"Harness Pipeline Push",
+		serde_json::json!({
+			"type": "push",
+			"token_id": "harness-token-id",
+			"accepted_format": "json"
+		}),
+	)
+	.await;
 	let pipeline_active_conflict = insert_pipeline(
 		pool,
 		tenant.tenant_id,
@@ -746,8 +930,94 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 	)
 	.await;
 
+	let provider_endpoint_patch = Uuid::parse_str("22222222-2222-4222-8222-222222222221")
+		.expect("valid provider endpoint UUID");
+	let provider_endpoint_delete = Uuid::parse_str("22222222-2222-4222-8222-222222222222")
+		.expect("valid provider endpoint UUID");
+	let provider_endpoint_inbound = Uuid::parse_str("22222222-2222-4222-8222-222222222223")
+		.expect("valid provider endpoint UUID");
+	for (id, label) in [
+		(provider_endpoint_patch, "Harness Patch"),
+		(provider_endpoint_delete, "Harness Delete"),
+		(provider_endpoint_inbound, "Harness Inbound"),
+	] {
+		sqlx::query(
+			"INSERT INTO v1_provider_endpoints (id, tenant_id, provider, label, status, delivery_token_hash, provider_config, allowed_ips) VALUES ($1, $2, 'postmark', $3, 'active', $4, '{}'::jsonb, '{}')",
+		)
+		.bind(id)
+		.bind(tenant.tenant_id)
+		.bind(label)
+		.bind("c56fdc11770ecd8117b413923b08863ffa0a234046fe61623ac2e24eac4231f4")
+		.execute(pool)
+		.await
+		.expect("insert provider endpoint fixture");
+	}
+
 	let suppression_id =
 		insert_suppression(pool, tenant.tenant_id, "suppressed@example.com", "manual").await;
+	let score_policy_get: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_score_policies (tenant_id, name, rules) VALUES ($1, 'Harness Get Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert score policy get failed");
+	let score_policy_update: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_score_policies (tenant_id, name, rules) VALUES ($1, 'Harness Patch Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert score policy patch failed");
+	let score_policy_delete: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_score_policies (tenant_id, name, rules) VALUES ($1, 'Harness Delete Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert score policy delete failed");
+	let outcome_policy_get: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Get Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy get failed");
+	let outcome_policy_update: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Patch Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy patch failed");
+	let outcome_policy_delete: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_outcome_policies (tenant_id, name, rules) VALUES ($1, 'Harness Delete Outcome Policy', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert outcome policy delete failed");
+	let saved_segment_get: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_saved_segments (tenant_id, name, scope, filter) VALUES ($1, 'Harness Get Segment', 'lists', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert saved segment get failed");
+	let saved_segment_update: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_saved_segments (tenant_id, name, scope, filter) VALUES ($1, 'Harness Patch Segment', 'lists', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert saved segment patch failed");
+	let saved_segment_delete: i64 = sqlx::query_scalar(
+		"INSERT INTO v1_saved_segments (tenant_id, name, scope, filter) VALUES ($1, 'Harness Delete Segment', 'lists', '{}'::jsonb) RETURNING id",
+	)
+	.bind(tenant.tenant_id)
+	.fetch_one(pool)
+	.await
+	.expect("insert saved segment delete failed");
 	insert_comment(
 		pool,
 		tenant.tenant_id,
@@ -881,16 +1151,32 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		job_cancelled,
 		finder_job,
 		list_main,
+		remediation_plan,
 		list_delete,
 		pipeline_main,
 		pipeline_pause,
 		pipeline_resume,
 		pipeline_trigger,
+		pipeline_push,
 		pipeline_delete,
 		pipeline_active_conflict,
 		pipeline_run,
+		provider_endpoint_patch,
+		provider_endpoint_delete,
+		provider_endpoint_inbound,
+		remediation_export,
 		suppression_id,
 		comment_delete_id,
+		alert_id,
+		score_policy_get,
+		score_policy_update,
+		score_policy_delete,
+		outcome_policy_get,
+		outcome_policy_update,
+		outcome_policy_delete,
+		saved_segment_get,
+		saved_segment_update,
+		saved_segment_delete,
 		self_api_key_get,
 		self_api_key_update,
 		self_api_key_delete,
@@ -929,6 +1215,12 @@ pub async fn build_runtime(db_url: &str, amqp_url: &str) -> HarnessRuntime {
 
 pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 	let tenant_id = Uuid::parse_str(UPGRADE_TENANT_ID).expect("valid upgrade tenant id");
+	// API keys need the Professional plan; the v4.1.0 seed predates that rule.
+	sqlx::query("UPDATE tenants SET plan_tier = 'professional' WHERE id = $1")
+		.bind(tenant_id)
+		.execute(pool)
+		.await
+		.expect("set upgrade tenant plan");
 	let tenant = insert_keys_for_existing_tenant(pool, tenant_id).await;
 	let comment_delete_id = insert_comment(
 		pool,
@@ -988,16 +1280,32 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 		job_cancelled: 0,
 		finder_job: 0,
 		list_main: UPGRADE_LIST_ID,
+		remediation_plan: 0,
 		list_delete: 0,
 		pipeline_main,
 		pipeline_pause: 0,
 		pipeline_resume: 0,
 		pipeline_trigger: 0,
+		pipeline_push: 0,
 		pipeline_delete: 0,
 		pipeline_active_conflict: 0,
 		pipeline_run,
+		provider_endpoint_patch: Uuid::nil(),
+		provider_endpoint_delete: Uuid::nil(),
+		provider_endpoint_inbound: Uuid::nil(),
+		remediation_export: 0,
 		suppression_id: 0,
 		comment_delete_id,
+		alert_id: 0,
+		score_policy_get: 0,
+		score_policy_update: 0,
+		score_policy_delete: 0,
+		outcome_policy_get: 0,
+		outcome_policy_update: 0,
+		outcome_policy_delete: 0,
+		saved_segment_get: 0,
+		saved_segment_update: 0,
+		saved_segment_delete: 0,
 		self_api_key_get: Uuid::nil(),
 		self_api_key_update: Uuid::nil(),
 		self_api_key_delete: Uuid::nil(),
@@ -1179,6 +1487,46 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			Expectation::Json(&["list_id", "quality_grade", "categories"])
 		),
 		case!(
+			"POST",
+			"/v1/lists/{list_id}/remediation-plan",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationPlan,
+			BodyProfile::JsonEmptyObject,
+			201,
+			Expectation::Json(&["id", "summary_counts", "preview_rows"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/remediation-plan",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationPlan,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "summary_counts", "preview_rows"])
+		),
+		case!(
+			"POST",
+			"/v1/lists/{list_id}/remediation-exports",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationExportCreate,
+			BodyProfile::JsonRemediationExportCreate,
+			201,
+			Expectation::Json(&["id", "download_url"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationExportDownload,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
 			"GET",
 			"/v1/lists/{list_id}/download",
 			ConfigProfile::PseudoWorker,
@@ -1197,6 +1545,16 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"GET",
+			"/v1/lists/{base_list_id}/diff/{compare_list_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListDiff,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["base_list_id", "compare_list_id", "unchanged"])
 		),
 		case!(
 			"POST",
@@ -1278,6 +1636,16 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			202,
 			Expectation::Json(&["run_id", "status"])
 		),
+		case!(
+			"POST",
+			"/v1/pipelines/{pipeline_id}/push",
+			ConfigProfile::PipelineEnabled,
+			AuthProfile::BearerFull,
+			PathProfile::PipelinePush,
+			BodyProfile::JsonPipelinePush,
+			202,
+			Expectation::Json(&["batch_id", "run_id", "status", "accepted_rows", "replayed"])
+		),
 		upgrade_case!(
 			"GET",
 			"/v1/pipelines/{pipeline_id}/runs",
@@ -1339,6 +1707,36 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			Expectation::Json(&["entries", "total"])
 		),
 		case!(
+			"POST",
+			"/v1/suppressions/import",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/import"),
+			BodyProfile::JsonSuppressionsAdd,
+			200,
+			Expectation::Json(&["added", "duplicates", "entry_ids"])
+		),
+		case!(
+			"GET",
+			"/v1/suppressions/export",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/export"),
+			BodyProfile::None,
+			200,
+			Expectation::Csv
+		),
+		case!(
+			"GET",
+			"/v1/suppressions/{id}/events",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SuppressionEvents,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["events", "total"])
+		),
+		case!(
 			"DELETE",
 			"/v1/suppressions/{id}",
 			ConfigProfile::PseudoWorker,
@@ -1379,12 +1777,108 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			Expectation::Json(&["results"])
 		),
 		case!(
+			"POST",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::JsonOutcomesIngest,
+			200,
+			Expectation::Json(&["ingested", "auto_suppressed", "ignored"])
+		),
+		case!(
+			"GET",
+			"/v1/outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcomes"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["outcomes", "limit", "offset"])
+		),
+		case!(
+			"GET",
+			"/v1/provider-endpoints",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/provider-endpoints"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["provider_endpoints"])
+		),
+		case!(
+			"POST",
+			"/v1/provider-endpoints",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/provider-endpoints"),
+			BodyProfile::JsonProviderEndpointCreate,
+			201,
+			Expectation::Json(&["endpoint_id", "provider", "delivery_token", "webhook_path"])
+		),
+		case!(
+			"PATCH",
+			"/v1/provider-endpoints/{endpoint_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ProviderEndpointPatch,
+			BodyProfile::JsonProviderEndpointPatch,
+			200,
+			Expectation::Json(&["endpoint_id", "provider", "label", "status"])
+		),
+		case!(
+			"DELETE",
+			"/v1/provider-endpoints/{endpoint_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ProviderEndpointDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::None,
+			PathProfile::ProviderInbound,
+			BodyProfile::JsonProviderInbound,
+			200,
+			Expectation::Json(&[
+				"receipt_id",
+				"provider",
+				"accepted",
+				"duplicates",
+				"rejected"
+			])
+		),
+		case!(
+			"GET",
+			"/v1/sources/quality",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/sources/quality"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["sources"])
+		),
+		case!(
 			"GET",
 			"/v1/reverification/status",
 			ConfigProfile::BearerTenant,
 			AuthProfile::BearerFull,
 			PathProfile::Literal("/v1/reverification/status"),
 			BodyProfile::None,
+			200,
+			Expectation::Json(&["enabled"])
+		),
+		case!(
+			"PUT",
+			"/v1/reverification",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/reverification"),
+			BodyProfile::JsonReverificationUpdate,
 			200,
 			Expectation::Json(&["enabled"])
 		),
@@ -1397,6 +1891,26 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["events", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/alerts",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/alerts"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["alerts", "total"])
+		),
+		case!(
+			"PATCH",
+			"/v1/alerts/{alert_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::AlertPatch,
+			BodyProfile::JsonAlertPatch,
+			200,
+			Expectation::Json(&["id", "status"])
 		),
 		case!(
 			"GET",
@@ -1417,6 +1931,186 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["results", "total"])
+		),
+		case!(
+			"POST",
+			"/v1/score-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/score-policies"),
+			BodyProfile::JsonScorePolicyCreate,
+			201,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"GET",
+			"/v1/score-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/score-policies"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["policies", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/score-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ScorePolicyGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"PATCH",
+			"/v1/score-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ScorePolicyPatch,
+			BodyProfile::JsonScorePolicyPatch,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"DELETE",
+			"/v1/score-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ScorePolicyDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/outcome-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcome-policies"),
+			BodyProfile::JsonOutcomePolicyCreate,
+			201,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"GET",
+			"/v1/outcome-policies",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/outcome-policies"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["policies", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"PATCH",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyPatch,
+			BodyProfile::JsonOutcomePolicyPatch,
+			200,
+			Expectation::Json(&["id", "name", "rules"])
+		),
+		case!(
+			"DELETE",
+			"/v1/outcome-policies/{policy_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::OutcomePolicyDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
+		),
+		case!(
+			"POST",
+			"/v1/campaign-outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/campaign-outcomes"),
+			BodyProfile::JsonCampaignOutcomesIngest,
+			202,
+			Expectation::Json(&["accepted", "rejected", "policy_id"])
+		),
+		case!(
+			"POST",
+			"/v1/campaign-outcomes/upload",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/campaign-outcomes/upload"),
+			BodyProfile::MultipartOutcomesUpload,
+			202,
+			Expectation::Json(&["accepted", "rejected", "policy_id"])
+		),
+		case!(
+			"GET",
+			"/v1/campaign-outcomes",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/campaign-outcomes"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["outcomes", "total"])
+		),
+		case!(
+			"POST",
+			"/v1/segments",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/segments"),
+			BodyProfile::JsonSavedSegmentCreate,
+			201,
+			Expectation::Json(&["id", "name", "filter"])
+		),
+		case!(
+			"GET",
+			"/v1/segments",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/segments"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["segments", "total"])
+		),
+		case!(
+			"GET",
+			"/v1/segments/{segment_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SavedSegmentGet,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["id", "name", "filter"])
+		),
+		case!(
+			"PATCH",
+			"/v1/segments/{segment_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SavedSegmentPatch,
+			BodyProfile::JsonSavedSegmentPatch,
+			200,
+			Expectation::Json(&["id", "name", "filter"])
+		),
+		case!(
+			"DELETE",
+			"/v1/segments/{segment_id}",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::SavedSegmentDelete,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["deleted"])
 		),
 		case!(
 			"POST",
@@ -1527,6 +2221,26 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::None,
 			200,
 			Expectation::Json(&["job_id", "avg_duration_ms", "p95_duration_ms"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/failure-center",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobFailureCenter,
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["job_id", "task_states", "failure_report_url"])
+		),
+		case!(
+			"GET",
+			"/v1/jobs/{job_id}/failure-report",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::JobFailureReport,
+			BodyProfile::None,
+			200,
+			Expectation::Csv
 		),
 		upgrade_case!(
 			"GET",
@@ -1930,7 +2644,29 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::ListGet => format!("/v1/lists/{}", fixtures.list_main),
 		PathProfile::ListQuality => format!("/v1/lists/{}/quality", fixtures.list_main),
 		PathProfile::ListDownload => format!("/v1/lists/{}/download", fixtures.list_main),
+		PathProfile::ListRemediationPlan => {
+			format!("/v1/lists/{}/remediation-plan", fixtures.list_main)
+		}
+		PathProfile::ListRemediationExportCreate => {
+			format!("/v1/lists/{}/remediation-exports", fixtures.list_main)
+		}
+		PathProfile::ListRemediationExportDownload => format!(
+			"/v1/lists/{}/remediation-exports/{}/download",
+			fixtures.list_main, fixtures.remediation_export
+		),
+		PathProfile::ListRemediationDownload => {
+			format!(
+				"/v1/lists/{}/remediation-plan/{}/download",
+				fixtures.list_main, fixtures.remediation_plan
+			)
+		}
 		PathProfile::ListDelete => format!("/v1/lists/{}", fixtures.list_delete),
+		PathProfile::ListDiff => {
+			format!(
+				"/v1/lists/{}/diff/{}",
+				fixtures.list_main, fixtures.list_main
+			)
+		}
 		PathProfile::PipelineGet => format!("/v1/pipelines/{}", fixtures.pipeline_main),
 		PathProfile::PipelinePatch => format!("/v1/pipelines/{}", fixtures.pipeline_main),
 		PathProfile::PipelineDelete => format!("/v1/pipelines/{}", fixtures.pipeline_delete),
@@ -1941,12 +2677,30 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		PathProfile::PipelineTrigger => {
 			format!("/v1/pipelines/{}/trigger", fixtures.pipeline_trigger)
 		}
+		PathProfile::PipelinePush => {
+			format!("/v1/pipelines/{}/push", fixtures.pipeline_push)
+		}
 		PathProfile::PipelineRuns => format!("/v1/pipelines/{}/runs", fixtures.pipeline_main),
 		PathProfile::PipelineRunGet => {
 			format!(
 				"/v1/pipelines/{}/runs/{}",
 				fixtures.pipeline_main, fixtures.pipeline_run
 			)
+		}
+		PathProfile::ProviderEndpointPatch => format!(
+			"/v1/provider-endpoints/{}",
+			fixtures.provider_endpoint_patch
+		),
+		PathProfile::ProviderEndpointDelete => format!(
+			"/v1/provider-endpoints/{}",
+			fixtures.provider_endpoint_delete
+		),
+		PathProfile::ProviderInbound => format!(
+			"/v1/inbound/providers/postmark/{}/harness-token",
+			fixtures.provider_endpoint_inbound
+		),
+		PathProfile::SuppressionEvents => {
+			format!("/v1/suppressions/{}/events", fixtures.suppression_id)
 		}
 		PathProfile::SuppressionDelete => format!("/v1/suppressions/{}", fixtures.suppression_id),
 		PathProfile::CommentDelete => format!("/v1/comments/{}", fixtures.comment_delete_id),
@@ -1961,10 +2715,42 @@ fn render_path(path: PathProfile, fixtures: &HarnessFixtures) -> String {
 		}
 		PathProfile::JobApproval => format!("/v1/jobs/{}/approval", fixtures.job_main),
 		PathProfile::JobLatency => format!("/v1/jobs/{}/latency", fixtures.job_main),
+		PathProfile::JobFailureCenter => {
+			format!("/v1/jobs/{}/failure-center", fixtures.job_retry)
+		}
+		PathProfile::JobFailureReport => {
+			format!("/v1/jobs/{}/failure-report", fixtures.job_retry)
+		}
 		PathProfile::JobCancelCompleted => {
 			format!("/v1/jobs/{}/cancel", fixtures.job_main)
 		}
 		PathProfile::EmailHistory => "/v1/emails/good%40example.com/history".to_string(),
+		PathProfile::AlertPatch => format!("/v1/alerts/{}", fixtures.alert_id),
+		PathProfile::ScorePolicyGet => {
+			format!("/v1/score-policies/{}", fixtures.score_policy_get)
+		}
+		PathProfile::ScorePolicyPatch => {
+			format!("/v1/score-policies/{}", fixtures.score_policy_update)
+		}
+		PathProfile::ScorePolicyDelete => {
+			format!("/v1/score-policies/{}", fixtures.score_policy_delete)
+		}
+		PathProfile::OutcomePolicyGet => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_get)
+		}
+		PathProfile::OutcomePolicyPatch => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_update)
+		}
+		PathProfile::OutcomePolicyDelete => {
+			format!("/v1/outcome-policies/{}", fixtures.outcome_policy_delete)
+		}
+		PathProfile::SavedSegmentGet => format!("/v1/segments/{}", fixtures.saved_segment_get),
+		PathProfile::SavedSegmentPatch => {
+			format!("/v1/segments/{}", fixtures.saved_segment_update)
+		}
+		PathProfile::SavedSegmentDelete => {
+			format!("/v1/segments/{}", fixtures.saved_segment_delete)
+		}
 		PathProfile::DomainGet => format!("/v1/me/domains/{}", fixtures.domain_get),
 		PathProfile::DomainPatch => format!("/v1/me/domains/{}", fixtures.domain_update),
 		PathProfile::DomainDelete => format!("/v1/me/domains/{}", fixtures.domain_delete),
@@ -2076,6 +2862,19 @@ fn multipart_body() -> (String, Vec<u8>) {
 	(boundary.to_string(), body.into_bytes())
 }
 
+fn outcomes_multipart_body(csv: &[u8]) -> (String, Vec<u8>) {
+	let boundary = "----reacher-outcomes-boundary";
+	let mut body = Vec::new();
+	body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
+	body.extend_from_slice(
+		b"Content-Disposition: form-data; name=\"file\"; filename=\"outcomes.csv\"\r\n",
+	);
+	body.extend_from_slice(b"Content-Type: text/csv\r\n\r\n");
+	body.extend_from_slice(csv);
+	body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
+	(boundary.to_string(), body)
+}
+
 fn apply_body(
 	builder: RequestBuilder,
 	body: BodyProfile,
@@ -2141,6 +2940,31 @@ fn apply_body(
 		BodyProfile::JsonPipelineTriggerConflict => builder.json(&serde_json::json!({
 			"reason": "active run conflict"
 		})),
+		BodyProfile::JsonPipelinePush => {
+			builder
+				.header("Idempotency-Key", "harness-push-1")
+				.json(&serde_json::json!({
+					"rows": [{"email": "push-harness@example.com", "lead_id": "lead-1"}],
+					"email_column": "email",
+					"source_key": "harness-push"
+				}))
+		}
+		BodyProfile::JsonProviderEndpointCreate => builder.json(&serde_json::json!({
+			"provider": "postmark",
+			"label": "Harness Created Endpoint",
+			"provider_config": {},
+			"allowed_ips": []
+		})),
+		BodyProfile::JsonProviderEndpointPatch => builder.json(&serde_json::json!({
+			"label": "Harness Patched Endpoint",
+			"status": "paused"
+		})),
+		BodyProfile::JsonProviderInbound => builder.json(&serde_json::json!({
+			"RecordType": "Delivery",
+			"Email": "provider-harness@example.com",
+			"MessageID": "harness-message-1",
+			"ID": "harness-event-1"
+		})),
 		BodyProfile::JsonReputationCheck => builder.json(&serde_json::json!({
 			"domain": "cached.example.com",
 			"force_refresh": false
@@ -2149,8 +2973,23 @@ fn apply_body(
 			"emails": ["new-suppression@example.com"],
 			"reason": "manual"
 		})),
+		BodyProfile::JsonRemediationExportCreate => builder.json(&serde_json::json!({
+			"partitions": ["safe_to_send"],
+			"format": "csv"
+		})),
+		BodyProfile::JsonOutcomesIngest => builder.json(&serde_json::json!({
+			"provider": "harness",
+			"source_key": "harness-source",
+			"outcomes": [{
+				"email": "outcome@example.com",
+				"event_type": "delivered",
+				"campaign_id": "harness-campaign",
+				"metadata": {"event_id": "harness-1"}
+			}]
+		})),
 		BodyProfile::JsonV1BulkCreate => builder.json(&serde_json::json!({
-			"input": ["bulk1@example.com", "bulk2@example.com"]
+			"input": ["bulk1@example.com", "bulk2@example.com"],
+			"source_key": "harness-bulk"
 		})),
 		BodyProfile::JsonCommentsCreate => builder.json(&serde_json::json!({
 			"job_id": fixtures.job_main,
@@ -2190,6 +3029,10 @@ fn apply_body(
 		BodyProfile::JsonMeApiKeyPatch => builder.json(&serde_json::json!({
 			"name": "Updated Harness Key"
 		})),
+		BodyProfile::JsonReverificationUpdate => builder.json(&serde_json::json!({
+			"enabled": true,
+			"staleness_days": 30
+		})),
 		BodyProfile::JsonEmptyObject => builder.json(&serde_json::json!({})),
 		BodyProfile::MalformedJson => builder.header("content-type", "application/json").body("{"),
 		BodyProfile::JsonAdminTenantCreate => builder.json(&serde_json::json!({
@@ -2210,6 +3053,60 @@ fn apply_body(
 		})),
 		BodyProfile::JsonAdminApiKeyPatch => builder.json(&serde_json::json!({
 			"name": "Admin Updated Key"
+		})),
+		BodyProfile::JsonAlertPatch => builder.json(&serde_json::json!({
+			"status": "read"
+		})),
+		BodyProfile::JsonScorePolicyCreate => builder.json(&serde_json::json!({
+			"name": "Harness Created Policy",
+			"rules": {
+				"send": {"score_min": 90, "safe_to_send": true},
+				"suppress": {"score_max": 30}
+			}
+		})),
+		BodyProfile::JsonScorePolicyPatch => builder.json(&serde_json::json!({
+			"name": "Harness Updated Policy",
+			"rules": {
+				"review": {"category": ["risky", "unknown"]}
+			}
+		})),
+		BodyProfile::JsonOutcomePolicyCreate => builder.json(&serde_json::json!({
+			"name": "Harness Created Outcome Policy",
+			"rules": serde_json::to_value(reacher_backend::outcomes::default_outcome_policy_rules()).unwrap()
+		})),
+		BodyProfile::JsonOutcomePolicyPatch => builder.json(&serde_json::json!({
+			"name": "Harness Updated Outcome Policy"
+		})),
+		BodyProfile::JsonCampaignOutcomesIngest => builder.json(&serde_json::json!({
+			"outcomes": [{
+				"email": "harness@example.com",
+				"type": "delivered",
+				"occurred_at": "2026-05-10T12:00:00Z",
+				"source": "harness"
+			}]
+		})),
+		BodyProfile::MultipartOutcomesUpload => {
+			let csv = b"email,outcome_type,occurred_at,source\nharness-csv@example.com,delivered,2026-05-10T12:00:00Z,harness\n";
+			let (boundary, body) = outcomes_multipart_body(csv);
+			builder
+				.header(
+					"content-type",
+					format!("multipart/form-data; boundary={boundary}"),
+				)
+				.body(body)
+		}
+		BodyProfile::JsonSavedSegmentCreate => builder.json(&serde_json::json!({
+			"name": "Harness Created Segment",
+			"filter": {
+				"category": "valid",
+				"score_min": 80
+			}
+		})),
+		BodyProfile::JsonSavedSegmentPatch => builder.json(&serde_json::json!({
+			"name": "Harness Updated Segment",
+			"filter": {
+				"safe_to_send": true
+			}
 		})),
 	}
 }

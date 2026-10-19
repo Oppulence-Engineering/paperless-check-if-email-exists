@@ -1,9 +1,9 @@
 /*
 Reacher
 
-### What is Reacher?  Reacher is a backend/API engine for email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The hosted dashboard is a separate product surface and is not part of this repository.
+### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 0.11.0
+API version: 4.3.0
 Contact: amaury@reacher.email
 */
 
@@ -23,6 +23,7 @@ var _ MappedNullable = &SuppressionDeleteResponse{}
 // SuppressionDeleteResponse struct for SuppressionDeleteResponse
 type SuppressionDeleteResponse struct {
 	Deleted bool `json:"deleted"`
+	Status string `json:"status"`
 }
 
 type _SuppressionDeleteResponse SuppressionDeleteResponse
@@ -31,9 +32,10 @@ type _SuppressionDeleteResponse SuppressionDeleteResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSuppressionDeleteResponse(deleted bool) *SuppressionDeleteResponse {
+func NewSuppressionDeleteResponse(deleted bool, status string) *SuppressionDeleteResponse {
 	this := SuppressionDeleteResponse{}
 	this.Deleted = deleted
+	this.Status = status
 	return &this
 }
 
@@ -69,6 +71,30 @@ func (o *SuppressionDeleteResponse) SetDeleted(v bool) {
 	o.Deleted = v
 }
 
+// GetStatus returns the Status field value
+func (o *SuppressionDeleteResponse) GetStatus() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Status
+}
+
+// GetStatusOk returns a tuple with the Status field value
+// and a boolean to check if the value has been set.
+func (o *SuppressionDeleteResponse) GetStatusOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Status, true
+}
+
+// SetStatus sets field value
+func (o *SuppressionDeleteResponse) SetStatus(v string) {
+	o.Status = v
+}
+
 func (o SuppressionDeleteResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -80,6 +106,7 @@ func (o SuppressionDeleteResponse) MarshalJSON() ([]byte, error) {
 func (o SuppressionDeleteResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["deleted"] = o.Deleted
+	toSerialize["status"] = o.Status
 	return toSerialize, nil
 }
 
@@ -89,6 +116,7 @@ func (o *SuppressionDeleteResponse) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"deleted",
+		"status",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -154,5 +182,3 @@ func (v *NullableSuppressionDeleteResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

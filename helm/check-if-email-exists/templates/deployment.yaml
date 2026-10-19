@@ -49,18 +49,27 @@ spec:
                 name: {{ include "check-if-email-exists.secretName" . }}
             {{- end }}
           {{- end }}
-          {{- with .Values.extraEnv }}
           env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            - name: RCH__WORKER__ENABLE
+              value: "true"
+            {{- range .Values.extraEnv }}
+            {{- if ne .name "RCH__WORKER__ENABLE" }}
+            {{- toYaml (list .) | nindent 12 }}
+            {{- end }}
+            {{- end }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            - name: web
+              containerPort: {{ .Values.service.webPort }}
+              protocol: TCP
+            - name: backend
+              containerPort: 8081
               protocol: TCP
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}

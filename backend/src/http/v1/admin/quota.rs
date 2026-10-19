@@ -1,5 +1,5 @@
 use crate::config::BackendConfig;
-use crate::http::check_header;
+use crate::http::check_admin_header;
 use crate::http::ReacherResponseError;
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
@@ -196,7 +196,7 @@ pub fn get_tenant_quota(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "quota")
 		.and(warp::get())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(get_handler)
 		.with(warp::log("reacher_backend::v1::admin::tenant_quota"))
@@ -217,7 +217,7 @@ pub fn reset_tenant_quota(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "quota" / "reset")
 		.and(warp::post())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and_then(reset_handler)
 		.with(warp::log("reacher_backend::v1::admin::tenant_quota::reset"))
@@ -238,7 +238,7 @@ pub fn update_tenant_quota(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v1" / "admin" / "tenants" / String / "quota")
 		.and(warp::patch())
-		.and(check_header(Arc::clone(&config)))
+		.and(check_admin_header(Arc::clone(&config)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
 		.and_then(update_handler)

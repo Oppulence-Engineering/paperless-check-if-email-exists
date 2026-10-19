@@ -1,6 +1,6 @@
 # \JobsAPI
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -9,9 +9,12 @@ Method | HTTP request | Description
 [**V1GetBulkJobProgress**](JobsAPI.md#V1GetBulkJobProgress) | **Get** /v1/bulk/{job_id} | GET /v1/bulk/{job_id}
 [**V1GetBulkJobResults**](JobsAPI.md#V1GetBulkJobResults) | **Get** /v1/bulk/{job_id}/results | GET /v1/bulk/{job_id}/results
 [**V1GetJobEvents**](JobsAPI.md#V1GetJobEvents) | **Get** /v1/jobs/{job_id}/events | GET /v1/jobs/{job_id}/events
+[**V1GetJobFailureCenter**](JobsAPI.md#V1GetJobFailureCenter) | **Get** /v1/jobs/{job_id}/failure-center | Get job failure center
+[**V1GetJobFailureReport**](JobsAPI.md#V1GetJobFailureReport) | **Get** /v1/jobs/{job_id}/failure-report | Download job failure report
 [**V1GetJobResults**](JobsAPI.md#V1GetJobResults) | **Get** /v1/jobs/{job_id}/results | GET /v1/jobs/{job_id}/results
 [**V1GetJobStatus**](JobsAPI.md#V1GetJobStatus) | **Get** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 [**V1JobApprovalChecklist**](JobsAPI.md#V1JobApprovalChecklist) | **Get** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
+[**V1JobLatency**](JobsAPI.md#V1JobLatency) | **Get** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
 [**V1RetryJob**](JobsAPI.md#V1RetryJob) | **Post** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 
 
@@ -55,7 +58,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -77,7 +80,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -126,7 +129,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -136,7 +139,7 @@ Other parameters are passed through a pointer to a apiV1DownloadJobResultsReques
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **format** | **string** | Supported values: &#x60;csv&#x60;, &#x60;json&#x60; | 
+ **format** | **string** | Supported values: &#x60;csv&#x60;, &#x60;json&#x60; |
 
 ### Return type
 
@@ -149,7 +152,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/x-ndjson, text/csv
+- **Accept**: application/x-ndjson, text/csv, application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -195,7 +198,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | V1 bulk job identifier | 
+**jobId** | **int32** | V1 bulk job identifier |
 
 ### Other Parameters
 
@@ -217,7 +220,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -268,7 +271,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | V1 bulk job identifier | 
+**jobId** | **int32** | V1 bulk job identifier |
 
 ### Other Parameters
 
@@ -278,9 +281,9 @@ Other parameters are passed through a pointer to a apiV1GetBulkJobResultsRequest
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **format** | **string** | Supported values: &#x60;json&#x60;, &#x60;csv&#x60; | 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **format** | **string** | Supported values: &#x60;json&#x60;, &#x60;csv&#x60; |
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -341,7 +344,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -351,8 +354,8 @@ Other parameters are passed through a pointer to a apiV1GetJobEventsRequest stru
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **limit** | **int64** |  | 
- **offset** | **int64** |  | 
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
 
 ### Return type
 
@@ -365,7 +368,143 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1GetJobFailureCenter
+
+> map[string]interface{} V1GetJobFailureCenter(ctx, jobId).Execute()
+
+Get job failure center
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	jobId := int32(56) // int32 |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.JobsAPI.V1GetJobFailureCenter(context.Background(), jobId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1GetJobFailureCenter``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetJobFailureCenter`: map[string]interface{}
+	fmt.Fprintf(os.Stdout, "Response from `JobsAPI.V1GetJobFailureCenter`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**jobId** | **int32** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetJobFailureCenterRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**map[string]interface{}**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1GetJobFailureReport
+
+> *os.File V1GetJobFailureReport(ctx, jobId).Execute()
+
+Download job failure report
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	jobId := int32(56) // int32 |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.JobsAPI.V1GetJobFailureReport(context.Background(), jobId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1GetJobFailureReport``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetJobFailureReport`: *os.File
+	fmt.Fprintf(os.Stdout, "Response from `JobsAPI.V1GetJobFailureReport`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**jobId** | **int32** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetJobFailureReportRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[***os.File**](*os.File.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/x-ndjson, text/csv, application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -416,7 +555,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -426,9 +565,9 @@ Other parameters are passed through a pointer to a apiV1GetJobResultsRequest str
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **cursor** | **int64** |  | 
- **limit** | **int64** |  | 
- **state** | **string** |  | 
+ **cursor** | **int64** |  |
+ **limit** | **int64** |  |
+ **state** | **string** |  |
 
 ### Return type
 
@@ -487,7 +626,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -509,7 +648,7 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -557,7 +696,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -571,6 +710,74 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ApprovalChecklistResponse**](ApprovalChecklistResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1JobLatency
+
+> V1JobLatency(ctx, jobId).Execute()
+
+GET /v1/jobs/{job_id}/latency
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	jobId := int32(56) // int32 | Bulk job identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.JobsAPI.V1JobLatency(context.Background(), jobId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1JobLatency``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**jobId** | **int32** | Bulk job identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1JobLatencyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+ (empty response body)
 
 ### Authorization
 
@@ -627,7 +834,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**jobId** | **int32** | Bulk job identifier | 
+**jobId** | **int32** | Bulk job identifier |
 
 ### Other Parameters
 
@@ -654,4 +861,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

@@ -229,6 +229,7 @@ pub async fn sync_finder_results(
 
 	let mut completed_results = Vec::new();
 	let mut all_terminal = true;
+	let mut has_failed = false;
 
 	for row in &rows {
 		let task_state = row
@@ -236,6 +237,9 @@ pub async fn sync_finder_results(
 			.unwrap_or_else(|| "queued".to_string());
 		if matches!(task_state.as_str(), "queued" | "running" | "retrying") {
 			all_terminal = false;
+		}
+		if matches!(task_state.as_str(), "failed" | "dead_lettered") {
+			has_failed = true;
 		}
 		let result: Option<serde_json::Value> = row.get("result");
 		let score = row.get::<Option<i16>, _>("score").or_else(|| {
@@ -337,10 +341,11 @@ pub async fn sync_finder_results(
 	});
 
 	if all_terminal {
+		let final_status = if has_failed { "failed" } else { "completed" };
 		sqlx::query(
 			r#"
 			UPDATE v1_finder_job
-			SET status = 'completed'::job_state,
+			SET status = $5::job_state,
 			    best_match_email = $2,
 			    best_match_score = $3,
 			    best_match_confidence = $4,
@@ -353,6 +358,7 @@ pub async fn sync_finder_results(
 		.bind(best_match.as_ref().map(|match_| match_.email.clone()))
 		.bind(best_match.as_ref().map(|match_| i32::from(match_.score)))
 		.bind(best_match.as_ref().map(|match_| match_.confidence.clone()))
+		.bind(final_status)
 		.execute(pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;

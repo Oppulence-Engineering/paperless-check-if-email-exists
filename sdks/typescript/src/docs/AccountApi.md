@@ -1,6 +1,6 @@
 # AccountApi
 
-All URIs are relative to *https://api.reacher.email*
+All URIs are relative to *http://localhost*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
@@ -12,7 +12,7 @@ All URIs are relative to *https://api.reacher.email*
 |[**v1Me**](#v1me) | **GET** /v1/me | GET /v1/me|
 
 # **createTenantApiKey**
-> createTenantApiKey()
+> TenantCreatedApiKey createTenantApiKey(createApiKeyRequest)
 
 Create a new API key for the authenticated tenant.
 
@@ -21,22 +21,30 @@ Create a new API key for the authenticated tenant.
 ```typescript
 import {
     AccountApi,
-    Configuration
+    Configuration,
+    CreateApiKeyRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AccountApi(configuration);
 
-const { status, data } = await apiInstance.createTenantApiKey();
+let createApiKeyRequest: CreateApiKeyRequest; //
+
+const { status, data } = await apiInstance.createTenantApiKey(
+    createApiKeyRequest
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createApiKeyRequest** | **CreateApiKeyRequest**|  | |
 
 
 ### Return type
 
-void (empty response body)
+**TenantCreatedApiKey**
 
 ### Authorization
 
@@ -44,19 +52,20 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**201** | API key created |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getTenantApiKey**
-> getTenantApiKey()
+> TenantApiKey getTenantApiKey()
 
 Return a single API key for the authenticated tenant.
 
@@ -87,7 +96,7 @@ const { status, data } = await apiInstance.getTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantApiKey**
 
 ### Authorization
 
@@ -96,18 +105,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | API key details |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **listTenantApiKeys**
-> listTenantApiKeys()
+> TenantApiKeyList listTenantApiKeys()
 
 List API keys for the authenticated tenant.
 
@@ -131,7 +141,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantApiKeyList**
 
 ### Authorization
 
@@ -140,18 +150,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | API key list |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **revokeTenantApiKey**
-> revokeTenantApiKey()
+> TenantApiKeyRevokeResponse revokeTenantApiKey()
 
 Revoke an API key.
 
@@ -182,7 +193,7 @@ const { status, data } = await apiInstance.revokeTenantApiKey(
 
 ### Return type
 
-void (empty response body)
+**TenantApiKeyRevokeResponse**
 
 ### Authorization
 
@@ -191,18 +202,19 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | API key revoked |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **updateTenantApiKey**
-> updateTenantApiKey()
+> TenantApiKey updateTenantApiKey(updateApiKeyRequest)
 
 Update metadata for an existing API key.
 
@@ -211,16 +223,19 @@ Update metadata for an existing API key.
 ```typescript
 import {
     AccountApi,
-    Configuration
+    Configuration,
+    UpdateApiKeyRequest
 } from '@oppulence/reacher-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new AccountApi(configuration);
 
 let keyId: string; //API key identifier (default to undefined)
+let updateApiKeyRequest: UpdateApiKeyRequest; //
 
 const { status, data } = await apiInstance.updateTenantApiKey(
-    keyId
+    keyId,
+    updateApiKeyRequest
 );
 ```
 
@@ -228,12 +243,13 @@ const { status, data } = await apiInstance.updateTenantApiKey(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **updateApiKeyRequest** | **UpdateApiKeyRequest**|  | |
 | **keyId** | [**string**] | API key identifier | defaults to undefined|
 
 
 ### Return type
 
-void (empty response body)
+**TenantApiKey**
 
 ### Authorization
 
@@ -241,14 +257,15 @@ void (empty response body)
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | API key updated |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -286,13 +303,13 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Current tenant profile |  -  |
+|**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

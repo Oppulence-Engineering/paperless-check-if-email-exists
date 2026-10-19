@@ -1,7 +1,8 @@
 use crate::config::BackendConfig;
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
+use crate::http::{check_scope, resolve_tenant};
 use crate::tenant::auth::generate_api_key;
+use crate::tenant::context::scope;
 use crate::tenant::context::TenantContext;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -11,14 +12,14 @@ use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct CreateApiKeyRequest {
 	pub name: Option<String>,
 	pub scopes: Option<Vec<String>>,
 	pub expires_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct UpdateApiKeyRequest {
 	pub name: Option<String>,
 	pub scopes: Option<Vec<String>>,
@@ -73,12 +74,33 @@ fn with_pg_pool(
 }
 
 fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::ADMIN)?;
 	tenant_ctx.tenant_id.ok_or_else(|| {
 		warp::reject::custom(ReacherResponseError::new(
 			StatusCode::UNAUTHORIZED,
-			"API key authentication required for account API key management",
+			"Tenant authentication required for account API key management",
 		))
 	})
+}
+
+#[cfg(test)]
+mod authorization_tests {
+	use super::*;
+	use crate::config::ThrottleConfig;
+
+	#[test]
+	fn scoped_keys_cannot_manage_api_keys() {
+		let mut context = TenantContext::legacy(ThrottleConfig::new_without_throttle());
+		context.is_legacy = false;
+		context.tenant_id = Some(Uuid::new_v4());
+		context.scopes = vec![scope::VERIFY.to_string()];
+		assert!(ensure_tenant_id(context.clone()).is_err());
+		context.scopes = vec![scope::ADMIN.to_string()];
+		assert_eq!(
+			ensure_tenant_id(context.clone()).unwrap(),
+			context.tenant_id.unwrap()
+		);
+	}
 }
 
 fn parse_expiry(expires_at: Option<String>) -> Result<Option<DateTime<Utc>>, warp::Rejection> {
@@ -172,6 +194,13 @@ async fn create_handler(
 	pg_pool: PgPool,
 	body: CreateApiKeyRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	if !tenant_ctx.plan_tier.includes_api() {
+		return Err(ReacherResponseError::new(
+			StatusCode::FORBIDDEN,
+			crate::tenant::models::API_PLAN_REQUIRED,
+		)
+		.into());
+	}
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let name = body.name.unwrap_or_else(|| "Default".to_string());
@@ -367,6 +396,7 @@ pub fn list_api_keys(
 	path = "/v1/me/api-keys",
 	operation_id = "createTenantApiKey",
 	tag = "Account",
+	request_body = CreateApiKeyRequest,
 	responses((status = 201, description = "API key created")),
 )]
 pub fn create_api_key(
@@ -389,6 +419,7 @@ pub fn create_api_key(
 	path = "/v1/me/api-keys/{key_id}",
 	operation_id = "updateTenantApiKey",
 	tag = "Account",
+	request_body = UpdateApiKeyRequest,
 	params(("key_id" = Uuid, Path, description = "API key identifier")),
 	responses((status = 200, description = "API key updated")),
 )]

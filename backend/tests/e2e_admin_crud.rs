@@ -1040,7 +1040,7 @@ mod api_key_crud {
 			.method("POST")
 			.header(REACHER_SECRET_HEADER, "admin-secret")
 			.json(
-				&serde_json::json!({"name": "AuthTest", "slug": "auth-crud-test", "contact_email": "a@c.com"}),
+				&serde_json::json!({"name": "AuthTest", "slug": "auth-crud-test", "contact_email": "a@c.com", "plan_tier": "professional"}),
 			)
 			.reply(&routes)
 			.await;

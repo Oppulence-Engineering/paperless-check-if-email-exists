@@ -5,11 +5,13 @@ use crate::finder::require_tenant_id;
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, CheckEmailRequest, ReacherResponseError};
+use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::scoring::response::{prepare_verification_response, PreparedVerificationResponse};
-use crate::tenant::context::TenantContext;
+use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::models::PlanTier;
-use crate::tenant::quota::{check_and_increment_quota_for_count, QuotaCheckResult};
+use crate::tenant::quota::{
+	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
+};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use bytes::Buf;
 use check_if_email_exists::{CheckEmailOutput, Reachable, LOG_TARGET};
@@ -21,6 +23,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tracing::warn;
 use warp::http::StatusCode;
 use warp::multipart::FormData;
 use warp::Filter;
@@ -31,6 +34,8 @@ struct Response {
 	job_id: i32,
 	total_rows: i32,
 	email_column: String,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	source_key: Option<String>,
 }
 
 async fn http_handler(
@@ -39,10 +44,31 @@ async fn http_handler(
 	pg_pool: PgPool,
 	form: FormData,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::LISTS)?;
+
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
 	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
 		.map_err(warp::reject::custom)?;
+	let source_key = normalize_source_key(upload.source_key.as_deref());
+
+	if let Some(policy_id) = upload.policy_id {
+		let exists: bool = sqlx::query_scalar(
+			"SELECT EXISTS(SELECT 1 FROM v1_score_policies WHERE id = $1 AND tenant_id = $2)",
+		)
+		.bind(policy_id)
+		.bind(tenant_id)
+		.fetch_one(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if !exists {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"Referenced score policy does not exist for this tenant",
+			)
+			.into());
+		}
+	}
 
 	enforce_row_limit(&tenant_ctx, parsed.rows.len())?;
 
@@ -102,10 +128,11 @@ async fn http_handler(
 	}
 
 	let job_id: i32 = sqlx::query_scalar(
-		"INSERT INTO v1_bulk_job (total_records, tenant_id, status) VALUES ($1, $2, 'pending'::job_state) RETURNING id",
+		"INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key) VALUES ($1, $2, 'pending'::job_state, $3) RETURNING id",
 	)
 	.bind(parsed.rows.len() as i32)
 	.bind(tenant_id)
+	.bind(&source_key)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -122,9 +149,9 @@ async fn http_handler(
 		INSERT INTO v1_lists (
 			tenant_id, job_id, name, original_filename, file_size_bytes, total_rows,
 			email_column, original_headers, original_data, status,
-			unique_emails, deduplicated_count
+			unique_emails, deduplicated_count, source_key, policy_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'uploading'::list_status, $10, $11, $12, $13)
 		RETURNING id
 		"#,
 	)
@@ -139,6 +166,8 @@ async fn http_handler(
 	.bind(&original_data)
 	.bind(unique_email_count)
 	.bind(deduplicated_count)
+	.bind(&source_key)
+	.bind(upload.policy_id)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -149,6 +178,7 @@ async fn http_handler(
 
 	// Phase 4: Process rows with deduplication
 	let mut published_any = false;
+	let mut published_task_ids = Vec::new();
 
 	// Handle blank emails
 	for &index in &blank_indices {
@@ -167,9 +197,9 @@ async fn http_handler(
 				score, score_category, sub_reason, safe_to_send, reason_codes,
 				bounce_risk_score, bounce_risk_category, bounce_risk_confidence,
 				bounce_risk_action, bounce_risk_model_version, bounce_risk_signals,
-				completed_at, canonical_email, is_duplicate
+				completed_at, canonical_email, is_duplicate, source_key
 			)
-				VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NULL, false)
+				VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NULL, false, $17)
 				"#,
 			)
 		.bind(job_id)
@@ -219,6 +249,7 @@ async fn http_handler(
 					.map(|risk| risk.model_version.clone()),
 			)
 			.bind(invalid_result.bounce_risk_signals)
+			.bind(&source_key)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -243,8 +274,8 @@ async fn http_handler(
 		// Use the canonical email for verification (not the raw first-seen email)
 		let primary_task_id: i32 = sqlx::query_scalar(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate)
-			VALUES ($1, $2, $3, 'queued', $4, $5, false)
+			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate, source_key)
+			VALUES ($1, $2, $3, 'queued', $4, $5, false, $6)
 			RETURNING id
 			"#,
 		)
@@ -257,6 +288,7 @@ async fn http_handler(
 		.bind(primary_extra)
 		.bind(tenant_id)
 		.bind(canonical)
+		.bind(&source_key)
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -279,16 +311,35 @@ async fn http_handler(
 				task_db_id: Some(primary_task_id),
 			}),
 		};
-		publish_task(
-			config
-				.must_worker_config()
-				.map_err(ReacherResponseError::from)?
-				.channel,
-			task,
-			properties.clone(),
-		)
-		.await?;
+		let channel = match config.must_worker_config() {
+			Ok(worker_config) => worker_config.channel,
+			Err(err) => {
+				cleanup_list_publish_failure(
+					&pg_pool,
+					tenant_id,
+					job_id,
+					list_id,
+					unique_email_count,
+					&published_task_ids,
+				)
+				.await;
+				return Err(ReacherResponseError::from(err).into());
+			}
+		};
+		if let Err(err) = publish_task(channel, task, properties.clone()).await {
+			cleanup_list_publish_failure(
+				&pg_pool,
+				tenant_id,
+				job_id,
+				list_id,
+				unique_email_count,
+				&published_task_ids,
+			)
+			.await;
+			return Err(err.into());
+		}
 		published_any = true;
+		published_task_ids.push(primary_task_id);
 
 		// Create duplicate rows (completed immediately, no RabbitMQ publish, no result yet)
 		for &dup_index in &indices[1..] {
@@ -309,9 +360,9 @@ async fn http_handler(
 				r#"
 				INSERT INTO v1_task_result (
 					job_id, payload, extra, task_state, tenant_id,
-					canonical_email, is_duplicate, canonical_task_id
+					canonical_email, is_duplicate, canonical_task_id, source_key
 				)
-				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
 				"#,
 			)
 			.bind(job_id)
@@ -324,6 +375,7 @@ async fn http_handler(
 			.bind(tenant_id)
 			.bind(canonical)
 			.bind(primary_task_id)
+			.bind(&source_key)
 			.execute(&pg_pool)
 			.await
 			.map_err(ReacherResponseError::from)?;
@@ -359,9 +411,65 @@ async fn http_handler(
 			job_id,
 			total_rows: parsed.rows.len() as i32,
 			email_column: parsed.email_column,
+			source_key,
 		}),
 		StatusCode::ACCEPTED,
 	))
+}
+
+async fn cleanup_list_publish_failure(
+	pg_pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	job_id: i32,
+	list_id: i32,
+	reserved_count: i32,
+	published_task_ids: &[i32],
+) {
+	let refund_count = reserved_count.saturating_sub(published_task_ids.len() as i32);
+	if refund_count > 0 {
+		let _ = release_reserved_usage(Some(pg_pool), Some(tenant_id), refund_count).await;
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(job_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list job failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		"UPDATE v1_lists SET status = 'failed'::list_status, error_message = COALESCE(error_message, 'publish_failed'), completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	)
+	.bind(list_id)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to mark list failed after publish failure");
+	}
+
+	if let Err(err) = sqlx::query(
+		r#"
+		UPDATE v1_task_result
+		SET task_state = 'failed'::task_state,
+		    error = COALESCE(error, 'publish_failed'),
+		    completed_at = COALESCE(completed_at, NOW()),
+		    updated_at = NOW()
+		WHERE job_id = $1
+		  AND task_state = 'queued'::task_state
+		  AND is_duplicate = false
+		  AND NOT (id = ANY($2::INTEGER[]))
+		"#,
+	)
+	.bind(job_id)
+	.bind(published_task_ids)
+	.execute(pg_pool)
+	.await
+	{
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list tasks failed after publish failure");
+	}
 }
 
 struct UploadData {
@@ -369,6 +477,8 @@ struct UploadData {
 	filename: String,
 	name: Option<String>,
 	email_column: Option<String>,
+	source_key: Option<String>,
+	policy_id: Option<i64>,
 }
 
 async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseError> {
@@ -376,6 +486,8 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 	let mut filename = None;
 	let mut name = None;
 	let mut email_column = None;
+	let mut source_key = None;
+	let mut policy_id = None;
 
 	while let Some(part) = form
 		.try_next()
@@ -402,6 +514,20 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
 			}
+			"source_key" | "source" => {
+				source_key = Some(String::from_utf8_lossy(&collected).trim().to_string())
+			}
+			"policy_id" => {
+				let raw = String::from_utf8_lossy(&collected).trim().to_string();
+				if !raw.is_empty() {
+					policy_id = Some(raw.parse::<i64>().map_err(|_| {
+						ReacherResponseError::new(
+							StatusCode::BAD_REQUEST,
+							"policy_id must be an integer",
+						)
+					})?);
+				}
+			}
 			_ => {}
 		}
 	}
@@ -416,7 +542,18 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 		filename: filename.unwrap_or_else(|| "upload.csv".to_string()),
 		name,
 		email_column,
+		source_key,
+		policy_id,
 	})
+}
+
+fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
+	let source_key = source_key?.trim().to_ascii_lowercase();
+	if source_key.is_empty() {
+		None
+	} else {
+		Some(source_key)
+	}
 }
 
 fn build_original_data(parsed: &ParsedCsv) -> serde_json::Value {
@@ -473,4 +610,31 @@ pub fn v1_create_list(
 		.and(warp::multipart::form().max_length(50_000_000))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn source_key_is_normalized_for_grouping() {
+		assert_eq!(
+			normalize_source_key(Some(" HubSpot Campaign ")),
+			Some("hubspot campaign".to_string())
+		);
+		assert_eq!(normalize_source_key(Some(" ")), None);
+		assert_eq!(normalize_source_key(None), None);
+	}
+
+	#[test]
+	fn row_limit_follows_the_plan() {
+		let mut context =
+			TenantContext::legacy(crate::config::ThrottleConfig::new_without_throttle());
+		context.plan_tier = PlanTier::Free;
+		assert!(enforce_row_limit(&context, 1_000).is_ok());
+		assert!(enforce_row_limit(&context, 1_001).is_err());
+		context.plan_tier = PlanTier::Professional;
+		assert!(enforce_row_limit(&context, 50_000).is_ok());
+		assert!(enforce_row_limit(&context, 50_001).is_err());
+	}
 }

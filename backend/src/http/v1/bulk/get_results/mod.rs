@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 //! This file implements the /bulk/{id}/results endpoints.
 
 use check_if_email_exists::LOG_TARGET;
@@ -27,9 +11,9 @@ use warp::Filter;
 use super::with_worker_read_db;
 use crate::config::BackendConfig;
 use crate::http::csv_shared::{csv_rows, TaskResultRecord};
-use crate::http::resolve_tenant;
 use crate::http::ReacherResponseError;
-use crate::tenant::context::TenantContext;
+use crate::http::{check_scope, resolve_tenant};
+use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
 
 /// Defines the download format, passed in as a query param.
@@ -61,6 +45,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	req: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	// Tenant-scoped job lookup
 	let total_records = sqlx::query!(
 		r#"SELECT total_records FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL);"#,
@@ -85,7 +71,7 @@ async fn http_handler(
 	if total_processed < total_records as i64 {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			format!("Job {} is still running, please try again later", job_id),
+			format!("Job {job_id} is still running, please try again later"),
 		)
 		.into());
 	}
@@ -182,7 +168,9 @@ async fn job_result_csv(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
-		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
+		SELECT id, payload, result, error, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at,
+		       recommendation, recommendation_action, recommendation_confidence, recommendation_priority,
+		       policy_mode, policy_evaluation, policy_decision
 		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
@@ -209,6 +197,13 @@ async fn job_result_csv(
 			safe_to_send: row.get("safe_to_send"),
 			reason_codes: row.get("reason_codes"),
 			completed_at: row.get::<Option<DateTime<Utc>>, _>("completed_at"),
+			recommendation: row.get("recommendation"),
+			recommendation_action: row.get("recommendation_action"),
+			recommendation_confidence: row.get("recommendation_confidence"),
+			recommendation_priority: row.get("recommendation_priority"),
+			policy_mode: row.get("policy_mode"),
+			policy_evaluation: row.get("policy_evaluation"),
+			policy_decision: row.get("policy_decision"),
 		})
 		.collect();
 

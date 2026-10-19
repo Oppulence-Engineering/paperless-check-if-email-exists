@@ -1,0 +1,21 @@
+import { describe, expect, it, vi } from "vitest";
+
+import type { RequestJsonFn } from "@/lib/api/request-json";
+
+import { request{{pascalName}}Descriptor, upload{{pascalName}}File } from "./upload-{{name}}";
+
+describe("{{title}} upload transport", () => {
+  it("requests a descriptor through requestJson and validates it", async () => {
+    const descriptor = { uploadId: "upload-1", url: "https://uploads.example.test/file", method: "PUT", headers: {}, expiresAt: "2999-01-01T00:00:00.000Z" };
+    const request: RequestJsonFn = vi.fn(async (input) => input.schema.parse(descriptor));
+    const file = new File(["hello"], "hello.txt", { type: "text/plain" });
+    await expect(request{{pascalName}}Descriptor(request{{#if hasPathParams}}, {{pathParamsSamples}}{{/if}}, { file })).resolves.toMatchObject({ uploadId: "upload-1" });
+  });
+
+  it("uploads to the descriptor URL", async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 204 }));
+    const file = new File(["hello"], "hello.txt", { type: "text/plain" });
+    await upload{{pascalName}}File({ uploadId: "upload-1", url: "https://uploads.example.test/file", method: "PUT", headers: {}, expiresAt: "2999-01-01T00:00:00.000Z" }, file, undefined, fetcher);
+    expect(fetcher).toHaveBeenCalledWith("https://uploads.example.test/file", expect.objectContaining({ method: "PUT", body: file, credentials: "omit", redirect: "error" }));
+  });
+});

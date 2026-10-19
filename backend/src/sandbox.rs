@@ -1,7 +1,24 @@
 use check_if_email_exists::{
-	misc::MiscDetails, mx::MxDetails, smtp::SmtpDetails, syntax::SyntaxDetails, CheckEmailOutput,
-	Reachable,
+	misc::MiscDetails,
+	mx::{MxDetails, MxLookup},
+	smtp::SmtpDetails,
+	syntax::SyntaxDetails,
+	CheckEmailOutput, Reachable,
 };
+use hickory_resolver::{
+	lookup::Lookup,
+	proto::op::Query,
+	proto::rr::{rdata::MX, Name, RData, RecordType},
+};
+
+fn sandbox_mx(domain: &str) -> MxDetails {
+	let domain = Name::from_ascii(domain).expect("sandbox domain is valid");
+	let exchange = Name::from_ascii("mail.example.com.").expect("sandbox MX is valid");
+	MxDetails::from(MxLookup::from(Lookup::from_rdata(
+		Query::query(domain, RecordType::MX),
+		RData::MX(MX::new(10, exchange)),
+	)))
+}
 
 /// Generates a deterministic mock CheckEmailOutput based on the email address.
 /// The domain controls the scenario:
@@ -60,7 +77,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Invalid,
 			misc: Ok(MiscDetails::default()),
-			mx: Ok(MxDetails::default()),
+			mx: Ok(sandbox_mx(&domain_lower)),
 			smtp: Ok(SmtpDetails {
 				can_connect_smtp: true,
 				has_full_inbox: false,
@@ -79,7 +96,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Risky,
 			misc: Ok(MiscDetails::default()),
-			mx: Ok(MxDetails::default()),
+			mx: Ok(sandbox_mx(&domain_lower)),
 			smtp: Ok(SmtpDetails {
 				can_connect_smtp: true,
 				has_full_inbox: false,
@@ -98,7 +115,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Unknown,
 			misc: Ok(MiscDetails::default()),
-			mx: Ok(MxDetails::default()),
+			mx: Ok(sandbox_mx(&domain_lower)),
 			smtp: Err(check_if_email_exists::smtp::SmtpError::from(
 				std::io::Error::other("sandbox: simulated SMTP timeout"),
 			)),
@@ -116,7 +133,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 				is_disposable: true,
 				..Default::default()
 			}),
-			mx: Ok(MxDetails::default()),
+			mx: Ok(sandbox_mx(&domain_lower)),
 			smtp: Ok(SmtpDetails {
 				can_connect_smtp: true,
 				has_full_inbox: false,
@@ -135,7 +152,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Safe,
 			misc: Ok(MiscDetails::default()),
-			mx: Ok(MxDetails::default()),
+			mx: Ok(sandbox_mx(&domain_lower)),
 			smtp: Ok(SmtpDetails {
 				can_connect_smtp: true,
 				has_full_inbox: false,
@@ -161,6 +178,7 @@ mod tests {
 	fn sandbox_valid_domain() {
 		let result = sandbox_check("test@valid.example.com");
 		assert_eq!(result.is_reachable, Reachable::Safe);
+		assert!(crate::scoring::compute_score(&result).safe_to_send);
 	}
 
 	#[test]

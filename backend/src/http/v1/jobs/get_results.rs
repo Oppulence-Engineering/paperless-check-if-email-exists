@@ -1,8 +1,8 @@
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{resolve_tenant, ReacherResponseError};
+use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::scoring::response::inject_freshness_into_result;
-use crate::tenant::context::TenantContext;
+use crate::tenant::context::{scope, TenantContext};
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -41,6 +41,8 @@ async fn http_handler(
 	pg_pool: PgPool,
 	query: Query,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&tenant_ctx, scope::BULK)?;
+
 	// Verify job belongs to tenant
 	let job_exists = sqlx::query_scalar!(
 		"SELECT EXISTS(SELECT 1 FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL)) as exists",
@@ -62,10 +64,12 @@ async fn http_handler(
 			Option<String>,
 			i32,
 			Option<DateTime<Utc>>,
+			Option<serde_json::Value>,
+			Option<serde_json::Value>,
 		),
 	>(
 		r#"
-		SELECT id, task_state::TEXT, result, error, retry_count, completed_at
+		SELECT id, task_state::TEXT, result, error, retry_count, completed_at, recommendation, policy_evaluation
 		FROM v1_task_result
 		WHERE job_id = $1
 		  AND task_state = $4::task_state
@@ -91,6 +95,9 @@ async fn http_handler(
 			if let (Some(ref mut res), Some(completed_at)) = (&mut result, r.5) {
 				inject_freshness_into_result(res, completed_at);
 			}
+			if let Some(ref mut res) = result {
+				inject_result_decision_fallbacks(res, r.6, r.7);
+			}
 			TaskResult {
 				id: r.0 as i64,
 				task_state: r.1,
@@ -112,6 +119,26 @@ async fn http_handler(
 		next_cursor,
 		has_more,
 	}))
+}
+
+fn inject_result_decision_fallbacks(
+	result: &mut serde_json::Value,
+	recommendation: Option<serde_json::Value>,
+	policy_evaluation: Option<serde_json::Value>,
+) {
+	let Some(map) = result.as_object_mut() else {
+		return;
+	};
+	if !map.contains_key("recommendation") {
+		if let Some(value) = recommendation {
+			map.insert("recommendation".to_string(), value);
+		}
+	}
+	if !map.contains_key("policy_evaluation") {
+		if let Some(value) = policy_evaluation {
+			map.insert("policy_evaluation".to_string(), value);
+		}
+	}
 }
 
 /// GET /v1/jobs/{job_id}/results

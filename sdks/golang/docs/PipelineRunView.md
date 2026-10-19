@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 **PipelineId** | **int64** |  | [required]
 **ResultLocation** | Pointer to [**NullablePipelineRunResultLocation**](PipelineRunResultLocation.md) |  | [optional]
 **ScheduledFor** | Pointer to **NullableTime** |  | [optional]
-**SourceSnapshot** | [**PipelineSource**](PipelineSource.md) |  | [required]
+**SourceSnapshot** | **map[string]interface{}** | The source that the run used. Its shape depends on the source type and the run state. | [required]
 **StartedAt** | Pointer to **NullableTime** |  | [optional]
 **Stats** | [**PipelineRunStats**](PipelineRunStats.md) |  | [required]
 **Status** | [**PipelineRunStatus**](PipelineRunStatus.md) |  | [required]
@@ -32,7 +32,7 @@ Name | Type | Description | Notes
 
 ### NewPipelineRunView
 
-`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot PipelineSource, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView`
+`func NewPipelineRunView(billedEmails int32, createdAt time.Time, deliveryAttempts int32, deliveryStatus PipelineDeliveryStatus, id int64, pipelineId int64, sourceSnapshot map[string]interface{}, stats PipelineRunStats, status PipelineRunStatus, tenantId string, triggerType string, updatedAt time.Time) *PipelineRunView`
 
 NewPipelineRunView instantiates a new PipelineRunView object
 This constructor will assign default values to properties that have it defined,
@@ -529,20 +529,20 @@ UnsetScheduledFor ensures that no value is present for ScheduledFor, not even an
 
 ### GetSourceSnapshot
 
-`func (o *PipelineRunView) GetSourceSnapshot() PipelineSource`
+`func (o *PipelineRunView) GetSourceSnapshot() map[string]interface{}`
 
 GetSourceSnapshot returns the SourceSnapshot field if non-nil, zero value otherwise.
 
 ### GetSourceSnapshotOk
 
-`func (o *PipelineRunView) GetSourceSnapshotOk() (*PipelineSource, bool)`
+`func (o *PipelineRunView) GetSourceSnapshotOk() (map[string]interface{}, bool)`
 
 GetSourceSnapshotOk returns a tuple with the SourceSnapshot field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetSourceSnapshot
 
-`func (o *PipelineRunView) SetSourceSnapshot(v PipelineSource)`
+`func (o *PipelineRunView) SetSourceSnapshot(v map[string]interface{})`
 
 SetSourceSnapshot sets SourceSnapshot field to given value.
 

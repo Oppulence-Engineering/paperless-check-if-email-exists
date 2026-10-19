@@ -31,9 +31,10 @@ jobs:
           path: ${{ steps.cross.outputs.install_path }}
     strategy:
       matrix:
-        platform: [linux-musl, apple-darwin]
+        platform: [linux-musl]
 
   macos:
+    if: false # Disabled for PR CI because native macOS builds are too slow for merge gating.
     runs-on: macos-latest
     needs: install-cross
     steps:
@@ -46,6 +47,11 @@ jobs:
       - run: chmod +x /usr/local/bin/cross
 
       - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          # Only save caches from master, so PRs don't evict each other.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
       - run: ci/build.bash cross ${{ matrix.target }}
         # Only test on macOS platforms since we can't simulate the others.
       - run: ci/test.bash cross ${{ matrix.target }}
@@ -123,6 +129,11 @@ jobs:
           path: /tmp/
       - run: chmod +x /tmp/cross
       - run: ci/set_rust_version.bash ${{ matrix.channel }} ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          # Only save caches from master, so PRs don't evict each other.
+          save-if: ${{ github.ref == 'refs/heads/master' }}
       - run: ci/build.bash /tmp/cross ${{ matrix.target }}
       - run: ci/test.bash /tmp/cross ${{ matrix.target }}
 

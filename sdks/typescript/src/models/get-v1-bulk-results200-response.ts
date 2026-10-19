@@ -18,16 +18,15 @@
 import type { CheckEmailOutput } from './check-email-output';
 
 /**
- * 
+ *
  * @export
  * @interface GetV1BulkResults200Response
  */
 export interface GetV1BulkResults200Response {
     /**
-     * 
+     *
      * @type {CheckEmailOutput}
      * @memberof GetV1BulkResults200Response
      */
     'results': CheckEmailOutput;
 }
-

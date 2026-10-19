@@ -20,9 +20,8 @@ use crate::http::ReacherResponseError;
 use crate::scoring::response::{
 	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
 };
-use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
-use crate::tenant::quota::{check_and_increment_quota, QuotaCheckResult};
+use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
 use crate::worker::single_shot::SingleShotReply;
@@ -275,15 +274,19 @@ async fn handle_without_worker(
 				input: body.to_check_email_input(Arc::clone(&config)),
 				job_id: CheckEmailJobId::SingleShot,
 				webhook: None,
-				metadata: None,
+				metadata: Some(crate::worker::do_work::TaskMetadata {
+					tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+					request_id: None,
+					correlation_id: None,
+					created_by: Some("api".to_string()),
+					retry_policy: None,
+					dedupe_key: None,
+					task_db_id: None,
+				}),
 			},
 			&prepared,
 			storage.get_extra(),
 		)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared))
 		.await
 		.map_err(ReacherResponseError::from)?;
 
@@ -315,16 +318,19 @@ async fn handle_with_worker(
 	body: &CheckEmailRequest,
 	tenant_ctx: &TenantContext,
 ) -> Result<Vec<u8>, warp::Rejection> {
-	let channel = config
-		.must_worker_config()
-		.map_err(ReacherResponseError::from)?
-		.channel;
+	let channel = match config.must_worker_config() {
+		Ok(worker_config) => worker_config.channel,
+		Err(err) => {
+			release_single_reserved_usage(&config, tenant_ctx).await;
+			return Err(ReacherResponseError::from(err).into());
+		}
+	};
 
 	let correlation_id = uuid::Uuid::new_v4();
 	let correlation_id_str = correlation_id.to_string();
-	let reply_queue = channel
+	let reply_queue = match channel
 		.queue_declare(
-			"",
+			"".into(),
 			QueueDeclareOptions {
 				auto_delete: true,
 				durable: false,
@@ -334,7 +340,13 @@ async fn handle_with_worker(
 			FieldTable::default(),
 		)
 		.await
-		.map_err(ReacherResponseError::from)?;
+	{
+		Ok(reply_queue) => reply_queue,
+		Err(err) => {
+			release_single_reserved_usage(&config, tenant_ctx).await;
+			return Err(ReacherResponseError::from(err).into());
+		}
+	};
 
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
@@ -342,7 +354,7 @@ async fn handle_with_worker(
 		.with_correlation_id(correlation_id_str.clone().into())
 		.with_reply_to(reply_queue.name().to_owned());
 
-	publish_task(
+	if let Err(err) = publish_task(
 		channel.clone(),
 		CheckEmailTask {
 			input: body.to_check_email_input(config.clone()),
@@ -360,12 +372,16 @@ async fn handle_with_worker(
 		},
 		properties,
 	)
-	.await?;
+	.await
+	{
+		release_single_reserved_usage(&config, tenant_ctx).await;
+		return Err(err.into());
+	}
 
 	let mut consumer = channel
 		.basic_consume(
-			reply_queue.name().as_str(),
-			format!("rpc.{}", correlation_id).as_str(),
+			reply_queue.name().clone(),
+			format!("rpc.{}", correlation_id).into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
@@ -450,4 +466,9 @@ async fn handle_with_worker(
 		"Failed to get a reply from the worker.",
 	)
 	.into())
+}
+
+async fn release_single_reserved_usage(config: &BackendConfig, tenant_ctx: &TenantContext) {
+	let pg_pool = config.get_pg_pool();
+	let _ = release_reserved_usage(pg_pool.as_ref(), tenant_ctx.tenant_id, 1).await;
 }
