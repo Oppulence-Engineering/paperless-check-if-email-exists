@@ -19,24 +19,15 @@ export const getV1ListEventsResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     actor: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-    event_data: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null]),
-      undefined,
-    ]),
+    event_data: faker.helpers.arrayElement([null]),
     event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.number.int(),
     job_id: faker.number.int(),
-    task_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    task_id: faker.helpers.arrayElement([faker.number.int(), null]),
   })),
   total: faker.number.int(),
   ...overrideResponse,

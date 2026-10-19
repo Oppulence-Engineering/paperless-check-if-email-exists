@@ -290,10 +290,10 @@ export const getV1GetListMockHandler = (
 
 export const getV1DownloadListMockHandler = (
   overrideResponse?:
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ArrayBuffer> | ArrayBuffer),
+      ) => Promise<Blob> | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -305,13 +305,10 @@ export const getV1DownloadListMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1DownloadListResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );
@@ -489,10 +486,10 @@ export const getV1CheckSuppressionMockHandler = (
 
 export const getV1ExportSuppressionsMockHandler = (
   overrideResponse?:
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ArrayBuffer> | ArrayBuffer),
+      ) => Promise<Blob> | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -504,13 +501,10 @@ export const getV1ExportSuppressionsMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1ExportSuppressionsResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );

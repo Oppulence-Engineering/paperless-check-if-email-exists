@@ -10,8 +10,8 @@ async fn publish_task_raw(
 	let task_json = serde_json::to_vec(task).unwrap();
 	channel
 		.basic_publish(
-			"",
-			reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
+			"".into(),
+			reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
 			lapin::options::BasicPublishOptions::default(),
 			&task_json,
 			properties,
@@ -281,7 +281,7 @@ mod rabbitmq_setup_tests {
 		// Passive declare verifies queue exists
 		let result = channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				lapin::options::QueueDeclareOptions {
 					passive: true,
 					..Default::default()
@@ -339,7 +339,7 @@ mod publish_consume_tests {
 		};
 		let channel = setup_rabbit_mq("pub-con-test", &config).await.unwrap();
 		channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await
 			.unwrap();
 
@@ -351,8 +351,8 @@ mod publish_consume_tests {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"test-consumer",
+				CHECK_EMAIL_QUEUE.into(),
+				"test-consumer".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -369,7 +369,7 @@ mod publish_consume_tests {
 		assert_eq!(received.input.to_email, "publish-test@example.com");
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
 		channel
-			.basic_cancel("test-consumer", BasicCancelOptions::default())
+			.basic_cancel("test-consumer".into(), BasicCancelOptions::default())
 			.await
 			.unwrap();
 	}
@@ -386,7 +386,7 @@ mod publish_consume_tests {
 		let queue_name = format!("multi-pub-{}", uuid::Uuid::new_v4().simple());
 		channel
 			.queue_declare(
-				&queue_name,
+				queue_name.as_str().into(),
 				QueueDeclareOptions {
 					auto_delete: true,
 					durable: false,
@@ -402,8 +402,8 @@ mod publish_consume_tests {
 			let task_json = serde_json::to_vec(&task).unwrap();
 			channel
 				.basic_publish(
-					"",
-					&queue_name,
+					"".into(),
+					queue_name.as_str().into(),
 					BasicPublishOptions::default(),
 					&task_json,
 					BasicProperties::default().with_priority(1),
@@ -416,8 +416,8 @@ mod publish_consume_tests {
 
 		let mut consumer = channel
 			.basic_consume(
-				&queue_name,
-				"multi-pub-consumer",
+				queue_name.as_str().into(),
+				"multi-pub-consumer".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -448,7 +448,7 @@ mod publish_consume_tests {
 			]
 		);
 		channel
-			.basic_cancel("multi-pub-consumer", BasicCancelOptions::default())
+			.basic_cancel("multi-pub-consumer".into(), BasicCancelOptions::default())
 			.await
 			.unwrap();
 	}
@@ -463,7 +463,7 @@ mod publish_consume_tests {
 		};
 		let channel = setup_rabbit_mq("priority-test", &config).await.unwrap();
 		channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await
 			.unwrap();
 
@@ -489,8 +489,8 @@ mod publish_consume_tests {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"prio-con",
+				CHECK_EMAIL_QUEUE.into(),
+				"prio-con".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -519,7 +519,7 @@ mod publish_consume_tests {
 		assert_eq!(second_task.input.to_email, "low@test.com");
 		second.ack(BasicAckOptions::default()).await.unwrap();
 		channel
-			.basic_cancel("prio-con", BasicCancelOptions::default())
+			.basic_cancel("prio-con".into(), BasicCancelOptions::default())
 			.await
 			.unwrap();
 	}
@@ -534,7 +534,7 @@ mod publish_consume_tests {
 		};
 		let channel = setup_rabbit_mq("meta-rt", &config).await.unwrap();
 		channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await
 			.unwrap();
 
@@ -565,8 +565,8 @@ mod publish_consume_tests {
 
 		let mut consumer = channel
 			.basic_consume(
-				CHECK_EMAIL_QUEUE,
-				"meta-con",
+				CHECK_EMAIL_QUEUE.into(),
+				"meta-con".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -586,7 +586,7 @@ mod publish_consume_tests {
 		assert_eq!(meta.task_db_id, Some(99));
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
 		channel
-			.basic_cancel("meta-con", BasicCancelOptions::default())
+			.basic_cancel("meta-con".into(), BasicCancelOptions::default())
 			.await
 			.unwrap();
 	}
@@ -669,7 +669,7 @@ mod full_pipeline_tests {
 		let channel = setup_rabbit_mq("pipeline-test", &config).await.unwrap();
 		channel
 			.queue_purge(
-				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
+				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
 				QueuePurgeOptions::default(),
 			)
 			.await
@@ -711,8 +711,8 @@ mod full_pipeline_tests {
 
 		let mut consumer = channel
 			.basic_consume(
-				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
-				"pipeline-consumer",
+				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+				"pipeline-consumer".into(),
 				BasicConsumeOptions::default(),
 				FieldTable::default(),
 			)
@@ -728,7 +728,7 @@ mod full_pipeline_tests {
 		let received_task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
 		delivery.ack(BasicAckOptions::default()).await.unwrap();
 		channel
-			.basic_cancel("pipeline-consumer", BasicCancelOptions::default())
+			.basic_cancel("pipeline-consumer".into(), BasicCancelOptions::default())
 			.await
 			.unwrap();
 

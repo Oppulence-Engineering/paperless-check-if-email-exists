@@ -1,22 +1,5 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use crate::config::BackendConfig;
 use crate::scoring::response::{prepare_check_email_success, PreparedCheckEmailSuccess};
-use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::{check_email, CheckEmailInput, Reachable, LOG_TARGET};
@@ -447,12 +430,6 @@ pub async fn do_check_email_work(
 		}
 
 		sync_related_entities(&config, task).await;
-		send_to_reacher(
-			Arc::clone(&config),
-			&task.input.to_email,
-			worker_output.as_ref(),
-		)
-		.await?;
 
 		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered terminal task result");
 	} else {
@@ -545,12 +522,6 @@ pub async fn do_check_email_work(
 		}
 
 		sync_related_entities(&config, task).await;
-		send_to_reacher(
-			Arc::clone(&config),
-			&task.input.to_email,
-			worker_output.as_ref(),
-		)
-		.await?;
 
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,
@@ -1085,7 +1056,7 @@ mod tests {
 		});
 		assert_eq!(throttle_err.status_code(), StatusCode::TOO_MANY_REQUESTS);
 
-		let lapin_err = TaskError::Lapin(lapin::Error::InvalidChannel(0));
+		let lapin_err = TaskError::Lapin(lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)));
 		assert_eq!(lapin_err.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
 
 		let webhook_err = TaskError::WebhookValidation("bad target".to_string());
@@ -1101,7 +1072,10 @@ mod tests {
 		assert!(!TaskError::WebhookStatus(302).is_retryable());
 		assert!(!TaskError::WebhookStatus(404).is_retryable());
 		assert!(TaskError::WebhookStatus(503).is_retryable());
-		assert!(TaskError::Lapin(lapin::Error::InvalidChannel(0)).is_retryable());
+		assert!(
+			TaskError::Lapin(lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)))
+				.is_retryable()
+		);
 	}
 
 	#[test]

@@ -99,31 +99,24 @@ export const getPostCheckEmailResponseMock = (
   overrideResponse: Partial<Extract<CheckEmailOutput, object>> = {},
 ): CheckEmailOutput => ({
   bounce_risk: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      {
-        action: faker.helpers.arrayElement(Object.values(RecommendedAction)),
-        category: faker.helpers.arrayElement(Object.values(BounceRiskCategory)),
-        confidence: faker.number.float({
-          min: 0.35,
-          max: 1,
-          fractionDigits: 2,
-        }),
-        model_version: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        risk_factors: Array.from(
-          { length: faker.number.int({ min: 1, max: 10 }) },
-          (_, i) => i + 1,
-        ).map(() => ({
-          contribution: faker.number.int(),
-          description: faker.string.alpha({ length: { min: 10, max: 20 } }),
-          direction: faker.helpers.arrayElement(Object.values(RiskDirection)),
-          signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        })),
-        score: faker.number.int({ min: 0, max: 100 }),
-        scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-      },
-      null,
-    ]),
-    undefined,
+    {
+      action: faker.helpers.arrayElement(Object.values(RecommendedAction)),
+      category: faker.helpers.arrayElement(Object.values(BounceRiskCategory)),
+      confidence: faker.number.float({ min: 0.35, max: 1, fractionDigits: 2 }),
+      model_version: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      risk_factors: Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => ({
+        contribution: faker.number.int(),
+        description: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        direction: faker.helpers.arrayElement(Object.values(RiskDirection)),
+        signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      })),
+      score: faker.number.int({ min: 0, max: 100 }),
+      scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    },
+    null,
   ]),
   debug: faker.helpers.arrayElement([
     {
@@ -133,6 +126,10 @@ export const getPostCheckEmailResponseMock = (
         secs: faker.number.float({ fractionDigits: 2 }),
       },
       end_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reacher_version: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        undefined,
+      ]),
       smtp: {
         verif_method: faker.helpers.arrayElement([
           {
@@ -157,11 +154,8 @@ export const getPostCheckEmailResponseMock = (
                   undefined,
                 ]),
                 proxy: faker.helpers.arrayElement([
-                  faker.helpers.arrayElement([
-                    faker.string.alpha({ length: { min: 10, max: 20 } }),
-                    null,
-                  ]),
-                  undefined,
+                  faker.string.alpha({ length: { min: 10, max: 20 } }),
+                  null,
                 ]),
                 retries: faker.helpers.arrayElement([
                   faker.number.int({ min: 0 }),
@@ -172,14 +166,11 @@ export const getPostCheckEmailResponseMock = (
                   undefined,
                 ]),
                 smtp_timeout: faker.helpers.arrayElement([
-                  faker.helpers.arrayElement([
-                    {
-                      nanos: faker.number.float({ fractionDigits: 2 }),
-                      secs: faker.number.float({ fractionDigits: 2 }),
-                    },
-                    null,
-                  ]),
-                  undefined,
+                  {
+                    nanos: faker.number.float({ fractionDigits: 2 }),
+                    secs: faker.number.float({ fractionDigits: 2 }),
+                  },
+                  null,
                 ]),
               },
               undefined,
@@ -204,25 +195,16 @@ export const getPostCheckEmailResponseMock = (
   ]),
   policy_evaluation: faker.helpers.arrayElement([{}, undefined]),
   provider: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(Provider)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(Provider)),
+    null,
   ]),
   provider_confidence: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(ProviderConfidence)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(ProviderConfidence)),
+    null,
   ]),
   provider_rejection_reason: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(ProviderRejectionReason)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(ProviderRejectionReason)),
+    null,
   ]),
   provider_rules_applied: faker.datatype.boolean(),
   recommendation: faker.helpers.arrayElement([{}, undefined]),

@@ -25,20 +25,14 @@ export const getListTenantApiKeysResponseMock = (
   ).map(() => ({
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     expires_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     id: faker.string.uuid(),
     key_prefix: faker.string.alpha({ length: { min: 10, max: 20 } }),
     last_used_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     scopes: Array.from(
@@ -56,11 +50,8 @@ export const getCreateTenantApiKeyResponseMock = (
 ): TenantCreatedApiKey => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   expires_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   id: faker.string.uuid(),
   key: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -88,20 +79,14 @@ export const getGetTenantApiKeyResponseMock = (
 ): TenantApiKey => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   expires_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   id: faker.string.uuid(),
   key_prefix: faker.string.alpha({ length: { min: 10, max: 20 } }),
   last_used_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   scopes: Array.from(
@@ -118,20 +103,14 @@ export const getUpdateTenantApiKeyResponseMock = (
 ): TenantApiKey => ({
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   expires_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   id: faker.string.uuid(),
   key_prefix: faker.string.alpha({ length: { min: 10, max: 20 } }),
   last_used_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   scopes: Array.from(

@@ -15,9 +15,10 @@ use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::io;
 use std::sync::Arc;
+use sync_wrapper::SyncStream;
 use warp::http::StatusCode;
-use warp::hyper::Body;
 use warp::Filter;
+use warp::Reply;
 
 const RULE_VERSION: &str = "remediation_v1";
 const PREVIEW_ROW_LIMIT: i64 = 100;
@@ -434,7 +435,7 @@ async fn download_export_handler(
 	let partitions: Vec<String> = export.get("partitions");
 	let headers: Vec<String> = export.get("original_headers");
 	let plan_id: i64 = export.get("plan_id");
-	let body = Body::wrap_stream(stream::unfold(
+	let body = warp::reply::stream(SyncStream::new(stream::unfold(
 		ExportDownloadState {
 			pg_pool,
 			tenant_id,
@@ -487,7 +488,9 @@ async fn download_export_handler(
 				}
 			}
 		},
-	));
+	)))
+	.into_response()
+	.into_body();
 
 	let response = warp::http::Response::builder()
 		.header("Content-Type", "text/csv")

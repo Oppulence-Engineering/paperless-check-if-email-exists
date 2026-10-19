@@ -11,7 +11,7 @@
 export interface ListUploadRequest {
   /** @nullable */
   email_column?: string | null;
-  file: Blob;
+  file: Blob | File;
   /** @nullable */
   name?: string | null;
   /** @nullable */

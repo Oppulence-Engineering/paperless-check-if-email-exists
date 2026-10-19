@@ -52,7 +52,7 @@ export const V1CheckEmailWithOnboardBody = zod.strictObject({
   plan_tier: zod
     .string()
     .nullish()
-    .describe('Optional plan tier (defaults to \"free\").'),
+    .describe('Optional plan tier (defaults to "free").'),
   slug: zod
     .string()
     .nullish()
@@ -233,6 +233,12 @@ export const V1CheckEmail200Response = zod
         end_time: zod
           .string()
           .describe("The timestamp when the email verification ended."),
+        reacher_version: zod
+          .string()
+          .optional()
+          .describe(
+            'The version of the backend that performed the verification, e.g. "4.3.0".',
+          ),
         smtp: zod
           .object({
             verif_method: zod
@@ -297,7 +303,7 @@ export const V1CheckEmail200Response = zod
     is_reachable: zod
       .enum(["invalid", "unknown", "safe", "risky"])
       .describe(
-        "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+        "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
       ),
     misc: zod
       .union([
@@ -454,7 +460,7 @@ export const V1CheckEmail200Response = zod
         .string()
         .optional()
         .describe(
-          "Canonical form of the email after alias\/plus-address normalization",
+          "Canonical form of the email after alias/plus-address normalization",
         ),
       partial_confidence: zod
         .object({
@@ -533,7 +539,7 @@ export const V1CheckEmail200Response = zod
         reachable: zod
           .enum(["invalid", "unknown", "safe", "risky"])
           .describe(
-            "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+            "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
           ),
         smtp_can_connect: zod.boolean(),
         smtp_error: zod.boolean(),
@@ -731,7 +737,7 @@ export const V1GetFindEmail200Response = zod.object({
       is_reachable: zod
         .enum(["invalid", "unknown", "safe", "risky"])
         .describe(
-          "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+          "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
         ),
       pattern: zod.string(),
       result: zod
@@ -810,6 +816,12 @@ export const V1GetFindEmail200Response = zod.object({
                     .describe(
                       "The timestamp when the email verification ended.",
                     ),
+                  reacher_version: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      'The version of the backend that performed the verification, e.g. "4.3.0".',
+                    ),
                   smtp: zod
                     .object({
                       verif_method: zod
@@ -884,7 +896,7 @@ export const V1GetFindEmail200Response = zod.object({
               is_reachable: zod
                 .enum(["invalid", "unknown", "safe", "risky"])
                 .describe(
-                  "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+                  "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
                 ),
               misc: zod
                 .union([
@@ -1061,7 +1073,7 @@ export const V1GetFindEmail200Response = zod.object({
                   .string()
                   .optional()
                   .describe(
-                    "Canonical form of the email after alias\/plus-address normalization",
+                    "Canonical form of the email after alias/plus-address normalization",
                   ),
                 partial_confidence: zod
                   .object({
@@ -1148,7 +1160,7 @@ export const V1GetFindEmail200Response = zod.object({
                   reachable: zod
                     .enum(["invalid", "unknown", "safe", "risky"])
                     .describe(
-                      "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+                      "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
                     ),
                   smtp_can_connect: zod.boolean(),
                   smtp_error: zod.boolean(),
@@ -1317,7 +1329,7 @@ export const V1ListListsDefaultResponse = zod.object({
  */
 export const V1CreateListBody = zod.strictObject({
   email_column: zod.string().nullish(),
-  file: zod.instanceof(File),
+  file: zod.instanceof(Blob),
   name: zod.string().nullish(),
   policy_id: zod.int().nullish(),
   source_key: zod

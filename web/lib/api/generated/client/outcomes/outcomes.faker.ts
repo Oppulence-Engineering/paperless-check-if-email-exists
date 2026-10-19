@@ -28,29 +28,20 @@ export const getV1ListCampaignOutcomesResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     campaign_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.number.int(),
     occurred_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     policy_action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.string.alpha({ length: { min: 10, max: 20 } }),
   })),
@@ -128,26 +119,17 @@ export const getV1ListOutcomesResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     campaign_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     correlation_status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    endpoint_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.uuid(), null]),
-      undefined,
-    ]),
+    endpoint_id: faker.helpers.arrayElement([faker.string.uuid(), null]),
     event_family: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.number.int(),
@@ -155,29 +137,17 @@ export const getV1ListOutcomesResponseMock = (
     occurred_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     provider_event_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider_message_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
-    receipt_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.uuid(), null]),
-      undefined,
-    ]),
+    receipt_id: faker.helpers.arrayElement([faker.string.uuid(), null]),
     source_key: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
   })),
   ...overrideResponse,
@@ -205,11 +175,8 @@ export const getV1ListProviderEndpointsResponseMock = (
     ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     delivery_token: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     endpoint_id: faker.string.uuid(),
     label: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -231,11 +198,8 @@ export const getV1CreateProviderEndpointResponseMock = (
   ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   delivery_token: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   endpoint_id: faker.string.uuid(),
   label: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -263,11 +227,8 @@ export const getV1UpdateProviderEndpointResponseMock = (
   ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   delivery_token: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   endpoint_id: faker.string.uuid(),
   label: faker.string.alpha({ length: { min: 10, max: 20 } }),

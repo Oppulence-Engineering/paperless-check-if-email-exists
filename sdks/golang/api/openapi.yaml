@@ -9,8 +9,8 @@ info:
 
     Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
   license:
-    name: AGPL-3.0 OR Commercial
-    url: https://github.com/reacherhq/check-if-email-exists/blob/master/LICENSE.md
+    name: MIT
+    url: https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/LICENSE.md
   termsOfService: https://github.com/reacherhq/policies/blob/master/terms/index.fr.md
   title: Reacher
   version: 4.3.0
@@ -5481,6 +5481,7 @@ components:
                 host: host
                 type: Smtp
             backend_name: backend_name
+            reacher_version: reacher_version
             end_time: end_time
           smtp:
             is_catch_all: true
@@ -5579,6 +5580,7 @@ components:
                 host: host
                 type: Smtp
             backend_name: backend_name
+            reacher_version: reacher_version
             end_time: end_time
           smtp:
             is_catch_all: true
@@ -5820,6 +5822,7 @@ components:
               host: host
               type: Smtp
           backend_name: backend_name
+          reacher_version: reacher_version
           end_time: end_time
         smtp:
           is_catch_all: true
@@ -6324,6 +6327,7 @@ components:
             host: host
             type: Smtp
         backend_name: backend_name
+        reacher_version: reacher_version
         end_time: end_time
       properties:
         backend_name:
@@ -6338,6 +6342,10 @@ components:
           type: string
           x-stoplight:
             id: zw4ccbvwsoh6q
+        reacher_version:
+          description: "The version of the backend that performed the verification,\
+            \ e.g. \"4.3.0\"."
+          type: string
         smtp:
           $ref: "#/components/schemas/DebugDetailsSmtp"
         start_time:

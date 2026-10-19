@@ -11,9 +11,10 @@ use serde_json::Value;
 use sqlx::{PgPool, Row};
 use std::io;
 use std::sync::Arc;
+use sync_wrapper::SyncStream;
 use warp::http::StatusCode;
-use warp::hyper::Body;
 use warp::Filter;
+use warp::Reply;
 
 const EXPORT_BATCH_SIZE: i64 = 500;
 
@@ -77,7 +78,7 @@ async fn http_handler(
 	}
 	let status_filter = normalize_status_filter(query.status.as_deref())?;
 	let include_expired = query.include_expired.unwrap_or(false);
-	let body = Body::wrap_stream(stream::unfold(
+	let body = warp::reply::stream(SyncStream::new(stream::unfold(
 		ExportState {
 			pg_pool,
 			tenant_id,
@@ -108,7 +109,9 @@ async fn http_handler(
 				Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
 			}
 		},
-	));
+	)))
+	.into_response()
+	.into_body();
 
 	let response = warp::http::Response::builder()
 		.header("Content-Type", "text/csv")

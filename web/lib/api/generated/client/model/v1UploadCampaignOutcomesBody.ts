@@ -9,5 +9,5 @@
  */
 
 export type V1UploadCampaignOutcomesBody = {
-  file: Blob;
+  file: Blob | File;
 };

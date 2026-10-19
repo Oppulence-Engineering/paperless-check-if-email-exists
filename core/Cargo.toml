@@ -7,7 +7,7 @@ description = "Check if an email address exists without sending any email"
 documentation = "http://docs.rs/check-if-email-exists"
 edition = "2018"
 keywords = ["email", "smtp", "mx", "verification"]
-license = "AGPL-3.0"
+license = "MIT"
 publish = true
 readme = "../README.md"
 repository = "https://github.com/reacherhq/check-if-email-exists"
@@ -15,30 +15,31 @@ repository = "https://github.com/reacherhq/check-if-email-exists"
 [dependencies]
 anyhow = "1.0"
 async-recursion = "1.0.5"
-async-smtp = { version = "0.9.1", features = ["runtime-tokio"] }
+async-smtp = { version = "0.10", features = ["runtime-tokio"] }
 chrono = { version = "0.4.31", features = ["serde"] }
-config = "0.14"
+config = "0.15"
 derive_builder = "0.20"
-fast-socks5 = "0.9"
-fantoccini = { version = "0.21.2", default-features = false, features = [
+fast-socks5 = "1.0"
+fantoccini = { version = "0.22", default-features = false, features = [
     "rustls-tls",
 ] }
 futures = { version = "0.3.30" }
-hickory-proto = "0.24.0"
-hickory-resolver = "0.24.0"
+hickory-proto = "0.26"
+hickory-resolver = "0.26"
 levenshtein = "1.0.5"
 log = "0.4.26"
 mailchecker = "6.0.11"
-md5 = "0.7.0"
+md5 = "0.8"
 once_cell = "1.21.1"
-rand = { version = "0.8.5", features = ["small_rng"] }
+rand = "0.10"
 regex = "1.11.1"
-reqwest = { version = "0.12.15", default-features = false, features = [
+reqwest = { version = "0.13", default-features = false, features = [
     "json",
-    "rustls-tls",
+    "query",
+    "rustls",
 ] }
 rustls = { version = "0.23", features = ["ring"] }
-sentry = { version = "0.36", default-features = false, features = [
+sentry = { version = "0.49", default-features = false, features = [
     "reqwest",
     "rustls",
 ], optional = true }

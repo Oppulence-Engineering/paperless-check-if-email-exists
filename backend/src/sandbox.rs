@@ -1,9 +1,12 @@
 use check_if_email_exists::{
-	misc::MiscDetails, mx::MxDetails, smtp::SmtpDetails, syntax::SyntaxDetails, CheckEmailOutput,
-	Reachable,
+	misc::MiscDetails,
+	mx::{MxDetails, MxLookup},
+	smtp::SmtpDetails,
+	syntax::SyntaxDetails,
+	CheckEmailOutput, Reachable,
 };
 use hickory_resolver::{
-	lookup::{Lookup, MxLookup},
+	lookup::Lookup,
 	proto::op::Query,
 	proto::rr::{rdata::MX, Name, RData, RecordType},
 };

@@ -20,7 +20,6 @@ use crate::http::ReacherResponseError;
 use crate::scoring::response::{
 	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
 };
-use crate::storage::commercial_license_trial::send_to_reacher;
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
 use crate::worker::consume::MAX_QUEUE_PRIORITY;
@@ -291,10 +290,6 @@ async fn handle_without_worker(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	send_to_reacher(Arc::clone(&config), &body.to_email, Ok(&prepared))
-		.await
-		.map_err(ReacherResponseError::from)?;
-
 	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
 	if let Some(pool) = config.get_pg_pool() {
 		if let Some(tenant_id) = tenant_ctx.tenant_id {
@@ -335,7 +330,7 @@ async fn handle_with_worker(
 	let correlation_id_str = correlation_id.to_string();
 	let reply_queue = match channel
 		.queue_declare(
-			"",
+			"".into(),
 			QueueDeclareOptions {
 				auto_delete: true,
 				durable: false,
@@ -385,8 +380,8 @@ async fn handle_with_worker(
 
 	let mut consumer = channel
 		.basic_consume(
-			reply_queue.name().as_str(),
-			format!("rpc.{}", correlation_id).as_str(),
+			reply_queue.name().clone(),
+			format!("rpc.{}", correlation_id).into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

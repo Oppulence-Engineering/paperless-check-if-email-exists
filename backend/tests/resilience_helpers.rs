@@ -328,7 +328,7 @@ async fn wait_for_rabbitmq(amqp_url: &str) -> Result<(), String> {
 		.await
 		{
 			Ok(Ok(connection)) => {
-				let _ = connection.close(0, "test cleanup").await;
+				let _ = connection.close(0, "test cleanup".into()).await;
 				return Ok(());
 			}
 			Ok(Err(err)) if Instant::now() < deadline => {

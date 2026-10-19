@@ -1,19 +1,3 @@
-// check-if-email-exists
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use check_if_email_exists::{
 	check_email, smtp::verif_method::VerifMethod, CheckEmailInputBuilder, CheckEmailInputProxy,
 };
@@ -56,11 +40,11 @@ pub struct Cli {
 	pub smtp_port: u16,
 
 	/// Whether to check if a gravatar image is existing for the given email.
-	#[clap(long, env, default_value = "false", parse(try_from_str))]
+	#[clap(long, env, default_value = "false", action = clap::ArgAction::Set)]
 	pub check_gravatar: bool,
 
 	/// HaveIBeenPnwed API key, ignore if not provided.
-	#[clap(long, env, parse(try_from_str))]
+	#[clap(long, env)]
 	pub haveibeenpwned_api_key: Option<String>,
 
 	/// The email to check.

@@ -58,8 +58,8 @@ mod worker_loop_tests {
 		let json = serde_json::to_vec(task).unwrap();
 		channel
 			.basic_publish(
-				"",
-				CHECK_EMAIL_QUEUE,
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
 				BasicPublishOptions::default(),
 				&json,
 				BasicProperties::default()
@@ -75,7 +75,7 @@ mod worker_loop_tests {
 	/// Purge the queue so tests are isolated.
 	async fn purge(channel: &lapin::Channel) {
 		let _ = channel
-			.queue_purge(CHECK_EMAIL_QUEUE, QueuePurgeOptions::default())
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 			.await;
 	}
 
@@ -257,7 +257,7 @@ mod worker_loop_tests {
 		// Create a reply queue to receive the throttle error
 		let reply_queue = pub_channel
 			.queue_declare(
-				"",
+				"".into(),
 				QueueDeclareOptions {
 					auto_delete: true,
 					exclusive: true,
@@ -282,8 +282,8 @@ mod worker_loop_tests {
 			let json = serde_json::to_vec(&task).unwrap();
 			pub_channel
 				.basic_publish(
-					"",
-					CHECK_EMAIL_QUEUE,
+					"".into(),
+					CHECK_EMAIL_QUEUE.into(),
 					BasicPublishOptions::default(),
 					&json,
 					BasicProperties::default()
@@ -305,7 +305,7 @@ mod worker_loop_tests {
 		// Queue should have been drained (messages processed or rejected)
 		let q = pub_channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				QueueDeclareOptions {
 					passive: true,
 					..Default::default()
@@ -374,7 +374,7 @@ mod worker_loop_tests {
 		// Verify the queue was consumed (messages processed or requeued)
 		let q = pub_channel
 			.queue_declare(
-				CHECK_EMAIL_QUEUE,
+				CHECK_EMAIL_QUEUE.into(),
 				QueueDeclareOptions {
 					passive: true,
 					..Default::default()

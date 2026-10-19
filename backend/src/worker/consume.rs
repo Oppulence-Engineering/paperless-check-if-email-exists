@@ -1,19 +1,3 @@
-// Reacher - Email Verification
-// Copyright (C) 2018-2023 Reacher
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 use super::do_work::{do_check_email_work, CheckEmailTask, TaskError};
 use super::single_shot::send_single_shot_reply;
 use crate::config::{BackendConfig, RabbitMQConfig};
@@ -42,11 +26,7 @@ pub async fn setup_rabbit_mq(
 	backend_name: &str,
 	config: &RabbitMQConfig,
 ) -> Result<Channel, anyhow::Error> {
-	let options = ConnectionProperties::default()
-		// Use tokio executor and reactor.
-		.with_executor(tokio_executor_trait::Tokio::current())
-		.with_reactor(tokio_reactor_trait::Tokio)
-		.with_connection_name(backend_name.into());
+	let options = ConnectionProperties::default().with_connection_name(backend_name.into());
 
 	let conn = timeout(
 		RABBITMQ_CONNECT_TIMEOUT,
@@ -62,7 +42,7 @@ pub async fn setup_rabbit_mq(
 	.context("Connecting to rabbitmq")?;
 	let channel = conn.create_channel().await?;
 
-	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(target: LOG_TARGET, backend=?backend_name,connected=conn.status().connected(), "Connected to AMQP broker");
 
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
@@ -70,7 +50,7 @@ pub async fn setup_rabbit_mq(
 	// Assert all queue is declared.
 	channel
 		.queue_declare(
-			CHECK_EMAIL_QUEUE,
+			CHECK_EMAIL_QUEUE.into(),
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -109,8 +89,8 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 
 	let mut consumer = match channel
 		.basic_consume(
-			CHECK_EMAIL_QUEUE,
-			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).as_str(),
+			CHECK_EMAIL_QUEUE.into(),
+			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

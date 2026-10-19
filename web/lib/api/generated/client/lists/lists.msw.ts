@@ -118,10 +118,10 @@ export const getV1CreateRemediationExportMockHandler = (
 
 export const getV1DownloadRemediationExportMockHandler = (
   overrideResponse?:
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ArrayBuffer> | ArrayBuffer),
+      ) => Promise<Blob> | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -133,13 +133,10 @@ export const getV1DownloadRemediationExportMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1DownloadRemediationExportResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );

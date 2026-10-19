@@ -10,12 +10,12 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, TimeZone, Utc};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use openssl::hash::MessageDigest;
 use openssl::memcmp;
 use openssl::sign::Verifier;
 use openssl::x509::X509;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -132,7 +132,7 @@ fn validate_status(status: &str) -> Result<String, ReacherResponseError> {
 
 fn generate_delivery_token() -> String {
 	let mut bytes = [0u8; 32];
-	rand::thread_rng().fill_bytes(&mut bytes);
+	rand::rng().fill_bytes(&mut bytes);
 	format!("rt_{}", hex::encode(bytes))
 }
 

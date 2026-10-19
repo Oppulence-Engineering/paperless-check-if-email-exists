@@ -1,10 +1,26 @@
 use super::models::DnsRecordResults;
-use hickory_resolver::system_conf::read_system_conf;
-use hickory_resolver::TokioAsyncResolver;
+use check_if_email_exists::mx::MxLookup;
+use hickory_resolver::lookup::Lookup;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::TokioResolver;
+
+/// The strings of all TXT records in a lookup.
+fn txt_strings(lookup: &Lookup) -> Vec<String> {
+	lookup
+		.answers()
+		.iter()
+		.filter_map(|record| match &record.data {
+			RData::TXT(txt) => Some(txt),
+			_ => None,
+		})
+		.flat_map(|txt| txt.txt_data.iter())
+		.filter_map(|bytes| std::str::from_utf8(bytes).ok())
+		.map(ToOwned::to_owned)
+		.collect()
+}
 
 pub async fn check_dns_records(domain: &str) -> Result<DnsRecordResults, anyhow::Error> {
-	let (config, opts) = read_system_conf()?;
-	let resolver = TokioAsyncResolver::tokio(config, opts);
+	let resolver = TokioResolver::builder_tokio()?.build()?;
 
 	let mx_lookup = resolver.mx_lookup(domain).await.ok();
 	let txt_lookup = resolver.txt_lookup(domain).await.ok();
@@ -13,36 +29,16 @@ pub async fn check_dns_records(domain: &str) -> Result<DnsRecordResults, anyhow:
 	let mx_records = mx_lookup
 		.as_ref()
 		.map(|lookup| {
-			lookup
+			MxLookup::from(lookup.clone())
 				.iter()
-				.map(|record| record.exchange().to_string())
+				.map(|record| record.exchange.to_string())
 				.collect()
 		})
 		.unwrap_or_else(Vec::new);
 	let has_mx = !mx_records.is_empty();
 
-	let txt_values: Vec<String> = txt_lookup
-		.as_ref()
-		.map(|lookup| {
-			lookup
-				.iter()
-				.flat_map(|txt| txt.txt_data().iter())
-				.filter_map(|bytes| std::str::from_utf8(bytes).ok())
-				.map(ToOwned::to_owned)
-				.collect()
-		})
-		.unwrap_or_default();
-	let dmarc_values: Vec<String> = dmarc_lookup
-		.as_ref()
-		.map(|lookup| {
-			lookup
-				.iter()
-				.flat_map(|txt| txt.txt_data().iter())
-				.filter_map(|bytes| std::str::from_utf8(bytes).ok())
-				.map(ToOwned::to_owned)
-				.collect()
-		})
-		.unwrap_or_default();
+	let txt_values: Vec<String> = txt_lookup.as_ref().map(txt_strings).unwrap_or_default();
+	let dmarc_values: Vec<String> = dmarc_lookup.as_ref().map(txt_strings).unwrap_or_default();
 
 	let spf_value = txt_values
 		.iter()
@@ -61,7 +57,7 @@ pub async fn check_dns_records(domain: &str) -> Result<DnsRecordResults, anyhow:
 			.await
 			.ok()
 			.as_ref()
-			.map(|lookup| lookup.iter().next().is_some())
+			.map(|lookup| !txt_strings(lookup).is_empty())
 			.unwrap_or(false)
 		{
 			has_dkim = true;

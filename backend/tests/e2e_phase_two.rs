@@ -116,10 +116,13 @@ mod tests {
 		})
 	}
 
-	fn spawn_server(config: Arc<BackendConfig>) -> String {
-		let routes = create_routes(config);
-		let (addr, server) = warp::serve(routes).bind_ephemeral(([127, 0, 0, 1], 0));
-		tokio::task::spawn(server);
+	async fn spawn_server(config: Arc<BackendConfig>) -> String {
+		let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+			.await
+			.unwrap();
+		let addr = listener.local_addr().unwrap();
+		let server = warp::serve(create_routes(config)).incoming(listener);
+		tokio::task::spawn(server.run());
 		format!("http://{}", addr)
 	}
 
@@ -517,7 +520,7 @@ mod tests {
 		let tenant_id = insert_tenant(db.pool(), "lists-roundtrip", Some(100), 0).await;
 		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url, "phase2").await;
-		let server_url = spawn_server(Arc::clone(&config));
+		let server_url = spawn_server(Arc::clone(&config)).await;
 		let client = reqwest::Client::new();
 		let csv = "name,email,company\nAlice,alice@example.com,Acme\nBob,,Widgets";
 		let upload = client
@@ -804,7 +807,7 @@ mod tests {
 		.unwrap();
 		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url, "phase2").await;
-		let server_url = spawn_server(config);
+		let server_url = spawn_server(config).await;
 		let client = reqwest::Client::new();
 
 		let mut csv = String::from("name,email\n");
