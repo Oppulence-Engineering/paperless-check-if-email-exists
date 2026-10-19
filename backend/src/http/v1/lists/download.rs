@@ -19,9 +19,10 @@ use sqlx::{PgPool, Row};
 use std::collections::BTreeMap;
 use std::io;
 use std::sync::Arc;
+use sync_wrapper::SyncStream;
 use warp::http::{Response, StatusCode};
-use warp::hyper::Body;
 use warp::Filter;
+use warp::Reply;
 
 const BATCH_SIZE: i64 = 500;
 
@@ -131,7 +132,7 @@ async fn http_handler(
 		}
 	}
 
-	let body = Body::wrap_stream(stream::unfold(
+	let body = warp::reply::stream(SyncStream::new(stream::unfold(
 		DownloadState {
 			pg_pool,
 			list_id,
@@ -245,7 +246,9 @@ async fn http_handler(
 				}
 			}
 		},
-	));
+	)))
+	.into_response()
+	.into_body();
 
 	let response = Response::builder()
 		.header("Content-Type", "text/csv")

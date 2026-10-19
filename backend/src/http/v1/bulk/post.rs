@@ -298,8 +298,8 @@ pub async fn publish_task(
 
 	channel
 		.basic_publish(
-			"",
-			CHECK_EMAIL_QUEUE,
+			"".into(),
+			CHECK_EMAIL_QUEUE.into(),
 			BasicPublishOptions::default(),
 			&payload,
 			properties,

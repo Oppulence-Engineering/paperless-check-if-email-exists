@@ -330,7 +330,7 @@ async fn handle_with_worker(
 	let correlation_id_str = correlation_id.to_string();
 	let reply_queue = match channel
 		.queue_declare(
-			"",
+			"".into(),
 			QueueDeclareOptions {
 				auto_delete: true,
 				durable: false,
@@ -380,8 +380,8 @@ async fn handle_with_worker(
 
 	let mut consumer = channel
 		.basic_consume(
-			reply_queue.name().as_str(),
-			format!("rpc.{}", correlation_id).as_str(),
+			reply_queue.name().clone(),
+			format!("rpc.{}", correlation_id).into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)
