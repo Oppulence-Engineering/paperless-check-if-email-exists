@@ -25,7 +25,7 @@ pub fn verify_signature(secret: &str, payload: &[u8], signature: &str) -> bool {
 }
 
 /// Constant-time byte comparison to prevent timing attacks.
-fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+pub(crate) fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 	if a.len() != b.len() {
 		return false;
 	}

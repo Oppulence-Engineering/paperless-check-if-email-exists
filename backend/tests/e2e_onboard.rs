@@ -31,6 +31,7 @@ mod tests {
 
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "foo@bar",
@@ -78,6 +79,7 @@ mod tests {
 		// Onboard
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "test@bar",
@@ -124,6 +126,7 @@ mod tests {
 
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "a@b",
@@ -147,6 +150,7 @@ mod tests {
 
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "a@b",
@@ -172,6 +176,7 @@ mod tests {
 		// First onboard
 		request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "a@b",
@@ -185,6 +190,7 @@ mod tests {
 		// Second with same slug
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "c@d",
@@ -204,6 +210,7 @@ mod tests {
 		let config = cfg().await;
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "",
@@ -222,6 +229,7 @@ mod tests {
 		let config = cfg().await;
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "a@b",
@@ -240,6 +248,7 @@ mod tests {
 		let config = cfg().await;
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "a@b",
@@ -254,23 +263,38 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
-	async fn test_onboard_no_auth_required() {
-		let _db = TestDb::start().await;
+	async fn test_onboard_rejects_requests_without_platform_secret() {
+		let db = TestDb::start().await;
 		let config = cfg().await;
+		let body = serde_json::json!({
+			"email_to_verify": "noauth@test.com",
+			"tenant_name": "No Auth Co",
+			"contact_email": "na@test.com",
+			"plan_tier": "enterprise"
+		});
 
-		// Onboard should work WITHOUT any auth header
-		let resp = request()
-			.path("/v1/check-email-with-onboard")
-			.method("POST")
-			.json(&serde_json::json!({
-				"email_to_verify": "noauth@test.com",
-				"tenant_name": "No Auth Co",
-				"contact_email": "na@test.com"
-			}))
-			.reply(&create_routes(config))
-			.await;
+		for secret in [None, Some("wrong")] {
+			let mut builder = request()
+				.path("/v1/check-email-with-onboard")
+				.method("POST")
+				.json(&body);
+			if let Some(secret) = secret {
+				builder = builder.header("x-reacher-secret", secret);
+			}
+			let resp = builder.reply(&create_routes(Arc::clone(&config))).await;
+			assert_eq!(
+				resp.status(),
+				StatusCode::UNAUTHORIZED,
+				"secret: {secret:?}"
+			);
+		}
 
-		assert_eq!(resp.status(), StatusCode::CREATED);
+		let tenants: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM tenants WHERE slug = 'no-auth-co'")
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(tenants, 0, "a rejected request must not create a tenant");
 	}
 
 	#[tokio::test]
@@ -281,6 +305,7 @@ mod tests {
 
 		let resp = request()
 			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
 			.method("POST")
 			.json(&serde_json::json!({
 				"email_to_verify": "stored@test.com",

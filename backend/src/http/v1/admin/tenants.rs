@@ -119,6 +119,51 @@ fn row_to_response(row: &sqlx::postgres::PgRow) -> TenantResponse {
 	}
 }
 
+// ── Validation ──────────────────────────────────────
+
+const PLAN_TIERS: [&str; 4] = ["free", "starter", "professional", "enterprise"];
+const TENANT_STATUSES: [&str; 3] = ["active", "suspended", "deactivated"];
+
+fn bad_request(message: impl Into<String>) -> warp::Rejection {
+	ReacherResponseError::new(StatusCode::BAD_REQUEST, message.into()).into()
+}
+
+/// Reject values that the database would refuse with a 500, or that would
+/// break the tenant: a rate limit below 1 blocks every request (and a
+/// negative one wraps to "unlimited" in the throttle), and a retention period
+/// outside the shared range either deletes every result at the next prune or
+/// overflows the prune's date arithmetic for all tenants.
+fn validate_tenant_fields(
+	plan_tier: Option<&str>,
+	status: Option<&str>,
+	rate_limits: [Option<i32>; 4],
+	result_retention_days: Option<i32>,
+) -> Result<(), warp::Rejection> {
+	if let Some(tier) = plan_tier {
+		if !PLAN_TIERS.contains(&tier) {
+			return Err(bad_request(format!(
+				"plan_tier must be one of: {}",
+				PLAN_TIERS.join(", ")
+			)));
+		}
+	}
+	if let Some(status) = status {
+		if !TENANT_STATUSES.contains(&status) {
+			return Err(bad_request(format!(
+				"status must be one of: {}",
+				TENANT_STATUSES.join(", ")
+			)));
+		}
+	}
+	if rate_limits.iter().flatten().any(|limit| *limit < 1) {
+		return Err(bad_request("max_requests_per_* limits must be at least 1"));
+	}
+	if let Some(days) = result_retention_days {
+		crate::http::v1::tenant_settings::validate_result_retention_days(days)?;
+	}
+	Ok(())
+}
+
 // ── Handlers ────────────────────────────────────────
 
 async fn create_handler(
@@ -132,6 +177,17 @@ async fn create_handler(
 		)
 		.into());
 	}
+	validate_tenant_fields(
+		body.plan_tier.as_deref(),
+		None,
+		[
+			body.max_requests_per_second,
+			body.max_requests_per_minute,
+			body.max_requests_per_hour,
+			body.max_requests_per_day,
+		],
+		body.result_retention_days,
+	)?;
 
 	let plan_tier = body.plan_tier.as_deref().unwrap_or("free");
 	let retention = body.result_retention_days.unwrap_or(30);
@@ -182,8 +238,9 @@ async fn list_handler(
 	pg_pool: PgPool,
 	query: ListQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(1, 200);
+	let offset = query.offset.unwrap_or(0).max(0);
+	validate_tenant_fields(None, query.status.as_deref(), [None; 4], None)?;
 
 	let (rows, total) = if let Some(ref status) = query.status {
 		let rows = sqlx::query(
@@ -265,6 +322,18 @@ async fn update_handler(
 		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid tenant ID format")
 	})?;
 
+	validate_tenant_fields(
+		body.plan_tier.as_deref(),
+		body.status.as_deref(),
+		[
+			body.max_requests_per_second,
+			body.max_requests_per_minute,
+			body.max_requests_per_hour,
+			body.max_requests_per_day,
+		],
+		body.result_retention_days,
+	)?;
+
 	// Build dynamic UPDATE query
 	let mut sets: Vec<String> = vec![];
 	let mut param_idx = 2u32; // $1 is tenant_id
@@ -279,6 +348,9 @@ async fn update_handler(
 	}
 	if body.plan_tier.is_some() {
 		sets.push(format!("plan_tier = ${}::plan_tier", param_idx));
+		// An operator's tier is kept when the billing plan later changes
+		// (see migration 20261016000002_plan_from_billing).
+		sets.push("plan_from_billing = false".to_string());
 		param_idx += 1;
 	}
 	if body.status.is_some() {
@@ -390,7 +462,17 @@ async fn delete_handler(id: String, pg_pool: PgPool) -> Result<impl warp::Reply,
 		.bind(tenant_id)
 		.execute(&pg_pool)
 		.await
-		.map_err(ReacherResponseError::from)?;
+		.map_err(|error| match &error {
+			// Jobs, lists and finder jobs reference the tenant without a
+			// cascade, so a tenant that has done work cannot be deleted.
+			sqlx::Error::Database(db_error) if db_error.code().as_deref() == Some("23503") => {
+				ReacherResponseError::new(
+					StatusCode::CONFLICT,
+					"Tenant still owns jobs, lists or other records; deactivate it instead",
+				)
+			}
+			_ => ReacherResponseError::from(error),
+		})?;
 
 	if result.rows_affected() == 0 {
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Tenant not found").into());

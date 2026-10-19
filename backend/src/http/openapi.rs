@@ -712,6 +712,10 @@ mod operation_id_tests {
 			spec["paths"]["/v1/admin/tenants"]["get"]["security"],
 			json!([{ "AdminSecret": [] }])
 		);
+		assert_eq!(
+			spec["paths"]["/v1/check-email-with-onboard"]["post"]["security"],
+			json!([{ "AdminSecret": [] }])
+		);
 		assert_eq!(spec["security"], json!([{ "Authorization": [] }]));
 		assert!(spec["paths"]["/v1/bulk"]["post"]["security"].is_null());
 	}
@@ -791,7 +795,9 @@ mod operation_id_tests {
 				if let Some(operation) = item.get(method) {
 					assert!(
 						operation["responses"]["default"]["description"].is_string(),
-						"{method} {path}"
+						"{} {}",
+						method,
+						path
 					);
 				}
 			}

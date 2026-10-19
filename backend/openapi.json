@@ -7445,8 +7445,12 @@
             "description": "Request error"
           }
         },
-        "security": [],
-        "summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
+        "security": [
+          {
+            "AdminSecret": []
+          }
+        ],
+        "summary": "POST /v1/check-email-with-onboard — Tenant signup + email verification in one call.\nCreates a tenant, generates an API key, verifies the email, and returns all\nthree. It needs the platform `x-reacher-secret`, like the admin API: the\nrequest chooses the plan tier and the returned key has every scope, so an\nopen route would hand out unmetered keys and free SMTP probes.",
         "tags": [
           "v1"
         ]

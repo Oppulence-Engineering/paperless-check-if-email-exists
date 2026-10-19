@@ -230,6 +230,11 @@ async fn update_domain_handler(
 	if let Some(value) = body.domain {
 		let normalized = normalize_domain(value)?;
 		sets.push(format!("domain = ${}", bind_idx));
+		// Verification belongs to the old name; a renamed domain starts
+		// unverified unless this request sets the flag itself.
+		if body.is_verified.is_none() {
+			sets.push("is_verified = false".to_string());
+		}
 		next_domain = Some(normalized);
 		bind_idx += 1;
 	}

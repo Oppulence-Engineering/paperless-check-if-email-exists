@@ -202,9 +202,11 @@ async fn onboard_handler(
 	))
 }
 
-/// POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
-/// No authentication required. Creates a tenant, generates an API key,
-/// verifies the email, and returns all three.
+/// POST /v1/check-email-with-onboard — Tenant signup + email verification in one call.
+/// Creates a tenant, generates an API key, verifies the email, and returns all
+/// three. It needs the platform `x-reacher-secret`, like the admin API: the
+/// request chooses the plan tier and the returned key has every scope, so an
+/// open route would hand out unmetered keys and free SMTP probes.
 #[utoipa::path(
 	post,
 	path = "/v1/check-email-with-onboard",
@@ -218,6 +220,7 @@ pub fn v1_check_email_with_onboard(
 	let config2 = Arc::clone(&config);
 	warp::path!("v1" / "check-email-with-onboard")
 		.and(warp::post())
+		.and(crate::http::check_admin_header(Arc::clone(&config)))
 		.and(warp::any().map(move || Arc::clone(&config2)))
 		.and(with_pg_pool(config))
 		.and(warp::body::json())
