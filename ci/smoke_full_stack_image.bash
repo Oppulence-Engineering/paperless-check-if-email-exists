@@ -60,14 +60,16 @@ done
 
 docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null
 
+# Use TCP. On first start, the image runs a temporary server on the Unix socket
+# only and then restarts it, so a socket check can pass too early.
 for _ in $(seq 1 60); do
-  if docker exec "${POSTGRES_NAME}" pg_isready -U reacher -d reacher >/dev/null 2>&1; then
+  if docker exec "${POSTGRES_NAME}" pg_isready -h 127.0.0.1 -U reacher -d reacher >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
 
-docker exec "${POSTGRES_NAME}" pg_isready -U reacher -d reacher >/dev/null
+docker exec "${POSTGRES_NAME}" pg_isready -h 127.0.0.1 -U reacher -d reacher >/dev/null
 
 echo "Starting full stack"
 docker run -d \
