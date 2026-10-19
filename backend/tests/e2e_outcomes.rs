@@ -924,6 +924,15 @@ async fn test_list_outcomes_filter_by_email() -> Result<()> {
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["total"], 1);
 	assert_eq!(body["outcomes"][0]["email"], "a@example.com");
+
+	// A malformed filter used to be dropped, returning every outcome.
+	let response = request()
+		.method("GET")
+		.path("/v1/campaign-outcomes?email=not-an-email")
+		.header("authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 	Ok(())
 }
 

@@ -1,5 +1,6 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
+use crate::http::shared::paging::clamp_limit;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
@@ -59,7 +60,7 @@ async fn http_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let min_records = query.min_records.unwrap_or(1).max(1);
-	let limit = query.limit.unwrap_or(50).min(200);
+	let limit = clamp_limit(query.limit);
 	let source_key = query
 		.source_key
 		.as_deref()

@@ -63,24 +63,18 @@ async fn http_handler(
 		.map_err(warp::reject::custom)?;
 
 	let status = if all_terminal {
-		"completed".to_string()
+		// sync_finder_results has just stored the final status, which is
+		// failed when any candidate check failed.
+		sqlx::query_scalar::<_, String>("SELECT status::TEXT FROM v1_finder_job WHERE id = $1")
+			.bind(job_id)
+			.fetch_one(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?
 	} else {
 		row.get::<String, _>("status")
 	};
 
-	// Build alternatives: candidates ranked 2nd-5th that scored >= 50
-	let alternatives: Vec<AlternativeContact> = results
-		.iter()
-		.skip(1) // skip best match
-		.filter(|c| c.score >= 50)
-		.take(4)
-		.map(|c| AlternativeContact {
-			email: c.email.clone(),
-			score: c.score,
-			pattern: c.pattern.clone(),
-			confidence: c.confidence.clone(),
-		})
-		.collect();
+	let alternatives = build_alternatives(&results, best_match.as_ref());
 
 	Ok(warp::reply::json(&Response {
 		job_id: row.get("id"),
@@ -93,6 +87,28 @@ async fn http_handler(
 		best_match,
 		alternatives,
 	}))
+}
+
+/// Candidates other than the best match that scored >= 50, at most four.
+/// Results are sorted by score, but a top candidate below the best-match
+/// threshold is not a best match and stays in the list.
+fn build_alternatives(
+	results: &[FinderCandidateResult],
+	best_match: Option<&FinderBestMatch>,
+) -> Vec<AlternativeContact> {
+	let skip = usize::from(best_match.is_some());
+	results
+		.iter()
+		.skip(skip)
+		.filter(|c| c.score >= 50)
+		.take(4)
+		.map(|c| AlternativeContact {
+			email: c.email.clone(),
+			score: c.score,
+			pattern: c.pattern.clone(),
+			confidence: c.confidence.clone(),
+		})
+		.collect()
 }
 
 /// GET /v1/find_email/{job_id}
@@ -112,4 +128,54 @@ pub fn v1_get_find_email(
 		.and(with_worker_db(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn candidate(email: &str, score: i16) -> FinderCandidateResult {
+		FinderCandidateResult {
+			email: email.to_string(),
+			pattern: "first.last".to_string(),
+			score,
+			category: "risky".to_string(),
+			sub_reason: "catch_all".to_string(),
+			is_reachable: "risky".to_string(),
+			confidence: None,
+			result: None,
+		}
+	}
+
+	fn emails(alternatives: &[AlternativeContact]) -> Vec<&str> {
+		alternatives.iter().map(|a| a.email.as_str()).collect()
+	}
+
+	#[test]
+	fn top_candidate_is_an_alternative_when_no_best_match_is_chosen() {
+		// Scores below 70 give no best match, so the top candidate must not be skipped.
+		let results = [
+			candidate("jane.doe@acme.test", 65),
+			candidate("jdoe@acme.test", 55),
+		];
+		assert_eq!(
+			emails(&build_alternatives(&results, None)),
+			["jane.doe@acme.test", "jdoe@acme.test"]
+		);
+
+		let best = FinderBestMatch {
+			email: "jane.doe@acme.test".to_string(),
+			score: 95,
+			confidence: "high".to_string(),
+			pattern: "first.last".to_string(),
+		};
+		let results = [
+			candidate("jane.doe@acme.test", 95),
+			candidate("jdoe@acme.test", 55),
+		];
+		assert_eq!(
+			emails(&build_alternatives(&results, Some(&best))),
+			["jdoe@acme.test"]
+		);
+	}
 }

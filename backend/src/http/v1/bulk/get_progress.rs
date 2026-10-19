@@ -5,7 +5,7 @@ use std::sync::Arc;
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use warp::http::StatusCode;
 use warp::Filter;
 
@@ -64,42 +64,41 @@ async fn http_handler(
 		job_id,
 		tenant_ctx.tenant_id,
 	)
-	.fetch_one(&conn_pool)
+	.fetch_optional(&conn_pool)
 	.await
-	.map_err(|e| ReacherResponseError::new(StatusCode::BAD_REQUEST, e))?;
+	.map_err(ReacherResponseError::from)?
+	.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found"))?;
 
-	let agg_info = sqlx::query!(
+	// Every terminal state counts as processed. Cancelled tasks carry neither a
+	// result nor an error, so counting by those columns left cancelled jobs
+	// running forever.
+	let agg_info = sqlx::query(
 		r#"
 		SELECT
-			COUNT(*) as total_processed,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'safe' THEN 1 END) as safe_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'risky' THEN 1 END) as risky_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'invalid' THEN 1 END) as invalid_count,
-			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) as unknown_count,
-			(SELECT created_at FROM v1_task_result WHERE job_id = $1 ORDER BY created_at DESC LIMIT 1) as finished_at
+			COUNT(*) AS total_processed,
+			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'safe' THEN 1 END) AS safe_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'risky' THEN 1 END) AS risky_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'invalid' THEN 1 END) AS invalid_count,
+			COUNT(CASE WHEN result ->> 'is_reachable' LIKE 'unknown' THEN 1 END) AS unknown_count,
+			-- Rows written before completed_at existed only have created_at.
+			MAX(COALESCE(completed_at, created_at)) AS finished_at
 		FROM v1_task_result
-		WHERE job_id = $1 AND (result IS NOT NULL OR error IS NOT NULL)
+		WHERE job_id = $1 AND task_state NOT IN ('queued', 'running', 'retrying')
 		"#,
-		job_id
 	)
+	.bind(job_id)
 	.fetch_one(&conn_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	let (job_status, finished_at) = if (agg_info
-		.total_processed
-		.expect("sql COUNT() returns an int. qed.") as i32)
-		< job_rec.total_records
-	{
+	let total_processed = agg_info.get::<i64, _>("total_processed") as i32;
+	let (job_status, finished_at) = if total_processed < job_rec.total_records {
 		(ValidStatus::Running, None)
 	} else {
+		// NULL for a job with no tasks.
 		(
 			ValidStatus::Completed,
-			Some(
-				agg_info
-					.finished_at
-					.expect("always at least one task in the job. qed."),
-			),
+			agg_info.get::<Option<DateTime<Utc>>, _>("finished_at"),
 		)
 	};
 
@@ -108,20 +107,12 @@ async fn http_handler(
 		created_at: job_rec.created_at,
 		finished_at,
 		total_records: job_rec.total_records,
-		total_processed: agg_info
-			.total_processed
-			.expect("sql COUNT returns an int. qed.") as i32,
+		total_processed,
 		summary: ResponseSummary {
-			total_safe: agg_info.safe_count.expect("sql COUNT returns an int. qed.") as i32,
-			total_risky: agg_info
-				.risky_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-			total_invalid: agg_info
-				.invalid_count
-				.expect("sql COUNT returns an int. qed.") as i32,
-			total_unknown: agg_info
-				.unknown_count
-				.expect("sql COUNT returns an int. qed.") as i32,
+			total_safe: agg_info.get::<i64, _>("safe_count") as i32,
+			total_risky: agg_info.get::<i64, _>("risky_count") as i32,
+			total_invalid: agg_info.get::<i64, _>("invalid_count") as i32,
+			total_unknown: agg_info.get::<i64, _>("unknown_count") as i32,
 		},
 		job_status,
 	}))

@@ -250,18 +250,31 @@ mod tests {
 			.await;
 		}
 
-		let resp = request()
-			.path(&format!("/v1/jobs/{}/results?limit=2", job_id))
-			.method("GET")
-			.header(REACHER_SECRET_HEADER, "test")
-			.reply(&create_routes(config))
-			.await;
+		let routes = create_routes(config);
+		let page = |query: &str| {
+			request()
+				.path(&format!("/v1/jobs/{}/results?{}", job_id, query))
+				.method("GET")
+				.header(REACHER_SECRET_HEADER, "test")
+				.reply(&routes)
+		};
 
+		let resp = page("limit=2").await;
 		assert_eq!(resp.status(), StatusCode::OK);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		assert_eq!(body["results"].as_array().unwrap().len(), 2);
 		assert_eq!(body["has_more"], true);
 		assert!(body["next_cursor"].is_number());
+
+		// A page that reports more rows must also return a cursor to reach them.
+		for limit in ["0", "-5"] {
+			let resp = page(&format!("limit={}", limit)).await;
+			assert_eq!(resp.status(), StatusCode::OK, "limit={}", limit);
+			let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+			assert_eq!(body["results"].as_array().unwrap().len(), 1);
+			assert!(body["next_cursor"].is_number(), "limit={}", limit);
+		}
+		assert_eq!(page("state=done").await.status(), StatusCode::BAD_REQUEST);
 	}
 
 	// ── v1/bulk/get_progress ────────────────────────────
@@ -296,7 +309,7 @@ mod tests {
 			.path(&format!("/v1/bulk/{}", job_id))
 			.method("GET")
 			.header(REACHER_SECRET_HEADER, "test")
-			.reply(&create_routes(config))
+			.reply(&create_routes(Arc::clone(&config)))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK);
@@ -304,6 +317,45 @@ mod tests {
 		assert_eq!(body["total_records"], 3);
 		assert_eq!(body["total_processed"], 2);
 		assert_eq!(body["job_status"], "Running");
+
+		let routes = create_routes(Arc::clone(&config));
+		let progress = |job_id: i32| {
+			request()
+				.path(&format!("/v1/bulk/{}", job_id))
+				.method("GET")
+				.header(REACHER_SECRET_HEADER, "test")
+				.reply(&routes)
+		};
+
+		// Cancelled tasks have neither result nor error but are finished.
+		let cancelled_job = insert_job(db.pool(), None, 2, "cancelled").await;
+		insert_task(
+			db.pool(),
+			cancelled_job,
+			"completed",
+			None,
+			Some(safe_result()),
+			None,
+		)
+		.await;
+		insert_task(db.pool(), cancelled_job, "cancelled", None, None, None).await;
+		let body: serde_json::Value =
+			serde_json::from_slice(progress(cancelled_job).await.body()).unwrap();
+		assert_eq!(body["total_processed"], 2);
+		assert_eq!(body["job_status"], "Completed");
+		assert!(body["finished_at"].is_string());
+
+		// A job with no tasks used to panic on the missing finish time.
+		let empty_job = insert_job(db.pool(), None, 0, "completed").await;
+		let resp = progress(empty_job).await;
+		assert_eq!(resp.status(), StatusCode::OK);
+		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+		assert_eq!(body["job_status"], "Completed");
+
+		assert_eq!(
+			progress(empty_job + 1_000_000).await.status(),
+			StatusCode::NOT_FOUND
+		);
 	}
 
 	// ── v1/bulk/get_results ─────────────────────────────
@@ -313,7 +365,17 @@ mod tests {
 	async fn test_v1_bulk_results_completed_job() {
 		let db = TestDb::start().await;
 		let config = pseudo_worker_config(db.db_url()).await;
-		let job_id = insert_job(db.pool(), None, 2, "completed").await;
+		let job_id = insert_job(db.pool(), None, 3, "completed").await;
+		// A failed task has no result; reading it used to panic the handler.
+		insert_task(
+			db.pool(),
+			job_id,
+			"failed",
+			None,
+			None,
+			Some("smtp timeout"),
+		)
+		.await;
 		insert_task(
 			db.pool(),
 			job_id,
@@ -333,16 +395,25 @@ mod tests {
 		)
 		.await;
 
+		let routes = create_routes(config);
 		let resp = request()
 			.path(&format!("/v1/bulk/{}/results", job_id))
 			.method("GET")
 			.header(REACHER_SECRET_HEADER, "test")
-			.reply(&create_routes(config))
+			.reply(&routes)
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::OK);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		assert_eq!(body["results"].as_array().unwrap().len(), 2);
+
+		let missing = request()
+			.path(&format!("/v1/bulk/{}/results", job_id + 1_000_000))
+			.method("GET")
+			.header(REACHER_SECRET_HEADER, "test")
+			.reply(&routes)
+			.await;
+		assert_eq!(missing.status(), StatusCode::NOT_FOUND);
 	}
 
 	#[tokio::test]
