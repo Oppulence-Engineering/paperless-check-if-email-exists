@@ -16,7 +16,9 @@
 
 use crate::config::BackendConfig;
 use crate::http::v1::bulk::post::publish_task;
-use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata};
+use crate::worker::do_work::{
+	sync_task_entities, CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata,
+};
 use check_if_email_exists::LOG_TARGET;
 use chrono::{Duration as ChronoDuration, Utc};
 use lapin::{BasicProperties, Channel};
@@ -104,15 +106,19 @@ pub async fn cleanup_terminal_rechecks(
 	Ok(deleted)
 }
 
+/// Schedules another verification of a task whose result was Unknown, and
+/// moves the task back to 'retrying' so its job, list and pipeline run stay
+/// open until the recheck has run. Returns whether the task is now waiting
+/// on the recheck.
 pub async fn schedule_delayed_recheck(
 	task: &CheckEmailTask,
 	config: Arc<BackendConfig>,
 	task_db_id: i32,
 	retry_count: i32,
 	retry_policy: &RetryPolicy,
-) {
+) -> bool {
 	let CheckEmailJobId::Bulk(job_id) = task.job_id else {
-		return;
+		return false;
 	};
 	let Some(pg_pool) = config.get_pg_pool() else {
 		warn!(
@@ -120,7 +126,7 @@ pub async fn schedule_delayed_recheck(
 			task_id = task_db_id,
 			"Cannot schedule delayed recheck without Postgres"
 		);
-		return;
+		return false;
 	};
 
 	if let Err(error) =
@@ -177,11 +183,14 @@ pub async fn schedule_delayed_recheck(
 				error = ?error,
 				"Failed to serialize delayed recheck task"
 			);
-			return;
+			return false;
 		}
 	};
 
-	let schedule_result = sqlx::query(
+	// One statement, so the task never waits on a recheck row that was not
+	// written. Data-modifying CTEs all run even though only the last one's
+	// rows are returned.
+	let schedule_result = sqlx::query_scalar::<_, i32>(
 		r#"
 		WITH updated AS (
 			UPDATE verification_delayed_rechecks
@@ -198,11 +207,20 @@ pub async fn schedule_delayed_recheck(
 			WHERE task_result_id = $1 AND status = 'scheduled'
 			RETURNING id
 		)
-		INSERT INTO verification_delayed_rechecks (
-			task_result_id, job_id, tenant_id, task, retry_count, run_at
+		, inserted AS (
+			INSERT INTO verification_delayed_rechecks (
+				task_result_id, job_id, tenant_id, task, retry_count, run_at
+			)
+			SELECT $1, $2, $3, $4, $5, $6
+			WHERE NOT EXISTS (SELECT 1 FROM updated)
+			RETURNING id
 		)
-		SELECT $1, $2, $3, $4, $5, $6
-		WHERE NOT EXISTS (SELECT 1 FROM updated)
+		UPDATE v1_task_result
+		SET task_state = 'retrying'::task_state, updated_at = NOW()
+		WHERE id = $1
+			AND task_state = 'completed'::task_state
+			AND result IS NOT NULL
+		RETURNING id
 		"#,
 	)
 	.bind(task_db_id)
@@ -211,30 +229,33 @@ pub async fn schedule_delayed_recheck(
 	.bind(task_json)
 	.bind(retry_count)
 	.bind(run_at)
-	.execute(&pg_pool)
+	.fetch_optional(&pg_pool)
 	.await;
 
-	if let Err(error) = schedule_result {
-		warn!(
-			target: LOG_TARGET,
-			task_id = task_db_id,
-			error = ?error,
-			"Failed to persist delayed recheck task"
-		);
-		record_job_event(
-			&pg_pool,
-			&config,
-			job_id,
-			Some(task_db_id),
-			"task.delayed_recheck_failed",
-			Some(serde_json::json!({
-				"retry_count": retry_count,
-				"reason": "schedule_persistence_failed"
-			})),
-		)
-		.await;
-		return;
-	}
+	let awaiting_recheck = match schedule_result {
+		Ok(task_row) => task_row.is_some(),
+		Err(error) => {
+			warn!(
+				target: LOG_TARGET,
+				task_id = task_db_id,
+				error = ?error,
+				"Failed to persist delayed recheck task"
+			);
+			record_job_event(
+				&pg_pool,
+				&config,
+				job_id,
+				Some(task_db_id),
+				"task.delayed_recheck_failed",
+				Some(serde_json::json!({
+					"retry_count": retry_count,
+					"reason": "schedule_persistence_failed"
+				})),
+			)
+			.await;
+			return false;
+		}
+	};
 
 	record_job_event(
 		&pg_pool,
@@ -258,6 +279,7 @@ pub async fn schedule_delayed_recheck(
 		})),
 	)
 	.await;
+	awaiting_recheck
 }
 
 pub async fn run_delayed_recheck_cycle(
@@ -421,6 +443,8 @@ async fn publish_claimed_recheck(
 				})),
 			)
 			.await;
+			release_task_awaiting_recheck(config, pg_pool, recheck.task_result_id, recheck.job_id)
+				.await;
 			return;
 		}
 	};
@@ -507,6 +531,8 @@ async fn reschedule_or_fail_publish(
 			})),
 		)
 		.await;
+		release_task_awaiting_recheck(config, pg_pool, recheck.task_result_id, recheck.job_id)
+			.await;
 		return;
 	}
 
@@ -536,6 +562,68 @@ async fn reschedule_or_fail_publish(
 			"Failed to reschedule delayed recheck publish attempt"
 		);
 	}
+}
+
+/// A recheck that will never run leaves its task with the earlier result:
+/// the task goes back to 'completed' (unless another recheck for it is still
+/// pending) and its job, list and pipeline run are finalized if it was the
+/// last thing they waited on.
+async fn release_task_awaiting_recheck(
+	config: &BackendConfig,
+	pg_pool: &PgPool,
+	task_result_id: i32,
+	job_id: i32,
+) {
+	let released = sqlx::query(
+		r#"
+		UPDATE v1_task_result t
+		SET task_state = 'completed'::task_state, updated_at = NOW()
+		WHERE t.id = $1
+			AND t.task_state = 'retrying'::task_state
+			AND t.result IS NOT NULL
+			AND NOT EXISTS (
+				SELECT 1 FROM verification_delayed_rechecks r
+				WHERE r.task_result_id = t.id AND r.status IN ('scheduled', 'publishing')
+			)
+		"#,
+	)
+	.bind(task_result_id)
+	.execute(pg_pool)
+	.await;
+	match released {
+		Ok(_) => sync_task_entities(config, Some(task_result_id), Some(job_id)).await,
+		Err(error) => warn!(
+			target: LOG_TARGET,
+			task_id = task_result_id,
+			error = ?error,
+			"Failed to release task after its delayed recheck failed"
+		),
+	}
+}
+
+/// With delayed rechecks turned off nothing will ever publish the pending
+/// ones, and their tasks would hold their jobs open forever. Cancels them
+/// and releases the tasks with the results they already have.
+pub async fn release_pending_rechecks(
+	config: &BackendConfig,
+	pg_pool: &PgPool,
+) -> Result<usize, anyhow::Error> {
+	let pending: Vec<(i32, i32)> = sqlx::query_as(
+		r#"
+		UPDATE verification_delayed_rechecks
+		SET status = 'cancelled',
+			last_error = 'delayed recheck disabled',
+			updated_at = NOW()
+		WHERE status IN ('scheduled', 'publishing')
+		RETURNING task_result_id, job_id
+		"#,
+	)
+	.fetch_all(pg_pool)
+	.await?;
+	for (task_result_id, job_id) in &pending {
+		release_task_awaiting_recheck(config, pg_pool, *task_result_id, *job_id).await;
+	}
+	Ok(pending.len())
 }
 
 async fn mark_recheck_failed(pg_pool: &PgPool, recheck_id: i64, reason: &str) {

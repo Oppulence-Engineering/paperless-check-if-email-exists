@@ -2329,7 +2329,8 @@ async fn settle_list_without_outstanding_rows(
 		WITH tally AS (
 			SELECT
 				COUNT(*) FILTER (
-					WHERE result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled'::task_state
+					WHERE (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled'::task_state)
+						AND task_state NOT IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
 				) AS processed,
 				COUNT(*) FILTER (
 					WHERE task_state IN ('failed'::task_state, 'dead_lettered'::task_state)

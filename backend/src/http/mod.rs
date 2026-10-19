@@ -68,6 +68,24 @@ pub async fn run_warp_server(
 				target: check_if_email_exists::LOG_TARGET,
 				"Delayed recheck is enabled but worker mode is disabled. Scheduler will not start."
 			);
+		} else if config.worker.enable {
+			let config = Arc::clone(&config);
+			let pool = pool.clone();
+			tokio::spawn(async move {
+				match crate::delayed_recheck::release_pending_rechecks(&config, &pool).await {
+					Ok(0) => {}
+					Ok(released) => tracing::info!(
+						target: check_if_email_exists::LOG_TARGET,
+						released,
+						"Delayed recheck is disabled; released tasks that were waiting on one"
+					),
+					Err(error) => tracing::warn!(
+						target: check_if_email_exists::LOG_TARGET,
+						error = ?error,
+						"Failed to release pending delayed rechecks"
+					),
+				}
+			});
 		}
 
 		if config.reverification.enable && config.worker.enable {

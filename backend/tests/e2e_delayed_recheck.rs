@@ -10,8 +10,8 @@ use reacher_backend::config::{
 	WorkerConfig,
 };
 use reacher_backend::delayed_recheck::{
-	cleanup_terminal_rechecks, delayed_recheck_delay_seconds, run_delayed_recheck_cycle,
-	schedule_delayed_recheck,
+	cleanup_terminal_rechecks, delayed_recheck_delay_seconds, release_pending_rechecks,
+	run_delayed_recheck_cycle, schedule_delayed_recheck,
 };
 use reacher_backend::http::create_routes;
 use reacher_backend::worker::do_work::{
@@ -180,6 +180,22 @@ async fn count_events(pool: &sqlx::PgPool, job_id: i32, event_type: &str) -> i64
 	.expect("count events")
 }
 
+async fn fetch_task_state(pool: &sqlx::PgPool, task_id: i32) -> String {
+	sqlx::query_scalar("SELECT task_state::TEXT FROM v1_task_result WHERE id = $1")
+		.bind(task_id)
+		.fetch_one(pool)
+		.await
+		.expect("fetch task state")
+}
+
+async fn fetch_job_status(pool: &sqlx::PgPool, job_id: i32) -> String {
+	sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+		.bind(job_id)
+		.fetch_one(pool)
+		.await
+		.expect("fetch job status")
+}
+
 async fn count_recheck_rows(pool: &sqlx::PgPool, task_result_id: i32) -> i64 {
 	sqlx::query_scalar::<_, i64>(
 		"SELECT COUNT(*) FROM verification_delayed_rechecks WHERE task_result_id = $1",
@@ -200,11 +216,20 @@ async fn test_schedule_delayed_recheck_creates_scheduled_row() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "schedule-create", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
-	let task_id = insert_task(db.pool(), job_id, "running", Some(tenant_id), None, None).await;
+	// What the first pass stored.
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"completed",
+		Some(tenant_id),
+		Some(serde_json::json!({"is_reachable": "unknown"})),
+		None,
+	)
+	.await;
 	let config = worker_config(true).await;
 
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
-	schedule_delayed_recheck(
+	let awaiting = schedule_delayed_recheck(
 		&task,
 		Arc::clone(&config),
 		task_id,
@@ -212,6 +237,10 @@ async fn test_schedule_delayed_recheck_creates_scheduled_row() -> Result<()> {
 		&RetryPolicy::default(),
 	)
 	.await;
+
+	// The task waits on the recheck, so its job is not finished yet.
+	assert!(awaiting);
+	assert_eq!(fetch_task_state(db.pool(), task_id).await, "retrying");
 
 	let row = sqlx::query(
 		"SELECT status::TEXT as s, retry_count, publish_attempts, EXTRACT(EPOCH FROM (run_at - NOW()))::BIGINT as delta FROM verification_delayed_rechecks WHERE task_result_id = $1",
@@ -478,7 +507,16 @@ async fn test_scheduler_handles_invalid_task_payload() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "scheduler-invalid", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
-	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
+	let earlier_result = serde_json::json!({"is_reachable": "unknown"});
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"retrying",
+		Some(tenant_id),
+		Some(earlier_result.clone()),
+		None,
+	)
+	.await;
 	let config = worker_config(true).await;
 	let recheck_id = sqlx::query_scalar::<_, i64>(
 		r#"
@@ -501,6 +539,16 @@ async fn test_scheduler_handles_invalid_task_payload() -> Result<()> {
 		count_events(db.pool(), job_id, "task.delayed_recheck_failed").await,
 		1
 	);
+	// The recheck will never run: the task keeps its earlier result and the
+	// job, which only waited on it, finishes.
+	assert_eq!(fetch_task_state(db.pool(), task_id).await, "completed");
+	let result: Option<serde_json::Value> =
+		sqlx::query_scalar("SELECT result FROM v1_task_result WHERE id = $1")
+			.bind(task_id)
+			.fetch_one(db.pool())
+			.await?;
+	assert_eq!(result, Some(earlier_result));
+	assert_eq!(fetch_job_status(db.pool(), job_id).await, "completed");
 	Ok(())
 }
 
@@ -831,9 +879,19 @@ async fn test_cancel_job_cancels_scheduled_rechecks() -> Result<()> {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "cancel-rechecks", Some(1000), 0).await;
 	let (api_key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["bulk"]).await;
-	let job_id = insert_job(db.pool(), Some(tenant_id), 2, "running").await;
-	let task_a = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
+	let job_id = insert_job(db.pool(), Some(tenant_id), 3, "running").await;
+	// Waiting on a delayed recheck, with the first pass's result.
+	let task_a = insert_task(
+		db.pool(),
+		job_id,
+		"retrying",
+		Some(tenant_id),
+		Some(serde_json::json!({"is_reachable": "unknown"})),
+		None,
+	)
+	.await;
 	let task_b = insert_task(db.pool(), job_id, "running", Some(tenant_id), None, None).await;
+	let task_c = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
 
 	let scheduled_id = insert_recheck_row(
 		db.pool(),
@@ -877,6 +935,9 @@ async fn test_cancel_job_cancels_scheduled_rechecks() -> Result<()> {
 		assert_eq!(status, "cancelled", "row {id} should be cancelled");
 		assert_eq!(last_error.as_deref(), Some("job cancelled"));
 	}
+	// Only work that had not produced a result is cancelled.
+	assert_eq!(fetch_task_state(db.pool(), task_a).await, "completed");
+	assert_eq!(fetch_task_state(db.pool(), task_c).await, "cancelled");
 	Ok(())
 }
 
@@ -1013,11 +1074,19 @@ async fn test_disabled_config_skips_scheduling() -> Result<()> {
 
 #[tokio::test]
 #[serial]
-async fn test_disabled_config_still_runs_cycle_safely() -> Result<()> {
+async fn test_disabled_config_releases_tasks_waiting_on_rechecks() -> Result<()> {
 	let db = TestDb::start().await;
-	let tenant_id = insert_tenant(db.pool(), "disabled-cycle-safe", Some(1000), 0).await;
+	let tenant_id = insert_tenant(db.pool(), "disabled-release", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
-	let task_id = insert_task(db.pool(), job_id, "queued", Some(tenant_id), None, None).await;
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"retrying",
+		Some(tenant_id),
+		Some(serde_json::json!({"is_reachable": "unknown"})),
+		None,
+	)
+	.await;
 	let config = worker_config(false).await;
 	let recheck_id = insert_recheck_row(
 		db.pool(),
@@ -1025,24 +1094,17 @@ async fn test_disabled_config_still_runs_cycle_safely() -> Result<()> {
 		job_id,
 		Some(tenant_id),
 		"scheduled",
-		-10,
+		600,
 		0,
 	)
 	.await;
 
-	// Even though enable=false, if a row is in the table the cycle runs (the gate is
-	// only at spawn time + worker schedule time). Verify it doesn't panic and either
-	// publishes or leaves alone safely.
-	let _ = run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await;
-	let status = fetch_recheck_status(db.pool(), recheck_id).await;
-	assert!(
-		matches!(
-			status.as_str(),
-			"scheduled" | "publishing" | "published" | "failed"
-		),
-		"unexpected status {}",
-		status
-	);
+	// Nothing will publish the recheck once the feature is off, so the job
+	// would otherwise never finish.
+	assert_eq!(release_pending_rechecks(&config, db.pool()).await?, 1);
+	assert_eq!(fetch_recheck_status(db.pool(), recheck_id).await, "cancelled");
+	assert_eq!(fetch_task_state(db.pool(), task_id).await, "completed");
+	assert_eq!(fetch_job_status(db.pool(), job_id).await, "completed");
 	Ok(())
 }
 

@@ -73,16 +73,28 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Cancel all queued/retrying tasks
-	let result = sqlx::query(
-		"UPDATE v1_task_result SET task_state = 'cancelled'::task_state, updated_at = NOW(), completed_at = NOW() WHERE job_id = $1 AND task_state IN ('queued', 'retrying')"
+	// Cancel all queued/retrying tasks. One that already has a result is
+	// waiting on a delayed recheck (cancelled below), so it keeps that result
+	// as completed rather than losing it.
+	let cancelled_flags: Vec<bool> = sqlx::query_scalar(
+		r#"
+		UPDATE v1_task_result
+		SET task_state = CASE WHEN result IS NOT NULL THEN 'completed'::task_state ELSE 'cancelled'::task_state END,
+			completed_at = CASE WHEN result IS NOT NULL THEN completed_at ELSE NOW() END,
+			updated_at = NOW()
+		WHERE job_id = $1 AND task_state IN ('queued', 'retrying')
+		RETURNING result IS NULL
+		"#,
 	)
 	.bind(job_id)
-	.execute(&mut *tx)
+	.fetch_all(&mut *tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	let tasks_cancelled = result.rows_affected() as i64;
+	let tasks_cancelled = cancelled_flags
+		.iter()
+		.filter(|cancelled| **cancelled)
+		.count() as i64;
 
 	// Cancel any in-flight delayed rechecks for this job so the scheduler
 	// won't republish them after cancellation.

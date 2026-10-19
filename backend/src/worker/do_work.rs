@@ -455,6 +455,23 @@ pub async fn do_check_email_work(
 				.await;
 		}
 
+		// Right after storing, before anything slow: the recheck turns the
+		// task back to 'retrying', and until then a sibling task finishing
+		// would see this one as done and finalize the job without it.
+		let awaiting_recheck = match task_db_id {
+			Some(id) if should_schedule_delayed_recheck => {
+				crate::delayed_recheck::schedule_delayed_recheck(
+					task,
+					Arc::clone(&config),
+					id,
+					delayed_recheck_count,
+					&retry_policy,
+				)
+				.await
+			}
+			_ => false,
+		};
+
 		// Before the ack, so a worker crash mid-delivery redelivers the task
 		// rather than silently dropping the webhook.
 		if let Ok(success) = &worker_output {
@@ -467,7 +484,9 @@ pub async fn do_check_email_work(
 		delivery.ack(BasicAckOptions::default()).await?;
 
 		if let Some(id) = task_db_id {
-			update_task_state(&config, id, "completed", None).await;
+			if !awaiting_recheck {
+				update_task_state(&config, id, "completed", None).await;
+			}
 
 			// Update completed_at
 			if let Some(pool) = config.get_pg_pool() {
@@ -542,19 +561,6 @@ pub async fn do_check_email_work(
 			job_id=?task.job_id,
 			"Done check",
 		);
-
-		if should_schedule_delayed_recheck {
-			if let Some(id) = task_db_id {
-				crate::delayed_recheck::schedule_delayed_recheck(
-					task,
-					Arc::clone(&config),
-					id,
-					delayed_recheck_count,
-					&retry_policy,
-				)
-				.await;
-			}
-		}
 	}
 
 	Ok(())
@@ -873,15 +879,29 @@ async fn delivery_finalize(
 /// Finalize whatever the task belongs to (finder job, duplicate rows, list,
 /// bulk job, pipeline run) once its row has reached a terminal state.
 pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
+	let task_db_id = task
+		.metadata
+		.as_ref()
+		.and_then(|metadata| metadata.task_db_id);
+	let bulk_job_id = match task.job_id {
+		CheckEmailJobId::Bulk(job_id) => Some(job_id),
+		CheckEmailJobId::SingleShot => None,
+	};
+	sync_task_entities(config, task_db_id, bulk_job_id).await;
+}
+
+/// [`sync_related_entities`] for callers that only have the task row's id
+/// and its bulk job id, such as the delayed recheck scheduler.
+pub(crate) async fn sync_task_entities(
+	config: &BackendConfig,
+	task_db_id: Option<i32>,
+	bulk_job_id: Option<i32>,
+) {
 	let Some(pool) = config.get_pg_pool() else {
 		return;
 	};
 
-	if let Some(task_db_id) = task
-		.metadata
-		.as_ref()
-		.and_then(|metadata| metadata.task_db_id)
-	{
+	if let Some(task_db_id) = task_db_id {
 		if let Ok(rows) =
 			sqlx::query("SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1")
 				.bind(task_db_id)
@@ -945,9 +965,11 @@ pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEm
 						.ok()
 						.flatten()
 						.unwrap_or_default();
-				// Count rows with results, errors, or cancelled state as terminal
+				// Count rows with results, errors, or cancelled state as
+				// terminal. A row being rechecked already holds a result but
+				// is not done yet.
 				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')",
+					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled') AND task_state NOT IN ('queued', 'running', 'retrying')",
 				)
 				.bind(list_id)
 				.fetch_one(&pool)
@@ -974,7 +996,7 @@ pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEm
 		}
 	}
 
-	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+	if let Some(job_id) = bulk_job_id {
 		let status = sqlx::query_scalar::<_, Option<String>>(
 			"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
 		)
