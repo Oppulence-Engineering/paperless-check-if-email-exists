@@ -95,14 +95,15 @@ async fn connect_to_smtp_host(
 			// port 25) otherwise holds this worker slot for the kernel's ~2
 			// minute connect timeout. Failing here as an I/O error also tells
 			// callers that no SMTP conversation took place.
-			let tcp_stream = tokio::time::timeout(SMTP_CONNECT_TIMEOUT, TcpStream::connect(&address))
-				.await
-				.map_err(|_| {
-					std::io::Error::new(
-						std::io::ErrorKind::TimedOut,
-						format!("connecting to {address} timed out"),
-					)
-				})??;
+			let tcp_stream =
+				tokio::time::timeout(SMTP_CONNECT_TIMEOUT, TcpStream::connect(&address))
+					.await
+					.map_err(|_| {
+						std::io::Error::new(
+							std::io::ErrorKind::TimedOut,
+							format!("connecting to {address} timed out"),
+						)
+					})??;
 			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
 		}
 	};

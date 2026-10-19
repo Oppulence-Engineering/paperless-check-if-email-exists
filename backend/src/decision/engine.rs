@@ -287,8 +287,14 @@ mod tests {
 		risky.category = EmailCategory::Risky;
 		risky.safe_to_send = false;
 		for (category, action) in [
-			(BounceRiskCategory::Low, BounceRecommendedAction::SendWithCaution),
-			(BounceRiskCategory::Medium, BounceRecommendedAction::VerifyManually),
+			(
+				BounceRiskCategory::Low,
+				BounceRecommendedAction::SendWithCaution,
+			),
+			(
+				BounceRiskCategory::Medium,
+				BounceRecommendedAction::VerifyManually,
+			),
 		] {
 			let risk = bounce_risk(category, action);
 			let input = DecisionInput {

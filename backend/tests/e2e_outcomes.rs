@@ -1,8 +1,8 @@
 mod test_helpers;
 
 use crate::test_helpers::{
-	ensure_test_amqp_url, insert_api_key_with_scopes, insert_job, insert_scored_task, insert_tenant,
-	test_db_url, TestDb,
+	ensure_test_amqp_url, insert_api_key_with_scopes, insert_job, insert_scored_task,
+	insert_tenant, test_db_url, TestDb,
 };
 use anyhow::Result;
 use chrono::{Duration as ChronoDuration, Utc};
@@ -652,7 +652,8 @@ async fn test_single_check_reads_suppressions_and_ignores_unverified_history() -
 		extra: None,
 	}));
 	config.bounce_risk.enabled = true;
-	config.bounce_risk.config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/bounce_risk.toml").into();
+	config.bounce_risk.config_path =
+		concat!(env!("CARGO_MANIFEST_DIR"), "/bounce_risk.toml").into();
 	config.connect().await?;
 
 	let pool = db.pool();
@@ -660,25 +661,49 @@ async fn test_single_check_reads_suppressions_and_ignores_unverified_history() -
 	let email = "jane.doe@example.com";
 	let output = reacher_backend::sandbox::sandbox_check(email);
 
-	let first = prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false)
-		.await?;
+	let first =
+		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
 	assert_eq!(first.score.score, 100);
 
 	// One failed check and one that could not reach the mail server.
 	let job_id = insert_job(pool, Some(tenant_id), 2, "completed").await;
 	insert_scored_task(
-		pool, job_id, Some(tenant_id), email, None, None, "failed", None, None, None, None,
-		None, Some(email), false,
+		pool,
+		job_id,
+		Some(tenant_id),
+		email,
+		None,
+		None,
+		"failed",
+		None,
+		None,
+		None,
+		None,
+		None,
+		Some(email),
+		false,
 	)
 	.await;
 	insert_scored_task(
-		pool, job_id, Some(tenant_id), email, None, Some(json!({"input": email})), "completed",
-		Some(33), Some("unknown"), Some("unknown"), Some(false), None, Some(email), false,
+		pool,
+		job_id,
+		Some(tenant_id),
+		email,
+		None,
+		Some(json!({"input": email})),
+		"completed",
+		Some(33),
+		Some("unknown"),
+		Some("unknown"),
+		Some(false),
+		None,
+		Some(email),
+		false,
 	)
 	.await;
 
-	let recheck = prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false)
-		.await?;
+	let recheck =
+		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
 	assert_eq!(recheck.score.score, first.score.score);
 	assert!(!recheck
 		.score
@@ -686,9 +711,15 @@ async fn test_single_check_reads_suppressions_and_ignores_unverified_history() -
 		.contains(&"tenant_history_inconsistent".to_string()));
 	let signals = recheck.bounce_risk_signals.expect("bounce risk is enabled");
 	assert!(signals["result_consistency"].is_null(), "{}", signals);
-	assert!(signals["days_since_last_verification"].is_null(), "{}", signals);
+	assert!(
+		signals["days_since_last_verification"].is_null(),
+		"{}",
+		signals
+	);
 	assert_eq!(
-		recheck.recommendation.map(|recommendation| recommendation.action),
+		recheck
+			.recommendation
+			.map(|recommendation| recommendation.action),
 		Some(RecommendedAction::Send)
 	);
 
@@ -702,7 +733,9 @@ async fn test_single_check_reads_suppressions_and_ignores_unverified_history() -
 	let suppressed =
 		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
 	assert_eq!(
-		suppressed.recommendation.map(|recommendation| recommendation.action),
+		suppressed
+			.recommendation
+			.map(|recommendation| recommendation.action),
 		Some(RecommendedAction::Drop)
 	);
 	Ok(())

@@ -44,8 +44,10 @@ fn is_public_domain(name: &str) -> bool {
 		return false;
 	};
 	!tld.is_empty()
-		&& !matches!(tld, "localhost" | "local" | "internal" | "lan" | "test" | "invalid")
-		&& name.split('.').all(|label| !label.is_empty())
+		&& !matches!(
+			tld,
+			"localhost" | "local" | "internal" | "lan" | "test" | "invalid"
+		) && name.split('.').all(|label| !label.is_empty())
 }
 
 /// Logs SMTP identity problems and, when no proxy is configured, whether this

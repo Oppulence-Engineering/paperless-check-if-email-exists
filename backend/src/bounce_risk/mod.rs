@@ -865,7 +865,12 @@ fn compute_assessment(
 		return BounceRiskAssessment {
 			score,
 			category,
-			confidence: compute_confidence(signals, &model.confidence_weights, true, verdict_present),
+			confidence: compute_confidence(
+				signals,
+				&model.confidence_weights,
+				true,
+				verdict_present,
+			),
 			action,
 			model_version: model.model_version.clone(),
 			scored_at: completed_at.to_rfc3339(),
@@ -1022,8 +1027,7 @@ fn compute_assessment(
 	factors.retain(|factor| factor.contribution != 0);
 	factors.sort_by_key(|factor| Reverse(i32::from(factor.contribution.abs())));
 
-	let confidence =
-		compute_confidence(signals, &model.confidence_weights, false, verdict_present);
+	let confidence = compute_confidence(signals, &model.confidence_weights, false, verdict_present);
 	let (category, action) = category_and_action(score, &model.thresholds);
 
 	BounceRiskAssessment {

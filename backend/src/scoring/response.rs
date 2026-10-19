@@ -274,7 +274,9 @@ pub async fn prepare_verification_response(
 		tenant_id,
 		output,
 		completed_at,
-		collected_signals.as_ref().map(|collected| &collected.signals),
+		collected_signals
+			.as_ref()
+			.map(|collected| &collected.signals),
 	)
 	.await;
 	let score_computation = compute_score_with_context(output, &scoring_context);
