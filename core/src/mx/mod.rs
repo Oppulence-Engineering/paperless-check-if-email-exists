@@ -20,6 +20,8 @@ pub struct MxLookup(Lookup);
 
 impl MxLookup {
 	/// The MX records of the answer, in the order that the server sent them.
+	/// A null MX (RFC 7505: exchange `.`) says the domain accepts no mail, so
+	/// it is left out; a domain with only a null MX has no mail exchangers.
 	pub fn iter(&self) -> impl Iterator<Item = &MX> {
 		self.0
 			.answers()
@@ -28,6 +30,7 @@ impl MxLookup {
 				RData::MX(mx) => Some(mx),
 				_ => None,
 			})
+			.filter(|mx| !mx.exchange.is_root())
 	}
 }
 
@@ -195,7 +198,7 @@ pub fn is_mimecast(mx_host: &str) -> bool {
 /// Check if the MX host is behind Proofpoint.
 pub fn is_proofpoint(mx_host: &str) -> bool {
 	let host = mx_host.to_lowercase();
-	host.ends_with(".pphosted.com.") || host.ends_with("ppe-hosted.com.")
+	host.ends_with(".pphosted.com.") || host.ends_with(".ppe-hosted.com.")
 }
 
 /// Check if the MX host is from Yahoo.

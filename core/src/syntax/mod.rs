@@ -44,7 +44,11 @@ impl Default for SyntaxDetails {
 pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 	let email_address = match EmailAddress::from_str(email_address) {
 		Ok(m) => {
-			if mailchecker::is_valid(email_address) {
+			// The syntax half of `mailchecker::is_valid`. That function also
+			// rejects disposable domains, which would report a disposable
+			// address as invalid syntax and leave `misc.is_disposable` false;
+			// `check_misc` flags it instead.
+			if fast_chemail::is_valid_email(email_address) {
 				m
 			} else {
 				return SyntaxDetails {

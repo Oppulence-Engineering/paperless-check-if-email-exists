@@ -4,9 +4,14 @@ use md5::Digest;
 const API_BASE_URL: &str = "https://www.gravatar.com/avatar/";
 
 pub async fn check_gravatar(to_email: &str) -> Option<String> {
-	let client = reqwest::Client::new();
+	let client = reqwest::Client::builder()
+		.connect_timeout(std::time::Duration::from_secs(5))
+		.timeout(std::time::Duration::from_secs(10))
+		.build()
+		.ok()?;
 
-	let mail_hash: Digest = md5::compute(to_email);
+	// Gravatar hashes the trimmed, lowercased address.
+	let mail_hash: Digest = md5::compute(to_email.trim().to_lowercase());
 
 	let url = format!("{API_BASE_URL}{mail_hash:x}");
 

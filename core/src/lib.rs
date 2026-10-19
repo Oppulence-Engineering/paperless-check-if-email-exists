@@ -254,8 +254,12 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		}
 	};
 
-	// Return if we didn't find any MX records.
-	if my_mx.lookup.is_err() {
+	// Return if we didn't find any MX records, or only a null MX.
+	if my_mx
+		.lookup
+		.as_ref()
+		.map_or(true, |lookup| lookup.iter().next().is_none())
+	{
 		get_similar_mail_provider(&mut my_syntax);
 		let (provider_value, provider_confidence) =
 			detected_provider_fields(detected_provider.as_ref());

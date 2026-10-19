@@ -198,6 +198,23 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 				});
 			}
 
+			// A rejection of our sending IP (a blacklist, a missing reverse
+			// DNS entry, a policy block) says nothing about the mailbox. Many
+			// servers send it at RCPT time with mailbox-like wording, so it
+			// must be recognised before `is_invalid`; it is reported as an
+			// error so that the result is unknown, not invalid.
+			let is_transient = matches!(err, async_smtp::error::Error::Transient(_));
+			let err = SmtpError::AsyncSmtpError(err);
+			if parser::is_err_ip_blacklisted(&err) || parser::is_err_needs_rdns(&err) {
+				return Err(err);
+			}
+
+			// A temporary (4xx) failure does not prove that the mailbox is
+			// missing, except for the few replies known to mean exactly that.
+			if is_transient && !parser::is_invalid_when_transient(&err_string) {
+				return Err(err);
+			}
+
 			// Check that the mailbox doesn't exist.
 			if parser::is_invalid(&err_string, to_email) {
 				return Ok(Deliverability {
@@ -208,7 +225,7 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			}
 
 			// Return all unparsable errors,.
-			Err(SmtpError::AsyncSmtpError(err))
+			Err(err)
 		}
 	}
 }
@@ -290,10 +307,16 @@ async fn create_smtp_future(
 		result?
 	};
 
-	smtp_transport
-		.quit()
-		.await
-		.map_err(SmtpError::AsyncSmtpError)?;
+	// The result is known by now. Some servers close the connection after a
+	// rejected RCPT, so a failed QUIT must not discard it.
+	if let Err(error) = smtp_transport.quit().await {
+		tracing::debug!(
+			target: LOG_TARGET,
+			email = to_email.to_string(),
+			error = ?error,
+			"QUIT failed after the result was known"
+		);
+	}
 
 	Ok((is_catch_all, deliverability))
 }
@@ -308,7 +331,16 @@ async fn check_smtp_without_retry(
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, mx_host, domain, verif_method);
 
-	let (is_catch_all, deliverability) = match verif_method.config.smtp_timeout {
+	// Some servers (listed in rules.json) take about 30s to answer RCPT, so
+	// a shorter configured timeout would always end in an unknown result.
+	let smtp_timeout = verif_method.config.smtp_timeout.map(|timeout| {
+		if has_rule(domain, mx_host, &Rule::SmtpTimeout45s) {
+			timeout.max(std::time::Duration::from_secs(45))
+		} else {
+			timeout
+		}
+	});
+	let (is_catch_all, deliverability) = match smtp_timeout {
 		Some(smtp_timeout) => {
 			let timeout = tokio::time::timeout(smtp_timeout, fut);
 

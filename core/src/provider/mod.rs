@@ -226,6 +226,14 @@ pub fn validate_provider_email(
 		return Ok(());
 	}
 
+	// With plus addressing the provider delivers `user+anything` to `user`,
+	// so its rules describe the part before the first `+`. The tag only has
+	// to be valid RFC syntax, which the syntax check already established.
+	let local_part = match local_part.split_once('+') {
+		Some((base, _tag)) if rule.plus_addressing => base,
+		_ => local_part,
+	};
+
 	let local_len = local_part.chars().count();
 	if local_len < rule.min_local_length {
 		return Err(ProviderRejectionReason::LocalPartTooShort);
@@ -486,6 +494,9 @@ mod tests {
 	fn validation_rules_allow_expected_variants() {
 		let gmail = detect_provider("gmail.com", None).unwrap();
 		assert!(validate_provider_email(&gmail, "valid.user+tag").is_ok());
+		// The tag is not held to Gmail's username rules.
+		assert!(validate_provider_email(&gmail, "jane.doe+news-letter").is_ok());
+		assert!(validate_provider_email(&gmail, "johnathan.smithson+subscriptions").is_ok());
 
 		let yahoo = detect_provider("yahoo.com", None).unwrap();
 		assert!(validate_provider_email(&yahoo, "valid_user").is_ok());

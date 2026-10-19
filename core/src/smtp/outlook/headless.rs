@@ -1,4 +1,5 @@
-use std::{pin::Pin, thread::sleep, time::Duration};
+use std::{pin::Pin, time::Duration};
+use tokio::time::sleep;
 
 use fantoccini::{error::CmdError, Locator};
 use futures::{future::select_ok, Future, TryFutureExt};
@@ -37,7 +38,7 @@ pub async fn check_password_recovery(
 	let input = c.wait().for_element(Locator::Id("iSigninName")).await?;
 	// Sometimes I get "input ... is not reachable by keyboard". Addind this
 	// small sleep helps.
-	sleep(Duration::from_millis(200));
+	sleep(Duration::from_millis(200)).await;
 	input.send_keys(to_email.as_str()).await?;
 
 	// Click on "Next"

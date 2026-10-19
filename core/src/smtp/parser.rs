@@ -26,7 +26,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
 	// 550 5.1.1 <EMAIL: Recipient address rejected: User unknown in relay recipient table
-	e.contains("address rejected")
+	// A "Sender address rejected" reply is about our MAIL FROM, not the mailbox.
+	(e.contains("address rejected") && !e.contains("sender address rejected"))
 	// 550 5.1.1 : Unrouteable address
 	|| e.contains("unrouteable")
 	// 550 5.1.1 : The email account that you tried to reach does not exist
@@ -59,7 +60,7 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 No such user here
 	|| e.contains("no such user")
 	// permanent: 5.1.1 MXIN501 mailbox <EMAIL> unknown (on @virginmedia.com)
-	|| e.contains(format!("mailbox {email} unknown").as_str())
+	|| e.contains(format!("mailbox {} unknown", email.to_string().to_lowercase()).as_str())
 	// 550 5.1.1 : Mailbox not found
 	// 550 Unknown address error ‘MAILBOX NOT FOUND’
 	|| e.contains("mailbox not found")
@@ -111,8 +112,18 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("no mail-enabled subscriptions")
 	// permanent: 5.1.1
 	|| e.contains("permanent: 5.1.1")
-	// permanent: 5.7.1
-	|| e.contains("permanent: 5.7.1")
+	// X.7.1 (RFC 3463) is "delivery not authorized": a policy or reputation
+	// block, not a missing mailbox. Gmail's "5.7.1 Email doesn't exist" is
+	// matched by its text above.
+}
+
+/// A temporary (4xx) reply that still means the mailbox doesn't exist. Every
+/// other temporary failure is retried and reported as unknown.
+pub fn is_invalid_when_transient(e: &str) -> bool {
+	// transient: unable to verify user (on @computan.net)
+	e.contains("unable to verify user")
+	// transient: 4.4.4 Mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions.
+	|| e.contains("no mail-enabled subscriptions")
 }
 
 /// Check that the mailbox has a full inbox.
@@ -244,7 +255,9 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
+	use super::{
+		is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid, is_invalid_when_transient,
+	};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -256,6 +269,31 @@ mod tests {
 	#[test]
 	fn test_is_invalid() {
 		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+
+		// The strings below are what async-smtp produces at runtime: the
+		// severity prefix and the reply text, lowercased by the caller.
+		assert!(!is_invalid(
+			"permanent: 5.7.1 service unavailable; client host [192.0.2.1] blocked using zen.spamhaus.org",
+			&email
+		));
+		assert!(!is_invalid(
+			"transient: 4.1.8 <from@sender.test>: sender address rejected: domain not found",
+			&email
+		));
+		assert!(is_invalid(
+			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown in local recipient table",
+			&email
+		));
+		assert!(is_invalid(
+			"permanent: 5.1.1 mxin501 mailbox foo@bar.baz unknown",
+			&EmailAddress::from_str("Foo@Bar.baz").unwrap()
+		));
+		assert!(is_invalid_when_transient(
+			"transient: unable to verify user"
+		));
+		assert!(!is_invalid_when_transient(
+			"transient: 4.1.1 <foo@bar.baz>: recipient address rejected: unverified address: address verification in progress"
+		));
 
 		assert!(!is_invalid(
 			"554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied",
