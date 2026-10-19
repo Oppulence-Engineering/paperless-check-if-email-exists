@@ -165,7 +165,8 @@ async fn fetch_batch(
 	Ok(rows
 		.into_iter()
 		.map(|row| {
-			let extra: Value = row.get("extra");
+			// Only list rows set extra; bulk API rows leave it NULL.
+			let extra = row.get::<Option<Value>, _>("extra").unwrap_or(Value::Null);
 			let payload: Value = row.get("payload");
 			FailureReportRow {
 				id: row.get("id"),
