@@ -35,9 +35,9 @@ pub struct CheckEmailRequest {
 	/// When false, skips provider-specific syntax validation even if the
 	/// provider is recognized.
 	pub strict_provider_rules: Option<bool>,
-	/// Optional risk policy mode used by the decision layer.
+	/// Not supported: decisions use the tenant's `default_policy_mode`, so a
+	/// request that sets this (or `policy_profile_key`) is refused with 400.
 	pub policy_mode: Option<PolicyMode>,
-	/// Optional tenant custom policy profile key used when policy_mode=custom.
 	pub policy_profile_key: Option<String>,
 	// The following fields are for backward compatibility.
 	pub yahoo_verif_method: Option<BackwardCompatYahooVerifMethod>,

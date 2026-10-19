@@ -479,6 +479,24 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+
+		// The decision always uses the tenant's default policy mode, so a
+		// per-request mode is refused instead of being silently ignored.
+		for body in [
+			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_mode": "growth"}),
+			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_profile_key": "strict"}),
+		] {
+			let resp = request()
+				.path("/v1/check_email")
+				.method("POST")
+				.header(REACHER_SECRET_HEADER, "foobar")
+				.json(&body)
+				.reply(&create_routes(create_backend_config("foobar")))
+				.await;
+			assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+			let error = parse_json(resp.body())["error"].to_string();
+			assert!(error.contains("default_policy_mode"), "{}", error);
+		}
 	}
 
 	// --- Version endpoint still works ---

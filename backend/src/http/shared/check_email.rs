@@ -72,6 +72,16 @@ pub async fn handle_check_email(
 		)
 		.into());
 	}
+	// The decision engine reads the tenant's default policy mode, in the
+	// worker as well, and custom profiles are not stored anywhere. Refusing
+	// the fields beats returning a decision made under another mode.
+	if body.policy_mode.is_some() || body.policy_profile_key.is_some() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"policy_mode and policy_profile_key are not supported per request; set default_policy_mode in the tenant settings (PATCH /v1/me/settings)",
+		)
+		.into());
+	}
 
 	// Sandbox mode: return deterministic mock results without SMTP,
 	// throttle checks, or quota consumption. Freshness fields are
