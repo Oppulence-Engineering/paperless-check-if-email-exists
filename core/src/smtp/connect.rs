@@ -366,6 +366,9 @@ pub async fn check_smtp_with_retry(
 		Err(SmtpError::HeadlessError(_)) => result,
 		Err(SmtpError::YahooError(_)) => result,
 		Err(SmtpError::GmailError(_)) => result,
+		// Retries exist to get past greylisting. A timed-out attempt already
+		// used its whole budget, and an immediate retry only doubles the wait.
+		Err(SmtpError::Timeout(_)) => result,
 		// Only retry if the SMTP error was unknown.
 		Err(err) if err.get_description().is_none() => {
 			if count <= 1 {
