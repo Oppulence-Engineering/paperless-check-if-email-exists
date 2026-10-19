@@ -14,8 +14,40 @@
 //! `20260630000003_suppression_intelligence_indexes` dropped the older
 //! `(tenant_id, email)` unique constraint, and `canonical_email` is NOT NULL.
 
+use crate::http::v1::lists::canonicalize::canonicalize_email;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+/// Whether `email` has an active, unexpired suppression for the tenant.
+///
+/// The suppression API keys entries by the lowercased address, while outcome
+/// ingest keys them by the Gmail canonical form (dots and +tag removed), so
+/// both spellings are checked.
+pub async fn has_active_suppression(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	email: &str,
+) -> Result<bool, sqlx::Error> {
+	let lowered = email.trim().to_lowercase();
+	let canonical = canonicalize_email(email).unwrap_or_else(|| lowered.clone());
+	sqlx::query_scalar::<_, bool>(
+		r#"
+		SELECT EXISTS (
+			SELECT 1
+			FROM v1_suppression_entries
+			WHERE tenant_id = $1
+			  AND canonical_email IN ($2, $3)
+			  AND status = 'active'
+			  AND (expires_at IS NULL OR expires_at > NOW())
+		)
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(&lowered)
+	.bind(&canonical)
+	.fetch_one(pg_pool)
+	.await
+}
 
 /// Insert one active suppression and its `created` audit event.
 ///
@@ -31,6 +63,11 @@ pub async fn insert_active_suppression(
 	source_type: &str,
 	actor: &str,
 ) -> Result<bool, sqlx::Error> {
+	// The entry and its audit event commit together. Otherwise a failed event
+	// insert leaves an entry that a retry skips (`DO NOTHING`), and the audit
+	// event is never written.
+	let mut tx = pg_pool.begin().await?;
+
 	// `reason` is bound twice: once for the enum column and once for the text
 	// reason code. A single placeholder cannot satisfy both types.
 	let entry_id = sqlx::query_scalar::<_, i32>(
@@ -55,7 +92,7 @@ pub async fn insert_active_suppression(
 	.bind(reason)
 	.bind(source_type)
 	.bind(actor)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
 
 	let Some(entry_id) = entry_id else {
@@ -78,8 +115,9 @@ pub async fn insert_active_suppression(
 	.bind(source_type)
 	.bind(source)
 	.bind(actor)
-	.execute(pg_pool)
+	.execute(&mut *tx)
 	.await?;
 
+	tx.commit().await?;
 	Ok(true)
 }

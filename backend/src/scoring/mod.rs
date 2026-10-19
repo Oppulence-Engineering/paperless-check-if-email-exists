@@ -184,7 +184,9 @@ pub struct ScoreInsights {
 pub struct TenantHistoryContext {
 	pub safe_count_180d: u32,
 	pub total_count_180d: u32,
-	pub latest_days_ago: Option<i64>,
+	/// Days since the newest safe result. A recent unknown or invalid result
+	/// is not fresh evidence that the mailbox works.
+	pub latest_safe_days_ago: Option<i64>,
 	pub inconsistent_count_180d: u32,
 }
 
@@ -521,7 +523,7 @@ pub fn compute_score_with_context(
 		confidence_factors.push("tenant_history:inconsistent".to_string());
 	}
 
-	if let Some(days) = context.tenant_history.latest_days_ago {
+	if let Some(days) = context.tenant_history.latest_safe_days_ago {
 		if days <= 7 {
 			adjustment += 5;
 			confidence_factors.push("fresh_history:within_7_days".to_string());
@@ -585,11 +587,19 @@ pub fn compute_score_with_context(
 			partial
 		});
 
+	// Same catch-all rule as `compute_score`, which deliverability policy relies
+	// on to send low-tier catch-alls, plus a veto when context raised the tier.
+	let catch_all_vetoes = catch_all_severity(&score.signals) == Some(CatchAllSeverity::High)
+		|| catch_all
+			.as_ref()
+			.map(|catch_all| catch_all.severity == InsightCatchAllSeverity::High)
+			.unwrap_or(false);
+
 	score.score = (score.score + adjustment).clamp(0, 100);
 	score.category = category_for_score(score.score);
 	score.safe_to_send = score.category == EmailCategory::Valid
 		&& !score.signals.is_disposable
-		&& !score.signals.smtp_is_catch_all
+		&& !catch_all_vetoes
 		&& !score.signals.is_role_account
 		&& !score.signals.is_spam_trap_domain
 		&& partial_confidence.is_none();
@@ -1168,7 +1178,7 @@ mod tests {
 				tenant_history: TenantHistoryContext {
 					safe_count_180d: 3,
 					total_count_180d: 3,
-					latest_days_ago: Some(2),
+					latest_safe_days_ago: Some(2),
 					inconsistent_count_180d: 0,
 				},
 				domain: DomainSignalContext {
@@ -1485,6 +1495,44 @@ mod tests {
 		assert_eq!(high.score, 85);
 		assert_eq!(high.category, EmailCategory::Valid);
 		assert!(!high.safe_to_send);
+	}
+
+	#[test]
+	fn contextual_scoring_keeps_low_tier_catch_all_sendable() {
+		let mut output = base_output();
+		output.mx = Ok(test_mx("example.com."));
+		output.smtp = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: false,
+			is_catch_all: true,
+			is_deliverable: true,
+			is_disabled: false,
+		});
+		output.misc = Ok(MiscDetails {
+			is_b2c: true,
+			..Default::default()
+		});
+		assert!(compute_score(&output).safe_to_send);
+
+		let low = compute_score_with_context(&output, &ScoringContext::default());
+		assert!(low.score.safe_to_send);
+
+		// Domain evidence can raise the same catch-all to high, which vetoes.
+		let high = compute_score_with_context(
+			&output,
+			&ScoringContext {
+				domain: DomainSignalContext {
+					website_present: Some(false),
+					..Default::default()
+				},
+				..Default::default()
+			},
+		);
+		assert_eq!(
+			high.insights.catch_all.map(|catch_all| catch_all.severity),
+			Some(InsightCatchAllSeverity::High)
+		);
+		assert!(!high.score.safe_to_send);
 	}
 
 	#[test]
