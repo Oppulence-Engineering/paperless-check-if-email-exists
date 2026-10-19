@@ -241,6 +241,34 @@ mod events_tests {
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 		assert!(b["events"].as_array().unwrap().len() <= 1);
 	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_negative_pagination_is_clamped() {
+		let db = TestDb::start().await;
+		let (tid, key) = setup_tenant_with_key(db.pool()).await;
+		let jid = setup_job_with_tasks(db.pool(), tid).await;
+		let suppression_id = insert_suppression(db.pool(), tid, "gone@example.com", "manual").await;
+		let routes = create_routes(worker_config().await);
+		// Postgres rejects a negative LIMIT or OFFSET, which surfaced as a 500.
+		for path in [
+			format!("/v1/jobs/{}/events?limit=-1&offset=-5", jid),
+			format!("/v1/jobs/{}/failure-center?preview_limit=-1", jid),
+			"/v1/suppressions?limit=-1&offset=-5".to_string(),
+			format!(
+				"/v1/suppressions/{}/events?limit=-1&offset=-5",
+				suppression_id
+			),
+		] {
+			let r = request()
+				.path(&path)
+				.method("GET")
+				.header("Authorization", format!("Bearer {}", key))
+				.reply(&routes)
+				.await;
+			assert_eq!(r.status(), StatusCode::OK, "{}: {:?}", path, r.body());
+		}
+	}
 }
 
 // ===== #28: Historical Verification Timeline =====

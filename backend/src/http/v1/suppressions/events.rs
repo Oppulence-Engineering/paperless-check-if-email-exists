@@ -66,8 +66,8 @@ async fn http_handler(
 		.into());
 	}
 
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(1, 200);
+	let offset = query.offset.unwrap_or(0).max(0);
 	let rows = sqlx::query(
 		r#"
 		SELECT id, entry_id, canonical_email, event_type, from_status, to_status,

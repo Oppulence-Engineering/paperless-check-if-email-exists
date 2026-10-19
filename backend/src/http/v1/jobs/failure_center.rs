@@ -104,8 +104,12 @@ async fn http_handler(
 	let estimated_completion_seconds =
 		estimate_completion_seconds(total_records, processed_rows, created_at, Utc::now());
 	let failure_breakdown = load_failure_breakdown(&pg_pool, job_id).await?;
-	let failed_rows =
-		load_failed_rows(&pg_pool, job_id, query.preview_limit.unwrap_or(50).min(200)).await?;
+	let failed_rows = load_failed_rows(
+		&pg_pool,
+		job_id,
+		query.preview_limit.unwrap_or(50).clamp(1, 200),
+	)
+	.await?;
 	let completed_at = job
 		.get::<Option<DateTime<Utc>>, _>("completed_at")
 		.map(|ts| ts.to_rfc3339());

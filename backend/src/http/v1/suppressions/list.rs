@@ -58,8 +58,8 @@ async fn http_handler(
 	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(1, 200);
+	let offset = query.offset.unwrap_or(0).max(0);
 	let status_filter = normalize_status_filter(query.status.as_deref())?;
 	let include_expired = query.include_expired.unwrap_or(false);
 
