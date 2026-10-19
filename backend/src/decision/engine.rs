@@ -1,6 +1,7 @@
 use crate::bounce_risk::{
 	BounceRiskAssessment, BounceRiskCategory, RecommendedAction as BounceRecommendedAction,
 };
+use crate::decision::custom_policy::CustomPolicyRules;
 use crate::decision::explain::{collect_explanations, ExplanationInput};
 use crate::decision::policy::{evaluate_policy, PolicyInput};
 use crate::decision::types::{
@@ -23,6 +24,7 @@ pub struct DecisionInput<'a> {
 	pub bounce_risk: Option<&'a BounceRiskAssessment>,
 	pub active_suppression: bool,
 	pub previous_hard_bounce: bool,
+	pub custom_policy: Option<&'a CustomPolicyRules>,
 }
 
 pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation) {
@@ -44,6 +46,7 @@ pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation)
 		active_suppression: input.active_suppression,
 		previous_hard_bounce: input.previous_hard_bounce,
 		evaluated_at: input.evaluated_at,
+		custom_rules: input.custom_policy,
 	});
 
 	let action = recommended_action(input, policy_evaluation.decision);
@@ -238,6 +241,7 @@ mod tests {
 			bounce_risk: None,
 			active_suppression: false,
 			previous_hard_bounce: false,
+			custom_policy: None,
 		}
 	}
 

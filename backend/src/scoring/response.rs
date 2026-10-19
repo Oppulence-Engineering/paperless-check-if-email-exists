@@ -334,17 +334,24 @@ pub async fn prepare_verification_response(
 		}
 		_ => false,
 	};
+	let custom_profile = match (policy_mode, tenant_id, read_pool.as_ref()) {
+		(PolicyMode::Custom, Some(tenant_id), Some(pool)) => {
+			crate::decision::custom_policy::load_active_profile(pool, tenant_id).await?
+		}
+		_ => None,
+	};
 	let decision_input = DecisionInput {
 		score: &email_score,
 		completed_at,
 		evaluated_at,
 		policy_mode,
-		policy_profile_key: None,
+		policy_profile_key: custom_profile.as_ref().map(|(key, _)| key.clone()),
 		domain_suggestion: output.syntax.suggestion.as_deref(),
 		suggested_email: output.syntax.suggestion.clone(),
 		bounce_risk: bounce_risk.as_ref(),
 		active_suppression,
 		previous_hard_bounce: scoring_context.outcomes.has_hard_bounce,
+		custom_policy: custom_profile.as_ref().map(|(_, rules)| rules),
 	};
 	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);
 	if let Some(result_obj) = value.as_object_mut() {
