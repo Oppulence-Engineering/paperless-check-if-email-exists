@@ -39,33 +39,60 @@ mod tests {
 		let db = TestDb::start().await;
 		let tenant_id = insert_tenant(db.pool(), "remediation-main", Some(10_000), 0).await;
 		let (key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["lists"]).await;
-		let job_id = insert_job(db.pool(), Some(tenant_id), 5, "completed").await;
+		let job_id = insert_job(db.pool(), Some(tenant_id), 6, "completed").await;
 		let list_id = insert_list(
 			db.pool(),
 			tenant_id,
 			job_id,
 			"Remediation fixture",
 			"completed",
-			5,
+			6,
 			&["email", "name"],
 			serde_json::json!({
 				"0": {"email": "user@Example.COM", "name": "Case"},
 				"1": {"email": "billing@example.com", "name": "Role"},
 				"2": {"email": "bad", "name": "Invalid"},
 				"3": {"email": "good@example.com", "name": "Safe"},
-				"4": {"email": "suppressed@example.com", "name": "Suppressed"}
+				"4": {"email": "suppressed@example.com", "name": "Suppressed"},
+				"5": {"email": " Gmail.Suppressed@gmail.com", "name": "Gmail"}
 			}),
 		)
 		.await;
 
-		sqlx::query(
-			"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, $2, 'manual'::suppression_reason)",
+		// Suppressions store the address as entered, lowercased; the list task
+		// for row 5 stores the Gmail-canonical form without the dot.
+		for email in ["suppressed@example.com", "gmail.suppressed@gmail.com"] {
+			sqlx::query(
+				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, $2, 'manual'::suppression_reason)",
+			)
+			.bind(tenant_id)
+			.bind(email)
+			.execute(db.pool())
+			.await
+			.unwrap();
+		}
+		insert_scored_task(
+			db.pool(),
+			job_id,
+			Some(tenant_id),
+			"gmailsuppressed@gmail.com",
+			Some(serde_json::json!({"list_id": list_id, "row_index": 5, "email_column": "email"})),
+			Some(result_json(
+				"gmailsuppressed@gmail.com",
+				"safe",
+				true,
+				false,
+			)),
+			"completed",
+			Some(99),
+			Some("valid"),
+			Some("deliverable"),
+			Some(true),
+			Some(vec!["deliverable".to_string()]),
+			Some("gmailsuppressed@gmail.com"),
+			false,
 		)
-		.bind(tenant_id)
-		.bind("suppressed@example.com")
-		.execute(db.pool())
-		.await
-		.unwrap();
+		.await;
 
 		insert_scored_task(
 			db.pool(),
@@ -171,11 +198,11 @@ mod tests {
 		let body: serde_json::Value = serde_json::from_slice(created.body()).unwrap();
 		// Case-normalized user@Example.COM is fixed. A role account that is
 		// still safe_to_send stays safe; invalid syntax and the active
-		// suppression are dropped.
+		// suppressions (including the Gmail form) are dropped.
 		assert_eq!(body["summary_counts"]["fixed"], 1, "{body}");
 		assert_eq!(body["summary_counts"]["safe"], 2, "{body}");
 		assert_eq!(body["summary_counts"]["review"], 0, "{body}");
-		assert_eq!(body["summary_counts"]["drop"], 2, "{body}");
+		assert_eq!(body["summary_counts"]["drop"], 3, "{body}");
 		let plan_id = body["id"].as_i64().unwrap();
 
 		let repeated = request()
@@ -234,6 +261,7 @@ mod tests {
 		assert!(csv.contains("good@example.com"));
 		assert!(csv.contains("billing@example.com"));
 		assert!(!csv.contains("suppressed@example.com"));
+		assert!(!csv.contains("suppressed@gmail.com"), "{}", csv);
 		assert!(!csv.contains("bad,"));
 	}
 

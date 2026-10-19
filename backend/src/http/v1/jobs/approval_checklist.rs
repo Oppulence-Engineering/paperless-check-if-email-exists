@@ -120,14 +120,36 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Count suppressed emails in this job (fall back to payload email if result is NULL)
+	// Count safe rows that an in-force suppression covers. A JOIN counted
+	// merged and expired entries and counted a row once per matching entry.
+	// Suppressions key on the lowercased address as entered; list tasks verify
+	// the Gmail-canonical form, so for list rows the address as entered comes
+	// from the list's original rows (expanded once, see remediation.rs).
 	let suppressed: i64 = sqlx::query_scalar(
 		r#"
+		WITH list_originals AS MATERIALIZED (
+			SELECT l.id AS list_id,
+			       entry.key::INTEGER AS row_index,
+			       LOWER(TRIM(entry.value ->> l.email_column)) AS email
+			FROM v1_lists l, jsonb_each(l.original_data) AS entry
+			WHERE l.job_id = $1
+		)
 		SELECT COUNT(*) FROM v1_task_result t
-		JOIN v1_suppression_entries s
-		  ON s.email = LOWER(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))
-		  AND s.tenant_id = t.tenant_id
+		LEFT JOIN list_originals o
+		  ON o.list_id = (t.extra->>'list_id')::INTEGER
+		 AND o.row_index = (t.extra->>'row_index')::INTEGER
 		WHERE t.job_id = $1 AND t.safe_to_send = true
+		  AND EXISTS (
+			SELECT 1 FROM v1_suppression_entries s
+			WHERE s.tenant_id = t.tenant_id
+			  AND s.status = 'active'
+			  AND (s.expires_at IS NULL OR s.expires_at > NOW())
+			  AND s.canonical_email IN (
+				LOWER(TRIM(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))),
+				t.canonical_email,
+				o.email
+			  )
+		  )
 		"#,
 	)
 	.bind(job_id)
