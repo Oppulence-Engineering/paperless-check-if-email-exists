@@ -17,6 +17,10 @@ use super::{SmtpDetails, SmtpError};
 use crate::rules::{has_rule, Rule};
 use crate::{EmailAddress, LOG_TARGET};
 
+/// How long to wait for the TCP handshake with an MX host. A reachable mail
+/// server answers in well under a second.
+const SMTP_CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
 // Define a new trait that combines AsyncRead, AsyncWrite, and Unpin
 trait AsyncReadWrite: AsyncRead + AsyncWrite + Unpin + Send {}
 impl<T: AsyncRead + AsyncWrite + Unpin + Send> AsyncReadWrite for T {}
@@ -86,9 +90,19 @@ async fn connect_to_smtp_host(
 			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
 		}
 		None => {
-			let tcp_stream =
-				TcpStream::connect(format!("{}:{}", clean_host, verif_method.config.smtp_port))
-					.await?;
+			let address = format!("{}:{}", clean_host, verif_method.config.smtp_port);
+			// A firewall that drops outbound SYNs (cloud hosts often block
+			// port 25) otherwise holds this worker slot for the kernel's ~2
+			// minute connect timeout. Failing here as an I/O error also tells
+			// callers that no SMTP conversation took place.
+			let tcp_stream = tokio::time::timeout(SMTP_CONNECT_TIMEOUT, TcpStream::connect(&address))
+				.await
+				.map_err(|_| {
+					std::io::Error::new(
+						std::io::ErrorKind::TimedOut,
+						format!("connecting to {address} timed out"),
+					)
+				})??;
 			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
 		}
 	};
@@ -290,10 +304,16 @@ async fn create_smtp_future(
 		result?
 	};
 
-	smtp_transport
-		.quit()
-		.await
-		.map_err(SmtpError::AsyncSmtpError)?;
+	// The verdict is already known. Servers that hang up right after a 550
+	// make QUIT fail, and that must not turn a definitive answer into an error.
+	if let Err(error) = smtp_transport.quit().await {
+		tracing::debug!(
+			target: LOG_TARGET,
+			email=to_email.to_string(),
+			error=?error,
+			"QUIT failed after the deliverability check, keeping the result"
+		);
+	}
 
 	Ok((is_catch_all, deliverability))
 }

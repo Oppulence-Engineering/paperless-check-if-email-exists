@@ -100,21 +100,35 @@ const MAIL_PROVIDERS: &[&str] = &[
 	"icloud.com",
 	"yandex.com",
 ];
+/// Real mailbox domains within two edits of a provider above. Without this
+/// list, mail.com and ymail.com would be "corrected" to gmail.com.
+const REAL_DOMAINS_NEAR_PROVIDERS: &[&str] = &[
+	"ymail.com",
+	"mail.com",
+	"email.com",
+	"yahoo.ca",
+	"hotmail.ca",
+	"protonmail.ch",
+];
+
 // Supplies the syntax parameter with a suggestion that matches the mail domain best by levenshtein
 // distance.
 pub fn get_similar_mail_provider(syntax: &mut SyntaxDetails) {
-	for possible_provider in MAIL_PROVIDERS {
-		let distance = levenshtein(&syntax.domain, possible_provider);
+	let domain = syntax.domain.to_ascii_lowercase();
+	if MAIL_PROVIDERS.contains(&domain.as_str())
+		|| REAL_DOMAINS_NEAR_PROVIDERS.contains(&domain.as_str())
+	{
+		return;
+	}
 
-		if distance < 3 {
-			// Return full address
-			syntax.suggestion = Some(format!(
-				"{}@{}",
-				syntax.username,
-				String::from(*possible_provider),
-			));
-			break;
-		}
+	let closest = MAIL_PROVIDERS
+		.iter()
+		.map(|provider| (levenshtein(&domain, provider), provider))
+		.filter(|(distance, _)| *distance < 3)
+		.min_by_key(|(distance, _)| *distance);
+
+	if let Some((_, provider)) = closest {
+		syntax.suggestion = Some(format!("{}@{}", syntax.username, provider));
 	}
 }
 
@@ -167,17 +181,55 @@ mod tests {
 		);
 	}
 
-	#[test]
-	fn should_suggest_a_correct_mail_if_similar() {
+	fn suggestion_for(email: &str) -> Option<String> {
+		let (username, domain) = email.split_once('@').expect("test email has an @");
 		let mut syntax = SyntaxDetails {
-			address: Some(EmailAddress::new("test@gmali.com".into()).unwrap()),
-			domain: "gmali.com".into(),
+			domain: domain.into(),
 			is_valid_syntax: true,
-			username: "test".into(),
-			normalized_email: Some("test@gmali.com".into()),
-			suggestion: None,
+			username: username.into(),
+			..Default::default()
 		};
 		get_similar_mail_provider(&mut syntax);
-		assert_eq!(syntax.suggestion, Some("test@gmail.com".to_string()))
+		syntax.suggestion
+	}
+
+	#[test]
+	fn should_suggest_a_correct_mail_if_similar() {
+		for (typo, fixed) in [
+			("test@gmali.com", "test@gmail.com"),
+			("test@gmail.co", "test@gmail.com"),
+			("test@gmail.cm", "test@gmail.com"),
+			("test@yaho.com", "test@yahoo.com"),
+			("test@hotmial.com", "test@hotmail.com"),
+			("test@outlok.com", "test@outlook.com"),
+			("test@icloud.co", "test@icloud.com"),
+		] {
+			assert_eq!(suggestion_for(typo), Some(fixed.to_string()), "{}", typo);
+		}
+	}
+
+	#[test]
+	fn should_not_suggest_for_real_mail_domains() {
+		// Every provider itself, real domains one or two edits away from a
+		// provider, and country variants of a provider are not typos.
+		for email in [
+			"test@gmail.com",
+			"test@Gmail.com",
+			"test@yahoo.com",
+			"test@outlook.com",
+			"test@hotmail.com",
+			"test@protonmail.com",
+			"test@icloud.com",
+			"test@yandex.com",
+			"test@ymail.com",
+			"test@mail.com",
+			"test@email.com",
+			"test@yahoo.ca",
+			"test@hotmail.ca",
+			"test@protonmail.ch",
+			"test@company.com",
+		] {
+			assert_eq!(suggestion_for(email), None, "{}", email);
+		}
 	}
 }

@@ -11,7 +11,9 @@ use hickory_resolver::{
 	proto::rr::{rdata::MX, Name, RData, RecordType},
 };
 
-fn sandbox_mx(domain: &str) -> MxDetails {
+/// MX details holding one record for `domain`. Tests reuse it to build
+/// outputs whose SMTP flags count, since those need an MX host.
+pub(crate) fn sandbox_mx(domain: &str) -> MxDetails {
 	let domain = Name::from_ascii(domain).expect("sandbox domain is valid");
 	let exchange = Name::from_ascii("mail.example.com.").expect("sandbox MX is valid");
 	MxDetails::from(MxLookup::from(Lookup::from_rdata(

@@ -1402,6 +1402,7 @@ mod tests {
 		let mut output = CheckEmailOutput::default();
 		output.is_reachable = check_if_email_exists::Reachable::Safe;
 		output.syntax.is_valid_syntax = true;
+		output.mx = Ok(crate::sandbox::sandbox_mx("example.com."));
 		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: true,

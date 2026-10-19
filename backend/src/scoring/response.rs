@@ -626,6 +626,7 @@ mod tests {
 		let mut output = CheckEmailOutput::default();
 		output.input = "user@company.com".to_string();
 		output.is_reachable = Reachable::Risky;
+		output.mx = Ok(crate::sandbox::sandbox_mx("company.com."));
 		output.smtp = Ok(SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: false,
@@ -656,6 +657,7 @@ mod tests {
 			let mut output = CheckEmailOutput {
 				input: "user@company.com".to_string(),
 				is_reachable: Reachable::Safe,
+				mx: Ok(crate::sandbox::sandbox_mx("company.com.")),
 				smtp: Ok(SmtpDetails {
 					can_connect_smtp: true,
 					has_full_inbox,
