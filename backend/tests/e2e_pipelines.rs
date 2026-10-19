@@ -764,6 +764,224 @@ async fn test_pipeline_scheduler_recovers_oldest_force_queued_run_when_queue_is_
 
 #[tokio::test]
 #[serial]
+async fn test_pipeline_scheduler_fails_stalled_run_and_starts_the_queued_one() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-stalled-run", Some(1000), 0).await;
+	let list_id = insert_source_list(db.pool(), tenant_id).await;
+	let config = worker_pipeline_config(true).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Stalled Run Recovery".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	// An executor that died mid-publish leaves its run active, and an active run
+	// blocks every later run of the pipeline.
+	let stalled_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (
+			pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats,
+			started_at, updated_at, created_at
+		)
+		VALUES (
+			$1, $2, 'schedule', 'publishing', $3, '{}'::jsonb,
+			NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '2 hours'
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let queued_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats, updated_at, created_at)
+		VALUES ($1, $2, 'manual', 'queued', $3, '{}'::jsonb, NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes')
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+
+	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
+		.await
+		.unwrap();
+
+	let stalled =
+		sqlx::query("SELECT status::TEXT, error_code FROM v1_pipeline_runs WHERE id = $1")
+			.bind(stalled_run_id)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	let stalled_status: String = stalled.get("status");
+	let stalled_error_code: Option<String> = stalled.get("error_code");
+	assert_eq!(stalled_status, "failed");
+	assert_eq!(stalled_error_code.as_deref(), Some("stalled"));
+
+	let (_status, job_id, created_list_id, started_at) =
+		wait_for_run_details(db.pool(), queued_run_id).await?;
+	assert!(job_id.is_some());
+	assert!(created_list_id.is_some());
+	assert!(started_at.is_some());
+	Ok(())
+}
+
+#[tokio::test]
+#[serial]
+async fn test_reading_runs_does_not_roll_contact_state_back_to_an_older_run() {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "pipeline-read-finalized", Some(1000), 0).await;
+	let list_id = insert_source_list_with_data(
+		db.pool(),
+		tenant_id,
+		serde_json::json!({ "0": { "email": "alice@example.com", "name": "Alice" } }),
+	)
+	.await;
+	let (api_key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["pipelines.read"]).await;
+	let config = worker_pipeline_config(false).await;
+
+	let pipeline = create_pipeline(
+		db.pool(),
+		tenant_id,
+		CreatePipelineInput {
+			name: "Finished Runs".to_string(),
+			source: PipelineSource::ListSnapshot { list_id },
+			schedule: PipelineSchedule {
+				cron: "0 9 * * 1".to_string(),
+				timezone: "UTC".to_string(),
+			},
+			verification: PipelineVerificationSettings::default(),
+			policy: Default::default(),
+			delivery: PipelineDeliveryConfig::default(),
+			status: PipelineStatus::Active,
+		},
+		&config.pipelines,
+	)
+	.await
+	.unwrap();
+
+	// A run finished two days ago verified alice; a newer run has since recorded
+	// her contact state.
+	let older_job_id: i32 = sqlx::query_scalar(
+		"INSERT INTO v1_bulk_job (total_records, tenant_id, status, completed_at) VALUES (1, $1, 'completed'::job_state, NOW() - INTERVAL '2 days') RETURNING id",
+	)
+	.bind(tenant_id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	sqlx::query(
+		r#"
+		INSERT INTO v1_task_result (
+			job_id, payload, tenant_id, task_state, result, canonical_email, is_duplicate, completed_at
+		)
+		VALUES ($1, '{}'::jsonb, $2, 'completed'::task_state, '{}'::jsonb, 'alice@example.com', false, NOW() - INTERVAL '2 days')
+		"#,
+	)
+	.bind(older_job_id)
+	.bind(tenant_id)
+	.execute(db.pool())
+	.await
+	.unwrap();
+	sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_runs (
+			pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats,
+			job_id, list_id, result_location, completed_at, created_at
+		)
+		VALUES (
+			$1, $2, 'schedule', 'completed', $3, '{}'::jsonb,
+			$4, $5, '{"download_url": null}'::jsonb, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'
+		)
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.bind(older_job_id)
+	.bind(list_id)
+	.execute(db.pool())
+	.await
+	.unwrap();
+	let newer_run_id: i64 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_pipeline_runs (
+			pipeline_id, tenant_id, trigger_type, status, source_snapshot, stats,
+			result_location, completed_at, created_at
+		)
+		VALUES (
+			$1, $2, 'schedule', 'completed', $3, '{}'::jsonb,
+			'{"download_url": null}'::jsonb, NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour'
+		)
+		RETURNING id
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(tenant_id)
+	.bind(serde_json::json!({ "type": "list_snapshot", "list_id": list_id }))
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	sqlx::query(
+		r#"
+		INSERT INTO v1_pipeline_contact_state (
+			pipeline_id, canonical_email, source_hash, last_run_id, last_seen_at, last_verified_at
+		)
+		VALUES ($1, 'alice@example.com', 'newer-run-hash', $2, NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour')
+		"#,
+	)
+	.bind(pipeline.id)
+	.bind(newer_run_id)
+	.execute(db.pool())
+	.await
+	.unwrap();
+
+	let response = request()
+		.method("GET")
+		.path(&format!("/v1/pipelines/{}/runs", pipeline.id))
+		.header("Authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(response.status(), StatusCode::OK);
+	let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+	assert_eq!(body["total"], 2);
+
+	let state = sqlx::query(
+		"SELECT source_hash, last_run_id FROM v1_pipeline_contact_state WHERE pipeline_id = $1 AND canonical_email = 'alice@example.com'",
+	)
+	.bind(pipeline.id)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	let source_hash: String = state.get("source_hash");
+	let last_run_id: Option<i64> = state.get("last_run_id");
+	assert_eq!(source_hash, "newer-run-hash");
+	assert_eq!(last_run_id, Some(newer_run_id));
+}
+
+#[tokio::test]
+#[serial]
 async fn test_pipeline_trigger_returns_conflict_for_active_run() {
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "pipeline-trigger-conflict", Some(1000), 0).await;
