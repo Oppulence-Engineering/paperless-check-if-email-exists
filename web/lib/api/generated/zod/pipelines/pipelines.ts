@@ -850,7 +850,7 @@ export const V1ListPipelineRuns200Response = zod.object({
           "The source that the run used. Its shape depends on the source type and the run state.",
         ),
       started_at: zod.iso.datetime({ offset: true }).nullish(),
-      stats: zod.object({
+      stats: zod.looseObject({
         accepted_rows: zod.int().nullish(),
         billed_emails: zod.int().nullish(),
         changed_only_export: zod.boolean().nullish(),
@@ -956,7 +956,7 @@ export const V1GetPipelineRun200Response = zod.object({
       "The source that the run used. Its shape depends on the source type and the run state.",
     ),
   started_at: zod.iso.datetime({ offset: true }).nullish(),
-  stats: zod.object({
+  stats: zod.looseObject({
     accepted_rows: zod.int().nullish(),
     billed_emails: zod.int().nullish(),
     changed_only_export: zod.boolean().nullish(),

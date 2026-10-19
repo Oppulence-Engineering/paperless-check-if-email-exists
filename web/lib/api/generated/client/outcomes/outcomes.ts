@@ -159,10 +159,34 @@ export const v1PostCampaignOutcomes = async (
   ingestOutcomesRequest: IngestOutcomesRequest,
   options?: RequestInit,
 ): Promise<v1PostCampaignOutcomesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
   const res = await fetch(getV1PostCampaignOutcomesUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
     body: JSON.stringify(ingestOutcomesRequest),
   });
 
@@ -280,12 +304,36 @@ export const v1IngestProviderOutcomes = async (
   v1IngestProviderOutcomesBody: unknown,
   options?: RequestInit,
 ): Promise<v1IngestProviderOutcomesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
   const res = await fetch(
     getV1IngestProviderOutcomesUrl(provider, endpointId, deliveryToken),
     {
       ...options,
       method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
       body: JSON.stringify(v1IngestProviderOutcomesBody),
     },
   );
@@ -398,10 +446,34 @@ export const v1IngestOutcomes = async (
   outcomeIngestRequest: OutcomeIngestRequest,
   options?: RequestInit,
 ): Promise<v1IngestOutcomesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
   const res = await fetch(getV1IngestOutcomesUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
     body: JSON.stringify(outcomeIngestRequest),
   });
 
@@ -498,10 +570,34 @@ export const v1CreateProviderEndpoint = async (
   createProviderEndpointInput: CreateProviderEndpointInput,
   options?: RequestInit,
 ): Promise<v1CreateProviderEndpointResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
   const res = await fetch(getV1CreateProviderEndpointUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
     body: JSON.stringify(createProviderEndpointInput),
   });
 
@@ -609,10 +705,34 @@ export const v1UpdateProviderEndpoint = async (
   updateProviderEndpointInput: UpdateProviderEndpointInput,
   options?: RequestInit,
 ): Promise<v1UpdateProviderEndpointResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
   const res = await fetch(getV1UpdateProviderEndpointUrl(endpointId), {
     ...options,
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
     body: JSON.stringify(updateProviderEndpointInput),
   });
 

@@ -146,7 +146,7 @@ export const V1GetBulkJobResults200Response = zod.object({
               .string()
               .optional()
               .describe(
-                'The version of the backend that performed the verification, e.g. \"4.3.0\".',
+                'The version of the backend that performed the verification, e.g. "4.3.0".',
               ),
             smtp: zod
               .object({
@@ -216,7 +216,7 @@ export const V1GetBulkJobResults200Response = zod.object({
         is_reachable: zod
           .enum(["invalid", "unknown", "safe", "risky"])
           .describe(
-            "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+            "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
           ),
         misc: zod
           .union([
@@ -379,7 +379,7 @@ export const V1GetBulkJobResults200Response = zod.object({
             .string()
             .optional()
             .describe(
-              "Canonical form of the email after alias\/plus-address normalization",
+              "Canonical form of the email after alias/plus-address normalization",
             ),
           partial_confidence: zod
             .object({
@@ -462,7 +462,7 @@ export const V1GetBulkJobResults200Response = zod.object({
             reachable: zod
               .enum(["invalid", "unknown", "safe", "risky"])
               .describe(
-                "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+                "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
               ),
             smtp_can_connect: zod.boolean(),
             smtp_error: zod.boolean(),
@@ -833,7 +833,7 @@ export const V1GetJobResults200Response = zod.object({
                     .string()
                     .optional()
                     .describe(
-                      'The version of the backend that performed the verification, e.g. \"4.3.0\".',
+                      'The version of the backend that performed the verification, e.g. "4.3.0".',
                     ),
                   smtp: zod
                     .object({
@@ -909,7 +909,7 @@ export const V1GetJobResults200Response = zod.object({
               is_reachable: zod
                 .enum(["invalid", "unknown", "safe", "risky"])
                 .describe(
-                  "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+                  "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
                 ),
               misc: zod
                 .union([
@@ -1086,7 +1086,7 @@ export const V1GetJobResults200Response = zod.object({
                   .string()
                   .optional()
                   .describe(
-                    "Canonical form of the email after alias\/plus-address normalization",
+                    "Canonical form of the email after alias/plus-address normalization",
                   ),
                 partial_confidence: zod
                   .object({
@@ -1173,7 +1173,7 @@ export const V1GetJobResults200Response = zod.object({
                   reachable: zod
                     .enum(["invalid", "unknown", "safe", "risky"])
                     .describe(
-                      "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https:\/\/help.reacher.email\/email-attributes-inside-json.",
+                      "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
                     ),
                   smtp_can_connect: zod.boolean(),
                   smtp_error: zod.boolean(),

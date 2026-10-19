@@ -30,45 +30,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   base_list_id: faker.number.int(),
@@ -80,45 +56,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   improved: {
@@ -128,45 +80,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   newly_invalid: {
@@ -176,45 +104,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   newly_risky: {
@@ -224,45 +128,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   newly_safe: {
@@ -272,45 +152,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   removed: {
@@ -320,45 +176,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   unchanged: {
@@ -368,45 +200,21 @@ export const getV1DiffListsResponseMock = (
       (_, i) => i + 1,
     ).map(() => ({
       base_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      base_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      base_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      base_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      base_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
       canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
       change_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       compare_category: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      compare_row_index: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_score: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      compare_task_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      compare_row_index: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_score: faker.helpers.arrayElement([faker.number.int(), null]),
+      compare_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     })),
   },
   ...overrideResponse,
@@ -415,8 +223,8 @@ export const getV1DiffListsResponseMock = (
 export const getV1CreateRemediationExportResponseMock =
   (): V1CreateRemediationExport200 => ({});
 
-export const getV1DownloadRemediationExportResponseMock = (): ArrayBuffer =>
-  new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
+export const getV1DownloadRemediationExportResponseMock = (): Blob =>
+  new Blob([new Uint8Array(faker.number.int({ min: 1, max: 64 }))]);
 
 export const getV1GetRemediationPlanResponseMock =
   (): V1GetRemediationPlan200 => ({});

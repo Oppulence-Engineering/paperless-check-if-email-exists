@@ -68,26 +68,17 @@ export const getV1ListPipelinesResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -113,52 +104,37 @@ export const getV1ListPipelinesResponseMock = (
         undefined,
       ]),
       webhook: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          {
-            headers: faker.helpers.arrayElement([
-              {
-                [faker.string.alphanumeric(5)]: faker.string.alpha({
-                  length: { min: 10, max: 20 },
-                }),
-              },
-              undefined,
-            ]),
-            url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-          },
-          null,
-        ]),
-        undefined,
+        {
+          headers: faker.helpers.arrayElement([
+            {
+              [faker.string.alphanumeric(5)]: faker.string.alpha({
+                length: { min: 10, max: 20 },
+              }),
+            },
+            undefined,
+          ]),
+          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        null,
       ]),
     },
     id: faker.number.int(),
-    last_run_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
     last_scheduled_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     next_run_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     policy: {
       missed_run_window_hours: faker.helpers.arrayElement([
         faker.number.int(),
         undefined,
       ]),
-      policy_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
     },
     schedule: {
       cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -178,10 +154,7 @@ export const getV1ListPipelinesResponseMock = (
         faker.datatype.boolean(),
         undefined,
       ]),
-      freshness_days: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
     },
   })),
   total: faker.number.int(),
@@ -228,26 +201,17 @@ export const getV1CreatePipelineResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -269,52 +233,37 @@ export const getV1CreatePipelineResponseMock = (
       undefined,
     ]),
     webhook: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          headers: faker.helpers.arrayElement([
-            {
-              [faker.string.alphanumeric(5)]: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-            },
-            undefined,
-          ]),
-          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        headers: faker.helpers.arrayElement([
+          {
+            [faker.string.alphanumeric(5)]: faker.string.alpha({
+              length: { min: 10, max: 20 },
+            }),
+          },
+          undefined,
+        ]),
+        url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
+      null,
     ]),
   },
   id: faker.number.int(),
-  last_run_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_scheduled_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
       undefined,
     ]),
-    policy_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -334,10 +283,7 @@ export const getV1CreatePipelineResponseMock = (
       faker.datatype.boolean(),
       undefined,
     ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -389,26 +335,17 @@ export const getV1GetPipelineResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -430,52 +367,37 @@ export const getV1GetPipelineResponseMock = (
       undefined,
     ]),
     webhook: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          headers: faker.helpers.arrayElement([
-            {
-              [faker.string.alphanumeric(5)]: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-            },
-            undefined,
-          ]),
-          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        headers: faker.helpers.arrayElement([
+          {
+            [faker.string.alphanumeric(5)]: faker.string.alpha({
+              length: { min: 10, max: 20 },
+            }),
+          },
+          undefined,
+        ]),
+        url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
+      null,
     ]),
   },
   id: faker.number.int(),
-  last_run_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_scheduled_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
       undefined,
     ]),
-    policy_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -495,10 +417,7 @@ export const getV1GetPipelineResponseMock = (
       faker.datatype.boolean(),
       undefined,
     ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -543,26 +462,17 @@ export const getV1UpdatePipelineResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -584,52 +494,37 @@ export const getV1UpdatePipelineResponseMock = (
       undefined,
     ]),
     webhook: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          headers: faker.helpers.arrayElement([
-            {
-              [faker.string.alphanumeric(5)]: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-            },
-            undefined,
-          ]),
-          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        headers: faker.helpers.arrayElement([
+          {
+            [faker.string.alphanumeric(5)]: faker.string.alpha({
+              length: { min: 10, max: 20 },
+            }),
+          },
+          undefined,
+        ]),
+        url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
+      null,
     ]),
   },
   id: faker.number.int(),
-  last_run_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_scheduled_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
       undefined,
     ]),
-    policy_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -649,10 +544,7 @@ export const getV1UpdatePipelineResponseMock = (
       faker.datatype.boolean(),
       undefined,
     ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -697,26 +589,17 @@ export const getV1PausePipelineResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -738,52 +621,37 @@ export const getV1PausePipelineResponseMock = (
       undefined,
     ]),
     webhook: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          headers: faker.helpers.arrayElement([
-            {
-              [faker.string.alphanumeric(5)]: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-            },
-            undefined,
-          ]),
-          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        headers: faker.helpers.arrayElement([
+          {
+            [faker.string.alphanumeric(5)]: faker.string.alpha({
+              length: { min: 10, max: 20 },
+            }),
+          },
+          undefined,
+        ]),
+        url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
+      null,
     ]),
   },
   id: faker.number.int(),
-  last_run_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_scheduled_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
       undefined,
     ]),
-    policy_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -803,10 +671,7 @@ export const getV1PausePipelineResponseMock = (
       faker.datatype.boolean(),
       undefined,
     ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -862,26 +727,17 @@ export const getV1ResumePipelineResponsePipelineSourceOneOf3Mock = (
   ...{
     bucket: faker.string.alpha({ length: { min: 10, max: 20 } }),
     path_pattern: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     prefix: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
     region: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     type: faker.helpers.arrayElement(["bucket"] as const),
   },
@@ -903,52 +759,37 @@ export const getV1ResumePipelineResponseMock = (
       undefined,
     ]),
     webhook: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          headers: faker.helpers.arrayElement([
-            {
-              [faker.string.alphanumeric(5)]: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-            },
-            undefined,
-          ]),
-          url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        headers: faker.helpers.arrayElement([
+          {
+            [faker.string.alphanumeric(5)]: faker.string.alpha({
+              length: { min: 10, max: 20 },
+            }),
+          },
+          undefined,
+        ]),
+        url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      },
+      null,
     ]),
   },
   id: faker.number.int(),
-  last_run_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_scheduled_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   policy: {
     missed_run_window_hours: faker.helpers.arrayElement([
       faker.number.int(),
       undefined,
     ]),
-    policy_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   schedule: {
     cron: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -968,10 +809,7 @@ export const getV1ResumePipelineResponseMock = (
       faker.datatype.boolean(),
       undefined,
     ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -985,173 +823,89 @@ export const getV1ListPipelineRunsResponseMock = (
   ).map(() => ({
     billed_emails: faker.number.int(),
     completed_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     delivery_attempts: faker.number.int(),
     delivery_error: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     delivery_status: faker.helpers.arrayElement(
       Object.values(PipelineDeliveryStatus),
     ),
     error_code: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     error_message: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     id: faker.number.int(),
-    job_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    job_id: faker.helpers.arrayElement([faker.number.int(), null]),
     last_delivery_attempt_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
-    list_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    list_id: faker.helpers.arrayElement([faker.number.int(), null]),
     next_delivery_attempt_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     pipeline_id: faker.number.int(),
     result_location: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        { download_url: faker.string.alpha({ length: { min: 10, max: 20 } }) },
-        null,
-      ]),
-      undefined,
+      { download_url: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+      null,
     ]),
     scheduled_for: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     source_snapshot: {},
     started_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     stats: {
-      accepted_rows: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      billed_emails: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      accepted_rows: faker.helpers.arrayElement([faker.number.int(), null]),
+      billed_emails: faker.helpers.arrayElement([faker.number.int(), null]),
       changed_only_export: faker.helpers.arrayElement([
         faker.datatype.boolean(),
-        undefined,
+        null,
       ]),
-      delta_mode: faker.helpers.arrayElement([
-        faker.datatype.boolean(),
-        undefined,
-      ]),
-      freshness_days: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      job_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      list_id: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      delta_mode: faker.helpers.arrayElement([faker.datatype.boolean(), null]),
+      freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
+      job_id: faker.helpers.arrayElement([faker.number.int(), null]),
+      list_id: faker.helpers.arrayElement([faker.number.int(), null]),
       selected_unique_emails: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
+        faker.number.int(),
+        null,
       ]),
-      skipped_unchanged: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      skipped_unchanged: faker.helpers.arrayElement([faker.number.int(), null]),
       source_filename: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       source_name: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      source_row_count: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      source_row_count: faker.helpers.arrayElement([faker.number.int(), null]),
       source_unique_emails: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
+        faker.number.int(),
+        null,
       ]),
-      total_failed: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      total_invalid: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      total_processed: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      total_risky: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      total_unknown: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
-      total_valid: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      total_failed: faker.helpers.arrayElement([faker.number.int(), null]),
+      total_invalid: faker.helpers.arrayElement([faker.number.int(), null]),
+      total_processed: faker.helpers.arrayElement([faker.number.int(), null]),
+      total_risky: faker.helpers.arrayElement([faker.number.int(), null]),
+      total_unknown: faker.helpers.arrayElement([faker.number.int(), null]),
+      total_valid: faker.helpers.arrayElement([faker.number.int(), null]),
       trigger_reason: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          faker.string.alpha({ length: { min: 10, max: 20 } }),
-          null,
-        ]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
     },
     status: faker.helpers.arrayElement(Object.values(PipelineRunStatus)),
@@ -1168,173 +922,89 @@ export const getV1GetPipelineRunResponseMock = (
 ): PipelineRunView => ({
   billed_emails: faker.number.int(),
   completed_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   delivery_attempts: faker.number.int(),
   delivery_error: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   delivery_status: faker.helpers.arrayElement(
     Object.values(PipelineDeliveryStatus),
   ),
   error_code: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   error_message: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   id: faker.number.int(),
-  job_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  job_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_delivery_attempt_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
-  list_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  list_id: faker.helpers.arrayElement([faker.number.int(), null]),
   next_delivery_attempt_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   pipeline_id: faker.number.int(),
   result_location: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      { download_url: faker.string.alpha({ length: { min: 10, max: 20 } }) },
-      null,
-    ]),
-    undefined,
+    { download_url: faker.string.alpha({ length: { min: 10, max: 20 } }) },
+    null,
   ]),
   scheduled_for: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   source_snapshot: {},
   started_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   stats: {
-    accepted_rows: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    billed_emails: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    accepted_rows: faker.helpers.arrayElement([faker.number.int(), null]),
+    billed_emails: faker.helpers.arrayElement([faker.number.int(), null]),
     changed_only_export: faker.helpers.arrayElement([
       faker.datatype.boolean(),
-      undefined,
+      null,
     ]),
-    delta_mode: faker.helpers.arrayElement([
-      faker.datatype.boolean(),
-      undefined,
-    ]),
-    freshness_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    job_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    list_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    delta_mode: faker.helpers.arrayElement([faker.datatype.boolean(), null]),
+    freshness_days: faker.helpers.arrayElement([faker.number.int(), null]),
+    job_id: faker.helpers.arrayElement([faker.number.int(), null]),
+    list_id: faker.helpers.arrayElement([faker.number.int(), null]),
     selected_unique_emails: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
+      faker.number.int(),
+      null,
     ]),
-    skipped_unchanged: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    skipped_unchanged: faker.helpers.arrayElement([faker.number.int(), null]),
     source_filename: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source_name: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
-    source_row_count: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    source_row_count: faker.helpers.arrayElement([faker.number.int(), null]),
     source_unique_emails: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
+      faker.number.int(),
+      null,
     ]),
-    total_failed: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    total_invalid: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    total_processed: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    total_risky: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    total_unknown: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
-    total_valid: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    total_failed: faker.helpers.arrayElement([faker.number.int(), null]),
+    total_invalid: faker.helpers.arrayElement([faker.number.int(), null]),
+    total_processed: faker.helpers.arrayElement([faker.number.int(), null]),
+    total_risky: faker.helpers.arrayElement([faker.number.int(), null]),
+    total_unknown: faker.helpers.arrayElement([faker.number.int(), null]),
+    total_valid: faker.helpers.arrayElement([faker.number.int(), null]),
     trigger_reason: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
   },
   status: faker.helpers.arrayElement(Object.values(PipelineRunStatus)),
