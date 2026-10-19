@@ -2,7 +2,8 @@ use lambda_runtime::{service_fn, Error, LambdaEvent};
 use reacher_backend::config::{load_config, BackendConfig};
 use reacher_backend::http::CheckEmailRequest;
 use reacher_backend::worker::do_work::{
-	check_email_and_send_result_with_config, CheckEmailJobId, CheckEmailTask, TaskWebhook,
+	check_email_and_send_result_with_config, CheckEmailJobId, CheckEmailTask, TaskMetadata,
+	TaskWebhook,
 };
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -51,12 +52,27 @@ struct CheckEmailPartialTask {
 }
 
 impl CheckEmailPartialTask {
-	fn into_check_email_task(self, backend_config: Arc<BackendConfig>) -> CheckEmailTask {
+	/// `message_id` is the SQS message id, which stays the same across
+	/// redeliveries. As the dedupe key it makes every delivery of a message
+	/// store into one result row.
+	fn into_check_email_task(
+		self,
+		backend_config: Arc<BackendConfig>,
+		message_id: Option<&str>,
+	) -> CheckEmailTask {
 		CheckEmailTask {
 			input: self.input.to_check_email_input(backend_config),
 			job_id: self.job_id,
 			webhook: self.webhook,
-			metadata: None,
+			metadata: message_id.map(|message_id| TaskMetadata {
+				tenant_id: None,
+				request_id: None,
+				correlation_id: None,
+				created_by: Some("sqs".to_string()),
+				retry_policy: None,
+				dedupe_key: Some(format!("sqs:{}", message_id)),
+				task_db_id: None,
+			}),
 		}
 	}
 }
@@ -136,7 +152,7 @@ async fn process_sqs_message(
 	let task: CheckEmailPartialTask = serde_json::from_str(&message.body)?;
 	info!(email = ?task.input.to_email, "Processing task");
 
-	let task = task.into_check_email_task(backend_config.clone());
+	let task = task.into_check_email_task(backend_config.clone(), message.message_id.as_deref());
 	let task = &task;
 
 	let worker_output =
@@ -153,6 +169,8 @@ async fn process_sqs_message(
 	// TODO:
 	// - Refactor storing the result, it's duplicated code from the backend.
 	// - Add throttling, again using backend code.
+	// Every delivery stores its outcome, so the last one stays even when SQS
+	// dead-letters the message; the dedupe key keeps them in one row.
 	match &worker_output {
 		Ok(success) => {
 			storage
