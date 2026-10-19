@@ -5,7 +5,6 @@
 1chuan.com
 1pad.de
 20minutemail.com
-21cn.com
 2fdns.com
 33mail.com
 3d-painting.com
@@ -285,7 +284,6 @@ mytempemail.com
 mytempmail.com
 mytrashmail.com
 nabala.com
-neomailbox.com
 nepwk.com
 nervmich.net
 nervtansen.de
@@ -311,7 +309,6 @@ nospamthanks.info
 nothingtoseehere.ca
 nowmymail.com
 nurfuerspam.de
-nus.edu.sg
 nwldx.com
 objectmail.com
 obobbo.com
@@ -336,7 +333,6 @@ proxymail.eu
 prtnx.com
 punkass.com
 putthisinyouremail.com
-qq.com
 quickinbox.com
 rcpt.at
 reallymymail.com
@@ -351,7 +347,6 @@ royal.net
 rppkn.com
 rtrtr.com
 s0ny.net
-safe-mail.net
 safersignup.de
 safetymail.info
 safetypost.de
@@ -368,7 +363,6 @@ shiftmail.com
 shitmail.me
 shortmail.net
 showslow.de
-sibmail.com
 sinnlos-mail.de
 siteposter.net
 skeefmail.com
@@ -530,14 +524,12 @@ xjoi.com
 xmaily.com
 xoxy.net
 yapped.net
-yeah.net
 yep.it
 yogamaven.com
 yopmail.com
 yopmail.fr
 yopmail.gq
 yopmail.net
-yourdomain.com
 ypmail.webarnak.fr.eu.org
 yuurok.com
 zehnminutenmail.de
