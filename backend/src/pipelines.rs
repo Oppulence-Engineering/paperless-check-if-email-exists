@@ -548,7 +548,6 @@ async fn claim_due_pipeline_runs(
 			&pipeline.schedule_cron,
 			&pipeline.schedule_timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		) {
 			Ok(next_future_run) => next_future_run,
 			Err(err) => {
@@ -853,7 +852,6 @@ pub async fn create_pipeline(
 			&input.schedule.cron,
 			&input.schedule.timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		)?),
 		(_, PipelineStatus::Paused | PipelineStatus::Deleted) => None,
 	};
@@ -1010,14 +1008,12 @@ pub async fn update_pipeline(
 				&next_schedule.cron,
 				&next_schedule.timezone,
 				Utc::now(),
-				pipeline_config.min_interval_seconds,
 			)?))
 		}
 		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
 			&next_schedule.cron,
 			&next_schedule.timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		)?),
 		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
@@ -1091,12 +1087,20 @@ pub async fn set_pipeline_status(
 	};
 	let next_run_at = match (&current.source, &status) {
 		(PipelineSource::Push { .. }, _) => None,
-		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
-			&current.schedule.cron,
-			&current.schedule.timezone,
-			Utc::now(),
-			min_interval_seconds,
-		)?),
+		(_, &PipelineStatus::Active) => {
+			validate_cron_expression(
+				&current.schedule.cron,
+				&current.schedule.timezone,
+				min_interval_seconds,
+				Utc::now(),
+			)
+			.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
+			Some(compute_next_run_at(
+				&current.schedule.cron,
+				&current.schedule.timezone,
+				Utc::now(),
+			)?)
+		}
 		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
 	let row = sqlx::query(
@@ -2974,38 +2978,63 @@ fn merge_pipeline_run_stats(existing: Value, computed: Value) -> Value {
 	Value::Object(merged)
 }
 
+/// How far past its first run a schedule is checked for gaps. Minute, hour and
+/// day-of-week fields repeat weekly, so eight days covers every gap, including
+/// the one from the last run of a week to the first run of the next.
+const SCHEDULE_VALIDATION_HORIZON_DAYS: i64 = 8;
+/// Upper bound on run times inspected, so validating a dense schedule stays cheap.
+const SCHEDULE_VALIDATION_MAX_RUNS: usize = 10_000;
+
+/// Rejects schedules whose runs are ever closer than `min_interval_seconds`.
+///
+/// Every gap in the cycle is checked, not just the next one, so whether a
+/// schedule is accepted does not depend on the time of day it is saved.
 fn validate_cron_expression(
 	expression: &str,
 	timezone: &str,
 	min_interval_seconds: i32,
+	now_utc: DateTime<Utc>,
 ) -> Result<()> {
 	let tz = parse_timezone(timezone)?;
 	let schedule = parse_schedule(expression)?;
-	let now = Utc::now().with_timezone(&tz);
-	let mut upcoming = schedule.after(&now);
+	let mut upcoming = schedule
+		.after(&now_utc.with_timezone(&tz))
+		.take(SCHEDULE_VALIDATION_MAX_RUNS);
 	let first = upcoming
 		.next()
 		.context("Cron expression does not produce any future run times")?;
-	let second = upcoming
-		.next()
-		.context("Cron expression must produce at least two future run times")?;
-	let interval = second.signed_duration_since(first).num_seconds();
-	if interval < i64::from(min_interval_seconds) {
-		bail!(
-			"Cron schedule must be at least {} seconds apart",
-			min_interval_seconds
-		);
+	let horizon = first + Duration::days(SCHEDULE_VALIDATION_HORIZON_DAYS);
+	let mut previous = first;
+	let mut has_second_run = false;
+	for next in upcoming {
+		has_second_run = true;
+		if next.signed_duration_since(previous).num_seconds() < i64::from(min_interval_seconds) {
+			bail!(
+				"Cron schedule must be at least {} seconds apart",
+				min_interval_seconds
+			);
+		}
+		if next > horizon {
+			break;
+		}
+		previous = next;
+	}
+	if !has_second_run {
+		bail!("Cron expression must produce at least two future run times");
 	}
 	Ok(())
 }
 
+/// The first run of the schedule after `now_utc`.
+///
+/// This does not apply the minimum-interval policy: that is enforced when a
+/// schedule is saved, and re-checking it here would pause a pipeline whose
+/// schedule was accepted earlier.
 pub fn compute_next_run_at(
 	expression: &str,
 	timezone: &str,
 	now_utc: DateTime<Utc>,
-	min_interval_seconds: i32,
 ) -> Result<DateTime<Utc>> {
-	validate_cron_expression(expression, timezone, min_interval_seconds)?;
 	let tz = parse_timezone(timezone)?;
 	let now = now_utc.with_timezone(&tz);
 	let schedule = parse_schedule(expression)?;
@@ -3025,8 +3054,13 @@ async fn validate_pipeline_input(
 	delivery: &PipelineDeliveryConfig,
 	min_interval_seconds: i32,
 ) -> std::result::Result<(), PipelineRequestError> {
-	validate_cron_expression(&schedule.cron, &schedule.timezone, min_interval_seconds)
-		.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
+	validate_cron_expression(
+		&schedule.cron,
+		&schedule.timezone,
+		min_interval_seconds,
+		Utc::now(),
+	)
+	.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
 	if policy.missed_run_window_hours < 1 {
 		return Err(PipelineRequestError::validation(
 			"Pipeline missed_run_window_hours must be at least 1",
@@ -3182,11 +3216,78 @@ fn is_private_ip(ip: std::net::IpAddr) -> bool {
 
 fn parse_schedule(expression: &str) -> Result<Schedule> {
 	let parts: Vec<&str> = expression.split_whitespace().collect();
-	if parts.len() != 5 {
+	let [minute, hour, day_of_month, month, day_of_week] = parts.as_slice() else {
 		bail!("Cron expression must use standard 5-field syntax");
-	}
-	let cron_expression = format!("0 {} *", expression.trim());
+	};
+	let day_of_week = translate_day_of_week_field(day_of_week)?;
+	let cron_expression = format!("0 {minute} {hour} {day_of_month} {month} {day_of_week} *");
 	Schedule::from_str(&cron_expression).context("Invalid cron expression")
+}
+
+/// Rewrites a standard day-of-week field for the `cron` crate.
+///
+/// Standard cron numbers days 0-7 with 0 and 7 both Sunday and 1 Monday; the
+/// crate numbers them 1 (Sunday) to 7 (Saturday). Passing numbers through made
+/// "0 9 * * 1" run on Sundays and rejected "0". Numeric items, ranges and steps
+/// are expanded to the crate's numbers; day names already mean the same day to
+/// both and pass through unchanged.
+fn translate_day_of_week_field(field: &str) -> Result<String> {
+	let items = field
+		.split(',')
+		.map(translate_day_of_week_item)
+		.collect::<Result<Vec<_>>>()?;
+	Ok(items.join(","))
+}
+
+fn translate_day_of_week_item(item: &str) -> Result<String> {
+	if item == "*" || item == "?" || item.chars().any(|c| c.is_ascii_alphabetic()) {
+		return Ok(item.to_string());
+	}
+	let (base, step) = match item.split_once('/') {
+		Some((base, step)) => (base, parse_cron_number(step, "step")?),
+		None => (item, 1),
+	};
+	if step == 0 {
+		bail!("Day-of-week step must be at least 1");
+	}
+	let (first, last) = match base.split_once('-') {
+		Some((first, last)) => (parse_day_of_week(first)?, parse_day_of_week(last)?),
+		None if base == "*" || base == "?" => (0, 7),
+		// "N/step" runs from N to the end of the week, as in cronie.
+		None if item.contains('/') => (parse_day_of_week(base)?, 7),
+		None => {
+			let day = parse_day_of_week(base)?;
+			(day, day)
+		}
+	};
+	if first > last {
+		bail!("Day-of-week range {} runs backwards", base);
+	}
+	let mut days: Vec<u32> = (first..=last)
+		.step_by(step as usize)
+		.map(|day| day % 7 + 1)
+		.collect();
+	days.sort_unstable();
+	days.dedup();
+	Ok(days
+		.iter()
+		.map(u32::to_string)
+		.collect::<Vec<_>>()
+		.join(","))
+}
+
+fn parse_day_of_week(value: &str) -> Result<u32> {
+	let day = parse_cron_number(value, "day of week")?;
+	if day > 7 {
+		bail!("Day of week must be between 0 and 7, got {}", day);
+	}
+	Ok(day)
+}
+
+fn parse_cron_number(value: &str, what: &str) -> Result<u32> {
+	value
+		.parse()
+		.with_context(|| format!("Invalid {} in cron expression: {:?}", what, value))
 }
 
 fn parse_timezone(timezone: &str) -> Result<Tz> {
@@ -3396,7 +3497,7 @@ mod tests {
 	#[test]
 	fn test_compute_next_run_at_accepts_five_field_cron() {
 		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
-		let next = compute_next_run_at("0 13 * * *", "UTC", now, 3600).unwrap();
+		let next = compute_next_run_at("0 13 * * *", "UTC", now).unwrap();
 		assert!(next > now);
 		assert_eq!(next.date_naive(), now.date_naive());
 		assert_eq!(next.hour(), 13);
@@ -3407,7 +3508,7 @@ mod tests {
 	#[test]
 	fn test_compute_next_run_at_rolls_to_next_day() {
 		let now = Utc.with_ymd_and_hms(2026, 3, 28, 13, 30, 0).unwrap();
-		let next = compute_next_run_at("0 13 * * *", "UTC", now, 3600).unwrap();
+		let next = compute_next_run_at("0 13 * * *", "UTC", now).unwrap();
 		assert!(next > now);
 		assert_eq!(
 			next.date_naive(),
@@ -3426,8 +3527,84 @@ mod tests {
 
 	#[test]
 	fn test_validate_cron_expression_rejects_too_frequent_schedule() {
-		let err = validate_cron_expression("* * * * *", "UTC", 3600).unwrap_err();
+		let err = validate_cron_expression("* * * * *", "UTC", 3600, Utc::now()).unwrap_err();
 		assert!(err.to_string().contains("at least 3600 seconds"));
+	}
+
+	/// Weekdays (1 = Monday .. 7 = Sunday) on which a schedule fires during the
+	/// two weeks after Saturday 2026-03-28.
+	fn fire_weekdays(expression: &str) -> Vec<u32> {
+		use chrono::Datelike;
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let mut days: Vec<u32> = parse_schedule(expression)
+			.unwrap()
+			.after(&now)
+			.take_while(|fire| *fire < now + Duration::days(14))
+			.map(|fire| fire.weekday().number_from_monday())
+			.collect();
+		days.sort_unstable();
+		days.dedup();
+		days
+	}
+
+	#[test]
+	fn test_parse_schedule_uses_standard_day_of_week_numbers() {
+		// Standard cron numbers days 0-7 with 0 and 7 both Sunday; the UI hint
+		// promises "0 9 * * 1" runs on Monday.
+		let cases: &[(&str, &[u32])] = &[
+			("0 9 * * 1", &[1]),
+			("0 9 * * 0", &[7]),
+			("0 9 * * 7", &[7]),
+			("0 9 * * 6", &[6]),
+			("0 9 * * 1-5", &[1, 2, 3, 4, 5]),
+			("0 9 * * 5-7", &[5, 6, 7]),
+			("0 9 * * 0,3", &[3, 7]),
+			("0 9 * * */2", &[2, 4, 6, 7]),
+			("0 9 * * 1-5/2", &[1, 3, 5]),
+			("0 9 * * 1,SAT", &[1, 6]),
+			("0 9 * * MON", &[1]),
+			("0 9 * * sun", &[7]),
+			("0 9 * * MON-FRI", &[1, 2, 3, 4, 5]),
+			("0 9 * * *", &[1, 2, 3, 4, 5, 6, 7]),
+		];
+		for (expression, weekdays) in cases {
+			assert_eq!(
+				fire_weekdays(expression),
+				weekdays.to_vec(),
+				"weekdays for {:?}",
+				expression
+			);
+		}
+		for invalid in ["0 9 * * 8", "0 9 * * 5-1", "0 9 * * 1/0", "0 9 * * 1-"] {
+			assert!(
+				parse_schedule(invalid).is_err(),
+				"{:?} should be rejected",
+				invalid
+			);
+		}
+	}
+
+	#[test]
+	fn test_validate_cron_expression_checks_every_gap_regardless_of_save_time() {
+		// 09:00 and 10:00 are an hour apart. Checking only the next two runs
+		// accepted this when saved between 09:00 and 10:00 (next runs 10:00 and
+		// 09:00 tomorrow, 23 hours apart) and rejected it at other times.
+		for hour in [8, 9, 12] {
+			let now = Utc.with_ymd_and_hms(2026, 3, 28, hour, 30, 0).unwrap();
+			assert!(
+				validate_cron_expression("0 9,10 * * *", "UTC", 7200, now).is_err(),
+				"accepted a one-hour gap when saved at {}",
+				now
+			);
+		}
+
+		// Monday and Tuesday runs are a day apart; saved on a Tuesday afternoon the
+		// next two runs (Friday, Monday) are three days apart.
+		let tuesday = Utc.with_ymd_and_hms(2026, 3, 31, 12, 0, 0).unwrap();
+		assert!(validate_cron_expression("0 9 * * 1,2,5", "UTC", 2 * 86_400, tuesday).is_err());
+		assert!(validate_cron_expression("0 9 * * 1,5", "UTC", 2 * 86_400, tuesday).is_ok());
+		assert!(validate_cron_expression("0 9 * * 1", "UTC", 3600, tuesday).is_ok());
+		assert!(validate_cron_expression("0 9 31 2 *", "UTC", 3600, tuesday).is_err());
 	}
 
 	#[test]

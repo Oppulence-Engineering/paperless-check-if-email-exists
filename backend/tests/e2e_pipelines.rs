@@ -476,6 +476,8 @@ async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_oth
 	.await
 	.unwrap();
 
+	// The claim only computes the next run (the minimum interval is enforced when
+	// a schedule is saved), so the stored schedule has to be unparseable to fail.
 	let invalid_pipeline_id: i64 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_pipelines (
@@ -484,7 +486,7 @@ async fn test_pipeline_scheduler_skips_invalid_due_pipeline_without_blocking_oth
 		)
 		VALUES (
 			$1, 'Invalid Scheduled Cleanup', 'active'::pipeline_status, 'list_snapshot'::pipeline_source_type,
-			$2, '*/5 * * * *', 'UTC', '{}'::jsonb, '{}'::jsonb, '{"dashboard":true}'::jsonb,
+			$2, '0 25 * * *', 'UTC', '{}'::jsonb, '{}'::jsonb, '{"dashboard":true}'::jsonb,
 			NOW() - INTERVAL '1 minute'
 		)
 		RETURNING id
