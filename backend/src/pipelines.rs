@@ -3232,10 +3232,12 @@ fn merge_pipeline_run_stats(existing: Value, computed: Value) -> Value {
 	Value::Object(merged)
 }
 
-/// How far past its first run a schedule is checked for gaps. Minute, hour and
-/// day-of-week fields repeat weekly, so eight days covers every gap, including
-/// the one from the last run of a week to the first run of the next.
-const SCHEDULE_VALIDATION_HORIZON_DAYS: i64 = 8;
+/// How far past its first run a schedule is checked for gaps. Day-of-month
+/// and month fields only repeat yearly, and daylight-saving changes happen
+/// within a year, so a year and a week covers every gap, including the one
+/// into the next cycle. An hourly schedule fires about 8,900 times in that
+/// span, under the run cap below.
+const SCHEDULE_VALIDATION_HORIZON_DAYS: i64 = 366 + 7;
 /// Upper bound on run times inspected, so validating a dense schedule stays cheap.
 const SCHEDULE_VALIDATION_MAX_RUNS: usize = 10_000;
 
@@ -3886,6 +3888,16 @@ mod tests {
 				invalid
 			);
 		}
+	}
+
+	#[test]
+	fn test_validate_cron_expression_sees_gaps_across_month_boundaries() {
+		// Saved on Jan 31 after 09:00, the first runs are Feb 1 and Mar 1, a
+		// month apart; the 1-day gap from Mar 31 to Apr 1 comes later.
+		let saved_at = Utc.with_ymd_and_hms(2026, 1, 31, 12, 0, 0).unwrap();
+		let two_days = 2 * 24 * 3600;
+		assert!(validate_cron_expression("0 9 1,31 * *", "UTC", two_days, saved_at).is_err());
+		assert!(validate_cron_expression("0 9 1,15 * *", "UTC", two_days, saved_at).is_ok());
 	}
 
 	#[test]
