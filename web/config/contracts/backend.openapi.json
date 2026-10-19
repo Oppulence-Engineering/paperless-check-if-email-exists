@@ -644,7 +644,7 @@
 					},
 					"confidence": {
 						"format": "double",
-						"maximum": 1.0,
+						"maximum": 1,
 						"minimum": 0.35,
 						"type": "number"
 					},
@@ -5200,7 +5200,7 @@
 		},
 		"termsOfService": "https://github.com/reacherhq/policies/blob/master/terms/index.fr.md",
 		"title": "Reacher",
-		"version": "4.3.0"
+		"version": "4.3.1"
 	},
 	"openapi": "3.0.0",
 	"paths": {
@@ -6908,8 +6908,12 @@
 						"description": "Request error"
 					}
 				},
-				"security": [],
-				"summary": "POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.\nNo authentication required. Creates a tenant, generates an API key,\nverifies the email, and returns all three.",
+				"security": [
+					{
+						"AdminSecret": []
+					}
+				],
+				"summary": "POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call.\nRequires the backend admin secret: it creates a tenant with the requested\nplan, generates a non-admin API key, verifies the email, and returns all three.\nWorkspaces sign up through the web app instead.",
 				"tags": ["v1"]
 			}
 		},

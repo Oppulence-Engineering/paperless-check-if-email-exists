@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"service": {
 		"name": "check-if-email-exists",
-		"apiVersion": "4.3.0"
+		"apiVersion": "4.3.1"
 	},
 	"auth": {
 		"audience": "check-if-email-exists-api"
