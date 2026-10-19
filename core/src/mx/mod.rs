@@ -1,7 +1,8 @@
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
 use hickory_resolver::lookup::Lookup;
-use hickory_resolver::net::NetError;
+use hickory_resolver::net::{NetError, NoRecords};
+use hickory_resolver::proto::op::ResponseCode;
 use hickory_resolver::proto::rr::rdata::MX;
 use hickory_resolver::proto::rr::RData;
 use hickory_resolver::TokioResolver;
@@ -20,12 +21,13 @@ pub struct MxLookup(Lookup);
 
 impl MxLookup {
 	/// The MX records of the answer, in the order that the server sent them.
+	/// A null MX (RFC 7505: `MX 0 .`) names no mail server, so it's left out.
 	pub fn iter(&self) -> impl Iterator<Item = &MX> {
 		self.0
 			.answers()
 			.iter()
 			.filter_map(|record| match &record.data {
-				RData::MX(mx) => Some(mx),
+				RData::MX(mx) if !mx.exchange.is_root() => Some(mx),
 				_ => None,
 			})
 	}
@@ -53,6 +55,15 @@ impl Default for MxDetails {
 
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
+		// A domain whose only MX is null has declared that it accepts no mail.
+		// Report it like a domain without MX records, instead of trying to
+		// connect to an empty host name.
+		if lookup.iter().next().is_none() {
+			let no_records = NoRecords::new(lookup.0.query().clone(), ResponseCode::NoError);
+			return MxDetails {
+				lookup: Err(no_records.into()),
+			};
+		}
 		MxDetails { lookup: Ok(lookup) }
 	}
 }
@@ -209,6 +220,44 @@ pub fn is_yahoo(mx_host: &str) -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use hickory_resolver::proto::op::Query;
+	use hickory_resolver::proto::rr::{Name, Record, RecordType};
+
+	fn mx_details_for(exchanges: &[&str]) -> MxDetails {
+		let domain = Name::from_ascii("example.com.").unwrap();
+		let records = exchanges.iter().map(|exchange| {
+			let exchange = Name::from_ascii(exchange).unwrap();
+			Record::from_rdata(domain.clone(), 3600, RData::MX(MX::new(0, exchange)))
+		});
+		let query = Query::query(domain.clone(), RecordType::MX);
+		MxDetails::from(MxLookup::from(Lookup::new_with_max_ttl(query, records)))
+	}
+
+	fn accepts_mail(mx: &MxDetails) -> bool {
+		serde_json::to_value(mx).unwrap()["accepts_mail"] == true
+	}
+
+	#[test]
+	fn null_mx_means_the_domain_accepts_no_mail() {
+		// RFC 7505: the single record "MX 0 ." declares that the domain
+		// receives no mail.
+		let null_mx = mx_details_for(&["."]);
+		assert!(null_mx.lookup.is_err());
+		assert!(!accepts_mail(&null_mx));
+
+		// RFC 7505 forbids mixing a null MX with real ones; if a domain does,
+		// the real ones still get the mail.
+		let mixed = mx_details_for(&[".", "mx.example.com."]);
+		let exchanges: Vec<String> = mixed
+			.lookup
+			.as_ref()
+			.unwrap()
+			.iter()
+			.map(|mx| mx.exchange.to_string())
+			.collect();
+		assert_eq!(exchanges, vec!["mx.example.com.".to_string()]);
+		assert!(accepts_mail(&mixed));
+	}
 
 	#[test]
 	fn proofpoint_detection_is_case_insensitive() {

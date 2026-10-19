@@ -54,7 +54,6 @@ alarm
 alarms
 alert
 alerts
-alexa
 all
 all-employees
 all-pms
@@ -120,7 +119,6 @@ backend-dev
 backup
 bd
 benefits
-berlin
 bestellung
 beta
 biblioteca
@@ -136,7 +134,6 @@ bod
 bookclub
 booking
 bookings
-boston
 boxoffice
 brand
 branding
@@ -174,8 +171,6 @@ chartering
 chat
 chatter
 chef
-chicago
-china
 church
 citymanagers
 classof2016
@@ -279,10 +274,8 @@ daemon
 data
 database
 deals
-dean
 delivery
 demo
-denver
 departures
 deploy
 deputy
@@ -396,7 +389,6 @@ ftp
 fulltime
 fun
 fundraising
-gardner
 geeks
 general
 geral
@@ -442,7 +434,6 @@ implementation
 import
 inbound
 inbox
-india
 info
 infor
 informacion
@@ -623,7 +614,6 @@ outage
 outreach
 owners
 parents
-paris
 partner
 partners
 partnerships
@@ -638,7 +628,6 @@ pd
 people
 peoplemanagers
 peopleops
-per
 performance
 personnel
 phish
@@ -849,7 +838,6 @@ support-team
 supportteam
 suprimentos
 survey
-sydney
 sysadmin
 system
 systems

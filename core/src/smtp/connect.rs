@@ -11,7 +11,7 @@ use std::str::FromStr;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
 use tokio::net::TcpStream;
 
-use super::parser;
+use super::parser::{self, RcptRejection};
 use super::verif_method::VerifMethodSmtp;
 use super::{SmtpDetails, SmtpError};
 use crate::rules::{has_rule, Rule};
@@ -170,59 +170,35 @@ async fn check_email_deliverability<S: AsyncBufRead + AsyncWrite + Unpin + Send>
 			is_disabled: false,
 		}),
 		Err(err) => {
-			// We cast to lowercase, because our matched strings below are all
-			// lowercase.
+			// We cast to lowercase, because the parser's matched strings are
+			// all lowercase.
 			let err_string = err.to_string().to_lowercase();
 
-			// Greylisting is a temporary deferral, it says nothing about the
-			// mailbox. Return the error as-is so that the check is retried,
-			// and eventually reported as unknown.
-			if parser::is_greylisted(&err_string) {
-				return Err(SmtpError::AsyncSmtpError(err));
-			}
-
-			// Check if the email account has been disabled or blocked.
-			if parser::is_disabled_account(&err_string) {
-				return Ok(Deliverability {
+			match parser::classify_rcpt_rejection(&err_string, to_email) {
+				// Return the error as-is so that the check is retried, and
+				// eventually reported as unknown.
+				RcptRejection::Inconclusive => Err(SmtpError::AsyncSmtpError(err)),
+				RcptRejection::Invalid => Ok(Deliverability {
+					has_full_inbox: false,
+					is_deliverable: false,
+					is_disabled: false,
+				}),
+				RcptRejection::Disabled => Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: false,
 					is_disabled: true,
-				});
-			}
-
-			// Check if the email account has a full inbox.
-			if parser::is_full_inbox(&err_string) {
-				return Ok(Deliverability {
+				}),
+				RcptRejection::FullInbox => Ok(Deliverability {
 					has_full_inbox: true,
 					is_deliverable: false,
 					is_disabled: false,
-				});
-			}
-
-			// Check error messages that say that user can actually receive
-			// emails.
-			// 4.2.1 The user you are trying to contact is receiving mail at a rate that
-			if err_string
-				.contains("the user you are trying to contact is receiving mail at a rate that")
-			{
-				return Ok(Deliverability {
+				}),
+				RcptRejection::Deliverable => Ok(Deliverability {
 					has_full_inbox: false,
 					is_deliverable: true,
 					is_disabled: false,
-				});
+				}),
 			}
-
-			// Check that the mailbox doesn't exist.
-			if parser::is_invalid(&err_string, to_email) {
-				return Ok(Deliverability {
-					has_full_inbox: false,
-					is_deliverable: false,
-					is_disabled: false,
-				});
-			}
-
-			// Return all unparsable errors,.
-			Err(SmtpError::AsyncSmtpError(err))
 		}
 	}
 }
