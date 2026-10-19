@@ -105,6 +105,13 @@ async fn http_handler(
 				)
 				.into());
 			}
+			IdempotencyCheck::PathMismatch => {
+				return Err(ReacherResponseError::new(
+					StatusCode::UNPROCESSABLE_ENTITY,
+					"Idempotency key was already used on another endpoint",
+				)
+				.into());
+			}
 			IdempotencyCheck::Cached(cached) => {
 				let status =
 					StatusCode::from_u16(cached.status_code).map_err(ReacherResponseError::from)?;

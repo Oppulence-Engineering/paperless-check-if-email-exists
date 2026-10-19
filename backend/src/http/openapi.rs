@@ -795,7 +795,9 @@ mod operation_id_tests {
 				if let Some(operation) = item.get(method) {
 					assert!(
 						operation["responses"]["default"]["description"].is_string(),
-						"{method} {path}"
+						"{} {}",
+						method,
+						path
 					);
 				}
 			}
