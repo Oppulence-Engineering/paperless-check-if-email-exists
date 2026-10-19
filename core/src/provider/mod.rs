@@ -282,9 +282,8 @@ fn validate_account_name(
 		return Err(ProviderRejectionReason::ProviderFormatViolation);
 	};
 
-	let is_restricted_special = |c: char| {
-		!c.is_ascii_alphanumeric() && !rule.unrestricted_special_chars.contains(&c)
-	};
+	let is_restricted_special =
+		|c: char| !c.is_ascii_alphanumeric() && !rule.unrestricted_special_chars.contains(&c);
 
 	if rule.must_start_with_alphanumeric && is_restricted_special(first_char) {
 		return Err(ProviderRejectionReason::InvalidStartCharacter);
