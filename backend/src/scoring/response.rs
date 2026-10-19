@@ -350,7 +350,7 @@ pub async fn prepare_verification_response(
 		suggested_email: output.syntax.suggestion.clone(),
 		bounce_risk: bounce_risk.as_ref(),
 		active_suppression,
-		previous_hard_bounce: scoring_context.outcomes.has_hard_bounce,
+		previous_hard_bounce: scoring_context.outcomes.hard_bounce_counts(),
 		custom_policy: custom_profile.as_ref().map(|(_, rules)| rules),
 	};
 	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);

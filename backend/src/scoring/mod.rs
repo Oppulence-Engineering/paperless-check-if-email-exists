@@ -439,16 +439,12 @@ pub fn compute_score_with_context(
 	// Outcome ground truth wins over every other signal, including the
 	// hard-invalid syntactic check below: a real hard bounce or complaint
 	// reported by the customer's ESP is the strongest possible signal.
-	if context.outcomes.forces_invalid() {
-		let reason_code = if context.outcomes.has_hard_bounce {
-			"outcome_hard_bounce"
-		} else {
-			"outcome_complaint"
-		};
-		let factor = if context.outcomes.has_hard_bounce {
-			"outcome_feedback:hard_bounce"
-		} else {
-			"outcome_feedback:complaint"
+	if let Some(forced_by) = context.outcomes.forced_invalid_reason() {
+		let (reason_code, factor) = match forced_by {
+			crate::outcomes::OutcomeType::HardBounce => {
+				("outcome_hard_bounce", "outcome_feedback:hard_bounce")
+			}
+			_ => ("outcome_complaint", "outcome_feedback:complaint"),
 		};
 		score.score = 5;
 		score.category = EmailCategory::Invalid;

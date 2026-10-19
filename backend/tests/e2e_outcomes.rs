@@ -921,6 +921,21 @@ async fn test_old_outcomes_ignored_by_ttl() -> Result<()> {
 		ctx.delivered_count, 0,
 		"30-day-old outcome should be filtered by 7-day TTL"
 	);
+
+	// The post-verification hook honours the same TTL: an expired hard
+	// bounce neither forces invalid in scoring nor suppresses afterwards.
+	sqlx::query(
+		"INSERT INTO verification_outcomes (tenant_id, canonical_email, outcome_type, occurred_at, source) VALUES ($1, $2, 'hard_bounce', NOW() - INTERVAL '30 days', 'old')",
+	)
+	.bind(tenant_id)
+	.bind("ttl@example.com")
+	.execute(db.pool())
+	.await?;
+	apply_post_verification_outcome_check(db.pool(), tenant_id, "ttl@example.com").await;
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "ttl@example.com").await,
+		0
+	);
 	Ok(())
 }
 
