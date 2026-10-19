@@ -92,7 +92,8 @@ mod tests {
 	use std::str::FromStr;
 
 	use super::*;
-	use crate::{syntax::SyntaxDetails, EmailAddress};
+	use crate::syntax::{check_syntax, SyntaxDetails};
+	use crate::EmailAddress;
 
 	#[tokio::test]
 	async fn test_check_misc() {
@@ -110,5 +111,9 @@ mod tests {
 		assert!(!misc_details.is_disposable); // gmail.com is not in mailchecker
 		assert!(misc_details.is_role_account); // test is in roles.txt
 		assert!(misc_details.is_b2c); // gmail.com is in b2c.txt
+
+		let disposable = check_syntax("someone@mailinator.com");
+		assert!(disposable.is_valid_syntax);
+		assert!(check_misc(&disposable, false, None).await.is_disposable);
 	}
 }

@@ -42,31 +42,13 @@ impl Default for SyntaxDetails {
 /// From an `email_address` string, compute syntax information about it, such as
 /// username and domain.
 pub fn check_syntax(email_address: &str) -> SyntaxDetails {
+	// This is the format check that mailchecker::is_valid runs. is_valid also
+	// fails disposable domains, which made every disposable or relay address
+	// (duck.com, simplelogin.com...) "invalid syntax" and left
+	// misc.is_disposable always false.
 	let email_address = match EmailAddress::from_str(email_address) {
-		Ok(m) => {
-			if mailchecker::is_valid(email_address) {
-				m
-			} else {
-				return SyntaxDetails {
-					address: None,
-					domain: "".into(),
-					is_valid_syntax: false,
-					username: "".into(),
-					normalized_email: None,
-					suggestion: None,
-				};
-			}
-		}
-		_ => {
-			return SyntaxDetails {
-				address: None,
-				domain: "".into(),
-				is_valid_syntax: false,
-				username: "".into(),
-				normalized_email: None,
-				suggestion: None,
-			}
-		}
+		Ok(m) if fast_chemail::is_valid_email(email_address) => m,
+		_ => return SyntaxDetails::default(),
 	};
 
 	let iter: &str = email_address.as_ref();
@@ -75,10 +57,14 @@ pub fn check_syntax(email_address: &str) -> SyntaxDetails {
 		.next()
 		.expect("We checked above that email is valid. qed.")
 		.into();
+	// Domain names are case-insensitive, so lowercase the domain for the
+	// lookups keyed on it (domain rules, provider detection). The local part
+	// keeps its case: RFC 5321 lets the receiving server treat it as
+	// case-sensitive.
 	let domain: String = iter
 		.next()
 		.expect("We checked above that email is valid. qed.")
-		.into();
+		.to_ascii_lowercase();
 	let normalized_email = normalize_email(&username, &domain);
 
 	SyntaxDetails {
@@ -178,6 +164,35 @@ mod tests {
 				normalized_email: Some("foo@bar.com".into()),
 				suggestion: None,
 			}
+		);
+	}
+
+	#[test]
+	fn should_accept_disposable_and_relay_domains() {
+		// Disposable domains are reported by misc.is_disposable. They say
+		// nothing about whether the address is well-formed.
+		for email in [
+			"foo@mailinator.com",
+			"foo@duck.com",
+			"foo@simplelogin.com",
+			"foo@anonaddy.com",
+			"foo@addy.io",
+			"foo@mozmail.com",
+		] {
+			assert!(check_syntax(email).is_valid_syntax, "{}", email);
+		}
+
+		assert!(!check_syntax("foo,bar@mailinator.com").is_valid_syntax);
+	}
+
+	#[test]
+	fn should_lowercase_the_domain_but_not_the_local_part() {
+		let syntax = check_syntax("John.Smith@Hotmail.COM");
+		assert_eq!(syntax.domain, "hotmail.com");
+		assert_eq!(syntax.username, "John.Smith");
+		assert_eq!(
+			syntax.normalized_email,
+			Some("John.Smith@hotmail.com".into())
 		);
 	}
 
