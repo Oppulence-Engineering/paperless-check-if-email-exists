@@ -724,6 +724,90 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_v1_job_retry_by_admin_publishes_the_job_tenant() {
+		let target_email = "retry-legacy@test.com";
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "retry-legacy-tenant", Some(100), 0).await;
+		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
+		// A payload stored before tasks carried metadata.
+		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: target_email.to_string(),
+				..Default::default()
+			},
+			job_id: reacher_backend::worker::do_work::CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: None,
+		})
+		.unwrap();
+		let task_id: i32 = sqlx::query_scalar(
+			"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, error) VALUES ($1, $2, 'failed', $3, 'timeout') RETURNING id",
+		)
+		.bind(job_id)
+		.bind(&payload)
+		.bind(tenant_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let routes = create_routes(Arc::clone(&config));
+
+		let ch = config.must_worker_config().unwrap().channel;
+		let (task_tx, task_rx) = tokio::sync::oneshot::channel();
+		tokio::spawn(async move {
+			use futures::StreamExt;
+			let mut consumer = ch
+				.basic_consume(
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+					"test-retry-metadata".into(),
+					lapin::options::BasicConsumeOptions::default(),
+					lapin::types::FieldTable::default(),
+				)
+				.await
+				.unwrap();
+			while let Some(Ok(delivery)) = consumer.next().await {
+				let _ = delivery
+					.ack(lapin::options::BasicAckOptions::default())
+					.await;
+				if let Ok(task) = serde_json::from_slice::<
+					reacher_backend::worker::do_work::CheckEmailTask,
+				>(&delivery.data)
+				{
+					if task.input.to_email == target_email {
+						let _ = task_tx.send(task.metadata);
+						break;
+					}
+				}
+			}
+		});
+		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+		// The admin secret carries no tenant; the worker must still check the
+		// address under the job's tenant (its policy, suppressions, webhook).
+		let resp = request()
+			.path(&format!("/v1/jobs/{}/retry", job_id))
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "test")
+			.reply(&routes)
+			.await;
+		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
+
+		let metadata = tokio::time::timeout(std::time::Duration::from_secs(10), task_rx)
+			.await
+			.expect("retried task was published")
+			.unwrap()
+			.expect("task metadata");
+		let tenant_id_string = tenant_id.to_string();
+		assert_eq!(
+			metadata.tenant_id.as_deref(),
+			Some(tenant_id_string.as_str())
+		);
+		assert_eq!(metadata.task_db_id, Some(task_id));
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_v1_check_email_sandbox_ignores_tenant_history_for_bounce_risk() {
 		let db = TestDb::start().await;
 		let tenant_with_history =

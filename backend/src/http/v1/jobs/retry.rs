@@ -36,7 +36,7 @@ async fn http_handler(
 
 	// Lock the job row (tenant-scoped)
 	let job = sqlx::query(
-		"SELECT status::TEXT as status FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) FOR UPDATE",
+		"SELECT status::TEXT as status, tenant_id FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) FOR UPDATE",
 	)
 	.bind(job_id)
 	.bind(tenant_ctx.tenant_id)
@@ -52,6 +52,14 @@ async fn http_handler(
 	};
 
 	let status: String = sqlx::Row::get(&job, "status");
+	// The worker reads the task's tenant for its policy mode, suppressions
+	// and webhook. An admin-secret caller has no tenant, and payloads stored
+	// before tasks carried metadata have none either, so the job's tenant
+	// is used.
+	let task_tenant_id = job
+		.get::<Option<uuid::Uuid>, _>("tenant_id")
+		.or(tenant_ctx.tenant_id)
+		.map(|id| id.to_string());
 
 	// Only completed, failed, or running jobs can be retried
 	match status.as_str() {
@@ -178,9 +186,12 @@ async fn http_handler(
 
 		if let Some(ref mut metadata) = task.metadata {
 			metadata.task_db_id = Some(task_db_id);
+			if metadata.tenant_id.is_none() {
+				metadata.tenant_id = task_tenant_id.clone();
+			}
 		} else {
 			task.metadata = Some(crate::worker::do_work::TaskMetadata {
-				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+				tenant_id: task_tenant_id.clone(),
 				request_id: None,
 				correlation_id: None,
 				created_by: None,
