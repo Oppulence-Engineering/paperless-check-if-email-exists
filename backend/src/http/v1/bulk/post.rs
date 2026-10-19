@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
 use futures::stream::StreamExt;
 use lapin::Channel;
@@ -9,11 +10,16 @@ use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::{debug, info, warn};
+use warp::http::header::{HeaderValue, CONTENT_TYPE};
 use warp::http::StatusCode;
-use warp::Filter;
+use warp::{Filter, Reply};
 
 use super::with_worker_db;
 use crate::config::BackendConfig;
+use crate::http::idempotency::{
+	check_idempotency_key, complete_idempotency_key, fail_idempotency_key, hash_request_body,
+	IdempotencyCheck,
+};
 use crate::http::v0::check_email::post::with_config;
 use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
@@ -49,10 +55,97 @@ async fn http_handler(
 	tenant_ctx: TenantContext,
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
-	body: Request,
-) -> Result<impl warp::Reply, warp::Rejection> {
+	idempotency_key: Option<String>,
+	raw_body: Bytes,
+) -> Result<warp::reply::Response, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::BULK)?;
+	let body: Request = serde_json::from_slice(&raw_body).map_err(ReacherResponseError::from)?;
 
+	let Some(idempotency_key) = idempotency_key else {
+		let response = create_bulk_job(tenant_ctx, config, pg_pool, body).await?;
+		return json_response(StatusCode::OK, serialize_response(&response)?);
+	};
+
+	// A retried POST with the same key must not create a second job or
+	// reserve the quota twice. Same contract as /v1/check_email.
+	let check = check_idempotency_key(
+		&pg_pool,
+		&tenant_ctx.tenant_id_str(),
+		&idempotency_key,
+		"/v1/bulk",
+		&hash_request_body(&raw_body),
+		&tenant_ctx.tenant_name,
+	)
+	.await?;
+	match check {
+		IdempotencyCheck::New { record_id } => {
+			match create_bulk_job(tenant_ctx, config, pg_pool.clone(), body).await {
+				Ok(response) => {
+					let bytes = serialize_response(&response)?;
+					if let Err(e) = complete_idempotency_key(
+						&pg_pool,
+						record_id,
+						StatusCode::OK.as_u16(),
+						&bytes,
+					)
+					.await
+					{
+						warn!(target: LOG_TARGET, record_id, error = ?e, "Failed to mark bulk idempotency key as completed");
+					}
+					json_response(StatusCode::OK, bytes)
+				}
+				Err(rejection) => {
+					// Nothing was created, so a retry with this key runs again.
+					if let Err(e) = fail_idempotency_key(&pg_pool, record_id).await {
+						warn!(target: LOG_TARGET, record_id, error = ?e, "Failed to mark bulk idempotency key as failed");
+					}
+					Err(rejection)
+				}
+			}
+		}
+		IdempotencyCheck::InProgress => Err(ReacherResponseError::new(
+			StatusCode::CONFLICT,
+			"Idempotency key is already in use for this path",
+		)
+		.into()),
+		IdempotencyCheck::BodyMismatch => Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Idempotency key body mismatch",
+		)
+		.into()),
+		IdempotencyCheck::Cached(cached) => {
+			let status = StatusCode::from_u16(cached.status_code).map_err(|e| {
+				ReacherResponseError::new(
+					StatusCode::INTERNAL_SERVER_ERROR,
+					format!("Invalid cached status code: {e}"),
+				)
+			})?;
+			json_response(status, cached.body)
+		}
+	}
+}
+
+fn serialize_response(response: &Response) -> Result<Vec<u8>, warp::Rejection> {
+	serde_json::to_vec(response).map_err(|e| ReacherResponseError::from(e).into())
+}
+
+fn json_response(
+	status: StatusCode,
+	body: Vec<u8>,
+) -> Result<warp::reply::Response, warp::Rejection> {
+	let mut response = warp::reply::with_status(body, status).into_response();
+	response
+		.headers_mut()
+		.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+	Ok(response)
+}
+
+async fn create_bulk_job(
+	tenant_ctx: TenantContext,
+	config: Arc<BackendConfig>,
+	pg_pool: PgPool,
+	body: Request,
+) -> Result<Response, warp::Rejection> {
 	if body.input.is_empty() {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
@@ -194,7 +287,7 @@ async fn http_handler(
 		queue = CHECK_EMAIL_QUEUE,
 		"Added {n} emails",
 	);
-	Ok(warp::reply::json(&Response { job_id, source_key }))
+	Ok(Response { job_id, source_key })
 }
 
 async fn insert_bulk_job_and_tasks(
@@ -357,8 +450,9 @@ pub fn v1_create_bulk_job(
 		.and(resolve_tenant(Arc::clone(&config)))
 		.and(with_config(Arc::clone(&config)))
 		.and(with_worker_db(config))
+		.and(warp::header::optional::<String>("Idempotency-Key"))
 		.and(warp::body::content_length_limit(1024 * 1024 * 50))
-		.and(warp::body::json())
+		.and(warp::body::bytes())
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
 }

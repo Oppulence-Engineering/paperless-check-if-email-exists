@@ -354,6 +354,20 @@ mod tests {
 		let body = parse_json(resp.body());
 		assert_eq!(body["bounce_risk"]["score"], 98);
 		assert_eq!(body["score"]["verified_at"], "2025-01-01T00:00:00+00:00");
+		// Evaluated at the fixed completion time: identical on every run, and
+		// never read as a result that is years old.
+		assert_eq!(
+			body["recommendation"]["evaluated_at"],
+			"2025-01-01T00:00:00Z"
+		);
+		let reasons = body["recommendation"]["reasons"].as_array().unwrap();
+		assert!(
+			reasons
+				.iter()
+				.all(|reason| reason["code"] != "result_stale"),
+			"{:?}",
+			reasons
+		);
 	}
 
 	#[tokio::test]

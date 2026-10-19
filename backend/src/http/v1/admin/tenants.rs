@@ -33,13 +33,21 @@ pub struct UpdateTenantRequest {
 	pub contact_email: Option<String>,
 	pub plan_tier: Option<String>,
 	pub status: Option<String>,
+	// Nullable columns: `null` clears them (no limit, no webhook).
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub monthly_email_limit: Option<Option<i32>>,
-	pub max_requests_per_second: Option<i32>,
-	pub max_requests_per_minute: Option<i32>,
-	pub max_requests_per_hour: Option<i32>,
-	pub max_requests_per_day: Option<i32>,
-	pub default_webhook_url: Option<String>,
-	pub webhook_signing_secret: Option<String>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub max_requests_per_second: Option<Option<i32>>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub max_requests_per_minute: Option<Option<i32>>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub max_requests_per_hour: Option<Option<i32>>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub max_requests_per_day: Option<Option<i32>>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub default_webhook_url: Option<Option<String>>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
 }
 
@@ -326,10 +334,10 @@ async fn update_handler(
 		body.plan_tier.as_deref(),
 		body.status.as_deref(),
 		[
-			body.max_requests_per_second,
-			body.max_requests_per_minute,
-			body.max_requests_per_hour,
-			body.max_requests_per_day,
+			body.max_requests_per_second.flatten(),
+			body.max_requests_per_minute.flatten(),
+			body.max_requests_per_hour.flatten(),
+			body.max_requests_per_day.flatten(),
 		],
 		body.result_retention_days,
 	)?;

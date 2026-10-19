@@ -233,6 +233,39 @@ pub async fn prepare_verification_response(
 	completed_at: DateTime<Utc>,
 	allow_external_enrichment: bool,
 ) -> Result<PreparedVerificationResponse, anyhow::Error> {
+	prepare_verification_response_at(
+		config,
+		output,
+		VerificationTimes {
+			completed_at,
+			evaluated_at: Utc::now(),
+		},
+		tenant_id,
+		allow_external_enrichment,
+	)
+	.await
+}
+
+/// When a result was produced and when the decision engine reads it.
+pub struct VerificationTimes {
+	pub completed_at: DateTime<Utc>,
+	/// The decision engine derives the result's age from this. Sandbox
+	/// responses pass their fixed `completed_at` so they stay deterministic
+	/// and never look like a stale result.
+	pub evaluated_at: DateTime<Utc>,
+}
+
+pub async fn prepare_verification_response_at(
+	config: &BackendConfig,
+	output: &CheckEmailOutput,
+	times: VerificationTimes,
+	tenant_id: Option<Uuid>,
+	allow_external_enrichment: bool,
+) -> Result<PreparedVerificationResponse, anyhow::Error> {
+	let VerificationTimes {
+		completed_at,
+		evaluated_at,
+	} = times;
 	let canonical_email = crate::http::v1::lists::canonicalize::canonicalize_email(&output.input);
 	let read_pool = config.get_read_pg_pool();
 	let write_pool = config.get_pg_pool();
@@ -303,7 +336,6 @@ pub async fn prepare_verification_response(
 		(None, None)
 	};
 
-	let evaluated_at = Utc::now();
 	// ponytail: Read the tenant default per check; carry it in task context if DB load grows.
 	let policy_mode = if let (Some(tenant_id), Some(pool)) =
 		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))

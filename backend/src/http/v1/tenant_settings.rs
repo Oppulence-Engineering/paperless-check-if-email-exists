@@ -5,7 +5,7 @@ use crate::http::{check_scope, resolve_tenant};
 use crate::pipelines::validate_webhook_url;
 use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -15,9 +15,9 @@ use warp::Filter;
 
 #[derive(Debug, Deserialize, ToSchema)]
 struct UpdateTenantSettingsRequest {
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub default_webhook_url: Option<Option<String>>,
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
 	pub default_policy_mode: Option<String>,
@@ -29,17 +29,10 @@ struct UpdateTenantSettingsRequest {
 
 #[derive(Debug, Deserialize, ToSchema)]
 struct UpdateWebhookRequest {
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub default_webhook_url: Option<Option<String>>,
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub webhook_signing_secret: Option<Option<String>>,
-}
-
-fn present_nullable_string<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
-where
-	D: Deserializer<'de>,
-{
-	Option::<String>::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Serialize, ToSchema)]

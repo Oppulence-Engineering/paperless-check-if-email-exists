@@ -244,19 +244,20 @@ mod tenant_crud {
 			.unwrap()
 			.to_string();
 
-		// Note: JSON `null` for Option<Option<i32>> is deserialized by serde as `None`
-		// (field absent), not `Some(None)`. The handler sees no fields to update and
-		// returns 400 "No fields to update". This is a known serde limitation with
-		// double-Option types.
+		// `null` clears the limit (unlimited); an absent field leaves it alone.
 		let resp = request()
 			.path(&format!("/v1/admin/tenants/{}", id))
 			.method("PUT")
 			.header(REACHER_SECRET_HEADER, "admin-secret")
-			.json(&serde_json::json!({"monthly_email_limit": null}))
+			.json(&serde_json::json!({"monthly_email_limit": null, "max_requests_per_day": null}))
 			.reply(&routes)
 			.await;
 
-		assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+		assert_eq!(resp.status(), StatusCode::OK);
+		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+		assert!(body["monthly_email_limit"].is_null());
+		assert!(body["max_requests_per_day"].is_null());
+		assert_eq!(body["name"], "Limited");
 	}
 
 	#[tokio::test]

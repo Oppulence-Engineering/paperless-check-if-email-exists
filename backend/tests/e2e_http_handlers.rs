@@ -425,6 +425,46 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_v1_bulk_post_retry_with_idempotency_key_returns_the_first_job() {
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let routes = create_routes(config);
+		let post = |body: serde_json::Value| {
+			request()
+				.path("/v1/bulk")
+				.method("POST")
+				.header(REACHER_SECRET_HEADER, "test")
+				.header("Idempotency-Key", "bulk-retry-1")
+				.json(&body)
+		};
+
+		let first = post(serde_json::json!({"input": ["a@b.com", "c@d.com"]}))
+			.reply(&routes)
+			.await;
+		let retry = post(serde_json::json!({"input": ["a@b.com", "c@d.com"]}))
+			.reply(&routes)
+			.await;
+		let changed = post(serde_json::json!({"input": ["x@y.com"]}))
+			.reply(&routes)
+			.await;
+
+		assert_eq!(first.status(), StatusCode::OK, "{:?}", first.body());
+		assert_eq!(retry.status(), StatusCode::OK, "{:?}", retry.body());
+		let first_body: serde_json::Value = serde_json::from_slice(first.body()).unwrap();
+		let retry_body: serde_json::Value = serde_json::from_slice(retry.body()).unwrap();
+		assert_eq!(retry_body["job_id"], first_body["job_id"]);
+		let job_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM v1_bulk_job")
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+		assert_eq!(job_count, 1);
+		// Reusing a key for a different request is refused, not replayed.
+		assert_eq!(changed.status(), StatusCode::BAD_REQUEST);
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_v1_bulk_post_empty_input_rejected() {
 		let db = TestDb::start().await;
 		let config = pseudo_worker_config(db.db_url()).await;

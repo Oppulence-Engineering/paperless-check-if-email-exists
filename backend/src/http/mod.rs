@@ -124,6 +124,20 @@ pub async fn run_warp_server(
 
 /// Check that the tenant context has the required scope.
 /// Returns 403 Forbidden if the scope is missing.
+/// Deserializes a PATCH field that may be absent, `null` or a value.
+///
+/// With `#[serde(default, deserialize_with = "crate::http::present_nullable")]`
+/// on an `Option<Option<T>>`, an absent field stays `None` (leave unchanged)
+/// and `null` becomes `Some(None)` (clear the column). Plain serde maps both
+/// to `None`, so a client could never clear a nullable column.
+pub(crate) fn present_nullable<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+	D: serde::Deserializer<'de>,
+	T: serde::Deserialize<'de>,
+{
+	<Option<T> as serde::Deserialize>::deserialize(deserializer).map(Some)
+}
+
 pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejection> {
 	if ctx.has_scope(scope) {
 		Ok(())

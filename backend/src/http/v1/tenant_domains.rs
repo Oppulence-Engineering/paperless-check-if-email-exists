@@ -37,6 +37,7 @@ struct UpdateTenantDomainRequest {
 	pub domain: Option<String>,
 	pub is_active: Option<bool>,
 	pub is_verified: Option<bool>,
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub notes: Option<Option<String>>,
 }
 

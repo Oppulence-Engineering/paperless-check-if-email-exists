@@ -298,12 +298,11 @@ pub async fn sync_finder_results(
 		}
 	}
 
-	completed_results.sort_by(|left, right| {
-		right
-			.score
-			.cmp(&left.score)
-			.then_with(|| left.email.cmp(&right.email))
-	});
+	// Rows arrive in generation order (ORDER BY fr.id) and the sort is
+	// stable, so equal scores keep the generator's pattern order. Catch-all
+	// domains give every candidate the same score; an alphabetical tie-break
+	// then picked patterns like `doe.john@` over `john.doe@`.
+	completed_results.sort_by(|left, right| right.score.cmp(&left.score));
 
 	for (index, result) in completed_results.iter().enumerate() {
 		sqlx::query(

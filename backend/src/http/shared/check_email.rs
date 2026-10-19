@@ -18,7 +18,8 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
 use crate::scoring::response::{
-	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
+	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response_at,
+	VerificationTimes,
 };
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
@@ -81,10 +82,18 @@ pub async fn handle_check_email(
 			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
 			.single()
 			.expect("static sandbox timestamp");
-		let mut prepared =
-			prepare_verification_response(config.as_ref(), &mock_result, None, completed_at, false)
-				.await
-				.map_err(ReacherResponseError::from)?;
+		let mut prepared = prepare_verification_response_at(
+			config.as_ref(),
+			&mock_result,
+			VerificationTimes {
+				completed_at,
+				evaluated_at: completed_at,
+			},
+			None,
+			false,
+		)
+		.await
+		.map_err(ReacherResponseError::from)?;
 		inject_freshness_into_result_at(&mut prepared.json, completed_at, completed_at);
 		prepared.body = serde_json::to_vec(&prepared.json).map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {

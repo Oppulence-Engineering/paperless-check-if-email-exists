@@ -130,6 +130,41 @@ fn validate_status(status: &str) -> Result<String, ReacherResponseError> {
 	}
 }
 
+/// Parses allowlist entries and stores them in canonical form, so the same
+/// address written as `2001:DB8::1` or `::ffff:192.0.2.1` matches the peer
+/// address the server sees.
+fn normalize_allowed_ips(values: &[String]) -> Result<Vec<String>, warp::Rejection> {
+	values
+		.iter()
+		.map(|value| {
+			value
+				.trim()
+				.parse::<std::net::IpAddr>()
+				.map(|ip| ip.to_canonical().to_string())
+				.map_err(|_| {
+					ReacherResponseError::new(
+						StatusCode::BAD_REQUEST,
+						"allowed_ips contains an invalid IP",
+					)
+					.into()
+				})
+		})
+		.collect()
+}
+
+/// Compares parsed addresses rather than strings. Rows written before
+/// entries were normalized may hold uppercase IPv6 or IPv4-mapped forms, and
+/// a dual-stack listener reports IPv4 peers as IPv4-mapped IPv6.
+fn ip_is_allowlisted(allowed_ips: &[String], remote: std::net::IpAddr) -> bool {
+	let remote = remote.to_canonical();
+	allowed_ips.iter().any(|entry| {
+		entry
+			.trim()
+			.parse::<std::net::IpAddr>()
+			.is_ok_and(|ip| ip.to_canonical() == remote)
+	})
+}
+
 fn generate_delivery_token() -> String {
 	let mut bytes = [0u8; 32];
 	rand::rng().fill_bytes(&mut bytes);
@@ -213,14 +248,7 @@ async fn create_handler(
 	if label.is_empty() || label.len() > 200 {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "label is invalid").into());
 	}
-	for value in &input.allowed_ips {
-		value.parse::<std::net::IpAddr>().map_err(|_| {
-			ReacherResponseError::new(
-				StatusCode::BAD_REQUEST,
-				"allowed_ips contains an invalid IP",
-			)
-		})?;
-	}
+	let allowed_ips = normalize_allowed_ips(&input.allowed_ips)?;
 	let endpoint_id = Uuid::new_v4();
 	let token = generate_delivery_token();
 	let row = sqlx::query(
@@ -233,7 +261,7 @@ async fn create_handler(
 	.bind(status)
 	.bind(token_hash(&token))
 	.bind(input.provider_config)
-	.bind(input.allowed_ips)
+	.bind(allowed_ips)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -256,16 +284,11 @@ async fn update_handler(
 	if label.is_some_and(|value| value.is_empty() || value.len() > 200) {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "label is invalid").into());
 	}
-	if let Some(values) = &input.allowed_ips {
-		for value in values {
-			value.parse::<std::net::IpAddr>().map_err(|_| {
-				ReacherResponseError::new(
-					StatusCode::BAD_REQUEST,
-					"allowed_ips contains an invalid IP",
-				)
-			})?;
-		}
-	}
+	let allowed_ips = input
+		.allowed_ips
+		.as_deref()
+		.map(normalize_allowed_ips)
+		.transpose()?;
 	let token = input.rotate_delivery_token.then(generate_delivery_token);
 	let row = sqlx::query(
 		r#"
@@ -282,7 +305,7 @@ async fn update_handler(
 	.bind(label)
 	.bind(status)
 	.bind(input.provider_config)
-	.bind(input.allowed_ips)
+	.bind(allowed_ips)
 	.bind(token.as_deref().map(token_hash))
 	.fetch_optional(&pg_pool)
 	.await
@@ -1095,12 +1118,8 @@ async fn inbound_handler(
 		.into());
 	}
 	if !endpoint.allowed_ips.is_empty()
-		&& !remote.is_some_and(|addr| {
-			endpoint
-				.allowed_ips
-				.iter()
-				.any(|ip| ip == &addr.ip().to_string())
-		}) {
+		&& !remote.is_some_and(|addr| ip_is_allowlisted(&endpoint.allowed_ips, addr.ip()))
+	{
 		return Err(ReacherResponseError::new(
 			StatusCode::FORBIDDEN,
 			"Source IP is not allowlisted",
@@ -1460,6 +1479,27 @@ mod tests {
 			sendgrid_event_type(&json!({"event": "bounce", "type": "bounce"})).as_deref(),
 			Some("bounced")
 		);
+	}
+
+	#[test]
+	fn allowlist_matches_addresses_not_their_spelling() {
+		let stored = normalize_allowed_ips(&[" 2001:DB8::1 ".into(), "::ffff:192.0.2.1".into()])
+			.expect("valid addresses");
+		assert_eq!(
+			stored,
+			vec!["2001:db8::1".to_string(), "192.0.2.1".to_string()]
+		);
+		assert!(normalize_allowed_ips(&["not-an-ip".into()]).is_err());
+
+		// Rows saved before normalization keep their original spelling.
+		let legacy = vec!["2001:DB8::1".to_string(), "192.0.2.1".to_string()];
+		assert!(ip_is_allowlisted(&legacy, "2001:db8::1".parse().unwrap()));
+		// A dual-stack listener reports IPv4 peers as IPv4-mapped IPv6.
+		assert!(ip_is_allowlisted(
+			&legacy,
+			"::ffff:192.0.2.1".parse().unwrap()
+		));
+		assert!(!ip_is_allowlisted(&legacy, "192.0.2.2".parse().unwrap()));
 	}
 
 	#[test]
