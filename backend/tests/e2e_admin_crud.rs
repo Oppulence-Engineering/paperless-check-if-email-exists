@@ -1364,6 +1364,31 @@ mod api_key_crud {
 		assert_eq!(body["id"], key_id);
 		assert_eq!(body["name"], "Updated Key");
 		assert_eq!(body["scopes"][0], "admin");
+
+		// An expiry can be set and then removed again with null.
+		for (expires_at, expect_null) in [
+			(serde_json::json!("2030-01-01T00:00:00Z"), false),
+			(serde_json::Value::Null, true),
+		] {
+			let patch_resp = request()
+				.path(&format!(
+					"/v1/admin/tenants/{}/api-keys/{}",
+					tenant_id, key_id
+				))
+				.method("PATCH")
+				.header(REACHER_SECRET_HEADER, "admin-secret")
+				.json(&serde_json::json!({ "expires_at": expires_at }))
+				.reply(&routes)
+				.await;
+			assert_eq!(
+				patch_resp.status(),
+				StatusCode::OK,
+				"{:?}",
+				patch_resp.body()
+			);
+			let body: serde_json::Value = serde_json::from_slice(patch_resp.body()).unwrap();
+			assert_eq!(body["expires_at"].is_null(), expect_null, "{}", body);
+		}
 	}
 
 	#[tokio::test]
