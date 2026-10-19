@@ -581,9 +581,10 @@ pub fn compute_score_with_context(
 
 	score.score = (score.score + adjustment).clamp(0, 100);
 	score.category = category_for_score(score.score);
+	// Same catch-all rule as `compute_score`: only the high tier vetoes.
 	score.safe_to_send = score.category == EmailCategory::Valid
 		&& !score.signals.is_disposable
-		&& !score.signals.smtp_is_catch_all
+		&& catch_all_severity(&score.signals) != Some(CatchAllSeverity::High)
 		&& !score.signals.is_role_account
 		&& !score.signals.is_spam_trap_domain
 		&& partial_confidence.is_none();
@@ -1423,20 +1424,28 @@ mod tests {
 				is_b2c,
 				..Default::default()
 			});
-			compute_score(&output)
+			output
 		};
 
 		// Low tier: lighter penalty, and no longer vetoed.
-		let low = catch_all_output(true);
+		let low = compute_score(&catch_all_output(true));
 		assert_eq!(low.score, 90);
 		assert_eq!(low.category, EmailCategory::Valid);
 		assert!(low.safe_to_send);
 
 		// High tier: unchanged penalty, still vetoed.
-		let high = catch_all_output(false);
+		let high = compute_score(&catch_all_output(false));
 		assert_eq!(high.score, 85);
 		assert_eq!(high.category, EmailCategory::Valid);
 		assert!(!high.safe_to_send);
+
+		// API checks are scored with context. Rescoring must keep the tiers,
+		// or the low tier never reaches safe_to_send and the deliverability
+		// policy's low-tier send is unreachable.
+		let contextual =
+			|is_b2c| compute_score_with_context(&catch_all_output(is_b2c), &Default::default());
+		assert!(contextual(true).score.safe_to_send);
+		assert!(!contextual(false).score.safe_to_send);
 	}
 
 	#[test]
