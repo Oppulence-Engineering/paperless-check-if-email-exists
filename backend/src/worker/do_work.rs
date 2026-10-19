@@ -18,7 +18,7 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 use warp::http::StatusCode;
 
 /// AMQP header counting how many times a worker has put this message back on
@@ -307,25 +307,25 @@ pub async fn do_check_email_work(
 		}
 	}
 
-	// Load webhook signing secret from DB if tenant_id is present
-	let webhook_signing_secret: Option<String> =
-		if let Some(ref tid) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
-			if let Some(pool) = config.get_pg_pool() {
-				if let Ok(uuid) = tid.parse::<uuid::Uuid>() {
-					sqlx::query_scalar("SELECT webhook_signing_secret FROM tenants WHERE id = $1")
-						.bind(uuid)
-						.fetch_optional(&pool)
-						.await
-						.ok()
-						.flatten()
-				} else {
-					None
-				}
-			} else {
-				None
-			}
-		} else {
-			None
+	// Load webhook signing secret from DB if tenant_id is present. A failed
+	// read stays an error rather than "no secret": sending unsigned would fail
+	// at receivers that verify signatures and look authentic at those that
+	// don't.
+	let tenant_uuid = task
+		.metadata
+		.as_ref()
+		.and_then(|m| m.tenant_id.as_deref())
+		.and_then(|tid| tid.parse::<uuid::Uuid>().ok());
+	let webhook_signing_secret: Result<Option<String>, sqlx::Error> =
+		match (tenant_uuid, config.get_pg_pool()) {
+			(Some(uuid), Some(pool)) => sqlx::query_scalar::<_, Option<String>>(
+				"SELECT webhook_signing_secret FROM tenants WHERE id = $1",
+			)
+			.bind(uuid)
+			.fetch_optional(&pool)
+			.await
+			.map(Option::flatten),
+			_ => Ok(None),
 		};
 
 	// Only the verification: the webhook goes out once the result is stored
@@ -458,7 +458,10 @@ pub async fn do_check_email_work(
 		// Before the ack, so a worker crash mid-delivery redelivers the task
 		// rather than silently dropping the webhook.
 		if let Ok(success) = &worker_output {
-			deliver_task_webhook(&config, task, success, webhook_signing_secret.as_deref()).await;
+			match &webhook_signing_secret {
+				Ok(secret) => deliver_task_webhook(&config, task, success, secret.as_deref()).await,
+				Err(error) => skip_webhook_without_secret(&config, task, error).await,
+			}
 		}
 
 		delivery.ack(BasicAckOptions::default()).await?;
@@ -797,6 +800,39 @@ async fn deliver_task_webhook(
 			Some(serde_json::json!({
 				"error": error.to_string(),
 				"attempts": attempts
+			})),
+			Some(&config.backend_name),
+		)
+		.await;
+	}
+}
+
+/// Records that the per-email webhook was not sent because the tenant's
+/// signing secret could not be read. The verification result is kept.
+async fn skip_webhook_without_secret(
+	config: &BackendConfig,
+	task: &CheckEmailTask,
+	error: &sqlx::Error,
+) {
+	let has_webhook = matches!(
+		&task.webhook,
+		Some(TaskWebhook {
+			on_each_email: Some(_)
+		})
+	);
+	if !has_webhook {
+		return;
+	}
+	error!(target: LOG_TARGET, email=?task.input.to_email, error=?error, "Webhook not sent: the tenant's signing secret could not be read");
+	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+		record_event(
+			config,
+			job_id,
+			task.metadata.as_ref().and_then(|m| m.task_db_id),
+			"task.webhook_failed",
+			Some(serde_json::json!({
+				"error": "signing_secret_unavailable",
+				"attempts": 0
 			})),
 			Some(&config.backend_name),
 		)
