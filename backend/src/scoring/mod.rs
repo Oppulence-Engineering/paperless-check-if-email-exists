@@ -1,7 +1,7 @@
 pub mod response;
 
 use check_if_email_exists::{
-	provider::{Provider, ProviderConfidence, ProviderRejectionReason},
+	provider::{Provider, ProviderConfidence},
 	smtp::SmtpError,
 	CheckEmailOutput, Reachable,
 };
@@ -275,8 +275,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 
 fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals) -> EmailScore {
 	if !signals.valid_syntax {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -288,8 +287,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if output.provider_rejection_reason.is_some() {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -301,8 +299,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if matches!(signals.reachable, Reachable::Invalid) {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -316,8 +313,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	// A full inbox is reported as undeliverable, but the mailbox exists. It is
 	// scored below as a risky state.
 	if !signals.smtp_is_deliverable && !signals.smtp_has_full_inbox {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -329,8 +325,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if signals.smtp_is_disabled {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -385,7 +380,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 		_ => EmailCategory::Invalid,
 	};
 
-	let sub_reason = if !signals.has_mx_records {
+	let sub_reason = if !signals.has_mx_records && !mx_lookup_failed(output) {
 		SubReason::NoMx
 	} else if signals.smtp_error {
 		SubReason::SmtpError
@@ -415,7 +410,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 		&& !signals.is_role_account
 		&& !signals.is_spam_trap_domain;
 
-	let reason_codes = collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+	let reason_codes = collect_reason_codes(&signals, output);
 
 	EmailScore {
 		score,
@@ -937,15 +932,19 @@ fn unique_strings(values: Vec<String>) -> Vec<String> {
 	unique
 }
 
-fn collect_reason_codes(
-	signals: &ScoringSignals,
-	provider_rejection_reason: Option<&ProviderRejectionReason>,
-) -> Vec<String> {
+/// The resolver failed, so nothing is known about the domain's mail servers.
+/// Unlike an answer without records, that is no evidence the domain takes no
+/// mail, and must not be reported as `no_mx`.
+fn mx_lookup_failed(output: &CheckEmailOutput) -> bool {
+	output.mx.is_err()
+}
+
+fn collect_reason_codes(signals: &ScoringSignals, output: &CheckEmailOutput) -> Vec<String> {
 	let mut codes = Vec::new();
 	if !signals.valid_syntax {
 		codes.push("invalid_syntax".to_string());
 	}
-	if let Some(reason) = provider_rejection_reason {
+	if let Some(reason) = output.provider_rejection_reason.as_ref() {
 		codes.push("provider_rejected".to_string());
 		codes.push(reason.code().to_string());
 		if signals.has_domain_suggestion {
@@ -962,7 +961,8 @@ fn collect_reason_codes(
 	if signals.smtp_is_disabled {
 		codes.push("disabled_mailbox".to_string());
 	}
-	if !signals.has_mx_records {
+	// Without valid syntax the lookup never ran.
+	if !signals.has_mx_records && signals.valid_syntax && !mx_lookup_failed(output) {
 		codes.push("no_mx".to_string());
 	}
 	if signals.smtp_error {
@@ -1153,7 +1153,9 @@ mod tests {
 		let score = compute_score(&output);
 		assert_eq!(score.score, 15);
 		assert_eq!(score.category, EmailCategory::Unknown);
-		assert_eq!(score.sub_reason, SubReason::NoMx);
+		// The failed DNS lookup says nothing about the domain.
+		assert_eq!(score.sub_reason, SubReason::SmtpError);
+		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 		assert!(!score.safe_to_send);
 	}
 
@@ -1560,11 +1562,18 @@ mod tests {
 		let computation = compute_score_with_context(&output, &ScoringContext::default());
 
 		assert_eq!(computation.score.category, EmailCategory::Unknown);
-		assert_eq!(computation.score.sub_reason, SubReason::NoMx);
-		assert!(!computation
-			.score
-			.reason_codes
-			.contains(&"smtp_undeliverable".to_string()));
+		// Not "the domain has no mail server": the lookup never answered.
+		assert_eq!(computation.score.sub_reason, SubReason::Unknown);
+		for misleading in ["smtp_undeliverable", "no_mx"] {
+			assert!(
+				!computation
+					.score
+					.reason_codes
+					.contains(&misleading.to_string()),
+				"{}",
+				misleading
+			);
+		}
 		assert_ne!(
 			computation.insights.confidence_factors,
 			vec!["hard_invalid_signal".to_string()]
@@ -1664,7 +1673,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals, None);
+		let codes = collect_reason_codes(&signals, &base_output());
 		assert_eq!(codes, vec!["deliverable"]);
 	}
 
@@ -1683,6 +1692,8 @@ mod tests {
 		let score = compute_score(&output);
 		assert!(score.reason_codes.contains(&"invalid_syntax".to_string()));
 		assert!(!score.reason_codes.contains(&"deliverable".to_string()));
+		// The MX lookup is skipped for invalid syntax, so it found nothing out.
+		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 	}
 
 	#[test]
@@ -1717,7 +1728,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals, None);
+		let codes = collect_reason_codes(&signals, &base_output());
 		assert!(codes.contains(&"spam_trap".to_string()));
 		assert!(!codes.contains(&"deliverable".to_string()));
 	}

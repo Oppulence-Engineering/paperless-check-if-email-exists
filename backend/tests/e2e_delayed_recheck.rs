@@ -1102,7 +1102,10 @@ async fn test_disabled_config_releases_tasks_waiting_on_rechecks() -> Result<()>
 	// Nothing will publish the recheck once the feature is off, so the job
 	// would otherwise never finish.
 	assert_eq!(release_pending_rechecks(&config, db.pool()).await?, 1);
-	assert_eq!(fetch_recheck_status(db.pool(), recheck_id).await, "cancelled");
+	assert_eq!(
+		fetch_recheck_status(db.pool(), recheck_id).await,
+		"cancelled"
+	);
 	assert_eq!(fetch_task_state(db.pool(), task_id).await, "completed");
 	assert_eq!(fetch_job_status(db.pool(), job_id).await, "completed");
 	Ok(())
