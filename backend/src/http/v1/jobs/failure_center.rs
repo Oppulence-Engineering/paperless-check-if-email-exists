@@ -245,7 +245,10 @@ async fn load_failed_rows(
 	Ok(rows
 		.into_iter()
 		.map(|row| {
-			let extra: Value = row.get("extra");
+			// Tasks created by POST /v1/bulk have no `extra`.
+			let extra: Value = row
+				.get::<Option<Value>, _>("extra")
+				.unwrap_or_else(|| Value::Object(Default::default()));
 			let payload: Value = row.get("payload");
 			FailedRowPreview {
 				id: row.get("id"),

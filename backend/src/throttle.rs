@@ -176,6 +176,11 @@ impl ThrottleManager {
 		}
 	}
 
+	/// The limits this manager enforces.
+	pub fn config(&self) -> &ThrottleConfig {
+		&self.config
+	}
+
 	pub async fn check_throttle(&self) -> Option<ThrottleResult> {
 		let mut throttle = self.inner.lock().await;
 		throttle.reset_if_needed();

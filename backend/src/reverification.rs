@@ -92,6 +92,12 @@ async fn process_schedule(
 			WHERE tenant_id = $1
 			  AND task_state = 'completed'
 			  AND completed_at IS NOT NULL
+			  -- Duplicates share their primary's result, and blank or
+			  -- malformed rows were never verified; re-verifying them
+			  -- would only spend credits.
+			  AND is_duplicate IS NOT TRUE
+			  AND COALESCE(payload->'input'->>'to_email', '') <> ''
+			  AND sub_reason IS DISTINCT FROM 'invalid_syntax'
 			GROUP BY payload->'input'->>'to_email'
 		) sub
 		WHERE sub.latest_completed < NOW() - make_interval(days => $2)
@@ -150,7 +156,7 @@ async fn process_schedule(
 	let job_id: i32 = sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_bulk_job (total_records, tenant_id, status, metadata)
-		VALUES ($1, $2, 'running'::job_state, '{"source": "reverification"}'::jsonb)
+		VALUES ($1, $2, 'pending'::job_state, '{"source": "reverification"}'::jsonb)
 		RETURNING id
 		"#,
 	)
@@ -166,7 +172,7 @@ async fn process_schedule(
 	let mut failed_task_ids: Vec<i32> = Vec::new();
 
 	for stale in &stale_emails {
-		let task_row_id: i32 = sqlx::query_scalar(
+		let inserted = sqlx::query_scalar::<_, i32>(
 			r#"
 			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id)
 			VALUES ($1, $2, 'queued', $3)
@@ -181,7 +187,20 @@ async fn process_schedule(
 		}))
 		.bind(schedule.tenant_id)
 		.fetch_one(pg_pool)
-		.await?;
+		.await;
+		let task_row_id = match inserted {
+			Ok(id) => id,
+			Err(err) => {
+				// Stop here; the unpublished remainder is refunded below.
+				warn!(
+					target: LOG_TARGET,
+					email = %stale.email,
+					error = ?err,
+					"Failed to create reverification task"
+				);
+				break;
+			}
+		};
 
 		let task = CheckEmailTask {
 			input: CheckEmailInput {
@@ -235,6 +254,28 @@ async fn process_schedule(
 			failed = failed_task_ids.len(),
 			"Partial reverification publish failure"
 		);
+	}
+
+	// Credits were reserved for every stale email; refund the ones that never
+	// reached the queue, as the bulk API does after a publish failure.
+	let unpublished = email_count - published;
+	if unpublished > 0 {
+		crate::tenant::quota::release_reserved_usage(
+			Some(pg_pool),
+			Some(schedule.tenant_id),
+			unpublished,
+		)
+		.await?;
+	}
+	if published > 0 {
+		crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id).await?;
+	} else {
+		sqlx::query(
+			"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'pending'",
+		)
+		.bind(job_id)
+		.execute(pg_pool)
+		.await?;
 	}
 
 	// Update schedule (next_run_at already set by the atomic claim)

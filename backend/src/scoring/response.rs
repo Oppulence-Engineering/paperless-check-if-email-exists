@@ -317,6 +317,31 @@ pub async fn prepare_verification_response(
 	} else {
 		PolicyMode::Deliverability
 	};
+	// A live suppression in this tenant overrides the verification result:
+	// the address must not be recommended for sending. Same lookup as
+	// GET /v1/suppressions/check. It reads the primary: a replica can lag
+	// behind a suppression added moments ago.
+	let active_suppression = if let (Some(tenant_id), Some(pool)) =
+		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))
+	{
+		sqlx::query_scalar::<_, bool>(
+			r#"
+			SELECT EXISTS (
+				SELECT 1 FROM v1_suppression_entries
+				WHERE tenant_id = $1
+				  AND canonical_email = $2
+				  AND status = 'active'
+				  AND (expires_at IS NULL OR expires_at > NOW())
+			)
+			"#,
+		)
+		.bind(tenant_id)
+		.bind(crate::suppression::suppression_key(&output.input))
+		.fetch_one(pool)
+		.await?
+	} else {
+		false
+	};
 	let decision_input = DecisionInput {
 		score: &email_score,
 		completed_at,
@@ -326,7 +351,7 @@ pub async fn prepare_verification_response(
 		domain_suggestion: output.syntax.suggestion.as_deref(),
 		suggested_email: output.syntax.suggestion.clone(),
 		bounce_risk: bounce_risk.as_ref(),
-		active_suppression: false,
+		active_suppression,
 		previous_hard_bounce: false,
 	};
 	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);

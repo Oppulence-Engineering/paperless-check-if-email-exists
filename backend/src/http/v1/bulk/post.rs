@@ -82,55 +82,18 @@ async fn http_handler(
 
 	let tenant_id = tenant_ctx.tenant_id;
 
-	// Create job entry with status = 'pending'
-	let job_id: i32 = sqlx::query_scalar(
-		r#"
-		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
-		VALUES ($1, $2, 'pending', $3)
-		RETURNING id
-		"#,
-	)
-	.bind(body.input.len() as i32)
-	.bind(tenant_id)
-	.bind(source_key.as_deref())
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
-
-	// Pre-create task result rows with task_state = 'queued'
-	let mut task_ids: Vec<i32> = Vec::with_capacity(body.input.len());
-	for email in &body.input {
-		let input = CheckEmailRequest {
-			to_email: email.clone(),
-			..Default::default()
-		}
-		.to_check_email_input(Arc::clone(&config));
-
-		let payload_json = serde_json::to_value(&CheckEmailTask {
-			input,
-			job_id: CheckEmailJobId::Bulk(job_id),
-			webhook: body.webhook.clone(),
-			metadata: None,
-		})
-		.map_err(ReacherResponseError::from)?;
-
-		let task_row: i32 = sqlx::query_scalar(
-			r#"
-			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key)
-			VALUES ($1, $2, 'queued', $3, $4)
-			RETURNING id
-			"#,
-		)
-		.bind(job_id)
-		.bind(payload_json)
-		.bind(tenant_id)
-		.bind(source_key.as_deref())
-		.fetch_one(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-		task_ids.push(task_row);
-	}
+	// The job and its task rows are written in one transaction, so a failure
+	// part way leaves no orphan job, and the quota reserved above is refunded.
+	let (job_id, task_ids) =
+		match insert_bulk_job_and_tasks(&pg_pool, &config, &body, tenant_id, source_key.as_deref())
+			.await
+		{
+			Ok(inserted) => inserted,
+			Err(err) => {
+				let _ = release_reserved_usage(Some(&pg_pool), tenant_id, email_count).await;
+				return Err(ReacherResponseError::from(err).into());
+			}
+		};
 
 	// Publish tasks to RabbitMQ with metadata.task_db_id
 	let n = body.input.len();
@@ -207,14 +170,12 @@ async fn http_handler(
 		return Err(err.into());
 	}
 
-	// Update job to 'running'
-	sqlx::query!(
-		"UPDATE v1_bulk_job SET status = 'running', updated_at = NOW() WHERE id = $1",
-		job_id,
-	)
-	.execute(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	// Every task is published, so the worker may now finish the job. This
+	// leaves a job that is already cancelled alone, and finishes it here if
+	// its tasks all completed while they were being published.
+	crate::worker::job_lifecycle::start_bulk_job(&pg_pool, job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	// Record job.created event
 	let _ = sqlx::query!(
@@ -234,6 +195,63 @@ async fn http_handler(
 		"Added {n} emails",
 	);
 	Ok(warp::reply::json(&Response { job_id, source_key }))
+}
+
+async fn insert_bulk_job_and_tasks(
+	pg_pool: &PgPool,
+	config: &Arc<BackendConfig>,
+	body: &Request,
+	tenant_id: Option<uuid::Uuid>,
+	source_key: Option<&str>,
+) -> Result<(i32, Vec<i32>), anyhow::Error> {
+	let mut tx = pg_pool.begin().await?;
+	let job_id: i32 = sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
+		VALUES ($1, $2, 'pending', $3)
+		RETURNING id
+		"#,
+	)
+	.bind(body.input.len() as i32)
+	.bind(tenant_id)
+	.bind(source_key)
+	.fetch_one(&mut *tx)
+	.await?;
+
+	// Pre-create task result rows with task_state = 'queued'
+	let mut task_ids: Vec<i32> = Vec::with_capacity(body.input.len());
+	for email in &body.input {
+		let input = CheckEmailRequest {
+			to_email: email.clone(),
+			..Default::default()
+		}
+		.to_check_email_input(Arc::clone(config));
+
+		let payload_json = serde_json::to_value(&CheckEmailTask {
+			input,
+			job_id: CheckEmailJobId::Bulk(job_id),
+			webhook: body.webhook.clone(),
+			metadata: None,
+		})?;
+
+		let task_row: i32 = sqlx::query_scalar(
+			r#"
+			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key)
+			VALUES ($1, $2, 'queued', $3, $4)
+			RETURNING id
+			"#,
+		)
+		.bind(job_id)
+		.bind(payload_json)
+		.bind(tenant_id)
+		.bind(source_key)
+		.fetch_one(&mut *tx)
+		.await?;
+
+		task_ids.push(task_row);
+	}
+	tx.commit().await?;
+	Ok((job_id, task_ids))
 }
 
 fn normalize_source_key(source_key: Option<&str>) -> Option<String> {

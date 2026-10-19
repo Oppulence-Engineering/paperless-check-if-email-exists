@@ -295,14 +295,20 @@ impl BackendConfig {
 		tenant_id: Option<Uuid>,
 		tenant_throttle_config: &ThrottleConfig,
 	) -> Arc<ThrottleManager> {
-		match tenant_id {
-			Some(id) => self
-				.tenant_throttle_managers
-				.entry(id)
-				.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())))
-				.clone(),
-			None => self.throttle_manager.clone(),
+		let Some(id) = tenant_id else {
+			return self.throttle_manager.clone();
+		};
+		// The tenant's limits are read from the database on every request; a
+		// changed limit (for example through the admin API) replaces the
+		// cached manager instead of waiting for a restart.
+		let mut entry = self
+			.tenant_throttle_managers
+			.entry(id)
+			.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())));
+		if entry.config() != tenant_throttle_config {
+			*entry = Arc::new(ThrottleManager::new(tenant_throttle_config.clone()));
 		}
+		entry.clone()
 	}
 }
 
@@ -341,7 +347,7 @@ pub struct RabbitMQConfig {
 	pub concurrency: u16,
 }
 
-#[derive(Debug, Default, Deserialize, Clone, Serialize)]
+#[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
 pub struct ThrottleConfig {
 	pub max_requests_per_second: Option<u32>,
 	pub max_requests_per_minute: Option<u32>,

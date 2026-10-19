@@ -437,7 +437,7 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 			.await?;
 	assert_eq!(before, 0);
 
-	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await;
+	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await?;
 	assert!(id > 0);
 	assert_eq!(rules.outcome_ttl_days, 90);
 
@@ -448,6 +448,18 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 	.fetch_one(db.pool())
 	.await?;
 	assert_eq!(after, 1);
+
+	// A tenant that customises the "default" policy and unsets its flag
+	// keeps its rules; the lazy fallback must not reset them.
+	sqlx::query(
+		"UPDATE v1_outcome_policies SET is_default = false, rules = jsonb_set(rules, '{outcome_ttl_days}', '30') WHERE id = $1",
+	)
+	.bind(id)
+	.execute(db.pool())
+	.await?;
+	let (same_id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await?;
+	assert_eq!(same_id, id);
+	assert_eq!(rules.outcome_ttl_days, 30);
 	Ok(())
 }
 

@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
@@ -19,6 +20,7 @@ struct Response {
 async fn http_handler(
 	job_id: i32,
 	tenant_ctx: TenantContext,
+	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::BULK)?;
@@ -116,6 +118,16 @@ async fn http_handler(
 
 	tx.commit().await.map_err(ReacherResponseError::from)?;
 
+	if final_status == "cancelled" {
+		// No worker task is left to finish the pipeline run that owns this
+		// job, and an open run blocks the pipeline's later runs.
+		if let Err(err) =
+			crate::pipelines::maybe_finalize_pipeline_run_for_job(&config, &pg_pool, job_id).await
+		{
+			tracing::warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to finalize pipeline run for cancelled job");
+		}
+	}
+
 	// Record event
 	let _ = sqlx::query!(
 		r#"
@@ -151,6 +163,7 @@ pub fn v1_cancel_job(
 	warp::path!("v1" / "jobs" / i32 / "cancel")
 		.and(warp::post())
 		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_config(Arc::clone(&config)))
 		.and(with_worker_db(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))

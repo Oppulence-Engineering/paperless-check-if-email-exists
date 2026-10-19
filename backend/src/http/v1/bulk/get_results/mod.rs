@@ -122,7 +122,8 @@ async fn job_result_as_iter(
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
 	let rows = sqlx::query(
 		r#"
-		SELECT result, completed_at FROM v1_task_result
+		SELECT result, error, payload->'input'->>'to_email' AS to_email, completed_at
+		FROM v1_task_result
 		WHERE job_id = $1
 		ORDER BY id
 		LIMIT $2 OFFSET $3
@@ -136,7 +137,14 @@ async fn job_result_as_iter(
 	.map_err(ReacherResponseError::from)?;
 
 	Ok(Box::new(rows.into_iter().map(|row| {
-		let mut result: serde_json::Value = row.get("result");
+		// A failed, dead-lettered or cancelled task has no result; report its
+		// input and error instead of a verification result.
+		let Some(mut result) = row.get::<Option<serde_json::Value>, _>("result") else {
+			return serde_json::json!({
+				"input": row.get::<Option<String>, _>("to_email"),
+				"error": row.get::<Option<String>, _>("error"),
+			});
+		};
 		if let Some(completed_at) = row.get::<Option<DateTime<Utc>>, _>("completed_at") {
 			crate::scoring::response::inject_freshness_into_result(&mut result, completed_at);
 		}

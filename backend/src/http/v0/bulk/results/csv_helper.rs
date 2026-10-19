@@ -169,7 +169,7 @@ impl TryFrom<CsvWrapper> for JobResultCsvResponse {
 		}
 
 		Ok(JobResultCsvResponse {
-			input,
+			input: crate::http::csv_shared::spreadsheet_safe(&input),
 			is_reachable,
 			misc_is_disposable,
 			misc_is_role_account,

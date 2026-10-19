@@ -265,18 +265,26 @@ pub async fn do_check_email_work(
 		.and_then(|m| m.retry_policy.clone())
 		.unwrap_or_default();
 
-	// Mark task as running
-	if let Some(id) = task_db_id {
-		update_task_state(&config, id, "running", None).await;
-
-		// Update started_at
-		if let Some(pool) = config.get_pg_pool() {
-			let _ = sqlx::query!(
-				"UPDATE v1_task_result SET started_at = NOW() WHERE id = $1",
-				id,
-			)
-			.execute(&pool)
-			.await;
+	// Mark the task running, unless it was cancelled after the consumer
+	// checked its job: a cancelled task must not be verified, charged or sent
+	// to the customer's webhook.
+	if let (Some(id), Some(pool)) = (task_db_id, config.get_pg_pool()) {
+		let claimed = sqlx::query(
+			"UPDATE v1_task_result SET task_state = 'running', started_at = NOW(), updated_at = NOW() WHERE id = $1 AND task_state <> 'cancelled' RETURNING id",
+		)
+		.bind(id)
+		.fetch_optional(&pool)
+		.await;
+		match claimed {
+			Ok(Some(_)) => {}
+			Ok(None) => {
+				debug!(target: LOG_TARGET, task_id = id, "Skipping cancelled task");
+				delivery.ack(BasicAckOptions::default()).await?;
+				return Ok(());
+			}
+			Err(err) => {
+				warn!(target: LOG_TARGET, task_id = id, error = ?err, "Failed to mark task running");
+			}
 		}
 	}
 
@@ -378,11 +386,7 @@ pub async fn do_check_email_work(
 	} else if should_retry || worker_output.is_err() {
 		// Exhausted retries or a deterministic non-retryable error: dead letter.
 		maybe_pause_before_delivery_settle().await;
-		delivery
-			.reject(BasicRejectOptions { requeue: false })
-			.await?;
-
-		delivery_finalize(
+		persist_before_settle(
 			task,
 			&delivery,
 			Arc::clone(&channel),
@@ -390,6 +394,9 @@ pub async fn do_check_email_work(
 			&worker_output,
 		)
 		.await?;
+		delivery
+			.reject(BasicRejectOptions { requeue: false })
+			.await?;
 
 		if let Some(id) = task_db_id {
 			update_task_state(&config, id, "dead_lettered", None).await;
@@ -442,9 +449,7 @@ pub async fn do_check_email_work(
 			return Err(anyhow::anyhow!("test failpoint forced requeue before ack"));
 		}
 
-		delivery.ack(BasicAckOptions::default()).await?;
-
-		delivery_finalize(
+		persist_before_settle(
 			task,
 			&delivery,
 			Arc::clone(&channel),
@@ -452,6 +457,7 @@ pub async fn do_check_email_work(
 			&worker_output,
 		)
 		.await?;
+		delivery.ack(BasicAckOptions::default()).await?;
 
 		if let Some(id) = task_db_id {
 			update_task_state(&config, id, "completed", None).await;
@@ -554,6 +560,50 @@ fn is_delayed_recheck_task(task: &CheckEmailTask) -> bool {
 		== Some("delayed_recheck")
 }
 
+/// How long a task whose result could not be stored waits before it goes
+/// back to the queue. The broker redelivers a requeued message at once, so
+/// without a pause a database outage turns into a hot loop.
+const STORE_FAILURE_REQUEUE_DELAY: Duration = Duration::from_secs(5);
+
+/// Store the result before the message is acked or dead-lettered. Once the
+/// broker forgets the message nothing can redo the work, so a storage error
+/// for a task with a database row requeues the message instead: the row stays
+/// non-terminal, and the job would otherwise never finish. The store is an
+/// update of that row, so the redelivery is idempotent. A single-shot task has
+/// already sent its reply and has no row to repair, so it is settled anyway.
+async fn persist_before_settle(
+	task: &CheckEmailTask,
+	delivery: &Delivery,
+	channel: Arc<Channel>,
+	config: Arc<BackendConfig>,
+	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
+) -> Result<(), anyhow::Error> {
+	let Err(error) = delivery_finalize(task, delivery, channel, config, worker_output).await else {
+		return Ok(());
+	};
+	let has_task_row = task.metadata.as_ref().and_then(|m| m.task_db_id).is_some();
+	if !has_task_row {
+		tracing::error!(
+			target: LOG_TARGET,
+			email = ?task.input.to_email,
+			error = ?error,
+			"Failed to store single-shot result"
+		);
+		return Ok(());
+	}
+	tracing::error!(
+		target: LOG_TARGET,
+		email = ?task.input.to_email,
+		error = ?error,
+		"Failed to store task result; requeueing"
+	);
+	tokio::time::sleep(STORE_FAILURE_REQUEUE_DELAY).await;
+	delivery
+		.reject(BasicRejectOptions { requeue: true })
+		.await?;
+	Err(error)
+}
+
 /// Finalize delivery: send single-shot reply and store result.
 async fn delivery_finalize(
 	task: &CheckEmailTask,
@@ -584,7 +634,7 @@ async fn delivery_finalize(
 	Ok(())
 }
 
-async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
+pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 	let Some(pool) = config.get_pg_pool() else {
 		return;
 	};
@@ -641,92 +691,31 @@ async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
 		.execute(&pool)
 		.await;
 
-		if let Ok(list_id) = sqlx::query_scalar::<_, Option<i32>>(
+		if let Ok(Some(list_id)) = sqlx::query_scalar::<_, Option<i32>>(
 			"SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $1",
 		)
 		.bind(task_db_id)
 		.fetch_one(&pool)
 		.await
 		{
-			if let Some(list_id) = list_id {
-				let total_rows =
-					sqlx::query_scalar::<_, i32>("SELECT total_rows FROM v1_lists WHERE id = $1")
-						.bind(list_id)
-						.fetch_optional(&pool)
-						.await
-						.ok()
-						.flatten()
-						.unwrap_or_default();
-				// Count rows with results, errors, or cancelled state as terminal
-				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')",
-				)
-				.bind(list_id)
-				.fetch_one(&pool)
-				.await
-				.unwrap_or(0);
-				if processed >= i64::from(total_rows) {
-					let failed = sqlx::query_scalar::<_, i64>(
-						"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
-					)
-					.bind(list_id)
-					.fetch_one(&pool)
-					.await
-					.unwrap_or(0);
-					let final_status = if failed > 0 { "failed" } else { "completed" };
-					let _ = sqlx::query(
-						"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-					)
-					.bind(list_id)
-					.bind(final_status)
-					.execute(&pool)
-					.await;
-				}
+			if let Err(err) =
+				crate::worker::job_lifecycle::finalize_list_if_done(&pool, list_id).await
+			{
+				warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to finalize list");
 			}
 		}
 	}
 
 	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
-		let status = sqlx::query_scalar::<_, Option<String>>(
-			"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
-		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.ok()
-		.flatten()
-		.unwrap_or_else(|| "running".to_string());
-
-		let non_terminal = sqlx::query_scalar::<_, i64>(
-			"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')",
-		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.unwrap_or(0);
-
-		if non_terminal == 0 {
-			let failed = sqlx::query_scalar::<_, i64>(
-				"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')",
-			)
-			.bind(job_id)
-			.fetch_one(&pool)
-			.await
-			.unwrap_or(0);
-
-			let final_status = match status.as_str() {
-				"cancelling" | "cancelled" => "cancelled",
-				_ if failed > 0 => "failed",
-				_ => "completed",
-			};
-
-			let _ = sqlx::query(
-				"UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN COALESCE(completed_at, NOW()) ELSE completed_at END, cancelled_at = CASE WHEN $2 = 'cancelled' THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END, updated_at = NOW() WHERE id = $1",
-			)
-			.bind(job_id)
-			.bind(final_status)
-			.execute(&pool)
-			.await;
+		if let Err(err) =
+			crate::worker::job_lifecycle::finalize_bulk_job_if_done(&pool, job_id).await
+		{
+			warn!(
+				target: LOG_TARGET,
+				job_id = job_id,
+				error = ?err,
+				"Failed to finalize bulk job"
+			);
 		}
 
 		if let Err(err) =

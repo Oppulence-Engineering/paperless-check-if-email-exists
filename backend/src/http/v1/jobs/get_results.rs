@@ -52,8 +52,18 @@ async fn http_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into());
 	}
 
-	let limit = query.limit.unwrap_or(50).min(200);
+	let limit = query.limit.unwrap_or(50).clamp(1, 200);
 	let state_filter = query.state.as_deref().unwrap_or("completed");
+	if !matches!(
+		state_filter,
+		"queued" | "running" | "completed" | "retrying" | "failed" | "cancelled" | "dead_lettered"
+	) {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"state must be one of: queued, running, completed, retrying, failed, cancelled, dead_lettered",
+		)
+		.into());
+	}
 
 	let results = sqlx::query_as::<
 		_,

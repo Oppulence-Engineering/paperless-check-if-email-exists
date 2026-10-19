@@ -165,7 +165,10 @@ async fn fetch_batch(
 	Ok(rows
 		.into_iter()
 		.map(|row| {
-			let extra: Value = row.get("extra");
+			// Tasks created by POST /v1/bulk have no `extra`.
+			let extra: Value = row
+				.get::<Option<Value>, _>("extra")
+				.unwrap_or_else(|| Value::Object(Default::default()));
 			let payload: Value = row.get("payload");
 			FailureReportRow {
 				id: row.get("id"),
@@ -190,7 +193,7 @@ fn render_csv_rows(rows: &[FailureReportRow]) -> Result<Vec<u8>, csv::Error> {
 		.has_headers(false)
 		.from_writer(Vec::new());
 	for row in rows {
-		writer.write_record([
+		let record = [
 			row.id.to_string(),
 			row.row_index
 				.map(|value| value.to_string())
@@ -202,7 +205,12 @@ fn render_csv_rows(rows: &[FailureReportRow]) -> Result<Vec<u8>, csv::Error> {
 			row.updated_at.to_rfc3339(),
 			row.payload.to_string(),
 			row.extra.to_string(),
-		])?;
+		];
+		writer.write_record(
+			record
+				.iter()
+				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+		)?;
 	}
 	writer.into_inner().map_err(|err| err.into_error().into())
 }

@@ -283,13 +283,9 @@ async fn http_handler(
 		published_task_ids.push(task_row_id);
 	}
 
-	sqlx::query(
-		"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1",
-	)
-	.bind(bulk_job_id)
-	.execute(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	crate::worker::job_lifecycle::start_bulk_job(&pg_pool, bulk_job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {

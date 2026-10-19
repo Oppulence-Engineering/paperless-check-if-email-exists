@@ -120,14 +120,21 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Count suppressed emails in this job (fall back to payload email if result is NULL)
+	// Count the safe-to-send tasks of this job that have a live suppression.
+	// Suppressions are keyed by the canonical address (as task rows are), and
+	// removed, merged or expired entries no longer suppress anything. A task
+	// counts once however many historical entries match it.
 	let suppressed: i64 = sqlx::query_scalar(
 		r#"
 		SELECT COUNT(*) FROM v1_task_result t
-		JOIN v1_suppression_entries s
-		  ON s.email = LOWER(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))
-		  AND s.tenant_id = t.tenant_id
 		WHERE t.job_id = $1 AND t.safe_to_send = true
+		  AND EXISTS (
+			SELECT 1 FROM v1_suppression_entries s
+			WHERE s.tenant_id = t.tenant_id
+			  AND s.canonical_email = t.canonical_email
+			  AND s.status = 'active'
+			  AND (s.expires_at IS NULL OR s.expires_at > NOW())
+		  )
 		"#,
 	)
 	.bind(job_id)

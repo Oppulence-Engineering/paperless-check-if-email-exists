@@ -45,8 +45,8 @@ async fn http_handler(
 	check_scope(&tenant_ctx, scope::LISTS)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let limit = query.limit.unwrap_or(50).clamp(1, 200);
+	let offset = query.offset.unwrap_or(0).max(0);
 	let rows = sqlx::query(
 		r#"
 		SELECT

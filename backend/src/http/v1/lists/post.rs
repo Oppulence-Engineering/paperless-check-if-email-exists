@@ -48,8 +48,12 @@ async fn http_handler(
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
-	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
-		.map_err(warp::reject::custom)?;
+	let parsed = parse_csv(
+		&upload.file_bytes,
+		upload.email_column.as_deref(),
+		Some(plan_row_limit(&tenant_ctx)),
+	)
+	.map_err(warp::reject::custom)?;
 	let source_key = normalize_source_key(upload.source_key.as_deref());
 
 	if let Some(policy_id) = upload.policy_id {
@@ -293,6 +297,48 @@ async fn http_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
+		// Create the duplicate rows before the primary is published. The worker
+		// copies the primary's result to its duplicates once, when the primary
+		// finishes, so a duplicate inserted after that stays queued forever.
+		for &dup_index in &indices[1..] {
+			let dup_email = parsed.rows[dup_index]
+				.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.trim()
+				.to_string();
+			let dup_extra = serde_json::json!({
+				"list_id": list_id,
+				"row_index": dup_index as i32,
+				"email_column": parsed.email_column,
+			});
+			// Mark as 'queued' (not 'completed') so polling consumers don't see
+			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
+			sqlx::query(
+				r#"
+				INSERT INTO v1_task_result (
+					job_id, payload, extra, task_state, tenant_id,
+					canonical_email, is_duplicate, canonical_task_id, source_key
+				)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
+				"#,
+			)
+			.bind(job_id)
+			.bind(serde_json::json!({
+				"input": {"to_email": dup_email},
+				"job_id": {"bulk": job_id},
+				"webhook": null
+			}))
+			.bind(dup_extra)
+			.bind(tenant_id)
+			.bind(canonical)
+			.bind(primary_task_id)
+			.bind(&source_key)
+			.execute(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?;
+		}
+
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
 				to_email: canonical.clone(),
@@ -340,70 +386,29 @@ async fn http_handler(
 		}
 		published_any = true;
 		published_task_ids.push(primary_task_id);
+	}
 
-		// Create duplicate rows (completed immediately, no RabbitMQ publish, no result yet)
-		for &dup_index in &indices[1..] {
-			let dup_email = parsed.rows[dup_index]
-				.get(&parsed.email_column)
-				.and_then(Value::as_str)
-				.unwrap_or_default()
-				.trim()
-				.to_string();
-			let dup_extra = serde_json::json!({
-				"list_id": list_id,
-				"row_index": dup_index as i32,
-				"email_column": parsed.email_column,
-			});
-			// Mark as 'queued' (not 'completed') so polling consumers don't see
-			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
-			sqlx::query(
-				r#"
-				INSERT INTO v1_task_result (
-					job_id, payload, extra, task_state, tenant_id,
-					canonical_email, is_duplicate, canonical_task_id, source_key
-				)
-				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
-				"#,
-			)
+	// Every row is written and published. The worker may already have
+	// finished the list, so these writes only move it forward.
+	if published_any {
+		crate::worker::job_lifecycle::start_bulk_job(&pg_pool, job_id)
+			.await
+			.map_err(ReacherResponseError::from)?;
+		crate::worker::job_lifecycle::start_list(&pg_pool, list_id)
+			.await
+			.map_err(ReacherResponseError::from)?;
+	} else {
+		sqlx::query("UPDATE v1_bulk_job SET status = 'completed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'pending'")
 			.bind(job_id)
-			.bind(serde_json::json!({
-				"input": {"to_email": dup_email},
-				"job_id": {"bulk": job_id},
-				"webhook": null
-			}))
-			.bind(dup_extra)
-			.bind(tenant_id)
-			.bind(canonical)
-			.bind(primary_task_id)
-			.bind(&source_key)
 			.execute(&pg_pool)
 			.await
 			.map_err(ReacherResponseError::from)?;
-		}
+		sqlx::query("UPDATE v1_lists SET status = 'completed'::list_status, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'uploading'")
+			.bind(list_id)
+			.execute(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?;
 	}
-
-	let job_status = if published_any {
-		"running"
-	} else {
-		"completed"
-	};
-	let list_status = if published_any {
-		"processing"
-	} else {
-		"completed"
-	};
-	sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, updated_at = NOW(), completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END WHERE id = $1")
-		.bind(job_id)
-		.bind(job_status)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
-	sqlx::query("UPDATE v1_lists SET status = $2::list_status, completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1")
-		.bind(list_id)
-		.bind(list_status)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {
@@ -511,8 +516,10 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 				filename = Some(part_filename.unwrap_or_else(|| "upload.csv".to_string()));
 			}
 			"name" => name = Some(String::from_utf8_lossy(&collected).trim().to_string()),
+			// An empty field (as HTML forms send) means "auto-detect".
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
+					.filter(|column| !column.is_empty())
 			}
 			"source_key" | "source" => {
 				source_key = Some(String::from_utf8_lossy(&collected).trim().to_string())
@@ -575,17 +582,25 @@ async fn blank_email_result(
 	prepare_verification_response(config, &output, None, Utc::now(), false).await
 }
 
-fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
-	let limit = match tenant_ctx.plan_tier {
+fn plan_row_limit(tenant_ctx: &TenantContext) -> usize {
+	match tenant_ctx.plan_tier {
 		PlanTier::Free => 1_000usize,
 		PlanTier::Starter => 10_000usize,
 		PlanTier::Professional => 50_000usize,
 		PlanTier::Enterprise => 100_000usize,
-	};
+	}
+}
+
+fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
+	let limit = plan_row_limit(tenant_ctx);
 	if rows > limit {
+		// Parsing stops one row past the limit, so the real count is unknown.
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			format!("List contains {} rows but plan allows {}", rows, limit),
+			format!(
+				"List contains more than {} rows; plan allows {}",
+				limit, limit
+			),
 		)
 		.into());
 	}

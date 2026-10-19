@@ -160,7 +160,9 @@ impl PostgresStorage {
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    result = $3,
 				    error = NULL,
-				    tenant_id = $4,
+				    -- A task row never loses its tenant; a task republished
+				    -- without tenant metadata (an admin-secret retry) keeps it.
+				    tenant_id = COALESCE($4, tenant_id),
 				    score = $5,
 				    score_category = $6,
 				    sub_reason = $7,
@@ -333,7 +335,9 @@ impl PostgresStorage {
 				SET payload = $1,
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    error = $3,
-				    tenant_id = $4,
+				    -- A task row never loses its tenant; a task republished
+				    -- without tenant metadata (an admin-secret retry) keeps it.
+				    tenant_id = COALESCE($4, tenant_id),
 				    canonical_email = COALESCE($5, canonical_email),
 				    result = NULL,
 				    score = NULL,

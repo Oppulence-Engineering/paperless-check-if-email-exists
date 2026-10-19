@@ -218,6 +218,9 @@ pub async fn handle_check_email(
 			}
 		}
 	} else {
+		// The worker throttle is global; the tenant's own limits count each
+		// admitted request here, as the direct path does after its check.
+		throttle_manager.increment_counters().await;
 		let response = handle_with_worker(Arc::clone(&config), body, tenant_ctx).await;
 		match response {
 			Ok(body) => {
@@ -237,7 +240,16 @@ pub async fn handle_check_email(
 				Ok(response)
 			}
 			Err(error) => {
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
+				// After a timeout the task is still queued and will run, so the
+				// key stays `processing`: a retry with it gets "in progress"
+				// instead of a second check and a second charge. The cleanup
+				// task fails the key once it is stale.
+				let timed_out = error
+					.find::<ReacherResponseError>()
+					.is_some_and(|error| error.code == StatusCode::GATEWAY_TIMEOUT);
+				if let (Some(pool), Some(record_id), false) =
+					(idempotency_pool, idempotency_record_id, timed_out)
+				{
 					mark_idempotency_failed(&pool, record_id).await;
 				}
 				Err(error)
@@ -446,6 +458,11 @@ async fn handle_with_worker(
 			}
 			SingleShotReply::Err((e, code)) => {
 				let status_code = StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
+				// The worker throttled the task without checking it, so the
+				// credit reserved for it is returned.
+				if status_code == StatusCode::TOO_MANY_REQUESTS {
+					release_single_reserved_usage(&config, tenant_ctx).await;
+				}
 				return Err(ReacherResponseError::new(status_code, e).into());
 			}
 		}

@@ -9,7 +9,7 @@ use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProper
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
 use tokio::time::{timeout, Duration};
-use tracing::{debug, error, info, trace};
+use tracing::{debug, error, info, trace, warn};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
@@ -170,8 +170,12 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 					}
 				}
 				CheckEmailJobId::Bulk(_) => {
-					// Put back the message into the same queue, so that other
-					// workers can pick it up.
+					// Wait out (part of) the throttle window before putting the
+					// message back: the broker redelivers a requeued message at
+					// once, so requeueing straight away spins the worker and
+					// the broker until the window resets. The cap keeps the
+					// message well inside RabbitMQ's delivery ack timeout.
+					tokio::time::sleep(throttle_result.delay.min(MAX_THROTTLE_PAUSE)).await;
 					delivery
 						.reject(BasicRejectOptions { requeue: true })
 						.await?;
@@ -197,17 +201,22 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
 						delivery.ack(BasicAckOptions::default()).await?;
 
-						// Mark task as cancelled if we have its DB id
+						// Mark the task cancelled if it can still run. A finished
+						// task (for example one whose delayed recheck message
+						// arrives after the cancel) keeps its result.
 						if let Some(task_db_id) =
 							payload.metadata.as_ref().and_then(|m| m.task_db_id)
 						{
-							let _ = sqlx::query!(
-								"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1",
-								task_db_id,
+							let _ = sqlx::query(
+								"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1 AND task_state IN ('queued', 'running', 'retrying')",
 							)
+							.bind(task_db_id)
 							.execute(&pool)
 							.await;
 						}
+						// This may have been the job's last open task. Nothing
+						// else would move the job out of `cancelling`.
+						finish_cancelled_job(config_clone.as_ref(), &pool, *job_id).await;
 
 						continue;
 					}
@@ -243,4 +252,22 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 	}
 
 	bail!("RabbitMQ consumer ended unexpectedly")
+}
+
+/// The longest a throttled bulk message waits before it goes back to the
+/// queue.
+const MAX_THROTTLE_PAUSE: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Finish a cancelled job, and the pipeline run that owns it, once its last
+/// open task was skipped.
+async fn finish_cancelled_job(config: &BackendConfig, pool: &sqlx::PgPool, job_id: i32) {
+	if let Err(err) = crate::worker::job_lifecycle::finalize_bulk_job_if_done(pool, job_id).await {
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to finalize cancelled job");
+		return;
+	}
+	if let Err(err) =
+		crate::pipelines::maybe_finalize_pipeline_run_for_job(config, pool, job_id).await
+	{
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to finalize pipeline run for cancelled job");
+	}
 }

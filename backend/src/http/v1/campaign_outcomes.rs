@@ -82,7 +82,9 @@ async fn ingest_handler(
 		.into());
 	}
 
-	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id).await;
+	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 	let summary = ingest_outcomes(&pg_pool, tenant_id, &policy, &body.outcomes).await;
 
 	let response = IngestOutcomesResponse {
@@ -132,7 +134,7 @@ async fn upload_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 
 	let upload = read_csv_upload(form).await?;
-	let parsed = parse_csv(&upload.file_bytes, Some("email"))?;
+	let parsed = parse_csv(&upload.file_bytes, Some("email"), None)?;
 
 	let mut outcomes = Vec::with_capacity(parsed.rows.len());
 	let mut errors: Vec<IngestRowError> = Vec::new();
@@ -144,7 +146,9 @@ async fn upload_handler(
 		}
 	}
 
-	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id).await;
+	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 	let mut summary = ingest_outcomes(&pg_pool, tenant_id, &policy, &outcomes).await;
 	summary.rejected += errors.len();
 	summary.errors.extend(errors);
