@@ -250,18 +250,31 @@ mod tests {
 			.await;
 		}
 
-		let resp = request()
-			.path(&format!("/v1/jobs/{}/results?limit=2", job_id))
-			.method("GET")
-			.header(REACHER_SECRET_HEADER, "test")
-			.reply(&create_routes(config))
-			.await;
+		let routes = create_routes(config);
+		let page = |query: &str| {
+			request()
+				.path(&format!("/v1/jobs/{}/results?{}", job_id, query))
+				.method("GET")
+				.header(REACHER_SECRET_HEADER, "test")
+				.reply(&routes)
+		};
 
+		let resp = page("limit=2").await;
 		assert_eq!(resp.status(), StatusCode::OK);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		assert_eq!(body["results"].as_array().unwrap().len(), 2);
 		assert_eq!(body["has_more"], true);
 		assert!(body["next_cursor"].is_number());
+
+		// A page that reports more rows must also return a cursor to reach them.
+		for limit in ["0", "-5"] {
+			let resp = page(&format!("limit={}", limit)).await;
+			assert_eq!(resp.status(), StatusCode::OK, "limit={}", limit);
+			let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+			assert_eq!(body["results"].as_array().unwrap().len(), 1);
+			assert!(body["next_cursor"].is_number(), "limit={}", limit);
+		}
+		assert_eq!(page("state=done").await.status(), StatusCode::BAD_REQUEST);
 	}
 
 	// ── v1/bulk/get_progress ────────────────────────────

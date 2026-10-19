@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::shared::paging::clamp_limit;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{resolve_tenant, ReacherResponseError};
 use crate::tenant::context::TenantContext;
@@ -104,8 +105,7 @@ async fn http_handler(
 	let estimated_completion_seconds =
 		estimate_completion_seconds(total_records, processed_rows, created_at, Utc::now());
 	let failure_breakdown = load_failure_breakdown(&pg_pool, job_id).await?;
-	let failed_rows =
-		load_failed_rows(&pg_pool, job_id, query.preview_limit.unwrap_or(50).min(200)).await?;
+	let failed_rows = load_failed_rows(&pg_pool, job_id, clamp_limit(query.preview_limit)).await?;
 	let completed_at = job
 		.get::<Option<DateTime<Utc>>, _>("completed_at")
 		.map(|ts| ts.to_rfc3339());

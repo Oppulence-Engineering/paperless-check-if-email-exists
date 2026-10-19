@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::shared::paging::{clamp_limit, validate_task_state};
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::scoring::response::inject_freshness_into_result;
@@ -52,8 +53,10 @@ async fn http_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into());
 	}
 
-	let limit = query.limit.unwrap_or(50).min(200);
-	let state_filter = query.state.as_deref().unwrap_or("completed");
+	// A limit below 1 fetched one row, reported has_more and returned no
+	// cursor, so clients paged forever.
+	let limit = clamp_limit(query.limit);
+	let state_filter = validate_task_state(query.state)?.unwrap_or_else(|| "completed".to_string());
 
 	let results = sqlx::query_as::<
 		_,
