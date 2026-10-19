@@ -321,25 +321,6 @@ async fn handle_without_worker(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
-	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
-	if let Some(pool) = config.get_pg_pool() {
-		if let Some(tenant_id) = tenant_ctx.tenant_id {
-			crate::worker::actions::evaluate_post_completion_actions(
-				&pool,
-				tenant_id,
-				&body.to_email,
-				Some(prepared.response.score.score),
-				Some(
-					&serde_json::to_value(&prepared.response.score.category)
-						.ok()
-						.and_then(|v| v.as_str().map(ToOwned::to_owned))
-						.unwrap_or_else(|| "unknown".to_string()),
-				),
-			)
-			.await;
-		}
-	}
-
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?prepared.output.is_reachable, "Done verification");
 	Ok(prepared.response.body)
 }

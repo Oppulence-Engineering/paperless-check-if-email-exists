@@ -4,7 +4,6 @@
 // - do the work (i.e. check the email)
 // - send response (either to the reply_to queue or save to the database)
 
-pub mod actions;
 pub mod consume;
 pub mod do_work;
 pub mod job_lifecycle;

@@ -496,24 +496,9 @@ pub async fn do_check_email_work(
 			}
 		}
 
-		// Evaluate conditional actions (auto-suppression) after successful completion
-		if let (Some(pool), Ok(output)) = (config.get_pg_pool(), &worker_output) {
+		if let (Some(pool), Ok(_)) = (config.get_pg_pool(), &worker_output) {
 			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
 				if let Ok(tenant_uuid) = tenant_id_str.parse::<uuid::Uuid>() {
-					crate::worker::actions::evaluate_post_completion_actions(
-						&pool,
-						tenant_uuid,
-						&task.input.to_email,
-						Some(output.response.score.score),
-						Some(
-							&serde_json::to_value(&output.response.score.category)
-								.ok()
-								.and_then(|v| v.as_str().map(ToOwned::to_owned))
-								.unwrap_or_else(|| "unknown".to_string()),
-						),
-					)
-					.await;
-
 					// If outcomes were ingested before this verification ran, ensure
 					// suppression still fires (the scorer already saw them via
 					// build_scoring_context, but suppression list writes happen here).
