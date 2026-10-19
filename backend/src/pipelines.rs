@@ -3471,14 +3471,61 @@ fn is_private_ip(ip: std::net::IpAddr) -> bool {
 	}
 }
 
-fn parse_schedule(expression: &str) -> Result<Schedule> {
+/// A five-field cron schedule with standard day semantics.
+///
+/// When both day-of-month and day-of-week are restricted, standard cron runs
+/// on days that match either field, but the `cron` crate requires both, so
+/// "0 9 1 * 1" would only fire on Mondays that fall on the 1st. Such an
+/// expression is split into one schedule per day field, and their run times
+/// are merged in order.
+struct CronSchedule(Vec<Schedule>);
+
+impl CronSchedule {
+	fn after<'a, Z>(&'a self, after: &DateTime<Z>) -> impl Iterator<Item = DateTime<Z>> + 'a
+	where
+		Z: chrono::TimeZone + 'a,
+	{
+		let mut runs: Vec<_> = self
+			.0
+			.iter()
+			.map(|schedule| schedule.after(after).peekable())
+			.collect();
+		std::iter::from_fn(move || {
+			let earliest = runs
+				.iter_mut()
+				.filter_map(|run| run.peek().cloned())
+				.min()?;
+			// A day matching both fields fires once.
+			for run in runs.iter_mut() {
+				while run.peek() == Some(&earliest) {
+					run.next();
+				}
+			}
+			Some(earliest)
+		})
+	}
+}
+
+fn parse_schedule(expression: &str) -> Result<CronSchedule> {
 	let parts: Vec<&str> = expression.split_whitespace().collect();
 	let [minute, hour, day_of_month, month, day_of_week] = parts.as_slice() else {
 		bail!("Cron expression must use standard 5-field syntax");
 	};
 	let day_of_week = translate_day_of_week_field(day_of_week)?;
-	let cron_expression = format!("0 {minute} {hour} {day_of_month} {month} {day_of_week} *");
-	Schedule::from_str(&cron_expression).context("Invalid cron expression")
+	let build = |day_of_month: &str, day_of_week: &str| {
+		Schedule::from_str(&format!(
+			"0 {minute} {hour} {day_of_month} {month} {day_of_week} *"
+		))
+		.context("Invalid cron expression")
+	};
+	let unrestricted = |field: &str| field == "*" || field == "?";
+	if unrestricted(day_of_month) || unrestricted(&day_of_week) {
+		return Ok(CronSchedule(vec![build(day_of_month, &day_of_week)?]));
+	}
+	Ok(CronSchedule(vec![
+		build(day_of_month, "*")?,
+		build("*", &day_of_week)?,
+	]))
 }
 
 /// Rewrites a standard day-of-week field for the `cron` crate.
@@ -3839,6 +3886,31 @@ mod tests {
 				invalid
 			);
 		}
+	}
+
+	#[test]
+	fn test_parse_schedule_runs_when_either_day_field_matches() {
+		use chrono::Datelike;
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let fire_dates = |expression: &str| -> Vec<(u32, u32)> {
+			parse_schedule(expression)
+				.unwrap()
+				.after(&now)
+				.take_while(|fire| *fire < now + Duration::days(36))
+				.map(|fire| (fire.month(), fire.day()))
+				.collect()
+		};
+
+		// Standard cron ORs the two day fields when both are restricted: the
+		// 1st of each month, and every Monday. Run times stay ordered and
+		// a day matching both fields fires once.
+		assert_eq!(
+			fire_dates("0 9 1 * 1"),
+			vec![(3, 30), (4, 1), (4, 6), (4, 13), (4, 20), (4, 27), (5, 1),]
+		);
+		// With one day field left as "*", the other alone decides.
+		assert_eq!(fire_dates("0 9 1 * *"), vec![(4, 1), (5, 1)]);
+		assert_eq!(fire_dates("0 9 * * 1").len(), 5);
 	}
 
 	#[test]
