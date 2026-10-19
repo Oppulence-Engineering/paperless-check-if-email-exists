@@ -836,7 +836,7 @@ pub async fn create_pipeline(
 	}
 
 	validate_pipeline_input(
-		pg_pool,
+		&mut *pg_pool.acquire().await?,
 		tenant_id,
 		&input.source,
 		&input.schedule,
@@ -958,6 +958,32 @@ pub async fn get_pipeline(
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
 
+/// Like `get_pipeline`, but locks the row until `tx` ends. Updates read
+/// next_run_at and write it back; the scheduler claims due pipelines with
+/// FOR UPDATE SKIP LOCKED, so holding the lock keeps a claim from advancing
+/// next_run_at in between, which the write would undo and run the pipeline twice.
+async fn get_pipeline_for_update(
+	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+	tenant_id: Uuid,
+	pipeline_id: i64,
+) -> Result<Option<PipelineView>> {
+	let row = sqlx::query(
+		r#"
+		SELECT id, tenant_id, name, status::TEXT, source_config, schedule_cron, schedule_timezone,
+		       verification_settings, policy_config, delivery_config, next_run_at, last_scheduled_at, last_run_id,
+		       created_at, updated_at
+		FROM v1_pipelines
+		WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+		FOR UPDATE
+		"#,
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.fetch_optional(&mut **tx)
+	.await?;
+	row.map(|row| row_to_pipeline_view(&row)).transpose()
+}
+
 pub async fn update_pipeline(
 	pg_pool: &PgPool,
 	tenant_id: Uuid,
@@ -972,7 +998,8 @@ pub async fn update_pipeline(
 		.into());
 	}
 
-	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
+	let mut tx = pg_pool.begin().await?;
+	let current = match get_pipeline_for_update(&mut tx, tenant_id, pipeline_id).await? {
 		Some(p) => p,
 		None => return Ok(None),
 	};
@@ -989,7 +1016,7 @@ pub async fn update_pipeline(
 	let next_name = input.name.unwrap_or_else(|| current.name.clone());
 
 	validate_pipeline_input(
-		pg_pool,
+		&mut tx,
 		tenant_id,
 		&next_source,
 		&next_schedule,
@@ -1050,8 +1077,9 @@ pub async fn update_pipeline(
 	.bind(serde_json::to_value(&next_policy)?)
 	.bind(serde_json::to_value(&next_delivery)?)
 	.bind(next_run_at)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
+	tx.commit().await?;
 
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
@@ -1081,7 +1109,8 @@ pub async fn set_pipeline_status(
 	status: PipelineStatus,
 	min_interval_seconds: i32,
 ) -> Result<Option<PipelineView>> {
-	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
+	let mut tx = pg_pool.begin().await?;
+	let current = match get_pipeline_for_update(&mut tx, tenant_id, pipeline_id).await? {
 		Some(p) => p,
 		None => return Ok(None),
 	};
@@ -1119,8 +1148,9 @@ pub async fn set_pipeline_status(
 	.bind(tenant_id)
 	.bind(enum_str(&status))
 	.bind(next_run_at)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
+	tx.commit().await?;
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
 
@@ -3045,8 +3075,11 @@ pub fn compute_next_run_at(
 	Ok(next.with_timezone(&Utc))
 }
 
+/// Takes a connection rather than the pool so `update_pipeline` can validate on
+/// the transaction that holds the pipeline row lock instead of waiting for a
+/// second pooled connection while holding it.
 async fn validate_pipeline_input(
-	pg_pool: &PgPool,
+	conn: &mut sqlx::PgConnection,
 	tenant_id: Uuid,
 	source: &PipelineSource,
 	schedule: &PipelineSchedule,
@@ -3072,7 +3105,7 @@ async fn validate_pipeline_input(
 		)
 		.bind(policy_id)
 		.bind(tenant_id)
-		.fetch_one(pg_pool)
+		.fetch_one(&mut *conn)
 		.await?;
 		if !exists {
 			return Err(PipelineRequestError::validation(
@@ -3101,7 +3134,7 @@ async fn validate_pipeline_input(
 			)
 			.bind(*list_id)
 			.bind(tenant_id)
-			.fetch_one(pg_pool)
+			.fetch_one(&mut *conn)
 			.await?;
 			if !exists {
 				return Err(PipelineRequestError::validation(
