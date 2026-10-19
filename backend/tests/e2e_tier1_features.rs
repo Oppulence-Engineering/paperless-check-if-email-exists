@@ -1214,6 +1214,114 @@ mod list_intelligence_api_tests {
 		assert_eq!(other_patch.status(), StatusCode::NOT_FOUND);
 	}
 
+	/// A delayed recheck rewrites the same task row, so the change event and
+	/// alert recorded for the first pass must be replaced, not kept.
+	#[tokio::test]
+	#[serial]
+	async fn test_recheck_rewriting_a_task_result_replaces_its_change_event_and_alert() {
+		let db = TestDb::start().await;
+		let (tid, _key) = setup_tenant_with_key(db.pool()).await;
+		let email = "recheck@example.com";
+
+		let previous_job = insert_job(db.pool(), Some(tid), 1, "completed").await;
+		let previous_task = insert_scored_task(
+			db.pool(),
+			previous_job,
+			Some(tid),
+			email,
+			None,
+			Some(scored_result(email, "invalid", 0, false)),
+			"completed",
+			Some(0),
+			Some("invalid"),
+			Some("invalid_recipient"),
+			Some(false),
+			Some(vec!["invalid_recipient".to_string()]),
+			Some(email),
+			false,
+		)
+		.await;
+		set_completed_at(db.pool(), previous_task, "2 hours").await;
+
+		// First pass: greylisted, stored as unknown.
+		let current_job = insert_job(db.pool(), Some(tid), 1, "completed").await;
+		let current_task = insert_scored_task(
+			db.pool(),
+			current_job,
+			Some(tid),
+			email,
+			None,
+			Some(scored_result(email, "unknown", 50, false)),
+			"completed",
+			Some(50),
+			Some("unknown"),
+			Some("smtp_unreachable"),
+			Some(false),
+			Some(vec!["smtp_unreachable".to_string()]),
+			Some(email),
+			false,
+		)
+		.await;
+		set_completed_at(db.pool(), current_task, "1 hour").await;
+
+		let pool = db.pool();
+		let record = move || async move {
+			reacher_backend::list_intelligence::record_verification_change_event(pool, current_task)
+				.await
+				.expect("record change event")
+		};
+		let event_types = move || async move {
+			sqlx::query_scalar::<_, String>(
+				"SELECT change_type FROM verification_change_events WHERE current_task_result_id = $1",
+			)
+			.bind(current_task)
+			.fetch_all(pool)
+			.await
+			.expect("load change events")
+		};
+		let alert_types = move || async move {
+			sqlx::query_scalar::<_, String>(
+				"SELECT type FROM v1_alerts WHERE tenant_id = $1 AND canonical_email = $2 ORDER BY id",
+			)
+			.bind(tid)
+			.bind(email)
+			.fetch_all(pool)
+			.await
+			.expect("load alerts")
+		};
+
+		record().await;
+		assert_eq!(event_types().await, vec!["improved".to_string()]);
+		assert_eq!(alert_types().await, vec!["improved".to_string()]);
+
+		// The delayed recheck lands on the same row: the address is now safe.
+		let rewrite = move |category: &'static str, score: i16, safe: bool| async move {
+			sqlx::query(
+				"UPDATE v1_task_result SET result = $2, score = $3, score_category = $4, safe_to_send = $5 WHERE id = $1",
+			)
+			.bind(current_task)
+			.bind(scored_result(email, category, score, safe))
+			.bind(score)
+			.bind(category)
+			.bind(safe)
+			.execute(pool)
+			.await
+			.expect("rewrite task result");
+		};
+		rewrite("valid", 95, true).await;
+		// Storing the same result twice must not duplicate the alert.
+		record().await;
+		record().await;
+		assert_eq!(event_types().await, vec!["became_safe".to_string()]);
+		assert_eq!(alert_types().await, vec!["became_safe".to_string()]);
+
+		// A later recheck back on the previous verdict leaves nothing to report.
+		rewrite("invalid", 0, false).await;
+		record().await;
+		assert!(event_types().await.is_empty());
+		assert!(alert_types().await.is_empty());
+	}
+
 	#[tokio::test]
 	#[serial]
 	async fn test_list_download_changed_filters_segments_and_policy_labels() {
