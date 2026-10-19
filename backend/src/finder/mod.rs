@@ -302,7 +302,7 @@ pub async fn sync_finder_results(
 	// stable, so equal scores keep the generator's pattern order. Catch-all
 	// domains give every candidate the same score; an alphabetical tie-break
 	// then picked patterns like `doe.john@` over `john.doe@`.
-	completed_results.sort_by(|left, right| right.score.cmp(&left.score));
+	completed_results.sort_by_key(|result| std::cmp::Reverse(result.score));
 
 	for (index, result) in completed_results.iter().enumerate() {
 		sqlx::query(
