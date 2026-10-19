@@ -1056,7 +1056,7 @@ mod tests {
 		});
 		assert_eq!(throttle_err.status_code(), StatusCode::TOO_MANY_REQUESTS);
 
-		let lapin_err = TaskError::Lapin(lapin::Error::InvalidChannel(0));
+		let lapin_err = TaskError::Lapin(lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)));
 		assert_eq!(lapin_err.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
 
 		let webhook_err = TaskError::WebhookValidation("bad target".to_string());
@@ -1072,7 +1072,10 @@ mod tests {
 		assert!(!TaskError::WebhookStatus(302).is_retryable());
 		assert!(!TaskError::WebhookStatus(404).is_retryable());
 		assert!(TaskError::WebhookStatus(503).is_retryable());
-		assert!(TaskError::Lapin(lapin::Error::InvalidChannel(0)).is_retryable());
+		assert!(
+			TaskError::Lapin(lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)))
+				.is_retryable()
+		);
 	}
 
 	#[test]

@@ -87,8 +87,8 @@ pub async fn send_single_shot_reply(
 
 		channel
 			.basic_publish(
-				"",
-				reply_to.as_str(),
+				"".into(),
+				reply_to.as_str().into(),
 				BasicPublishOptions::default(),
 				&reply_payload,
 				properties,

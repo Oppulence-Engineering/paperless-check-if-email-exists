@@ -1,14 +1,42 @@
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
-use hickory_resolver::error::{ResolveError, ResolveErrorKind};
-use hickory_resolver::lookup::MxLookup;
-use hickory_resolver::system_conf::read_system_conf;
-use hickory_resolver::TokioAsyncResolver;
+use hickory_resolver::lookup::Lookup;
+use hickory_resolver::net::NetError;
+use hickory_resolver::proto::rr::rdata::MX;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::TokioResolver;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io;
 use thiserror::Error;
 
 /// Details about the MX lookup.
+/// The error of a DNS lookup.
+pub type ResolveError = NetError;
+
+/// The MX records of one DNS lookup. hickory-resolver returns a generic
+/// `Lookup`; this keeps only its MX records.
+#[derive(Debug, Clone)]
+pub struct MxLookup(Lookup);
+
+impl MxLookup {
+	/// The MX records of the answer, in the order that the server sent them.
+	pub fn iter(&self) -> impl Iterator<Item = &MX> {
+		self.0
+			.answers()
+			.iter()
+			.filter_map(|record| match &record.data {
+				RData::MX(mx) => Some(mx),
+				_ => None,
+			})
+	}
+}
+
+impl From<Lookup> for MxLookup {
+	fn from(lookup: Lookup) -> Self {
+		MxLookup(lookup)
+	}
+}
+
 #[derive(Debug)]
 pub struct MxDetails {
 	/// MX lookup of this DNS.
@@ -40,7 +68,7 @@ impl Serialize for MxDetails {
 			.map(|lookup| {
 				lookup
 					.iter()
-					.map(|host| host.exchange().to_string())
+					.map(|host| host.exchange.to_string())
 					.collect::<Vec<_>>()
 			})
 			.unwrap_or_else(|_| Vec::new()); // In case of a resolve error, we don't serialize the error.
@@ -80,17 +108,14 @@ impl From<ResolveError> for MxError {
 
 /// Make a MX lookup.
 pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
-	// Construct a new Resolver with default configuration options
-	let (config, opts) = read_system_conf()?;
-	let resolver = TokioAsyncResolver::tokio(config, opts);
+	// A resolver with the system configuration (/etc/resolv.conf on Unix).
+	let resolver = TokioResolver::builder_tokio()?.build()?;
 
 	match resolver.mx_lookup(&syntax.domain).await {
-		Ok(lookup) => Ok(MxDetails::from(lookup)),
-		Err(err) => match err.kind() {
-			// Prefer to return an empty MX lookup if there are no records.
-			ResolveErrorKind::NoRecordsFound { .. } => Ok(MxDetails { lookup: Err(err) }),
-			_ => Err(err.into()),
-		},
+		Ok(lookup) => Ok(MxDetails::from(MxLookup::from(lookup))),
+		// Prefer to return an empty MX lookup if there are no records.
+		Err(err) if err.is_no_records_found() => Ok(MxDetails { lookup: Err(err) }),
+		Err(err) => Err(err.into()),
 	}
 }
 

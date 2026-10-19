@@ -11,9 +11,10 @@ use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
 use std::io;
 use std::sync::Arc;
+use sync_wrapper::SyncStream;
 use warp::http::{Response, StatusCode};
-use warp::hyper::Body;
 use warp::Filter;
+use warp::Reply;
 
 const BATCH_SIZE: i64 = 500;
 const CSV_HEADER: &str =
@@ -78,29 +79,34 @@ async fn http_handler(
 		header_sent: false,
 	};
 
-	let body = Body::wrap_stream(stream::unfold(state, |mut state| async move {
-		if matches!(state.format, ReportFormat::Csv) && !state.header_sent {
-			state.header_sent = true;
-			return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
-		}
-
-		match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
-			Ok(rows) if rows.is_empty() => None,
-			Ok(rows) => {
-				state.last_id = rows.last().map(|row| row.id).unwrap_or(state.last_id);
-				let chunk = match state.format {
-					ReportFormat::Csv => render_csv_rows(&rows)
-						.map(Bytes::from)
-						.map_err(|err| io::Error::other(err.to_string())),
-					ReportFormat::Json => render_ndjson_rows(&rows)
-						.map(Bytes::from)
-						.map_err(|err| io::Error::other(err.to_string())),
-				};
-				Some((chunk, state))
+	let body = warp::reply::stream(SyncStream::new(stream::unfold(
+		state,
+		|mut state| async move {
+			if matches!(state.format, ReportFormat::Csv) && !state.header_sent {
+				state.header_sent = true;
+				return Some((Ok::<Bytes, io::Error>(Bytes::from(CSV_HEADER)), state));
 			}
-			Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
-		}
-	}));
+
+			match fetch_batch(&state.pg_pool, state.job_id, state.last_id).await {
+				Ok(rows) if rows.is_empty() => None,
+				Ok(rows) => {
+					state.last_id = rows.last().map(|row| row.id).unwrap_or(state.last_id);
+					let chunk = match state.format {
+						ReportFormat::Csv => render_csv_rows(&rows)
+							.map(Bytes::from)
+							.map_err(|err| io::Error::other(err.to_string())),
+						ReportFormat::Json => render_ndjson_rows(&rows)
+							.map(Bytes::from)
+							.map_err(|err| io::Error::other(err.to_string())),
+					};
+					Some((chunk, state))
+				}
+				Err(err) => Some((Err(io::Error::other(err.to_string())), state)),
+			}
+		},
+	)))
+	.into_response()
+	.into_body();
 
 	let (content_type, extension) = match format {
 		ReportFormat::Csv => ("text/csv", "csv"),

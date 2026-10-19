@@ -1,6 +1,7 @@
 use super::models::BlacklistResult;
-use hickory_resolver::system_conf::read_system_conf;
-use hickory_resolver::TokioAsyncResolver;
+use check_if_email_exists::mx::MxLookup;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::TokioResolver;
 use std::time::Instant;
 
 const PROVIDERS: &[(&str, &str)] = &[
@@ -15,15 +16,14 @@ const PROVIDERS: &[(&str, &str)] = &[
 ];
 
 pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::Error> {
-	let (config, opts) = read_system_conf()?;
-	let resolver = TokioAsyncResolver::tokio(config, opts);
+	let resolver = TokioResolver::builder_tokio()?.build()?;
 	let mx_lookup = resolver.mx_lookup(domain).await.ok();
 	let mx_hosts: Vec<String> = mx_lookup
 		.as_ref()
 		.map(|lookup| {
-			lookup
+			MxLookup::from(lookup.clone())
 				.iter()
-				.map(|record| record.exchange().to_string())
+				.map(|record| record.exchange.to_string())
 				.collect()
 		})
 		.unwrap_or_default();
@@ -42,7 +42,15 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 	};
 
 	let ip_lookup = resolver.ipv4_lookup(first_host).await.ok();
-	let ip = ip_lookup.and_then(|lookup| lookup.iter().next().copied());
+	let ip = ip_lookup.and_then(|lookup| {
+		lookup
+			.answers()
+			.iter()
+			.find_map(|record| match &record.data {
+				RData::A(a) => Some(a.0),
+				_ => None,
+			})
+	});
 
 	let mut results = Vec::new();
 	for (provider, zone) in PROVIDERS {

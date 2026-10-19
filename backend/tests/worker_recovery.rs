@@ -15,7 +15,8 @@ async fn connect(url: &str) -> Arc<BackendConfig> {
 		concurrency: 1,
 	});
 	// ContainerAsync::start returns before the restarted broker is listening.
-	timeout(Duration::from_secs(30), async {
+	// The broker can take more than 30 seconds to boot again on a busy host.
+	timeout(Duration::from_secs(120), async {
 		loop {
 			if config.connect().await.is_ok() {
 				break;
@@ -34,7 +35,7 @@ async fn wait_for_consumer(config: &BackendConfig) {
 		loop {
 			let queue = channel
 				.queue_declare(
-					CHECK_EMAIL_QUEUE,
+					CHECK_EMAIL_QUEUE.into(),
 					QueueDeclareOptions {
 						passive: true,
 						..Default::default()
@@ -85,7 +86,10 @@ async fn worker_reports_broker_loss_and_can_restart() {
 	wait_for_consumer(&config).await;
 	let channel = config.must_worker_config().unwrap().channel;
 	channel
-		.basic_cancel("recovery-test-check_email", BasicCancelOptions::default())
+		.basic_cancel(
+			"recovery-test-check_email".into(),
+			BasicCancelOptions::default(),
+		)
 		.await
 		.unwrap();
 	let result = timeout(Duration::from_secs(5), worker)
@@ -97,7 +101,10 @@ async fn worker_reports_broker_loss_and_can_restart() {
 		.to_string()
 		.contains("ended unexpectedly"));
 
-	channel.close(200, "test startup failure").await.unwrap();
+	channel
+		.close(200, "test startup failure".into())
+		.await
+		.unwrap();
 	assert!(run_worker(config)
 		.await
 		.unwrap_err()

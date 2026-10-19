@@ -40,11 +40,11 @@ pub struct Cli {
 	pub smtp_port: u16,
 
 	/// Whether to check if a gravatar image is existing for the given email.
-	#[clap(long, env, default_value = "false", parse(try_from_str))]
+	#[clap(long, env, default_value = "false", action = clap::ArgAction::Set)]
 	pub check_gravatar: bool,
 
 	/// HaveIBeenPnwed API key, ignore if not provided.
-	#[clap(long, env, parse(try_from_str))]
+	#[clap(long, env)]
 	pub haveibeenpwned_api_key: Option<String>,
 
 	/// The email to check.

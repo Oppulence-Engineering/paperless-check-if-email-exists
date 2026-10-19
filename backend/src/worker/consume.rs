@@ -26,11 +26,7 @@ pub async fn setup_rabbit_mq(
 	backend_name: &str,
 	config: &RabbitMQConfig,
 ) -> Result<Channel, anyhow::Error> {
-	let options = ConnectionProperties::default()
-		// Use tokio executor and reactor.
-		.with_executor(tokio_executor_trait::Tokio::current())
-		.with_reactor(tokio_reactor_trait::Tokio)
-		.with_connection_name(backend_name.into());
+	let options = ConnectionProperties::default().with_connection_name(backend_name.into());
 
 	let conn = timeout(
 		RABBITMQ_CONNECT_TIMEOUT,
@@ -46,7 +42,7 @@ pub async fn setup_rabbit_mq(
 	.context("Connecting to rabbitmq")?;
 	let channel = conn.create_channel().await?;
 
-	info!(target: LOG_TARGET, backend=?backend_name,state=?conn.status().state(), "Connected to AMQP broker");
+	info!(target: LOG_TARGET, backend=?backend_name,connected=conn.status().connected(), "Connected to AMQP broker");
 
 	let mut queue_args = FieldTable::default();
 	queue_args.insert("x-max-priority".into(), MAX_QUEUE_PRIORITY.into());
@@ -54,7 +50,7 @@ pub async fn setup_rabbit_mq(
 	// Assert all queue is declared.
 	channel
 		.queue_declare(
-			CHECK_EMAIL_QUEUE,
+			CHECK_EMAIL_QUEUE.into(),
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -93,8 +89,8 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 
 	let mut consumer = match channel
 		.basic_consume(
-			CHECK_EMAIL_QUEUE,
-			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).as_str(),
+			CHECK_EMAIL_QUEUE.into(),
+			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

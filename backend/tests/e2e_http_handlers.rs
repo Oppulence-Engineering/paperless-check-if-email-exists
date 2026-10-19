@@ -502,8 +502,8 @@ mod tests {
 			use futures::StreamExt;
 			let mut consumer = ch
 				.basic_consume(
-					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
-					"test-worker",
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+					"test-worker".into(),
 					lapin::options::BasicConsumeOptions::default(),
 					lapin::types::FieldTable::default(),
 				)
@@ -525,8 +525,8 @@ mod tests {
 						let payload = serde_json::to_vec(&reply).unwrap();
 						let _ = ch2
 							.basic_publish(
-								"",
-								reply_to.as_str(),
+								"".into(),
+								reply_to.as_str().into(),
 								lapin::options::BasicPublishOptions::default(),
 								&payload,
 								lapin::BasicProperties::default()
@@ -602,8 +602,8 @@ mod tests {
 
 			let mut consumer = ch
 				.basic_consume(
-					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE,
-					"test-worker-metadata",
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+					"test-worker-metadata".into(),
 					lapin::options::BasicConsumeOptions::default(),
 					lapin::types::FieldTable::default(),
 				)
@@ -632,8 +632,8 @@ mod tests {
 						let payload = serde_json::to_vec(&reply).unwrap();
 						let _ = ch2
 							.basic_publish(
-								"",
-								reply_to.as_str(),
+								"".into(),
+								reply_to.as_str().into(),
 								lapin::options::BasicPublishOptions::default(),
 								&payload,
 								lapin::BasicProperties::default()

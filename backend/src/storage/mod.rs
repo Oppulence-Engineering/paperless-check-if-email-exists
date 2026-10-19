@@ -95,8 +95,9 @@ mod tests {
 	async fn test_noop_store_with_error_succeeds() {
 		let adapter = StorageAdapter::Noop;
 		let task = make_task();
-		let output: Result<CheckEmailOutput, TaskError> =
-			Err(TaskError::Lapin(lapin::Error::InvalidChannel(0)));
+		let output: Result<CheckEmailOutput, TaskError> = Err(TaskError::Lapin(
+			lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)),
+		));
 		let result = adapter.store(&task, &output, None).await;
 		assert!(result.is_ok());
 	}
