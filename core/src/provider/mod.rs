@@ -89,6 +89,10 @@ pub struct ProviderRule {
 	pub must_start_with_alphanumeric: bool,
 	pub consecutive_special_allowed: bool,
 	pub leading_trailing_special_allowed: bool,
+	/// Allowed special characters that `must_start_with_alphanumeric`,
+	/// `consecutive_special_allowed` and `leading_trailing_special_allowed`
+	/// don't apply to.
+	pub unrestricted_special_chars: Vec<char>,
 	pub plus_addressing: bool,
 	pub reserved_words: Vec<String>,
 }
@@ -115,6 +119,8 @@ struct ProviderRuleJson {
 	must_start_with_alphanumeric: bool,
 	consecutive_special_allowed: bool,
 	leading_trailing_special_allowed: bool,
+	#[serde(default)]
+	unrestricted_special_chars: Vec<String>,
 	plus_addressing: bool,
 	reserved_words: Vec<String>,
 }
@@ -142,6 +148,10 @@ impl ProviderCatalog {
 				must_start_with_alphanumeric: rule.must_start_with_alphanumeric,
 				consecutive_special_allowed: rule.consecutive_special_allowed,
 				leading_trailing_special_allowed: rule.leading_trailing_special_allowed,
+				unrestricted_special_chars: validate_allowed_special_chars(
+					rule.unrestricted_special_chars,
+					&provider,
+				)?,
 				plus_addressing: rule.plus_addressing,
 				reserved_words: rule.reserved_words,
 			};
@@ -169,7 +179,7 @@ fn validate_allowed_special_chars(
 				_ => Err(serde_json::Error::io(std::io::Error::new(
 					std::io::ErrorKind::InvalidData,
 					format!(
-						"provider {:?} has invalid rule.allowed_special_chars entry {:?}; each allowed_special_chars value must contain exactly one character instead of relying on chars().next() truncation",
+						"provider {:?} has invalid special character entry {:?}; each allowed_special_chars and unrestricted_special_chars value must contain exactly one character instead of relying on chars().next() truncation",
 						provider, entry
 					),
 				))),
@@ -226,6 +236,31 @@ pub fn validate_provider_email(
 		return Ok(());
 	}
 
+	// The provider's naming rules describe the account name. The owner makes
+	// up the sub-address tag after the first "+" on the fly, so the tag only
+	// has to be RFC 5322 text: jane.doe+work_stuff@gmail.com is delivered to
+	// jane.doe even though "_" can't appear in a Gmail username.
+	match local_part.split_once('+') {
+		Some((account, tag)) if rule.plus_addressing => {
+			if !tag.chars().all(|c| c == '.' || is_atext(c)) {
+				return Err(ProviderRejectionReason::InvalidCharacter);
+			}
+			validate_account_name(rule, account)
+		}
+		_ => validate_account_name(rule, local_part),
+	}
+}
+
+/// RFC 5322 `atext`: the characters allowed in a dot-atom local part, besides
+/// the dots between atoms.
+fn is_atext(c: char) -> bool {
+	c.is_ascii_alphanumeric() || "!#$%&'*+-/=?^_`{|}~".contains(c)
+}
+
+fn validate_account_name(
+	rule: &ProviderRule,
+	local_part: &str,
+) -> Result<(), ProviderRejectionReason> {
 	let local_len = local_part.chars().count();
 	if local_len < rule.min_local_length {
 		return Err(ProviderRejectionReason::LocalPartTooShort);
@@ -247,7 +282,11 @@ pub fn validate_provider_email(
 		return Err(ProviderRejectionReason::ProviderFormatViolation);
 	};
 
-	if rule.must_start_with_alphanumeric && !first_char.is_ascii_alphanumeric() {
+	let is_restricted_special = |c: char| {
+		!c.is_ascii_alphanumeric() && !rule.unrestricted_special_chars.contains(&c)
+	};
+
+	if rule.must_start_with_alphanumeric && is_restricted_special(first_char) {
 		return Err(ProviderRejectionReason::InvalidStartCharacter);
 	}
 
@@ -255,11 +294,11 @@ pub fn validate_provider_email(
 		.chars()
 		.last()
 		.expect("local part cannot be empty after earlier length check");
-	if !rule.leading_trailing_special_allowed && !last_char.is_ascii_alphanumeric() {
+	if !rule.leading_trailing_special_allowed && is_restricted_special(last_char) {
 		return Err(ProviderRejectionReason::InvalidEndCharacter);
 	}
 
-	let mut previous_special = !first_char.is_ascii_alphanumeric();
+	let mut previous_restricted = false;
 	for current_char in local_part.chars() {
 		if current_char == '+' && !rule.plus_addressing {
 			return Err(ProviderRejectionReason::PlusAddressingNotSupported);
@@ -272,11 +311,11 @@ pub fn validate_provider_email(
 			return Err(ProviderRejectionReason::InvalidCharacter);
 		}
 
-		let is_special = !is_alphanumeric;
-		if is_special && previous_special && !rule.consecutive_special_allowed {
+		let is_restricted = is_restricted_special(current_char);
+		if is_restricted && previous_restricted && !rule.consecutive_special_allowed {
 			return Err(ProviderRejectionReason::ConsecutiveSpecialCharacters);
 		}
-		previous_special = is_special;
+		previous_restricted = is_restricted;
 	}
 
 	Ok(())
@@ -589,8 +628,8 @@ mod tests {
 			let actual_reason = detected
 				.as_ref()
 				.and_then(|value| validate_provider_email(value, local_part).err());
-			assert_eq!(actual_reason.is_none(), fixture.valid);
-			assert_eq!(actual_reason, fixture.reason);
+			assert_eq!(actual_reason.is_none(), fixture.valid, "{}", fixture.email);
+			assert_eq!(actual_reason, fixture.reason, "{}", fixture.email);
 		}
 	}
 }
