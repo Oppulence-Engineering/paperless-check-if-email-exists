@@ -819,7 +819,7 @@ fn compute_partial_confidence(
 	// must not lift the result to high confidence or a "risky" verdict.
 	let ceiling = match classification {
 		SmtpUncertaintyClass::Network | SmtpUncertaintyClass::SmtpUnreachable => {
-			factors.push("smtp:no_conversation".to_string());
+			factors.push("smtp:not_reached".to_string());
 			NO_SMTP_CONVERSATION_CONFIDENCE_CEILING
 		}
 		SmtpUncertaintyClass::Transient
