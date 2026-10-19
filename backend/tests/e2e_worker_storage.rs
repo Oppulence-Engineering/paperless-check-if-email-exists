@@ -249,6 +249,26 @@ mod postgres_storage_tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_single_shot_rows_cannot_share_a_dedupe_key() {
+		// SQS can hand one message to two invocations at once. Both find no
+		// row for its key and insert; the database must keep only one, so
+		// the loser fails and SQS's redelivery updates the winner's row.
+		let db = TestDb::start().await;
+		let insert = || {
+			sqlx::query(
+				"INSERT INTO v1_task_result (payload, dedupe_key) VALUES ('{}'::jsonb, 'sqs:message-1')",
+			)
+			.execute(db.pool())
+		};
+
+		insert().await.unwrap();
+		let duplicate = insert().await;
+
+		assert!(duplicate.is_err());
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_redelivered_task_keeps_one_row() {
 		// SQS redelivers a message after a retryable error, and every
 		// delivery stores its outcome. Keyed by the message, the deliveries
