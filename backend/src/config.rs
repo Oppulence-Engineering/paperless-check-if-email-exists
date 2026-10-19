@@ -104,10 +104,11 @@ pub struct BackendConfig {
 	#[serde(skip)]
 	throttle_manager: Arc<ThrottleManager>,
 
-	/// Per-tenant throttle managers, keyed by tenant UUID.
-	/// Legacy/open-mode callers use the global `throttle_manager` above.
+	/// Per-tenant throttle managers, keyed by tenant UUID, with the limits
+	/// each was built from. Legacy/open-mode callers use the global
+	/// `throttle_manager` above.
 	#[serde(skip)]
-	tenant_throttle_managers: Arc<DashMap<Uuid, Arc<ThrottleManager>>>,
+	tenant_throttle_managers: Arc<DashMap<Uuid, (ThrottleConfig, Arc<ThrottleManager>)>>,
 
 	#[serde(skip)]
 	bounce_risk_service: Arc<BounceRiskService>,
@@ -290,19 +291,32 @@ impl BackendConfig {
 
 	/// Get or create a per-tenant ThrottleManager. If the tenant_id is None
 	/// (legacy mode), returns the global throttle manager.
+	///
+	/// The tenant's limits are read from the database on every request. When
+	/// they differ from the cached manager's, the manager is rebuilt (with
+	/// fresh counters) so a changed limit applies without a restart.
 	pub fn get_tenant_throttle_manager(
 		&self,
 		tenant_id: Option<Uuid>,
 		tenant_throttle_config: &ThrottleConfig,
 	) -> Arc<ThrottleManager> {
-		match tenant_id {
-			Some(id) => self
-				.tenant_throttle_managers
-				.entry(id)
-				.or_insert_with(|| Arc::new(ThrottleManager::new(tenant_throttle_config.clone())))
-				.clone(),
-			None => self.throttle_manager.clone(),
+		let Some(id) = tenant_id else {
+			return self.throttle_manager.clone();
+		};
+		let new_manager = || {
+			(
+				tenant_throttle_config.clone(),
+				Arc::new(ThrottleManager::new(tenant_throttle_config.clone())),
+			)
+		};
+		let mut entry = self
+			.tenant_throttle_managers
+			.entry(id)
+			.or_insert_with(new_manager);
+		if entry.0 != *tenant_throttle_config {
+			*entry = new_manager();
 		}
+		entry.1.clone()
 	}
 }
 
@@ -341,7 +355,7 @@ pub struct RabbitMQConfig {
 	pub concurrency: u16,
 }
 
-#[derive(Debug, Default, Deserialize, Clone, Serialize)]
+#[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]
 pub struct ThrottleConfig {
 	pub max_requests_per_second: Option<u32>,
 	pub max_requests_per_minute: Option<u32>,
@@ -829,5 +843,26 @@ db_url = "postgres://localhost:5432/test1"
 "#;
 
 		assert_eq!(expected, toml::to_string(&storage_config).unwrap(),);
+	}
+
+	#[tokio::test]
+	async fn tenant_throttle_follows_changed_limits_without_restart() {
+		let config = BackendConfig::empty();
+		let tenant_id = Uuid::new_v4();
+		let one_per_second = ThrottleConfig {
+			max_requests_per_second: Some(1),
+			..ThrottleConfig::new_without_throttle()
+		};
+
+		let manager = config.get_tenant_throttle_manager(Some(tenant_id), &one_per_second);
+		manager.increment_counters().await;
+		// Same limits: the same manager keeps counting.
+		let same = config.get_tenant_throttle_manager(Some(tenant_id), &one_per_second);
+		assert!(same.check_throttle().await.is_some());
+
+		// An operator lifts the limit; the next request must see it.
+		let lifted = config
+			.get_tenant_throttle_manager(Some(tenant_id), &ThrottleConfig::new_without_throttle());
+		assert!(lifted.check_throttle().await.is_none());
 	}
 }

@@ -229,7 +229,7 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 							}
 						}
 						if let (Some(auth_config), Some(pool)) = (&config.auth, config.get_pg_pool()) {
-								let ctx = resolve_from_jwt(&pool, token, auth_config, method.as_str(), path.as_str())
+								let ctx = resolve_from_jwt(&pool, token, auth_config, &config.throttle, method.as_str(), path.as_str())
 									.await
 									.map_err(|_| warp::reject::custom(ReacherResponseError::new(
 										StatusCode::UNAUTHORIZED,
