@@ -255,17 +255,16 @@ async fn http_handler(
 		.map_err(ReacherResponseError::from)?;
 	}
 
-	// Handle canonical groups: first occurrence is primary, rest are duplicates
+	// Handle canonical groups: first occurrence is primary, rest are duplicates.
+	// Every row is inserted before any task is published. The worker copies a
+	// primary's result only to duplicate rows that already exist, and marks the
+	// job finished once no queued rows remain, so a row inserted after a
+	// publish could stay queued forever or finish the job early.
+	let mut primaries = Vec::with_capacity(canonical_groups.len());
 	for (canonical, indices) in &canonical_groups {
 		let primary_index = indices[0];
-		let _primary_email = parsed.rows[primary_index]
-			.get(&parsed.email_column)
-			.and_then(Value::as_str)
-			.unwrap_or_default()
-			.trim()
-			.to_string();
 
-		// Create primary task (queued, published to RabbitMQ)
+		// Create primary task (queued, published to RabbitMQ below)
 		let primary_extra = serde_json::json!({
 			"list_id": list_id,
 			"row_index": primary_index as i32,
@@ -292,7 +291,50 @@ async fn http_handler(
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
+		primaries.push((canonical, primary_index, primary_task_id));
 
+		// Create duplicate rows (no RabbitMQ publish, no result yet)
+		for &dup_index in &indices[1..] {
+			let dup_email = parsed.rows[dup_index]
+				.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.trim()
+				.to_string();
+			let dup_extra = serde_json::json!({
+				"list_id": list_id,
+				"row_index": dup_index as i32,
+				"email_column": parsed.email_column,
+			});
+			// Mark as 'queued' (not 'completed') so polling consumers don't see
+			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
+			sqlx::query(
+				r#"
+				INSERT INTO v1_task_result (
+					job_id, payload, extra, task_state, tenant_id,
+					canonical_email, is_duplicate, canonical_task_id, source_key
+				)
+				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
+				"#,
+			)
+			.bind(job_id)
+			.bind(serde_json::json!({
+				"input": {"to_email": dup_email},
+				"job_id": {"bulk": job_id},
+				"webhook": null
+			}))
+			.bind(dup_extra)
+			.bind(tenant_id)
+			.bind(canonical)
+			.bind(primary_task_id)
+			.bind(&source_key)
+			.execute(&pg_pool)
+			.await
+			.map_err(ReacherResponseError::from)?;
+		}
+	}
+
+	for (canonical, primary_index, primary_task_id) in primaries {
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
 				to_email: canonical.clone(),
@@ -340,48 +382,11 @@ async fn http_handler(
 		}
 		published_any = true;
 		published_task_ids.push(primary_task_id);
-
-		// Create duplicate rows (completed immediately, no RabbitMQ publish, no result yet)
-		for &dup_index in &indices[1..] {
-			let dup_email = parsed.rows[dup_index]
-				.get(&parsed.email_column)
-				.and_then(Value::as_str)
-				.unwrap_or_default()
-				.trim()
-				.to_string();
-			let dup_extra = serde_json::json!({
-				"list_id": list_id,
-				"row_index": dup_index as i32,
-				"email_column": parsed.email_column,
-			});
-			// Mark as 'queued' (not 'completed') so polling consumers don't see
-			// rows with NULL result. Propagation UPDATE sets state to 'completed'.
-			sqlx::query(
-				r#"
-				INSERT INTO v1_task_result (
-					job_id, payload, extra, task_state, tenant_id,
-					canonical_email, is_duplicate, canonical_task_id, source_key
-				)
-				VALUES ($1, $2, $3, 'queued', $4, $5, true, $6, $7)
-				"#,
-			)
-			.bind(job_id)
-			.bind(serde_json::json!({
-				"input": {"to_email": dup_email},
-				"job_id": {"bulk": job_id},
-				"webhook": null
-			}))
-			.bind(dup_extra)
-			.bind(tenant_id)
-			.bind(canonical)
-			.bind(primary_task_id)
-			.bind(&source_key)
-			.execute(&pg_pool)
-			.await
-			.map_err(ReacherResponseError::from)?;
-		}
 	}
 
+	// The worker may already have finished every task and set a terminal
+	// status, or the job may have been cancelled; only move the job and list
+	// out of their initial states.
 	let job_status = if published_any {
 		"running"
 	} else {
@@ -392,13 +397,13 @@ async fn http_handler(
 	} else {
 		"completed"
 	};
-	sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, updated_at = NOW(), completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END WHERE id = $1")
+	sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, updated_at = NOW(), completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END WHERE id = $1 AND status = 'pending'")
 		.bind(job_id)
 		.bind(job_status)
 		.execute(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
-	sqlx::query("UPDATE v1_lists SET status = $2::list_status, completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1")
+	sqlx::query("UPDATE v1_lists SET status = $2::list_status, completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1 AND status = 'uploading'")
 		.bind(list_id)
 		.bind(list_status)
 		.execute(&pg_pool)
@@ -450,6 +455,9 @@ async fn cleanup_list_publish_failure(
 		warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to mark list failed after publish failure");
 	}
 
+	// Duplicate rows stay queued: when their primary is retried and finishes,
+	// the worker copies its result to them, as it does for a normal run.
+	// Failing them here would make a retry verify each duplicate again.
 	if let Err(err) = sqlx::query(
 		r#"
 		UPDATE v1_task_result

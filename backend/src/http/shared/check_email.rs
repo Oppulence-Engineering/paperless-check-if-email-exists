@@ -130,6 +130,13 @@ pub async fn handle_check_email(
 					)
 					.into());
 				}
+				IdempotencyCheck::PathMismatch => {
+					return Err(ReacherResponseError::new(
+						StatusCode::UNPROCESSABLE_ENTITY,
+						"Idempotency key was already used on another endpoint",
+					)
+					.into());
+				}
 				IdempotencyCheck::Cached(cached) => {
 					let cached_status = StatusCode::from_u16(cached.status_code).map_err(|e| {
 						ReacherResponseError::new(

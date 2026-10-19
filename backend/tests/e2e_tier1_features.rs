@@ -1826,6 +1826,42 @@ mod custom_threshold_tests {
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 		assert_eq!(b["job_id"], jid);
 		assert!(b.get("recommendation").is_some());
+
+		// One in-force suppression plus an older merged entry for the same
+		// address count the row once; an expired suppression does not count.
+		for status in ["active", "merged"] {
+			sqlx::query(
+				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, status, reason) \
+				 VALUES ($1, 'good@example.com', 'good@example.com', $2, 'manual'::suppression_reason)",
+			)
+			.bind(tid)
+			.bind(status)
+			.execute(db.pool())
+			.await
+			.unwrap();
+		}
+		let routes = create_routes(worker_config().await);
+		let (routes, key) = (&routes, &key);
+		let suppressed_count = move || async move {
+			let r = request()
+				.path(&format!("/v1/jobs/{}/approval", jid))
+				.method("GET")
+				.header("Authorization", format!("Bearer {}", key))
+				.reply(routes)
+				.await;
+			assert_eq!(r.status(), StatusCode::OK);
+			let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
+			b["risk_flags"]["suppressed_count"].clone()
+		};
+		assert_eq!(suppressed_count().await, 1);
+		sqlx::query(
+			"UPDATE v1_suppression_entries SET expires_at = NOW() - INTERVAL '1 day' WHERE tenant_id = $1 AND status = 'active'",
+		)
+		.bind(tid)
+		.execute(db.pool())
+		.await
+		.unwrap();
+		assert_eq!(suppressed_count().await, 0);
 	}
 }
 
@@ -1939,6 +1975,19 @@ mod alternatives_tests {
 			.bind(fid).bind(task_id).bind(email).bind(pattern)
 			.execute(db.pool()).await.unwrap();
 		}
+		// A candidate whose check failed makes the finished job failed, not completed.
+		let failed_task: i32 = sqlx::query(
+			"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, error) VALUES ($1, $2, 'failed'::task_state, $3, 'smtp timeout') RETURNING id",
+		)
+		.bind(jid)
+		.bind(serde_json::json!({"input": {"to_email": "j.doe@example.com"}, "job_id": {"bulk": jid}}))
+		.bind(tid)
+		.fetch_one(db.pool()).await.unwrap().get("id");
+		sqlx::query(
+			"INSERT INTO v1_finder_result (finder_job_id, task_result_id, candidate_email, pattern) VALUES ($1, $2, 'j.doe@example.com', 'f.last')",
+		)
+		.bind(fid).bind(failed_task)
+		.execute(db.pool()).await.unwrap();
 		let c = worker_config().await;
 		let r = request()
 			.path(&format!("/v1/find_email/{}", fid))
@@ -1956,5 +2005,6 @@ mod alternatives_tests {
 		// Best match is john.doe (95), alternatives are jdoe (85) and johndoe (70)
 		assert_eq!(alts.len(), 2);
 		assert_eq!(alts[0]["email"], "jdoe@example.com");
+		assert_eq!(b["status"], "failed");
 	}
 }
