@@ -62,13 +62,11 @@ export const getV1GetBulkJobProgressMockHandler = (
 export const getV1GetBulkJobResultsMockHandler = (
   overrideResponse?:
     | BulkJobResultsResponse
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
       ) =>
-        | Promise<BulkJobResultsResponse | ArrayBuffer>
-        | BulkJobResultsResponse
-        | ArrayBuffer),
+        Promise<BulkJobResultsResponse | Blob> | BulkJobResultsResponse | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -80,13 +78,10 @@ export const getV1GetBulkJobResultsMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1GetBulkJobResultsResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );
@@ -160,10 +155,10 @@ export const getV1CancelJobMockHandler = (
 
 export const getV1DownloadJobResultsMockHandler = (
   overrideResponse?:
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ArrayBuffer> | ArrayBuffer),
+      ) => Promise<Blob> | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -175,13 +170,10 @@ export const getV1DownloadJobResultsMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1DownloadJobResultsResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );
@@ -234,10 +226,10 @@ export const getV1GetJobFailureCenterMockHandler = (
 
 export const getV1GetJobFailureReportMockHandler = (
   overrideResponse?:
-    | ArrayBuffer
+    | Blob
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<ArrayBuffer> | ArrayBuffer),
+      ) => Promise<Blob> | Blob),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
@@ -249,13 +241,10 @@ export const getV1GetJobFailureReportMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1GetJobFailureReportResponseMock();
-      return HttpResponse.arrayBuffer(
-        binaryBody instanceof ArrayBuffer ? binaryBody : new ArrayBuffer(0),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/octet-stream" },
-        },
-      );
+      return new HttpResponse(binaryBody, {
+        status: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
     },
     options,
   );

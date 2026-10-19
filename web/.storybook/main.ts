@@ -11,7 +11,6 @@ const config: StorybookConfig = {
 		"../components/**/*.stories.@(ts|tsx)",
 		"../app/**/*.stories.@(ts|tsx)",
 	],
-	addons: ["@storybook/addon-essentials"],
 	framework: "@storybook/react-vite",
 	async viteFinal(config) {
 		return mergeConfig(config, {

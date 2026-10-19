@@ -54,11 +54,8 @@ export const getV1CreateBulkJobResponseMock = (
 ): BulkCreateResponse => ({
   job_id: faker.number.int(),
   source_key: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   ...overrideResponse,
 });
@@ -129,31 +126,24 @@ export const getV1CheckEmailResponseMock = (
   overrideResponse: Partial<Extract<CheckEmailOutput, object>> = {},
 ): CheckEmailOutput => ({
   bounce_risk: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      {
-        action: faker.helpers.arrayElement(Object.values(RecommendedAction)),
-        category: faker.helpers.arrayElement(Object.values(BounceRiskCategory)),
-        confidence: faker.number.float({
-          min: 0.35,
-          max: 1,
-          fractionDigits: 2,
-        }),
-        model_version: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        risk_factors: Array.from(
-          { length: faker.number.int({ min: 1, max: 10 }) },
-          (_, i) => i + 1,
-        ).map(() => ({
-          contribution: faker.number.int(),
-          description: faker.string.alpha({ length: { min: 10, max: 20 } }),
-          direction: faker.helpers.arrayElement(Object.values(RiskDirection)),
-          signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        })),
-        score: faker.number.int({ min: 0, max: 100 }),
-        scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-      },
-      null,
-    ]),
-    undefined,
+    {
+      action: faker.helpers.arrayElement(Object.values(RecommendedAction)),
+      category: faker.helpers.arrayElement(Object.values(BounceRiskCategory)),
+      confidence: faker.number.float({ min: 0.35, max: 1, fractionDigits: 2 }),
+      model_version: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      risk_factors: Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => ({
+        contribution: faker.number.int(),
+        description: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        direction: faker.helpers.arrayElement(Object.values(RiskDirection)),
+        signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      })),
+      score: faker.number.int({ min: 0, max: 100 }),
+      scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    },
+    null,
   ]),
   debug: faker.helpers.arrayElement([
     {
@@ -191,11 +181,8 @@ export const getV1CheckEmailResponseMock = (
                   undefined,
                 ]),
                 proxy: faker.helpers.arrayElement([
-                  faker.helpers.arrayElement([
-                    faker.string.alpha({ length: { min: 10, max: 20 } }),
-                    null,
-                  ]),
-                  undefined,
+                  faker.string.alpha({ length: { min: 10, max: 20 } }),
+                  null,
                 ]),
                 retries: faker.helpers.arrayElement([
                   faker.number.int({ min: 0 }),
@@ -206,14 +193,11 @@ export const getV1CheckEmailResponseMock = (
                   undefined,
                 ]),
                 smtp_timeout: faker.helpers.arrayElement([
-                  faker.helpers.arrayElement([
-                    {
-                      nanos: faker.number.float({ fractionDigits: 2 }),
-                      secs: faker.number.float({ fractionDigits: 2 }),
-                    },
-                    null,
-                  ]),
-                  undefined,
+                  {
+                    nanos: faker.number.float({ fractionDigits: 2 }),
+                    secs: faker.number.float({ fractionDigits: 2 }),
+                  },
+                  null,
                 ]),
               },
               undefined,
@@ -238,25 +222,16 @@ export const getV1CheckEmailResponseMock = (
   ]),
   policy_evaluation: faker.helpers.arrayElement([{}, undefined]),
   provider: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(Provider)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(Provider)),
+    null,
   ]),
   provider_confidence: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(ProviderConfidence)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(ProviderConfidence)),
+    null,
   ]),
   provider_rejection_reason: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(ProviderRejectionReason)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(ProviderRejectionReason)),
+    null,
   ]),
   provider_rules_applied: faker.datatype.boolean(),
   recommendation: faker.helpers.arrayElement([{}, undefined]),
@@ -443,16 +418,13 @@ export const getV1GetFindEmailResponseMock = (
   overrideResponse: Partial<Extract<FindEmailStatusResponse, object>> = {},
 ): FindEmailStatusResponse => ({
   best_match: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      {
-        confidence: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        email: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        pattern: faker.string.alpha({ length: { min: 10, max: 20 } }),
-        score: faker.number.int(),
-      },
-      null,
-    ]),
-    undefined,
+    {
+      confidence: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      pattern: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      score: faker.number.int(),
+    },
+    null,
   ]),
   bulk_job_id: faker.number.int(),
   candidates_checked: faker.number.int(),
@@ -465,297 +437,254 @@ export const getV1GetFindEmailResponseMock = (
   ).map(() => ({
     category: faker.helpers.arrayElement(Object.values(EmailCategory)),
     confidence: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          factors: Array.from(
-            { length: faker.number.int({ min: 1, max: 10 }) },
-            (_, i) => i + 1,
-          ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
-          level: faker.helpers.arrayElement([
-            "high",
-            "medium",
-            "low",
-            "very_low",
-          ] as const),
-          score: faker.number.int({ min: 0, max: 100 }),
-        },
-        null,
-      ]),
-      undefined,
+      {
+        factors: Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+        level: faker.helpers.arrayElement([
+          "high",
+          "medium",
+          "low",
+          "very_low",
+        ] as const),
+        score: faker.number.int({ min: 0, max: 100 }),
+      },
+      null,
     ]),
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
     pattern: faker.string.alpha({ length: { min: 10, max: 20 } }),
     result: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          bounce_risk: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              {
-                action: faker.helpers.arrayElement(
-                  Object.values(RecommendedAction),
-                ),
-                category: faker.helpers.arrayElement(
-                  Object.values(BounceRiskCategory),
-                ),
-                confidence: faker.number.float({
-                  min: 0.35,
-                  max: 1,
-                  fractionDigits: 2,
-                }),
-                model_version: faker.string.alpha({
-                  length: { min: 10, max: 20 },
-                }),
-                risk_factors: Array.from(
-                  { length: faker.number.int({ min: 1, max: 10 }) },
-                  (_, i) => i + 1,
-                ).map(() => ({
-                  contribution: faker.number.int(),
-                  description: faker.string.alpha({
-                    length: { min: 10, max: 20 },
-                  }),
-                  direction: faker.helpers.arrayElement(
-                    Object.values(RiskDirection),
-                  ),
-                  signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
-                })),
-                score: faker.number.int({ min: 0, max: 100 }),
-                scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-              },
-              null,
+      {
+        bounce_risk: faker.helpers.arrayElement([
+          {
+            action: faker.helpers.arrayElement(
+              Object.values(RecommendedAction),
+            ),
+            category: faker.helpers.arrayElement(
+              Object.values(BounceRiskCategory),
+            ),
+            confidence: faker.number.float({
+              min: 0.35,
+              max: 1,
+              fractionDigits: 2,
+            }),
+            model_version: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            risk_factors: Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => ({
+              contribution: faker.number.int(),
+              description: faker.string.alpha({ length: { min: 10, max: 20 } }),
+              direction: faker.helpers.arrayElement(
+                Object.values(RiskDirection),
+              ),
+              signal: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            })),
+            score: faker.number.int({ min: 0, max: 100 }),
+            scored_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+          },
+          null,
+        ]),
+        debug: faker.helpers.arrayElement([
+          {
+            backend_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            duration: {
+              nanos: faker.number.float({ fractionDigits: 2 }),
+              secs: faker.number.float({ fractionDigits: 2 }),
+            },
+            end_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            reacher_version: faker.helpers.arrayElement([
+              faker.string.alpha({ length: { min: 10, max: 20 } }),
+              undefined,
             ]),
-            undefined,
-          ]),
-          debug: faker.helpers.arrayElement([
-            {
-              backend_name: faker.string.alpha({
-                length: { min: 10, max: 20 },
-              }),
-              duration: {
-                nanos: faker.number.float({ fractionDigits: 2 }),
-                secs: faker.number.float({ fractionDigits: 2 }),
-              },
-              end_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
-              reacher_version: faker.helpers.arrayElement([
-                faker.string.alpha({ length: { min: 10, max: 20 } }),
+            smtp: {
+              verif_method: faker.helpers.arrayElement([
+                {
+                  host: faker.helpers.arrayElement([
+                    faker.string.alpha({ length: { min: 10, max: 20 } }),
+                    undefined,
+                  ]),
+                  type: faker.helpers.arrayElement([
+                    "Smtp",
+                    "Headless",
+                    "Api",
+                    "Skipped",
+                  ] as const),
+                  verif_method: faker.helpers.arrayElement([
+                    {
+                      from_email: faker.helpers.arrayElement([
+                        faker.string.alpha({ length: { min: 10, max: 20 } }),
+                        undefined,
+                      ]),
+                      hello_name: faker.helpers.arrayElement([
+                        faker.string.alpha({ length: { min: 10, max: 20 } }),
+                        undefined,
+                      ]),
+                      proxy: faker.helpers.arrayElement([
+                        faker.string.alpha({ length: { min: 10, max: 20 } }),
+                        null,
+                      ]),
+                      retries: faker.helpers.arrayElement([
+                        faker.number.int({ min: 0 }),
+                        undefined,
+                      ]),
+                      smtp_port: faker.helpers.arrayElement([
+                        faker.number.int({ min: 0 }),
+                        undefined,
+                      ]),
+                      smtp_timeout: faker.helpers.arrayElement([
+                        {
+                          nanos: faker.number.float({ fractionDigits: 2 }),
+                          secs: faker.number.float({ fractionDigits: 2 }),
+                        },
+                        null,
+                      ]),
+                    },
+                    undefined,
+                  ]),
+                },
                 undefined,
               ]),
-              smtp: {
-                verif_method: faker.helpers.arrayElement([
-                  {
-                    host: faker.helpers.arrayElement([
-                      faker.string.alpha({ length: { min: 10, max: 20 } }),
-                      undefined,
-                    ]),
-                    type: faker.helpers.arrayElement([
-                      "Smtp",
-                      "Headless",
-                      "Api",
-                      "Skipped",
-                    ] as const),
-                    verif_method: faker.helpers.arrayElement([
-                      {
-                        from_email: faker.helpers.arrayElement([
-                          faker.string.alpha({ length: { min: 10, max: 20 } }),
-                          undefined,
-                        ]),
-                        hello_name: faker.helpers.arrayElement([
-                          faker.string.alpha({ length: { min: 10, max: 20 } }),
-                          undefined,
-                        ]),
-                        proxy: faker.helpers.arrayElement([
-                          faker.helpers.arrayElement([
-                            faker.string.alpha({
-                              length: { min: 10, max: 20 },
-                            }),
-                            null,
-                          ]),
-                          undefined,
-                        ]),
-                        retries: faker.helpers.arrayElement([
-                          faker.number.int({ min: 0 }),
-                          undefined,
-                        ]),
-                        smtp_port: faker.helpers.arrayElement([
-                          faker.number.int({ min: 0 }),
-                          undefined,
-                        ]),
-                        smtp_timeout: faker.helpers.arrayElement([
-                          faker.helpers.arrayElement([
-                            {
-                              nanos: faker.number.float({ fractionDigits: 2 }),
-                              secs: faker.number.float({ fractionDigits: 2 }),
-                            },
-                            null,
-                          ]),
-                          undefined,
-                        ]),
-                      },
-                      undefined,
-                    ]),
-                  },
-                  undefined,
-                ]),
-              },
-              start_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
             },
-            undefined,
-          ]),
-          input: faker.string.alpha({ length: { min: 10, max: 20 } }),
-          is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
-          misc: faker.helpers.arrayElement([
-            { ...getV1GetFindEmailResponseMiscDetailsMock() },
-            { ...getV1GetFindEmailResponseCoreErrorMock() },
-          ]),
-          mx: faker.helpers.arrayElement([
-            { ...getV1GetFindEmailResponseMxDetailsMock() },
-            { ...getV1GetFindEmailResponseCoreErrorMock() },
-          ]),
-          policy_evaluation: faker.helpers.arrayElement([{}, undefined]),
-          provider: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.helpers.arrayElement(Object.values(Provider)),
-              null,
-            ]),
-            undefined,
-          ]),
-          provider_confidence: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.helpers.arrayElement(Object.values(ProviderConfidence)),
-              null,
-            ]),
-            undefined,
-          ]),
-          provider_rejection_reason: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.helpers.arrayElement(
-                Object.values(ProviderRejectionReason),
-              ),
-              null,
-            ]),
-            undefined,
-          ]),
-          provider_rules_applied: faker.datatype.boolean(),
-          recommendation: faker.helpers.arrayElement([{}, undefined]),
-          score: {
-            age_days: faker.helpers.arrayElement([
-              faker.number.int(),
-              undefined,
-            ]),
-            catch_all: faker.helpers.arrayElement([
-              {
-                confidence: faker.number.int({ min: 0, max: 100 }),
-                factors: Array.from(
-                  { length: faker.number.int({ min: 1, max: 10 }) },
-                  (_, i) => i + 1,
-                ).map(() =>
-                  faker.string.alpha({ length: { min: 10, max: 20 } }),
-                ),
-                severity: faker.helpers.arrayElement(
-                  Object.values(CatchAllSeverity),
-                ),
-              },
-              undefined,
-            ]),
-            catch_all_severity: faker.helpers.arrayElement([
-              faker.helpers.arrayElement(["low", "medium", "high"] as const),
-              undefined,
-            ]),
-            category: faker.helpers.arrayElement(Object.values(EmailCategory)),
-            confidence: faker.helpers.arrayElement([
-              faker.number.int({ min: 0, max: 100 }),
-              undefined,
-            ]),
-            confidence_factors: faker.helpers.arrayElement([
-              Array.from(
+            start_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          undefined,
+        ]),
+        input: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
+        misc: faker.helpers.arrayElement([
+          { ...getV1GetFindEmailResponseMiscDetailsMock() },
+          { ...getV1GetFindEmailResponseCoreErrorMock() },
+        ]),
+        mx: faker.helpers.arrayElement([
+          { ...getV1GetFindEmailResponseMxDetailsMock() },
+          { ...getV1GetFindEmailResponseCoreErrorMock() },
+        ]),
+        policy_evaluation: faker.helpers.arrayElement([{}, undefined]),
+        provider: faker.helpers.arrayElement([
+          faker.helpers.arrayElement(Object.values(Provider)),
+          null,
+        ]),
+        provider_confidence: faker.helpers.arrayElement([
+          faker.helpers.arrayElement(Object.values(ProviderConfidence)),
+          null,
+        ]),
+        provider_rejection_reason: faker.helpers.arrayElement([
+          faker.helpers.arrayElement(Object.values(ProviderRejectionReason)),
+          null,
+        ]),
+        provider_rules_applied: faker.datatype.boolean(),
+        recommendation: faker.helpers.arrayElement([{}, undefined]),
+        score: {
+          age_days: faker.helpers.arrayElement([faker.number.int(), undefined]),
+          catch_all: faker.helpers.arrayElement([
+            {
+              confidence: faker.number.int({ min: 0, max: 100 }),
+              factors: Array.from(
                 { length: faker.number.int({ min: 1, max: 10 }) },
                 (_, i) => i + 1,
               ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
-              undefined,
-            ]),
-            confidence_level: faker.helpers.arrayElement([
-              faker.helpers.arrayElement(Object.values(ConfidenceLevel)),
-              undefined,
-            ]),
-            domain_suggestion: faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              undefined,
-            ]),
-            freshness: faker.helpers.arrayElement([
-              faker.helpers.arrayElement(Object.values(Freshness)),
-              undefined,
-            ]),
-            normalized_email: faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              undefined,
-            ]),
-            partial_confidence: faker.helpers.arrayElement([
-              {
-                classification: faker.helpers.arrayElement(
-                  Object.values(SmtpUncertaintyClass),
-                ),
-                confidence: faker.number.int({ min: 0, max: 100 }),
-                factors: Array.from(
-                  { length: faker.number.int({ min: 1, max: 10 }) },
-                  (_, i) => i + 1,
-                ).map(() =>
-                  faker.string.alpha({ length: { min: 10, max: 20 } }),
-                ),
-              },
-              undefined,
-            ]),
-            reason_codes: faker.helpers.arrayElements(
-              Object.values(ReasonCode),
-            ),
-            safe_to_send: faker.datatype.boolean(),
-            score: faker.number.int({ min: 0, max: 100 }),
-            signals: {
-              has_domain_suggestion: faker.datatype.boolean(),
-              has_mx_records: faker.datatype.boolean(),
-              is_disposable: faker.datatype.boolean(),
-              is_free_provider: faker.datatype.boolean(),
-              is_role_account: faker.datatype.boolean(),
-              is_spam_trap_domain: faker.datatype.boolean(),
-              reachable: faker.helpers.arrayElement(Object.values(Reachable)),
-              smtp_can_connect: faker.datatype.boolean(),
-              smtp_error: faker.datatype.boolean(),
-              smtp_has_full_inbox: faker.datatype.boolean(),
-              smtp_is_catch_all: faker.datatype.boolean(),
-              smtp_is_deliverable: faker.datatype.boolean(),
-              smtp_is_disabled: faker.datatype.boolean(),
-              valid_syntax: faker.datatype.boolean(),
+              severity: faker.helpers.arrayElement(
+                Object.values(CatchAllSeverity),
+              ),
             },
-            sub_reason: faker.helpers.arrayElement(Object.values(SubReason)),
-            verified_at: faker.helpers.arrayElement([
-              faker.date.past().toISOString().slice(0, 19) + "Z",
-              undefined,
-            ]),
-          },
-          smtp: faker.helpers.arrayElement([
-            { ...getV1GetFindEmailResponseSmtpDetailsMock() },
-            { ...getV1GetFindEmailResponseCoreErrorMock() },
+            undefined,
           ]),
-          syntax: {
-            address: faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
-            is_valid_syntax: faker.datatype.boolean(),
-            normalized_email: faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            suggestion: faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            username: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          catch_all_severity: faker.helpers.arrayElement([
+            faker.helpers.arrayElement(["low", "medium", "high"] as const),
+            undefined,
+          ]),
+          category: faker.helpers.arrayElement(Object.values(EmailCategory)),
+          confidence: faker.helpers.arrayElement([
+            faker.number.int({ min: 0, max: 100 }),
+            undefined,
+          ]),
+          confidence_factors: faker.helpers.arrayElement([
+            Array.from(
+              { length: faker.number.int({ min: 1, max: 10 }) },
+              (_, i) => i + 1,
+            ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            undefined,
+          ]),
+          confidence_level: faker.helpers.arrayElement([
+            faker.helpers.arrayElement(Object.values(ConfidenceLevel)),
+            undefined,
+          ]),
+          domain_suggestion: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          freshness: faker.helpers.arrayElement([
+            faker.helpers.arrayElement(Object.values(Freshness)),
+            undefined,
+          ]),
+          normalized_email: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            undefined,
+          ]),
+          partial_confidence: faker.helpers.arrayElement([
+            {
+              classification: faker.helpers.arrayElement(
+                Object.values(SmtpUncertaintyClass),
+              ),
+              confidence: faker.number.int({ min: 0, max: 100 }),
+              factors: Array.from(
+                { length: faker.number.int({ min: 1, max: 10 }) },
+                (_, i) => i + 1,
+              ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+            },
+            undefined,
+          ]),
+          reason_codes: faker.helpers.arrayElements(Object.values(ReasonCode)),
+          safe_to_send: faker.datatype.boolean(),
+          score: faker.number.int({ min: 0, max: 100 }),
+          signals: {
+            has_domain_suggestion: faker.datatype.boolean(),
+            has_mx_records: faker.datatype.boolean(),
+            is_disposable: faker.datatype.boolean(),
+            is_free_provider: faker.datatype.boolean(),
+            is_role_account: faker.datatype.boolean(),
+            is_spam_trap_domain: faker.datatype.boolean(),
+            reachable: faker.helpers.arrayElement(Object.values(Reachable)),
+            smtp_can_connect: faker.datatype.boolean(),
+            smtp_error: faker.datatype.boolean(),
+            smtp_has_full_inbox: faker.datatype.boolean(),
+            smtp_is_catch_all: faker.datatype.boolean(),
+            smtp_is_deliverable: faker.datatype.boolean(),
+            smtp_is_disabled: faker.datatype.boolean(),
+            valid_syntax: faker.datatype.boolean(),
           },
+          sub_reason: faker.helpers.arrayElement(Object.values(SubReason)),
+          verified_at: faker.helpers.arrayElement([
+            faker.date.past().toISOString().slice(0, 19) + "Z",
+            undefined,
+          ]),
         },
-        null,
-      ]),
-      undefined,
+        smtp: faker.helpers.arrayElement([
+          { ...getV1GetFindEmailResponseSmtpDetailsMock() },
+          { ...getV1GetFindEmailResponseCoreErrorMock() },
+        ]),
+        syntax: {
+          address: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          is_valid_syntax: faker.datatype.boolean(),
+          normalized_email: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          suggestion: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          username: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+      },
+      null,
     ]),
     score: faker.number.int(),
     sub_reason: faker.helpers.arrayElement(Object.values(SubReason)),
@@ -781,11 +710,8 @@ export const getV1ListListsResponseMock = (
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     original_filename: faker.string.alpha({ length: { min: 10, max: 20 } }),
     source_key: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     total_rows: faker.number.int(),
@@ -801,11 +727,8 @@ export const getV1CreateListResponseMock = (
   job_id: faker.number.int(),
   list_id: faker.number.int(),
   source_key: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   total_rows: faker.number.int(),
   ...overrideResponse,
@@ -821,24 +744,15 @@ export const getV1DeleteListResponseMock = (
 export const getV1GetListResponseMock = (
   overrideResponse: Partial<Extract<ListDetailResponse, object>> = {},
 ): ListDetailResponse => ({
-  deduplicated_count: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  deduplicated_count: faker.helpers.arrayElement([faker.number.int(), null]),
   email_column: faker.string.alpha({ length: { min: 10, max: 20 } }),
   id: faker.number.int(),
   job_id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  policy_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   source_key: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   summary: {
@@ -849,15 +763,12 @@ export const getV1GetListResponseMock = (
     total_valid: faker.number.int(),
   },
   total_rows: faker.number.int(),
-  unique_emails: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  unique_emails: faker.helpers.arrayElement([faker.number.int(), null]),
   ...overrideResponse,
 });
 
-export const getV1DownloadListResponseMock = (): ArrayBuffer =>
-  new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
+export const getV1DownloadListResponseMock = (): Blob =>
+  new Blob([new Uint8Array(faker.number.int({ min: 1, max: 64 }))]);
 
 export const getV1CheckReputationResponseMock = (
   overrideResponse: Partial<Extract<ReputationCheckResponse, object>> = {},
@@ -873,11 +784,8 @@ export const getV1CheckReputationResponseMock = (
   cached: faker.datatype.boolean(),
   dns_records: {
     dmarc_policy: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     has_dkim: faker.datatype.boolean(),
     has_dmarc: faker.datatype.boolean(),
@@ -892,22 +800,13 @@ export const getV1CheckReputationResponseMock = (
   domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
   domain_info: {
     created_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
-    domain_age_days: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    domain_age_days: faker.helpers.arrayElement([faker.number.int(), null]),
     registrar: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
   },
   risk_level: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -921,23 +820,14 @@ export const getV1UpdateReverificationResponseMock = (
   batch_size: faker.helpers.arrayElement([faker.number.int(), undefined]),
   emails_requeued: faker.helpers.arrayElement([faker.number.int(), undefined]),
   enabled: faker.datatype.boolean(),
-  last_job_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_job_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   staleness_days: faker.helpers.arrayElement([faker.number.int(), undefined]),
   ...overrideResponse,
@@ -949,23 +839,14 @@ export const getV1ReverificationStatusResponseMock = (
   batch_size: faker.helpers.arrayElement([faker.number.int(), undefined]),
   emails_requeued: faker.helpers.arrayElement([faker.number.int(), undefined]),
   enabled: faker.datatype.boolean(),
-  last_job_id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
+  last_job_id: faker.helpers.arrayElement([faker.number.int(), null]),
   last_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   next_run_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   staleness_days: faker.helpers.arrayElement([faker.number.int(), undefined]),
   ...overrideResponse,
@@ -1018,71 +899,44 @@ export const getV1ListSuppressionsResponseMock = (
     canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     created_by: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     expires_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     id: faker.number.int(),
     last_seen_at: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.date.past().toISOString().slice(0, 19) + "Z",
-        null,
-      ]),
-      undefined,
+      faker.date.past().toISOString().slice(0, 19) + "Z",
+      null,
     ]),
     metadata: {},
     notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     reason: faker.helpers.arrayElement(Object.values(SuppressionReason)),
     reason_code: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     reason_detail: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source_ref: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source_type: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -1111,96 +965,57 @@ export const getV1CheckSuppressionResponseMock = (
   overrideResponse: Partial<Extract<SuppressionCheckResponse, object>> = {},
 ): SuppressionCheckResponse => ({
   canonical_email: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   created_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
   created_by: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   expires_at: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 19) + "Z",
-      null,
-    ]),
-    undefined,
+    faker.date.past().toISOString().slice(0, 19) + "Z",
+    null,
   ]),
-  id: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([faker.number.int(), null]),
-    undefined,
-  ]),
-  metadata: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([null]),
-    undefined,
-  ]),
+  id: faker.helpers.arrayElement([faker.number.int(), null]),
+  metadata: faker.helpers.arrayElement([null]),
   reason: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.helpers.arrayElement(Object.values(SuppressionReason)),
-      null,
-    ]),
-    undefined,
+    faker.helpers.arrayElement(Object.values(SuppressionReason)),
+    null,
   ]),
   reason_code: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   reason_detail: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   source: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   source_ref: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   source_type: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   status: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
   ]),
   suppressed: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
-export const getV1ExportSuppressionsResponseMock = (): ArrayBuffer =>
-  new ArrayBuffer(faker.number.int({ min: 1, max: 64 }));
+export const getV1ExportSuppressionsResponseMock = (): Blob =>
+  new Blob([new Uint8Array(faker.number.int({ min: 1, max: 64 }))]);
 
 export const getV1ImportSuppressionsResponseMock = (
   overrideResponse: Partial<Extract<AddSuppressionsResponse, object>> = {},
@@ -1234,63 +1049,39 @@ export const getV1ListSuppressionEventsResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     actor_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     actor_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
-    entry_id: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    entry_id: faker.helpers.arrayElement([faker.number.int(), null]),
     event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     from_status: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     id: faker.number.int(),
     metadata: {},
     reason_code: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     reason_detail: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source_ref: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     source_type: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     to_status: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        null,
-      ]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
   })),
   total: faker.number.int(),

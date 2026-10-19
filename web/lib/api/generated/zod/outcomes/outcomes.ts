@@ -58,7 +58,7 @@ export const V1PostCampaignOutcomesBody = zod.strictObject({
             "unsubscribe",
           ])
           .describe(
-            "SQL enum mirror. Must stay in sync with `outcome_type` in\n`migrations\/20260510000001_campaign_outcomes.up.sql`.",
+            "SQL enum mirror. Must stay in sync with `outcome_type` in\n`migrations/20260510000001_campaign_outcomes.up.sql`.",
           ),
       })
       .describe("One outcome event ingested via API or CSV."),
@@ -92,7 +92,7 @@ export const V1PostCampaignOutcomesDefaultResponse = zod.object({
 });
 
 export const V1UploadCampaignOutcomesBody = zod.strictObject({
-  file: zod.instanceof(File),
+  file: zod.instanceof(Blob),
 });
 
 export const v1UploadCampaignOutcomes202ResponseAcceptedMin = 0;
