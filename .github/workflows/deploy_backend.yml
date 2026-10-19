@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - develop
-<<<<<<< HEAD
-=======
       - master
->>>>>>> 9cd18ef7e216cb3eac58463b2900eeb54c8f55b9
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -17,18 +14,11 @@ on:
         required: true
         type: choice
         options:
-<<<<<<< HEAD
-          - staging
-          - production
-          - all
-        default: staging
-=======
           - build-only
           - staging
           - production
           - all
         default: build-only
->>>>>>> 9cd18ef7e216cb3eac58463b2900eeb54c8f55b9
 
 # Publish the web, API, and worker as one image.
 permissions:
@@ -93,11 +83,7 @@ jobs:
         run: echo "value=sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
   deploy-production:
-<<<<<<< HEAD
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all')) }}
-=======
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all')) }}
->>>>>>> 9cd18ef7e216cb3eac58463b2900eeb54c8f55b9
     name: "Production – ${{ matrix.cluster }}"
     needs: docker
     strategy:
@@ -114,10 +100,7 @@ jobs:
       service_name: check-if-email-exists
       service_path: .
       chart_repository: ./helm/check-if-email-exists
-<<<<<<< HEAD
-=======
       values_file: ./helm/check-if-email-exists/values.production.yaml
->>>>>>> 9cd18ef7e216cb3eac58463b2900eeb54c8f55b9
       namespace: paperless-production
       create_namespace: true
       image_repository: ghcr.io/oppulence-engineering/check-if-email-exists
@@ -145,11 +128,7 @@ jobs:
     secrets: inherit
 
   deploy-staging:
-<<<<<<< HEAD
-    if: ${{ github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all')) }}
-=======
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all')) }}
->>>>>>> 9cd18ef7e216cb3eac58463b2900eeb54c8f55b9
     name: "Staging – ${{ matrix.cluster }}"
     needs: docker
     strategy:
