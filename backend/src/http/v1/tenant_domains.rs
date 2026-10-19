@@ -36,6 +36,7 @@ struct CreateTenantDomainRequest {
 struct UpdateTenantDomainRequest {
 	pub domain: Option<String>,
 	pub is_active: Option<bool>,
+	/// Only read to refuse it: verification is not the tenant's to declare.
 	pub is_verified: Option<bool>,
 	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub notes: Option<Option<String>>,
@@ -212,11 +213,18 @@ async fn update_domain_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 	let target_domain = normalize_domain(domain)?;
 
-	if body.domain.is_none()
-		&& body.is_active.is_none()
-		&& body.is_verified.is_none()
-		&& body.notes.is_none()
-	{
+	// A tenant that could set the flag would mark any domain as verified
+	// for itself. Nothing in this API verifies a domain, so only an
+	// operator (in the database) can.
+	if body.is_verified.is_some() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"is_verified is set by domain verification and cannot be changed through this endpoint",
+		)
+		.into());
+	}
+
+	if body.domain.is_none() && body.is_active.is_none() && body.notes.is_none() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
 			"No domain fields provided",
@@ -232,19 +240,13 @@ async fn update_domain_handler(
 		let normalized = normalize_domain(value)?;
 		sets.push(format!("domain = ${}", bind_idx));
 		// Verification belongs to the old name; a renamed domain starts
-		// unverified unless this request sets the flag itself.
-		if body.is_verified.is_none() {
-			sets.push("is_verified = false".to_string());
-		}
+		// unverified.
+		sets.push("is_verified = false".to_string());
 		next_domain = Some(normalized);
 		bind_idx += 1;
 	}
 	if body.is_active.is_some() {
 		sets.push(format!("is_active = ${}", bind_idx));
-		bind_idx += 1;
-	}
-	if body.is_verified.is_some() {
-		sets.push(format!("is_verified = ${}", bind_idx));
 		bind_idx += 1;
 	}
 	if body.notes.is_some() {
@@ -263,9 +265,6 @@ async fn update_domain_handler(
 	}
 	if let Some(is_active) = body.is_active {
 		query = query.bind(is_active);
-	}
-	if let Some(is_verified) = body.is_verified {
-		query = query.bind(is_verified);
 	}
 	if let Some(notes) = body.notes {
 		query = query.bind(notes);
@@ -381,7 +380,7 @@ pub fn v1_get_tenant_domain(
 
 /// PATCH /v1/me/domains/{domain}
 ///
-/// Update the domain value, status, verification state, or metadata notes.
+/// Update the domain value, active status, or notes. Setting `is_verified` is refused.
 #[utoipa::path(
 	patch,
 	path = "/v1/me/domains/{domain}",
