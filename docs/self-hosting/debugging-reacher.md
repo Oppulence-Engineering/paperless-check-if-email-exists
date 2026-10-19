@@ -123,7 +123,7 @@ Here are details about some of the most well-known providers:
 * :warning: Digital Ocean: Your account needs to be 60d old, then you can [apply](https://www.digitalocean.com/community/questions/how-i-can-open-port-25-please?answer=67100) to open port 25 (Mar 2020).
 * ❌ GCP: Port 25 closed, [source](https://cloud.google.com/compute/docs/tutorials/sending-mail).
 * ❌ Heroku: Starting from July 2021, Heroku blocks port 25 intermittently according to [this document](https://help.heroku.com/IR3S6I5X/problem-in-sending-e-mails-through-smtp).
-* :warning: Hetzner: Port 25 open according to [unofficial source](https://www.reddit.com/r/hetzner/comments/lb2o13/does_hetzner_block_port_25/) (Feb 2021), but seems now that you need to request manually.
+* :warning: Hetzner Cloud: Ports 25 and 465 are blocked by default on all cloud servers. Once the account is a month old and its first invoice is paid, you can file a limit request to unblock them for a valid use case; Hetzner decides case by case. Port 587 stays open, but it is a submission port and cannot be used to verify mailboxes, [source](https://docs.hetzner.com/cloud/servers/faq/) (Oct 2026).
 * :warning: Linode: Port 25 closed for new accounts, but can be opened if reverse DNS is set up correctly, [source](https://www.linode.com/docs/guides/running-a-mail-server/#sending-email-on-linode=) (Apr 2022).
 * :white\_check\_mark: OVH: Port 25 open on new instances, but outbound port 25 traffic is monitored to prevent spam (May 2022).
 * :warning: Vultr: Create support ticket to open port 25, [source](https://www.vultr.com/docs/what-ports-are-blocked/), though [recent reports](https://github.com/LukeSmithxyz/emailwiz/issues/172) (May 2022) show that they won’t do it anymore.

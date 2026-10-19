@@ -2,7 +2,7 @@
 //!
 //! Every verification depends on opening port 25 to the recipient's mail
 //! server. When the host blocks that port (most cloud providers do by default,
-//! DigitalOcean included) or the EHLO identity is rejected, each check comes
+//! Hetzner Cloud included) or the EHLO identity is rejected, each check comes
 //! back "unknown" and nothing else points at the cause. These checks put it in
 //! the logs at boot.
 
@@ -75,8 +75,9 @@ fn log_blocked_egress(reason: &str) {
 		probe = PROBE_MX,
 		reason = reason,
 		"Outbound SMTP port 25 is unreachable from this host, so every verification will \
-		 come back unknown. Route SMTP through a SOCKS5 proxy (RCH__PROXY__HOST and \
-		 RCH__PROXY__PORT) or run the worker on a host that allows outbound port 25."
+		 come back unknown. Ask the hosting provider to lift its port 25 block (on Hetzner \
+		 Cloud, a limit request), route SMTP through a SOCKS5 proxy (RCH__PROXY__HOST and \
+		 RCH__PROXY__PORT), or run the worker on a host that allows outbound port 25."
 	);
 }
 
