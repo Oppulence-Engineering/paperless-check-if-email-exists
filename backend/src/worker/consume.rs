@@ -216,12 +216,18 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 		// Check if the job has been cancelled before processing
 		if let CheckEmailJobId::Bulk(job_id) = &payload.job_id {
 			if let Some(pool) = config_clone.get_pg_pool() {
-				let job_status = sqlx::query_scalar!(
-					r#"SELECT status as "status: String" FROM v1_bulk_job WHERE id = $1"#,
-					*job_id
+				// The cast is required: query_scalar! decodes with a type check,
+				// and the job_state enum is not a String. That decode error used
+				// to be dropped, so cancelled jobs kept verifying their tasks.
+				let job_status = sqlx::query_scalar::<_, String>(
+					"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
 				)
+				.bind(*job_id)
 				.fetch_optional(&pool)
 				.await;
+				if let Err(error) = &job_status {
+					error!(target: LOG_TARGET, job_id = *job_id, error = ?error, "Could not read job status before processing a task");
+				}
 
 				if let Ok(Some(status)) = job_status {
 					if status == "cancelling" || status == "cancelled" {
