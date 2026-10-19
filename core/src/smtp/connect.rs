@@ -57,10 +57,16 @@ async fn open_stream(
 	let clean_host = host.trim_end_matches('.').to_string();
 	let stream: Box<dyn AsyncReadWrite> = match proxy {
 		Some(proxy) => {
+			// Bounded like the direct connect below: without a timeout an
+			// unreachable proxy held the check until the overall SMTP timeout
+			// and was then reported as a slow mail server.
 			let mut config = Config::default();
-			if let Some(timeout_ms) = proxy.timeout_ms {
-				config.set_connect_timeout(std::time::Duration::from_millis(timeout_ms));
-			}
+			config.set_connect_timeout(
+				proxy
+					.timeout_ms
+					.map(std::time::Duration::from_millis)
+					.unwrap_or(SMTP_CONNECT_TIMEOUT),
+			);
 
 			let socks_stream = if let (Some(username), Some(password)) =
 				(&proxy.username, &proxy.password)
