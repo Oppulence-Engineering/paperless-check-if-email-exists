@@ -25,7 +25,7 @@ export async function startMswBrowser(persona: DevPersona = activePersona): Prom
 	starting = (async () => {
 		worker = createWorker(persona);
 		await worker.start({
-			onUnhandledFrame: "bypass",
+			onUnhandledRequest: "bypass",
 			quiet: false,
 			serviceWorker: { url: "/mockServiceWorker.js" },
 		});
