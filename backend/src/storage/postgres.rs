@@ -152,6 +152,9 @@ impl PostgresStorage {
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError> {
+		// The row was created with its tenant; a task message without tenant
+		// metadata (e.g. an admin retry of an old payload) must not clear it,
+		// or the result disappears from the tenant's views.
 		let task_result_id = if let Some(db_id) = task_db_id {
 			let updated_id = sqlx::query_scalar(
 				r#"
@@ -160,7 +163,7 @@ impl PostgresStorage {
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    result = $3,
 				    error = NULL,
-				    tenant_id = $4,
+				    tenant_id = COALESCE($4, tenant_id),
 				    score = $5,
 				    score_category = $6,
 				    sub_reason = $7,
@@ -326,6 +329,7 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		let canonical_email = canonicalize_email(&task.input.to_email);
 
+		// tenant_id is kept when the task carries none; see store_success.
 		if let Some(db_id) = task_db_id {
 			let upd = sqlx::query(
 				r#"
@@ -333,7 +337,7 @@ impl PostgresStorage {
 				SET payload = $1,
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    error = $3,
-				    tenant_id = $4,
+				    tenant_id = COALESCE($4, tenant_id),
 				    canonical_email = COALESCE($5, canonical_email),
 				    result = NULL,
 				    score = NULL,
