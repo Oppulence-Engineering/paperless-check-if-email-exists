@@ -1123,3 +1123,108 @@ async fn test_unique_scheduled_index_prevents_duplicate_inserts() -> Result<()> 
 	);
 	Ok(())
 }
+
+// ----------------------------------------------------------------------------
+// Worker handling of a delayed recheck that fails
+// ----------------------------------------------------------------------------
+
+#[tokio::test]
+#[serial]
+async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
+	use futures::StreamExt;
+	use lapin::options::{BasicConsumeOptions, BasicPublishOptions, QueuePurgeOptions};
+	use lapin::types::FieldTable;
+	use lapin::BasicProperties;
+	use reacher_backend::worker::consume::CHECK_EMAIL_QUEUE;
+	use reacher_backend::worker::do_work::{do_check_email_work, TaskWebhook, Webhook};
+
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "recheck-fails", Some(1000), 0).await;
+	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
+	// What the first pass stored before scheduling the recheck.
+	let earlier_result = serde_json::json!({
+		"input": "greylisted@example.com",
+		"is_reachable": "unknown"
+	});
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"completed",
+		Some(tenant_id),
+		Some(earlier_result.clone()),
+		None,
+	)
+	.await;
+
+	let config = worker_config(true).await;
+	let channel = config.must_worker_config()?.channel;
+	channel
+		.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
+		.await?;
+
+	// The recheck fails deterministically and without retries: its webhook
+	// target is no longer acceptable (plain HTTP), so it is dead-lettered.
+	let mut task = make_task(job_id, "greylisted@example.com", Some(tenant_id), task_id);
+	if let Some(metadata) = task.metadata.as_mut() {
+		metadata.created_by = Some("delayed_recheck".to_string());
+	}
+	task.webhook = Some(TaskWebhook {
+		on_each_email: Some(Webhook {
+			url: "http://example.com/hook".to_string(),
+			headers: Default::default(),
+			extra: None,
+		}),
+	});
+	channel
+		.basic_publish(
+			"".into(),
+			CHECK_EMAIL_QUEUE.into(),
+			BasicPublishOptions::default(),
+			&serde_json::to_vec(&task)?,
+			BasicProperties::default().with_priority(0),
+		)
+		.await?
+		.await?;
+	let mut deliveries = channel
+		.basic_consume(
+			CHECK_EMAIL_QUEUE.into(),
+			"failed-recheck-consumer".into(),
+			BasicConsumeOptions::default(),
+			FieldTable::default(),
+		)
+		.await?;
+	let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), deliveries.next())
+		.await?
+		.expect("delivery stream item")?;
+
+	do_check_email_work(&task, delivery, Arc::clone(&channel), Arc::clone(&config)).await?;
+	// Stop consuming so later tests' messages aren't delivered to this consumer.
+	channel
+		.basic_cancel(
+			"failed-recheck-consumer".into(),
+			lapin::options::BasicCancelOptions::default(),
+		)
+		.await?;
+
+	let row = sqlx::query(
+		"SELECT task_state::TEXT AS state, result, error FROM v1_task_result WHERE id = $1",
+	)
+	.bind(task_id)
+	.fetch_one(db.pool())
+	.await?;
+	assert_eq!(row.get::<String, _>("state"), "completed");
+	assert_eq!(
+		row.get::<Option<serde_json::Value>, _>("result"),
+		Some(earlier_result)
+	);
+	assert_eq!(row.get::<Option<String>, _>("error"), None);
+	assert_eq!(
+		count_events(db.pool(), job_id, "task.delayed_recheck_failed").await,
+		1
+	);
+	assert_eq!(
+		count_events(db.pool(), job_id, "task.dead_lettered").await,
+		0
+	);
+	Ok(())
+}
