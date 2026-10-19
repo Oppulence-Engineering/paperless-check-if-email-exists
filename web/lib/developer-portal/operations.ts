@@ -260,7 +260,8 @@ const FAMILY_NOTES: Record<Family, string> = {
 		"Manage API keys, sender domains, the webhook, usage, settings, and score policies.",
 	"Provider callback":
 		"Email providers call these endpoints with delivery events. Each call uses the delivery token of its endpoint, not an API key.",
-	Onboarding: "Check an address during sign-up, before a workspace exists.",
+	Onboarding:
+		"Create a tenant and its first API key with one check. It takes the operator secret, so the hosted app blocks it.",
 	"Legacy v0":
 		"The first version of the API. It uses the x-reacher-secret header. New integrations use v1.",
 	System: "Health and readiness checks. They need no authentication.",
@@ -334,15 +335,23 @@ function reachableComponents(paths: unknown): Record<string, Record<string, unkn
 }
 
 /**
+ * Whether the public reference documents an operation. Platform admin routes,
+ * and any other route that takes the private operator secret, stay out.
+ */
+function inPublicReference(operation: PortalOperation): boolean {
+	if (operation.audience === "admin" || operation.path === "/version") return false;
+	const source = spec.paths[operation.path][operation.method.toLowerCase() as Method];
+	return !(source?.security ?? []).some((requirement) => "AdminSecret" in requirement);
+}
+
+/**
  * The OpenAPI document that Scalar shows. "workspace" has the tenant
  * operations for the signed-in explorer, with the session server first.
- * "public" has every operation except the platform admin ones.
+ * "public" has every operation that needs no operator secret.
  */
 export function referenceDocument(surface: "workspace" | "public"): Record<string, unknown> {
 	const included = operations.filter((operation) =>
-		surface === "workspace"
-			? operation.audience === "tenant"
-			: operation.audience !== "admin" && operation.path !== "/version",
+		surface === "workspace" ? operation.audience === "tenant" : inPublicReference(operation),
 	);
 	const paths: Record<string, Record<string, unknown>> = {};
 	const schemeNames = new Set(["Authorization"]);
@@ -414,11 +423,12 @@ export function referenceDocument(surface: "workspace" | "public"): Record<strin
 
 /**
  * The public reference link for an operation. Scalar names each operation
- * `#tag/<family>/<operationId>`. Admin and unknown operations go to the index.
+ * `#tag/<family>/<operationId>`. Operator-only and unknown operations go to
+ * the index.
  */
 export function referenceHref(operationId: string): string {
 	const operation = operations.find((item) => item.id === operationId);
-	if (!operation || operation.audience === "admin" || operation.path === "/version") {
+	if (!operation || !inPublicReference(operation)) {
 		return "/developers/reference";
 	}
 	return `/developers/reference#tag/${familySlug(operation.family)}/${operation.id}`;
