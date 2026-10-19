@@ -63,7 +63,9 @@ async fn main() -> Result<(), anyhow::Error> {
 	}
 
 	let config = Arc::new(config);
-	if config.worker.enable {
+	{
+		// Both the HTTP server (single checks) and the worker open SMTP
+		// connections, so every process checks its own route.
 		let config = Arc::clone(&config);
 		tokio::spawn(async move { log_smtp_egress_checks(&config).await });
 	}

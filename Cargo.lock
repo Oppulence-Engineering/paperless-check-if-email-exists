@@ -3743,6 +3743,7 @@ dependencies = [
  "csv",
  "dashmap",
  "dotenv",
+ "fast-socks5",
  "futures",
  "hex",
  "hickory-resolver",

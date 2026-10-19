@@ -8,14 +8,14 @@ use rand::rngs::SmallRng;
 use rand::{distr::Alphanumeric, RngExt};
 use std::iter;
 use std::str::FromStr;
-use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufStream};
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncRead, AsyncWrite, BufStream};
 use tokio::net::TcpStream;
 
 use super::parser::{self, RcptRejection};
 use super::verif_method::VerifMethodSmtp;
 use super::{SmtpDetails, SmtpError};
 use crate::rules::{has_rule, Rule};
-use crate::{EmailAddress, LOG_TARGET};
+use crate::{CheckEmailInputProxy, EmailAddress, LOG_TARGET};
 
 /// How long to wait for the TCP handshake with an MX host. A reachable mail
 /// server answers in well under a second.
@@ -45,52 +45,43 @@ macro_rules! try_smtp (
     })
 );
 
-/// Connect to an SMTP host and return the configured client transport.
-async fn connect_to_smtp_host(
-	to_email: &EmailAddress,
-	mx_host: &str,
-	verif_method: &VerifMethodSmtp,
-) -> Result<SmtpTransport<BufStream<Box<dyn AsyncReadWrite>>>, SmtpError> {
+/// Opens a byte stream to `host:port`, through the SOCKS5 proxy when one is
+/// given.
+async fn open_stream(
+	host: &str,
+	port: u16,
+	proxy: Option<&CheckEmailInputProxy>,
+) -> Result<BufStream<Box<dyn AsyncReadWrite>>, SmtpError> {
 	// hostname verification fails if it ends with '.', for example, using
 	// SOCKS5 proxies we can `io: incomplete` error.
-	let clean_host = mx_host.trim_end_matches('.').to_string();
-	let smtp_client = SmtpClient::new()
-		.hello_name(ClientId::Domain(verif_method.config.hello_name.to_string()))
-		// Sometimes, using socks5 proxy, we get an `io: incomplete` error
-		// when using pipelining and sending two consecutive RCPT TO commands.
-		.pipelining(false);
-
-	let stream: BufStream<Box<dyn AsyncReadWrite>> = match &verif_method.proxy {
+	let clean_host = host.trim_end_matches('.').to_string();
+	let stream: Box<dyn AsyncReadWrite> = match proxy {
 		Some(proxy) => {
 			let mut config = Config::default();
 			if let Some(timeout_ms) = proxy.timeout_ms {
 				config.set_connect_timeout(std::time::Duration::from_millis(timeout_ms));
 			}
 
-			let socks_stream =
-				if let (Some(username), Some(password)) = (&proxy.username, &proxy.password) {
-					Socks5Stream::connect_with_password(
-						(proxy.host.as_ref(), proxy.port),
-						clean_host.clone(),
-						verif_method.config.smtp_port,
-						username.clone(),
-						password.clone(),
-						config,
-					)
+			let socks_stream = if let (Some(username), Some(password)) =
+				(&proxy.username, &proxy.password)
+			{
+				Socks5Stream::connect_with_password(
+					(proxy.host.as_ref(), proxy.port),
+					clean_host,
+					port,
+					username.clone(),
+					password.clone(),
+					config,
+				)
+				.await?
+			} else {
+				Socks5Stream::connect((proxy.host.as_ref(), proxy.port), clean_host, port, config)
 					.await?
-				} else {
-					Socks5Stream::connect(
-						(proxy.host.as_ref(), proxy.port),
-						clean_host.clone(),
-						verif_method.config.smtp_port,
-						config,
-					)
-					.await?
-				};
-			BufStream::new(Box::new(socks_stream) as Box<dyn AsyncReadWrite>)
+			};
+			Box::new(socks_stream)
 		}
 		None => {
-			let address = format!("{}:{}", clean_host, verif_method.config.smtp_port);
+			let address = format!("{}:{}", clean_host, port);
 			// A firewall that drops outbound SYNs (cloud hosts often block
 			// port 25) otherwise holds this worker slot for the kernel's ~2
 			// minute connect timeout. Failing here as an I/O error also tells
@@ -104,9 +95,51 @@ async fn connect_to_smtp_host(
 							format!("connecting to {address} timed out"),
 						)
 					})??;
-			BufStream::new(Box::new(tcp_stream) as Box<dyn AsyncReadWrite>)
+			Box::new(tcp_stream)
 		}
 	};
+	Ok(BufStream::new(stream))
+}
+
+/// Connects to `host:port` the way a verification does, directly or through
+/// `proxy`, and returns the server's first greeting line. Used to diagnose
+/// the SMTP path without verifying any address.
+pub async fn probe_smtp_greeting(
+	host: &str,
+	port: u16,
+	proxy: Option<&CheckEmailInputProxy>,
+	timeout: std::time::Duration,
+) -> Result<String, SmtpError> {
+	let probe = async {
+		let mut stream = open_stream(host, port, proxy).await?;
+		let mut greeting = String::new();
+		stream.read_line(&mut greeting).await?;
+		Ok(greeting.trim_end().to_string())
+	};
+	tokio::time::timeout(timeout, probe)
+		.await
+		.map_err(|_| SmtpError::Timeout(timeout))?
+}
+
+/// Connect to an SMTP host and return the configured client transport.
+async fn connect_to_smtp_host(
+	to_email: &EmailAddress,
+	mx_host: &str,
+	verif_method: &VerifMethodSmtp,
+) -> Result<SmtpTransport<BufStream<Box<dyn AsyncReadWrite>>>, SmtpError> {
+	let clean_host = mx_host.trim_end_matches('.').to_string();
+	let smtp_client = SmtpClient::new()
+		.hello_name(ClientId::Domain(verif_method.config.hello_name.to_string()))
+		// Sometimes, using socks5 proxy, we get an `io: incomplete` error
+		// when using pipelining and sending two consecutive RCPT TO commands.
+		.pipelining(false);
+
+	let stream = open_stream(
+		mx_host,
+		verif_method.config.smtp_port,
+		verif_method.proxy.as_ref(),
+	)
+	.await?;
 
 	let mut smtp_transport = SmtpTransport::new(smtp_client, stream).await?;
 
@@ -383,5 +416,137 @@ pub async fn check_smtp_with_retry(
 			}
 		}
 		_ => result,
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use fast_socks5::server::{
+		run_tcp_proxy, DnsResolveHelper as _, Socks5ServerProtocol, SocksServerError,
+	};
+	use fast_socks5::{ReplyError, SocksError};
+	use std::time::Duration;
+	use tokio::io::AsyncWriteExt;
+	use tokio::net::TcpListener;
+
+	const TIMEOUT: Duration = Duration::from_secs(5);
+
+	async fn listener() -> (TcpListener, u16) {
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let port = listener.local_addr().unwrap().port();
+		(listener, port)
+	}
+
+	/// A mail server that greets every connection.
+	async fn greeting_server() -> u16 {
+		let (listener, port) = listener().await;
+		tokio::spawn(async move {
+			while let Ok((mut socket, _)) = listener.accept().await {
+				let _ = socket.write_all(b"220 mx.test ESMTP\r\n").await;
+			}
+		});
+		port
+	}
+
+	/// A port that refuses connections, like a blocked port 25.
+	async fn closed_port() -> u16 {
+		listener().await.1
+	}
+
+	async fn serve_socks5(socket: TcpStream) -> std::result::Result<(), SocksServerError> {
+		let (proto, _) = Socks5ServerProtocol::accept_password_auth(socket, |user, pass| {
+			user == "u" && pass == "p"
+		})
+		.await?;
+		let (proto, _, target) = proto.read_command().await?.resolve_dns().await?;
+		run_tcp_proxy(proto, &target, TIMEOUT, false).await?;
+		Ok(())
+	}
+
+	/// A SOCKS5 proxy that only accepts user "u" with password "p".
+	async fn socks5_proxy(password: &str) -> CheckEmailInputProxy {
+		let (listener, port) = listener().await;
+		tokio::spawn(async move {
+			while let Ok((socket, _)) = listener.accept().await {
+				tokio::spawn(serve_socks5(socket));
+			}
+		});
+		CheckEmailInputProxy {
+			host: "127.0.0.1".into(),
+			port,
+			username: Some("u".into()),
+			password: Some(password.into()),
+			timeout_ms: None,
+		}
+	}
+
+	#[tokio::test]
+	async fn probe_reads_the_greeting_directly_and_through_a_proxy() {
+		let mx_port = greeting_server().await;
+		let proxy = socks5_proxy("p").await;
+
+		for proxy in [None, Some(&proxy)] {
+			let greeting = probe_smtp_greeting("127.0.0.1.", mx_port, proxy, TIMEOUT).await;
+			assert_eq!(
+				greeting.map_err(|e| e.to_string()),
+				Ok("220 mx.test ESMTP".to_string()),
+				"proxy: {:?}",
+				proxy.map(|p| p.port)
+			);
+		}
+	}
+
+	#[tokio::test]
+	async fn probe_fails_with_the_reason_the_path_is_broken() {
+		let mx_port = greeting_server().await;
+		let blocked_port = closed_port().await;
+		let good_proxy = socks5_proxy("p").await;
+		let bad_password = socks5_proxy("wrong").await;
+		let unreachable_proxy = CheckEmailInputProxy {
+			port: closed_port().await,
+			..good_proxy.clone()
+		};
+
+		// Each cause surfaces as a distinct error, so operators can be told
+		// which one to fix.
+		let cases: [(_, _, _, fn(&SocksError) -> bool); 3] = [
+			(&bad_password, mx_port, "rejected credentials", |e| {
+				matches!(e, SocksError::AuthenticationRejected(_))
+			}),
+			(
+				&good_proxy,
+				blocked_port,
+				"proxy cannot reach the MX",
+				|e| matches!(e, SocksError::ReplyError(ReplyError::ConnectionRefused)),
+			),
+			(&unreachable_proxy, mx_port, "proxy unreachable", |e| {
+				matches!(e, SocksError::ConnectError(_))
+			}),
+		];
+		for (proxy, port, case, expected) in cases {
+			let result = probe_smtp_greeting("127.0.0.1", port, Some(proxy), TIMEOUT).await;
+			assert!(
+				matches!(&result, Err(SmtpError::Socks5(e)) if expected(e)),
+				"{}: {:?}",
+				case,
+				result
+			);
+		}
+
+		// A server that accepts but never greets.
+		let (silent, silent_port) = listener().await;
+		let _hold = tokio::spawn(async move {
+			let accepted = silent.accept().await;
+			tokio::time::sleep(TIMEOUT).await;
+			drop(accepted);
+		});
+		let short = Duration::from_millis(200);
+		let result = probe_smtp_greeting("127.0.0.1", silent_port, None, short).await;
+		assert!(
+			matches!(result, Err(SmtpError::Timeout(d)) if d == short),
+			"{:?}",
+			result
+		);
 	}
 }

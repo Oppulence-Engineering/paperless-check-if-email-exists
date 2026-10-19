@@ -11,6 +11,7 @@ mod yahoo;
 use crate::util::input_output::CheckEmailInput;
 use crate::EmailAddress;
 use connect::check_smtp_with_retry;
+pub use connect::probe_smtp_greeting;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
