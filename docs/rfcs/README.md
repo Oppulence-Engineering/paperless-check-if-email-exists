@@ -51,3 +51,9 @@ Recommended build order:
 5. [0013 Discover](0013-discover-company-and-people-search.md): the weakest fit with our buyer and the highest cost.
 
 Each data RFC has a Definition Of Done with end-to-end tests, live staging targets, and a Hunter benchmark. The RFC 0015 Legal Review is a release gate for all of them.
+
+## Deliverability RFCs
+
+| RFC | Title | Status | Summary |
+|---|---|---|---|
+| [0016](0016-deliverability-intelligence-roadmap.md) | Deliverability Intelligence Roadmap | Draft | Ten roadmap features, one paragraph each: health monitor, bounce taxonomy, suppression scopes, signup protection, provider reports, bot engagement, webhooks, MCP, newsletter integrations, and Postmaster data. |
