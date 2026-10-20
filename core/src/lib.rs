@@ -110,6 +110,15 @@ pub fn initialize_crypto_provider() {
 /// ref: https://github.com/reacherhq/check-if-email-exists/issues/935
 fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>) -> Reachable {
 	if let Ok(smtp) = smtp {
+		// A rejected mailbox is invalid whatever else is true of it. A full
+		// inbox is reported as not deliverable, but the mailbox exists.
+		let mailbox_rejected = !smtp.can_connect_smtp
+			|| smtp.is_disabled
+			|| (!smtp.is_deliverable && !smtp.has_full_inbox);
+		if mailbox_rejected {
+			return Reachable::Invalid;
+		}
+
 		if misc.is_disposable
 			|| misc.is_role_account
 			|| misc.is_spam_trap_domain
@@ -117,10 +126,6 @@ fn calculate_reachable(misc: &MiscDetails, smtp: &Result<SmtpDetails, SmtpError>
 			|| smtp.has_full_inbox
 		{
 			return Reachable::Risky;
-		}
-
-		if !smtp.is_deliverable || !smtp.can_connect_smtp || smtp.is_disabled {
-			return Reachable::Invalid;
 		}
 
 		Reachable::Safe
@@ -254,12 +259,8 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		}
 	};
 
-	// Return if we didn't find any MX records, or only a null MX.
-	if my_mx
-		.lookup
-		.as_ref()
-		.map_or(true, |lookup| lookup.iter().next().is_none())
-	{
+	// Return if we didn't find any MX records.
+	if my_mx.lookup.is_err() {
 		get_similar_mail_provider(&mut my_syntax);
 		let (provider_value, provider_confidence) =
 			detected_provider_fields(detected_provider.as_ref());
@@ -395,6 +396,39 @@ mod tests {
 	use super::*;
 	use crate::provider::{Provider, ProviderRejectionReason};
 	use crate::CheckEmailInputBuilder;
+
+	#[test]
+	fn rejected_mailbox_is_invalid_even_when_otherwise_risky() {
+		let rejected = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			is_deliverable: false,
+			..Default::default()
+		});
+		for misc in [
+			MiscDetails {
+				is_role_account: true,
+				..Default::default()
+			},
+			MiscDetails {
+				is_disposable: true,
+				..Default::default()
+			},
+		] {
+			assert_eq!(calculate_reachable(&misc, &rejected), Reachable::Invalid);
+		}
+
+		// A full inbox is not deliverable right now, but the mailbox exists.
+		let full_inbox = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: true,
+			is_deliverable: false,
+			..Default::default()
+		});
+		assert_eq!(
+			calculate_reachable(&MiscDetails::default(), &full_inbox),
+			Reachable::Risky
+		);
+	}
 
 	#[tokio::test]
 	async fn provider_invalid_email_short_circuits_before_mx_and_smtp() {

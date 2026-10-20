@@ -25,6 +25,7 @@ const FACTOR_TOPICS: Record<string, string> = {
 	outcome_feedback: "Delivery feedback",
 	auth_records: "Sender authentication",
 	mx: "Mail server",
+	smtp: "Mail server check",
 };
 
 /**

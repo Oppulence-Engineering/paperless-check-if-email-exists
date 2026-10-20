@@ -183,27 +183,60 @@ pub struct OutcomeContext {
 	pub click_count: i64,
 	pub soft_bounce_count: i64,
 	pub latest_engagement_days_ago: Option<i64>,
+	/// The tenant's default outcome policy, which decides what each outcome
+	/// does to scoring.
+	pub rules: OutcomePolicyRules,
 }
 
 impl OutcomeContext {
 	/// True when an outcome is so definitive it should override SMTP-derived score.
 	pub fn forces_invalid(&self) -> bool {
-		self.has_hard_bounce || self.has_complaint
+		self.forced_invalid_reason().is_some()
 	}
 
-	pub fn engagement_boost(&self) -> i16 {
-		let mut boost: i16 = 0;
-		if self.delivered_count > 0 {
-			boost = boost.saturating_add(5);
+	/// The outcome that forces this address invalid, if any: one that was
+	/// reported and whose rule overrides the score to "invalid".
+	pub fn forced_invalid_reason(&self) -> Option<OutcomeType> {
+		if self.has_hard_bounce && overrides_to_invalid(&self.rules.hard_bounce) {
+			Some(OutcomeType::HardBounce)
+		} else if self.has_complaint && overrides_to_invalid(&self.rules.complaint) {
+			Some(OutcomeType::Complaint)
+		} else {
+			None
 		}
-		if self.open_count > 0 {
-			boost = boost.saturating_add(3);
-		}
-		if self.click_count > 0 {
-			boost = boost.saturating_add(8);
-		}
-		boost.min(15)
 	}
+
+	/// A reported hard bounce the tenant's policy acts on. An informational
+	/// or score-boost rule means the tenant chose not to treat it as blocking.
+	pub fn hard_bounce_counts(&self) -> bool {
+		self.has_hard_bounce
+			&& !matches!(
+				self.rules.hard_bounce,
+				RuleAction::Informational | RuleAction::ScoreBoost { .. }
+			)
+	}
+
+	/// Score boost from engagement, using the tenant's ScoreBoost rules and
+	/// capped at 15. Other rule kinds add nothing.
+	pub fn engagement_boost(&self) -> i16 {
+		let boost = |count: i64, rule: &RuleAction| match rule {
+			RuleAction::ScoreBoost { boost } if count > 0 => (*boost).max(0),
+			_ => 0,
+		};
+		boost(self.delivered_count, &self.rules.delivered)
+			.saturating_add(boost(self.open_count, &self.rules.open))
+			.saturating_add(boost(self.click_count, &self.rules.click))
+			.min(15)
+	}
+}
+
+fn overrides_to_invalid(rule: &RuleAction) -> bool {
+	matches!(
+		rule,
+		RuleAction::Suppress { score_override: Some(target) }
+			| RuleAction::SuppressAndUnsubscribe { score_override: Some(target) }
+			if target == "invalid"
+	)
 }
 
 // ----------------------------------------------------------------------------
@@ -556,6 +589,22 @@ async fn fetch_policy(
 	Ok(Some((id, rules)))
 }
 
+/// The rules of the tenant's default outcome policy, for read-only use.
+/// Best effort: without a policy, or when the read fails, the built-in rules
+/// apply. Nothing is created here.
+async fn default_policy_rules(pg_pool: &PgPool, tenant_id: Uuid) -> OutcomePolicyRules {
+	fetch_policy(
+		pg_pool,
+		tenant_id,
+		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
+	)
+	.await
+	.ok()
+	.flatten()
+	.map(|(_, rules)| rules)
+	.unwrap_or_default()
+}
+
 // ----------------------------------------------------------------------------
 // Scoring-context enrichment
 // ----------------------------------------------------------------------------
@@ -573,17 +622,8 @@ pub async fn enrich_outcome_context(
 		return OutcomeContext::default();
 	}
 
-	// Read-only, best effort: scoring falls back to the built-in TTL.
-	let ttl_days = fetch_policy(
-		pool,
-		tenant_id,
-		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
-	)
-	.await
-	.ok()
-	.flatten()
-	.map(|(_, r)| r.outcome_ttl_days)
-	.unwrap_or(90);
+	let rules = default_policy_rules(pool, tenant_id).await;
+	let ttl_days = rules.outcome_ttl_days;
 
 	let row = sqlx::query(
 		r#"
@@ -600,6 +640,7 @@ pub async fn enrich_outcome_context(
 		WHERE tenant_id = $1
 			AND canonical_email = $2
 			AND occurred_at >= $3 - ($4::INT * INTERVAL '1 day')
+			AND occurred_at <= $3
 		"#,
 	)
 	.bind(tenant_id)
@@ -611,7 +652,11 @@ pub async fn enrich_outcome_context(
 
 	let row = match row {
 		Ok(Some(r)) => r,
-		_ => return OutcomeContext::default(),
+		Ok(None) => return OutcomeContext::default(),
+		Err(error) => {
+			tracing::warn!(target: LOG_TARGET, tenant_id = %tenant_id, error = ?error, "Outcome lookup failed, scoring without outcome feedback");
+			return OutcomeContext::default();
+		}
 	};
 
 	let latest_engagement: Option<DateTime<Utc>> = row.try_get("latest_engagement").ok().flatten();
@@ -624,6 +669,7 @@ pub async fn enrich_outcome_context(
 		click_count: row.try_get("click_count").unwrap_or(0),
 		soft_bounce_count: row.try_get("soft_bounce_count").unwrap_or(0),
 		latest_engagement_days_ago: latest_engagement.map(|t| (completed_at - t).num_days().max(0)),
+		rules,
 	}
 }
 
@@ -640,6 +686,9 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 	let Some(canonical) = canonicalize_email(email) else {
 		return;
 	};
+	// The same policy and expiry as ingestion and scoring, so a verification
+	// never suppresses an address over an outcome the policy ignores.
+	let rules = default_policy_rules(pg_pool, tenant_id).await;
 	let row = sqlx::query(
 		r#"
 		SELECT
@@ -648,30 +697,33 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 			BOOL_OR(outcome_type = 'unsubscribe'::outcome_type) AS unsubscribe
 		FROM verification_outcomes
 		WHERE tenant_id = $1 AND canonical_email = $2
+			AND occurred_at >= NOW() - ($3::INT * INTERVAL '1 day')
 		"#,
 	)
 	.bind(tenant_id)
 	.bind(&canonical)
+	.bind(rules.outcome_ttl_days)
 	.fetch_optional(pg_pool)
 	.await;
 
 	let Ok(Some(row)) = row else {
 		return;
 	};
-	let hard_bounce: bool = row.try_get("hard_bounce").unwrap_or(false);
-	let complaint: bool = row.try_get("complaint").unwrap_or(false);
-	let unsubscribe: bool = row.try_get("unsubscribe").unwrap_or(false);
-
 	// Failures are logged inside add_to_suppression; the next verification of
 	// this address runs the check again.
-	if hard_bounce {
-		let _ = add_to_suppression(pg_pool, tenant_id, email, "bounce").await;
-	}
-	if complaint {
-		let _ = add_to_suppression(pg_pool, tenant_id, email, "complaint").await;
-	}
-	if unsubscribe {
-		let _ = add_to_suppression(pg_pool, tenant_id, email, "unsubscribe").await;
+	for (column, rule, reason) in [
+		("hard_bounce", &rules.hard_bounce, "bounce"),
+		("complaint", &rules.complaint, "complaint"),
+		("unsubscribe", &rules.unsubscribe, "unsubscribe"),
+	] {
+		let seen: bool = row.try_get(column).ok().flatten().unwrap_or(false);
+		let suppresses = matches!(
+			rule,
+			RuleAction::Suppress { .. } | RuleAction::SuppressAndUnsubscribe { .. }
+		);
+		if seen && suppresses {
+			let _ = add_to_suppression(pg_pool, tenant_id, email, reason).await;
+		}
 	}
 }
 
@@ -706,6 +758,11 @@ mod tests {
 		ctx.open_count = 50;
 		ctx.click_count = 25;
 		assert_eq!(ctx.engagement_boost(), 15);
+
+		// The tenant's rules set the boosts: informational events add nothing.
+		ctx.rules.click = RuleAction::Informational;
+		ctx.rules.open = RuleAction::ScoreBoost { boost: 2 };
+		assert_eq!(ctx.engagement_boost(), 5 + 2);
 	}
 
 	#[test]
@@ -717,6 +774,16 @@ mod tests {
 		ctx.has_hard_bounce = false;
 		ctx.has_complaint = true;
 		assert!(ctx.forces_invalid());
+		assert_eq!(ctx.forced_invalid_reason(), Some(OutcomeType::Complaint));
+
+		// A tenant whose policy keeps hard bounces informational does not want
+		// them to override verification; its complaint rule still applies.
+		ctx.has_hard_bounce = true;
+		ctx.rules.hard_bounce = RuleAction::Informational;
+		assert_eq!(ctx.forced_invalid_reason(), Some(OutcomeType::Complaint));
+		assert!(!ctx.hard_bounce_counts());
+		ctx.has_complaint = false;
+		assert!(!ctx.forces_invalid());
 	}
 
 	#[test]

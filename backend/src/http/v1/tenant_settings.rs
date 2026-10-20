@@ -254,6 +254,20 @@ async fn update_settings_handler(
 	}
 	if let Some(mode) = &body.default_policy_mode {
 		validate_policy_mode(mode)?;
+		// Without a usable profile, custom mode returns Review for every
+		// address, so it can only be chosen once a profile exists.
+		if mode == "custom"
+			&& crate::decision::custom_policy::load_active_profile(&pg_pool, tenant_id)
+				.await
+				.map_err(ReacherResponseError::from)?
+				.is_none()
+		{
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"default_policy_mode 'custom' needs an active, valid custom policy profile",
+			)
+			.into());
+		}
 	}
 	validate_webhook_setting(&body.default_webhook_url)?;
 	let thresholds = validate_thresholds(

@@ -1,5 +1,6 @@
 use crate::config::BackendConfig;
 use crate::http::check_admin_header;
+use crate::http::shared::paging::clamp_page;
 use crate::http::ReacherResponseError;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
@@ -246,8 +247,7 @@ async fn list_handler(
 	pg_pool: PgPool,
 	query: ListQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	let limit = query.limit.unwrap_or(50).clamp(1, 200);
-	let offset = query.offset.unwrap_or(0).max(0);
+	let (limit, offset) = clamp_page(query.limit, query.offset);
 	validate_tenant_fields(None, query.status.as_deref(), [None; 4], None)?;
 
 	let (rows, total) = if let Some(ref status) = query.status {

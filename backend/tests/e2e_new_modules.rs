@@ -408,16 +408,61 @@ mod tenant_self_tests {
 	#[serial]
 	async fn test_update_settings() {
 		let db = TestDb::start().await;
-		let (_, key) = create_tenant_key(db.pool()).await;
+		let (tenant_id, key) = create_tenant_key(db.pool()).await;
 		let c = cfg().await;
-		let r = request()
-			.path("/v1/me/settings")
-			.method("PATCH")
-			.header("Authorization", format!("Bearer {}", key))
-			.json(&serde_json::json!({"default_webhook_url":"https://hook.test"}))
-			.reply(&create_routes(c))
-			.await;
+		let patch = |body: serde_json::Value| {
+			let c = Arc::clone(&c);
+			let key = key.clone();
+			async move {
+				request()
+					.path("/v1/me/settings")
+					.method("PATCH")
+					.header("Authorization", format!("Bearer {}", key))
+					.json(&body)
+					.reply(&create_routes(c))
+					.await
+			}
+		};
+		let r = patch(serde_json::json!({"default_webhook_url":"https://hook.test"})).await;
 		assert_eq!(r.status(), StatusCode::OK);
+
+		// Custom mode with no profile would review every address: refused.
+		let r = patch(serde_json::json!({"default_policy_mode":"custom"})).await;
+		assert_eq!(r.status(), StatusCode::BAD_REQUEST);
+
+		// With a profile, custom mode is accepted and decides single checks.
+		sqlx::query(
+			"INSERT INTO tenant_policy_profiles (tenant_id, profile_key, display_name, rules) VALUES ($1, 'strict', 'Strict', $2)",
+		)
+		.bind(tenant_id)
+		.bind(serde_json::json!({
+			"default_decision": "review",
+			"rules": [{"field": "score", "operator": "gte", "value": 95,
+				"decision": "send", "reason_code": "trusted_score"}]
+		}))
+		.execute(db.pool())
+		.await
+		.unwrap();
+		let r = patch(serde_json::json!({"default_policy_mode":"custom"})).await;
+		assert_eq!(r.status(), StatusCode::OK);
+
+		let output = reacher_backend::sandbox::sandbox_check("jane@example.com");
+		let prepared = reacher_backend::scoring::response::prepare_verification_response(
+			&c,
+			&output,
+			Some(tenant_id),
+			chrono::Utc::now(),
+			false,
+		)
+		.await
+		.unwrap();
+		let policy = prepared.policy_evaluation.expect("policy evaluation");
+		assert_eq!(
+			policy.decision,
+			reacher_backend::decision::types::PolicyDecision::Send
+		);
+		assert_eq!(policy.policy_profile_key.as_deref(), Some("strict"));
+		assert_eq!(policy.reasons[0].code, "trusted_score");
 	}
 
 	#[tokio::test]

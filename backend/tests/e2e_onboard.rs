@@ -26,7 +26,7 @@ mod tests {
 	#[tokio::test]
 	#[serial]
 	async fn test_onboard_creates_tenant_key_and_verifies() {
-		let _db = TestDb::start().await;
+		let db = TestDb::start().await;
 		let config = cfg().await;
 
 		let resp = request()
@@ -63,6 +63,24 @@ mod tests {
 			.starts_with("rch_live_"));
 		assert!(body["api_key"]["id"].is_string());
 		assert_eq!(body["api_key"]["name"], "Default");
+
+		// A NULL limit is unlimited and empty key scopes grant admin.
+		let tenant_id: uuid::Uuid = body["tenant"]["id"].as_str().unwrap().parse().unwrap();
+		let limit: Option<i32> =
+			sqlx::query_scalar("SELECT monthly_email_limit FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(limit, Some(100));
+		let scopes: Vec<String> =
+			sqlx::query_scalar("SELECT scopes FROM api_keys WHERE tenant_id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert!(scopes.iter().any(|scope| scope == "verify"));
+		assert!(!scopes.iter().any(|scope| scope == "admin" || scope == "*"));
 
 		// Verification ran
 		assert!(body["verification_result"]["is_reachable"].is_string());
@@ -158,12 +176,26 @@ mod tests {
 				"contact_email": "e@f.com",
 				"plan_tier": "enterprise"
 			}))
-			.reply(&create_routes(config))
+			.reply(&create_routes(Arc::clone(&config)))
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::CREATED);
 		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
 		assert_eq!(body["tenant"]["plan_tier"], "enterprise");
+
+		let unknown_plan = request()
+			.path("/v1/check-email-with-onboard")
+			.header("x-reacher-secret", "s")
+			.method("POST")
+			.json(&serde_json::json!({
+				"email_to_verify": "a@b",
+				"tenant_name": "Unknown Plan Co",
+				"contact_email": "u@f.com",
+				"plan_tier": "platinum"
+			}))
+			.reply(&create_routes(config))
+			.await;
+		assert_eq!(unknown_plan.status(), StatusCode::BAD_REQUEST);
 	}
 
 	#[tokio::test]
@@ -263,38 +295,37 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
-	async fn test_onboard_rejects_requests_without_platform_secret() {
+	async fn test_onboard_requires_admin_secret() {
 		let db = TestDb::start().await;
 		let config = cfg().await;
-		let body = serde_json::json!({
-			"email_to_verify": "noauth@test.com",
-			"tenant_name": "No Auth Co",
-			"contact_email": "na@test.com",
-			"plan_tier": "enterprise"
-		});
-
-		for secret in [None, Some("wrong")] {
+		let routes = create_routes(config);
+		let onboard = |secret: Option<&'static str>| {
 			let mut builder = request()
 				.path("/v1/check-email-with-onboard")
 				.method("POST")
-				.json(&body);
+				.json(&serde_json::json!({
+					"email_to_verify": "noauth@test.com",
+					"tenant_name": "No Auth Co",
+					"contact_email": "na@test.com",
+					"plan_tier": "enterprise"
+				}));
 			if let Some(secret) = secret {
 				builder = builder.header("x-reacher-secret", secret);
 			}
-			let resp = builder.reply(&create_routes(Arc::clone(&config))).await;
-			assert_eq!(
-				resp.status(),
-				StatusCode::UNAUTHORIZED,
-				"secret: {secret:?}"
-			);
-		}
+			builder.reply(&routes)
+		};
 
+		// Anyone could otherwise mint an unlimited Enterprise tenant and key.
+		assert!(onboard(None).await.status().is_client_error());
+		assert!(onboard(Some("wrong")).await.status().is_client_error());
 		let tenants: i64 =
 			sqlx::query_scalar("SELECT COUNT(*) FROM tenants WHERE slug = 'no-auth-co'")
 				.fetch_one(db.pool())
 				.await
 				.unwrap();
-		assert_eq!(tenants, 0, "a rejected request must not create a tenant");
+		assert_eq!(tenants, 0);
+
+		assert_eq!(onboard(Some("s")).await.status(), StatusCode::CREATED);
 	}
 
 	#[tokio::test]

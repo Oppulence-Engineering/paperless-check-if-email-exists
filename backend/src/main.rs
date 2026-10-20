@@ -4,6 +4,7 @@
 use check_if_email_exists::{initialize_crypto_provider, setup_sentry, LOG_TARGET};
 use reacher_backend::config::load_config;
 use reacher_backend::http::run_warp_server;
+use reacher_backend::smtp_egress::log_smtp_egress_checks;
 use reacher_backend::worker::run_worker;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -62,6 +63,12 @@ async fn main() -> Result<(), anyhow::Error> {
 	}
 
 	let config = Arc::new(config);
+	{
+		// Both the HTTP server (single checks) and the worker open SMTP
+		// connections, so every process checks its own route.
+		let config = Arc::clone(&config);
+		tokio::spawn(async move { log_smtp_egress_checks(&config).await });
+	}
 	if let Some(pool) = config.get_pg_pool() {
 		tokio::spawn(async move {
 			let period = Duration::from_secs(3600);

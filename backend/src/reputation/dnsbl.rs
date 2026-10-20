@@ -1,5 +1,8 @@
+use super::dns_records::found_or_absent;
 use super::models::BlacklistResult;
+use anyhow::Context;
 use check_if_email_exists::mx::MxLookup;
+use hickory_resolver::lookup::Lookup;
 use hickory_resolver::proto::rr::RData;
 use hickory_resolver::TokioResolver;
 use std::net::Ipv4Addr;
@@ -16,24 +19,40 @@ const PROVIDERS: &[(&str, &str)] = &[
 	("Invaluement", "dnsbl.invaluement.com"),
 ];
 
-/// Whether a DNSBL answer means that the address is listed. Lists answer
-/// with an address in 127.0.0.0/8 for a listing. Spamhaus answers
-/// 127.255.255.0/24 when it refuses the query, for example for a query through
-/// a public resolver or above the rate limit, and that is not a listing. Some
-/// resolvers answer a missing name with an address outside 127.0.0.0/8; that
-/// is not a listing either.
+/// DNSBLs answer a listed IP with an A record in 127.0.0.2-127.0.0.255. Other
+/// answers are not listings: Spamhaus returns 127.255.255.252/254/255 when it
+/// refuses a query (for example one sent through a public resolver), and an
+/// answer outside 127.0.0.0/24 comes from a wildcarding or hijacking resolver.
 fn is_listing_answer(answer: Ipv4Addr) -> bool {
-	let [first, second, third, _] = answer.octets();
-	first == 127 && !(second == 255 && third == 255)
+	let [a, b, c, d] = answer.octets();
+	(a, b, c) == (127, 0, 0) && d >= 2
 }
 
+fn ipv4_answers(lookup: &Lookup) -> impl Iterator<Item = Ipv4Addr> + '_ {
+	lookup
+		.answers()
+		.iter()
+		.filter_map(|record| match &record.data {
+			RData::A(a) => Some(a.0),
+			_ => None,
+		})
+}
+
+/// Checks the preferred MX host of `domain` against the DNSBL zones.
+///
+/// Fails when the MX or address lookup fails for a reason other than the record
+/// not existing, since then no list was actually consulted. A failed query to a
+/// single list counts as "not listed": an error must never read as a listing,
+/// and some zones are permanently unreachable, which would otherwise make every
+/// check fail.
 pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::Error> {
 	let resolver = TokioResolver::builder_tokio()?.build()?;
-	let mx_lookup = resolver.mx_lookup(domain).await.ok();
+	let mx_lookup = found_or_absent(resolver.mx_lookup(domain).await)
+		.with_context(|| format!("MX lookup for {} failed", domain))?;
 	// Senders deliver to the MX host with the lowest preference, so that host
 	// is the one to look up. The DNS answer order is not the preference order.
-	let preferred_host = mx_lookup.as_ref().and_then(|lookup| {
-		MxLookup::from(lookup.clone())
+	let preferred_host = mx_lookup.and_then(|lookup| {
+		MxLookup::from(lookup)
 			.iter()
 			.min_by_key(|record| record.preference)
 			.map(|record| record.exchange.to_string())
@@ -52,16 +71,9 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 		}
 	};
 
-	let ip_lookup = resolver.ipv4_lookup(first_host).await.ok();
-	let ip = ip_lookup.and_then(|lookup| {
-		lookup
-			.answers()
-			.iter()
-			.find_map(|record| match &record.data {
-				RData::A(a) => Some(a.0),
-				_ => None,
-			})
-	});
+	let ip_lookup = found_or_absent(resolver.ipv4_lookup(first_host.as_str()).await)
+		.with_context(|| format!("A lookup for MX host {} failed", first_host))?;
+	let ip = ip_lookup.and_then(|lookup| ipv4_answers(&lookup).next());
 
 	let mut results = Vec::new();
 	for (provider, zone) in PROVIDERS {
@@ -76,13 +88,7 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 				.ipv4_lookup(query)
 				.await
 				.ok()
-				.map(|lookup| {
-					lookup.answers().iter().any(|record| match &record.data {
-						RData::A(a) => is_listing_answer(a.0),
-						_ => false,
-					})
-				})
-				.unwrap_or(false)
+				.is_some_and(|lookup| ipv4_answers(&lookup).any(is_listing_answer))
 		} else {
 			false
 		};
@@ -102,14 +108,26 @@ mod tests {
 	use std::net::Ipv4Addr;
 
 	#[test]
-	fn only_loopback_codes_outside_the_refusal_range_are_listings() {
-		assert!(is_listing_answer(Ipv4Addr::new(127, 0, 0, 2)));
-		assert!(is_listing_answer(Ipv4Addr::new(127, 0, 0, 10)));
-		// Spamhaus refusals: public resolver, rate limit, bad zone name.
-		assert!(!is_listing_answer(Ipv4Addr::new(127, 255, 255, 254)));
-		assert!(!is_listing_answer(Ipv4Addr::new(127, 255, 255, 255)));
-		assert!(!is_listing_answer(Ipv4Addr::new(127, 255, 255, 252)));
-		// A resolver that rewrites NXDOMAIN to its own search page.
-		assert!(!is_listing_answer(Ipv4Addr::new(198, 51, 100, 7)));
+	fn only_127_0_0_x_return_codes_count_as_listings() {
+		let cases = [
+			// Spamhaus ZEN listing codes (SBL, XBL, PBL).
+			(Ipv4Addr::new(127, 0, 0, 2), true),
+			(Ipv4Addr::new(127, 0, 0, 4), true),
+			(Ipv4Addr::new(127, 0, 0, 11), true),
+			(Ipv4Addr::new(127, 0, 0, 255), true),
+			// Spamhaus error codes: typing error, query via public resolver,
+			// excessive queries. None of these say anything about the IP.
+			(Ipv4Addr::new(127, 255, 255, 252), false),
+			(Ipv4Addr::new(127, 255, 255, 254), false),
+			(Ipv4Addr::new(127, 255, 255, 255), false),
+			// 127.0.0.1 is not a listing code, and a wildcard or hijacked answer
+			// outside 127.0.0.0/24 is not one either.
+			(Ipv4Addr::new(127, 0, 0, 1), false),
+			(Ipv4Addr::new(127, 0, 1, 2), false),
+			(Ipv4Addr::new(93, 184, 216, 34), false),
+		];
+		for (answer, listed) in cases {
+			assert_eq!(is_listing_answer(answer), listed, "answer {}", answer);
+		}
 	}
 }

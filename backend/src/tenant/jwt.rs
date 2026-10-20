@@ -1,5 +1,5 @@
-use crate::config::JwtAuthConfig;
-use crate::tenant::auth::resolve_tenant_context_by_id;
+use crate::config::{JwtAuthConfig, ThrottleConfig};
+use crate::tenant::auth::{resolve_tenant_context_by_id, with_global_throttle};
 use crate::tenant::context::TenantContext;
 use anyhow::{bail, Context, Result};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
@@ -172,6 +172,7 @@ pub async fn resolve_from_jwt(
 	pool: &PgPool,
 	token: &str,
 	config: &JwtAuthConfig,
+	global_throttle: &ThrottleConfig,
 	method: &str,
 	path: &str,
 ) -> std::result::Result<TenantContext, JwtAuthError> {
@@ -206,6 +207,10 @@ pub async fn resolve_from_jwt(
 				JwtAuthError::Forbidden(error)
 			}
 		})?;
+	// Same limits as the tenant's API keys get. Without the server-wide
+	// fallback, console requests ran unthrottled, and the tenant's throttle
+	// manager was rebuilt each time a request switched between the two.
+	context.throttle = with_global_throttle(context.throttle, global_throttle);
 	context.scopes = if role_is_admin(&claims.org_role) {
 		vec!["*".into()]
 	} else {

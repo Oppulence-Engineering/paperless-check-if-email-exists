@@ -556,8 +556,20 @@ async fn load_task_rows(
 	list_id: i32,
 	tenant_id: uuid::Uuid,
 ) -> Result<Vec<RawTaskRow>, ReacherResponseError> {
+	// Suppressions are keyed on the lowercased address as entered, but list
+	// tasks store the Gmail-canonical form (dots and +tag removed), so a
+	// suppressed john.doe@gmail.com never matched johndoe@gmail.com. The
+	// address as entered only survives in the list's original rows. They are
+	// expanded once (MATERIALIZED) so the large original_data value is not
+	// decoded again for every task row.
 	let rows = sqlx::query(
 		r#"
+		WITH list_originals AS MATERIALIZED (
+			SELECT entry.key::INTEGER AS row_index,
+			       LOWER(TRIM(entry.value ->> l.email_column)) AS email
+			FROM v1_lists l, jsonb_each(l.original_data) AS entry
+			WHERE l.id = $1 AND l.tenant_id = $2
+		)
 		SELECT
 			tr.id,
 			(extra->>'row_index')::INTEGER AS row_index,
@@ -576,13 +588,14 @@ async fn load_task_rows(
 			tr.reason_codes,
 			tr.completed_at
 		FROM v1_task_result tr
+		LEFT JOIN list_originals o ON o.row_index = (tr.extra->>'row_index')::INTEGER
 		LEFT JOIN LATERAL (
 			SELECT id, reason_code
 			FROM v1_suppression_entries se
 			WHERE se.tenant_id = tr.tenant_id
 			  AND se.status = 'active'
 			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
-			  AND se.canonical_email = tr.canonical_email
+			  AND se.canonical_email IN (tr.canonical_email, o.email)
 			ORDER BY se.created_at DESC
 			LIMIT 1
 		) se ON true

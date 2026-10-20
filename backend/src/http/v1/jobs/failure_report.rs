@@ -165,10 +165,8 @@ async fn fetch_batch(
 	Ok(rows
 		.into_iter()
 		.map(|row| {
-			// Tasks created by POST /v1/bulk have no `extra`.
-			let extra: Value = row
-				.get::<Option<Value>, _>("extra")
-				.unwrap_or_else(|| Value::Object(Default::default()));
+			// Only list rows set extra; bulk API rows leave it NULL.
+			let extra = row.get::<Option<Value>, _>("extra").unwrap_or(Value::Null);
 			let payload: Value = row.get("payload");
 			FailureReportRow {
 				id: row.get("id"),
@@ -181,7 +179,7 @@ async fn fetch_batch(
 				error: row.get("error"),
 				retry_count: row.get("retry_count"),
 				updated_at: row.get("updated_at"),
-				payload,
+				payload: tenant_visible_payload(payload),
 				extra,
 			}
 		})
@@ -235,6 +233,18 @@ fn render_ndjson_rows(rows: &[FailureReportRow]) -> Result<Vec<u8>, serde_json::
 	Ok(bytes)
 }
 
+/// The stored task with the verification input cut down to the address.
+///
+/// Bulk rows store the whole task, whose input carries the backend's SMTP
+/// proxy credentials, API keys and webdriver settings. None of that is the
+/// tenant's data, so the report keeps only `to_email` from the input.
+fn tenant_visible_payload(mut payload: Value) -> Value {
+	if let Some(input) = payload.get_mut("input").and_then(Value::as_object_mut) {
+		input.retain(|key, _| key == "to_email");
+	}
+	payload
+}
+
 fn payload_input(payload: &Value) -> Option<String> {
 	payload
 		.get("input")
@@ -278,6 +288,38 @@ mod tests {
 			payload: json!({"input": {"to_email": "user@example.com"}}),
 			extra: json!({"row_index": 3}),
 		}
+	}
+
+	#[test]
+	fn report_payload_never_carries_backend_configuration() {
+		// Bulk rows store the whole task, including the backend's SMTP proxy
+		// credentials and API keys. The tenant only gets back what it sent.
+		let stored = json!({
+			"input": {
+				"to_email": "user@example.com",
+				"haveibeenpwned_api_key": "hibp-secret",
+				"verif_method": {
+					"proxies": {"default": {"host": "proxy.example", "port": 1080,
+						"username": "proxy-user", "password": "proxy-secret"}}
+				},
+				"webdriver_addr": "http://localhost:9515"
+			},
+			"job_id": {"bulk": 7},
+			"webhook": null
+		});
+		let visible = tenant_visible_payload(stored);
+
+		assert_eq!(
+			visible,
+			json!({
+				"input": {"to_email": "user@example.com"},
+				"job_id": {"bulk": 7},
+				"webhook": null
+			})
+		);
+		// Older list rows store only the address and pass through unchanged.
+		let legacy = json!({"input": {"to_email": "user@example.com"}});
+		assert_eq!(tenant_visible_payload(legacy.clone()), legacy);
 	}
 
 	#[test]

@@ -3,6 +3,13 @@ use md5::Digest;
 
 const API_BASE_URL: &str = "https://www.gravatar.com/avatar/";
 
+/// Gravatar keys avatars by the MD5 of the trimmed, lowercased address, so
+/// John@Example.com would otherwise never find the avatar of john@example.com.
+fn gravatar_url(email: &str) -> String {
+	let mail_hash: Digest = md5::compute(email.trim().to_lowercase());
+	format!("{API_BASE_URL}{mail_hash:x}")
+}
+
 pub async fn check_gravatar(to_email: &str) -> Option<String> {
 	let client = reqwest::Client::builder()
 		.connect_timeout(std::time::Duration::from_secs(5))
@@ -10,10 +17,7 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 		.build()
 		.ok()?;
 
-	// Gravatar hashes the trimmed, lowercased address.
-	let mail_hash: Digest = md5::compute(to_email.trim().to_lowercase());
-
-	let url = format!("{API_BASE_URL}{mail_hash:x}");
+	let url = gravatar_url(to_email);
 
 	tracing::debug!(
 		target: LOG_TARGET,
@@ -45,5 +49,19 @@ pub async fn check_gravatar(to_email: &str) -> Option<String> {
 	match response.status() {
 		reqwest::StatusCode::OK => Some(url),
 		_ => None,
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::gravatar_url;
+
+	#[test]
+	fn hashes_the_trimmed_lowercased_address() {
+		// The example from https://docs.gravatar.com/api/avatars/hash/
+		assert_eq!(
+			gravatar_url(" MyEmailAddress@example.com "),
+			"https://www.gravatar.com/avatar/0bc83cb571cd1c50ba6f3e8a78ef1346"
+		);
 	}
 }

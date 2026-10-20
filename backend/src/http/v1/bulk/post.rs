@@ -10,7 +10,7 @@ use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::{debug, info, warn};
-use warp::http::header::{HeaderValue, CONTENT_TYPE};
+use warp::http::header::CONTENT_TYPE;
 use warp::http::StatusCode;
 use warp::{Filter, Reply};
 
@@ -33,6 +33,13 @@ use crate::worker::do_work::CheckEmailJobId;
 use crate::worker::do_work::CheckEmailTask;
 use crate::worker::do_work::TaskMetadata;
 use crate::worker::do_work::TaskWebhook;
+
+const BULK_REQUEST_PATH: &str = "/v1/bulk";
+
+/// AMQP delivery mode 2 marks a message persistent, so the durable
+/// `check_email` queue keeps it across a broker restart. Left unset, messages
+/// are transient and a restart drops every queued task.
+const PERSISTENT_DELIVERY_MODE: u8 = 2;
 
 /// POST v1/bulk endpoint request body.
 #[derive(Debug, Deserialize)]
@@ -59,101 +66,108 @@ async fn http_handler(
 	raw_body: Bytes,
 ) -> Result<warp::reply::Response, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::BULK)?;
-	let body: Request = serde_json::from_slice(&raw_body).map_err(ReacherResponseError::from)?;
 
-	let Some(idempotency_key) = idempotency_key else {
-		let response = create_bulk_job(tenant_ctx, config, pg_pool, body).await?;
-		return json_response(StatusCode::OK, serialize_response(&response)?);
-	};
-
-	// A retried POST with the same key must not create a second job or
-	// reserve the quota twice. Same contract as /v1/check_email.
-	let check = check_idempotency_key(
-		&pg_pool,
-		&tenant_ctx.tenant_id_str(),
-		&idempotency_key,
-		"/v1/bulk",
-		&hash_request_body(&raw_body),
-		&tenant_ctx.tenant_name,
-	)
-	.await?;
-	match check {
-		IdempotencyCheck::New { record_id } => {
-			match create_bulk_job(tenant_ctx, config, pg_pool.clone(), body).await {
-				Ok(response) => {
-					let bytes = serialize_response(&response)?;
-					if let Err(e) = complete_idempotency_key(
-						&pg_pool,
-						record_id,
-						StatusCode::OK.as_u16(),
-						&bytes,
-					)
-					.await
-					{
-						warn!(target: LOG_TARGET, record_id, error = ?e, "Failed to mark bulk idempotency key as completed");
-					}
-					json_response(StatusCode::OK, bytes)
-				}
-				Err(rejection) => {
-					// Nothing was created, so a retry with this key runs again.
-					if let Err(e) = fail_idempotency_key(&pg_pool, record_id).await {
-						warn!(target: LOG_TARGET, record_id, error = ?e, "Failed to mark bulk idempotency key as failed");
-					}
-					Err(rejection)
-				}
-			}
-		}
-		IdempotencyCheck::InProgress => Err(ReacherResponseError::new(
-			StatusCode::CONFLICT,
-			"Idempotency key is already in use for this path",
-		)
-		.into()),
-		IdempotencyCheck::BodyMismatch => Err(ReacherResponseError::new(
+	let body: Request = serde_json::from_slice(&raw_body).map_err(|err| {
+		ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			"Idempotency key body mismatch",
+			format!("Invalid request body: {}", err),
 		)
-		.into()),
-		IdempotencyCheck::Cached(cached) => {
-			let status = StatusCode::from_u16(cached.status_code).map_err(|e| {
-				ReacherResponseError::new(
-					StatusCode::INTERNAL_SERVER_ERROR,
-					format!("Invalid cached status code: {e}"),
-				)
-			})?;
-			json_response(status, cached.body)
-		}
-	}
-}
-
-fn serialize_response(response: &Response) -> Result<Vec<u8>, warp::Rejection> {
-	serde_json::to_vec(response).map_err(|e| ReacherResponseError::from(e).into())
-}
-
-fn json_response(
-	status: StatusCode,
-	body: Vec<u8>,
-) -> Result<warp::reply::Response, warp::Rejection> {
-	let mut response = warp::reply::with_status(body, status).into_response();
-	response
-		.headers_mut()
-		.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-	Ok(response)
-}
-
-async fn create_bulk_job(
-	tenant_ctx: TenantContext,
-	config: Arc<BackendConfig>,
-	pg_pool: PgPool,
-	body: Request,
-) -> Result<Response, warp::Rejection> {
+	})?;
 	if body.input.is_empty() {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Empty input").into());
 	}
+
+	// A client retrying a request whose response it never received must get
+	// the original job back, not a second job charged against its quota.
+	let idempotency_record_id = match idempotency_key {
+		Some(key) => match check_idempotency_key(
+			&pg_pool,
+			&tenant_ctx.tenant_id_str(),
+			&key,
+			BULK_REQUEST_PATH,
+			&hash_request_body(&raw_body),
+			&tenant_ctx.tenant_name,
+		)
+		.await?
+		{
+			IdempotencyCheck::New { record_id } => Some(record_id),
+			IdempotencyCheck::InProgress => {
+				return Err(ReacherResponseError::new(
+					StatusCode::CONFLICT,
+					"Idempotency key is already in use for this path",
+				)
+				.into());
+			}
+			IdempotencyCheck::BodyMismatch => {
+				return Err(ReacherResponseError::new(
+					StatusCode::BAD_REQUEST,
+					"Idempotency key body mismatch",
+				)
+				.into());
+			}
+			IdempotencyCheck::PathMismatch => {
+				return Err(ReacherResponseError::new(
+					StatusCode::UNPROCESSABLE_ENTITY,
+					"Idempotency key was already used on another endpoint",
+				)
+				.into());
+			}
+			IdempotencyCheck::Cached(cached) => {
+				let status =
+					StatusCode::from_u16(cached.status_code).map_err(ReacherResponseError::from)?;
+				return Ok(json_response(status, cached.body));
+			}
+		},
+		None => None,
+	};
+
+	let result = create_bulk_job(&tenant_ctx, config, &pg_pool, body).await;
+
+	if let Some(record_id) = idempotency_record_id {
+		let settled = match &result {
+			Ok(response_body) => {
+				complete_idempotency_key(
+					&pg_pool,
+					record_id,
+					StatusCode::OK.as_u16(),
+					response_body,
+				)
+				.await
+			}
+			// Failed attempts release the key so the client can retry with it.
+			Err(_) => fail_idempotency_key(&pg_pool, record_id).await,
+		};
+		if let Err(err) = settled {
+			warn!(target: LOG_TARGET, record_id = record_id, error = ?err, "Failed to settle bulk idempotency key");
+		}
+	}
+
+	Ok(json_response(StatusCode::OK, result?))
+}
+
+fn json_response(status: StatusCode, body: Vec<u8>) -> warp::reply::Response {
+	let mut response = warp::reply::with_status(body, status).into_response();
+	response.headers_mut().insert(
+		CONTENT_TYPE,
+		"application/json".parse().expect("static header value"),
+	);
+	response
+}
+
+/// Reserves quota, creates the job and its task rows, and publishes the
+/// tasks. Returns the serialized response body. Any failure after the quota
+/// reservation refunds every email that was not published.
+async fn create_bulk_job(
+	tenant_ctx: &TenantContext,
+	config: Arc<BackendConfig>,
+	pg_pool: &PgPool,
+	body: Request,
+) -> Result<Vec<u8>, ReacherResponseError> {
 	let source_key = normalize_source_key(body.source_key.as_deref());
 
 	// Atomically check and increment quota for all emails in the bulk request.
 	let email_count = body.input.len() as i32;
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, email_count).await {
+	match check_and_increment_quota_for_count(Some(pg_pool), tenant_ctx, email_count).await {
 		QuotaCheckResult::Allowed => {}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
@@ -168,25 +182,49 @@ async fn create_bulk_job(
 					used,
 					resets_at.format("%Y-%m-%d %H:%M:%S UTC")
 				),
-			)
-			.into());
+			));
 		}
 	}
 
 	let tenant_id = tenant_ctx.tenant_id;
 
-	// The job and its task rows are written in one transaction, so a failure
-	// part way leaves no orphan job, and the quota reserved above is refunded.
-	let (job_id, task_ids) =
-		match insert_bulk_job_and_tasks(&pg_pool, &config, &body, tenant_id, source_key.as_deref())
-			.await
-		{
-			Ok(inserted) => inserted,
-			Err(err) => {
-				let _ = release_reserved_usage(Some(&pg_pool), tenant_id, email_count).await;
-				return Err(ReacherResponseError::from(err).into());
-			}
-		};
+	// Create job entry with status = 'pending'
+	let job_id: i32 = match sqlx::query_scalar(
+		r#"
+		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
+		VALUES ($1, $2, 'pending', $3)
+		RETURNING id
+		"#,
+	)
+	.bind(email_count)
+	.bind(tenant_id)
+	.bind(source_key.as_deref())
+	.fetch_one(pg_pool)
+	.await
+	{
+		Ok(job_id) => job_id,
+		Err(err) => {
+			let _ = release_reserved_usage(Some(pg_pool), tenant_id, email_count).await;
+			return Err(ReacherResponseError::from(err));
+		}
+	};
+
+	let task_ids = match insert_queued_tasks(
+		&config,
+		pg_pool,
+		job_id,
+		tenant_id,
+		source_key.as_deref(),
+		&body,
+	)
+	.await
+	{
+		Ok(task_ids) => task_ids,
+		Err(err) => {
+			cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &[]).await;
+			return Err(err);
+		}
+	};
 
 	// Publish tasks to RabbitMQ with metadata.task_db_id
 	let n = body.input.len();
@@ -201,8 +239,8 @@ async fn create_bulk_job(
 	let channel = match config.must_worker_config() {
 		Ok(worker_config) => worker_config.channel,
 		Err(err) => {
-			cleanup_publish_failure(&pg_pool, tenant_id, job_id, email_count, &[]).await;
-			return Err(ReacherResponseError::from(err).into());
+			cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &[]).await;
+			return Err(ReacherResponseError::from(err));
 		}
 	};
 	let publish_results = stream
@@ -252,21 +290,14 @@ async fn create_bulk_job(
 		}
 	}
 	if let Some(err) = publish_error {
-		cleanup_publish_failure(
-			&pg_pool,
-			tenant_id,
-			job_id,
-			email_count,
-			&published_task_ids,
-		)
-		.await;
-		return Err(err.into());
+		cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &published_task_ids).await;
+		return Err(err);
 	}
 
 	// Every task is published, so the worker may now finish the job. This
 	// leaves a job that is already cancelled alone, and finishes it here if
 	// its tasks all completed while they were being published.
-	crate::worker::job_lifecycle::start_bulk_job(&pg_pool, job_id)
+	crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id)
 		.await
 		.map_err(ReacherResponseError::from)?;
 
@@ -279,7 +310,7 @@ async fn create_bulk_job(
 		job_id,
 		serde_json::json!({ "total_records": n }),
 	)
-	.execute(&pg_pool)
+	.execute(pg_pool)
 	.await;
 
 	info!(
@@ -287,31 +318,18 @@ async fn create_bulk_job(
 		queue = CHECK_EMAIL_QUEUE,
 		"Added {n} emails",
 	);
-	Ok(Response { job_id, source_key })
+	serde_json::to_vec(&Response { job_id, source_key }).map_err(ReacherResponseError::from)
 }
 
-async fn insert_bulk_job_and_tasks(
-	pg_pool: &PgPool,
+/// Pre-create one task result row per input email, in state 'queued'.
+async fn insert_queued_tasks(
 	config: &Arc<BackendConfig>,
-	body: &Request,
+	pg_pool: &PgPool,
+	job_id: i32,
 	tenant_id: Option<uuid::Uuid>,
 	source_key: Option<&str>,
-) -> Result<(i32, Vec<i32>), anyhow::Error> {
-	let mut tx = pg_pool.begin().await?;
-	let job_id: i32 = sqlx::query_scalar(
-		r#"
-		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
-		VALUES ($1, $2, 'pending', $3)
-		RETURNING id
-		"#,
-	)
-	.bind(body.input.len() as i32)
-	.bind(tenant_id)
-	.bind(source_key)
-	.fetch_one(&mut *tx)
-	.await?;
-
-	// Pre-create task result rows with task_state = 'queued'
+	body: &Request,
+) -> Result<Vec<i32>, ReacherResponseError> {
 	let mut task_ids: Vec<i32> = Vec::with_capacity(body.input.len());
 	for email in &body.input {
 		let input = CheckEmailRequest {
@@ -325,7 +343,8 @@ async fn insert_bulk_job_and_tasks(
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: body.webhook.clone(),
 			metadata: None,
-		})?;
+		})
+		.map_err(ReacherResponseError::from)?;
 
 		let task_row: i32 = sqlx::query_scalar(
 			r#"
@@ -338,13 +357,13 @@ async fn insert_bulk_job_and_tasks(
 		.bind(payload_json)
 		.bind(tenant_id)
 		.bind(source_key)
-		.fetch_one(&mut *tx)
-		.await?;
+		.fetch_one(pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 		task_ids.push(task_row);
 	}
-	tx.commit().await?;
-	Ok((job_id, task_ids))
+	Ok(task_ids)
 }
 
 fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
@@ -407,18 +426,7 @@ pub async fn publish_task(
 ) -> Result<(), ReacherResponseError> {
 	let payload = serde_json::to_vec(&task).map_err(ReacherResponseError::from)?;
 
-	channel
-		.basic_publish(
-			"".into(),
-			CHECK_EMAIL_QUEUE.into(),
-			BasicPublishOptions::default(),
-			&payload,
-			properties,
-		)
-		.await
-		.map_err(ReacherResponseError::from)?
-		.await
-		.map_err(ReacherResponseError::from)?;
+	publish_payload(&channel, &payload, properties).await?;
 
 	debug!(
 		target: LOG_TARGET,
@@ -426,6 +434,38 @@ pub async fn publish_task(
 		queue = CHECK_EMAIL_QUEUE,
 		"Published task"
 	);
+
+	Ok(())
+}
+
+/// Publish an already serialized task to the "check_email" queue.
+///
+/// The message is always made persistent. On a channel in confirm mode (the
+/// channel from `setup_rabbit_mq` is), this returns only after the broker has
+/// taken responsibility for the message, and a broker nack is an error, so
+/// callers never treat a task the broker refused as queued.
+pub async fn publish_payload(
+	channel: &Channel,
+	payload: &[u8],
+	properties: BasicProperties,
+) -> Result<(), ReacherResponseError> {
+	let confirmation = channel
+		.basic_publish(
+			"".into(),
+			CHECK_EMAIL_QUEUE.into(),
+			BasicPublishOptions::default(),
+			payload,
+			properties.with_delivery_mode(PERSISTENT_DELIVERY_MODE),
+		)
+		.await?
+		.await?;
+
+	if confirmation.is_nack() {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"RabbitMQ did not accept the task (publisher nack)",
+		));
+	}
 
 	Ok(())
 }

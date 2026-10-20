@@ -1,7 +1,7 @@
 pub mod response;
 
 use check_if_email_exists::{
-	provider::{Provider, ProviderConfidence, ProviderRejectionReason},
+	provider::{Provider, ProviderConfidence},
 	smtp::SmtpError,
 	CheckEmailOutput, Reachable,
 };
@@ -161,6 +161,11 @@ pub enum SmtpUncertaintyClass {
 	SmtpUnreachable,
 }
 
+/// Highest partial confidence when the SMTP server was never reached. It sits
+/// in the low band, so domain signals alone cannot make an unverified mailbox
+/// look verified.
+const NO_SMTP_CONVERSATION_CONFIDENCE_CEILING: i16 = 55;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PartialConfidence {
 	pub confidence: i16,
@@ -181,7 +186,9 @@ pub struct ScoreInsights {
 pub struct TenantHistoryContext {
 	pub safe_count_180d: u32,
 	pub total_count_180d: u32,
-	pub latest_days_ago: Option<i64>,
+	/// Days since the newest safe result. A recent unknown or invalid result
+	/// is not fresh evidence that the mailbox works.
+	pub latest_safe_days_ago: Option<i64>,
 	pub inconsistent_count_180d: u32,
 }
 
@@ -270,8 +277,7 @@ pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 
 fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals) -> EmailScore {
 	if !signals.valid_syntax {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -283,8 +289,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if output.provider_rejection_reason.is_some() {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -296,8 +301,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if matches!(signals.reachable, Reachable::Invalid) {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -308,9 +312,10 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 		};
 	}
 
-	if !signals.smtp_is_deliverable {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+	// A full inbox is reported as undeliverable, but the mailbox exists. It is
+	// scored below as a risky state.
+	if !signals.smtp_is_deliverable && !signals.smtp_has_full_inbox {
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -322,8 +327,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 	}
 
 	if signals.smtp_is_disabled {
-		let reason_codes =
-			collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+		let reason_codes = collect_reason_codes(&signals, output);
 		return EmailScore {
 			score: 0,
 			category: EmailCategory::Invalid,
@@ -378,7 +382,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 		_ => EmailCategory::Invalid,
 	};
 
-	let sub_reason = if !signals.has_mx_records {
+	let sub_reason = if !signals.has_mx_records && !mx_lookup_failed(output) {
 		SubReason::NoMx
 	} else if signals.smtp_error {
 		SubReason::SmtpError
@@ -408,7 +412,7 @@ fn compute_score_from_signals(output: &CheckEmailOutput, signals: ScoringSignals
 		&& !signals.is_role_account
 		&& !signals.is_spam_trap_domain;
 
-	let reason_codes = collect_reason_codes(&signals, output.provider_rejection_reason.as_ref());
+	let reason_codes = collect_reason_codes(&signals, output);
 
 	EmailScore {
 		score,
@@ -432,16 +436,12 @@ pub fn compute_score_with_context(
 	// Outcome ground truth wins over every other signal, including the
 	// hard-invalid syntactic check below: a real hard bounce or complaint
 	// reported by the customer's ESP is the strongest possible signal.
-	if context.outcomes.forces_invalid() {
-		let reason_code = if context.outcomes.has_hard_bounce {
-			"outcome_hard_bounce"
-		} else {
-			"outcome_complaint"
-		};
-		let factor = if context.outcomes.has_hard_bounce {
-			"outcome_feedback:hard_bounce"
-		} else {
-			"outcome_feedback:complaint"
+	if let Some(forced_by) = context.outcomes.forced_invalid_reason() {
+		let (reason_code, factor) = match forced_by {
+			crate::outcomes::OutcomeType::HardBounce => {
+				("outcome_hard_bounce", "outcome_feedback:hard_bounce")
+			}
+			_ => ("outcome_complaint", "outcome_feedback:complaint"),
 		};
 		score.score = 5;
 		score.category = EmailCategory::Invalid;
@@ -485,7 +485,12 @@ pub fn compute_score_with_context(
 	}
 
 	if let Some(provider) = &context.provider_reputation {
-		if score.signals.smtp_is_deliverable && provider.reputation_score >= 80 {
+		// `smtp_is_deliverable` defaults to true when SMTP errored, so the
+		// error check keeps an unanswered probe from earning this bonus.
+		if !score.signals.smtp_error
+			&& score.signals.smtp_is_deliverable
+			&& provider.reputation_score >= 80
+		{
 			adjustment += 5;
 			contextual_codes.push("provider_reputation".to_string());
 			confidence_factors.push(format!(
@@ -511,7 +516,7 @@ pub fn compute_score_with_context(
 		confidence_factors.push("tenant_history:inconsistent".to_string());
 	}
 
-	if let Some(days) = context.tenant_history.latest_days_ago {
+	if let Some(days) = context.tenant_history.latest_safe_days_ago {
 		if days <= 7 {
 			adjustment += 5;
 			confidence_factors.push("fresh_history:within_7_days".to_string());
@@ -579,12 +584,19 @@ pub fn compute_score_with_context(
 			partial
 		});
 
+	// Same catch-all rule as `compute_score`, which deliverability policy relies
+	// on to send low-tier catch-alls, plus a veto when context raised the tier.
+	let catch_all_vetoes = catch_all_severity(&score.signals) == Some(CatchAllSeverity::High)
+		|| catch_all
+			.as_ref()
+			.map(|catch_all| catch_all.severity == InsightCatchAllSeverity::High)
+			.unwrap_or(false);
+
 	score.score = (score.score + adjustment).clamp(0, 100);
 	score.category = category_for_score(score.score);
-	// Same catch-all rule as `compute_score`: only the high tier vetoes.
 	score.safe_to_send = score.category == EmailCategory::Valid
 		&& !score.signals.is_disposable
-		&& catch_all_severity(&score.signals) != Some(CatchAllSeverity::High)
+		&& !catch_all_vetoes
 		&& !score.signals.is_role_account
 		&& !score.signals.is_spam_trap_domain
 		&& partial_confidence.is_none();
@@ -799,8 +811,22 @@ fn compute_partial_confidence(
 		factors.push("tenant_history:inconsistent".to_string());
 	}
 
+	// Every factor above describes the domain. When no SMTP conversation took
+	// place, nothing at all is known about the mailbox, so a well-run domain
+	// must not lift the result to high confidence or a "risky" verdict.
+	let ceiling = match classification {
+		SmtpUncertaintyClass::Network | SmtpUncertaintyClass::SmtpUnreachable => {
+			factors.push("smtp:not_reached".to_string());
+			NO_SMTP_CONVERSATION_CONFIDENCE_CEILING
+		}
+		SmtpUncertaintyClass::Transient
+		| SmtpUncertaintyClass::PolicyBlock
+		| SmtpUncertaintyClass::Timeout
+		| SmtpUncertaintyClass::AmbiguousResponse => 90,
+	};
+
 	PartialConfidence {
-		confidence: confidence.clamp(10, 90),
+		confidence: confidence.clamp(10, ceiling),
 		classification,
 		factors: unique_strings(factors),
 	}
@@ -912,15 +938,19 @@ fn unique_strings(values: Vec<String>) -> Vec<String> {
 	unique
 }
 
-fn collect_reason_codes(
-	signals: &ScoringSignals,
-	provider_rejection_reason: Option<&ProviderRejectionReason>,
-) -> Vec<String> {
+/// The resolver failed, so nothing is known about the domain's mail servers.
+/// Unlike an answer without records, that is no evidence the domain takes no
+/// mail, and must not be reported as `no_mx`.
+fn mx_lookup_failed(output: &CheckEmailOutput) -> bool {
+	output.mx.is_err()
+}
+
+fn collect_reason_codes(signals: &ScoringSignals, output: &CheckEmailOutput) -> Vec<String> {
 	let mut codes = Vec::new();
 	if !signals.valid_syntax {
 		codes.push("invalid_syntax".to_string());
 	}
-	if let Some(reason) = provider_rejection_reason {
+	if let Some(reason) = output.provider_rejection_reason.as_ref() {
 		codes.push("provider_rejected".to_string());
 		codes.push(reason.code().to_string());
 		if signals.has_domain_suggestion {
@@ -931,13 +961,14 @@ fn collect_reason_codes(
 	if matches!(signals.reachable, Reachable::Invalid) {
 		codes.push("invalid_recipient".to_string());
 	}
-	if !signals.smtp_is_deliverable {
+	if !signals.smtp_is_deliverable && !signals.smtp_has_full_inbox {
 		codes.push("smtp_undeliverable".to_string());
 	}
 	if signals.smtp_is_disabled {
 		codes.push("disabled_mailbox".to_string());
 	}
-	if !signals.has_mx_records {
+	// Without valid syntax the lookup never ran.
+	if !signals.has_mx_records && signals.valid_syntax && !mx_lookup_failed(output) {
 		codes.push("no_mx".to_string());
 	}
 	if signals.smtp_error {
@@ -986,13 +1017,10 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		.unwrap_or(false);
 
 	let smtp_error = output.smtp.is_err();
-	// When the MX lookup itself fails (a resolver timeout, SERVFAIL), core
-	// stops before SMTP and leaves the default SMTP block, whose
-	// `is_deliverable` is false. That is not an answer from a mail server,
-	// so it must not read as "undeliverable"; the result is scored as the
-	// unknown it is.
-	let smtp_attempted = output.mx.is_ok();
-	let smtp_ok = output.smtp.as_ref().ok().filter(|_| smtp_attempted);
+	// Core probes SMTP only after the MX lookup finds a host. Otherwise `smtp`
+	// holds `SmtpDetails::default()`, whose false flags mean "not checked",
+	// not "rejected", so they are read like an unanswered probe.
+	let smtp_ok = output.smtp.as_ref().ok().filter(|_| has_mx_records);
 	let misc_ok = output.misc.as_ref().ok();
 
 	ScoringSignals {
@@ -1018,27 +1046,14 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::sandbox::sandbox_mx as test_mx;
 	use check_if_email_exists::{
 		misc::MiscDetails,
-		mx::{MxDetails, MxLookup},
+		mx::MxDetails,
 		provider::{Provider, ProviderConfidence, ProviderRejectionReason},
 		smtp::SmtpDetails,
 		syntax::SyntaxDetails,
 	};
-	use hickory_resolver::{
-		lookup::Lookup,
-		proto::op::Query,
-		proto::rr::{rdata::MX, Name, RData, RecordType},
-	};
-
-	fn test_mx(domain: &str) -> MxDetails {
-		let domain = Name::from_ascii(domain).expect("test domain is valid");
-		let exchange = Name::from_ascii("mail.example.com.").expect("test MX is valid");
-		MxDetails::from(MxLookup::from(Lookup::from_rdata(
-			Query::query(domain, RecordType::MX),
-			RData::MX(MX::new(10, exchange)),
-		)))
-	}
 
 	fn base_output() -> CheckEmailOutput {
 		CheckEmailOutput {
@@ -1144,7 +1159,9 @@ mod tests {
 		let score = compute_score(&output);
 		assert_eq!(score.score, 15);
 		assert_eq!(score.category, EmailCategory::Unknown);
-		assert_eq!(score.sub_reason, SubReason::NoMx);
+		// The failed DNS lookup says nothing about the domain.
+		assert_eq!(score.sub_reason, SubReason::SmtpError);
+		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 		assert!(!score.safe_to_send);
 
 		// What core returns when the MX lookup fails before SMTP runs: the
@@ -1174,7 +1191,7 @@ mod tests {
 				tenant_history: TenantHistoryContext {
 					safe_count_180d: 3,
 					total_count_180d: 3,
-					latest_days_ago: Some(2),
+					latest_safe_days_ago: Some(2),
 					inconsistent_count_180d: 0,
 				},
 				domain: DomainSignalContext {
@@ -1203,12 +1220,66 @@ mod tests {
 	}
 
 	#[test]
+	fn unreachable_smtp_server_stays_unknown_without_high_confidence() {
+		// Production shape: outbound port 25 is blocked, so the TCP connect to
+		// a healthy Gmail MX fails. Every domain-level signal is perfect, but
+		// nothing was learned about the mailbox itself.
+		let mut output = base_output();
+		output.input = "someone@gmail.com".to_string();
+		output.is_reachable = Reachable::Unknown;
+		output.mx = Ok(test_mx("gmail.com."));
+		output.misc = Ok(MiscDetails {
+			is_b2c: true,
+			..Default::default()
+		});
+		output.smtp = Err(SmtpError::from(std::io::Error::new(
+			std::io::ErrorKind::ConnectionRefused,
+			"connection refused",
+		)));
+		output.provider = Some(Provider::Gmail);
+		output.provider_confidence = Some(ProviderConfidence::High);
+		let context = ScoringContext {
+			domain: DomainSignalContext {
+				domain_age_days: Some(9000),
+				website_present: Some(true),
+				has_spf: Some(true),
+				has_dkim: Some(true),
+				has_dmarc: Some(true),
+			},
+			provider_reputation: provider_reputation_context(
+				output.provider.as_ref(),
+				output.provider_confidence.as_ref(),
+			),
+			..Default::default()
+		};
+
+		let computation = compute_score_with_context(&output, &context);
+
+		assert_eq!(computation.score.category, EmailCategory::Unknown);
+		assert!(!computation.score.safe_to_send);
+		assert!(!computation
+			.score
+			.reason_codes
+			.contains(&"provider_reputation".to_string()));
+		assert_ne!(computation.insights.confidence_level, ConfidenceLevel::High);
+		assert_eq!(
+			computation
+				.insights
+				.partial_confidence
+				.as_ref()
+				.map(|partial| partial.classification),
+			Some(SmtpUncertaintyClass::Network)
+		);
+	}
+
+	#[test]
 	fn contextual_catch_all_uses_pattern_tier_instead_of_flat_penalty() {
 		let mut output = base_output();
 		output.input = "john.smith@company.com".to_string();
 		output.is_reachable = Reachable::Risky;
 		output.syntax.domain = "company.com".to_string();
 		output.syntax.username = "john.smith".to_string();
+		output.mx = Ok(test_mx("company.com."));
 		output.smtp = Ok(SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: false,
@@ -1449,6 +1520,44 @@ mod tests {
 	}
 
 	#[test]
+	fn contextual_scoring_keeps_low_tier_catch_all_sendable() {
+		let mut output = base_output();
+		output.mx = Ok(test_mx("example.com."));
+		output.smtp = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: false,
+			is_catch_all: true,
+			is_deliverable: true,
+			is_disabled: false,
+		});
+		output.misc = Ok(MiscDetails {
+			is_b2c: true,
+			..Default::default()
+		});
+		assert!(compute_score(&output).safe_to_send);
+
+		let low = compute_score_with_context(&output, &ScoringContext::default());
+		assert!(low.score.safe_to_send);
+
+		// Domain evidence can raise the same catch-all to high, which vetoes.
+		let high = compute_score_with_context(
+			&output,
+			&ScoringContext {
+				domain: DomainSignalContext {
+					website_present: Some(false),
+					..Default::default()
+				},
+				..Default::default()
+			},
+		);
+		assert_eq!(
+			high.insights.catch_all.map(|catch_all| catch_all.severity),
+			Some(InsightCatchAllSeverity::High)
+		);
+		assert!(!high.score.safe_to_send);
+	}
+
+	#[test]
 	fn safe_to_send_false_catch_all() {
 		let mut output = base_output();
 		output.smtp = Ok(SmtpDetails {
@@ -1461,6 +1570,63 @@ mod tests {
 		let score = compute_score(&output);
 		// Corporate catch-all emails are never safe to send regardless of category.
 		assert!(!score.safe_to_send);
+	}
+
+	#[test]
+	fn dns_failure_is_unknown_not_a_rejected_mailbox() {
+		// When the MX lookup itself errors, core never probes SMTP and fills
+		// `smtp` with `SmtpDetails::default()`, whose flags are all false.
+		let mut output = base_output();
+		output.is_reachable = Reachable::Unknown;
+		output.mx = Err(check_if_email_exists::mx::MxError::from(
+			std::io::Error::other("dns timeout"),
+		));
+		output.smtp = Ok(SmtpDetails::default());
+
+		let computation = compute_score_with_context(&output, &ScoringContext::default());
+
+		assert_eq!(computation.score.category, EmailCategory::Unknown);
+		// Not "the domain has no mail server": the lookup never answered.
+		assert_eq!(computation.score.sub_reason, SubReason::Unknown);
+		for misleading in ["smtp_undeliverable", "no_mx"] {
+			assert!(
+				!computation
+					.score
+					.reason_codes
+					.contains(&misleading.to_string()),
+				"{}",
+				misleading
+			);
+		}
+		assert_ne!(
+			computation.insights.confidence_factors,
+			vec!["hard_invalid_signal".to_string()]
+		);
+	}
+
+	#[test]
+	fn full_inbox_is_risky_rather_than_invalid() {
+		// The mailbox exists but is over quota: the parser reports it as not
+		// deliverable, yet it is a temporary, risky state, not a dead address.
+		let mut output = base_output();
+		output.is_reachable = Reachable::Risky;
+		output.mx = Ok(test_mx("example.com."));
+		output.smtp = Ok(SmtpDetails {
+			can_connect_smtp: true,
+			has_full_inbox: true,
+			is_catch_all: false,
+			is_deliverable: false,
+			is_disabled: false,
+		});
+		let score = compute_score(&output);
+		assert_eq!(score.category, EmailCategory::Risky);
+		assert_eq!(score.sub_reason, SubReason::FullInbox);
+		assert!(score.score > 0);
+		assert!(!score.safe_to_send);
+		assert!(score.reason_codes.contains(&"full_inbox".to_string()));
+		assert!(!score
+			.reason_codes
+			.contains(&"smtp_undeliverable".to_string()));
 	}
 
 	#[test]
@@ -1491,6 +1657,7 @@ mod tests {
 	#[test]
 	fn reason_codes_multiple_flags() {
 		let mut output = base_output();
+		output.mx = Ok(test_mx("example.com."));
 		output.smtp = Ok(SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: false,
@@ -1530,7 +1697,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals, None);
+		let codes = collect_reason_codes(&signals, &base_output());
 		assert_eq!(codes, vec!["deliverable"]);
 	}
 
@@ -1549,6 +1716,8 @@ mod tests {
 		let score = compute_score(&output);
 		assert!(score.reason_codes.contains(&"invalid_syntax".to_string()));
 		assert!(!score.reason_codes.contains(&"deliverable".to_string()));
+		// The MX lookup is skipped for invalid syntax, so it found nothing out.
+		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 	}
 
 	#[test]
@@ -1583,7 +1752,7 @@ mod tests {
 			is_free_provider: false,
 			has_domain_suggestion: false,
 		};
-		let codes = collect_reason_codes(&signals, None);
+		let codes = collect_reason_codes(&signals, &base_output());
 		assert!(codes.contains(&"spam_trap".to_string()));
 		assert!(!codes.contains(&"deliverable".to_string()));
 	}

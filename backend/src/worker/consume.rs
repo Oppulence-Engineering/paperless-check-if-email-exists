@@ -1,4 +1,4 @@
-use super::do_work::{do_check_email_work, CheckEmailTask, TaskError};
+use super::do_work::{do_check_email_work, sync_related_entities, CheckEmailTask, TaskError};
 use super::single_shot::send_single_shot_reply;
 use crate::config::{BackendConfig, RabbitMQConfig};
 use crate::worker::do_work::CheckEmailJobId;
@@ -9,12 +9,25 @@ use lapin::{options::*, types::FieldTable, Channel, Connection, ConnectionProper
 use sentry_anyhow::capture_anyhow;
 use std::sync::Arc;
 use tokio::time::{timeout, Duration};
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, error, info, trace};
 
 /// Our RabbitMQ only has one queue: "check_email".
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
 const RABBITMQ_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Longest a throttled bulk delivery is held before being requeued. Per-hour
+/// and per-day throttle windows can be far longer, and holding an unacked
+/// delivery past RabbitMQ's consumer ack timeout (30 minutes by default)
+/// gets the whole channel closed.
+const MAX_THROTTLE_REQUEUE_DELAY: Duration = Duration::from_secs(60);
+/// Shortest hold, so a window that has just rolled over (delay of zero)
+/// cannot turn into a tight requeue loop.
+const MIN_THROTTLE_REQUEUE_DELAY: Duration = Duration::from_millis(100);
+
+fn throttle_requeue_delay(throttle_delay: Duration) -> Duration {
+	throttle_delay.clamp(MIN_THROTTLE_REQUEUE_DELAY, MAX_THROTTLE_REQUEUE_DELAY)
+}
 
 /// Set up the RabbitMQ connection and declare the "check_email" queue.
 ///
@@ -57,6 +70,14 @@ pub async fn setup_rabbit_mq(
 			},
 			queue_args.clone(),
 		)
+		.await?;
+
+	// Publisher confirms: without them a publish on this channel "succeeds"
+	// as soon as the frame is written to the socket, and a broker crash right
+	// after silently loses the task. With them, publish_payload waits for the
+	// broker's ack (for persistent messages: once written to disk).
+	channel
+		.confirm_select(ConfirmSelectOptions::default())
 		.await?;
 
 	// Set up prefetch (concurrency) limit using qos
@@ -170,16 +191,22 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 					}
 				}
 				CheckEmailJobId::Bulk(_) => {
-					// Wait out (part of) the throttle window before putting the
-					// message back: the broker redelivers a requeued message at
-					// once, so requeueing straight away spins the worker and
-					// the broker until the window resets. The cap keeps the
-					// message well inside RabbitMQ's delivery ack timeout.
-					tokio::time::sleep(throttle_result.delay.min(MAX_THROTTLE_PAUSE)).await;
-					delivery
-						.reject(BasicRejectOptions { requeue: true })
-						.await?;
-					debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Requeued message because of throttling");
+					// Put the message back so that this or another worker can
+					// pick it up, but only once the throttle window has passed:
+					// requeueing right away hands the same message straight
+					// back to us in a hot loop for the whole window. Holding the
+					// delivery unacked meanwhile keeps its prefetch slot busy,
+					// which also stops this worker pulling more messages.
+					let wait = throttle_requeue_delay(throttle_result.delay);
+					tokio::spawn(async move {
+						tokio::time::sleep(wait).await;
+						if let Err(err) =
+							delivery.reject(BasicRejectOptions { requeue: true }).await
+						{
+							error!(target: LOG_TARGET, error=?err, "Failed to requeue throttled message");
+						}
+					});
+					debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, wait=?wait, "Requeueing message after throttle delay");
 				}
 			}
 
@@ -189,35 +216,44 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 		// Check if the job has been cancelled before processing
 		if let CheckEmailJobId::Bulk(job_id) = &payload.job_id {
 			if let Some(pool) = config_clone.get_pg_pool() {
-				let job_status = sqlx::query_scalar!(
-					r#"SELECT status as "status: String" FROM v1_bulk_job WHERE id = $1"#,
-					*job_id
+				// The cast is required: query_scalar! decodes with a type check,
+				// and the job_state enum is not a String. That decode error used
+				// to be dropped, so cancelled jobs kept verifying their tasks.
+				let job_status = sqlx::query_scalar::<_, String>(
+					"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
 				)
+				.bind(*job_id)
 				.fetch_optional(&pool)
 				.await;
+				if let Err(error) = &job_status {
+					error!(target: LOG_TARGET, job_id = *job_id, error = ?error, "Could not read job status before processing a task");
+				}
 
 				if let Ok(Some(status)) = job_status {
 					if status == "cancelling" || status == "cancelled" {
 						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
-						delivery.ack(BasicAckOptions::default()).await?;
 
-						// Mark the task cancelled if it can still run. A finished
-						// task (for example one whose delayed recheck message
-						// arrives after the cancel) keeps its result.
+						// Mark task as cancelled if we have its DB id and it can
+						// still run. A task that already has a result (a delayed
+						// recheck) keeps it, and a finished task keeps its state.
 						if let Some(task_db_id) =
 							payload.metadata.as_ref().and_then(|m| m.task_db_id)
 						{
 							let _ = sqlx::query(
-								"UPDATE v1_task_result SET task_state = 'cancelled', updated_at = NOW(), completed_at = NOW() WHERE id = $1 AND task_state IN ('queued', 'running', 'retrying')",
+								"UPDATE v1_task_result SET task_state = CASE WHEN result IS NOT NULL THEN 'completed'::task_state ELSE 'cancelled'::task_state END, completed_at = CASE WHEN result IS NOT NULL THEN completed_at ELSE NOW() END, updated_at = NOW() WHERE id = $1 AND task_state IN ('queued', 'running', 'retrying')",
 							)
 							.bind(task_db_id)
 							.execute(&pool)
 							.await;
 						}
-						// This may have been the job's last open task. Nothing
-						// else would move the job out of `cancelling`.
-						finish_cancelled_job(config_clone.as_ref(), &pool, *job_id).await;
 
+						// This may have been the job's last non-terminal task
+						// (e.g. one that was running or being retried when the
+						// cancel came in). Nothing else will finalize the job
+						// afterwards, so do it here or it stays 'cancelling'.
+						sync_related_entities(&config_clone, &payload).await;
+
+						delivery.ack(BasicAckOptions::default()).await?;
 						continue;
 					}
 				}
@@ -254,20 +290,27 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 	bail!("RabbitMQ consumer ended unexpectedly")
 }
 
-/// The longest a throttled bulk message waits before it goes back to the
-/// queue.
-const MAX_THROTTLE_PAUSE: std::time::Duration = std::time::Duration::from_secs(10);
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-/// Finish a cancelled job, and the pipeline run that owns it, once its last
-/// open task was skipped.
-async fn finish_cancelled_job(config: &BackendConfig, pool: &sqlx::PgPool, job_id: i32) {
-	if let Err(err) = crate::worker::job_lifecycle::finalize_bulk_job_if_done(pool, job_id).await {
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to finalize cancelled job");
-		return;
-	}
-	if let Err(err) =
-		crate::pipelines::maybe_finalize_pipeline_run_for_job(config, pool, job_id).await
-	{
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to finalize pipeline run for cancelled job");
+	#[test]
+	fn throttled_delivery_is_held_for_the_window_but_never_past_the_ack_timeout() {
+		// Per-day limit hit: waiting out the window would exceed the broker's
+		// ack timeout, so the hold is capped.
+		assert_eq!(
+			throttle_requeue_delay(Duration::from_secs(23 * 3600)),
+			MAX_THROTTLE_REQUEUE_DELAY
+		);
+		// Window just rolled over: still not an immediate requeue.
+		assert_eq!(
+			throttle_requeue_delay(Duration::ZERO),
+			MIN_THROTTLE_REQUEUE_DELAY
+		);
+		// Per-second / per-minute windows are waited out exactly.
+		assert_eq!(
+			throttle_requeue_delay(Duration::from_millis(750)),
+			Duration::from_millis(750)
+		);
 	}
 }

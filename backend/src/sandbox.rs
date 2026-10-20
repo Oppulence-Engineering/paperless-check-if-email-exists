@@ -2,7 +2,7 @@ use check_if_email_exists::{
 	misc::MiscDetails,
 	mx::{MxDetails, MxLookup},
 	smtp::SmtpDetails,
-	syntax::SyntaxDetails,
+	syntax::check_syntax,
 	CheckEmailOutput, Reachable,
 };
 use hickory_resolver::{
@@ -11,11 +11,14 @@ use hickory_resolver::{
 	proto::rr::{rdata::MX, Name, RData, RecordType},
 };
 
-fn sandbox_mx(domain: &str) -> MxDetails {
-	// The domain comes from the request and need not be a valid DNS name
-	// (`a@exa mple.com`); it only names the query of this mock answer.
+/// MX details holding one record for `domain`. Tests reuse it to build
+/// outputs whose SMTP flags count, since those need an MX host.
+pub(crate) fn sandbox_mx(domain: &str) -> MxDetails {
+	// The query name is not part of the output, so a name hickory rejects
+	// falls back to a fixed one rather than failing the request.
 	let domain = Name::from_ascii(domain)
-		.unwrap_or_else(|_| Name::from_ascii("example.com.").expect("static name is valid"));
+		.or_else(|_| Name::from_ascii("example.com."))
+		.expect("fallback sandbox domain is valid");
 	let exchange = Name::from_ascii("mail.example.com.").expect("sandbox MX is valid");
 	MxDetails::from(MxLookup::from(Lookup::from_rdata(
 		Query::query(domain, RecordType::MX),
@@ -32,22 +35,14 @@ fn sandbox_mx(domain: &str) -> MxDetails {
 /// - `*@disposable.example.com` → risky, disposable
 /// - Any other domain → safe, deliverable (default)
 pub fn sandbox_check(email: &str) -> CheckEmailOutput {
-	let parts: Vec<&str> = email.splitn(2, '@').collect();
-	let (username, domain) = if parts.len() == 2 {
-		(parts[0], parts[1])
-	} else {
-		// Invalid email — no @ sign
+	// Same syntax gate as a real check, so a malformed address comes back
+	// invalid instead of "safe", and never reaches DNS name parsing.
+	let syntax = check_syntax(email);
+	if !syntax.is_valid_syntax {
 		return CheckEmailOutput {
 			input: email.to_string(),
 			is_reachable: Reachable::Invalid,
-			syntax: SyntaxDetails {
-				address: None,
-				domain: String::new(),
-				is_valid_syntax: false,
-				username: email.to_string(),
-				normalized_email: None,
-				suggestion: None,
-			},
+			syntax,
 			misc: Ok(MiscDetails::default()),
 			mx: Ok(MxDetails::default()),
 			smtp: Ok(SmtpDetails {
@@ -63,17 +58,9 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			provider_confidence: None,
 			debug: Default::default(),
 		};
-	};
+	}
 
-	let domain_lower = domain.to_lowercase();
-	let syntax = SyntaxDetails {
-		address: None,
-		domain: domain_lower.clone(),
-		is_valid_syntax: !username.is_empty() && !domain.is_empty(),
-		username: username.to_string(),
-		normalized_email: Some(format!("{}@{}", username, domain_lower)),
-		suggestion: None,
-	};
+	let domain_lower = syntax.domain.to_lowercase();
 
 	match domain_lower.as_str() {
 		"invalid.example.com" => CheckEmailOutput {
@@ -178,16 +165,30 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn sandbox_rejects_malformed_addresses_without_panicking() {
+		for email in [
+			"a@b..com",
+			"a@bü.com",
+			"a@b c.com",
+			"user@",
+			"@valid.example.com",
+		] {
+			let result = sandbox_check(email);
+			assert_eq!(result.is_reachable, Reachable::Invalid, "{}", email);
+			assert!(!result.syntax.is_valid_syntax, "{}", email);
+			assert_eq!(
+				crate::scoring::compute_score(&result).category,
+				crate::scoring::EmailCategory::Invalid,
+				"{}",
+				email
+			);
+		}
+	}
+
+	#[test]
 	fn sandbox_valid_domain() {
 		let result = sandbox_check("test@valid.example.com");
 		assert_eq!(result.is_reachable, Reachable::Safe);
-		// A domain that is not a DNS name gets the default scenario
-		// instead of panicking the request.
-		assert_eq!(
-			sandbox_check("a@exa mple.com").is_reachable,
-			Reachable::Safe
-		);
-		assert_eq!(sandbox_check("a@b..com").is_reachable, Reachable::Safe);
 		assert!(crate::scoring::compute_score(&result).safe_to_send);
 	}
 

@@ -2,15 +2,15 @@ use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
-use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
+use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::quota::{
 	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
 };
-use crate::worker::do_work::CheckEmailTask;
+use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskWebhook};
 use check_if_email_exists::LOG_TARGET;
 use lapin::BasicProperties;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use tracing::info;
@@ -170,7 +170,7 @@ async fn http_handler(
 		let payload: serde_json::Value = row.get("payload");
 		let task_db_id: i32 = row.get("id");
 
-		let mut task: CheckEmailTask = match serde_json::from_value(payload) {
+		let mut task = match task_from_payload(&payload, job_id, Arc::clone(&config)) {
 			Ok(task) => task,
 			Err(err) => {
 				release_unpublished_retry_quota(
@@ -292,6 +292,46 @@ async fn http_handler(
 	}))
 }
 
+/// Rebuilds the task to republish from a stored task payload.
+///
+/// Bulk API rows store the whole CheckEmailTask. List and pipeline rows store
+/// only `{"input": {"to_email"}, "job_id", "webhook"}`, which has no
+/// verif_method; those are rebuilt from the current configuration the same
+/// way they were first published. Rebuilding here, rather than storing the
+/// whole task for list rows, keeps the configured proxy credentials out of
+/// those payloads, which the failure report returns to the tenant.
+fn task_from_payload(
+	payload: &serde_json::Value,
+	job_id: i32,
+	config: Arc<BackendConfig>,
+) -> Result<CheckEmailTask, serde_json::Error> {
+	#[derive(Deserialize)]
+	struct StoredInput {
+		to_email: String,
+	}
+	#[derive(Deserialize)]
+	struct StoredTask {
+		input: StoredInput,
+		#[serde(default)]
+		webhook: Option<TaskWebhook>,
+	}
+
+	if let Ok(task) = CheckEmailTask::deserialize(payload) {
+		return Ok(task);
+	}
+	let stored = StoredTask::deserialize(payload)?;
+	Ok(CheckEmailTask {
+		input: CheckEmailRequest {
+			to_email: stored.input.to_email,
+			..Default::default()
+		}
+		.to_check_email_input(config),
+		job_id: CheckEmailJobId::Bulk(job_id),
+		webhook: stored.webhook,
+		metadata: None,
+	})
+}
+
 async fn release_unpublished_retry_quota(
 	pg_pool: &PgPool,
 	tenant_id: Option<uuid::Uuid>,
@@ -324,4 +364,57 @@ pub fn v1_retry_job(
 		.and(with_worker_db(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::worker::do_work::Webhook;
+	use serde_json::json;
+
+	#[test]
+	fn list_payload_without_verif_method_is_rebuilt_for_retry() {
+		// Lists and pipelines store only the address; deserializing that as a
+		// CheckEmailTask failed on the missing verif_method and retry returned 500.
+		let config = Arc::new(BackendConfig::empty());
+		let payload = json!({
+			"input": {"to_email": "johndoe@gmail.com"},
+			"job_id": {"bulk": 7},
+			"webhook": null
+		});
+		let task = task_from_payload(&payload, 7, Arc::clone(&config)).unwrap();
+		assert_eq!(task.input.to_email, "johndoe@gmail.com");
+		assert!(matches!(task.job_id, CheckEmailJobId::Bulk(7)));
+
+		assert!(task_from_payload(&json!({"job_id": {"bulk": 7}}), 7, config).is_err());
+	}
+
+	#[test]
+	fn full_bulk_payload_keeps_its_webhook_on_retry() {
+		let config = Arc::new(BackendConfig::empty());
+		let stored = CheckEmailTask {
+			input: crate::http::CheckEmailRequest {
+				to_email: "a@example.com".into(),
+				..Default::default()
+			}
+			.to_check_email_input(Arc::clone(&config)),
+			job_id: CheckEmailJobId::Bulk(3),
+			webhook: Some(TaskWebhook {
+				on_each_email: Some(Webhook {
+					url: "https://hooks.example.com/each".into(),
+					headers: Default::default(),
+					extra: None,
+				}),
+			}),
+			metadata: None,
+		};
+		let task = task_from_payload(&serde_json::to_value(&stored).unwrap(), 3, config).unwrap();
+		assert_eq!(task.input.to_email, "a@example.com");
+		assert_eq!(
+			task.webhook
+				.and_then(|webhook| webhook.on_each_email)
+				.map(|webhook| webhook.url),
+			Some("https://hooks.example.com/each".to_string())
+		);
+	}
 }

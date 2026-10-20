@@ -77,7 +77,7 @@ impl AsRef<str> for EmailAddress {
 
 /// Perform the email verification via a specified proxy. The usage of a proxy
 /// is optional.
-#[derive(Debug, Default, Clone, Deserialize, PartialEq, Serialize)]
+#[derive(Default, Clone, Deserialize, PartialEq, Serialize)]
 pub struct CheckEmailInputProxy {
 	/// Use the specified SOCKS5 proxy host to perform email verification.
 	pub host: String,
@@ -89,6 +89,20 @@ pub struct CheckEmailInputProxy {
 	pub password: Option<String>,
 	/// The timeout for the connection to the proxy, in ms.
 	pub timeout_ms: Option<u64>,
+}
+
+/// Debug output ends up in logs (the backend prints its verification config
+/// at startup), so the password is never shown.
+impl std::fmt::Debug for CheckEmailInputProxy {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("CheckEmailInputProxy")
+			.field("host", &self.host)
+			.field("port", &self.port)
+			.field("username", &self.username)
+			.field("password", &self.password.as_ref().map(|_| "<redacted>"))
+			.field("timeout_ms", &self.timeout_ms)
+			.finish()
+	}
 }
 
 /// Builder pattern for the input argument into the main `email_exists`
@@ -320,8 +334,32 @@ pub struct WebdriverConfig {
 
 #[cfg(test)]
 mod tests {
-	use super::{CheckEmailOutput, DebugDetails};
+	use super::{CheckEmailInputProxy, CheckEmailOutput, DebugDetails};
+	use crate::smtp::verif_method::VerifMethod;
 	use async_smtp::response::{Category, Code, Detail, Response, Severity};
+
+	#[test]
+	fn logged_verification_config_hides_the_proxy_password() {
+		let verif_method = VerifMethod::new_with_same_config_for_all(
+			Some(CheckEmailInputProxy {
+				host: "proxy.example.com".into(),
+				port: 1080,
+				username: Some("proxy-user".into()),
+				password: Some("hunter2-secret".into()),
+				timeout_ms: None,
+			}),
+			"example.com".into(),
+			"verify@example.com".into(),
+			25,
+			None,
+			1,
+		);
+
+		// What the backend logs at startup.
+		let logged = format!("{:#?}", verif_method);
+		assert!(!logged.contains("hunter2-secret"), "{}", logged);
+		assert!(logged.contains("proxy.example.com"), "{}", logged);
+	}
 
 	#[test]
 	fn should_serialize_correctly() {

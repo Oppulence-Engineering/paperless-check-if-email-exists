@@ -1,9 +1,10 @@
 use crate::syntax::SyntaxDetails;
 use crate::util::ser_with_display::ser_with_display;
 use hickory_resolver::lookup::Lookup;
-use hickory_resolver::net::NetError;
+use hickory_resolver::net::{NetError, NoRecords};
+use hickory_resolver::proto::op::{Query, ResponseCode};
 use hickory_resolver::proto::rr::rdata::MX;
-use hickory_resolver::proto::rr::RData;
+use hickory_resolver::proto::rr::{Name, RData, RecordType};
 use hickory_resolver::TokioResolver;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::io;
@@ -20,17 +21,15 @@ pub struct MxLookup(Lookup);
 
 impl MxLookup {
 	/// The MX records of the answer, in the order that the server sent them.
-	/// A null MX (RFC 7505: exchange `.`) says the domain accepts no mail, so
-	/// it is left out; a domain with only a null MX has no mail exchangers.
+	/// A null MX (RFC 7505: `MX 0 .`) names no mail server, so it's left out.
 	pub fn iter(&self) -> impl Iterator<Item = &MX> {
 		self.0
 			.answers()
 			.iter()
 			.filter_map(|record| match &record.data {
-				RData::MX(mx) => Some(mx),
+				RData::MX(mx) if !mx.exchange.is_root() => Some(mx),
 				_ => None,
 			})
-			.filter(|mx| !mx.exchange.is_root())
 	}
 }
 
@@ -56,6 +55,15 @@ impl Default for MxDetails {
 
 impl From<MxLookup> for MxDetails {
 	fn from(lookup: MxLookup) -> Self {
+		// A domain whose only MX is null has declared that it accepts no mail.
+		// Report it like a domain without MX records, instead of trying to
+		// connect to an empty host name.
+		if lookup.iter().next().is_none() {
+			let no_records = NoRecords::new(lookup.0.query().clone(), ResponseCode::NoError);
+			return MxDetails {
+				lookup: Err(no_records.into()),
+			};
+		}
 		MxDetails { lookup: Ok(lookup) }
 	}
 }
@@ -116,10 +124,35 @@ pub async fn check_mx(syntax: &SyntaxDetails) -> Result<MxDetails, MxError> {
 
 	match resolver.mx_lookup(&syntax.domain).await {
 		Ok(lookup) => Ok(MxDetails::from(MxLookup::from(lookup))),
+		// RFC 5321 5.1: a domain that exists but publishes no MX record still
+		// receives mail at its own address. A null MX is an answer, not a
+		// missing record, so it never reaches this fallback.
+		Err(err) if err.is_no_records_found() && !err.is_nx_domain() => {
+			match resolver.lookup_ip(syntax.domain.as_str()).await {
+				Ok(addresses) if addresses.iter().next().is_some() => {
+					Ok(implicit_mx_details(&syntax.domain)
+						.unwrap_or(MxDetails { lookup: Err(err) }))
+				}
+				Ok(_) => Ok(MxDetails { lookup: Err(err) }),
+				Err(ip_err) if ip_err.is_no_records_found() => Ok(MxDetails { lookup: Err(err) }),
+				Err(ip_err) => Err(ip_err.into()),
+			}
+		}
 		// Prefer to return an empty MX lookup if there are no records.
 		Err(err) if err.is_no_records_found() => Ok(MxDetails { lookup: Err(err) }),
 		Err(err) => Err(err.into()),
 	}
+}
+
+/// MX details naming `domain` itself as the only exchanger, at preference 0,
+/// which is how RFC 5321 treats a domain with an address but no MX record.
+fn implicit_mx_details(domain: &str) -> Option<MxDetails> {
+	let name = Name::from_ascii(format!("{}.", domain.trim_end_matches('.'))).ok()?;
+	let lookup = Lookup::from_rdata(
+		Query::query(name.clone(), RecordType::MX),
+		RData::MX(MX::new(0, name)),
+	);
+	Some(MxDetails::from(MxLookup::from(lookup)))
 }
 
 /// Check if the MX host is from Google, i.e. either a @gmail.com address, or
@@ -212,6 +245,62 @@ pub fn is_yahoo(mx_host: &str) -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use hickory_resolver::proto::rr::Record;
+
+	fn mx_details_for(exchanges: &[&str]) -> MxDetails {
+		let domain = Name::from_ascii("example.com.").unwrap();
+		let records = exchanges.iter().map(|exchange| {
+			let exchange = Name::from_ascii(exchange).unwrap();
+			Record::from_rdata(domain.clone(), 3600, RData::MX(MX::new(0, exchange)))
+		});
+		let query = Query::query(domain.clone(), RecordType::MX);
+		MxDetails::from(MxLookup::from(Lookup::new_with_max_ttl(query, records)))
+	}
+
+	fn accepts_mail(mx: &MxDetails) -> bool {
+		serde_json::to_value(mx).unwrap()["accepts_mail"] == true
+	}
+
+	#[test]
+	fn null_mx_means_the_domain_accepts_no_mail() {
+		// RFC 7505: the single record "MX 0 ." declares that the domain
+		// receives no mail.
+		let null_mx = mx_details_for(&["."]);
+		assert!(null_mx.lookup.is_err());
+		assert!(!accepts_mail(&null_mx));
+
+		// RFC 7505 forbids mixing a null MX with real ones; if a domain does,
+		// the real ones still get the mail.
+		let mixed = mx_details_for(&[".", "mx.example.com."]);
+		let exchanges: Vec<String> = mixed
+			.lookup
+			.as_ref()
+			.unwrap()
+			.iter()
+			.map(|mx| mx.exchange.to_string())
+			.collect();
+		assert_eq!(exchanges, vec!["mx.example.com.".to_string()]);
+		assert!(accepts_mail(&mixed));
+	}
+
+	#[test]
+	fn implicit_mx_is_the_domain_itself() {
+		// RFC 5321 5.1: with no MX record, the domain's own address is the
+		// mail exchanger, at preference 0.
+		for domain in ["example.com", "example.com."] {
+			let implicit = implicit_mx_details(domain).expect("valid domain");
+			assert!(accepts_mail(&implicit));
+			let exchanges: Vec<String> = implicit
+				.lookup
+				.as_ref()
+				.unwrap()
+				.iter()
+				.map(|mx| format!("{} {}", mx.preference, mx.exchange))
+				.collect();
+			assert_eq!(exchanges, vec!["0 example.com.".to_string()]);
+		}
+		assert!(implicit_mx_details("not a domain").is_none());
+	}
 
 	#[test]
 	fn proofpoint_detection_is_case_insensitive() {

@@ -270,12 +270,24 @@ pub async fn prepare_verification_response_at(
 	let read_pool = config.get_read_pg_pool();
 	let write_pool = config.get_pg_pool();
 	let bounce_risk_service = config.get_bounce_risk_service();
-	let baseline_score = compute_score(output);
+	let warn_enrichment_failed = |error: &anyhow::Error| {
+		let email_domain = output
+			.input
+			.rsplit_once('@')
+			.map(|(_, domain)| domain)
+			.unwrap_or("unknown");
+		warn!(
+			target: LOG_TARGET,
+			error = ?error,
+			email_domain = %email_domain,
+			tenant_id = ?tenant_id,
+			"Bounce-risk enrichment failed, continuing without enrichment"
+		);
+	};
 
-	let bounce_risk_result = match bounce_risk_service
-		.assess(
+	let collected_signals = bounce_risk_service
+		.collect_signals(
 			output,
-			&baseline_score,
 			read_pool.as_ref(),
 			write_pool.as_ref(),
 			&BounceRiskRequestContext {
@@ -285,35 +297,32 @@ pub async fn prepare_verification_response_at(
 			},
 		)
 		.await
-	{
-		Ok(result) => result,
-		Err(error) => {
-			let email_domain = output
-				.input
-				.rsplit_once('@')
-				.map(|(_, domain)| domain)
-				.unwrap_or("unknown");
-			warn!(
-				target: LOG_TARGET,
-				error = ?error,
-				email_domain = %email_domain,
-				tenant_id = ?tenant_id,
-				"Bounce-risk enrichment failed, continuing without enrichment"
-			);
+		.unwrap_or_else(|error| {
+			warn_enrichment_failed(&error);
 			None
-		}
-	};
+		});
 
 	let scoring_context = build_scoring_context(
 		read_pool.as_ref(),
 		tenant_id,
 		output,
 		completed_at,
-		bounce_risk_result.as_ref().map(|result| &result.signals),
+		collected_signals
+			.as_ref()
+			.map(|collected| &collected.signals),
 	)
 	.await;
 	let score_computation = compute_score_with_context(output, &scoring_context);
 	let email_score = score_computation.score.clone();
+
+	// Bounce risk is scored against the same contextual score that is stored
+	// and shown, so its history comparison and overrides agree with it.
+	let bounce_risk_result = collected_signals.and_then(|collected| {
+		bounce_risk_service
+			.assess(collected, &email_score, completed_at)
+			.map_err(|error| warn_enrichment_failed(&error))
+			.ok()
+	});
 	let mut value = scored_json_with_score_and_insights(
 		output,
 		&email_score,
@@ -349,42 +358,34 @@ pub async fn prepare_verification_response_at(
 	} else {
 		PolicyMode::Deliverability
 	};
-	// A live suppression in this tenant overrides the verification result:
-	// the address must not be recommended for sending. Same lookup as
-	// GET /v1/suppressions/check. It reads the primary: a replica can lag
-	// behind a suppression added moments ago.
-	let active_suppression = if let (Some(tenant_id), Some(pool)) =
-		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))
-	{
-		sqlx::query_scalar::<_, bool>(
-			r#"
-			SELECT EXISTS (
-				SELECT 1 FROM v1_suppression_entries
-				WHERE tenant_id = $1
-				  AND canonical_email = $2
-				  AND status = 'active'
-				  AND (expires_at IS NULL OR expires_at > NOW())
-			)
-			"#,
-		)
-		.bind(tenant_id)
-		.bind(crate::suppression::suppression_key(&output.input))
-		.fetch_one(pool)
-		.await?
-	} else {
-		false
+	// A single check must honour the tenant's suppression list and bounce
+	// history like list remediation does, or a suppressed address gets "Send".
+	// It reads the primary: a replica can lag behind a suppression added
+	// moments ago.
+	let active_suppression = match (tenant_id, write_pool.as_ref().or(read_pool.as_ref())) {
+		(Some(tenant_id), Some(pool)) => {
+			crate::suppression::has_active_suppression(pool, tenant_id, &output.input).await?
+		}
+		_ => false,
+	};
+	let custom_profile = match (policy_mode, tenant_id, read_pool.as_ref()) {
+		(PolicyMode::Custom, Some(tenant_id), Some(pool)) => {
+			crate::decision::custom_policy::load_active_profile(pool, tenant_id).await?
+		}
+		_ => None,
 	};
 	let decision_input = DecisionInput {
 		score: &email_score,
 		completed_at,
 		evaluated_at,
 		policy_mode,
-		policy_profile_key: None,
+		policy_profile_key: custom_profile.as_ref().map(|(key, _)| key.clone()),
 		domain_suggestion: output.syntax.suggestion.as_deref(),
 		suggested_email: output.syntax.suggestion.clone(),
 		bounce_risk: bounce_risk.as_ref(),
 		active_suppression,
-		previous_hard_bounce: false,
+		previous_hard_bounce: scoring_context.outcomes.hard_bounce_counts(),
+		custom_policy: custom_profile.as_ref().map(|(_, rules)| rules),
 	};
 	let (recommendation, policy_evaluation) = evaluate_decision(&decision_input);
 	if let Some(result_obj) = value.as_object_mut() {
@@ -483,6 +484,9 @@ async fn enrich_tenant_scoring_context(
 			completed_at
 		FROM v1_task_result
 		WHERE tenant_id = $1
+		  AND task_state = 'completed'
+		  AND result IS NOT NULL
+		  AND is_duplicate = false
 		  AND completed_at IS NOT NULL
 		  AND completed_at >= $4 - INTERVAL '180 days'
 		  AND completed_at < $4
@@ -501,26 +505,16 @@ async fn enrich_tenant_scoring_context(
 	.fetch_all(pool)
 	.await?;
 
-	let mut history = TenantHistoryContext::default();
-	for row in rows {
-		history.total_count_180d += 1;
-		let category = row.get::<Option<String>, _>("category");
-		let safe_to_send = row.get::<Option<bool>, _>("safe_to_send").unwrap_or(false);
-		let score = row.get::<Option<i16>, _>("score").unwrap_or(0);
-		if safe_to_send || category.as_deref() == Some("valid") || score >= 80 {
-			history.safe_count_180d += 1;
-		} else if matches!(category.as_deref(), Some("invalid" | "unknown")) || score < 50 {
-			history.inconsistent_count_180d += 1;
-		}
-		if history.latest_days_ago.is_none() {
-			if let Some(previous_completed_at) = row.get::<Option<DateTime<Utc>>, _>("completed_at")
-			{
-				history.latest_days_ago =
-					Some((completed_at - previous_completed_at).num_days().max(0));
-			}
-		}
-	}
-	context.tenant_history = history;
+	let rows: Vec<TenantHistoryRow> = rows
+		.iter()
+		.map(|row| TenantHistoryRow {
+			category: row.get("category"),
+			safe_to_send: row.get("safe_to_send"),
+			score: row.get("score"),
+			completed_at: row.get("completed_at"),
+		})
+		.collect();
+	context.tenant_history = summarize_tenant_history(&rows, completed_at);
 
 	let domain = normalized_domain(output);
 	let Some(pattern) = infer_local_pattern(&lowered_email) else {
@@ -540,6 +534,9 @@ async fn enrich_tenant_scoring_context(
 			score
 		FROM v1_task_result
 		WHERE tenant_id = $1
+		  AND task_state = 'completed'
+		  AND result IS NOT NULL
+		  AND is_duplicate = false
 		  AND completed_at IS NOT NULL
 		  AND completed_at >= $2 - INTERVAL '180 days'
 		  AND completed_at < $2
@@ -578,6 +575,43 @@ async fn enrich_tenant_scoring_context(
 	context.pattern = pattern_context;
 
 	Ok(())
+}
+
+/// One earlier completed verification of the same address.
+struct TenantHistoryRow {
+	category: Option<String>,
+	safe_to_send: Option<bool>,
+	score: Option<i16>,
+	completed_at: Option<DateTime<Utc>>,
+}
+
+/// Rows must be newest first. Only results that said something about the
+/// mailbox count: a safe result is positive evidence and an invalid one
+/// conflicts. Unknown results carry no evidence either way, so rechecking an
+/// address that could not be verified neither raises nor lowers its score.
+fn summarize_tenant_history(
+	rows: &[TenantHistoryRow],
+	completed_at: DateTime<Utc>,
+) -> TenantHistoryContext {
+	let mut history = TenantHistoryContext::default();
+	for row in rows {
+		history.total_count_180d += 1;
+		let category = row.category.as_deref();
+		let is_safe = row.safe_to_send == Some(true)
+			|| category == Some("valid")
+			|| row.score.map(|score| score >= 80).unwrap_or(false);
+		if is_safe {
+			history.safe_count_180d += 1;
+			if history.latest_safe_days_ago.is_none() {
+				history.latest_safe_days_ago = row
+					.completed_at
+					.map(|previous| (completed_at - previous).num_days().max(0));
+			}
+		} else if category == Some("invalid") {
+			history.inconsistent_count_180d += 1;
+		}
+	}
+	history
 }
 
 fn normalized_domain(output: &CheckEmailOutput) -> Option<String> {
@@ -633,6 +667,44 @@ mod tests {
 	};
 
 	#[test]
+	fn tenant_history_counts_only_evidence_about_the_mailbox() {
+		let now = Utc::now();
+		let row = |category: Option<&str>, safe_to_send, score, days_ago| TenantHistoryRow {
+			category: category.map(str::to_string),
+			safe_to_send,
+			score,
+			completed_at: Some(now - chrono::Duration::days(days_ago)),
+		};
+
+		// Unknown results and rows without a result say nothing about the
+		// mailbox, so they are neither positive nor conflicting evidence.
+		let unknown_only = summarize_tenant_history(
+			&[
+				row(Some("unknown"), Some(false), Some(33), 1),
+				row(None, None, None, 2),
+			],
+			now,
+		);
+		assert_eq!(unknown_only.total_count_180d, 2);
+		assert_eq!(unknown_only.safe_count_180d, 0);
+		assert_eq!(unknown_only.inconsistent_count_180d, 0);
+		assert_eq!(unknown_only.latest_safe_days_ago, None);
+
+		// Recency is measured from the newest safe result, not the newest row.
+		let mixed = summarize_tenant_history(
+			&[
+				row(Some("unknown"), Some(false), Some(33), 1),
+				row(Some("valid"), Some(true), Some(95), 12),
+				row(Some("invalid"), Some(false), Some(0), 40),
+			],
+			now,
+		);
+		assert_eq!(mixed.safe_count_180d, 1);
+		assert_eq!(mixed.inconsistent_count_180d, 1);
+		assert_eq!(mixed.latest_safe_days_ago, Some(12));
+	}
+
+	#[test]
 	fn scored_json_appends_score() {
 		let value = scored_json(&CheckEmailOutput::default()).unwrap();
 		assert!(value.get("score").is_some());
@@ -683,6 +755,7 @@ mod tests {
 		let mut output = CheckEmailOutput::default();
 		output.input = "user@company.com".to_string();
 		output.is_reachable = Reachable::Risky;
+		output.mx = Ok(crate::sandbox::sandbox_mx("company.com."));
 		output.smtp = Ok(SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: false,
@@ -713,6 +786,7 @@ mod tests {
 			let mut output = CheckEmailOutput {
 				input: "user@company.com".to_string(),
 				is_reachable: Reachable::Safe,
+				mx: Ok(crate::sandbox::sandbox_mx("company.com.")),
 				smtp: Ok(SmtpDetails {
 					can_connect_smtp: true,
 					has_full_inbox,

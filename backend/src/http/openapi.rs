@@ -3195,6 +3195,10 @@ pub fn build_spec() -> Result<Value, ReacherResponseError> {
 		serde_json::to_value(BackendApiDoc::openapi()).map_err(ReacherResponseError::from)?;
 
 	merge_openapi(&mut spec, generated_spec);
+	// Onboarding creates tenants and API keys, so it takes the operator secret.
+	if let Some(operation) = operation_mut(&mut spec, "/v1/check-email-with-onboard", "post") {
+		operation.insert("security".to_string(), json!([{ "AdminSecret": [] }]));
+	}
 	// These generic names were emitted by an earlier outcomes contract. Keeping
 	// them in the self-hosted base spec produces stale SDK models indefinitely.
 	for stale_schema in ["Request", "Response"] {

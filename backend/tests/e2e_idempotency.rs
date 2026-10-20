@@ -117,6 +117,23 @@ mod tests {
 			"Expected BodyMismatch, got {:?}",
 			second
 		);
+
+		// Same key and body on another endpoint must not replay this one.
+		let other_path = check_idempotency_key(
+			pool,
+			TENANT,
+			"key-mismatch",
+			"/v0/check_email",
+			&hash_a,
+			LOCKED_BY,
+		)
+		.await
+		.expect("other path check failed");
+		assert!(
+			matches!(other_path, IdempotencyCheck::PathMismatch),
+			"Expected PathMismatch, got {:?}",
+			other_path
+		);
 	}
 
 	#[tokio::test]

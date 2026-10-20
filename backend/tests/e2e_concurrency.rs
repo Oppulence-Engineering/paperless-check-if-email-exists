@@ -270,6 +270,67 @@ async fn parallel_bulk_job_creation_creates_exact_job_and_task_counts() {
 
 #[tokio::test]
 #[serial]
+async fn bulk_retry_with_same_idempotency_key_returns_the_first_job_and_charges_once() {
+	let env = OwnedResilienceEnv::start().await;
+	let pool = env.postgres.pool().await;
+	let tenant_id = insert_tenant(&pool, "bulk-idempotency", Some(1000), 0).await;
+	let keys = insert_keys_for_existing_tenant(&pool, tenant_id).await;
+
+	let config = build_test_config(
+		ConfigProfile::WorkerRabbit,
+		Some(env.postgres.db_url()),
+		Some(env.rabbitmq.amqp_url()),
+	)
+	.await;
+	let post_bulk = |body: serde_json::Value| {
+		let config = Arc::clone(&config);
+		let api_key = keys.full_access_key.clone();
+		async move {
+			request()
+				.method("POST")
+				.path("/v1/bulk")
+				.header("Authorization", format!("Bearer {}", api_key))
+				.header("Idempotency-Key", "bulk-client-retry")
+				.json(&body)
+				.reply(&create_routes(config))
+				.await
+		}
+	};
+	let body = serde_json::json!({
+		"input": ["idem-a@example.com", "idem-b@example.com"]
+	});
+
+	let first = post_bulk(body.clone()).await;
+	assert_eq!(first.status(), StatusCode::OK);
+	// The client never saw the first response and sends the request again.
+	let retry = post_bulk(body).await;
+	assert_eq!(retry.status(), StatusCode::OK);
+	assert_eq!(retry.body(), first.body());
+
+	let reused_for_other_input = post_bulk(serde_json::json!({
+		"input": ["someone-else@example.com"]
+	}))
+	.await;
+	assert_eq!(reused_for_other_input.status(), StatusCode::BAD_REQUEST);
+
+	let job_count: i64 =
+		sqlx::query_scalar("SELECT COUNT(*) FROM v1_bulk_job WHERE tenant_id = $1")
+			.bind(tenant_id)
+			.fetch_one(&pool)
+			.await
+			.expect("count bulk jobs");
+	assert_eq!(job_count, 1);
+	let used: i32 = sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id = $1")
+		.bind(tenant_id)
+		.fetch_one(&pool)
+		.await
+		.expect("read tenant usage");
+	assert_eq!(used, 2, "quota is charged for the first request only");
+	pool.close().await;
+}
+
+#[tokio::test]
+#[serial]
 async fn parallel_pipeline_trigger_force_false_creates_one_open_run() {
 	let env = OwnedResilienceEnv::start().await;
 	let pool = env.postgres.pool().await;

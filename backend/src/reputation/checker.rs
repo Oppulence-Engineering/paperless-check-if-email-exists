@@ -40,10 +40,25 @@ pub async fn check_domain(
 	}
 
 	let (blacklist_results, dns_records, domain_info) = tokio::join!(
-		async { lookup_dnsbl(&normalized).await.unwrap_or_default() },
-		async { check_dns_records(&normalized).await.unwrap_or_default() },
+		lookup_dnsbl(&normalized),
+		check_dns_records(&normalized),
 		async { fetch_domain_info(&normalized).await.unwrap_or_default() }
 	);
+	// A failed lookup (SERVFAIL, timeout) says nothing about the domain. Scoring
+	// it as "no SPF/DKIM/DMARC/MX" would rate a healthy domain as high risk and
+	// cache that verdict for a day, so report the failure and cache nothing.
+	let (blacklist_results, dns_records) = match (blacklist_results, dns_records) {
+		(Ok(blacklist_results), Ok(dns_records)) => (blacklist_results, dns_records),
+		(Err(err), _) | (_, Err(err)) => {
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				format!(
+					"DNS lookups for {} failed, try again later: {:#}",
+					normalized, err
+				),
+			));
+		}
+	};
 
 	let (score, risk_level) = compute_score(&blacklist_results, &dns_records, &domain_info);
 	let response = ReputationCheckResponse {

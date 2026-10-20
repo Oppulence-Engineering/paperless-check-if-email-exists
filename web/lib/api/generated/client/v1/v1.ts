@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.0
+ * OpenAPI spec version: 4.3.1
  */
 import type {
   AddSuppressionsRequest,
@@ -184,9 +184,10 @@ export const getV1CheckEmailWithOnboardUrl = () => {
 };
 
 /**
- * @summary POST /v1/check-email-with-onboard — Self-service signup + email verification in one call.
-No authentication required. Creates a tenant, generates an API key,
-verifies the email, and returns all three.
+ * @summary POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call.
+Requires the backend admin secret: it creates a tenant with the requested
+plan, generates a non-admin API key, verifies the email, and returns all three.
+Workspaces sign up through the web app instead.
  */
 export const v1CheckEmailWithOnboard = async (
   onboardRequest: OnboardRequest,

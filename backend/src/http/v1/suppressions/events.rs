@@ -1,5 +1,6 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
+use crate::http::shared::paging::clamp_page;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
@@ -66,8 +67,7 @@ async fn http_handler(
 		.into());
 	}
 
-	let limit = query.limit.unwrap_or(50).clamp(1, 200);
-	let offset = query.offset.unwrap_or(0).max(0);
+	let (limit, offset) = clamp_page(query.limit, query.offset);
 	let rows = sqlx::query(
 		r#"
 		SELECT id, entry_id, canonical_email, event_type, from_status, to_status,

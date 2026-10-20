@@ -187,6 +187,9 @@ impl PostgresStorage {
 		columns: SuccessColumns,
 		extra: Option<serde_json::Value>,
 	) -> Result<(), StorageError> {
+		// The row was created with its tenant; a task message without tenant
+		// metadata (e.g. an admin retry of an old payload) must not clear it,
+		// or the result disappears from the tenant's views.
 		let task_result_id = if let Some(db_id) = task_db_id {
 			let updated_id = sqlx::query_scalar(
 				r#"
@@ -364,6 +367,7 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		let canonical_email = canonicalize_email(&task.input.to_email);
 
+		// tenant_id is kept when the task carries none; see store_success.
 		if let Some(db_id) = task_db_id {
 			let upd = sqlx::query(
 				r#"

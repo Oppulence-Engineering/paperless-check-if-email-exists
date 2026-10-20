@@ -26,6 +26,36 @@ pub fn suppression_key(email: &str) -> String {
 	canonicalize_email(email).unwrap_or_else(|| email.trim().to_lowercase())
 }
 
+/// Whether `email` has an active, unexpired suppression for the tenant.
+///
+/// Entries are keyed by [`suppression_key`]. The lowercased spelling is
+/// checked too, for rows written before every writer used that key.
+pub async fn has_active_suppression(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	email: &str,
+) -> Result<bool, sqlx::Error> {
+	let lowered = email.trim().to_lowercase();
+	let canonical = suppression_key(email);
+	sqlx::query_scalar::<_, bool>(
+		r#"
+		SELECT EXISTS (
+			SELECT 1
+			FROM v1_suppression_entries
+			WHERE tenant_id = $1
+			  AND canonical_email IN ($2, $3)
+			  AND status = 'active'
+			  AND (expires_at IS NULL OR expires_at > NOW())
+		)
+		"#,
+	)
+	.bind(tenant_id)
+	.bind(&lowered)
+	.bind(&canonical)
+	.fetch_one(pg_pool)
+	.await
+}
+
 /// Insert one active suppression and its `created` audit event.
 ///
 /// Returns `Ok(false)` when an active row for this address already exists.
@@ -45,6 +75,11 @@ pub async fn insert_active_suppression(
 	let email = email.trim().to_lowercase();
 	let canonical_email = suppression_key(&email);
 	let canonical_email = canonical_email.as_str();
+	// The entry and its audit event commit together. Otherwise a failed event
+	// insert leaves an entry that a retry skips (`DO NOTHING`), and the audit
+	// event is never written.
+	let mut tx = pg_pool.begin().await?;
+
 	// `reason` is bound twice: once for the enum column and once for the text
 	// reason code. A single placeholder cannot satisfy both types.
 	let entry_id = sqlx::query_scalar::<_, i32>(
@@ -80,7 +115,7 @@ pub async fn insert_active_suppression(
 	.bind(source_type)
 	.bind(actor)
 	.bind(&email)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
 
 	let Some(entry_id) = entry_id else {
@@ -103,8 +138,9 @@ pub async fn insert_active_suppression(
 	.bind(source_type)
 	.bind(source)
 	.bind(actor)
-	.execute(pg_pool)
+	.execute(&mut *tx)
 	.await?;
 
+	tx.commit().await?;
 	Ok(true)
 }

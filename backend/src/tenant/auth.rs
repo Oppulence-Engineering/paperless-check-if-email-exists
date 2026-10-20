@@ -47,6 +47,22 @@ pub fn hash_api_key(key: &str) -> String {
 	}
 }
 
+/// Fills each limit the tenant does not set from the server-wide limits.
+pub fn with_global_throttle(tenant: ThrottleConfig, global: &ThrottleConfig) -> ThrottleConfig {
+	ThrottleConfig {
+		max_requests_per_second: tenant
+			.max_requests_per_second
+			.or(global.max_requests_per_second),
+		max_requests_per_minute: tenant
+			.max_requests_per_minute
+			.or(global.max_requests_per_minute),
+		max_requests_per_hour: tenant
+			.max_requests_per_hour
+			.or(global.max_requests_per_hour),
+		max_requests_per_day: tenant.max_requests_per_day.or(global.max_requests_per_day),
+	}
+}
+
 /// Resolve a TenantContext from a raw API key by looking up the key hash
 /// in the database, joining with the tenants table. Validates key status,
 /// expiry, and tenant status.
@@ -168,24 +184,23 @@ pub async fn resolve_from_api_key(
 	};
 
 	// Build throttle config: use tenant overrides where present, fall back to global
-	let throttle = ThrottleConfig {
-		max_requests_per_second: row
-			.get::<Option<i32>, _>("max_requests_per_second")
-			.map(|v| v as u32)
-			.or(global_throttle.max_requests_per_second),
-		max_requests_per_minute: row
-			.get::<Option<i32>, _>("max_requests_per_minute")
-			.map(|v| v as u32)
-			.or(global_throttle.max_requests_per_minute),
-		max_requests_per_hour: row
-			.get::<Option<i32>, _>("max_requests_per_hour")
-			.map(|v| v as u32)
-			.or(global_throttle.max_requests_per_hour),
-		max_requests_per_day: row
-			.get::<Option<i32>, _>("max_requests_per_day")
-			.map(|v| v as u32)
-			.or(global_throttle.max_requests_per_day),
-	};
+	let throttle = with_global_throttle(
+		ThrottleConfig {
+			max_requests_per_second: row
+				.get::<Option<i32>, _>("max_requests_per_second")
+				.map(|v| v as u32),
+			max_requests_per_minute: row
+				.get::<Option<i32>, _>("max_requests_per_minute")
+				.map(|v| v as u32),
+			max_requests_per_hour: row
+				.get::<Option<i32>, _>("max_requests_per_hour")
+				.map(|v| v as u32),
+			max_requests_per_day: row
+				.get::<Option<i32>, _>("max_requests_per_day")
+				.map(|v| v as u32),
+		},
+		global_throttle,
+	);
 
 	let api_key_id: Uuid = row.get("api_key_id");
 	let scopes: Vec<String> = row.get("scopes");
@@ -267,7 +282,8 @@ pub async fn resolve_tenant_context_by_id(
 
 	// No global throttle fallback: background tasks (reverification) run at
 	// the tenant's own rate limits without inheriting server-wide defaults.
-	// This differs from resolve_from_api_key which merges with global_throttle.
+	// API key and workspace token requests merge with the global throttle
+	// (see with_global_throttle).
 	let throttle = ThrottleConfig {
 		max_requests_per_second: row
 			.get::<Option<i32>, _>("max_requests_per_second")
@@ -322,6 +338,29 @@ mod tests {
 		assert!(full_key.starts_with(API_KEY_PREFIX));
 		assert_eq!(prefix.len(), 24);
 		assert_eq!(hash, hash_api_key(&full_key));
+	}
+
+	#[test]
+	fn tenant_limits_override_global_limits_field_by_field() {
+		let tenant = ThrottleConfig {
+			max_requests_per_second: Some(5),
+			..ThrottleConfig::new_without_throttle()
+		};
+		let global = ThrottleConfig {
+			max_requests_per_second: Some(50),
+			max_requests_per_minute: Some(600),
+			max_requests_per_hour: None,
+			max_requests_per_day: Some(10_000),
+		};
+		assert_eq!(
+			with_global_throttle(tenant, &global),
+			ThrottleConfig {
+				max_requests_per_second: Some(5),
+				max_requests_per_minute: Some(600),
+				max_requests_per_hour: None,
+				max_requests_per_day: Some(10_000),
+			}
+		);
 	}
 
 	#[test]

@@ -5270,6 +5270,7 @@
       "UpdateApiKeyRequest": {
         "properties": {
           "expires_at": {
+            "description": "`null` removes the expiry; an absent field leaves it unchanged.",
             "nullable": true,
             "type": "string"
           },
@@ -5479,6 +5480,7 @@
             "type": "boolean"
           },
           "is_verified": {
+            "description": "Only read to refuse it: verification is not the tenant's to declare.",
             "nullable": true,
             "type": "boolean"
           },
@@ -5665,7 +5667,7 @@
     },
     "termsOfService": "https://github.com/reacherhq/policies/blob/master/terms/index.fr.md",
     "title": "Reacher",
-    "version": "4.3.0"
+    "version": "4.3.1"
   },
   "openapi": "3.0.0",
   "paths": {
@@ -7450,7 +7452,7 @@
             "AdminSecret": []
           }
         ],
-        "summary": "POST /v1/check-email-with-onboard — Tenant signup + email verification in one call.\nCreates a tenant, generates an API key, verifies the email, and returns all\nthree. It needs the platform `x-reacher-secret`, like the admin API: the\nrequest chooses the plan tier and the returned key has every scope, so an\nopen route would hand out unmetered keys and free SMTP probes.",
+        "summary": "POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call.\nRequires the backend admin secret: it creates a tenant with the requested\nplan, generates a non-admin API key, verifies the email, and returns all three.\nWorkspaces sign up through the web app instead.",
         "tags": [
           "v1"
         ]
@@ -9371,7 +9373,7 @@
         ]
       },
       "patch": {
-        "description": "Update the domain value, status, verification state, or metadata notes.",
+        "description": "Update the domain value, active status, or notes. Setting `is_verified` is refused.",
         "operationId": "v1_update_tenant_domain",
         "parameters": [
           {

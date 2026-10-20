@@ -3,10 +3,11 @@
 //! worker that completes their tasks.
 //!
 //! A creator inserts the job as `pending`, inserts and publishes its tasks,
-//! then calls [`start_bulk_job`]. The worker only finishes jobs that are
-//! `running` or `cancelling`. While tasks are still being published the
-//! worker can finish every task published so far, and a `pending` job must
-//! not be finished then. Every write checks the current status, so a late
+//! then calls [`start_bulk_job`]. (Pipeline runs insert every task row first
+//! and move the job to `running` before publishing, which is equally safe.)
+//! The worker only finishes jobs that are `running` or `cancelling`. While
+//! tasks are still being added the worker can finish every task published so
+//! far, and a `pending` job must not be finished then. Every write checks the current status, so a late
 //! write never moves a finished job or list back to an open status.
 
 use sqlx::PgPool;
@@ -61,16 +62,18 @@ pub async fn finalize_bulk_job_if_done(pool: &PgPool, job_id: i32) -> Result<(),
 }
 
 /// Finish a list once every row has a result, an error, or was cancelled.
-/// Rows are matched through the list's job, whose index keeps this from
-/// scanning every task in the table. A deleted or already finished list
-/// keeps its status.
+/// A row waiting for a delayed recheck already holds a result but is not done
+/// until it leaves 'retrying'. Rows are matched through the list's job, whose
+/// index keeps this from scanning every task in the table. A deleted or
+/// already finished list keeps its status.
 pub async fn finalize_list_if_done(pool: &PgPool, list_id: i32) -> Result<(), sqlx::Error> {
 	sqlx::query(
 		r#"
 		WITH counts AS (
 			SELECT
 				COUNT(*) FILTER (
-					WHERE t.result IS NOT NULL OR t.error IS NOT NULL OR t.task_state = 'cancelled'
+					WHERE (t.result IS NOT NULL OR t.error IS NOT NULL OR t.task_state = 'cancelled')
+						AND t.task_state NOT IN ('queued', 'running', 'retrying')
 				) AS processed,
 				COUNT(*) FILTER (WHERE t.task_state IN ('failed', 'dead_lettered')) AS failed
 			FROM v1_lists l

@@ -1,4 +1,5 @@
 use std::{pin::Pin, time::Duration};
+// std::thread::sleep would block the tokio worker thread and every task on it.
 use tokio::time::sleep;
 
 use fantoccini::{error::CmdError, Locator};

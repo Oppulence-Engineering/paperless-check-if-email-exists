@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::v1::bulk::post::publish_payload;
 use crate::scoring::response::{prepare_check_email_success, PreparedCheckEmailSuccess};
 use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
@@ -6,17 +7,43 @@ use check_if_email_exists::{check_email, CheckEmailInput, Reachable, LOG_TARGET}
 use chrono::Utc;
 use http::HeaderMap;
 use lapin::message::Delivery;
-use lapin::{options::*, Channel};
+use lapin::types::AMQPValue;
+use lapin::{options::*, BasicProperties, Channel};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::collections::HashMap;
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 use std::fmt::Debug;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 use warp::http::StatusCode;
+
+/// AMQP header counting how many times a worker has put this message back on
+/// the queue. The `check_email` queue is a classic (priority) queue, which
+/// does not count redeliveries the way quorum queues do (`x-delivery-count`),
+/// and single-shot tasks have no DB row holding a retry_count. Without this
+/// header a retryable error requeued such a task, re-running its SMTP check,
+/// forever.
+pub const DELIVERY_ATTEMPT_HEADER: &str = "x-reacher-attempt";
+
+/// Cap on requeues of a bulk task whose outcome could not be stored. Bounds
+/// the case where storing can never succeed, e.g. the job was deleted while
+/// the task was in flight.
+pub const MAX_STORE_FAILURE_REQUEUES: u32 = 8;
+/// Pause before requeueing after a store failure, doubled per attempt, so a
+/// Postgres outage is ridden out (about four minutes in total) rather than
+/// burned through in a burst of SMTP re-checks.
+const STORE_FAILURE_BASE_DELAY: Duration = Duration::from_secs(2);
+const STORE_FAILURE_MAX_DELAY: Duration = Duration::from_secs(60);
+
+/// Webhook POST attempts per stored result. Retrying the POST is cheap;
+/// retrying the whole task, as a webhook 5xx used to do, re-ran the SMTP
+/// check.
+const WEBHOOK_MAX_ATTEMPTS: u32 = 3;
+const WEBHOOK_RETRY_BASE_DELAY: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailTask {
@@ -267,17 +294,29 @@ pub async fn do_check_email_work(
 
 	// Mark the task running, unless it was cancelled after the consumer
 	// checked its job: a cancelled task must not be verified, charged or sent
-	// to the customer's webhook.
+	// to the customer's webhook. The statement reports whether the row is
+	// cancelled; a row that is missing is not skipped here, so storing the
+	// result fails and the requeue path below handles it.
 	if let (Some(id), Some(pool)) = (task_db_id, config.get_pg_pool()) {
-		let claimed = sqlx::query(
-			"UPDATE v1_task_result SET task_state = 'running', started_at = NOW(), updated_at = NOW() WHERE id = $1 AND task_state <> 'cancelled' RETURNING id",
+		let cancelled = sqlx::query_scalar::<_, bool>(
+			r#"
+			WITH claimed AS (
+				UPDATE v1_task_result
+				SET task_state = 'running', started_at = NOW(), updated_at = NOW()
+				WHERE id = $1 AND task_state <> 'cancelled'
+				RETURNING id
+			)
+			SELECT EXISTS (
+				SELECT 1 FROM v1_task_result WHERE id = $1 AND task_state = 'cancelled'
+			)
+			"#,
 		)
 		.bind(id)
-		.fetch_optional(&pool)
+		.fetch_one(&pool)
 		.await;
-		match claimed {
-			Ok(Some(_)) => {}
-			Ok(None) => {
+		match cancelled {
+			Ok(false) => {}
+			Ok(true) => {
 				debug!(target: LOG_TARGET, task_id = id, "Skipping cancelled task");
 				delivery.ack(BasicAckOptions::default()).await?;
 				return Ok(());
@@ -288,36 +327,35 @@ pub async fn do_check_email_work(
 		}
 	}
 
-	// Load webhook signing secret from DB if tenant_id is present
-	let webhook_signing_secret: Option<String> =
-		if let Some(ref tid) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
-			if let Some(pool) = config.get_pg_pool() {
-				if let Ok(uuid) = tid.parse::<uuid::Uuid>() {
-					sqlx::query_scalar("SELECT webhook_signing_secret FROM tenants WHERE id = $1")
-						.bind(uuid)
-						.fetch_optional(&pool)
-						.await
-						.ok()
-						.flatten()
-				} else {
-					None
-				}
-			} else {
-				None
-			}
-		} else {
-			None
+	// Load webhook signing secret from DB if tenant_id is present. A failed
+	// read stays an error rather than "no secret": sending unsigned would fail
+	// at receivers that verify signatures and look authentic at those that
+	// don't.
+	let tenant_uuid = task
+		.metadata
+		.as_ref()
+		.and_then(|m| m.tenant_id.as_deref())
+		.and_then(|tid| tid.parse::<uuid::Uuid>().ok());
+	let webhook_signing_secret: Result<Option<String>, sqlx::Error> =
+		match (tenant_uuid, config.get_pg_pool()) {
+			(Some(uuid), Some(pool)) => sqlx::query_scalar::<_, Option<String>>(
+				"SELECT webhook_signing_secret FROM tenants WHERE id = $1",
+			)
+			.bind(uuid)
+			.fetch_optional(&pool)
+			.await
+			.map(Option::flatten),
+			_ => Ok(None),
 		};
 
-	let worker_output = check_email_and_send_result_with_config(
-		task,
-		Some(Arc::clone(&config)),
-		webhook_signing_secret.as_deref(),
-	)
-	.await;
+	// Only the verification: the webhook goes out once the result is stored
+	// (deliver_task_webhook), so a failing tenant endpoint can neither discard
+	// the result nor make the worker redo the SMTP check.
+	let worker_output =
+		check_email_and_prepare_result_with_config(task, Some(Arc::clone(&config))).await;
 
 	// Determine current retry count from the database
-	let current_retry_count = if let Some(id) = task_db_id {
+	let db_retry_count = if let Some(id) = task_db_id {
 		if let Some(pool) = config.get_pg_pool() {
 			sqlx::query_scalar!("SELECT retry_count FROM v1_task_result WHERE id = $1", id)
 				.fetch_optional(&pool)
@@ -331,6 +369,12 @@ pub async fn do_check_email_work(
 	} else {
 		0
 	};
+	// The row's retry_count exists only for tasks with a DB row and reads as 0
+	// when the lookup fails; the attempt header carried on the message covers
+	// both gaps, so retries stay bounded either way.
+	let delivery_attempt = delivery_attempt(&delivery.properties);
+	let current_retry_count =
+		db_retry_count.max(i32::try_from(delivery_attempt).unwrap_or(i32::MAX));
 
 	let unknown_success =
 		matches!(&worker_output, Ok(output) if output.output.is_reachable == Reachable::Unknown);
@@ -379,62 +423,28 @@ pub async fn do_check_email_work(
 			tokio::time::sleep(std::time::Duration::from_secs_f64(delay_seconds)).await;
 		}
 
-		delivery
-			.reject(BasicRejectOptions { requeue: true })
-			.await?;
+		requeue_with_attempt(
+			&delivery,
+			&channel,
+			u32::try_from(new_count).unwrap_or(u32::MAX),
+		)
+		.await?;
 		info!(target: LOG_TARGET, email=?&task.input.to_email, retry=new_count, max=retry_policy.max_retries, "Requeued message for retry");
 	} else if should_retry || worker_output.is_err() {
 		// Exhausted retries or a deterministic non-retryable error: dead letter.
 		maybe_pause_before_delivery_settle().await;
-		persist_before_settle(
-			task,
-			&delivery,
-			Arc::clone(&channel),
-			Arc::clone(&config),
-			&worker_output,
-		)
-		.await?;
+
+		// Persist the failure before settling the delivery, for the same
+		// reason as on the success path below.
+		if let Err(error) =
+			finalize_dead_letter(task, &delivery, &channel, &config, &worker_output).await
+		{
+			return settle_after_store_failure(task, &delivery, &channel, delivery_attempt, error)
+				.await;
+		}
 		delivery
 			.reject(BasicRejectOptions { requeue: false })
 			.await?;
-
-		if let Some(id) = task_db_id {
-			update_task_state(&config, id, "dead_lettered", None).await;
-
-			// Update completed_at
-			if let Some(pool) = config.get_pg_pool() {
-				let _ = sqlx::query!(
-					"UPDATE v1_task_result SET completed_at = NOW() WHERE id = $1",
-					id,
-				)
-				.execute(&pool)
-				.await;
-				let _ = sqlx::query(
-					r#"
-					DELETE FROM verification_change_events
-					WHERE current_task_result_id = $1
-					"#,
-				)
-				.bind(id)
-				.execute(&pool)
-				.await;
-			}
-
-			if let CheckEmailJobId::Bulk(job_id) = task.job_id {
-				record_event(
-					&config,
-					job_id,
-					Some(id),
-					"task.dead_lettered",
-					Some(serde_json::json!({
-						"reason": worker_output.as_ref().err().map(|e| e.to_string())
-							.unwrap_or_else(|| "Unknown result after max retries".to_string())
-					})),
-					Some(&config.backend_name),
-				)
-				.await;
-			}
-		}
 
 		sync_related_entities(&config, task).await;
 
@@ -449,18 +459,54 @@ pub async fn do_check_email_work(
 			return Err(anyhow::anyhow!("test failpoint forced requeue before ack"));
 		}
 
-		persist_before_settle(
+		// Store before acking: once acked the message is gone, so a result
+		// that then failed to store left the row 'running' and its job and
+		// list never finalized.
+		if let Err(error) = delivery_finalize(
 			task,
 			&delivery,
 			Arc::clone(&channel),
 			Arc::clone(&config),
 			&worker_output,
 		)
-		.await?;
+		.await
+		{
+			return settle_after_store_failure(task, &delivery, &channel, delivery_attempt, error)
+				.await;
+		}
+
+		// Right after storing, before anything slow: the recheck turns the
+		// task back to 'retrying', and until then a sibling task finishing
+		// would see this one as done and finalize the job without it.
+		let awaiting_recheck = match task_db_id {
+			Some(id) if should_schedule_delayed_recheck => {
+				crate::delayed_recheck::schedule_delayed_recheck(
+					task,
+					Arc::clone(&config),
+					id,
+					delayed_recheck_count,
+					&retry_policy,
+				)
+				.await
+			}
+			_ => false,
+		};
+
+		// Before the ack, so a worker crash mid-delivery redelivers the task
+		// rather than silently dropping the webhook.
+		if let Ok(success) = &worker_output {
+			match &webhook_signing_secret {
+				Ok(secret) => deliver_task_webhook(&config, task, success, secret.as_deref()).await,
+				Err(error) => skip_webhook_without_secret(&config, task, error).await,
+			}
+		}
+
 		delivery.ack(BasicAckOptions::default()).await?;
 
 		if let Some(id) = task_db_id {
-			update_task_state(&config, id, "completed", None).await;
+			if !awaiting_recheck {
+				update_task_state(&config, id, "completed", None).await;
+			}
 
 			// Update completed_at
 			if let Some(pool) = config.get_pg_pool() {
@@ -496,6 +542,7 @@ pub async fn do_check_email_work(
 			}
 		}
 
+		// Evaluate conditional actions (auto-suppression) after successful completion
 		if let (Some(pool), Ok(_)) = (config.get_pg_pool(), &worker_output) {
 			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
 				if let Ok(tenant_uuid) = tenant_id_str.parse::<uuid::Uuid>() {
@@ -520,19 +567,6 @@ pub async fn do_check_email_work(
 			job_id=?task.job_id,
 			"Done check",
 		);
-
-		if should_schedule_delayed_recheck {
-			if let Some(id) = task_db_id {
-				crate::delayed_recheck::schedule_delayed_recheck(
-					task,
-					Arc::clone(&config),
-					id,
-					delayed_recheck_count,
-					&retry_policy,
-				)
-				.await;
-			}
-		}
 	}
 
 	Ok(())
@@ -545,48 +579,277 @@ fn is_delayed_recheck_task(task: &CheckEmailTask) -> bool {
 		== Some("delayed_recheck")
 }
 
-/// How long a task whose result could not be stored waits before it goes
-/// back to the queue. The broker redelivers a requeued message at once, so
-/// without a pause a database outage turns into a hot loop.
-const STORE_FAILURE_REQUEUE_DELAY: Duration = Duration::from_secs(5);
-
-/// Store the result before the message is acked or dead-lettered. Once the
-/// broker forgets the message nothing can redo the work, so a storage error
-/// for a task with a database row requeues the message instead: the row stays
-/// non-terminal, and the job would otherwise never finish. The store is an
-/// update of that row, so the redelivery is idempotent. A single-shot task has
-/// already sent its reply and has no row to repair, so it is settled anyway.
-async fn persist_before_settle(
+/// Persist a task's terminal failure.
+///
+/// A delayed recheck is the exception: its row still holds the result of the
+/// pass that scheduled it, and the recheck only tried to firm that result up.
+/// Failing to do so is no reason to erase it, so the row goes back to
+/// 'completed' with that result instead of being overwritten with the error.
+async fn finalize_dead_letter(
 	task: &CheckEmailTask,
 	delivery: &Delivery,
-	channel: Arc<Channel>,
-	config: Arc<BackendConfig>,
+	channel: &Arc<Channel>,
+	config: &Arc<BackendConfig>,
 	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
 ) -> Result<(), anyhow::Error> {
-	let Err(error) = delivery_finalize(task, delivery, channel, config, worker_output).await else {
-		return Ok(());
-	};
-	let has_task_row = task.metadata.as_ref().and_then(|m| m.task_db_id).is_some();
-	if !has_task_row {
-		tracing::error!(
-			target: LOG_TARGET,
-			email = ?task.input.to_email,
-			error = ?error,
-			"Failed to store single-shot result"
-		);
-		return Ok(());
+	let task_db_id = task.metadata.as_ref().and_then(|m| m.task_db_id);
+	let reason = worker_output
+		.as_ref()
+		.err()
+		.map(|e| e.to_string())
+		.unwrap_or_else(|| "Unknown result after max retries".to_string());
+
+	if is_delayed_recheck_task(task) {
+		if let (Some(id), Some(pool)) = (task_db_id, config.get_pg_pool()) {
+			if keep_result_of_failed_recheck(&pool, id).await? {
+				if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+					record_event(
+						config,
+						job_id,
+						Some(id),
+						"task.delayed_recheck_failed",
+						Some(serde_json::json!({
+							"reason": reason,
+							"kept_previous_result": true
+						})),
+						Some(&config.backend_name),
+					)
+					.await;
+				}
+				return Ok(());
+			}
+		}
 	}
-	tracing::error!(
-		target: LOG_TARGET,
-		email = ?task.input.to_email,
-		error = ?error,
-		"Failed to store task result; requeueing"
+
+	delivery_finalize(
+		task,
+		delivery,
+		Arc::clone(channel),
+		Arc::clone(config),
+		worker_output,
+	)
+	.await?;
+
+	if let Some(id) = task_db_id {
+		update_task_state(config, id, "dead_lettered", None).await;
+
+		// Update completed_at
+		if let Some(pool) = config.get_pg_pool() {
+			let _ = sqlx::query!(
+				"UPDATE v1_task_result SET completed_at = NOW() WHERE id = $1",
+				id,
+			)
+			.execute(&pool)
+			.await;
+			let _ = sqlx::query(
+				r#"
+				DELETE FROM verification_change_events
+				WHERE current_task_result_id = $1
+				"#,
+			)
+			.bind(id)
+			.execute(&pool)
+			.await;
+		}
+
+		if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+			record_event(
+				config,
+				job_id,
+				Some(id),
+				"task.dead_lettered",
+				Some(serde_json::json!({ "reason": reason })),
+				Some(&config.backend_name),
+			)
+			.await;
+		}
+	}
+
+	Ok(())
+}
+
+/// Returns the row of a failed delayed recheck to 'completed' when it still
+/// holds the earlier result. Returns false when there is no result to keep.
+async fn keep_result_of_failed_recheck(
+	pool: &PgPool,
+	task_db_id: i32,
+) -> Result<bool, sqlx::Error> {
+	let kept = sqlx::query(
+		"UPDATE v1_task_result SET task_state = 'completed'::task_state, updated_at = NOW() WHERE id = $1 AND result IS NOT NULL",
+	)
+	.bind(task_db_id)
+	.execute(pool)
+	.await?;
+	Ok(kept.rows_affected() > 0)
+}
+
+/// Settle a delivery whose outcome could not be stored (or, for a
+/// single-shot task, whose reply could not be sent), then report `error`.
+///
+/// A bulk task goes back on the queue so a later attempt can store it:
+/// acking would leave its row 'running' and its job unfinalized for good.
+/// The requeue is counted and capped, so a store that can never succeed
+/// cannot loop. Single-shot tasks are not requeued: the reply normally went
+/// out already, and by the time a retry ran the caller would have stopped
+/// waiting for it.
+async fn settle_after_store_failure(
+	task: &CheckEmailTask,
+	delivery: &Delivery,
+	channel: &Channel,
+	delivery_attempt: u32,
+	error: anyhow::Error,
+) -> Result<(), anyhow::Error> {
+	let requeue = matches!(task.job_id, CheckEmailJobId::Bulk(_))
+		&& delivery_attempt < MAX_STORE_FAILURE_REQUEUES;
+	if requeue {
+		tokio::time::sleep(store_failure_delay(delivery_attempt)).await;
+		requeue_with_attempt(delivery, channel, delivery_attempt + 1).await?;
+		Err(error.context("Failed to store task outcome; requeued the task"))
+	} else {
+		delivery
+			.reject(BasicRejectOptions { requeue: false })
+			.await?;
+		Err(error.context("Failed to store task outcome; dropped the task"))
+	}
+}
+
+fn store_failure_delay(delivery_attempt: u32) -> Duration {
+	STORE_FAILURE_BASE_DELAY
+		.saturating_mul(1 << delivery_attempt.min(16))
+		.min(STORE_FAILURE_MAX_DELAY)
+}
+
+/// Put the delivered message back on the queue with its attempt counter set
+/// to `attempt`.
+///
+/// `basic.reject` cannot change headers, so the message is republished with
+/// the new count and the original acked. If republishing fails, the original
+/// is rejected with requeue instead: an uncounted attempt beats losing the
+/// task.
+async fn requeue_with_attempt(
+	delivery: &Delivery,
+	channel: &Channel,
+	attempt: u32,
+) -> Result<(), anyhow::Error> {
+	let properties = with_delivery_attempt(delivery.properties.clone(), attempt);
+	match publish_payload(channel, &delivery.data, properties).await {
+		Ok(()) => {
+			delivery.ack(BasicAckOptions::default()).await?;
+		}
+		Err(error) => {
+			warn!(target: LOG_TARGET, error=?error, attempt=attempt, "Failed to republish task for another attempt; requeueing it uncounted");
+			delivery
+				.reject(BasicRejectOptions { requeue: true })
+				.await?;
+		}
+	}
+	Ok(())
+}
+
+/// How many times a worker has already requeued this message (0 when the
+/// header is absent, i.e. on the first delivery).
+pub fn delivery_attempt(properties: &BasicProperties) -> u32 {
+	properties
+		.headers()
+		.as_ref()
+		.and_then(|headers| headers.inner().get(DELIVERY_ATTEMPT_HEADER))
+		.and_then(amqp_value_as_u32)
+		.unwrap_or(0)
+}
+
+fn with_delivery_attempt(properties: BasicProperties, attempt: u32) -> BasicProperties {
+	let mut headers = properties.headers().clone().unwrap_or_default();
+	headers.insert(DELIVERY_ATTEMPT_HEADER.into(), AMQPValue::LongUInt(attempt));
+	properties.with_headers(headers)
+}
+
+/// Header integers keep whatever width the publisher chose; tools other than
+/// this worker (e.g. the management UI) may write the counter differently.
+fn amqp_value_as_u32(value: &AMQPValue) -> Option<u32> {
+	let value = match value {
+		AMQPValue::ShortShortInt(n) => i64::from(*n),
+		AMQPValue::ShortShortUInt(n) => i64::from(*n),
+		AMQPValue::ShortInt(n) => i64::from(*n),
+		AMQPValue::ShortUInt(n) => i64::from(*n),
+		AMQPValue::LongInt(n) => i64::from(*n),
+		AMQPValue::LongUInt(n) => i64::from(*n),
+		AMQPValue::LongLongInt(n) => *n,
+		_ => return None,
+	};
+	u32::try_from(value).ok()
+}
+
+/// Send the per-email webhook for a result that is already stored.
+///
+/// Failures are logged and recorded as a `task.webhook_failed` job event but
+/// never fail the task: the tenant endpoint being down is no reason to
+/// discard the verification result or to redo the SMTP check.
+async fn deliver_task_webhook(
+	config: &BackendConfig,
+	task: &CheckEmailTask,
+	success: &PreparedCheckEmailSuccess,
+	webhook_signing_secret: Option<&str>,
+) {
+	let mut attempts = 1;
+	let error = loop {
+		match send_task_webhook(task, success, webhook_signing_secret).await {
+			Ok(()) => return,
+			Err(error) if error.is_retryable() && attempts < WEBHOOK_MAX_ATTEMPTS => {
+				tokio::time::sleep(WEBHOOK_RETRY_BASE_DELAY * attempts).await;
+				attempts += 1;
+			}
+			Err(error) => break error,
+		}
+	};
+
+	warn!(target: LOG_TARGET, email=?task.input.to_email, attempts=attempts, error=?error, "Webhook delivery failed; the verification result is kept");
+	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+		record_event(
+			config,
+			job_id,
+			task.metadata.as_ref().and_then(|m| m.task_db_id),
+			"task.webhook_failed",
+			Some(serde_json::json!({
+				"error": error.to_string(),
+				"attempts": attempts
+			})),
+			Some(&config.backend_name),
+		)
+		.await;
+	}
+}
+
+/// Records that the per-email webhook was not sent because the tenant's
+/// signing secret could not be read. The verification result is kept.
+async fn skip_webhook_without_secret(
+	config: &BackendConfig,
+	task: &CheckEmailTask,
+	error: &sqlx::Error,
+) {
+	let has_webhook = matches!(
+		&task.webhook,
+		Some(TaskWebhook {
+			on_each_email: Some(_)
+		})
 	);
-	tokio::time::sleep(STORE_FAILURE_REQUEUE_DELAY).await;
-	delivery
-		.reject(BasicRejectOptions { requeue: true })
-		.await?;
-	Err(error)
+	if !has_webhook {
+		return;
+	}
+	error!(target: LOG_TARGET, email=?task.input.to_email, error=?error, "Webhook not sent: the tenant's signing secret could not be read");
+	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+		record_event(
+			config,
+			job_id,
+			task.metadata.as_ref().and_then(|m| m.task_db_id),
+			"task.webhook_failed",
+			Some(serde_json::json!({
+				"error": "signing_secret_unavailable",
+				"attempts": 0
+			})),
+			Some(&config.backend_name),
+		)
+		.await;
+	}
 }
 
 /// Finalize delivery: send single-shot reply and store result.
@@ -619,16 +882,32 @@ async fn delivery_finalize(
 	Ok(())
 }
 
+/// Finalize whatever the task belongs to (finder job, duplicate rows, list,
+/// bulk job, pipeline run) once its row has reached a terminal state.
 pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
+	let task_db_id = task
+		.metadata
+		.as_ref()
+		.and_then(|metadata| metadata.task_db_id);
+	let bulk_job_id = match task.job_id {
+		CheckEmailJobId::Bulk(job_id) => Some(job_id),
+		CheckEmailJobId::SingleShot => None,
+	};
+	sync_task_entities(config, task_db_id, bulk_job_id).await;
+}
+
+/// [`sync_related_entities`] for callers that only have the task row's id
+/// and its bulk job id, such as the delayed recheck scheduler.
+pub(crate) async fn sync_task_entities(
+	config: &BackendConfig,
+	task_db_id: Option<i32>,
+	bulk_job_id: Option<i32>,
+) {
 	let Some(pool) = config.get_pg_pool() else {
 		return;
 	};
 
-	if let Some(task_db_id) = task
-		.metadata
-		.as_ref()
-		.and_then(|metadata| metadata.task_db_id)
-	{
+	if let Some(task_db_id) = task_db_id {
 		if let Ok(rows) =
 			sqlx::query("SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1")
 				.bind(task_db_id)
@@ -691,7 +970,7 @@ pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEm
 		}
 	}
 
-	if let CheckEmailJobId::Bulk(job_id) = task.job_id {
+	if let Some(job_id) = bulk_job_id {
 		if let Err(err) =
 			crate::worker::job_lifecycle::finalize_bulk_job_if_done(&pool, job_id).await
 		{
@@ -1050,6 +1329,76 @@ mod tests {
 			TaskError::Lapin(lapin::Error::from(lapin::ErrorKind::InvalidChannel(0)))
 				.is_retryable()
 		);
+	}
+
+	#[test]
+	fn attempt_counter_survives_requeue_and_keeps_rpc_routing() {
+		use lapin::types::FieldTable;
+
+		// First delivery: no header yet.
+		assert_eq!(delivery_attempt(&BasicProperties::default()), 0);
+
+		let mut other_headers = FieldTable::default();
+		other_headers.insert("x-trace".into(), AMQPValue::LongString("abc".into()));
+		let original = BasicProperties::default()
+			.with_reply_to("amq.gen-reply".into())
+			.with_correlation_id("corr-1".into())
+			.with_priority(5)
+			.with_headers(other_headers);
+
+		let requeued = with_delivery_attempt(original, 3);
+		assert_eq!(delivery_attempt(&requeued), 3);
+		// A single-shot task requeued for retry must still reach its caller.
+		assert_eq!(
+			requeued.reply_to().as_ref().map(|q| q.as_str()),
+			Some("amq.gen-reply")
+		);
+		assert_eq!(
+			requeued.correlation_id().as_ref().map(|c| c.as_str()),
+			Some("corr-1")
+		);
+		assert_eq!(*requeued.priority(), Some(5));
+		let headers = requeued.headers().as_ref().expect("headers kept");
+		assert!(headers.contains_key("x-trace"));
+
+		let requeued_again = with_delivery_attempt(requeued, 4);
+		assert_eq!(delivery_attempt(&requeued_again), 4);
+	}
+
+	#[test]
+	fn attempt_counter_accepts_other_integer_widths_and_ignores_garbage() {
+		let with_value = |value: AMQPValue| {
+			let mut headers = lapin::types::FieldTable::default();
+			headers.insert(DELIVERY_ATTEMPT_HEADER.into(), value);
+			BasicProperties::default().with_headers(headers)
+		};
+		assert_eq!(delivery_attempt(&with_value(AMQPValue::LongLongInt(2))), 2);
+		assert_eq!(
+			delivery_attempt(&with_value(AMQPValue::ShortShortUInt(1))),
+			1
+		);
+		assert_eq!(delivery_attempt(&with_value(AMQPValue::LongInt(-1))), 0);
+		assert_eq!(
+			delivery_attempt(&with_value(AMQPValue::LongString("2".into()))),
+			0
+		);
+	}
+
+	#[test]
+	fn store_failure_requeues_back_off_within_the_ack_timeout_and_ride_out_an_outage() {
+		let delays: Vec<Duration> = (0..MAX_STORE_FAILURE_REQUEUES)
+			.map(store_failure_delay)
+			.collect();
+		assert_eq!(delays[0], STORE_FAILURE_BASE_DELAY);
+		assert!(delays.windows(2).all(|pair| pair[0] <= pair[1]));
+		assert!(delays.iter().all(|delay| *delay <= STORE_FAILURE_MAX_DELAY));
+		let total: Duration = delays.iter().sum();
+		assert!(
+			total >= Duration::from_secs(180),
+			"requeues only cover {:?} of a Postgres outage",
+			total
+		);
+		assert_eq!(store_failure_delay(u32::MAX), STORE_FAILURE_MAX_DELAY);
 	}
 
 	#[test]

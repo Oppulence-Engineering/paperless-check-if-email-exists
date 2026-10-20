@@ -180,8 +180,12 @@ pub async fn release_reserved_usage(
 		_ => return Ok(()),
 	};
 
+	// Reservations only count tenants with a positive monthly limit, so the
+	// release does too. Otherwise a failed request for an unlimited tenant
+	// lowered a counter that its reservation never raised.
 	let result = sqlx::query(
-		"UPDATE tenants SET used_this_period = GREATEST(used_this_period - $2, 0) WHERE id = $1",
+		"UPDATE tenants SET used_this_period = GREATEST(used_this_period - $2, 0) \
+		 WHERE id = $1 AND monthly_email_limit > 0",
 	)
 	.bind(id)
 	.bind(count)

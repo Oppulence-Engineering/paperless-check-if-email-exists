@@ -259,17 +259,16 @@ async fn http_handler(
 		.map_err(ReacherResponseError::from)?;
 	}
 
-	// Handle canonical groups: first occurrence is primary, rest are duplicates
+	// Handle canonical groups: first occurrence is primary, rest are duplicates.
+	// Every row is inserted before any task is published. The worker copies a
+	// primary's result only to duplicate rows that already exist, and marks the
+	// job finished once no queued rows remain, so a row inserted after a
+	// publish could stay queued forever or finish the job early.
+	let mut primaries = Vec::with_capacity(canonical_groups.len());
 	for (canonical, indices) in &canonical_groups {
 		let primary_index = indices[0];
-		let _primary_email = parsed.rows[primary_index]
-			.get(&parsed.email_column)
-			.and_then(Value::as_str)
-			.unwrap_or_default()
-			.trim()
-			.to_string();
 
-		// Create primary task (queued, published to RabbitMQ)
+		// Create primary task (queued, published to RabbitMQ below)
 		let primary_extra = serde_json::json!({
 			"list_id": list_id,
 			"row_index": primary_index as i32,
@@ -296,10 +295,9 @@ async fn http_handler(
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;
+		primaries.push((canonical, primary_index, primary_task_id));
 
-		// Create the duplicate rows before the primary is published. The worker
-		// copies the primary's result to its duplicates once, when the primary
-		// finishes, so a duplicate inserted after that stays queued forever.
+		// Create duplicate rows (no RabbitMQ publish, no result yet)
 		for &dup_index in &indices[1..] {
 			let dup_email = parsed.rows[dup_index]
 				.get(&parsed.email_column)
@@ -338,7 +336,9 @@ async fn http_handler(
 			.await
 			.map_err(ReacherResponseError::from)?;
 		}
+	}
 
+	for (canonical, primary_index, primary_task_id) in primaries {
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
 				to_email: canonical.clone(),
@@ -455,6 +455,9 @@ async fn cleanup_list_publish_failure(
 		warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to mark list failed after publish failure");
 	}
 
+	// Duplicate rows stay queued: when their primary is retried and finishes,
+	// the worker copies its result to them, as it does for a normal run.
+	// Failing them here would make a retry verify each duplicate again.
 	if let Err(err) = sqlx::query(
 		r#"
 		UPDATE v1_task_result

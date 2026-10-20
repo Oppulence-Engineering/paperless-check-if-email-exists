@@ -68,6 +68,24 @@ pub async fn run_warp_server(
 				target: check_if_email_exists::LOG_TARGET,
 				"Delayed recheck is enabled but worker mode is disabled. Scheduler will not start."
 			);
+		} else if config.worker.enable {
+			let config = Arc::clone(&config);
+			let pool = pool.clone();
+			tokio::spawn(async move {
+				match crate::delayed_recheck::release_pending_rechecks(&config, &pool).await {
+					Ok(0) => {}
+					Ok(released) => tracing::info!(
+						target: check_if_email_exists::LOG_TARGET,
+						released,
+						"Delayed recheck is disabled; released tasks that were waiting on one"
+					),
+					Err(error) => tracing::warn!(
+						target: check_if_email_exists::LOG_TARGET,
+						error = ?error,
+						"Failed to release pending delayed rechecks"
+					),
+				}
+			});
 		}
 
 		if config.reverification.enable && config.worker.enable {
@@ -122,8 +140,6 @@ pub async fn run_warp_server(
 	Ok(runner)
 }
 
-/// Check that the tenant context has the required scope.
-/// Returns 403 Forbidden if the scope is missing.
 /// Deserializes a PATCH field that may be absent, `null` or a value.
 ///
 /// With `#[serde(default, deserialize_with = "crate::http::present_nullable")]`
@@ -138,6 +154,8 @@ where
 	<Option<T> as serde::Deserialize>::deserialize(deserializer).map(Some)
 }
 
+/// Check that the tenant context has the required scope.
+/// Returns 403 Forbidden if the scope is missing.
 pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejection> {
 	if ctx.has_scope(scope) {
 		Ok(())
@@ -150,8 +168,7 @@ pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejecti
 }
 
 fn required_route_scope(path: &str) -> Option<&'static str> {
-	// The deprecated v0 endpoint runs the same verification as v1 and spends
-	// the same quota, so it needs the same scope.
+	// v0 check_email runs the same verification as v1 and accepts API keys.
 	if path == "/v0/check_email" {
 		return Some(scope::VERIFY);
 	}
@@ -198,7 +215,7 @@ const API_KEY_PREFIX: &str = "rch_live_";
 /// 1. `Authorization: Bearer rch_live_...` → resolve via API key lookup
 /// 2. `Authorization: Bearer <Better Auth JWT>` → verify signature, tenant and role
 /// 3. `x-reacher-secret` header → validate against config → legacy context
-/// 4. No auth headers + no `header_secret` configured → legacy context (open mode)
+/// 4. No auth headers, no `header_secret` and no JWT `auth` configured → legacy context (open mode)
 /// 5. Otherwise → 401 Unauthorized
 pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<(TenantContext,)> {
 	let config_clone = Arc::clone(&config);
@@ -244,7 +261,7 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 							}
 						}
 						if let (Some(auth_config), Some(pool)) = (&config.auth, config.get_pg_pool()) {
-								let ctx = resolve_from_jwt(&pool, token, auth_config, method.as_str(), path.as_str())
+								let ctx = resolve_from_jwt(&pool, token, auth_config, &config.throttle, method.as_str(), path.as_str())
 									.await
 									.map_err(|error| {
 										let (status, message) = match error {
@@ -284,7 +301,15 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 					// If header_secret is not configured, fall through
 				}
 
-				// Path 3: No auth + no secret configured → open mode
+				// Path 3: open mode. The legacy context has no tenant id, so it
+				// reads every tenant's rows. A backend that verifies workspace
+				// tokens serves many tenants and must not answer anonymously.
+				if config.auth.is_some() {
+					return Err(warp::reject::custom(ReacherResponseError::new(
+						StatusCode::UNAUTHORIZED,
+						"Authentication required. Provide Authorization: Bearer <api_key> or x-reacher-secret header.",
+					)));
+				}
 				match &config.header_secret {
 					None => Ok(TenantContext::legacy(config.throttle.clone())),
 					Some(s) if s.is_empty() => {
@@ -391,11 +416,47 @@ mod tests {
 			.is_ok());
 	}
 
+	#[tokio::test]
+	async fn missing_credentials_are_refused_when_workspace_tokens_are_configured() {
+		let rejected_status = |config: BackendConfig| async move {
+			warp::test::request()
+				.path("/v1/jobs/1")
+				.filter(&super::resolve_tenant(Arc::new(config)))
+				.await
+				.err()
+				.and_then(|rejection| {
+					rejection
+						.find::<super::ReacherResponseError>()
+						.map(|error| error.code)
+				})
+		};
+
+		// A single-user backend with no credentials configured stays open.
+		assert_eq!(rejected_status(BackendConfig::empty()).await, None);
+
+		// Workspace tokens mean many tenants share this backend, and the open
+		// context has no tenant id, so it would read every tenant's rows.
+		let mut config = BackendConfig::empty();
+		config.auth = Some(crate::config::JwtAuthConfig {
+			jwks_url: "http://localhost/jwks".into(),
+			issuer: "http://localhost".into(),
+			audience: "check-if-email-exists-api".into(),
+		});
+		assert_eq!(
+			rejected_status(config).await,
+			Some(warp::http::StatusCode::UNAUTHORIZED)
+		);
+	}
+
 	#[test]
 	fn every_tenant_api_group_has_a_scope() {
 		let spec = super::openapi::build_spec().expect("OpenAPI spec");
 		for path in spec["paths"].as_object().expect("OpenAPI paths").keys() {
-			if !path.starts_with("/v1/")
+			// v0 bulk only accepts the backend secret; v0 check_email accepts API keys.
+			if path.starts_with("/v0/") && path != "/v0/check_email" {
+				continue;
+			}
+			if !(path.starts_with("/v1/") || path.starts_with("/v0/"))
 				|| path.starts_with("/v1/admin/")
 				|| path.starts_with("/v1/inbound/")
 				|| path.starts_with("/v1/pipelines")

@@ -595,6 +595,12 @@ for the second; a custom policy uses exponential backoff (`backoff_seconds * bac
 Bounded by `RetryPolicy.max_retries`. Cancelling a job (`POST /v1/jobs/{id}/cancel`) flips any
 scheduled or in-flight rechecks for that job to `cancelled` in the same transaction.
 
+While a recheck is pending, its task is `retrying` and keeps the partial result. The job, its list
+and its pipeline run stay open until the recheck has run, so results and pipeline deliveries carry
+the final verdict rather than the interim Unknown. A recheck that can never run (cancelled job,
+invalid payload, publish attempts exhausted) returns the task to `completed` with the partial result.
+A worker started with `enable = false` releases any rechecks still pending in the same way.
+
 The verification response now exposes `score.partial_confidence` for these cases:
 
 ```json

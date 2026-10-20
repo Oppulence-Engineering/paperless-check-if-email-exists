@@ -1,7 +1,20 @@
 use crate::LOG_TARGET;
-use reqwest::Client;
+use reqwest::{Client, Url};
 
 const MAIN_API_URL: &str = "https://haveibeenpwned.com/api/v3/";
+
+/// The account goes in the path as one percent-encoded segment. A local part
+/// may contain "/", "?" or "#", which would otherwise change the request.
+fn breached_account_url(to_email: &str) -> Url {
+	let mut url = Url::parse(MAIN_API_URL).expect("MAIN_API_URL is a valid URL");
+	url.path_segments_mut()
+		.expect("an https URL has path segments")
+		.pop_if_empty()
+		.extend(["breachedaccount", to_email]);
+	url.query_pairs_mut()
+		.append_pair("truncateResponse", "false");
+	url
+}
 
 /// Check if the email has been found in any breach or paste using the
 /// HaveIBeenPwned API.
@@ -15,15 +28,7 @@ pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Op
 		.timeout(std::time::Duration::from_secs(10))
 		.build()
 		.ok()?;
-	// The address is one path segment: `/`, `#`, `?` and `%` are valid in a
-	// local part and must not change the URL.
-	let mut url = reqwest::Url::parse(MAIN_API_URL).ok()?;
-	url.path_segments_mut()
-		.ok()?
-		.pop_if_empty()
-		.push("breachedaccount")
-		.push(to_email);
-	url.set_query(Some("truncateResponse=false"));
+	let url = breached_account_url(to_email);
 
 	let request = client
 		.get(url)
@@ -61,5 +66,19 @@ pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Op
 			);
 			None
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::breached_account_url;
+
+	#[test]
+	fn encodes_the_account_as_one_path_segment() {
+		// "/", "?", "#" and "%" are all legal in a local part.
+		assert_eq!(
+			breached_account_url("a/b?c#d%e@example.com").as_str(),
+			"https://haveibeenpwned.com/api/v3/breachedaccount/a%2Fb%3Fc%23d%25e@example.com?truncateResponse=false"
+		);
 	}
 }
