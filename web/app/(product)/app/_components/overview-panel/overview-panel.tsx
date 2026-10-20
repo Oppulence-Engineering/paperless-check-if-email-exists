@@ -100,7 +100,7 @@ const linkRow = "flex items-center gap-4 p-5 transition-colors hover:bg-white/[0
 
 export function OverviewPanel({ className, ...props }: OverviewPanelProps) {
 	return (
-		<Page description="What needs your attention in this workspace." title="Overview" width="md">
+		<Page description="What needs your attention in this workspace." title="Overview">
 			<section
 				className={cn("flex flex-col gap-10", className)}
 				data-slot="overview-panel"

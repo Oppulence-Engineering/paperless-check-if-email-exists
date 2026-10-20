@@ -30,7 +30,6 @@ export function HistoryPanel({ className, ...props }: HistoryPanelProps) {
 		<Page
 			description="Review earlier results for an address in this workspace."
 			title="Verification history"
-			width="md"
 		>
 			<section
 				className={cn("flex flex-col gap-10", className)}

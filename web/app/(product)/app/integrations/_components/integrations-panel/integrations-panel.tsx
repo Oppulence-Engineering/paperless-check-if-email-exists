@@ -60,7 +60,6 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 			}
 			description="Connect delivery feedback, the webhook, API keys, and pipelines. Each row shows if it is set up and opens its setup page."
 			title="Connect your stack"
-			width="md"
 		>
 			<section
 				data-slot="integrations-panel"

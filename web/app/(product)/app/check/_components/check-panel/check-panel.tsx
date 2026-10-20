@@ -69,7 +69,6 @@ export function CheckPanel({ className, initialEmail, ...props }: CheckPanelProp
 		<Page
 			description="Review reachability, delivery risk, and the signals behind the result."
 			title="Check an email address"
-			width="md"
 		>
 			<section data-slot="check-panel" className={cn("flex flex-col gap-10", className)} {...props}>
 				<Group>
