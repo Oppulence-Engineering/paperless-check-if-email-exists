@@ -3978,6 +3978,111 @@ paths:
       summary: POST /v1/reputation/check
       tags:
       - v1
+  /v1/research:
+    get:
+      operationId: v1_list_research
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchList"
+          description: Research sessions
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - v1
+    post:
+      operationId: v1_create_research
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResearchRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchCreated"
+          description: Research queued
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - v1
+  /v1/research/{session_id}:
+    get:
+      operationId: v1_get_research
+      parameters:
+      - description: Research session
+        explode: false
+        in: path
+        name: session_id
+        required: true
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchDetail"
+          description: Research evidence and progress
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - v1
+  /v1/research/{session_id}/export:
+    post:
+      operationId: v1_export_research
+      parameters:
+      - description: Research session
+        explode: false
+        in: path
+        name: session_id
+        required: true
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResearchExportRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchExportResponse"
+          description: Selected evidence or currently approved contacts as CSV
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - v1
   /v1/reverification:
     put:
       operationId: v1_update_reverification
@@ -6351,6 +6456,44 @@ components:
       required:
       - label
       - provider
+      type: object
+    CreateResearchRequest:
+      additionalProperties: false
+      example:
+        max_candidates: 0
+        import_format: csv
+        max_verifications: 0
+        name: name
+        idempotency_key: idempotency_key
+        target_role: target_role
+        import_content: import_content
+      properties:
+        idempotency_key:
+          type: string
+        import_content:
+          type: string
+        import_format:
+          $ref: "#/components/schemas/ResearchImportFormat"
+        max_candidates:
+          format: int32
+          minimum: 0
+          type: integer
+        max_verifications:
+          format: int32
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        target_role:
+          type: string
+      required:
+      - idempotency_key
+      - import_content
+      - import_format
+      - max_candidates
+      - max_verifications
+      - name
+      - target_role
       type: object
     CreateSavedSegmentRequest:
       example:
@@ -9511,6 +9654,346 @@ components:
       - domain_info
       - risk_level
       - score
+      type: object
+    ResearchCandidate:
+      example:
+        observed_at: observed_at
+        verification_error: verification_error
+        mailbox: ""
+        email_source: email_source
+        person_status: person_status
+        name: name
+        role_status: role_status
+        employment_status: employment_status
+        evidence_url: evidence_url
+        title: title
+        email: email
+      properties:
+        email:
+          type: string
+        email_source:
+          type: string
+        employment_status:
+          type: string
+        evidence_url:
+          nullable: true
+          type: string
+        mailbox:
+          allOf:
+          - $ref: "#/components/schemas/ResearchMailbox"
+          nullable: true
+        name:
+          type: string
+        observed_at:
+          nullable: true
+          type: string
+        person_status:
+          type: string
+        role_status:
+          type: string
+        title:
+          type: string
+        verification_error:
+          nullable: true
+          type: string
+      required:
+      - email
+      - email_source
+      - employment_status
+      - name
+      - person_status
+      - role_status
+      - title
+      type: object
+    ResearchCreated:
+      example:
+        id: id
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
+    ResearchDetail:
+      example:
+        max_candidates: 0
+        session:
+          imported_rows: 0
+          name: name
+          created_at: created_at
+          id: id
+        verification_requests: 0
+        max_verifications: 0
+        target_role: target_role
+        rows:
+        - checked_pages:
+          - checked_pages
+          - checked_pages
+          row_key: row_key
+          candidates:
+          - observed_at: observed_at
+            verification_error: verification_error
+            mailbox: ""
+            email_source: email_source
+            person_status: person_status
+            name: name
+            role_status: role_status
+            employment_status: employment_status
+            evidence_url: evidence_url
+            title: title
+            email: email
+          - observed_at: observed_at
+            verification_error: verification_error
+            mailbox: ""
+            email_source: email_source
+            person_status: person_status
+            name: name
+            role_status: role_status
+            employment_status: employment_status
+            evidence_url: evidence_url
+            title: title
+            email: email
+          reason: reason
+          company_domain: company_domain
+          company_name: company_name
+          status: status
+        - checked_pages:
+          - checked_pages
+          - checked_pages
+          row_key: row_key
+          candidates:
+          - observed_at: observed_at
+            verification_error: verification_error
+            mailbox: ""
+            email_source: email_source
+            person_status: person_status
+            name: name
+            role_status: role_status
+            employment_status: employment_status
+            evidence_url: evidence_url
+            title: title
+            email: email
+          - observed_at: observed_at
+            verification_error: verification_error
+            mailbox: ""
+            email_source: email_source
+            person_status: person_status
+            name: name
+            role_status: role_status
+            employment_status: employment_status
+            evidence_url: evidence_url
+            title: title
+            email: email
+          reason: reason
+          company_domain: company_domain
+          company_name: company_name
+          status: status
+        status: status
+      properties:
+        max_candidates:
+          format: int32
+          minimum: 0
+          type: integer
+        max_verifications:
+          format: int32
+          minimum: 0
+          type: integer
+        rows:
+          items:
+            $ref: "#/components/schemas/ResearchRow"
+          type: array
+        session:
+          $ref: "#/components/schemas/ResearchSummary"
+        status:
+          type: string
+        target_role:
+          type: string
+        verification_requests:
+          format: int32
+          minimum: 0
+          type: integer
+      required:
+      - max_candidates
+      - max_verifications
+      - rows
+      - session
+      - status
+      - target_role
+      - verification_requests
+      type: object
+    ResearchExportMode:
+      enum:
+      - approved
+      - review
+      type: string
+    ResearchExportRequest:
+      additionalProperties: false
+      example:
+        mode: approved
+        row_keys:
+        - row_keys
+        - row_keys
+      properties:
+        mode:
+          $ref: "#/components/schemas/ResearchExportMode"
+        row_keys:
+          items:
+            type: string
+          type: array
+      required:
+      - mode
+      - row_keys
+      type: object
+    ResearchExportResponse:
+      example:
+        excluded_row_keys:
+        - excluded_row_keys
+        - excluded_row_keys
+        filename: filename
+        csv: csv
+        exported_rows: 0
+      properties:
+        csv:
+          type: string
+        excluded_row_keys:
+          items:
+            type: string
+          type: array
+        exported_rows:
+          format: int32
+          minimum: 0
+          type: integer
+        filename:
+          type: string
+      required:
+      - csv
+      - excluded_row_keys
+      - exported_rows
+      - filename
+      type: object
+    ResearchImportFormat:
+      enum:
+      - csv
+      - json
+      type: string
+    ResearchList:
+      example:
+        sessions:
+        - imported_rows: 0
+          name: name
+          created_at: created_at
+          id: id
+        - imported_rows: 0
+          name: name
+          created_at: created_at
+          id: id
+      properties:
+        sessions:
+          items:
+            $ref: "#/components/schemas/ResearchSummary"
+          type: array
+      required:
+      - sessions
+      type: object
+    ResearchMailbox:
+      properties:
+        action:
+          type: string
+        catch_all:
+          type: boolean
+        provider:
+          type: string
+        result:
+          type: string
+      required:
+      - action
+      - catch_all
+      - provider
+      - result
+      type: object
+    ResearchRow:
+      example:
+        checked_pages:
+        - checked_pages
+        - checked_pages
+        row_key: row_key
+        candidates:
+        - observed_at: observed_at
+          verification_error: verification_error
+          mailbox: ""
+          email_source: email_source
+          person_status: person_status
+          name: name
+          role_status: role_status
+          employment_status: employment_status
+          evidence_url: evidence_url
+          title: title
+          email: email
+        - observed_at: observed_at
+          verification_error: verification_error
+          mailbox: ""
+          email_source: email_source
+          person_status: person_status
+          name: name
+          role_status: role_status
+          employment_status: employment_status
+          evidence_url: evidence_url
+          title: title
+          email: email
+        reason: reason
+        company_domain: company_domain
+        company_name: company_name
+        status: status
+      properties:
+        candidates:
+          items:
+            $ref: "#/components/schemas/ResearchCandidate"
+          type: array
+        checked_pages:
+          items:
+            type: string
+          type: array
+        company_domain:
+          type: string
+        company_name:
+          type: string
+        reason:
+          type: string
+        row_key:
+          type: string
+        status:
+          type: string
+      required:
+      - candidates
+      - checked_pages
+      - company_domain
+      - company_name
+      - reason
+      - row_key
+      - status
+      type: object
+    ResearchSummary:
+      example:
+        imported_rows: 0
+        name: name
+        created_at: created_at
+        id: id
+      properties:
+        created_at:
+          nullable: true
+          type: string
+        id:
+          type: string
+        imported_rows:
+          format: int32
+          minimum: 0
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - imported_rows
+      - name
       type: object
     RetryJobResponse:
       example:

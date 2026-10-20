@@ -121,6 +121,8 @@ enum BodyProfile {
 	JsonOnboard,
 	JsonV1CheckEmail,
 	JsonFindEmailCreate,
+	JsonResearchCreate,
+	JsonResearchExport,
 	JsonFindEmailInvalidStrategy,
 	MultipartListUpload,
 	JsonPipelineCreate,
@@ -1440,6 +1442,46 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::JsonV1CheckEmail,
 			200,
 			Expectation::Json(&["is_reachable", "score"])
+		),
+		case!(
+			"POST",
+			"/v1/research",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/research"),
+			BodyProfile::JsonResearchCreate,
+			503,
+			Expectation::Error("Company research is not configured.")
+		),
+		case!(
+			"GET",
+			"/v1/research",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/research"),
+			BodyProfile::None,
+			503,
+			Expectation::Error("Company research is not configured.")
+		),
+		case!(
+			"GET",
+			"/v1/research/{session_id}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/research/1"),
+			BodyProfile::None,
+			503,
+			Expectation::Error("Company research is not configured.")
+		),
+		case!(
+			"POST",
+			"/v1/research/{session_id}/export",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/research/1/export"),
+			BodyProfile::JsonResearchExport,
+			503,
+			Expectation::Error("Company research is not configured.")
 		),
 		case!(
 			"POST",
@@ -2925,6 +2967,8 @@ fn apply_body(
 			"to_email": "sandbox@example.com",
 			"sandbox": true
 		})),
+		BodyProfile::JsonResearchCreate => builder.json(&serde_json::json!({"name":"Pilot","target_role":"CEO","import_content":"company_name,company_domain\nAcme,acme.com","import_format":"csv","max_candidates":1,"max_verifications":1,"idempotency_key":uuid::Uuid::new_v4().to_string()})),
+		BodyProfile::JsonResearchExport => builder.json(&serde_json::json!({"row_keys":["row-1"],"mode":"approved"})),
 		BodyProfile::JsonFindEmailCreate => builder.json(&serde_json::json!({
 			"first_name": "Jane",
 			"last_name": "Doe",

@@ -177,7 +177,7 @@ fn required_route_scope(path: &str) -> Option<&'static str> {
 	match route.split('/').next()? {
 		"check_email" | "operations" | "emails" => Some(scope::VERIFY),
 		"bulk" | "jobs" | "events" | "query" | "sources" => Some(scope::BULK),
-		"find_email" => Some(scope::FIND),
+		"find_email" | "research" => Some(scope::FIND),
 		"lists" | "segments" => Some(scope::LISTS),
 		"alerts" => Some(scope::VERIFY),
 		"suppressions" | "outcomes" => Some(scope::SUPPRESSIONS),

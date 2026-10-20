@@ -163,16 +163,20 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1CheckSuppression**](docs/V1Api.md#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check
 *V1Api* | [**v1CreateBulkJob**](docs/V1Api.md#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.
 *V1Api* | [**v1CreateList**](docs/V1Api.md#v1createlist) | **POST** /v1/lists | POST /v1/lists
+*V1Api* | [**v1CreateResearch**](docs/V1Api.md#v1createresearch) | **POST** /v1/research |
 *V1Api* | [**v1DeleteList**](docs/V1Api.md#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
 *V1Api* | [**v1DeleteSuppression**](docs/V1Api.md#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 *V1Api* | [**v1DownloadList**](docs/V1Api.md#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
+*V1Api* | [**v1ExportResearch**](docs/V1Api.md#v1exportresearch) | **POST** /v1/research/{session_id}/export |
 *V1Api* | [**v1ExportSuppressions**](docs/V1Api.md#v1exportsuppressions) | **GET** /v1/suppressions/export | Export suppressions
 *V1Api* | [**v1FindEmail**](docs/V1Api.md#v1findemail) | **POST** /v1/find_email | POST /v1/find_email
 *V1Api* | [**v1GetFindEmail**](docs/V1Api.md#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+*V1Api* | [**v1GetResearch**](docs/V1Api.md#v1getresearch) | **GET** /v1/research/{session_id} |
 *V1Api* | [**v1GetVerificationOperation**](docs/V1Api.md#v1getverificationoperation) | **GET** /v1/operations/{operation_id} |
 *V1Api* | [**v1ImportSuppressions**](docs/V1Api.md#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
+*V1Api* | [**v1ListResearch**](docs/V1Api.md#v1listresearch) | **GET** /v1/research |
 *V1Api* | [**v1ListSuppressionEvents**](docs/V1Api.md#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
@@ -231,6 +235,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [CreateOutcomePolicyRequest](docs/CreateOutcomePolicyRequest.md)
  - [CreatePipelineInput](docs/CreatePipelineInput.md)
  - [CreateProviderEndpointInput](docs/CreateProviderEndpointInput.md)
+ - [CreateResearchRequest](docs/CreateResearchRequest.md)
  - [CreateSavedSegmentRequest](docs/CreateSavedSegmentRequest.md)
  - [CreateScorePolicyRequest](docs/CreateScorePolicyRequest.md)
  - [CreateTenantDomainRequest](docs/CreateTenantDomainRequest.md)
@@ -322,6 +327,17 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [RecommendedAction](docs/RecommendedAction.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
+ - [ResearchCandidate](docs/ResearchCandidate.md)
+ - [ResearchCreated](docs/ResearchCreated.md)
+ - [ResearchDetail](docs/ResearchDetail.md)
+ - [ResearchExportMode](docs/ResearchExportMode.md)
+ - [ResearchExportRequest](docs/ResearchExportRequest.md)
+ - [ResearchExportResponse](docs/ResearchExportResponse.md)
+ - [ResearchImportFormat](docs/ResearchImportFormat.md)
+ - [ResearchList](docs/ResearchList.md)
+ - [ResearchMailbox](docs/ResearchMailbox.md)
+ - [ResearchRow](docs/ResearchRow.md)
+ - [ResearchSummary](docs/ResearchSummary.md)
  - [RetryJobResponse](docs/RetryJobResponse.md)
  - [ReverificationStatusResponse](docs/ReverificationStatusResponse.md)
  - [RiskDirection](docs/RiskDirection.md)

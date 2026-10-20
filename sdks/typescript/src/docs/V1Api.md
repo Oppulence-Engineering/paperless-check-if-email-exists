@@ -11,16 +11,20 @@ All URIs are relative to *http://localhost*
 |[**v1CheckSuppression**](#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check|
 |[**v1CreateBulkJob**](#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.|
 |[**v1CreateList**](#v1createlist) | **POST** /v1/lists | POST /v1/lists|
+|[**v1CreateResearch**](#v1createresearch) | **POST** /v1/research | |
 |[**v1DeleteList**](#v1deletelist) | **DELETE** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}|
 |[**v1DeleteSuppression**](#v1deletesuppression) | **DELETE** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}|
 |[**v1DownloadList**](#v1downloadlist) | **GET** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download|
+|[**v1ExportResearch**](#v1exportresearch) | **POST** /v1/research/{session_id}/export | |
 |[**v1ExportSuppressions**](#v1exportsuppressions) | **GET** /v1/suppressions/export | Export suppressions|
 |[**v1FindEmail**](#v1findemail) | **POST** /v1/find_email | POST /v1/find_email|
 |[**v1GetFindEmail**](#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}|
 |[**v1GetList**](#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}|
+|[**v1GetResearch**](#v1getresearch) | **GET** /v1/research/{session_id} | |
 |[**v1GetVerificationOperation**](#v1getverificationoperation) | **GET** /v1/operations/{operation_id} | |
 |[**v1ImportSuppressions**](#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions|
 |[**v1ListLists**](#v1listlists) | **GET** /v1/lists | GET /v1/lists|
+|[**v1ListResearch**](#v1listresearch) | **GET** /v1/research | |
 |[**v1ListSuppressionEvents**](#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events|
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
@@ -410,6 +414,58 @@ const { status, data } = await apiInstance.v1CreateList(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1CreateResearch**
+> ResearchCreated v1CreateResearch(createResearchRequest)
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration,
+    CreateResearchRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let createResearchRequest: CreateResearchRequest; //
+
+const { status, data } = await apiInstance.v1CreateResearch(
+    createResearchRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **createResearchRequest** | **CreateResearchRequest**|  | |
+
+
+### Return type
+
+**ResearchCreated**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Research queued |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1DeleteList**
 > ListDeleteResponse v1DeleteList()
 
@@ -571,6 +627,61 @@ const { status, data } = await apiInstance.v1DownloadList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Cleaned list CSV download |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ExportResearch**
+> ResearchExportResponse v1ExportResearch(researchExportRequest)
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration,
+    ResearchExportRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let sessionId: number; //Research session (default to undefined)
+let researchExportRequest: ResearchExportRequest; //
+
+const { status, data } = await apiInstance.v1ExportResearch(
+    sessionId,
+    researchExportRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **researchExportRequest** | **ResearchExportRequest**|  | |
+| **sessionId** | [**number**] | Research session | defaults to undefined|
+
+
+### Return type
+
+**ResearchExportResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Selected evidence or currently approved contacts as CSV |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -795,6 +906,57 @@ const { status, data } = await apiInstance.v1GetList(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v1GetResearch**
+> ResearchDetail v1GetResearch()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let sessionId: number; //Research session (default to undefined)
+
+const { status, data } = await apiInstance.v1GetResearch(
+    sessionId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **sessionId** | [**number**] | Research session | defaults to undefined|
+
+
+### Return type
+
+**ResearchDetail**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Research evidence and progress |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v1GetVerificationOperation**
 > VerificationResponse v1GetVerificationOperation()
 
@@ -949,6 +1111,50 @@ const { status, data } = await apiInstance.v1ListLists(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List resources |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListResearch**
+> ResearchList v1ListResearch()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+const { status, data } = await apiInstance.v1ListResearch();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**ResearchList**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Research sessions |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -2045,6 +2045,150 @@ export const V1CheckReputationDefaultResponse = zod.object({
   error: zod.string(),
 });
 
+export const v1ListResearch200ResponseSessionsItemImportedRowsMin = 0;
+
+export const V1ListResearch200Response = zod.object({
+  sessions: zod.array(
+    zod.object({
+      created_at: zod.string().nullish(),
+      id: zod.string(),
+      imported_rows: zod
+        .int()
+        .min(v1ListResearch200ResponseSessionsItemImportedRowsMin),
+      name: zod.string(),
+    }),
+  ),
+});
+
+export const V1ListResearchDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const v1CreateResearchBodyMaxCandidatesMin = 0;
+
+export const v1CreateResearchBodyMaxVerificationsMin = 0;
+
+export const V1CreateResearchBody = zod.strictObject({
+  idempotency_key: zod.string(),
+  import_content: zod.string(),
+  import_format: zod.enum(["csv", "json"]),
+  max_candidates: zod.int().min(v1CreateResearchBodyMaxCandidatesMin),
+  max_verifications: zod.int().min(v1CreateResearchBodyMaxVerificationsMin),
+  name: zod.string(),
+  target_role: zod.string(),
+});
+
+export const V1CreateResearch200Response = zod.object({
+  id: zod.string(),
+});
+
+export const V1CreateResearchDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const v1GetResearchPathSessionIdMin = 0;
+
+export const V1GetResearchParams = zod.object({
+  session_id: zod.coerce
+    .number()
+    .int()
+    .min(v1GetResearchPathSessionIdMin)
+    .describe("Research session"),
+});
+
+export const v1GetResearch200ResponseMaxCandidatesMin = 0;
+
+export const v1GetResearch200ResponseMaxVerificationsMin = 0;
+
+export const v1GetResearch200ResponseSessionImportedRowsMin = 0;
+
+export const v1GetResearch200ResponseVerificationRequestsMin = 0;
+
+export const V1GetResearch200Response = zod.object({
+  max_candidates: zod.int().min(v1GetResearch200ResponseMaxCandidatesMin),
+  max_verifications: zod.int().min(v1GetResearch200ResponseMaxVerificationsMin),
+  rows: zod.array(
+    zod.object({
+      candidates: zod.array(
+        zod.object({
+          email: zod.string(),
+          email_source: zod.string(),
+          employment_status: zod.string(),
+          evidence_url: zod.string().nullish(),
+          mailbox: zod
+            .union([
+              zod.object({
+                action: zod.string(),
+                catch_all: zod.boolean(),
+                provider: zod.string(),
+                result: zod.string(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
+          name: zod.string(),
+          observed_at: zod.string().nullish(),
+          person_status: zod.string(),
+          role_status: zod.string(),
+          title: zod.string(),
+          verification_error: zod.string().nullish(),
+        }),
+      ),
+      checked_pages: zod.array(zod.string()),
+      company_domain: zod.string(),
+      company_name: zod.string(),
+      reason: zod.string(),
+      row_key: zod.string(),
+      status: zod.string(),
+    }),
+  ),
+  session: zod.object({
+    created_at: zod.string().nullish(),
+    id: zod.string(),
+    imported_rows: zod
+      .int()
+      .min(v1GetResearch200ResponseSessionImportedRowsMin),
+    name: zod.string(),
+  }),
+  status: zod.string(),
+  target_role: zod.string(),
+  verification_requests: zod
+    .int()
+    .min(v1GetResearch200ResponseVerificationRequestsMin),
+});
+
+export const V1GetResearchDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const v1ExportResearchPathSessionIdMin = 0;
+
+export const V1ExportResearchParams = zod.object({
+  session_id: zod.coerce
+    .number()
+    .int()
+    .min(v1ExportResearchPathSessionIdMin)
+    .describe("Research session"),
+});
+
+export const V1ExportResearchBody = zod.strictObject({
+  mode: zod.enum(["approved", "review"]),
+  row_keys: zod.array(zod.string()),
+});
+
+export const v1ExportResearch200ResponseExportedRowsMin = 0;
+
+export const V1ExportResearch200Response = zod.object({
+  csv: zod.string(),
+  excluded_row_keys: zod.array(zod.string()),
+  exported_rows: zod.int().min(v1ExportResearch200ResponseExportedRowsMin),
+  filename: zod.string(),
+});
+
+export const V1ExportResearchDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 /**
  * @summary PUT /v1/reverification
  */

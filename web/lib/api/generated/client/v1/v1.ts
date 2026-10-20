@@ -14,6 +14,7 @@ import type {
   BulkCreateResponse,
   CheckEmailOutput,
   CheckEmailRequest,
+  CreateResearchRequest,
   ErrorEnvelope,
   FindEmailAcceptedResponse,
   FindEmailRequest,
@@ -27,6 +28,11 @@ import type {
   PendingVerification,
   ReputationCheckRequest,
   ReputationCheckResponse,
+  ResearchCreated,
+  ResearchDetail,
+  ResearchExportRequest,
+  ResearchExportResponse,
+  ResearchList,
   ReverificationStatusResponse,
   SourceQualityResponse,
   SuppressionCheckResponse,
@@ -843,6 +849,230 @@ export const v1CheckReputation = async (
     status: res.status,
     headers: res.headers,
   } as v1CheckReputationResponse;
+};
+
+export type v1ListResearchResponse200 = {
+  data: ResearchList;
+  status: 200;
+};
+
+export type v1ListResearchResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListResearchResponseSuccess = v1ListResearchResponse200 & {
+  headers: Headers;
+};
+export type v1ListResearchResponseError = v1ListResearchResponseDefault & {
+  headers: Headers;
+};
+
+export type v1ListResearchResponse =
+  v1ListResearchResponseSuccess | v1ListResearchResponseError;
+
+export const getV1ListResearchUrl = () => {
+  return `/v1/research`;
+};
+
+export const v1ListResearch = async (
+  options?: RequestInit,
+): Promise<v1ListResearchResponse> => {
+  const res = await fetch(getV1ListResearchUrl(), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListResearchResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListResearchResponse;
+};
+
+export type v1CreateResearchResponse200 = {
+  data: ResearchCreated;
+  status: 200;
+};
+
+export type v1CreateResearchResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1CreateResearchResponseSuccess = v1CreateResearchResponse200 & {
+  headers: Headers;
+};
+export type v1CreateResearchResponseError = v1CreateResearchResponseDefault & {
+  headers: Headers;
+};
+
+export type v1CreateResearchResponse =
+  v1CreateResearchResponseSuccess | v1CreateResearchResponseError;
+
+export const getV1CreateResearchUrl = () => {
+  return `/v1/research`;
+};
+
+export const v1CreateResearch = async (
+  createResearchRequest: CreateResearchRequest,
+  options?: RequestInit,
+): Promise<v1CreateResearchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getV1CreateResearchUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createResearchRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1CreateResearchResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1CreateResearchResponse;
+};
+
+export type v1GetResearchResponse200 = {
+  data: ResearchDetail;
+  status: 200;
+};
+
+export type v1GetResearchResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1GetResearchResponseSuccess = v1GetResearchResponse200 & {
+  headers: Headers;
+};
+export type v1GetResearchResponseError = v1GetResearchResponseDefault & {
+  headers: Headers;
+};
+
+export type v1GetResearchResponse =
+  v1GetResearchResponseSuccess | v1GetResearchResponseError;
+
+export const getV1GetResearchUrl = (sessionId: number) => {
+  return `/v1/research/${sessionId}`;
+};
+
+export const v1GetResearch = async (
+  sessionId: number,
+  options?: RequestInit,
+): Promise<v1GetResearchResponse> => {
+  const res = await fetch(getV1GetResearchUrl(sessionId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1GetResearchResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1GetResearchResponse;
+};
+
+export type v1ExportResearchResponse200 = {
+  data: ResearchExportResponse;
+  status: 200;
+};
+
+export type v1ExportResearchResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ExportResearchResponseSuccess = v1ExportResearchResponse200 & {
+  headers: Headers;
+};
+export type v1ExportResearchResponseError = v1ExportResearchResponseDefault & {
+  headers: Headers;
+};
+
+export type v1ExportResearchResponse =
+  v1ExportResearchResponseSuccess | v1ExportResearchResponseError;
+
+export const getV1ExportResearchUrl = (sessionId: number) => {
+  return `/v1/research/${sessionId}/export`;
+};
+
+export const v1ExportResearch = async (
+  sessionId: number,
+  researchExportRequest: ResearchExportRequest,
+  options?: RequestInit,
+): Promise<v1ExportResearchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getV1ExportResearchUrl(sessionId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(researchExportRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ExportResearchResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ExportResearchResponse;
 };
 
 export type v1UpdateReverificationResponse200 = {

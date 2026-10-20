@@ -2,14 +2,27 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft; architecture revised 2026-10-20 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
 | **Depends on** | RFC 0015 (Data Platform Foundations); RFC 0012 (title taxonomy, departure signal) |
 | **Connects to** | RFC 0003 (reverification), RFC 0004 (suppressions), RFC 0005 (list quality), RFC 0008 (remediation) |
 | **Release gates** | RFC 0015 Legal Review sign-off, including the DPIA (item 2), before any person enrichment; Definition Of Done met |
 
-## Summary
+## Implementation decision — 2026-10-20
+
+Follow the [company-to-contact integration](../paperless-research-integration.md).
+Go owns company/person matching, enrichment, provenance, and research state.
+Rust owns MillionVerifier mailbox checks and sending decisions. A deliverable
+address is not proof of the individual's identity, current employer, or purchasing
+role. Keep observations, source dates, and unresolved uncertainty separately.
+
+The separate Rust enrichment store and compulsory Parallel workflow below are
+historical proposals. First ship company imports, missing-address repair, evidence
+review, and approved exports. Job-change monitoring and CRM synchronization follow
+measured results from that workflow.
+
+## Earlier proposal
 
 Add enrichment for work data:
 

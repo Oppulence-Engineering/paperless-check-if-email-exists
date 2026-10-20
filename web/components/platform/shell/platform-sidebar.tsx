@@ -58,6 +58,10 @@ type NavItem = { children?: SubItem[]; href: string; icon: Icon; label: string }
 const NAV_GROUPS: { items: NavItem[]; label?: string }[] = [
 	{ items: [{ href: "/app", icon: SquaresFour, label: "Overview" }] },
 	{
+		items: [{ href: "/app/research", icon: Target, label: "Company research" }],
+		label: "Prospecting",
+	},
+	{
 		items: [
 			{ href: "/app/check", icon: MailValidation, label: "Check an address" },
 			{ href: "/app/finder", icon: MailSearch, label: "Find an address" },
