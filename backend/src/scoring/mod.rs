@@ -272,6 +272,37 @@ pub fn compute_freshness_at(
 
 pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let signals = extract_signals(output);
+	if let Some(external) = &output.external_verification {
+		let (score, category, sub_reason, safe_to_send) = match external.result.as_str() {
+			"invalid" => (
+				0,
+				EmailCategory::Invalid,
+				SubReason::InvalidRecipient,
+				false,
+			),
+			"unknown" => (20, EmailCategory::Unknown, SubReason::Unknown, false),
+			"catch_all" => (70, EmailCategory::Risky, SubReason::CatchAll, false),
+			_ if signals.is_disposable => (50, EmailCategory::Risky, SubReason::Disposable, false),
+			_ if signals.is_spam_trap_domain => {
+				(50, EmailCategory::Risky, SubReason::SpamTrap, false)
+			}
+			_ if signals.is_role_account => {
+				(75, EmailCategory::Risky, SubReason::RoleAccount, false)
+			}
+			"ok" if output.is_reachable == Reachable::Safe => {
+				(100, EmailCategory::Valid, SubReason::Deliverable, true)
+			}
+			_ => (20, EmailCategory::Unknown, SubReason::Unknown, false),
+		};
+		return EmailScore {
+			score,
+			category,
+			sub_reason,
+			safe_to_send,
+			reason_codes: vec!["external_verification".into()],
+			signals,
+		};
+	}
 	compute_score_from_signals(output, signals)
 }
 
@@ -455,6 +486,20 @@ pub fn compute_score_with_context(
 			partial_confidence: None,
 		};
 		return ScoreComputation { score, insights };
+	}
+
+	if output.external_verification.is_some() {
+		// History cannot promote an external unknown/catch-all into a verified mailbox.
+		return ScoreComputation {
+			insights: ScoreInsights {
+				confidence: 0,
+				confidence_level: ConfidenceLevel::VeryLow,
+				confidence_factors: vec!["external_confidence_unavailable".into()],
+				catch_all: None,
+				partial_confidence: None,
+			},
+			score,
+		};
 	}
 
 	if is_hard_invalid(&score) {
@@ -1016,7 +1061,8 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		.map(|lookup| lookup.iter().next().is_some())
 		.unwrap_or(false);
 
-	let smtp_error = output.smtp.is_err();
+	let external = output.external_verification.as_ref();
+	let smtp_error = output.smtp.is_err() && external.is_none();
 	// Core probes SMTP only after the MX lookup finds a host. Otherwise `smtp`
 	// holds `SmtpDetails::default()`, whose false flags mean "not checked",
 	// not "rejected", so they are read like an unanswered probe.
@@ -1028,10 +1074,16 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		reachable: output.is_reachable.clone(),
 		has_mx_records,
 		smtp_error,
-		smtp_can_connect: smtp_ok.map(|smtp| smtp.can_connect_smtp).unwrap_or(true),
-		smtp_is_deliverable: smtp_ok.map(|smtp| smtp.is_deliverable).unwrap_or(true),
+		smtp_can_connect: smtp_ok
+			.map(|smtp| smtp.can_connect_smtp)
+			.unwrap_or(external.is_none()),
+		smtp_is_deliverable: smtp_ok
+			.map(|smtp| smtp.is_deliverable)
+			.unwrap_or(external.is_none()),
 		smtp_is_disabled: smtp_ok.map(|smtp| smtp.is_disabled).unwrap_or(false),
-		smtp_is_catch_all: smtp_ok.map(|smtp| smtp.is_catch_all).unwrap_or(false),
+		smtp_is_catch_all: smtp_ok
+			.map(|smtp| smtp.is_catch_all)
+			.unwrap_or_else(|| external.is_some_and(|value| value.result == "catch_all")),
 		smtp_has_full_inbox: smtp_ok.map(|smtp| smtp.has_full_inbox).unwrap_or(false),
 		is_disposable: misc_ok.map(|misc| misc.is_disposable).unwrap_or(false),
 		is_role_account: misc_ok.map(|misc| misc.is_role_account).unwrap_or(false),
@@ -1057,6 +1109,7 @@ mod tests {
 
 	fn base_output() -> CheckEmailOutput {
 		CheckEmailOutput {
+			external_verification: None,
 			input: "user@example.com".into(),
 			is_reachable: Reachable::Safe,
 			misc: Ok(MiscDetails::default()),

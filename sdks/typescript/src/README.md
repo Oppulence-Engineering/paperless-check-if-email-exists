@@ -217,6 +217,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [CatchAllSeverity](docs/CatchAllSeverity.md)
  - [CheckEmailInputProxy](docs/CheckEmailInputProxy.md)
  - [CheckEmailOutput](docs/CheckEmailOutput.md)
+ - [CheckEmailOutputExternalVerification](docs/CheckEmailOutputExternalVerification.md)
  - [CheckEmailOutputMisc](docs/CheckEmailOutputMisc.md)
  - [CheckEmailOutputMx](docs/CheckEmailOutputMx.md)
  - [CheckEmailOutputSmtp](docs/CheckEmailOutputSmtp.md)

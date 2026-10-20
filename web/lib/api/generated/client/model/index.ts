@@ -44,6 +44,7 @@ export * from "./catchAllScore";
 export * from "./catchAllSeverity";
 export * from "./checkEmailInputProxy";
 export * from "./checkEmailOutput";
+export * from "./checkEmailOutputExternalVerification";
 export * from "./checkEmailRequest";
 export * from "./confidenceExplanation";
 export * from "./confidenceExplanationLevel";

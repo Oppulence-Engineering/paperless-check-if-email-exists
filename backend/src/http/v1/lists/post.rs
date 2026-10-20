@@ -344,6 +344,7 @@ async fn http_handler(
 
 	for (routing_email, primary_index, primary_task_id) in primaries {
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
 				to_email: routing_email,
 				..Default::default()

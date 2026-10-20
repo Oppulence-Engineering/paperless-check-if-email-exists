@@ -66,6 +66,17 @@ impl SmtpHealth {
 }
 
 pub fn require_smtp_ready(config: &BackendConfig) -> Result<(), crate::http::ReacherResponseError> {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return config
+			.millionverifier
+			.validate(config.verification_backend)
+			.map_err(|_| {
+				crate::http::ReacherResponseError::new(
+				warp::http::StatusCode::SERVICE_UNAVAILABLE,
+				"MillionVerifier is not configured with a live API key; no check was dispatched or charged.",
+			)
+			});
+	}
 	if config.smtp_health_enabled && config.smtp_health.snapshot(true).status != "ready" {
 		return Err(crate::http::ReacherResponseError::new(
 			warp::http::StatusCode::SERVICE_UNAVAILABLE,
@@ -88,6 +99,9 @@ fn smtp_providers() -> [EmailProvider; 7] {
 }
 
 pub fn validate_smtp_identity(config: &BackendConfig) -> Result<(), anyhow::Error> {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return config.millionverifier.validate(config.verification_backend);
+	}
 	if !config.smtp_health_enabled {
 		return Ok(());
 	}
@@ -102,6 +116,9 @@ pub fn validate_smtp_identity(config: &BackendConfig) -> Result<(), anyhow::Erro
 }
 
 pub async fn monitor_smtp_egress(config: Arc<BackendConfig>) {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return;
+	}
 	if !config.smtp_health_enabled {
 		warn!(target: LOG_TARGET, "SMTP capability monitoring and admission guard are disabled");
 		return;

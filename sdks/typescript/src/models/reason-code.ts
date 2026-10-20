@@ -21,6 +21,7 @@
  */
 
 export const ReasonCode = {
+    ExternalVerification: 'external_verification',
     Deliverable: 'deliverable',
     InvalidSyntax: 'invalid_syntax',
     InvalidRecipient: 'invalid_recipient',

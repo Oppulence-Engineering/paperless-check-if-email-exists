@@ -18,6 +18,9 @@
 import type { BounceRiskAssessment } from './bounce-risk-assessment';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { CheckEmailOutputExternalVerification } from './check-email-output-external-verification';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { CheckEmailOutputMisc } from './check-email-output-misc';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -65,6 +68,12 @@ export interface CheckEmailOutput {
      * @memberof CheckEmailOutput
      */
     'debug'?: DebugDetails;
+    /**
+     *
+     * @type {CheckEmailOutputExternalVerification}
+     * @memberof CheckEmailOutput
+     */
+    'external_verification'?: CheckEmailOutputExternalVerification;
     /**
      * The email address that was verified.
      * @type {string}

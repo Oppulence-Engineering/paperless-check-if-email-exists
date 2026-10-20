@@ -36,4 +36,31 @@ describe("TechnicalDetails", () => {
 
 		expect(screen.getByText("Timeout: No answer")).toBeInTheDocument();
 	});
+	it("explains external verification without presenting missing SMTP diagnostics as a failure", () => {
+		render(
+			<TechnicalDetails
+				result={{
+					...SAMPLE_CHECK_RESULT,
+					external_verification: {
+						service: "millionverifier",
+						result: "ok",
+						result_code: 1,
+						subresult: "ok",
+					},
+					smtp: {
+						error: {
+							type: "AnyhowError",
+							message: "Not performed",
+						},
+					},
+				}}
+			/>,
+		);
+		expect(
+			screen.getByText(/Checked by MillionVerifier/),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText("AnyhowError: Not performed"),
+		).not.toBeInTheDocument();
+	});
 });

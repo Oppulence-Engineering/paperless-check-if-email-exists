@@ -5,6 +5,12 @@
 # Env variable: RCH__BACKEND_NAME
 backend_name = "backend-dev"
 
+# Set to "millionverifier" to use HTTPS verification without SMTP/proxies.
+# Set RCH__MILLIONVERIFIER__API_KEY through the secret store, never this file.
+# MillionVerifier requires Postgres. Drain existing jobs before switching.
+# Env variable: RCH__VERIFICATION_BACKEND
+verification_backend = "reacher"
+
 # Host to bind the backend to.
 #
 # Env variable: RCH__HTTP_HOST

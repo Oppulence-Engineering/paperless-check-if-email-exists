@@ -113,6 +113,7 @@ mod worker_loop_tests {
 
 		// Publish task with invalid email (returns Invalid → success path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad-syntax".into(),
 				..Default::default()
@@ -195,6 +196,7 @@ mod worker_loop_tests {
 
 		// Publish task for the cancelled job
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "cancel@test.com".into(),
 				..Default::default()
@@ -251,6 +253,7 @@ mod worker_loop_tests {
 		.await
 		.unwrap();
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "invalid-syntax".into(),
 				..Default::default()
@@ -328,6 +331,7 @@ mod worker_loop_tests {
 		// Publish 2 single-shot tasks rapidly — second should be throttled
 		for i in 0..2 {
 			let task = CheckEmailTask {
+				verification_backend: Default::default(),
 				input: check_if_email_exists::CheckEmailInput {
 					to_email: format!("throttle{}@test.com", i),
 					..Default::default()
@@ -400,6 +404,7 @@ mod worker_loop_tests {
 		let id: i32 = sqlx::query_scalar("INSERT INTO v1_task_result (operation_id, payload, task_state) VALUES ($1, '{}', 'queued') RETURNING id")
 			.bind(uuid::Uuid::new_v4()).fetch_one(db.pool()).await.unwrap();
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "invalid-syntax".into(),
 				..Default::default()
@@ -471,6 +476,7 @@ mod worker_loop_tests {
 		// Publish 2 bulk tasks
 		for i in 0..2 {
 			let task = CheckEmailTask {
+				verification_backend: Default::default(),
 				input: check_if_email_exists::CheckEmailInput {
 					to_email: format!("bulk-throttle{}@test.com", i),
 					..Default::default()
@@ -542,6 +548,7 @@ mod worker_loop_tests {
 
 		// Use nonexistent domain that will return Invalid (success path) or Unknown (retry path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "syntax-bad".into(),
 				..Default::default()

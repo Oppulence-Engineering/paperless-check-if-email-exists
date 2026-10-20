@@ -1215,6 +1215,7 @@ async fn requested_policy_survives_queue_serialization_and_is_stored_and_replaye
 	.await
 	.is_err());
 	let task = CheckEmailTask {
+		verification_backend: Default::default(),
 		input: CheckEmailRequest {
 			to_email: "invalid".into(),
 			..Default::default()

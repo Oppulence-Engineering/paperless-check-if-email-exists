@@ -275,11 +275,14 @@ fn task_from_payload(
 		webhook: Option<TaskWebhook>,
 	}
 
-	if let Ok(task) = CheckEmailTask::deserialize(payload) {
+	if let Ok(mut task) = CheckEmailTask::deserialize(payload) {
+		// An explicit user retry creates a new attempt on the currently selected backend.
+		task.verification_backend = config.verification_backend;
 		return Ok(task);
 	}
 	let stored = StoredTask::deserialize(payload)?;
 	Ok(CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: CheckEmailRequest {
 			to_email: stored.input.to_email,
 			..Default::default()
@@ -340,6 +343,7 @@ mod tests {
 	fn full_bulk_payload_keeps_its_webhook_on_retry() {
 		let config = Arc::new(BackendConfig::empty());
 		let stored = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: crate::http::CheckEmailRequest {
 				to_email: "a@example.com".into(),
 				..Default::default()
@@ -362,6 +366,18 @@ mod tests {
 				.and_then(|webhook| webhook.on_each_email)
 				.map(|webhook| webhook.url),
 			Some("https://hooks.example.com/each".to_string())
+		);
+		let mut switched = BackendConfig::empty();
+		switched.verification_backend = crate::verification::VerificationBackend::Millionverifier;
+		let task = task_from_payload(
+			&serde_json::to_value(&stored).unwrap(),
+			3,
+			Arc::new(switched),
+		)
+		.unwrap();
+		assert_eq!(
+			task.verification_backend,
+			crate::verification::VerificationBackend::Millionverifier
 		);
 	}
 }

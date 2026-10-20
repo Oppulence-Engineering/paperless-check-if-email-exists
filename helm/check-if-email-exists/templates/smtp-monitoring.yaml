@@ -31,7 +31,7 @@ spec:
     - name: {{ include "check-if-email-exists.fullname" . }}.smtp
       rules:
         - alert: PaperlessSmtpUnavailable
-          expr: reacher_smtp_capability_ready{namespace="{{ .Release.Namespace }}"} == 0
+          expr: (reacher_smtp_capability_ready{namespace="{{ .Release.Namespace }}"} == 0) and (reacher_smtp_required{namespace="{{ .Release.Namespace }}"} == 1)
           for: 3m
           labels:
             severity: critical

@@ -1,0 +1,1420 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "//api.millionverifier.com",
+      "description": "MillionVerifier Single API"
+    }
+  ],
+  "info": {
+    "description": "API stands for Application Programming Interface. You can connect our system with your website, landing page, application or software to verify emails in real time or to send us files programmatically.\n\nUsing MillionVerifier's API you can avoid bad emails added to your email lists. You may also use our API to resell our services. \n\n# Authentication\nUse your API key to identify your account when making an API call. Each endpoint contains an example of how to use our API. \nSimply just replace \"your-api-key\" with your API key you can find on this page: https://app.millionverifier.com/api\n\nTest API key for development: \"API_KEY_FOR_TEST\". This API key will return random results.\n\n# SSL Information\nThe following versions (or above) are supported to make a succesful request in certain programming languages:\n  - PHP 5.4.45 <=\n  - Python (Requests module) 1.0.0 <=\n  - cURL 7.65.3 <= \n  - Java (OpenJDK) 10 <=\n  - NodeJS 0.10.28 <=\n  - C# (.NET Core) 2.1 <=\n\n# Servers\n- Single API base URL: https://api.millionverifier.com \n- Bulk API base URL: https://bulkapi.millionverifier.com\n",
+    "version": "3.1.0",
+    "title": "MillionVerifier API"
+  },
+  "tags": [
+    {
+      "name": "Single API",
+      "description": "Verify an email address in real time as your subscriber signs up to your newsletter. For cleaning larger databases please use our Bulk API.\n\nSpecial characters in the email address should be encoded.\n\nDemo API keys:\n  - API_KEY_FOR_TEST\n      - Returns with a random response\n  - API_KEY_FOR_UNVERIFIED\n  - API_KEY_FOR_OK\n  - API_KEY_FOR_CATCH_ALL\n  - API_KEY_FOR_INVALID\n  - API_KEY_FOR_UNKOWN\n  - API_KEY_FOR_DISPOSABLE\n  - API_KEY_FOR_ERROR_NO_EMAIL\n  - API_KEY_FOR_ERROR_NO_APIKEY\n  - API_KEY_FOR_ERROR_INVALID_APIKEY\n  - API_KEY_FOR_ERROR_INSUFFICIENT_CREDITS\n  - API_KEY_FOR_ERROR_IP_ADDRESS_BLOCKED\n  - API_KEY_FOR_ERROR_INTERNAL_ERROR\n"
+    },
+    {
+      "name": "Bulk API",
+      "description": "Send your emails in a CSV file programmatically and retrieve your results."
+    },
+    {
+      "name": "API credits",
+      "description": "Get information of the available credits on your account."
+    }
+  ],
+  "paths": {
+    "/api/v3": {
+      "get": {
+        "tags": [
+          "Single API"
+        ],
+        "summary": "Verify an email address in real time",
+        "description": "Verify an email address in real time and get resutls in just a second.",
+        "operationId": "single-verification",
+        "parameters": [
+          {
+            "name": "api",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email address that needs to be verified",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "test@example.com"
+            }
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "Time in seconds to terminate the connection in case no response recevied from the recipient server. You can set between 2 and 60 seconds. Default timeout is 20 seconds.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SingleApiResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SingleApiResponseBadApiKey"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SingleApiResponseMissingEmail"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10' \\\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://api.millionverifier.com/api/v3/?api=your-api-key&email=test@example.com&timeout=10\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/api/v3/credits": {
+      "get": {
+        "tags": [
+          "API credits"
+        ],
+        "summary": "API credits",
+        "description": "Check the amount of available credits",
+        "operationId": "api-credits",
+        "parameters": [
+          {
+            "name": "api",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credits": {
+                      "type": "integer",
+                      "description": "Remaining credits",
+                      "example": 12345
+                    },
+                    "bulk_credits": {
+                      "type": "integer",
+                      "description": "Remaining credits, same as \"credits\"",
+                      "example": 12345
+                    },
+                    "renewing_credits": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "plan": {
+                      "type": "integer",
+                      "example": 4
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://api.millionverifier.com/api/v3/credits?api=your-api-key',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://api.millionverifier.com/api/v3/credits?api=your-api-key' \\\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://api.millionverifier.com/api/v3/credits?api=your-api-key\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://api.millionverifier.com/api/v3/credits?api=your-api-key\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://api.millionverifier.com/api/v3/credits?api=your-api-key\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://api.millionverifier.com/api/v3/credits?api=your-api-key\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://api.millionverifier.com/api/v3/credits?api=your-api-key',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://api.millionverifier.com/api/v3/credits?api=your-api-key\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/v2/upload": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "File upload",
+        "description": "Upload file containing email addresses for verification",
+        "operationId": "bulk-upload",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request parameters for upload",
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file_contents": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BulkapiUploadSuccess"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BulkapiInsufficientCredits"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'POST',\n  CURLOPT_POSTFIELDS => array('file_contents'=> new CURLFILE('path/to/file')),\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request POST 'https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key' \\\n--form 'file_contents=@\"path/to/file\"'\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"bytes\"\n  \"mime/multipart\"\n  \"os\"\n  \"path/filepath\"\n  \"io\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key\"\n  method := \"POST\"\n\n  payload := &bytes.Buffer{}\n  writer := multipart.NewWriter(payload)\n  file, errFile1 := os.Open(\"path/to/file\")\n  defer file.Close()\n  part1,\n        errFile1 := writer.CreateFormFile(\"file_contents\",filepath.Base(\"path/to/file\"))\n  _, errFile1 = io.Copy(part1, file)\n  if errFile1 != nil {\n    fmt.Println(errFile1)\n    return\n  }\n  err := writer.Close()\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, payload)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  req.Header.Set(\"Content-Type\", writer.FormDataContentType())\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key\"\n\nfiles=[\n  ('file_contents',('filename',open('path/to/file','rb'),'text/plain'))\n]\n\nresponse = requests.request(\"POST\", url, files=files)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Post.new(url)\n\nform_data = [['file_contents', File.open('path/to/file')]]\nrequest.set_form form_data, 'multipart/form-data'\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nMediaType mediaType = MediaType.parse(\"text/plain\");\nRequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)\n  .addFormDataPart(\"file_contents\",\"path/to/file\",\n    RequestBody.create(MediaType.parse(\"application/octet-stream\"),\n    new File(\"path/to/file\")))\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key\")\n  .method(\"POST\", body)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar fs = require('fs');\nvar options = {\n  'method': 'POST',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key',\n  'headers': {},\n  formData: {\n    'file_contents': {\n      'value': fs.createReadStream('path/to/file'),\n      'options': {\n        'filename': 'path/to/file',\n        'contentType': null\n      }\n    }\n  }\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key=your-api-key\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.POST);\nrequest.AddFile(\"file_contents\", \"path/to/file\");\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/v2/fileinfo": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "File info",
+        "description": "Get info of the uploaded file",
+        "operationId": "bulk-fileinfo",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "query",
+            "description": "The ID of the uploaded file",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 940
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkapiUploadSuccess"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940' \\\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/v2/fileinfo?key=your-api-key&file_id=940\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/v2/filelist": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "Files list",
+        "description": "Get a list of files according to the given filters",
+        "operationId": "bulk-filelist",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The amount of files to show on one page. Defaults to 50, which is also the maximum amount that can be used for limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 25
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Filter for file IDs. To filter for multiple file IDs, use comma separated values e.g.: `id=1,2,3`",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter for file name. It checks if any of the file names contain the given filter",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "myfile.txt"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter for file state. To filter for multiple file states, use comma separatedvalues e.g.: `status=in_progress,finished`. Any state type that does not match the possible values will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_progress",
+                "error",
+                "finished",
+                "canceled",
+                "paused",
+                "in_queue_to_start"
+              ],
+              "example": "in_progress,error"
+            }
+          },
+          {
+            "name": "updated_at_from",
+            "in": "query",
+            "description": "Filter for files that were updated after the given date time. If the given value does not match the format, the filter will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "example": "2023-01-01 15:00:05"
+            }
+          },
+          {
+            "name": "updated_at_to",
+            "in": "query",
+            "description": "Filter for files that were updated before the given date time. If the given value does not match the format, the filter will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "example": "2023-01-01 15:00:05"
+            }
+          },
+          {
+            "name": "createdate_from",
+            "in": "query",
+            "description": "Filter for files that were created after the given date time. If the given value does not match the format, the filter will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "example": "2023-01-01 15:00:05"
+            }
+          },
+          {
+            "name": "createdate_to",
+            "in": "query",
+            "description": "Filter for files that were created before the given date time. If the given value does not match the format, the filter will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "example": "2023-01-01 15:00:05"
+            }
+          },
+          {
+            "name": "percent_from",
+            "in": "query",
+            "description": "Filter for files that has a progress over the given percentage",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 50
+            }
+          },
+          {
+            "name": "percent_to",
+            "in": "query",
+            "description": "Filter for files that has a progress below the given percentage",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 75
+            }
+          },
+          {
+            "name": "has_error",
+            "in": "query",
+            "description": "Filter for files that either had or didn't have any errors. It accepts the listed boolean values. Any other values will be ignored",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "t",
+                "T",
+                "TRUE",
+                "True",
+                "true",
+                "0",
+                "f",
+                "F",
+                "FALSE",
+                "False",
+                "false"
+              ],
+              "example": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "files": {
+                      "type": "array",
+                      "description": "An array of files",
+                      "items": {
+                        "$ref": "#/components/schemas/BulkapiUploadSuccess"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "The amount of total files matching the given filters",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18%2015:00:00&percent_from=5&percent_to=75&has_error=0',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0'\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18%2015:00:00&percent_from=5&percent_to=75&has_error=0\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0\")\n\nhttp = Net::HTTP.new(url.host, url.port);\nrequest = Net::HTTP::Get.new(url)\n\nresponse = http.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/v2/filelist?key=your-api-key&offset=0&limit=0&status=in_progress&updated_at_from=2023-01-18 15:00:00&percent_from=5&percent_to=75&has_error=0\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/v2/download": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "Download report",
+        "description": "Download report of the verification result",
+        "operationId": "bulk-download",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "query",
+            "description": "The ID of the uploaded file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 940
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Download only filtered results",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "ok_and_catch_all",
+                "unknown",
+                "invalid",
+                "all",
+                "custom"
+              ],
+              "example": "all"
+            }
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "description": "When the 'custom' filter is used, result statuses can be given as a comma separated values. If omitted, then all statuses will be in the results",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "catch_all",
+                "unknown",
+                "invalid",
+                "disposable"
+              ],
+              "example": "ok,disposable,invalid"
+            }
+          },
+          {
+            "name": "free",
+            "in": "query",
+            "description": "When the 'custom' filter is used, this option decides whether to filter for free domains or not. If omitted, both type of domains will be in the results",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "0"
+              ]
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "When the 'custom' filter is used, this option decides whether to filter for role emails or not. If omitted, both type of emails will be in the results",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1",
+                "0"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message if the request was not succesful"
+                    }
+                  }
+                },
+                "examples": {
+                  "Invalid_API_key": {
+                    "value": {
+                      "error": "invalid_api_key"
+                    }
+                  },
+                  "Unsupported_filter_value": {
+                    "value": {
+                      "error": "unsupported filter value"
+                    }
+                  },
+                  "File_id_is_empty": {
+                    "value": {
+                      "error": "parameter file_id is empty"
+                    }
+                  }
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all' \\\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/v2/download?key=your-api-key&file_id=940&filter=all\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/stop": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "Stop a file in Progress",
+        "description": "This will cancel the file in progress and the results for already verified emails can be downloaded in a few seconds",
+        "operationId": "bulk-stop",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "query",
+            "description": "The ID of the uploaded file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 940
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BulkApiStopSuccessfulRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BulkApiStopBadRequest"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942' \\\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942\"\n\nresponse = requests.request(\"GET\", url)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942',\n  'headers': {}\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/stop?key=your-api-key&file_id=942\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    },
+    "/bulkapi/v2/delete": {
+      "servers": [
+        {
+          "url": "//bulkapi.millionverifier.com"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bulk API"
+        ],
+        "summary": "Delete a file",
+        "description": "This will delete a file uploaded to the bulk API",
+        "operationId": "bulk-delete",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "query",
+            "description": "The ID of the uploaded file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": 115
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BulkApiStopSuccessfulRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BulkApiStopBadRequest"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "PHP",
+            "source": "<?php\n\n$curl = curl_init();\n\ncurl_setopt_array($curl, array(\n  CURLOPT_URL => 'https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115',\n  CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_ENCODING => '',\n  CURLOPT_MAXREDIRS => 10,\n  CURLOPT_TIMEOUT => 0,\n  CURLOPT_FOLLOWLOCATION => true,\n  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,\n  CURLOPT_CUSTOMREQUEST => 'GET',\n));\n\n$response = curl_exec($curl);\n\ncurl_close($curl);\necho $response;\n"
+          },
+          {
+            "lang": "cURL",
+            "source": "curl --location --request GET 'https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115'\n"
+          },
+          {
+            "lang": "Python",
+            "source": "import requests\n\nurl = \"https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115\"\n\npayload={}\nheaders = {}\n\nresponse = requests.request(\"GET\", url, headers=headers, data=payload)\n\nprint(response.text)\n"
+          },
+          {
+            "lang": "Ruby",
+            "source": "require \"uri\"\nrequire \"net/http\"\n\nurl = URI(\"https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115\")\n\nhttps = Net::HTTP.new(url.host, url.port)\nhttps.use_ssl = true\n\nrequest = Net::HTTP::Get.new(url)\n\nresponse = https.request(request)\nputs response.read_body\n"
+          },
+          {
+            "lang": "Java",
+            "source": "OkHttpClient client = new OkHttpClient().newBuilder()\n  .build();\nRequest request = new Request.Builder()\n  .url(\"https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115\")\n  .method(\"GET\", null)\n  .build();\nResponse response = client.newCall(request).execute();\n"
+          },
+          {
+            "lang": "NodeJS",
+            "source": "var request = require('request');\nvar options = {\n  'method': 'GET',\n  'url': 'https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115',\n  'headers': {\n  }\n};\nrequest(options, function (error, response) {\n  if (error) throw new Error(error);\n  console.log(response.body);\n});\n"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n  \"fmt\"\n  \"net/http\"\n  \"io/ioutil\"\n)\n\nfunc main() {\n\n  url := \"https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115\"\n  method := \"GET\"\n\n  client := &http.Client {\n  }\n  req, err := http.NewRequest(method, url, nil)\n\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  res, err := client.Do(req)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  defer res.Body.Close()\n\n  body, err := ioutil.ReadAll(res.Body)\n  if err != nil {\n    fmt.Println(err)\n    return\n  }\n  fmt.Println(string(body))\n}\n"
+          },
+          {
+            "lang": "C#",
+            "source": "var client = new RestClient(\"https://bulkapi.millionverifier.com/bulkapi/v2/delete?key=your-api-key&file_id=115\");\nclient.Timeout = -1;\nvar request = new RestRequest(Method.GET);\nIRestResponse response = client.Execute(request);\nConsole.WriteLine(response.Content);\n"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Subresult": {
+        "description": "Subresult of email verification.",
+        "type": "string",
+        "enum": [
+          "unknown",
+          "ok",
+          "internal_error",
+          "invalid_syntax",
+          "no_local_ip_available",
+          "dns_server_failed",
+          "dns_no_mx",
+          "dns_no_a",
+          "could_not_connect",
+          "no_code_in_banner",
+          "invalid_banner_code",
+          "no_code_in_ehlo_response",
+          "no_code_in_helo_response",
+          "no_code_in_mail_from_response",
+          "no_code_in_rcpt_to_response",
+          "ip_blocked",
+          "no_mailbox",
+          "mailbox_disabled",
+          "mailbox_full",
+          "greylisted",
+          "connection_lost",
+          "connection_timeout",
+          "connection_refused",
+          "connection_reset_by_peer",
+          "connection_no_route_to_host",
+          "host_not_accept_incoming_mail",
+          "mail_service_unavailable",
+          "bad_domain",
+          "dns_error",
+          "anti_spam_system",
+          "dns_no_domain",
+          "dns_refused",
+          "timeout_error"
+        ]
+      },
+      "BulkapiUploadSuccess": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "The ID of the uploaded file",
+            "example": "940"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "The name of the uploaded file",
+            "example": "mails500.txt"
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the verification",
+            "example": "in_progress"
+          },
+          "unique_emails": {
+            "type": "integer",
+            "description": "The number of unique emails found in the file",
+            "example": 257
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "The last update of the file",
+            "example": "2021-05-16 12:25:42"
+          },
+          "createdate": {
+            "type": "string",
+            "description": "The date of creation",
+            "example": "2021-05-16 12:25:42"
+          },
+          "percent": {
+            "type": "integer",
+            "description": "Progress percentage",
+            "example": 60
+          },
+          "total_rows": {
+            "type": "integer",
+            "description": "Total rows in the file",
+            "example": 500
+          },
+          "verified": {
+            "type": "integer",
+            "description": "Amount of verified",
+            "example": 0
+          },
+          "unverified": {
+            "type": "integer",
+            "description": "Amount of unverified",
+            "example": 0
+          },
+          "ok": {
+            "type": "integer",
+            "description": "Amount of ok emails",
+            "example": 0
+          },
+          "catch_all": {
+            "type": "integer",
+            "description": "Amount of catch all emails",
+            "example": 0
+          },
+          "disposable": {
+            "type": "integer",
+            "description": "Amount of disposable emails",
+            "example": 0
+          },
+          "invalid": {
+            "type": "integer",
+            "description": "Amount of invalid emails",
+            "example": 0
+          },
+          "unknown": {
+            "type": "integer",
+            "description": "Amount of unknown emails",
+            "example": 0
+          },
+          "reverify": {
+            "type": "integer",
+            "description": "Amount of emails that needs to be reverified",
+            "example": 0
+          },
+          "credit": {
+            "type": "integer",
+            "description": "Amount of credits needed for the verification of the file",
+            "example": 0
+          },
+          "estimated_time_sec": {
+            "type": "integer",
+            "description": "Amount of estimated seconds it will take to verify the file",
+            "example": 120
+          },
+          "error": {
+            "type": "string",
+            "description": "Any errors that happened with the file",
+            "example": ""
+          }
+        }
+      },
+      "BulkapiInsufficientCredits": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "insufficient_credits"
+          },
+          "unique_emails": {
+            "type": "integer",
+            "description": "Number of unique emails in file",
+            "example": 250000
+          },
+          "credits": {
+            "type": "integer",
+            "description": "Available credits",
+            "example": 500
+          }
+        }
+      },
+      "SingleApiResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The verified email address.",
+            "example": "bademail@gmal.com"
+          },
+          "quality": {
+            "type": "string",
+            "description": "The quality of the email address.",
+            "example": "good",
+            "enum": [
+              "",
+              "good",
+              "bad",
+              "risky"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of email verification.",
+            "example": "invalid",
+            "enum": [
+              "ok",
+              "catch_all",
+              "unknown",
+              "error",
+              "disposable",
+              "invalid"
+            ]
+          },
+          "resultcode": {
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "type": "integer",
+            "description": "The result of email verification as an integer. 1 (ok), 2 (catch_all), 3 (unknown), 4 (error), 5 (disposable), 6 (invalid)",
+            "example": 6
+          },
+          "subresult": {
+            "$ref": "#/components/schemas/Subresult",
+            "example": "bad_domain"
+          },
+          "free": {
+            "type": "boolean",
+            "description": "True if the email address is provided by a free email service such as Gmail or Yahoo.",
+            "example": false
+          },
+          "role": {
+            "type": "boolean",
+            "description": "True if the email address if linked to a role as opposed to a person. For example: admin@, sales@",
+            "example": false
+          },
+          "didyoumean": {
+            "type": "string",
+            "description": "Autocorrection suggestion for common typos.",
+            "example": "bademail@gmail.com"
+          },
+          "credits": {
+            "type": "integer",
+            "description": "Remaining credits in your account.",
+            "example": 3454
+          },
+          "executiontime": {
+            "type": "integer",
+            "description": "The time in milliseconds for the email verification.",
+            "example": 2
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message displayed here if result is \"error\".",
+            "example": ""
+          },
+          "livemode": {
+            "type": "boolean",
+            "description": "Whether the request was made with a real or demo API key",
+            "example": true
+          }
+        }
+      },
+      "SingleApiResponseBadApiKey": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The verified email address.",
+            "example": "test@example.com"
+          },
+          "quality": {
+            "type": "string",
+            "description": "The quality of the email address.",
+            "example": "",
+            "enum": [
+              "",
+              "good",
+              "bad",
+              "risky"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of email verification.",
+            "enum": [
+              "ok",
+              "catch_all",
+              "unknown",
+              "error",
+              "disposable",
+              "invalid"
+            ],
+            "example": "error"
+          },
+          "resultcode": {
+            "type": "integer",
+            "description": "The result of email verification as an integer. 1 (ok), 2 (catch_all), 3 (unknown), 4 (error), 5 (disposable), 6 (invalid)",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "example": 4
+          },
+          "subresult": {
+            "$ref": "#/components/schemas/Subresult",
+            "example": ""
+          },
+          "free": {
+            "type": "boolean",
+            "description": "True if the email address is provided by a free email service such as Gmail or Yahoo.",
+            "example": false
+          },
+          "role": {
+            "type": "boolean",
+            "description": "True if the email address if linked to a role as opposed to a person. For example: admin@, sales@",
+            "example": false
+          },
+          "didyoumean": {
+            "type": "string",
+            "description": "Autocorrection suggestion for common typos.",
+            "example": "bademail@gmail.com"
+          },
+          "credits": {
+            "type": "integer",
+            "description": "Remaining credits in your account.",
+            "example": 3454
+          },
+          "executiontime": {
+            "type": "integer",
+            "description": "The time in milliseconds for the email verification.",
+            "example": 2
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message displayed here if result is \"error\".",
+            "example": "apikey_not_found"
+          },
+          "livemode": {
+            "type": "boolean",
+            "description": "Whether the request was made with a real or demo API key",
+            "example": true
+          }
+        }
+      },
+      "SingleApiResponseMissingEmail": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The verified email address.",
+            "example": ""
+          },
+          "quality": {
+            "type": "string",
+            "description": "The quality of the email address.",
+            "example": "",
+            "enum": [
+              "",
+              "good",
+              "bad",
+              "risky"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of email verification.",
+            "enum": [
+              "ok",
+              "catch_all",
+              "unknown",
+              "error",
+              "disposable",
+              "invalid"
+            ],
+            "example": "error"
+          },
+          "resultcode": {
+            "type": "integer",
+            "description": "The result of email verification as an integer. 1 (ok), 2 (catch_all), 3 (unknown), 4 (error), 5 (disposable), 6 (invalid)",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "example": 4
+          },
+          "subresult": {
+            "$ref": "#/components/schemas/Subresult",
+            "example": ""
+          },
+          "free": {
+            "type": "boolean",
+            "description": "True if the email address is provided by a free email service such as Gmail or Yahoo.",
+            "example": false
+          },
+          "role": {
+            "type": "boolean",
+            "description": "True if the email address if linked to a role as opposed to a person. For example: admin@, sales@",
+            "example": false
+          },
+          "didyoumean": {
+            "type": "string",
+            "description": "Autocorrection suggestion for common typos.",
+            "example": "bademail@gmail.com"
+          },
+          "credits": {
+            "type": "integer",
+            "description": "Remaining credits in your account.",
+            "example": 3454
+          },
+          "executiontime": {
+            "type": "integer",
+            "description": "The time in milliseconds for the email verification.",
+            "example": 2
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message displayed here if result is \"error\".",
+            "example": "No email specified"
+          },
+          "livemode": {
+            "type": "boolean",
+            "description": "Whether the request was made with a real or demo API key",
+            "example": true
+          }
+        }
+      },
+      "BulkApiStopSuccessfulRequest": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "description": "Result of the request",
+            "example": "ok"
+          }
+        }
+      },
+      "BulkApiStopBadRequest": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message if the request resulted in an error",
+            "example": "file_not_found"
+          }
+        }
+      }
+    }
+  }
+}

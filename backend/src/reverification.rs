@@ -363,6 +363,7 @@ fn reverification_task(
 	email: &str,
 ) -> CheckEmailTask {
 	CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: CheckEmailRequest {
 			to_email: email.to_string(),
 			..Default::default()

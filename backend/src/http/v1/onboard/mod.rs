@@ -203,6 +203,43 @@ async fn onboard_handler(
 
 	info!(target: LOG_TARGET, tenant_id=?tenant_id, "Onboard: created API key");
 
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		use crate::http::shared::verification_operation::{admit_operation, wait_for_operation};
+		let mut tenant_ctx = crate::tenant::context::TenantContext::legacy(config.throttle.clone());
+		tenant_ctx.tenant_id = Some(tenant_id);
+		tenant_ctx.is_legacy = false;
+		let request = crate::http::CheckEmailRequest {
+			to_email: body.email_to_verify,
+			..Default::default()
+		};
+		let (operation, dispatch) = admit_operation(
+			Arc::clone(&config),
+			&pg_pool,
+			&request,
+			&tenant_ctx,
+			None,
+			None,
+		)
+		.await?;
+		if !config.worker.enable {
+			let pool = pg_pool.clone();
+			let config = Arc::clone(&config);
+			tokio::spawn(async move {
+				let _ = crate::worker::dispatch::execute_local(&pool, config, dispatch).await;
+			});
+		}
+		let verification = wait_for_operation(&pg_pool, operation, &tenant_ctx).await?;
+		return Ok(warp::reply::with_status(
+			warp::reply::json(&OnboardResponse {
+				tenant,
+				api_key,
+				verification_result: serde_json::from_slice(&verification.body)
+					.map_err(ReacherResponseError::from)?,
+			}),
+			StatusCode::CREATED,
+		));
+	}
+
 	// ── 3. Run email verification ───────────────────
 	let input = crate::http::v0::check_email::post::CheckEmailRequest {
 		to_email: body.email_to_verify.clone(),

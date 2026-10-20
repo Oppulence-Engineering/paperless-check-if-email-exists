@@ -34,6 +34,11 @@ pub struct JwtAuthConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
+	/// Server-selected verification engine; captured when a task is admitted.
+	#[serde(default)]
+	pub verification_backend: crate::verification::VerificationBackend,
+	#[serde(default)]
+	pub millionverifier: crate::verification::MillionVerifierConfig,
 	/// Name of the backend.
 	pub backend_name: String,
 
@@ -127,6 +132,8 @@ impl BackendConfig {
 	/// Create an empty BackendConfig. This is useful for testing purposes.
 	pub fn empty() -> Self {
 		Self {
+			verification_backend: Default::default(),
+			millionverifier: Default::default(),
 			backend_name: "".to_string(),
 			webdriver_addr: "".to_string(),
 			webdriver: WebdriverConfig::default(),
@@ -619,6 +626,12 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	// provider's verification method, the proxy (if set) must exist in the
 	// `proxies` field.
 	cfg.get_verif_method().validate_proxies()?;
+	cfg.millionverifier.validate(cfg.verification_backend)?;
+	if cfg.verification_backend == crate::verification::VerificationBackend::Millionverifier
+		&& !matches!(cfg.storage, Some(StorageConfig::Postgres(_)))
+	{
+		bail!("MillionVerifier requires Postgres to record paid verification attempts.");
+	}
 
 	Ok(cfg)
 }

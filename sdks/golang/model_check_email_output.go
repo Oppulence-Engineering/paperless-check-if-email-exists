@@ -25,6 +25,7 @@ type CheckEmailOutput struct {
 	// Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.
 	BounceRisk NullableBounceRiskAssessment `json:"bounce_risk,omitempty"`
 	Debug *DebugDetails `json:"debug,omitempty"`
+	ExternalVerification *CheckEmailOutputExternalVerification `json:"external_verification,omitempty"`
 	// The email address that was verified.
 	Input string `json:"input"`
 	IsReachable Reachable `json:"is_reachable"`
@@ -140,6 +141,38 @@ func (o *CheckEmailOutput) HasDebug() bool {
 // SetDebug gets a reference to the given DebugDetails and assigns it to the Debug field.
 func (o *CheckEmailOutput) SetDebug(v DebugDetails) {
 	o.Debug = &v
+}
+
+// GetExternalVerification returns the ExternalVerification field value if set, zero value otherwise.
+func (o *CheckEmailOutput) GetExternalVerification() CheckEmailOutputExternalVerification {
+	if o == nil || IsNil(o.ExternalVerification) {
+		var ret CheckEmailOutputExternalVerification
+		return ret
+	}
+	return *o.ExternalVerification
+}
+
+// GetExternalVerificationOk returns a tuple with the ExternalVerification field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CheckEmailOutput) GetExternalVerificationOk() (*CheckEmailOutputExternalVerification, bool) {
+	if o == nil || IsNil(o.ExternalVerification) {
+		return nil, false
+	}
+	return o.ExternalVerification, true
+}
+
+// HasExternalVerification returns a boolean if a field has been set.
+func (o *CheckEmailOutput) HasExternalVerification() bool {
+	if o != nil && !IsNil(o.ExternalVerification) {
+		return true
+	}
+
+	return false
+}
+
+// SetExternalVerification gets a reference to the given CheckEmailOutputExternalVerification and assigns it to the ExternalVerification field.
+func (o *CheckEmailOutput) SetExternalVerification(v CheckEmailOutputExternalVerification) {
+	o.ExternalVerification = &v
 }
 
 // GetInput returns the Input field value
@@ -511,6 +544,9 @@ func (o CheckEmailOutput) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Debug) {
 		toSerialize["debug"] = o.Debug
+	}
+	if !IsNil(o.ExternalVerification) {
+		toSerialize["external_verification"] = o.ExternalVerification
 	}
 	toSerialize["input"] = o.Input
 	toSerialize["is_reachable"] = o.IsReachable

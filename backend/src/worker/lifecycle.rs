@@ -213,7 +213,10 @@ async fn run_owned_task(
 		let output =
 			check_email_and_prepare_result_with_config(task, Some(Arc::clone(config))).await;
 		if let Err(error) = &output {
-			if error.is_retryable() && (retry_count as u32) < policy.max_retries {
+			if task.verification_backend == crate::verification::VerificationBackend::Reacher
+				&& error.is_retryable()
+				&& (retry_count as u32) < policy.max_retries
+			{
 				let mut tx = pool.begin().await?;
 				lock_owned(&mut tx, task).await?;
 				let next_count = retry_count.saturating_add(1);

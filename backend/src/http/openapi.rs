@@ -1003,6 +1003,20 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 		json!({ "$ref": "#/components/schemas/EmailScore" }),
 	);
 	properties.insert(
+		"external_verification".to_string(),
+		json!({
+			"type": "object",
+			"description": "External verification evidence. When present, SMTP was not performed locally.",
+			"required": ["service", "result", "result_code", "subresult"],
+			"properties": {
+				"service": {"type": "string"},
+				"result": {"type": "string"},
+				"result_code": {"type": "integer", "format": "int32"},
+				"subresult": {"type": "string"}
+			}
+		}),
+	);
+	properties.insert(
 		"bounce_risk".to_string(),
 		json!({
 			"description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
@@ -1156,6 +1170,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": [
+				"external_verification",
 				"deliverable",
 				"invalid_syntax",
 				"invalid_recipient",

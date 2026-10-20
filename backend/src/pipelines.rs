@@ -2179,6 +2179,7 @@ async fn execute_pipeline_run_inner(
 	{
 		heartbeat_pipeline_run(pg_pool, run_id, group_number).await?;
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
 				to_email: prepared_list.rows[primary_index]
 					.get(&prepared_list.email_column)

@@ -54,6 +54,7 @@ docs/CatchAllScore.md
 docs/CatchAllSeverity.md
 docs/CheckEmailInputProxy.md
 docs/CheckEmailOutput.md
+docs/CheckEmailOutputExternalVerification.md
 docs/CheckEmailOutputMisc.md
 docs/CheckEmailOutputMx.md
 docs/CheckEmailOutputSmtp.md
@@ -262,6 +263,7 @@ model_catch_all_score.go
 model_catch_all_severity.go
 model_check_email_input_proxy.go
 model_check_email_output.go
+model_check_email_output_external_verification.go
 model_check_email_output_misc.go
 model_check_email_output_mx.go
 model_check_email_output_smtp.go

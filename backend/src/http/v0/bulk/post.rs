@@ -79,6 +79,13 @@ async fn create_bulk_request(
 	body: CreateBulkRequestBody,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	crate::smtp_egress::require_smtp_ready(&config)?;
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return Err(crate::http::ReacherResponseError::new(
+			warp::http::StatusCode::BAD_REQUEST,
+			"MillionVerifier requires /v1/bulk or /v1/lists for durable paid checks.",
+		)
+		.into());
+	}
 	if body.input.is_empty() {
 		return Err(BulkError::EmptyInput.into());
 	}

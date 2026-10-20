@@ -306,22 +306,27 @@ pub async fn prepare_verification_response_at(
 		);
 	};
 
-	let collected_signals = bounce_risk_service
-		.collect_signals(
-			output,
-			read_pool.as_ref(),
-			write_pool.as_ref(),
-			&BounceRiskRequestContext {
-				tenant_id,
-				completed_at,
-				allow_external_enrichment,
-			},
-		)
-		.await
-		.unwrap_or_else(|error| {
-			warn_enrichment_failed(&error);
-			None
-		});
+	let collected_signals = if output.external_verification.is_some() {
+		// The bounce-risk model expects local SMTP observations.
+		None
+	} else {
+		bounce_risk_service
+			.collect_signals(
+				output,
+				read_pool.as_ref(),
+				write_pool.as_ref(),
+				&BounceRiskRequestContext {
+					tenant_id,
+					completed_at,
+					allow_external_enrichment,
+				},
+			)
+			.await
+			.unwrap_or_else(|error| {
+				warn_enrichment_failed(&error);
+				None
+			})
+	};
 
 	let scoring_context = build_scoring_context(
 		read_pool.as_ref(),
@@ -347,7 +352,10 @@ pub async fn prepare_verification_response_at(
 	let mut value = scored_json_with_score_and_insights(
 		output,
 		&email_score,
-		Some(&score_computation.insights),
+		output
+			.external_verification
+			.is_none()
+			.then_some(&score_computation.insights),
 	)?;
 	inject_freshness_into_result(&mut value, completed_at);
 

@@ -84,8 +84,20 @@ async fn handler(config: Arc<BackendConfig>) -> Result<impl warp::Reply, warp::R
 		("unavailable", _) | (_, "unavailable") => "unavailable",
 		_ => "degraded",
 	};
-	let smtp = config.smtp_health.snapshot(config.smtp_health_enabled);
+	let uses_smtp =
+		config.verification_backend == crate::verification::VerificationBackend::Reacher;
+	let smtp = config
+		.smtp_health
+		.snapshot(config.smtp_health_enabled && uses_smtp);
 	if !matches!(smtp.status, "ready" | "disabled") {
+		overall = "unavailable";
+	}
+	if !uses_smtp
+		&& config
+			.millionverifier
+			.validate(config.verification_backend)
+			.is_err()
+	{
 		overall = "unavailable";
 	}
 

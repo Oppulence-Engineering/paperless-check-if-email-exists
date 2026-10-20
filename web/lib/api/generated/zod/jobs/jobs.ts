@@ -212,6 +212,17 @@ export const V1GetBulkJobResults200Response = zod.object({
               .describe("The timestamp when the email verification started."),
           })
           .optional(),
+        external_verification: zod
+          .object({
+            result: zod.string(),
+            result_code: zod.int(),
+            service: zod.string(),
+            subresult: zod.string(),
+          })
+          .optional()
+          .describe(
+            "External verification evidence. When present, SMTP was not performed locally.",
+          ),
         input: zod.string().describe("The email address that was verified."),
         is_reachable: zod
           .enum(["invalid", "unknown", "safe", "risky"])
@@ -404,6 +415,7 @@ export const V1GetBulkJobResults200Response = zod.object({
             .optional(),
           reason_codes: zod.array(
             zod.enum([
+              "external_verification",
               "deliverable",
               "invalid_syntax",
               "invalid_recipient",
@@ -903,6 +915,17 @@ export const V1GetJobResults200Response = zod.object({
                     ),
                 })
                 .optional(),
+              external_verification: zod
+                .object({
+                  result: zod.string(),
+                  result_code: zod.int(),
+                  service: zod.string(),
+                  subresult: zod.string(),
+                })
+                .optional()
+                .describe(
+                  "External verification evidence. When present, SMTP was not performed locally.",
+                ),
               input: zod
                 .string()
                 .describe("The email address that was verified."),
@@ -1111,6 +1134,7 @@ export const V1GetJobResults200Response = zod.object({
                   .optional(),
                 reason_codes: zod.array(
                   zod.enum([
+                    "external_verification",
                     "deliverable",
                     "invalid_syntax",
                     "invalid_recipient",

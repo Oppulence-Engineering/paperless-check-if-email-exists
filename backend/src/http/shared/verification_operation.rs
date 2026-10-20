@@ -127,6 +127,7 @@ pub async fn admit_operation(
 		.bind(id).bind(serde_json::json!({"input":body.to_email})).bind(tenant_ctx.tenant_id)
 		.fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
 	let task = CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: body.to_check_email_input(Arc::clone(&config)),
 		job_id: CheckEmailJobId::SingleShot,
 		webhook: None,

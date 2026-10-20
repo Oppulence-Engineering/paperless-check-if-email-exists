@@ -61,6 +61,7 @@ impl CheckEmailPartialTask {
 		message_id: Option<&str>,
 	) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: backend_config.verification_backend,
 			input: self.input.to_check_email_input(backend_config),
 			job_id: self.job_id,
 			webhook: self.webhook,

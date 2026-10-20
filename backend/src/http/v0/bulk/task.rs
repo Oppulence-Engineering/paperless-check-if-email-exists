@@ -104,6 +104,9 @@ pub async fn email_verification_task(
 	mut current_job: CurrentJob,
 	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return Err("Legacy SMTP jobs must be drained before switching to MillionVerifier.".into());
+	}
 	crate::smtp_egress::require_smtp_ready(&config)?;
 	let task_payload: TaskPayload = current_job.json()?.ok_or("Got empty task.")?;
 	let job_id = task_payload.id;

@@ -97,6 +97,7 @@ async fn worker_config_with(
 
 fn make_task(job_id: i32, email: &str, tenant_id: Option<Uuid>, task_db_id: i32) -> CheckEmailTask {
 	CheckEmailTask {
+		verification_backend: Default::default(),
 		input: check_if_email_exists::CheckEmailInput {
 			to_email: email.to_string(),
 			..Default::default()

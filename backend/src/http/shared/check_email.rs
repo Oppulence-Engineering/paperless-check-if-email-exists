@@ -314,6 +314,13 @@ async fn handle_without_worker(
 ) -> Result<Vec<u8>, warp::Rejection> {
 	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"MillionVerifier requires durable Postgres operations.",
+		)
+		.into());
+	}
 	let result = check_email(&input).await;
 	// The caller gets an error on either failure below, so the check reserved
 	// from the monthly quota is given back.
@@ -338,6 +345,7 @@ async fn handle_without_worker(
 	if let Err(err) = storage
 		.store_prepared(
 			&CheckEmailTask {
+				verification_backend: config.verification_backend,
 				input: body.to_check_email_input(Arc::clone(&config)),
 				job_id: CheckEmailJobId::SingleShot,
 				webhook: None,

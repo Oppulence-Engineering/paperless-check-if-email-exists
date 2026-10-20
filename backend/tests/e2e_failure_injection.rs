@@ -185,6 +185,7 @@ async fn killed_worker_before_ack_does_not_duplicate_completion_side_effects() {
 		.await;
 
 	let task = CheckEmailTask {
+		verification_backend: Default::default(),
 		input: check_if_email_exists::CheckEmailInput {
 			to_email: "bad-syntax".into(),
 			..Default::default()
@@ -407,6 +408,7 @@ mod settlement_after_failure {
 		let channel = config.must_worker_config().expect("worker config").channel;
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad-syntax".into(),
 				..Default::default()
@@ -480,6 +482,7 @@ mod settlement_after_failure {
 		)
 		.await;
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "cancelled@example.com".into(),
 				..Default::default()

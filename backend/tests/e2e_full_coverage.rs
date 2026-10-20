@@ -95,6 +95,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_check_email_returns_invalid_for_bad_syntax() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "not-email".into(),
 				..Default::default()
@@ -114,6 +115,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_check_email_with_metadata() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad".into(),
 				..Default::default()
@@ -154,6 +156,7 @@ mod do_work_coverage {
 			.await;
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "roundtrip@test.com".into(),
 				..Default::default()
@@ -215,6 +218,7 @@ mod do_work_coverage {
 	async fn test_task_with_webhook_no_url() {
 		// Webhook with None on_each_email should not send anything
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "noemail".into(),
 				..Default::default()
@@ -853,6 +857,7 @@ mod do_check_email_work_coverage {
 
 		// Publish a task with invalid email (will return Invalid = success path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "invalid-syntax".into(),
 				..Default::default()
@@ -961,6 +966,7 @@ mod do_check_email_work_coverage {
 		// Use an email that will return Unknown (triggers retry path)
 		// But with max_retries=0 and retry_count already at 2, it should dead-letter
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@nonexistent-domain-xyz123.tld".into(),
 				..Default::default()
@@ -1111,6 +1117,7 @@ mod do_check_email_work_retry_coverage {
 		let correlation_id = uuid::Uuid::new_v4().to_string();
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad".into(),
 				..Default::default()
@@ -1179,6 +1186,7 @@ mod do_check_email_work_retry_coverage {
 
 		// Task with high max_retries — will trigger retry path for Unknown results
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "user@nonexistent-domain-abc999.tld".into(),
 				..Default::default()
@@ -1269,6 +1277,7 @@ mod postgres_storage_coverage {
 
 	fn make_task(metadata: Option<TaskMetadata>) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "store@test.com".into(),
 				..Default::default()

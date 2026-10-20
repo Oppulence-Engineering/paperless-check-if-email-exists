@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **bounce_risk** | [**BounceRiskAssessment**](BounceRiskAssessment.md) | Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable. | [optional]
 **debug** | [**DebugDetails**](DebugDetails.md) |  | [optional]
+**external_verification** | [**CheckEmailOutputExternalVerification**](CheckEmailOutputExternalVerification.md) |  | [optional]
 **input** | **string** | The email address that was verified. | [optional]
 **is_reachable** | [**Reachable**](Reachable.md) |  | [optional]
 **misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [optional]
@@ -33,6 +34,7 @@ import { VerificationResponse } from '@oppulence/reacher-sdk';
 const instance: VerificationResponse = {
     bounce_risk: {} as any,
     debug: {} as any,
+    external_verification: {} as any,
     input: 'example',
     is_reachable: {} as any,
     misc: {} as any,

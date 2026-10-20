@@ -21,6 +21,7 @@ type ReasonCode string
 
 // List of ReasonCode
 const (
+	REASONCODE_EXTERNAL_VERIFICATION ReasonCode = "external_verification"
 	REASONCODE_DELIVERABLE ReasonCode = "deliverable"
 	REASONCODE_INVALID_SYNTAX ReasonCode = "invalid_syntax"
 	REASONCODE_INVALID_RECIPIENT ReasonCode = "invalid_recipient"
@@ -66,6 +67,7 @@ const (
 
 // All allowed values of ReasonCode enum
 var AllowedReasonCodeEnumValues = []ReasonCode{
+	"external_verification",
 	"deliverable",
 	"invalid_syntax",
 	"invalid_recipient",

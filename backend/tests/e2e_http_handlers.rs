@@ -626,6 +626,7 @@ mod tests {
 		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
 		// A payload stored before tasks carried metadata.
 		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: target_email.to_string(),
 				..Default::default()

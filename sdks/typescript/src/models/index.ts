@@ -30,6 +30,7 @@ export * from './catch-all-score';
 export * from './catch-all-severity';
 export * from './check-email-input-proxy';
 export * from './check-email-output';
+export * from './check-email-output-external-verification';
 export * from './check-email-output-misc';
 export * from './check-email-output-mx';
 export * from './check-email-output-smtp';

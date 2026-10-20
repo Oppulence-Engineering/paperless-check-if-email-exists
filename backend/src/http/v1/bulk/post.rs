@@ -197,6 +197,7 @@ async fn create_bulk_job(
         .fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
 	for email in body.input {
 		let mut task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
 				to_email: email.clone(),
 				..Default::default()

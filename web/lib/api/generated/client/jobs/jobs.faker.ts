@@ -205,6 +205,15 @@ export const getV1GetBulkJobResultsResponseMock = (
           },
           undefined,
         ]),
+        external_verification: faker.helpers.arrayElement([
+          {
+            result: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            result_code: faker.number.int(),
+            service: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            subresult: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          undefined,
+        ]),
         input: faker.string.alpha({ length: { min: 10, max: 20 } }),
         is_reachable: faker.helpers.arrayElement(Object.values(Reachable)),
         misc: faker.helpers.arrayElement([
@@ -553,6 +562,15 @@ export const getV1GetJobResultsResponseMock = (
               ]),
             },
             start_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          undefined,
+        ]),
+        external_verification: faker.helpers.arrayElement([
+          {
+            result: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            result_code: faker.number.int(),
+            service: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            subresult: faker.string.alpha({ length: { min: 10, max: 20 } }),
           },
           undefined,
         ]),

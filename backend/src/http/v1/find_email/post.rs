@@ -266,6 +266,7 @@ async fn http_handler(
 		.map_err(ReacherResponseError::from)?;
 
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
 				to_email: candidate.email.clone(),
 				..Default::default()

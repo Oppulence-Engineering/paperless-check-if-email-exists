@@ -579,6 +579,7 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		(retry_task_two, "retry2@example.com"),
 	] {
 		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			verification_backend: Default::default(),
 			input: reacher_backend::http::CheckEmailRequest {
 				to_email: email.to_string(),
 				..Default::default()

@@ -116,6 +116,9 @@ pub async fn schedule_delayed_recheck(
 	retry_count: i32,
 	retry_policy: &RetryPolicy,
 ) -> Result<bool, anyhow::Error> {
+	if task.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return Ok(false);
+	}
 	let CheckEmailJobId::Bulk(job_id) = task.job_id else {
 		return Ok(false);
 	};

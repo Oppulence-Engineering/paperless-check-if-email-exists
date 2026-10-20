@@ -3,6 +3,8 @@
 
 ## Enum
 
+* `ExternalVerification` (value: `'external_verification'`)
+
 * `Deliverable` (value: `'deliverable'`)
 
 * `InvalidSyntax` (value: `'invalid_syntax'`)

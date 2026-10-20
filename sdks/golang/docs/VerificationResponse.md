@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **BounceRisk** | Pointer to [**NullableBounceRiskAssessment**](BounceRiskAssessment.md) | Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable. | [optional]
 **Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional]
+**ExternalVerification** | Pointer to [**CheckEmailOutputExternalVerification**](CheckEmailOutputExternalVerification.md) |  | [optional]
 **Input** | **string** | The email address that was verified. | [optional]
 **IsReachable** | [**Reachable**](Reachable.md) |  | [optional]
 **Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [optional]

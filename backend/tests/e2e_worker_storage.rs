@@ -35,6 +35,7 @@ mod postgres_storage_tests {
 
 	fn make_task(job_id: CheckEmailJobId, metadata: Option<TaskMetadata>) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@example.com".into(),
 				..Default::default()
@@ -401,6 +402,7 @@ mod publish_consume_tests {
 
 	fn make_task(email: &str) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: email.into(),
 				..Default::default()
@@ -621,6 +623,7 @@ mod publish_consume_tests {
 			.unwrap();
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "meta@test.com".into(),
 				..Default::default()
@@ -687,6 +690,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_invalid_syntax() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "not-an-email".into(),
 				..Default::default()
@@ -708,6 +712,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_valid_syntax_no_mx() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "user@nonexistent-domain-12345.tld".into(),
 				..Default::default()
@@ -768,6 +773,7 @@ mod full_pipeline_tests {
 		let job_id: i32 = job_row.get("id");
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "pipeline@example.com".into(),
 				..Default::default()

@@ -7,6 +7,7 @@ COPY backend ./backend
 COPY core ./core
 COPY cli ./cli
 COPY sqs ./sqs
+COPY sdks/millionverifier/generated ./sdks/millionverifier/generated
 ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin reacher_backend --target x86_64-unknown-linux-musl
 

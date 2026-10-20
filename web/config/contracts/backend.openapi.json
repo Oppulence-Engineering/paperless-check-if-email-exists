@@ -877,6 +877,31 @@
 					"debug": {
 						"$ref": "#/components/schemas/DebugDetails"
 					},
+					"external_verification": {
+						"description": "External verification evidence. When present, SMTP was not performed locally.",
+						"properties": {
+							"result": {
+								"type": "string"
+							},
+							"result_code": {
+								"format": "int32",
+								"type": "integer"
+							},
+							"service": {
+								"type": "string"
+							},
+							"subresult": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"service",
+							"result",
+							"result_code",
+							"subresult"
+						],
+						"type": "object"
+					},
 					"input": {
 						"description": "The email address that was verified.",
 						"type": "string"
@@ -3594,6 +3619,7 @@
 			},
 			"ReasonCode": {
 				"enum": [
+					"external_verification",
 					"deliverable",
 					"invalid_syntax",
 					"invalid_recipient",

@@ -86,6 +86,7 @@ docker run -d \
   -e RESEND_FROM=smoke@example.test \
   -e RCH__HEADER_SECRET=smoke-only-backend-secret \
   -e RCH__HTTP_HOST=0.0.0.0 \
+  -e RCH__SMTP_HEALTH_ENABLED=false \
   -e RCH__WORKER__ENABLE=true \
   -e RCH__WORKER__RABBITMQ__URL=amqp://guest:guest@rabbitmq:5672 \
   "${IMAGE_TAG}" >/dev/null

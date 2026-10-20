@@ -4,7 +4,7 @@ use crate::scoring::response::{prepare_check_email_success, PreparedCheckEmailSu
 use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
 use check_if_email_exists::network::is_private_ip;
-use check_if_email_exists::{check_email, CheckEmailInput, Reachable, LOG_TARGET};
+use check_if_email_exists::{CheckEmailInput, Reachable, LOG_TARGET};
 use chrono::Utc;
 use http::HeaderMap;
 use lapin::message::Delivery;
@@ -48,6 +48,8 @@ const WEBHOOK_RETRY_BASE_DELAY: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CheckEmailTask {
+	#[serde(default)]
+	pub verification_backend: crate::verification::VerificationBackend,
 	pub input: CheckEmailInput,
 	pub job_id: CheckEmailJobId,
 	pub webhook: Option<TaskWebhook>,
@@ -120,6 +122,8 @@ impl Default for RetryPolicy {
 /// The errors that can occur when processing a task.
 #[derive(Debug, Error)]
 pub enum TaskError {
+	#[error("{0}")]
+	Verification(#[from] crate::verification::VerificationError),
 	/// The worker is at full capacity and cannot accept more tasks. Note that
 	/// this error only occurs for single-shot tasks, and not for bulk
 	/// verification, as for bulk verification tasks the task will simply stay
@@ -144,6 +148,7 @@ impl TaskError {
 	/// Returns the status code that should be returned to the client.
 	pub fn status_code(&self) -> StatusCode {
 		match self {
+			Self::Verification(_) => StatusCode::BAD_GATEWAY,
 			Self::Throttle(_) => StatusCode::TOO_MANY_REQUESTS,
 			Self::Lapin(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Reqwest(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -156,6 +161,7 @@ impl TaskError {
 
 	pub fn is_retryable(&self) -> bool {
 		match self {
+			Self::Verification(_) => false,
 			Self::WebhookValidation(_) | Self::Headers(_) => false,
 			Self::WebhookStatus(status) => (500..=599).contains(status),
 			_ => true,
@@ -1109,7 +1115,7 @@ pub async fn check_email_and_prepare_result_with_config(
 	let config = config.unwrap_or_else(|| Arc::new(BackendConfig::empty()));
 	validate_task_webhook_targets(task).await?;
 
-	let output = check_email(&task.input).await;
+	let output = crate::verification::verify_task(&config, task).await?;
 	let tenant_id = task
 		.metadata
 		.as_ref()
@@ -1463,6 +1469,7 @@ mod tests {
 	#[test]
 	fn test_check_email_task_with_metadata() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@example.com".into(),
 				..Default::default()

@@ -5586,25 +5586,30 @@ components:
             records:
             - records
             - records
+          external_verification:
+            result: result
+            service: service
+            result_code: 5
+            subresult: subresult
           policy_evaluation: ""
           input: input
           score:
-            age_days: 5
+            age_days: 2
             confidence_factors:
             - confidence_factors
             - confidence_factors
             catch_all_severity: low
             partial_confidence:
-              confidence: 93
+              confidence: 36
               classification: transient
               factors:
               - factors
               - factors
-            confidence: 70
+            confidence: 93
             confidence_level: high
             catch_all:
               severity: low
-              confidence: 23
+              confidence: 70
               factors:
               - factors
               - factors
@@ -5612,9 +5617,9 @@ components:
             safe_to_send: true
             sub_reason: deliverable
             reason_codes:
-            - deliverable
-            - deliverable
-            score: 36
+            - external_verification
+            - external_verification
+            score: 20
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -5685,25 +5690,30 @@ components:
             records:
             - records
             - records
+          external_verification:
+            result: result
+            service: service
+            result_code: 5
+            subresult: subresult
           policy_evaluation: ""
           input: input
           score:
-            age_days: 5
+            age_days: 2
             confidence_factors:
             - confidence_factors
             - confidence_factors
             catch_all_severity: low
             partial_confidence:
-              confidence: 93
+              confidence: 36
               classification: transient
               factors:
               - factors
               - factors
-            confidence: 70
+            confidence: 93
             confidence_level: high
             catch_all:
               severity: low
-              confidence: 23
+              confidence: 70
               factors:
               - factors
               - factors
@@ -5711,9 +5721,9 @@ components:
             safe_to_send: true
             sub_reason: deliverable
             reason_codes:
-            - deliverable
-            - deliverable
-            score: 36
+            - external_verification
+            - external_verification
+            score: 20
             signals:
               smtp_is_deliverable: true
               smtp_is_disabled: true
@@ -5833,7 +5843,7 @@ components:
     CatchAllScore:
       example:
         severity: low
-        confidence: 23
+        confidence: 70
         factors:
         - factors
         - factors
@@ -5927,25 +5937,30 @@ components:
           records:
           - records
           - records
+        external_verification:
+          result: result
+          service: service
+          result_code: 5
+          subresult: subresult
         policy_evaluation: ""
         input: input
         score:
-          age_days: 5
+          age_days: 2
           confidence_factors:
           - confidence_factors
           - confidence_factors
           catch_all_severity: low
           partial_confidence:
-            confidence: 93
+            confidence: 36
             classification: transient
             factors:
             - factors
             - factors
-          confidence: 70
+          confidence: 93
           confidence_level: high
           catch_all:
             severity: low
-            confidence: 23
+            confidence: 70
             factors:
             - factors
             - factors
@@ -5953,9 +5968,9 @@ components:
           safe_to_send: true
           sub_reason: deliverable
           reason_codes:
-          - deliverable
-          - deliverable
-          score: 36
+          - external_verification
+          - external_verification
+          score: 20
           signals:
             smtp_is_deliverable: true
             smtp_is_disabled: true
@@ -6001,6 +6016,8 @@ components:
           nullable: true
         debug:
           $ref: "#/components/schemas/DebugDetails"
+        external_verification:
+          $ref: "#/components/schemas/CheckEmailOutput_external_verification"
         input:
           description: The email address that was verified.
           type: string
@@ -6667,22 +6684,22 @@ components:
       type: string
     EmailScore:
       example:
-        age_days: 5
+        age_days: 2
         confidence_factors:
         - confidence_factors
         - confidence_factors
         catch_all_severity: low
         partial_confidence:
-          confidence: 93
+          confidence: 36
           classification: transient
           factors:
           - factors
           - factors
-        confidence: 70
+        confidence: 93
         confidence_level: high
         catch_all:
           severity: low
-          confidence: 23
+          confidence: 70
           factors:
           - factors
           - factors
@@ -6690,9 +6707,9 @@ components:
         safe_to_send: true
         sub_reason: deliverable
         reason_codes:
-        - deliverable
-        - deliverable
-        score: 36
+        - external_verification
+        - external_verification
+        score: 20
         signals:
           smtp_is_deliverable: true
           smtp_is_disabled: true
@@ -8524,7 +8541,7 @@ components:
       type: object
     PartialConfidence:
       example:
-        confidence: 93
+        confidence: 36
         classification: transient
         factors:
         - factors
@@ -9359,6 +9376,7 @@ components:
       type: string
     ReasonCode:
       enum:
+      - external_verification
       - deliverable
       - invalid_syntax
       - invalid_recipient
@@ -11296,6 +11314,30 @@ components:
       - email
       - history
       - total
+      type: object
+    CheckEmailOutput_external_verification:
+      description: "External verification evidence. When present, SMTP was not performed\
+        \ locally."
+      example:
+        result: result
+        service: service
+        result_code: 5
+        subresult: subresult
+      properties:
+        result:
+          type: string
+        result_code:
+          format: int32
+          type: integer
+        service:
+          type: string
+        subresult:
+          type: string
+      required:
+      - result
+      - result_code
+      - service
+      - subresult
       type: object
     CheckEmailOutput_misc:
       description: Additional information about the email account.

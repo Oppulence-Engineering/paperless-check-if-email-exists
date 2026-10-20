@@ -21,6 +21,9 @@ import type { BounceRiskAssessment } from './bounce-risk-assessment';
 import type { CheckEmailOutput } from './check-email-output';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { CheckEmailOutputExternalVerification } from './check-email-output-external-verification';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { CheckEmailOutputMisc } from './check-email-output-misc';
 // May contain unused imports in some cases
 // @ts-ignore

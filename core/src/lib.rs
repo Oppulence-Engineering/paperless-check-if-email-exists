@@ -378,6 +378,7 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		detected_provider_fields(detected_provider.as_ref());
 
 	let output = CheckEmailOutput {
+		external_verification: None,
 		input: to_email.to_string(),
 		is_reachable: calculate_reachable(&my_misc, &my_smtp),
 		misc: Ok(my_misc),

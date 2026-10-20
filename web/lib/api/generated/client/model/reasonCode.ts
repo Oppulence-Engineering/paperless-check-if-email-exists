@@ -11,6 +11,7 @@
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
 
 export const ReasonCode = {
+  external_verification: "external_verification",
   deliverable: "deliverable",
   invalid_syntax: "invalid_syntax",
   invalid_recipient: "invalid_recipient",
