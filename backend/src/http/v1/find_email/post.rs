@@ -85,6 +85,24 @@ async fn http_handler(
 		.into());
 	}
 
+	// The precheck probes the domain's mail server from our IPs before any
+	// quota is reserved, so it counts against the tenant's rate limits like a
+	// single check does. Without this, repeated requests probe arbitrary
+	// domains unthrottled.
+	let throttle_manager =
+		config.get_tenant_throttle_manager(tenant_ctx.tenant_id, &tenant_ctx.throttle);
+	if let Some(throttle_result) = throttle_manager.check_throttle().await {
+		return Err(ReacherResponseError::new(
+			StatusCode::TOO_MANY_REQUESTS,
+			format!(
+				"Rate limit {} exceeded, please wait {:?}",
+				throttle_result.limit_type, throttle_result.delay
+			),
+		)
+		.into());
+	}
+	throttle_manager.increment_counters().await;
+
 	let precheck = precheck_domain(Arc::clone(&config), &normalized_domain)
 		.await
 		.map_err(warp::reject::custom)?;
@@ -283,13 +301,9 @@ async fn http_handler(
 		published_task_ids.push(task_row_id);
 	}
 
-	sqlx::query(
-		"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1",
-	)
-	.bind(bulk_job_id)
-	.execute(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	crate::worker::job_lifecycle::start_bulk_job(&pg_pool, bulk_job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {

@@ -496,6 +496,46 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_v1_bulk_post_retry_with_idempotency_key_returns_the_first_job() {
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let routes = create_routes(config);
+		let post = |body: serde_json::Value| {
+			request()
+				.path("/v1/bulk")
+				.method("POST")
+				.header(REACHER_SECRET_HEADER, "test")
+				.header("Idempotency-Key", "bulk-retry-1")
+				.json(&body)
+		};
+
+		let first = post(serde_json::json!({"input": ["a@b.com", "c@d.com"]}))
+			.reply(&routes)
+			.await;
+		let retry = post(serde_json::json!({"input": ["a@b.com", "c@d.com"]}))
+			.reply(&routes)
+			.await;
+		let changed = post(serde_json::json!({"input": ["x@y.com"]}))
+			.reply(&routes)
+			.await;
+
+		assert_eq!(first.status(), StatusCode::OK, "{:?}", first.body());
+		assert_eq!(retry.status(), StatusCode::OK, "{:?}", retry.body());
+		let first_body: serde_json::Value = serde_json::from_slice(first.body()).unwrap();
+		let retry_body: serde_json::Value = serde_json::from_slice(retry.body()).unwrap();
+		assert_eq!(retry_body["job_id"], first_body["job_id"]);
+		let job_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM v1_bulk_job")
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+		assert_eq!(job_count, 1);
+		// Reusing a key for a different request is refused, not replayed.
+		assert_eq!(changed.status(), StatusCode::BAD_REQUEST);
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_v1_bulk_post_empty_input_rejected() {
 		let db = TestDb::start().await;
 		let config = pseudo_worker_config(db.db_url()).await;
@@ -751,6 +791,196 @@ mod tests {
 		);
 		assert_eq!(metadata.created_by.as_deref(), Some("api"));
 		assert!(metadata.task_db_id.is_none());
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_v1_job_retry_by_admin_publishes_the_job_tenant() {
+		let target_email = "retry-legacy@test.com";
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "retry-legacy-tenant", Some(100), 0).await;
+		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
+		// A payload stored before tasks carried metadata.
+		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: target_email.to_string(),
+				..Default::default()
+			},
+			job_id: reacher_backend::worker::do_work::CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: None,
+		})
+		.unwrap();
+		let task_id: i32 = sqlx::query_scalar(
+			"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, error) VALUES ($1, $2, 'failed', $3, 'timeout') RETURNING id",
+		)
+		.bind(job_id)
+		.bind(&payload)
+		.bind(tenant_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let routes = create_routes(Arc::clone(&config));
+
+		let ch = config.must_worker_config().unwrap().channel;
+		let (task_tx, task_rx) = tokio::sync::oneshot::channel();
+		tokio::spawn(async move {
+			use futures::StreamExt;
+			let mut consumer = ch
+				.basic_consume(
+					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+					"test-retry-metadata".into(),
+					lapin::options::BasicConsumeOptions::default(),
+					lapin::types::FieldTable::default(),
+				)
+				.await
+				.unwrap();
+			while let Some(Ok(delivery)) = consumer.next().await {
+				let _ = delivery
+					.ack(lapin::options::BasicAckOptions::default())
+					.await;
+				if let Ok(task) = serde_json::from_slice::<
+					reacher_backend::worker::do_work::CheckEmailTask,
+				>(&delivery.data)
+				{
+					if task.input.to_email == target_email {
+						let _ = task_tx.send(task.metadata);
+						break;
+					}
+				}
+			}
+		});
+		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+		// The admin secret carries no tenant; the worker must still check the
+		// address under the job's tenant (its policy, suppressions, webhook).
+		let resp = request()
+			.path(&format!("/v1/jobs/{}/retry", job_id))
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "test")
+			.reply(&routes)
+			.await;
+		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
+
+		let metadata = tokio::time::timeout(std::time::Duration::from_secs(10), task_rx)
+			.await
+			.expect("retried task was published")
+			.unwrap()
+			.expect("task metadata");
+		let tenant_id_string = tenant_id.to_string();
+		assert_eq!(
+			metadata.tenant_id.as_deref(),
+			Some(tenant_id_string.as_str())
+		);
+		assert_eq!(metadata.task_db_id, Some(task_id));
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_v1_job_retry_reopens_its_failed_list_so_a_successful_retry_completes_it() {
+		use futures::StreamExt;
+		use reacher_backend::worker::do_work::{do_check_email_work, CheckEmailTask};
+
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "retry-list-tenant", Some(100), 0).await;
+		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "failed").await;
+		let list_id = crate::test_helpers::insert_list(
+			db.pool(),
+			tenant_id,
+			job_id,
+			"retried list",
+			"failed",
+			1,
+			&["email"],
+			serde_json::json!({"0": {"email": "bad-syntax"}}),
+		)
+		.await;
+		sqlx::query(
+			"UPDATE v1_lists SET error_message = 'task_failed', completed_at = NOW() WHERE id = $1",
+		)
+		.bind(list_id)
+		.execute(db.pool())
+		.await
+		.unwrap();
+		// The row's first attempt failed. An address that fails syntax is
+		// checked without any network access, so the retry succeeds here.
+		let task_id: i32 = sqlx::query_scalar(
+			r#"
+			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, error)
+			VALUES ($1, $2, $3, 'failed', $4, 'timeout')
+			RETURNING id
+			"#,
+		)
+		.bind(job_id)
+		.bind(serde_json::json!({
+			"input": {"to_email": "bad-syntax"},
+			"job_id": {"bulk": job_id},
+			"webhook": null
+		}))
+		.bind(serde_json::json!({"list_id": list_id, "row_index": 0, "email_column": "email"}))
+		.bind(tenant_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let channel = config.must_worker_config().unwrap().channel;
+		let mut deliveries = channel
+			.basic_consume(
+				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+				"test-retry-list".into(),
+				lapin::options::BasicConsumeOptions::default(),
+				lapin::types::FieldTable::default(),
+			)
+			.await
+			.unwrap();
+
+		let resp = request()
+			.path(&format!("/v1/jobs/{}/retry", job_id))
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "test")
+			.reply(&create_routes(Arc::clone(&config)))
+			.await;
+		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
+
+		// Run the worker on the republished row.
+		let (task, delivery) = loop {
+			let delivery =
+				tokio::time::timeout(std::time::Duration::from_secs(10), deliveries.next())
+					.await
+					.expect("retried task was published")
+					.unwrap()
+					.unwrap();
+			let task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+			if task.metadata.as_ref().and_then(|m| m.task_db_id) == Some(task_id) {
+				break (task, delivery);
+			}
+			delivery
+				.ack(lapin::options::BasicAckOptions::default())
+				.await
+				.unwrap();
+		};
+		do_check_email_work(&task, delivery, Arc::clone(&channel), Arc::clone(&config))
+			.await
+			.expect("worker stores the retried row");
+
+		let list =
+			sqlx::query("SELECT status::TEXT AS status, error_message FROM v1_lists WHERE id = $1")
+				.bind(list_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(list.get::<String, _>("status"), "completed");
+		assert_eq!(list.get::<Option<String>, _>("error_message"), None);
+		let job_status: String =
+			sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+				.bind(job_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(job_status, "completed");
 	}
 
 	#[tokio::test]

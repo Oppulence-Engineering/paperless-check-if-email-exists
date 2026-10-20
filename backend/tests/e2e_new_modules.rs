@@ -612,6 +612,17 @@ mod tenant_self_tests {
 			r.status()
 		);
 
+		// Verification is not the tenant's to declare: a tenant that could
+		// set the flag would mark any domain as its own.
+		let r = request()
+			.path("/v1/me/domains/example.com")
+			.method("PATCH")
+			.header("Authorization", format!("Bearer {}", key))
+			.json(&serde_json::json!({"is_verified": true, "notes": "claimed"}))
+			.reply(&routes)
+			.await;
+		assert_eq!(r.status(), StatusCode::BAD_REQUEST, "{:?}", r.body());
+
 		let r = request()
 			.path("/v1/me/domains/example.com")
 			.method("GET")
@@ -619,6 +630,9 @@ mod tenant_self_tests {
 			.reply(&routes)
 			.await;
 		assert_eq!(r.status(), StatusCode::OK);
+		let body: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
+		assert_eq!(body["is_verified"], false);
+		assert!(body["notes"].is_null());
 
 		let r = request()
 			.path("/v1/me/domains/example.com")

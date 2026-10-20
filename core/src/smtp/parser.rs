@@ -78,7 +78,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
 	// 550 5.1.1 <EMAIL: Recipient address rejected: User unknown in relay recipient table
-	e.contains("address rejected")
+	// A "Sender address rejected" reply is about our MAIL FROM, not the mailbox.
+	(e.contains("address rejected") && !e.contains("sender address rejected"))
 	// 550 5.1.1 : Unrouteable address
 	|| e.contains("unrouteable")
 	// 550 5.1.1 : The email account that you tried to reach does not exist

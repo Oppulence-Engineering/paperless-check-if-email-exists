@@ -331,6 +331,17 @@ mod tests {
 		let (recommendation, policy) = evaluate(&input(&score));
 		assert_eq!(recommendation.action, RecommendedAction::Review);
 		assert_eq!(policy.decision, PolicyDecision::Review);
+
+		// A medium bounce risk does not turn the policy's review into a send.
+		let risk = bounce_risk(
+			BounceRiskCategory::Medium,
+			BounceRecommendedAction::SendWithCaution,
+		);
+		let (recommendation, _) = evaluate(&DecisionInput {
+			bounce_risk: Some(&risk),
+			..input(&score)
+		});
+		assert_eq!(recommendation.action, RecommendedAction::Review);
 	}
 
 	#[test]

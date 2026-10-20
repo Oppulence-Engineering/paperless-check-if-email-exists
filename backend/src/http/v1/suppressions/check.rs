@@ -42,7 +42,7 @@ async fn http_handler(
 	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
-	let email = query.email.trim().to_lowercase();
+	let email = crate::suppression::suppression_key(&query.email);
 
 	let row = sqlx::query(
 		r#"

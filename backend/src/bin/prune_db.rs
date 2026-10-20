@@ -4,7 +4,8 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	dotenv::dotenv().expect("Unable to load environment variables from .env file");
+	// A .env file is optional: containers pass the variables directly.
+	dotenv::dotenv().ok();
 	tracing_subscriber::fmt::init();
 
 	let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
@@ -36,7 +37,7 @@ async fn main() -> Result<()> {
 		(false, true) => info!("No jobs to delete"),
 		(false, false) => {
 			// Start a transaction
-			let tx = pool.begin().await?;
+			let mut tx = pool.begin().await?;
 
 			// Before deleting from bulk_jobs, delete the corresponding records from email_results in a batch
 			let delete_email_results_query =
@@ -49,7 +50,7 @@ async fn main() -> Result<()> {
 			// Execute the delete query for email_results in a batch within the transaction
 			sqlx::query(delete_email_results_query)
 				.bind(&job_ids_to_delete_vec)
-				.execute(&pool) // Use execute on the query builder
+				.execute(&mut *tx)
 				.await?;
 
 			info!(
@@ -63,7 +64,7 @@ async fn main() -> Result<()> {
 			// Execute the delete query for bulk_jobs in a batch within the transaction
 			sqlx::query(delete_bulk_jobs_query)
 				.bind(&job_ids_to_delete_vec)
-				.execute(&pool) // Use execute on the query builder
+				.execute(&mut *tx)
 				.await?;
 
 			info!(

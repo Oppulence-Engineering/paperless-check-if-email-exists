@@ -122,9 +122,10 @@ async fn http_handler(
 
 	// Count safe rows that an in-force suppression covers. A JOIN counted
 	// merged and expired entries and counted a row once per matching entry.
-	// Suppressions key on the lowercased address as entered; list tasks verify
-	// the Gmail-canonical form, so for list rows the address as entered comes
-	// from the list's original rows (expanded once, see remediation.rs).
+	// Suppressions key on the canonical address, as task rows do. Rows
+	// written before that may still hold the lowercased address as entered,
+	// which for list rows only the list's original rows keep (expanded once,
+	// see remediation.rs).
 	let suppressed: i64 = sqlx::query_scalar(
 		r#"
 		WITH list_originals AS MATERIALIZED (

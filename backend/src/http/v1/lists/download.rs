@@ -391,7 +391,12 @@ fn render_row(
 	row.push(flat.policy_reasons.clone().unwrap_or_default());
 	row.push(policy_decision.unwrap_or_default().to_string());
 	row.push(change_type.unwrap_or_default().to_string());
-	writer.write_record(&row).expect("csv row write");
+	writer
+		.write_record(
+			row.iter()
+				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+		)
+		.expect("csv row write");
 	writer.into_inner().expect("csv row bytes")
 }
 
@@ -422,7 +427,12 @@ fn render_header(headers: &[String]) -> Vec<u8> {
 		"score_policy_decision".to_string(),
 		"change_type".to_string(),
 	]);
-	writer.write_record(&row).expect("csv header write");
+	writer
+		.write_record(
+			row.iter()
+				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+		)
+		.expect("csv header write");
 	writer.into_inner().expect("csv header bytes")
 }
 

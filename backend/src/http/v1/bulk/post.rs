@@ -294,14 +294,12 @@ async fn create_bulk_job(
 		return Err(err);
 	}
 
-	// Update job to 'running'
-	sqlx::query!(
-		"UPDATE v1_bulk_job SET status = 'running', updated_at = NOW() WHERE id = $1",
-		job_id,
-	)
-	.execute(pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	// Every task is published, so the worker may now finish the job. This
+	// leaves a job that is already cancelled alone, and finishes it here if
+	// its tasks all completed while they were being published.
+	crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	// Record job.created event
 	let _ = sqlx::query!(

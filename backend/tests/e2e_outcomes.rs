@@ -438,7 +438,7 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 			.await?;
 	assert_eq!(before, 0);
 
-	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await;
+	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await?;
 	assert!(id > 0);
 	assert_eq!(rules.outcome_ttl_days, 90);
 
@@ -449,6 +449,18 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 	.fetch_one(db.pool())
 	.await?;
 	assert_eq!(after, 1);
+
+	// A tenant that customises the "default" policy and unsets its flag
+	// keeps its rules; the lazy fallback must not reset them.
+	sqlx::query(
+		"UPDATE v1_outcome_policies SET is_default = false, rules = jsonb_set(rules, '{outcome_ttl_days}', '30') WHERE id = $1",
+	)
+	.bind(id)
+	.execute(db.pool())
+	.await?;
+	let (same_id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await?;
+	assert_eq!(same_id, id);
+	assert_eq!(rules.outcome_ttl_days, 30);
 	Ok(())
 }
 
@@ -567,6 +579,207 @@ async fn test_complaint_creates_suppression() -> Result<()> {
 		reason == "complaint" || reason == "unsubscribe",
 		"expected complaint/unsubscribe, got {}",
 		reason
+	);
+	Ok(())
+}
+
+async fn count_active_suppressions(pool: &sqlx::PgPool, tenant_id: Uuid, email: &str) -> i64 {
+	sqlx::query_scalar::<_, i64>(
+		"SELECT COUNT(*) FROM v1_suppression_entries WHERE tenant_id = $1 AND email = $2 AND status = 'active'",
+	)
+	.bind(tenant_id)
+	.bind(email)
+	.fetch_one(pool)
+	.await
+	.unwrap_or(0)
+}
+
+#[tokio::test]
+#[serial]
+async fn test_reuploaded_outcome_does_not_resuppress_a_removed_address() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "outcomes-reupload", Some(1000), 0).await;
+	let (api_key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["suppressions"]).await;
+	let config = worker_config().await;
+	let policy = default_outcome_policy_rules();
+	let email = "removed@example.com";
+	let outcome = vec![ingest(email, OutcomeType::HardBounce)];
+
+	let first = ingest_outcomes(db.pool(), tenant_id, &policy, &outcome).await;
+	assert_eq!(first.suppressed, 1);
+	let entry_id: i32 = sqlx::query_scalar(
+		"SELECT id FROM v1_suppression_entries WHERE tenant_id = $1 AND email = $2 AND status = 'active'",
+	)
+	.bind(tenant_id)
+	.bind(email)
+	.fetch_one(db.pool())
+	.await?;
+
+	// The customer decides the address may be mailed again.
+	let response = request()
+		.method("DELETE")
+		.path(&format!("/v1/suppressions/{}", entry_id))
+		.header("authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(response.status(), StatusCode::OK);
+
+	// Re-uploading the same export must not undo that decision.
+	let replay = ingest_outcomes(db.pool(), tenant_id, &policy, &outcome).await;
+	assert_eq!(replay.accepted, 1);
+	assert_eq!(replay.suppressed, 0);
+	assert_eq!(
+		count_active_suppressions(db.pool(), tenant_id, email).await,
+		0
+	);
+	assert_eq!(count_outcomes(db.pool(), tenant_id, email).await, 1);
+	Ok(())
+}
+
+#[tokio::test]
+#[serial]
+async fn test_outcome_whose_suppression_fails_is_not_stored_and_a_retry_applies_it() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "outcomes-supp-fails", Some(1000), 0).await;
+	let policy = default_outcome_policy_rules();
+	let email = "write-fails@example.com";
+	let outcome = vec![ingest(email, OutcomeType::HardBounce)];
+
+	// Make the suppression write fail for this address only.
+	sqlx::query(
+		r#"
+		CREATE OR REPLACE FUNCTION test_reject_suppression() RETURNS trigger AS $$
+		BEGIN
+			RAISE EXCEPTION 'suppression write rejected by test';
+		END;
+		$$ LANGUAGE plpgsql
+		"#,
+	)
+	.execute(db.pool())
+	.await?;
+	sqlx::query("DROP TRIGGER IF EXISTS test_reject_suppression ON v1_suppression_entries")
+		.execute(db.pool())
+		.await?;
+	sqlx::query(
+		"CREATE TRIGGER test_reject_suppression BEFORE INSERT ON v1_suppression_entries FOR EACH ROW WHEN (NEW.email = 'write-fails@example.com') EXECUTE FUNCTION test_reject_suppression()",
+	)
+	.execute(db.pool())
+	.await?;
+
+	let failed = ingest_outcomes(db.pool(), tenant_id, &policy, &outcome).await;
+	assert_eq!(failed.rejected, 1, "the client must be told to retry");
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_id, email).await,
+		0,
+		"an outcome whose action failed must not be stored as done"
+	);
+
+	sqlx::query("DROP TRIGGER test_reject_suppression ON v1_suppression_entries")
+		.execute(db.pool())
+		.await?;
+	sqlx::query("DROP FUNCTION test_reject_suppression()")
+		.execute(db.pool())
+		.await?;
+	let retried = ingest_outcomes(db.pool(), tenant_id, &policy, &outcome).await;
+	assert_eq!(retried.accepted, 1);
+	assert_eq!(retried.suppressed, 1);
+	assert_eq!(
+		count_active_suppressions(db.pool(), tenant_id, email).await,
+		1
+	);
+	assert_eq!(count_outcomes(db.pool(), tenant_id, email).await, 1);
+	Ok(())
+}
+
+/// Advisory lock key that the test below holds to keep both requests in
+/// flight at once.
+const OUTCOME_INSERT_GATE: i64 = 7_201_901;
+
+#[tokio::test]
+#[serial]
+async fn test_concurrent_soft_bounces_still_cross_the_threshold() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "outcomes-sb-race", Some(1000), 0).await;
+	let policy = default_outcome_policy_rules();
+	let email = "race@example.com";
+	let soft_bounce = |source: &str, days_ago: i64| {
+		let mut outcome = ingest(email, OutcomeType::SoftBounce);
+		outcome.occurred_at = Utc::now() - ChronoDuration::days(days_ago);
+		outcome.source = Some(source.to_string());
+		outcome
+	};
+	// One bounce on record; the default policy suppresses at the third.
+	ingest_outcomes(db.pool(), tenant_id, &policy, &[soft_bounce("src-0", 2)]).await;
+
+	// Every further insert for this address waits on a lock the test holds,
+	// so two requests can both be in their transactions before either ends.
+	sqlx::query(&format!(
+		"CREATE OR REPLACE FUNCTION test_hold_outcome_insert() RETURNS trigger AS $$ \
+		 BEGIN PERFORM pg_advisory_xact_lock_shared({OUTCOME_INSERT_GATE}); RETURN NULL; END; \
+		 $$ LANGUAGE plpgsql"
+	))
+	.execute(db.pool())
+	.await?;
+	sqlx::query("DROP TRIGGER IF EXISTS test_hold_outcome_insert ON verification_outcomes")
+		.execute(db.pool())
+		.await?;
+	sqlx::query(
+		"CREATE TRIGGER test_hold_outcome_insert AFTER INSERT ON verification_outcomes FOR EACH ROW WHEN (NEW.canonical_email = 'race@example.com') EXECUTE FUNCTION test_hold_outcome_insert()",
+	)
+	.execute(db.pool())
+	.await?;
+	let mut gate = db.pool().acquire().await?;
+	sqlx::query("SELECT pg_advisory_lock($1)")
+		.bind(OUTCOME_INSERT_GATE)
+		.execute(&mut *gate)
+		.await?;
+
+	let spawn_ingest = |outcome: IngestOutcome| {
+		let pool = db.pool_owned();
+		let policy = policy.clone();
+		tokio::spawn(async move { ingest_outcomes(&pool, tenant_id, &policy, &[outcome]).await })
+	};
+	let first = spawn_ingest(soft_bounce("src-1", 1));
+	let second = spawn_ingest(soft_bounce("src-2", 0));
+
+	// Both requests are blocked: on the gate, or one on the gate and the
+	// other behind it.
+	let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(10);
+	loop {
+		let waiting: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM pg_locks WHERE locktype = 'advisory' AND NOT granted \
+			 AND database = (SELECT oid FROM pg_database WHERE datname = current_database())",
+		)
+		.fetch_one(db.pool())
+		.await?;
+		if waiting >= 2 {
+			break;
+		}
+		assert!(
+			tokio::time::Instant::now() < deadline,
+			"both requests should be waiting, {waiting} are"
+		);
+		tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+	}
+	sqlx::query("SELECT pg_advisory_unlock($1)")
+		.bind(OUTCOME_INSERT_GATE)
+		.execute(&mut *gate)
+		.await?;
+	let (first, second) = (first.await?, second.await?);
+
+	sqlx::query("DROP TRIGGER test_hold_outcome_insert ON verification_outcomes")
+		.execute(db.pool())
+		.await?;
+	sqlx::query("DROP FUNCTION test_hold_outcome_insert()")
+		.execute(db.pool())
+		.await?;
+
+	assert_eq!(first.accepted + second.accepted, 2);
+	assert_eq!(count_outcomes(db.pool(), tenant_id, email).await, 3);
+	assert_eq!(
+		count_active_suppressions(db.pool(), tenant_id, email).await,
+		1,
+		"three soft bounces are stored, so the third must suppress"
 	);
 	Ok(())
 }

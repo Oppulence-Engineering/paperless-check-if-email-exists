@@ -80,11 +80,12 @@ async fn http_handler(
 		if normalized.is_empty() {
 			continue;
 		}
-		if !seen.insert(normalized.clone()) {
+		let key = crate::suppression::suppression_key(&normalized);
+		if !seen.insert(key.clone()) {
 			duplicates += 1;
 			continue;
 		}
-		unique_emails.push(normalized);
+		unique_emails.push((normalized, key));
 	}
 
 	if unique_emails.is_empty() {
@@ -114,7 +115,7 @@ async fn http_handler(
 	let mut entry_ids = Vec::new();
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
-	for email in &unique_emails {
+	for (email, canonical_email) in &unique_emails {
 		let row = sqlx::query(
 			r#"
 			INSERT INTO v1_suppression_entries (
@@ -123,7 +124,7 @@ async fn http_handler(
 				expires_at, last_seen_at, metadata
 			)
 			VALUES (
-				$1, $2, $2, 'active', $3::suppression_reason, $4, $5,
+				$1, $2, $12, 'active', $3::suppression_reason, $4, $5,
 				$3, $6, $7, $8, $9, $10, NOW(), $11
 			)
 			ON CONFLICT (tenant_id, canonical_email) WHERE status = 'active'
@@ -136,7 +137,13 @@ async fn http_handler(
 				source_type = EXCLUDED.source_type,
 				source_ref = COALESCE(EXCLUDED.source_ref, v1_suppression_entries.source_ref),
 				created_by = COALESCE(EXCLUDED.created_by, v1_suppression_entries.created_by),
-				expires_at = COALESCE(EXCLUDED.expires_at, v1_suppression_entries.expires_at),
+				-- An expired row no longer suppresses but still holds the
+				-- unique index; re-adding it takes the request's expiry, and
+				-- none makes it permanent.
+				expires_at = CASE
+					WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.expires_at
+					ELSE COALESCE(EXCLUDED.expires_at, v1_suppression_entries.expires_at)
+				END,
 				last_seen_at = NOW(),
 				metadata = v1_suppression_entries.metadata || EXCLUDED.metadata,
 				updated_at = NOW()
@@ -154,6 +161,7 @@ async fn http_handler(
 		.bind(&created_by)
 		.bind(body.expires_at)
 		.bind(&metadata)
+		.bind(canonical_email)
 		.fetch_one(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;

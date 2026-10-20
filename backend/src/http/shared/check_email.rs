@@ -18,7 +18,8 @@ use crate::http::v0::check_email::post::CheckEmailRequest;
 use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
 use crate::scoring::response::{
-	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
+	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response_at,
+	VerificationTimes,
 };
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
@@ -71,6 +72,16 @@ pub async fn handle_check_email(
 		)
 		.into());
 	}
+	// The decision engine reads the tenant's default policy mode, in the
+	// worker as well, and custom profiles are not stored anywhere. Refusing
+	// the fields beats returning a decision made under another mode.
+	if body.policy_mode.is_some() || body.policy_profile_key.is_some() {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"policy_mode and policy_profile_key are not supported per request; set default_policy_mode in the tenant settings (PATCH /v1/me/settings)",
+		)
+		.into());
+	}
 
 	// Sandbox mode: return deterministic mock results without SMTP,
 	// throttle checks, or quota consumption. Freshness fields are
@@ -81,10 +92,18 @@ pub async fn handle_check_email(
 			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
 			.single()
 			.expect("static sandbox timestamp");
-		let mut prepared =
-			prepare_verification_response(config.as_ref(), &mock_result, None, completed_at, false)
-				.await
-				.map_err(ReacherResponseError::from)?;
+		let mut prepared = prepare_verification_response_at(
+			config.as_ref(),
+			&mock_result,
+			VerificationTimes {
+				completed_at,
+				evaluated_at: completed_at,
+			},
+			None,
+			false,
+		)
+		.await
+		.map_err(ReacherResponseError::from)?;
 		inject_freshness_into_result_at(&mut prepared.json, completed_at, completed_at);
 		prepared.body = serde_json::to_vec(&prepared.json).map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
@@ -247,7 +266,16 @@ pub async fn handle_check_email(
 				Ok(response)
 			}
 			Err(error) => {
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
+				// After a timeout the task is still queued and will run, so the
+				// key stays `processing`: a retry with it gets "in progress"
+				// instead of a second check and a second charge. The cleanup
+				// task fails the key once it is stale.
+				let timed_out = error
+					.find::<ReacherResponseError>()
+					.is_some_and(|error| error.code == StatusCode::GATEWAY_TIMEOUT);
+				if let (Some(pool), Some(record_id), false) =
+					(idempotency_pool, idempotency_record_id, timed_out)
+				{
 					mark_idempotency_failed(&pool, record_id).await;
 				}
 				Err(error)
@@ -309,25 +337,6 @@ async fn handle_without_worker(
 	{
 		release_single_reserved_usage(&config, tenant_ctx).await;
 		return Err(ReacherResponseError::from(err).into());
-	}
-
-	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
-	if let Some(pool) = config.get_pg_pool() {
-		if let Some(tenant_id) = tenant_ctx.tenant_id {
-			crate::worker::actions::evaluate_post_completion_actions(
-				&pool,
-				tenant_id,
-				&body.to_email,
-				Some(prepared.response.score.score),
-				Some(
-					&serde_json::to_value(&prepared.response.score.category)
-						.ok()
-						.and_then(|v| v.as_str().map(ToOwned::to_owned))
-						.unwrap_or_else(|| "unknown".to_string()),
-				),
-			)
-			.await;
-		}
 	}
 
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?prepared.output.is_reachable, "Done verification");

@@ -1,7 +1,7 @@
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
-use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
-use crate::tenant::context::{scope, TenantContext};
+use crate::http::{resolve_tenant, ReacherResponseError};
+use crate::tenant::context::TenantContext;
 use check_if_email_exists::LOG_TARGET;
 use serde::Serialize;
 use sqlx::{PgPool, Row};
@@ -30,8 +30,9 @@ pub(super) async fn http_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, scope::VERIFY)?;
-
+	// The route requires the `settings` scope (`required_route_scope`). A
+	// second scope here made a settings key fail on GET, and fail on PUT
+	// after the update had been saved.
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 
 	let row = sqlx::query(

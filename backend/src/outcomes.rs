@@ -28,7 +28,7 @@ use crate::http::v1::lists::canonicalize::canonicalize_email;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::{PgConnection, PgPool, Row};
 use uuid::Uuid;
 
 /// SQL enum mirror. Must stay in sync with `outcome_type` in
@@ -301,6 +301,23 @@ async fn ingest_one(
 	let action = decide_action(policy, outcome.outcome_type);
 	let policy_action_label: Option<&'static str> = action_label(&action);
 
+	// The outcome row and the suppressions it causes commit together. A
+	// duplicate row therefore means its action already ran, and a failed
+	// action stores no row, so the client's retry runs it again. Replaying the
+	// action for a duplicate would re-suppress an address that the customer
+	// has removed from the suppression list since.
+	let mut tx = pg_pool
+		.begin()
+		.await
+		.map_err(|err| format!("db begin: {err}"))?;
+	// Ingests for one mailbox take turns. A threshold rule counts the
+	// mailbox's outcomes on this transaction, and two concurrent requests
+	// would each see only their own new row, so neither would suppress.
+	sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+		.bind(format!("verification_outcomes:{tenant_id}:{canonical}"))
+		.execute(&mut *tx)
+		.await
+		.map_err(|err| format!("db lock: {err}"))?;
 	let inserted = sqlx::query_scalar::<_, Option<i64>>(
 		r#"
 		INSERT INTO verification_outcomes
@@ -318,61 +335,37 @@ async fn ingest_one(
 	.bind(outcome.campaign_id.as_deref())
 	.bind(outcome.metadata.as_ref())
 	.bind(policy_action_label)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await
 	.map_err(|err| format!("db insert: {err}"))?;
 
-	if inserted.flatten().is_none() {
-		// Duplicate ingest — that's fine, treat as accepted with no action.
+	let Some(outcome_id) = inserted.flatten() else {
+		// Duplicate ingest: accepted, and its action committed with it.
 		return Ok(false);
-	}
-
-	let action_taken = match action {
-		Action::Suppress { reason, .. } => {
-			add_to_suppression(pg_pool, tenant_id, &canonical, reason).await
-		}
-		Action::SuppressAndUnsubscribe { reason, .. } => {
-			let s1 = add_to_suppression(pg_pool, tenant_id, &canonical, reason).await;
-			let s2 = add_to_suppression(pg_pool, tenant_id, &canonical, "unsubscribe").await;
-			s1 || s2
-		}
-		Action::SuppressAfter {
-			threshold_count,
-			threshold_window_days,
-		} => {
-			let count = count_recent_outcomes(
-				pg_pool,
-				tenant_id,
-				&canonical,
-				outcome.outcome_type,
-				threshold_window_days,
-			)
-			.await;
-			if count >= threshold_count {
-				add_to_suppression(pg_pool, tenant_id, &canonical, "bounce").await
-			} else {
-				false
-			}
-		}
-		Action::ScoreBoost => false,
-		Action::Informational => false,
 	};
+
+	let action_taken = apply_outcome_action(
+		&mut tx,
+		tenant_id,
+		&outcome.email,
+		&canonical,
+		outcome,
+		action,
+	)
+	.await?;
 
 	if action_taken {
 		// Re-stamp policy_action with the actual outcome.
-		let _ = sqlx::query(
-			"UPDATE verification_outcomes SET policy_action = $2 WHERE tenant_id = $1 AND canonical_email = $3 AND outcome_type = $4 AND occurred_at = $5 AND source = $6"
-		)
-		.bind(tenant_id)
-		.bind("suppressed")
-		.bind(&canonical)
-		.bind(outcome.outcome_type)
-		.bind(outcome.occurred_at)
-		.bind(&source)
-		.execute(pg_pool)
-		.await;
+		sqlx::query("UPDATE verification_outcomes SET policy_action = 'suppressed' WHERE id = $1")
+			.bind(outcome_id)
+			.execute(&mut *tx)
+			.await
+			.map_err(|err| format!("db update: {err}"))?;
 	}
 
+	tx.commit()
+		.await
+		.map_err(|err| format!("db commit: {err}"))?;
 	Ok(action_taken)
 }
 
@@ -436,44 +429,85 @@ fn action_label(action: &Action) -> Option<&'static str> {
 	})
 }
 
-async fn add_to_suppression(
-	pg_pool: &PgPool,
+/// Run the policy action for one outcome on the ingest transaction. Returns
+/// whether a suppression was created; a failed suppression write is an
+/// error, so the outcome is not stored and the client retries the row.
+async fn apply_outcome_action(
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
-	canonical_email: &str,
+	email: &str,
+	canonical: &str,
+	outcome: &IngestOutcome,
+	action: Action,
+) -> Result<bool, String> {
+	Ok(match action {
+		Action::Suppress { reason, .. } => {
+			add_to_suppression(conn, tenant_id, email, reason).await?
+		}
+		Action::SuppressAndUnsubscribe { reason, .. } => {
+			let s1 = add_to_suppression(conn, tenant_id, email, reason).await?;
+			let s2 = add_to_suppression(conn, tenant_id, email, "unsubscribe").await?;
+			s1 || s2
+		}
+		Action::SuppressAfter {
+			threshold_count,
+			threshold_window_days,
+		} => {
+			// On the transaction, so the outcome just inserted counts.
+			let count = count_recent_outcomes(
+				conn,
+				tenant_id,
+				canonical,
+				outcome.outcome_type,
+				threshold_window_days,
+			)
+			.await
+			.map_err(|err| format!("db count: {err}"))?;
+			if count >= threshold_count {
+				add_to_suppression(conn, tenant_id, email, "bounce").await?
+			} else {
+				false
+			}
+		}
+		Action::ScoreBoost => false,
+		Action::Informational => false,
+	})
+}
+
+async fn add_to_suppression(
+	conn: &mut PgConnection,
+	tenant_id: Uuid,
+	email: &str,
 	reason: &str,
-) -> bool {
-	let result = crate::suppression::insert_active_suppression(
-		pg_pool,
+) -> Result<bool, String> {
+	crate::suppression::insert_active_suppression(
+		conn,
 		tenant_id,
-		canonical_email,
+		email,
 		reason,
 		"outcome_feedback",
 		"outcome",
 		"outcome_ingest",
 	)
-	.await;
-
-	match result {
-		Ok(inserted) => inserted,
-		Err(e) => {
-			tracing::warn!(
-				target: LOG_TARGET,
-				tenant_id = %tenant_id,
-				error = ?e,
-				"Failed to add to suppression list from outcome ingest"
-			);
-			false
-		}
-	}
+	.await
+	.map_err(|e| {
+		tracing::warn!(
+			target: LOG_TARGET,
+			tenant_id = %tenant_id,
+			error = ?e,
+			"Failed to add to suppression list from outcome ingest"
+		);
+		format!("suppression write: {e}")
+	})
 }
 
 async fn count_recent_outcomes(
-	pg_pool: &PgPool,
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
 	canonical_email: &str,
 	outcome_type: OutcomeType,
 	window_days: i32,
-) -> i64 {
+) -> Result<i64, sqlx::Error> {
 	sqlx::query_scalar::<_, i64>(
 		r#"
 		SELECT COUNT(*)
@@ -488,59 +522,90 @@ async fn count_recent_outcomes(
 	.bind(canonical_email)
 	.bind(outcome_type)
 	.bind(window_days)
-	.fetch_one(pg_pool)
+	.fetch_one(conn)
 	.await
-	.unwrap_or(0)
 }
 
 // ----------------------------------------------------------------------------
 // Policy fetch / lazy default
 // ----------------------------------------------------------------------------
 
+/// The tenant's default outcome policy, created with the built-in rules on
+/// first use. A database error is returned, not treated as "no policy": the
+/// fallback must never replace rules that a tenant has customised.
 pub async fn fetch_or_create_default_policy(
 	pg_pool: &PgPool,
 	tenant_id: Uuid,
-) -> (i64, OutcomePolicyRules) {
-	if let Some((id, rules)) = fetch_default_policy(pg_pool, tenant_id).await {
-		return (id, rules);
-	}
-	create_default_policy(pg_pool, tenant_id).await
-}
-
-async fn fetch_default_policy(
-	pg_pool: &PgPool,
-	tenant_id: Uuid,
-) -> Option<(i64, OutcomePolicyRules)> {
-	let row = sqlx::query(
+) -> Result<(i64, OutcomePolicyRules), sqlx::Error> {
+	if let Some(found) = fetch_policy(
+		pg_pool,
+		tenant_id,
 		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
 	)
-	.bind(tenant_id)
-	.fetch_optional(pg_pool)
-	.await
-	.ok()??;
-	let id: i64 = row.get("id");
-	let rules: serde_json::Value = row.get("rules");
-	let rules: OutcomePolicyRules = serde_json::from_value(rules).unwrap_or_default();
-	Some((id, rules))
-}
-
-async fn create_default_policy(pg_pool: &PgPool, tenant_id: Uuid) -> (i64, OutcomePolicyRules) {
-	let rules = default_outcome_policy_rules();
+	.await?
+	{
+		return Ok(found);
+	}
 	let rules_json = default_outcome_policy_rules_json();
-	let id = sqlx::query_scalar::<_, i64>(
+	let inserted = sqlx::query_scalar::<_, i64>(
 		r#"
 		INSERT INTO v1_outcome_policies (tenant_id, name, is_default, rules)
 		VALUES ($1, 'default', true, $2)
-		ON CONFLICT (tenant_id, name) DO UPDATE SET rules = EXCLUDED.rules
+		ON CONFLICT (tenant_id, name) DO NOTHING
 		RETURNING id
 		"#,
 	)
 	.bind(tenant_id)
 	.bind(&rules_json)
-	.fetch_one(pg_pool)
+	.fetch_optional(pg_pool)
+	.await?;
+	if let Some(id) = inserted {
+		return Ok((id, default_outcome_policy_rules()));
+	}
+	// A policy named "default" exists but is not the default one (the tenant
+	// unset the flag, or a concurrent request created it). Use its rules as
+	// they are.
+	fetch_policy(
+		pg_pool,
+		tenant_id,
+		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND name = 'default'",
+	)
+	.await?
+	.ok_or(sqlx::Error::RowNotFound)
+}
+
+async fn fetch_policy(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	sql: &str,
+) -> Result<Option<(i64, OutcomePolicyRules)>, sqlx::Error> {
+	let Some(row) = sqlx::query(sql)
+		.bind(tenant_id)
+		.fetch_optional(pg_pool)
+		.await?
+	else {
+		return Ok(None);
+	};
+	let id: i64 = row.get("id");
+	let rules: serde_json::Value = row.get("rules");
+	let rules: OutcomePolicyRules = serde_json::from_value(rules).unwrap_or_default();
+	Ok(Some((id, rules)))
+}
+
+/// The rules of the tenant's default outcome policy, for read-only use.
+/// Best effort: without a policy, or when the read fails, the built-in rules
+/// apply. Nothing is created here.
+async fn default_policy_rules(pg_pool: &PgPool, tenant_id: Uuid) -> OutcomePolicyRules {
+	fetch_policy(
+		pg_pool,
+		tenant_id,
+		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
+	)
 	.await
-	.unwrap_or(0);
-	(id, rules)
+	.ok()
+	.flatten()
+	.map(|(_, rules)| rules)
+	.unwrap_or_default()
 }
 
 // ----------------------------------------------------------------------------
@@ -560,10 +625,7 @@ pub async fn enrich_outcome_context(
 		return OutcomeContext::default();
 	}
 
-	let rules = fetch_default_policy(pool, tenant_id)
-		.await
-		.map(|(_, rules)| rules)
-		.unwrap_or_default();
+	let rules = default_policy_rules(pool, tenant_id).await;
 	let ttl_days = rules.outcome_ttl_days;
 
 	let row = sqlx::query(
@@ -629,10 +691,7 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 	};
 	// The same policy and expiry as ingestion and scoring, so a verification
 	// never suppresses an address over an outcome the policy ignores.
-	let rules = fetch_default_policy(pg_pool, tenant_id)
-		.await
-		.map(|(_, rules)| rules)
-		.unwrap_or_default();
+	let rules = default_policy_rules(pg_pool, tenant_id).await;
 	let row = sqlx::query(
 		r#"
 		SELECT
@@ -653,6 +712,15 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 	let Ok(Some(row)) = row else {
 		return;
 	};
+	let mut conn = match pg_pool.acquire().await {
+		Ok(conn) => conn,
+		Err(error) => {
+			tracing::warn!(target: LOG_TARGET, tenant_id = %tenant_id, error = ?error, "No connection for the post-verification outcome check");
+			return;
+		}
+	};
+	// Failures are logged inside add_to_suppression; the next verification of
+	// this address runs the check again.
 	for (column, rule, reason) in [
 		("hard_bounce", &rules.hard_bounce, "bounce"),
 		("complaint", &rules.complaint, "complaint"),
@@ -664,7 +732,7 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 			RuleAction::Suppress { .. } | RuleAction::SuppressAndUnsubscribe { .. }
 		);
 		if seen && suppresses {
-			add_to_suppression(pg_pool, tenant_id, &canonical, reason).await;
+			let _ = add_to_suppression(&mut conn, tenant_id, email, reason).await;
 		}
 	}
 }

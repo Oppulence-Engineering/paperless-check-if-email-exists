@@ -292,18 +292,38 @@ pub async fn do_check_email_work(
 		.and_then(|m| m.retry_policy.clone())
 		.unwrap_or_default();
 
-	// Mark task as running
-	if let Some(id) = task_db_id {
-		update_task_state(&config, id, "running", None).await;
-
-		// Update started_at
-		if let Some(pool) = config.get_pg_pool() {
-			let _ = sqlx::query!(
-				"UPDATE v1_task_result SET started_at = NOW() WHERE id = $1",
-				id,
+	// Mark the task running, unless it was cancelled after the consumer
+	// checked its job: a cancelled task must not be verified, charged or sent
+	// to the customer's webhook. The statement reports whether the row is
+	// cancelled; a row that is missing is not skipped here, so storing the
+	// result fails and the requeue path below handles it.
+	if let (Some(id), Some(pool)) = (task_db_id, config.get_pg_pool()) {
+		let cancelled = sqlx::query_scalar::<_, bool>(
+			r#"
+			WITH claimed AS (
+				UPDATE v1_task_result
+				SET task_state = 'running', started_at = NOW(), updated_at = NOW()
+				WHERE id = $1 AND task_state <> 'cancelled'
+				RETURNING id
 			)
-			.execute(&pool)
-			.await;
+			SELECT EXISTS (
+				SELECT 1 FROM v1_task_result WHERE id = $1 AND task_state = 'cancelled'
+			)
+			"#,
+		)
+		.bind(id)
+		.fetch_one(&pool)
+		.await;
+		match cancelled {
+			Ok(false) => {}
+			Ok(true) => {
+				debug!(target: LOG_TARGET, task_id = id, "Skipping cancelled task");
+				delivery.ack(BasicAckOptions::default()).await?;
+				return Ok(());
+			}
+			Err(err) => {
+				warn!(target: LOG_TARGET, task_id = id, error = ?err, "Failed to mark task running");
+			}
 		}
 	}
 
@@ -523,23 +543,9 @@ pub async fn do_check_email_work(
 		}
 
 		// Evaluate conditional actions (auto-suppression) after successful completion
-		if let (Some(pool), Ok(output)) = (config.get_pg_pool(), &worker_output) {
+		if let (Some(pool), Ok(_)) = (config.get_pg_pool(), &worker_output) {
 			if let Some(tenant_id_str) = task.metadata.as_ref().and_then(|m| m.tenant_id.clone()) {
 				if let Ok(tenant_uuid) = tenant_id_str.parse::<uuid::Uuid>() {
-					crate::worker::actions::evaluate_post_completion_actions(
-						&pool,
-						tenant_uuid,
-						&task.input.to_email,
-						Some(output.response.score.score),
-						Some(
-							&serde_json::to_value(&output.response.score.category)
-								.ok()
-								.and_then(|v| v.as_str().map(ToOwned::to_owned))
-								.unwrap_or_else(|| "unknown".to_string()),
-						),
-					)
-					.await;
-
 					// If outcomes were ingested before this verification ran, ensure
 					// suppression still fires (the scorer already saw them via
 					// build_scoring_context, but suppression list writes happen here).
@@ -949,94 +955,31 @@ pub(crate) async fn sync_task_entities(
 		.execute(&pool)
 		.await;
 
-		if let Ok(list_id) = sqlx::query_scalar::<_, Option<i32>>(
+		if let Ok(Some(list_id)) = sqlx::query_scalar::<_, Option<i32>>(
 			"SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $1",
 		)
 		.bind(task_db_id)
 		.fetch_one(&pool)
 		.await
 		{
-			if let Some(list_id) = list_id {
-				let total_rows =
-					sqlx::query_scalar::<_, i32>("SELECT total_rows FROM v1_lists WHERE id = $1")
-						.bind(list_id)
-						.fetch_optional(&pool)
-						.await
-						.ok()
-						.flatten()
-						.unwrap_or_default();
-				// Count rows with results, errors, or cancelled state as
-				// terminal. A row being rechecked already holds a result but
-				// is not done yet.
-				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled') AND task_state NOT IN ('queued', 'running', 'retrying')",
-				)
-				.bind(list_id)
-				.fetch_one(&pool)
-				.await
-				.unwrap_or(0);
-				if processed >= i64::from(total_rows) {
-					let failed = sqlx::query_scalar::<_, i64>(
-						"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
-					)
-					.bind(list_id)
-					.fetch_one(&pool)
-					.await
-					.unwrap_or(0);
-					let final_status = if failed > 0 { "failed" } else { "completed" };
-					let _ = sqlx::query(
-						"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-					)
-					.bind(list_id)
-					.bind(final_status)
-					.execute(&pool)
-					.await;
-				}
+			if let Err(err) =
+				crate::worker::job_lifecycle::finalize_list_if_done(&pool, list_id).await
+			{
+				warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to finalize list");
 			}
 		}
 	}
 
 	if let Some(job_id) = bulk_job_id {
-		let status = sqlx::query_scalar::<_, Option<String>>(
-			"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
-		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.ok()
-		.flatten()
-		.unwrap_or_else(|| "running".to_string());
-
-		let non_terminal = sqlx::query_scalar::<_, i64>(
-			"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')",
-		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.unwrap_or(0);
-
-		if non_terminal == 0 {
-			let failed = sqlx::query_scalar::<_, i64>(
-				"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')",
-			)
-			.bind(job_id)
-			.fetch_one(&pool)
-			.await
-			.unwrap_or(0);
-
-			let final_status = match status.as_str() {
-				"cancelling" | "cancelled" => "cancelled",
-				_ if failed > 0 => "failed",
-				_ => "completed",
-			};
-
-			let _ = sqlx::query(
-				"UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN COALESCE(completed_at, NOW()) ELSE completed_at END, cancelled_at = CASE WHEN $2 = 'cancelled' THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END, updated_at = NOW() WHERE id = $1",
-			)
-			.bind(job_id)
-			.bind(final_status)
-			.execute(&pool)
-			.await;
+		if let Err(err) =
+			crate::worker::job_lifecycle::finalize_bulk_job_if_done(&pool, job_id).await
+		{
+			warn!(
+				target: LOG_TARGET,
+				job_id = job_id,
+				error = ?err,
+				"Failed to finalize bulk job"
+			);
 		}
 
 		if let Err(err) =

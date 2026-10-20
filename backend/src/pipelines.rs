@@ -731,6 +731,11 @@ async fn recover_stranded_queued_pipeline_runs(
 		SET updated_at = NOW()
 		FROM candidates c
 		WHERE pr.id = c.id
+		  -- Checked again here: PostgreSQL re-checks this WHERE against the
+		  -- latest row after waiting for a lock, but not the CTE's filters,
+		  -- so without it two replicas could recover the same run.
+		  AND pr.status = 'queued'::pipeline_run_status
+		  AND pr.updated_at < NOW() - INTERVAL '5 minutes'
 		RETURNING pr.id, c.pipeline_id
 		"#,
 	)
@@ -1743,7 +1748,10 @@ async fn reserve_pipeline_usage_event(
 ) -> Result<PipelineUsageReservation> {
 	let mut tx = pg_pool.begin().await?;
 
-	if let Some(limit) = tenant_ctx.monthly_email_limit.filter(|value| *value > 0) {
+	if tenant_ctx
+		.monthly_email_limit
+		.is_some_and(|value| value > 0)
+	{
 		if Utc::now() >= tenant_ctx.period_reset_at {
 			sqlx::query(
 				r#"
@@ -1779,20 +1787,11 @@ async fn reserve_pipeline_usage_event(
 			.await?;
 
 			if usage_updated.is_none() {
-				let current_usage = sqlx::query_scalar::<_, Option<i32>>(
-					"SELECT used_this_period FROM tenants WHERE id = $1",
-				)
-				.bind(tenant_id)
-				.fetch_one(&mut *tx)
-				.await?
-				.unwrap_or_default();
-
+				// The guarded update fails exactly when this run would go over
+				// the limit, including when some credits are left but fewer
+				// than the run needs; that is a shortfall, not an error.
 				tx.rollback().await?;
-				if current_usage >= limit {
-					return Ok(PipelineUsageReservation::ExceededMonthlyLimit);
-				}
-
-				bail!("Tenant quota reservation failed for pipeline run");
+				return Ok(PipelineUsageReservation::ExceededMonthlyLimit);
 			}
 		}
 	}
@@ -1895,12 +1894,17 @@ async fn execute_pipeline_run_inner(
 	let delivery: PipelineDeliveryConfig =
 		serde_json::from_value(run.get::<Value, _>("delivery_config")).unwrap_or_default();
 
-	sqlx::query(
-		"UPDATE v1_pipeline_runs SET status = 'preparing'::pipeline_run_status, started_at = COALESCE(started_at, NOW()), updated_at = NOW() WHERE id = $1",
+	// Only one executor may take a queued run; another one that read the run
+	// before this claim stops here instead of publishing every email again.
+	let claimed = sqlx::query(
+		"UPDATE v1_pipeline_runs SET status = 'preparing'::pipeline_run_status, started_at = COALESCE(started_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'queued'::pipeline_run_status",
 	)
 	.bind(run_id)
 	.execute(pg_pool)
 	.await?;
+	if claimed.rows_affected() == 0 {
+		return Ok(());
+	}
 
 	let prepared_list = load_pipeline_source(pg_pool, tenant_id, &source, &source_snapshot).await?;
 	let (prepared_list, delta_summary) =
@@ -2003,7 +2007,8 @@ async fn execute_pipeline_run_inner(
 	// settles the job and list as tasks complete, and a row added after the last
 	// completion would leave the list short of its total forever.
 	let mut groups_to_publish = Vec::with_capacity(prepared_list.canonical_groups.len());
-	for (canonical, indices) in &prepared_list.canonical_groups {
+	for (group_number, (canonical, indices)) in prepared_list.canonical_groups.iter().enumerate() {
+		heartbeat_pipeline_run(pg_pool, run_id, group_number).await?;
 		let primary_index = indices[0];
 		let primary_extra = json!({
 			"list_id": list_id,
@@ -2159,7 +2164,10 @@ async fn execute_pipeline_run_inner(
 	.await?;
 
 	let mut published_unique_groups = 0i32;
-	for (canonical, primary_index, primary_task_id, duplicate_ids) in groups_to_publish {
+	for (group_number, (canonical, primary_index, primary_task_id, duplicate_ids)) in
+		groups_to_publish.into_iter().enumerate()
+	{
+		heartbeat_pipeline_run(pg_pool, run_id, group_number).await?;
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
 				to_email: canonical.clone(),
@@ -2240,8 +2248,8 @@ async fn execute_pipeline_run_inner(
 
 	// Rows that failed to publish, or a list with nothing to verify, leave no
 	// task for the worker to finish, so nothing else would settle these.
-	settle_job_without_outstanding_tasks(pg_pool, job_id).await?;
-	settle_list_without_outstanding_rows(pg_pool, list_id, job_id).await?;
+	crate::worker::job_lifecycle::finalize_bulk_job_if_done(pg_pool, job_id).await?;
+	crate::worker::job_lifecycle::finalize_list_if_done(pg_pool, list_id).await?;
 
 	// Only now hand the run over: maybe_finalize_pipeline_run skips runs that
 	// are still publishing, so the worker cannot finalize it underneath us. The
@@ -2269,90 +2277,19 @@ async fn execute_pipeline_run_inner(
 	Ok(())
 }
 
-/// Gives a pipeline job its final status once none of its tasks is still
-/// queued or running, using the worker's rules: cancelling becomes cancelled,
-/// any failed task makes it failed, otherwise completed.
-async fn settle_job_without_outstanding_tasks(pg_pool: &PgPool, job_id: i32) -> Result<()> {
-	sqlx::query(
-		r#"
-		WITH settled AS (
-			SELECT j.id,
-			       CASE
-			           WHEN j.status = 'cancelling'::job_state THEN 'cancelled'::job_state
-			           WHEN EXISTS (
-			               SELECT 1 FROM v1_task_result t
-			               WHERE t.job_id = j.id
-			                 AND t.task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
-			           ) THEN 'failed'::job_state
-			           ELSE 'completed'::job_state
-			       END AS final_status
-			FROM v1_bulk_job j
-			WHERE j.id = $1
-			  AND j.status IN ('running'::job_state, 'cancelling'::job_state)
-			  AND NOT EXISTS (
-			      SELECT 1 FROM v1_task_result t
-			      WHERE t.job_id = j.id
-			        AND t.task_state IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
-			  )
-		)
-		UPDATE v1_bulk_job j
-		SET status = settled.final_status,
-		    completed_at = CASE
-		        WHEN settled.final_status IN ('completed'::job_state, 'failed'::job_state)
-		        THEN COALESCE(j.completed_at, NOW())
-		        ELSE j.completed_at
-		    END,
-		    cancelled_at = CASE
-		        WHEN settled.final_status = 'cancelled'::job_state THEN COALESCE(j.cancelled_at, NOW())
-		        ELSE j.cancelled_at
-		    END,
-		    updated_at = NOW()
-		FROM settled
-		WHERE j.id = settled.id
-		"#,
-	)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await?;
-	Ok(())
-}
+/// Rows between progress marks while a run inserts or publishes its rows.
+const PIPELINE_RUN_HEARTBEAT_ROWS: usize = 500;
 
-/// Gives a pipeline list its final status once every row has a result, using
-/// the worker's rules: failed if any row failed, otherwise completed.
-async fn settle_list_without_outstanding_rows(
-	pg_pool: &PgPool,
-	list_id: i32,
-	job_id: i32,
-) -> Result<()> {
-	sqlx::query(
-		r#"
-		WITH tally AS (
-			SELECT
-				COUNT(*) FILTER (
-					WHERE (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled'::task_state)
-						AND task_state NOT IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
-				) AS processed,
-				COUNT(*) FILTER (
-					WHERE task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
-				) AS failed
-			FROM v1_task_result
-			WHERE job_id = $2
-		)
-		UPDATE v1_lists l
-		SET status = CASE WHEN tally.failed > 0 THEN 'failed'::list_status ELSE 'completed'::list_status END,
-		    error_message = CASE WHEN tally.failed > 0 THEN COALESCE(l.error_message, 'task_failed') ELSE l.error_message END,
-		    completed_at = COALESCE(l.completed_at, NOW()),
-		    updated_at = NOW()
-		FROM tally
-		WHERE l.id = $1
-		  AND l.status = 'processing'::list_status
-		  AND tally.processed >= l.total_rows
-		"#,
-	)
-	.bind(list_id)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await?;
+/// Refreshes the run's `updated_at` every few hundred rows. The stalled-run
+/// sweep fails runs that go quiet for 30 minutes, and a large list can take
+/// that long to insert or publish while its executor is alive.
+async fn heartbeat_pipeline_run(pg_pool: &PgPool, run_id: i64, row_number: usize) -> Result<()> {
+	if row_number > 0 && row_number.is_multiple_of(PIPELINE_RUN_HEARTBEAT_ROWS) {
+		sqlx::query("UPDATE v1_pipeline_runs SET updated_at = NOW() WHERE id = $1")
+			.bind(run_id)
+			.execute(pg_pool)
+			.await?;
+	}
 	Ok(())
 }
 
@@ -2751,9 +2688,14 @@ async fn apply_delta_selection(
 		state_by_email.insert(state.canonical_email.clone(), state);
 	}
 
+	// Checked arithmetic: `freshness_days` comes from the API unbounded, and
+	// an overflowing subtraction panics, which would kill the run task and
+	// leave the run stuck in `preparing`. A cutoff before the representable
+	// range marks nothing as stale, like any very long freshness window.
 	let freshness_cutoff = verification
 		.freshness_days
-		.map(|days| Utc::now() - Duration::days(i64::from(days.max(0))));
+		.and_then(|days| Duration::try_days(i64::from(days.max(0))))
+		.and_then(|age| Utc::now().checked_sub_signed(age));
 
 	let mut selected_indices = Vec::new();
 	let mut skipped_unchanged = 0i32;
@@ -3295,11 +3237,15 @@ pub fn compute_next_run_at(
 	let tz = parse_timezone(timezone)?;
 	let now = now_utc.with_timezone(&tz);
 	let schedule = parse_schedule(expression)?;
+	// On a DST fall-back day an ambiguous local time resolves to its earlier
+	// instant, which can already be past; a past next run would fire on every
+	// scheduler tick until the clock catches up.
 	let next = schedule
 		.after(&now)
-		.next()
+		.map(|next| next.with_timezone(&Utc))
+		.find(|next| *next > now_utc)
 		.context("Cron expression did not produce a next run")?;
-	Ok(next.with_timezone(&Utc))
+	Ok(next)
 }
 
 /// Takes a connection rather than the pool so `update_pipeline` can validate on
@@ -3830,6 +3776,31 @@ mod tests {
 	fn test_compute_delivery_retry_delay_clamps_large_base_delay() {
 		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 1), 86_400);
 		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 4), 86_400);
+	}
+
+	#[test]
+	fn test_compute_next_run_at_uses_standard_day_of_week_numbers() {
+		use chrono::{Datelike, Weekday};
+		// 2026-03-28 is a Saturday.
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let weekday = |expression: &str| {
+			compute_next_run_at(expression, "UTC", now)
+				.unwrap()
+				.weekday()
+		};
+		assert_eq!(weekday("0 9 * * 1"), Weekday::Mon);
+		assert_eq!(weekday("0 9 * * 0"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * 7"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * 1-5"), Weekday::Mon);
+		assert_eq!(weekday("0 9 * * 5-7"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * MON"), Weekday::Mon);
+		assert!(compute_next_run_at("0 9 * * 8", "UTC", now).is_err());
+	}
+
+	#[test]
+	fn test_validate_cron_expression_checks_the_shortest_gap() {
+		// 30 minutes apart once a day: too frequent at any time of day.
+		assert!(validate_cron_expression("0,30 9 * * *", "UTC", 3600, Utc::now()).is_err());
 	}
 
 	#[test]

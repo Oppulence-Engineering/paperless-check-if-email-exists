@@ -96,6 +96,12 @@ async fn process_schedule(
 			WHERE tenant_id = $1
 			  AND task_state = 'completed'
 			  AND completed_at IS NOT NULL
+			  -- Duplicates share their primary's result, and blank or
+			  -- malformed rows were never verified; re-verifying them
+			  -- would only spend credits.
+			  AND is_duplicate IS NOT TRUE
+			  AND COALESCE(payload->'input'->>'to_email', '') <> ''
+			  AND sub_reason IS DISTINCT FROM 'invalid_syntax'
 			GROUP BY payload->'input'->>'to_email'
 		) sub
 		WHERE sub.latest_completed < NOW() - make_interval(days => $2)
@@ -155,7 +161,7 @@ async fn process_schedule(
 	let job_id: i32 = match sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_bulk_job (total_records, tenant_id, status, metadata)
-		VALUES ($1, $2, 'running'::job_state, '{"source": "reverification"}'::jsonb)
+		VALUES ($1, $2, 'pending'::job_state, '{"source": "reverification"}'::jsonb)
 		RETURNING id
 		"#,
 	)
@@ -193,18 +199,22 @@ async fn process_schedule(
 	)
 	.await;
 
-	// With nothing published no worker will ever finalize the job, which
-	// would otherwise stay 'running' forever.
-	if published == 0 {
-		if let Err(err) = sqlx::query(
-			"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	// The job stays 'pending' while its rows are created and published, so
+	// the worker cannot finish it after the first task. With nothing published
+	// no worker will ever finalize it, so it fails here.
+	let settled = if published > 0 {
+		crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id).await
+	} else {
+		sqlx::query(
+			"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'pending'",
 		)
 		.bind(job_id)
 		.execute(pg_pool)
 		.await
-		{
-			warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark unpublished reverification job failed");
-		}
+		.map(|_| ())
+	};
+	if let Err(err) = settled {
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to settle reverification job");
 	}
 
 	// Update schedule (next_run_at already set by the atomic claim)

@@ -89,8 +89,10 @@ pub fn catch_all_severity(signals: &ScoringSignals) -> Option<CatchAllSeverity> 
 		return None;
 	}
 
+	// Core reports every catch-all as Risky, so `Safe` can never be required
+	// here; the other causes of Risky are each excluded below.
 	let otherwise_clean = signals.valid_syntax
-		&& matches!(signals.reachable, Reachable::Safe)
+		&& !matches!(signals.reachable, Reachable::Invalid | Reachable::Unknown)
 		&& signals.has_mx_records
 		&& !signals.smtp_error
 		&& signals.smtp_can_connect
@@ -534,8 +536,12 @@ pub fn compute_score_with_context(
 			InsightCatchAllSeverity::Medium => 12,
 			InsightCatchAllSeverity::High => 25,
 		};
-		// The legacy scorer already applied a flat -15 catch-all penalty.
-		adjustment += 15 - severity_penalty;
+		// Replace the legacy scorer's catch-all penalty with this one.
+		let legacy_penalty = match catch_all_severity(&score.signals) {
+			Some(CatchAllSeverity::Low) => 10,
+			_ => 15,
+		};
+		adjustment += legacy_penalty - severity_penalty;
 		contextual_codes.push(
 			match catch_all.severity {
 				InsightCatchAllSeverity::Low => "catch_all_low_confidence",
@@ -1157,6 +1163,15 @@ mod tests {
 		assert_eq!(score.sub_reason, SubReason::SmtpError);
 		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 		assert!(!score.safe_to_send);
+
+		// What core returns when the MX lookup fails before SMTP runs: the
+		// default SMTP block, whose `is_deliverable` is false. A DNS timeout
+		// says nothing about the mailbox.
+		output.is_reachable = Reachable::Unknown;
+		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails::default());
+		let score = compute_score(&output);
+		assert_eq!(score.category, EmailCategory::Unknown);
+		assert_ne!(score.sub_reason, SubReason::SmtpUndeliverable);
 	}
 
 	#[test]
@@ -1346,7 +1361,8 @@ mod tests {
 	fn catch_all_signals(is_free_provider: bool) -> ScoringSignals {
 		ScoringSignals {
 			valid_syntax: true,
-			reachable: Reachable::Safe,
+			// What core reports for every catch-all domain.
+			reachable: Reachable::Risky,
 			has_mx_records: true,
 			smtp_error: false,
 			smtp_can_connect: true,
@@ -1389,7 +1405,7 @@ mod tests {
 		// list it in catch_all_severity, add the case here and this fails.
 		let mutators: [(&str, SignalMutator); 13] = [
 			("valid_syntax", |s| s.valid_syntax = false),
-			("reachable_risky", |s| s.reachable = Reachable::Risky),
+			("reachable_invalid", |s| s.reachable = Reachable::Invalid),
 			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
 			("smtp_error", |s| s.smtp_error = true),
 			("smtp_is_deliverable", |s| s.smtp_is_deliverable = false),
@@ -1479,20 +1495,28 @@ mod tests {
 				is_b2c,
 				..Default::default()
 			});
-			compute_score(&output)
+			output
 		};
 
 		// Low tier: lighter penalty, and no longer vetoed.
-		let low = catch_all_output(true);
+		let low = compute_score(&catch_all_output(true));
 		assert_eq!(low.score, 90);
 		assert_eq!(low.category, EmailCategory::Valid);
 		assert!(low.safe_to_send);
 
 		// High tier: unchanged penalty, still vetoed.
-		let high = catch_all_output(false);
+		let high = compute_score(&catch_all_output(false));
 		assert_eq!(high.score, 85);
 		assert_eq!(high.category, EmailCategory::Valid);
 		assert!(!high.safe_to_send);
+
+		// API checks are scored with context. Rescoring must keep the tiers,
+		// or the low tier never reaches safe_to_send and the deliverability
+		// policy's low-tier send is unreachable.
+		let contextual =
+			|is_b2c| compute_score_with_context(&catch_all_output(is_b2c), &Default::default());
+		assert!(contextual(true).score.safe_to_send);
+		assert!(!contextual(false).score.safe_to_send);
 	}
 
 	#[test]

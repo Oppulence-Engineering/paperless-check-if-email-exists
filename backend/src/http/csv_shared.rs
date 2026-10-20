@@ -56,12 +56,36 @@ pub struct CsvDownloadRow {
 pub const CSV_HEADER: &str =
 	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness,recommended_action,recommendation_confidence,recommendation_priority,recommendation_reasons,policy_mode,policy_decision,policy_reasons\n";
 
+/// A CSV cell as a spreadsheet will treat it: a value that a spreadsheet
+/// would run as a formula gets a leading `'` and opens as text. Exported
+/// cells come from uploaded lists, API callers and provider webhooks, so any
+/// of them can carry `=HYPERLINK(...)` or `@SUM(...)`. A plain signed number
+/// (`-5`, `+1 (555) 010-0000`) is left alone, so cleaned lists keep their
+/// phone numbers and amounts.
+pub fn spreadsheet_safe(cell: &str) -> String {
+	let mut chars = cell.chars();
+	let runs_as_formula = match chars.next() {
+		Some('=' | '@' | '\t' | '\r') => true,
+		Some('+' | '-') => !chars
+			.all(|c| c.is_ascii_digit() || matches!(c, ' ' | '.' | ',' | '(' | ')' | '-' | '/')),
+		_ => false,
+	};
+	if runs_as_formula {
+		format!("'{cell}")
+	} else {
+		cell.to_string()
+	}
+}
+
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
 		.has_headers(false)
 		.from_writer(Vec::new());
 	for record in records {
-		writer.serialize(csv_row(record))?;
+		let mut row = csv_row(record);
+		row.input = spreadsheet_safe(&row.input);
+		row.error = row.error.as_deref().map(spreadsheet_safe);
+		writer.serialize(row)?;
 	}
 	writer.into_inner().map_err(|err| err.into_error().into())
 }
@@ -283,6 +307,34 @@ fn result_value<'a>(record: &'a TaskResultRecord, path: &[&str]) -> Option<&'a V
 
 #[cfg(test)]
 mod tests {
+
+	#[test]
+	fn spreadsheet_safe_neutralizes_formulas_but_keeps_numbers() {
+		for formula in [
+			"=HYPERLINK(\"http://evil\",\"x\")",
+			"=1+2@x.com",
+			"@SUM(A1)",
+			"+cmd|' /C calc'!A0",
+			"-2+3+cmd|' /C calc'!A0",
+			"\tdata",
+		] {
+			assert_eq!(
+				spreadsheet_safe(formula),
+				format!("'{formula}"),
+				"{formula}"
+			);
+		}
+		for plain in [
+			"user@example.com",
+			"-5",
+			"+1 (555) 010-0000",
+			"2026-10-19",
+			"",
+		] {
+			assert_eq!(spreadsheet_safe(plain), plain, "{plain}");
+		}
+	}
+
 	use super::*;
 
 	#[test]

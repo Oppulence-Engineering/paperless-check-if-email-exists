@@ -94,7 +94,7 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		let payload_json = serde_json::to_value(task)?;
 		let tenant_id = parse_tenant_id(task);
-		let task_db_id = task.metadata.as_ref().and_then(|m| m.task_db_id);
+		let task_db_id = self.task_row_id(task).await?;
 
 		match worker_output {
 			Ok(output) => {
@@ -120,7 +120,7 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		let payload_json = serde_json::to_value(task)?;
 		let tenant_id = parse_tenant_id(task);
-		let task_db_id = task.metadata.as_ref().and_then(|m| m.task_db_id);
+		let task_db_id = self.task_row_id(task).await?;
 		let columns = success_columns_from_prepared(&success.response)?;
 
 		self.store_success(task, &payload_json, tenant_id, task_db_id, columns, extra)
@@ -138,9 +138,44 @@ impl PostgresStorage {
 	) -> Result<(), StorageError> {
 		let payload_json = serde_json::to_value(task)?;
 		let tenant_id = parse_tenant_id(task);
-		let task_db_id = task.metadata.as_ref().and_then(|m| m.task_db_id);
+		let task_db_id = self.task_row_id(task).await?;
 		self.store_error(task, &payload_json, tenant_id, task_db_id, err, extra)
 			.await
+	}
+
+	/// The row this task writes to. Tasks published by the backend carry it.
+	/// A task from outside (the SQS lambda) has only its dedupe key: SQS
+	/// redelivers a message after a retryable error, and each delivery
+	/// stores its outcome, so the row an earlier delivery wrote is found by
+	/// the key (kept in the `dedupe_key` column, unique per job) and updated
+	/// instead of adding one row per attempt.
+	async fn task_row_id(&self, task: &CheckEmailTask) -> Result<Option<i32>, StorageError> {
+		if let Some(task_db_id) = task.metadata.as_ref().and_then(|m| m.task_db_id) {
+			return Ok(Some(task_db_id));
+		}
+		let Some(dedupe_key) = task_dedupe_key(task) else {
+			return Ok(None);
+		};
+		let id = match task.job_id {
+			CheckEmailJobId::Bulk(job_id) => {
+				sqlx::query_scalar(
+					"SELECT id FROM v1_task_result WHERE job_id = $1 AND dedupe_key = $2",
+				)
+				.bind(job_id)
+				.bind(dedupe_key)
+				.fetch_optional(&self.pg_pool)
+				.await?
+			}
+			CheckEmailJobId::SingleShot => {
+				sqlx::query_scalar(
+					"SELECT id FROM v1_task_result WHERE job_id IS NULL AND dedupe_key = $1 ORDER BY id LIMIT 1",
+				)
+				.bind(dedupe_key)
+				.fetch_optional(&self.pg_pool)
+				.await?
+			}
+		};
+		Ok(id)
 	}
 
 	async fn store_success(
@@ -163,6 +198,8 @@ impl PostgresStorage {
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    result = $3,
 				    error = NULL,
+				    -- A task row never loses its tenant; a task republished
+				    -- without tenant metadata (an admin-secret retry) keeps it.
 				    tenant_id = COALESCE($4, tenant_id),
 				    score = $5,
 				    score_category = $6,
@@ -267,7 +304,7 @@ impl PostgresStorage {
 				recommendation, recommendation_action, recommendation_confidence,
 				recommendation_priority, policy_mode, policy_profile_key,
 				policy_evaluation, policy_decision, policy_evaluated_at,
-				task_state, completed_at
+				dedupe_key, task_state, completed_at
 			)
 			VALUES (
 				$1, $2, $3, $4, $5,
@@ -278,7 +315,7 @@ impl PostgresStorage {
 				$18, $19, $20,
 				$21, $22, $23,
 				$24, $25, $26,
-				'completed'::task_state, NOW()
+				$27, 'completed'::task_state, NOW()
 			)
 			RETURNING id
 			"#,
@@ -312,6 +349,7 @@ impl PostgresStorage {
 		.bind(&columns.policy_evaluation)
 		.bind(&columns.policy_decision)
 		.bind(columns.policy_evaluated_at)
+		.bind(task_dedupe_key(task))
 		.fetch_one(&self.pg_pool)
 		.await?;
 
@@ -337,6 +375,8 @@ impl PostgresStorage {
 				SET payload = $1,
 				    extra = COALESCE(extra, '{}'::jsonb) || COALESCE($2, '{}'::jsonb),
 				    error = $3,
+				    -- A task row never loses its tenant; a task republished
+				    -- without tenant metadata (an admin-secret retry) keeps it.
 				    tenant_id = COALESCE($4, tenant_id),
 				    canonical_email = COALESCE($5, canonical_email),
 				    result = NULL,
@@ -399,9 +439,9 @@ impl PostgresStorage {
 			r#"
 			INSERT INTO v1_task_result (
 				payload, job_id, extra, error, tenant_id, canonical_email,
-				task_state, completed_at
+				dedupe_key, task_state, completed_at
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, 'failed'::task_state, NOW())
+			VALUES ($1, $2, $3, $4, $5, $6, $7, 'failed'::task_state, NOW())
 			RETURNING id
 			"#,
 		)
@@ -414,6 +454,7 @@ impl PostgresStorage {
 		.bind(err.to_string())
 		.bind(tenant_id)
 		.bind(canonical_email)
+		.bind(task_dedupe_key(task))
 		.fetch_one(&self.pg_pool)
 		.await?;
 
@@ -422,6 +463,17 @@ impl PostgresStorage {
 
 	pub fn get_extra(&self) -> Option<serde_json::Value> {
 		self.extra.clone()
+	}
+}
+
+/// The key `task_row_id` finds a task's row by, for a task that carries no
+/// row id. Rows of tasks that do carry one keep the column empty: their
+/// dedupe keys never had to be unique per job.
+fn task_dedupe_key(task: &CheckEmailTask) -> Option<&str> {
+	let metadata = task.metadata.as_ref()?;
+	match metadata.task_db_id {
+		Some(_) => None,
+		None => metadata.dedupe_key.as_deref(),
 	}
 }
 

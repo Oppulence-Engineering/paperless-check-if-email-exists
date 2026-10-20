@@ -233,13 +233,14 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 					if status == "cancelling" || status == "cancelled" {
 						debug!(target: LOG_TARGET, email=payload.input.to_email, job_id=?payload.job_id, "Skipping cancelled job");
 
-						// Mark task as cancelled if we have its DB id. A task
-						// that already has a result (a delayed recheck) keeps it.
+						// Mark task as cancelled if we have its DB id and it can
+						// still run. A task that already has a result (a delayed
+						// recheck) keeps it, and a finished task keeps its state.
 						if let Some(task_db_id) =
 							payload.metadata.as_ref().and_then(|m| m.task_db_id)
 						{
 							let _ = sqlx::query(
-								"UPDATE v1_task_result SET task_state = CASE WHEN result IS NOT NULL THEN 'completed'::task_state ELSE 'cancelled'::task_state END, completed_at = CASE WHEN result IS NOT NULL THEN completed_at ELSE NOW() END, updated_at = NOW() WHERE id = $1",
+								"UPDATE v1_task_result SET task_state = CASE WHEN result IS NOT NULL THEN 'completed'::task_state ELSE 'cancelled'::task_state END, completed_at = CASE WHEN result IS NOT NULL THEN completed_at ELSE NOW() END, updated_at = NOW() WHERE id = $1 AND task_state IN ('queued', 'running', 'retrying')",
 							)
 							.bind(task_db_id)
 							.execute(&pool)
