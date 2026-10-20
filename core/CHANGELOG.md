@@ -1,5 +1,27 @@
 # Changelog
 
+## [4.4.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.4.0) (2026-10-20)
+
+
+### Features
+
+* **smtp:** probe the SMTP route through each configured proxy at startup ([078c760](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/078c7602f67b8c478cbd7851a5b0f15690a09c1b))
+
+
+### Bug Fixes
+
+* **core:** Gravatar hash, HIBP URL encoding and blocking headless sleeps ([194a4bd](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/194a4bdc4a251bad1c58673b178e77640364d5fc))
+* **core:** keep the proxy password out of Debug output ([fe96acf](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/fe96acf6147eac87a51cd2a2f9c5f6901073f40e))
+* **misc:** remove real providers, names and institutions from the lists ([fe196c5](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/fe196c5f5c8a65f22f576ee055e555d501a00c7f))
+* **mx:** fall back to the domain's address when it has no MX record ([fd75801](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/fd7580107e171d9809e8ce6ddabfc36e08ae270c))
+* **mx:** treat a null MX as a domain that accepts no mail ([e2b1b26](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e2b1b26e55080870c495e74e39662df10fd05509))
+* **provider:** stop rejecting valid Gmail, Outlook and Yahoo addresses ([4fd6bc0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4fd6bc0acc7acbc2ceaaae673875460a5a318465))
+* **scoring:** stop unverified mailboxes from scoring as risky ([bbacc9c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/bbacc9c379d04511b96658ce844c4e979a1e5a38))
+* **smtp:** bound the connect to a SOCKS5 proxy like a direct connect ([70c95c4](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/70c95c48fc57cd32e9e088cb21986fbcadb28668))
+* **smtp:** do not retry an SMTP check that timed out ([891a151](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/891a151db6660292293bb73445a70856fa2437ad))
+* **smtp:** stop reading blocks and deferrals as invalid mailboxes ([986080d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/986080d2a55d7244952dc9407034785202c6d21d))
+* **syntax:** accept disposable domains and lowercase the domain ([f3c35eb](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f3c35eb5488f5dde2403b1dcfc32270777c3552a))
+
 ## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-16)
 
 

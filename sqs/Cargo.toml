@@ -1,6 +1,6 @@
 [package]
 name = "reacher_sqs"
-version = "4.3.1"
+version = "4.3.2"
 edition = "2018"
 license = "MIT"
 publish = false
