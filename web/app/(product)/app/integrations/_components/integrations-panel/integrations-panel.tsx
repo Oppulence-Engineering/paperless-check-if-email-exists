@@ -103,7 +103,7 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 					) : null}
 				</Section>
 				<Section
-					description="The legacy onboarding check creates a tenant and API key without authentication. The hosted app blocks this endpoint; use the app sign-up flow for new workspaces."
+					description="The onboarding check creates a tenant and API key. It takes the operator secret and the hosted app blocks it, so use the app sign-up flow for new workspaces."
 					title="Onboarding checks"
 				>
 					<Group>
@@ -118,12 +118,6 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 							<div className="flex flex-wrap gap-4">
 								<Link className={link} href="/app/settings?settings=developer">
 									Manage API keys
-								</Link>
-								<Link
-									className={link}
-									href="/developers/reference#tag/onboarding/v1_check_email_with_onboard"
-								>
-									Onboarding API contract
 								</Link>
 							</div>
 						</Row>

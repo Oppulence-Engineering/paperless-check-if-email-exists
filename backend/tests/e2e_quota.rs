@@ -8,7 +8,8 @@ mod tests {
 	use reacher_backend::tenant::context::TenantContext;
 	use reacher_backend::tenant::models::{PlanTier, TenantStatus};
 	use reacher_backend::tenant::quota::{
-		check_and_increment_quota_for_count, check_quota, increment_usage, QuotaCheckResult,
+		check_and_increment_quota_for_count, check_quota, increment_usage, release_reserved_usage,
+		QuotaCheckResult,
 	};
 	use serial_test::serial;
 	use sqlx::{PgPool, Row};
@@ -139,13 +140,22 @@ mod tests {
 
 		// Zero limit = unlimited: the function returns Allowed early without
 		// incrementing the usage counter, so the value stays at the original 12.
-		let used: i32 = sqlx::query("SELECT used_this_period FROM tenants WHERE id = $1")
-			.bind(tenant_id)
-			.fetch_one(pool)
+		let used = || async {
+			sqlx::query("SELECT used_this_period FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(pool)
+				.await
+				.unwrap()
+				.get::<i32, _>("used_this_period")
+		};
+		assert_eq!(used().await, 12);
+
+		// Releasing a failed request must mirror the reservation, which never
+		// counted this tenant, so the counter is left alone.
+		release_reserved_usage(Some(pool), Some(tenant_id), 100)
 			.await
-			.unwrap()
-			.get("used_this_period");
-		assert_eq!(used, 12);
+			.unwrap();
+		assert_eq!(used().await, 12);
 	}
 
 	// ---------------------------------------------------------------

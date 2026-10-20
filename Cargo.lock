@@ -718,6 +718,7 @@ dependencies = [
  "derive_builder",
  "fantoccini",
  "fast-socks5",
+ "fast_chemail",
  "futures",
  "hickory-proto",
  "hickory-resolver",
@@ -3728,7 +3729,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "4.3.0"
+version = "4.3.1"
 dependencies = [
  "anyhow",
  "async-smtp",
@@ -3742,6 +3743,7 @@ dependencies = [
  "csv",
  "dashmap",
  "dotenv",
+ "fast-socks5",
  "futures",
  "hex",
  "hickory-resolver",
@@ -3778,7 +3780,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_sqs"
-version = "4.3.0"
+version = "4.3.1"
 dependencies = [
  "check-if-email-exists",
  "lambda_runtime",

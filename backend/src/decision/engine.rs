@@ -1,6 +1,7 @@
 use crate::bounce_risk::{
 	BounceRiskAssessment, BounceRiskCategory, RecommendedAction as BounceRecommendedAction,
 };
+use crate::decision::custom_policy::CustomPolicyRules;
 use crate::decision::explain::{collect_explanations, ExplanationInput};
 use crate::decision::policy::{evaluate_policy, PolicyInput};
 use crate::decision::types::{
@@ -23,6 +24,7 @@ pub struct DecisionInput<'a> {
 	pub bounce_risk: Option<&'a BounceRiskAssessment>,
 	pub active_suppression: bool,
 	pub previous_hard_bounce: bool,
+	pub custom_policy: Option<&'a CustomPolicyRules>,
 }
 
 pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation) {
@@ -44,6 +46,7 @@ pub fn evaluate(input: &DecisionInput<'_>) -> (Recommendation, PolicyEvaluation)
 		active_suppression: input.active_suppression,
 		previous_hard_bounce: input.previous_hard_bounce,
 		evaluated_at: input.evaluated_at,
+		custom_rules: input.custom_policy,
 	});
 
 	let action = recommended_action(input, policy_evaluation.decision);
@@ -110,21 +113,27 @@ fn recommended_action(
 		return RecommendedAction::FixThenSend;
 	}
 
-	if matches!(
-		input.bounce_risk.map(|risk| &risk.category),
-		Some(BounceRiskCategory::Medium)
-	) || matches!(
-		input.bounce_risk.map(|risk| &risk.action),
-		Some(BounceRecommendedAction::SendWithCaution)
-	) {
-		return RecommendedAction::SendWithCaution;
-	}
-
 	match policy_decision {
-		PolicyDecision::Send => RecommendedAction::Send,
+		// Bounce risk can only add caution to a send. It must never soften a
+		// Review, Suppress or Drop that the policy already decided on.
+		PolicyDecision::Send => bounce_risk_adjusted_send(input.bounce_risk),
 		PolicyDecision::Review => RecommendedAction::Review,
 		PolicyDecision::Suppress => RecommendedAction::Suppress,
 		PolicyDecision::Drop => RecommendedAction::Drop,
+	}
+}
+
+fn bounce_risk_adjusted_send(bounce_risk: Option<&BounceRiskAssessment>) -> RecommendedAction {
+	let Some(risk) = bounce_risk else {
+		return RecommendedAction::Send;
+	};
+	match (&risk.category, &risk.action) {
+		(_, BounceRecommendedAction::DoNotSend)
+		| (BounceRiskCategory::High | BounceRiskCategory::Dangerous, _) => RecommendedAction::Review,
+		(BounceRiskCategory::Medium, _) | (_, BounceRecommendedAction::SendWithCaution) => {
+			RecommendedAction::SendWithCaution
+		}
+		_ => RecommendedAction::Send,
 	}
 }
 
@@ -232,6 +241,7 @@ mod tests {
 			bounce_risk: None,
 			active_suppression: false,
 			previous_hard_bounce: false,
+			custom_policy: None,
 		}
 	}
 
@@ -271,6 +281,46 @@ mod tests {
 		};
 		let (recommendation, _) = evaluate(&input);
 		assert_eq!(recommendation.action, RecommendedAction::SendWithCaution);
+	}
+
+	#[test]
+	fn bounce_risk_only_tightens_the_policy_decision() {
+		// A policy Review (safe_to_send=false) must survive any bounce-risk
+		// tier: bounce risk may add caution, never remove it.
+		let mut risky = base_score();
+		risky.category = EmailCategory::Risky;
+		risky.safe_to_send = false;
+		for (category, action) in [
+			(
+				BounceRiskCategory::Low,
+				BounceRecommendedAction::SendWithCaution,
+			),
+			(
+				BounceRiskCategory::Medium,
+				BounceRecommendedAction::VerifyManually,
+			),
+		] {
+			let risk = bounce_risk(category, action);
+			let input = DecisionInput {
+				bounce_risk: Some(&risk),
+				..input(&risky)
+			};
+			let (recommendation, policy) = evaluate(&input);
+			assert_eq!(policy.decision, PolicyDecision::Review);
+			assert_eq!(recommendation.action, RecommendedAction::Review);
+		}
+
+		// A clean result with high bounce risk is held for review, not sent.
+		let clean = base_score();
+		for category in [BounceRiskCategory::High, BounceRiskCategory::Dangerous] {
+			let risk = bounce_risk(category, BounceRecommendedAction::DoNotSend);
+			let input = DecisionInput {
+				bounce_risk: Some(&risk),
+				..input(&clean)
+			};
+			let (recommendation, _) = evaluate(&input);
+			assert_eq!(recommendation.action, RecommendedAction::Review);
+		}
 	}
 
 	#[test]

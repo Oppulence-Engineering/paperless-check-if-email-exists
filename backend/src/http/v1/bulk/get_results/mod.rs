@@ -53,9 +53,10 @@ async fn http_handler(
 		job_id,
 		tenant_ctx.tenant_id,
 	)
-	.fetch_one(&pg_pool)
+	.fetch_optional(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?
+	.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found"))?
 	.total_records;
 	// Count all terminal tasks (completed, failed, cancelled, dead_lettered) — not just those with result/error
 	let total_processed = sqlx::query!(
@@ -120,10 +121,13 @@ async fn job_result_as_iter(
 	offset: u64,
 	pg_pool: PgPool,
 ) -> Result<Box<dyn Iterator<Item = serde_json::Value>>, ReacherResponseError> {
+	// Failed, cancelled and dead-lettered tasks have no result. The JSON items
+	// are CheckEmailOutput objects, so those rows are left out here; the CSV
+	// format lists them with their error.
 	let rows = sqlx::query(
 		r#"
 		SELECT result, completed_at FROM v1_task_result
-		WHERE job_id = $1
+		WHERE job_id = $1 AND result IS NOT NULL
 		ORDER BY id
 		LIMIT $2 OFFSET $3
 		"#,

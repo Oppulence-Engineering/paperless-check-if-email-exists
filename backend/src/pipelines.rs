@@ -422,6 +422,9 @@ pub async fn run_pipeline_scheduler_cycle(
 		return Ok(());
 	}
 
+	recover_stalled_pipeline_runs(config.as_ref(), pg_pool, config.pipelines.max_due_per_tick)
+		.await?;
+
 	let recovered =
 		recover_stranded_queued_pipeline_runs(pg_pool, config.pipelines.max_due_per_tick).await?;
 	if !recovered.is_empty() {
@@ -548,7 +551,6 @@ async fn claim_due_pipeline_runs(
 			&pipeline.schedule_cron,
 			&pipeline.schedule_timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		) {
 			Ok(next_future_run) => next_future_run,
 			Err(err) => {
@@ -746,6 +748,86 @@ async fn recover_stranded_queued_pipeline_runs(
 		.collect())
 }
 
+/// Finishes or fails runs that stopped making progress.
+///
+/// Runs in 'preparing', 'fetching_source' or 'publishing' belong to an
+/// executor; if its process died, nothing else moves them on, and an active run
+/// makes the scheduler skip every later run of the pipeline. Execution touches
+/// the run at each phase and does a few statements per row, so 30 quiet minutes
+/// means the executor is gone. Runs left in 'delivering', or in 'running' after
+/// their job finished, missed finalization and get it retried; a run still not
+/// finished after that, other than a running one, is marked failed.
+async fn recover_stalled_pipeline_runs(
+	config: &BackendConfig,
+	pg_pool: &PgPool,
+	limit: i32,
+) -> Result<()> {
+	// Bumping updated_at claims the rows, so another scheduler instance does not
+	// pick the same runs for the next 30 minutes.
+	let rows = sqlx::query(
+		r#"
+		WITH stalled AS (
+			SELECT pr.id
+			FROM v1_pipeline_runs pr
+			LEFT JOIN v1_bulk_job j ON j.id = pr.job_id
+			WHERE pr.updated_at < NOW() - INTERVAL '30 minutes'
+			  AND (
+				pr.status IN (
+					'preparing'::pipeline_run_status,
+					'fetching_source'::pipeline_run_status,
+					'publishing'::pipeline_run_status,
+					'delivering'::pipeline_run_status
+				)
+				OR (
+					pr.status = 'running'::pipeline_run_status
+					AND j.status IN ('completed'::job_state, 'failed'::job_state, 'cancelled'::job_state)
+				)
+			  )
+			ORDER BY pr.updated_at ASC
+			LIMIT $1
+			FOR UPDATE OF pr SKIP LOCKED
+		)
+		UPDATE v1_pipeline_runs pr
+		SET updated_at = NOW()
+		FROM stalled
+		WHERE pr.id = stalled.id
+		RETURNING pr.id, pr.status::TEXT
+		"#,
+	)
+	.bind(limit.max(1))
+	.fetch_all(pg_pool)
+	.await?;
+
+	for row in rows {
+		let run_id: i64 = row.get("id");
+		let status = parse_pipeline_run_status(&row.get::<String, _>("status"))?;
+		if matches!(
+			status,
+			PipelineRunStatus::Delivering | PipelineRunStatus::Running
+		) {
+			if let Err(err) = maybe_finalize_pipeline_run(config, pg_pool, run_id).await {
+				warn!(target: LOG_TARGET, run_id = run_id, error = ?err, "Retrying stalled pipeline run finalization failed");
+			}
+			if status == PipelineRunStatus::Running {
+				continue;
+			}
+		}
+
+		warn!(target: LOG_TARGET, run_id = run_id, status = ?status, "Failing stalled pipeline run");
+		let err = anyhow::anyhow!(
+			"Pipeline run made no progress for 30 minutes while {}",
+			enum_str(&status)
+		);
+		// Does nothing if the retried finalization above finished the run.
+		if let Err(mark_err) =
+			mark_pipeline_run_execution_failed(pg_pool, run_id, "stalled", &err).await
+		{
+			warn!(target: LOG_TARGET, run_id = run_id, error = ?mark_err, "Failed to mark stalled pipeline run as failed");
+		}
+	}
+	Ok(())
+}
+
 /// Recovers deliveries stranded in 'pending' status (e.g., after a process crash).
 /// Resets them to 'retry_scheduled' so the normal retry loop picks them up.
 async fn recover_stranded_pending_deliveries(pg_pool: &PgPool) -> Result<()> {
@@ -837,7 +919,7 @@ pub async fn create_pipeline(
 	}
 
 	validate_pipeline_input(
-		pg_pool,
+		&mut *pg_pool.acquire().await?,
 		tenant_id,
 		&input.source,
 		&input.schedule,
@@ -853,7 +935,6 @@ pub async fn create_pipeline(
 			&input.schedule.cron,
 			&input.schedule.timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		)?),
 		(_, PipelineStatus::Paused | PipelineStatus::Deleted) => None,
 	};
@@ -960,6 +1041,32 @@ pub async fn get_pipeline(
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
 
+/// Like `get_pipeline`, but locks the row until `tx` ends. Updates read
+/// next_run_at and write it back; the scheduler claims due pipelines with
+/// FOR UPDATE SKIP LOCKED, so holding the lock keeps a claim from advancing
+/// next_run_at in between, which the write would undo and run the pipeline twice.
+async fn get_pipeline_for_update(
+	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+	tenant_id: Uuid,
+	pipeline_id: i64,
+) -> Result<Option<PipelineView>> {
+	let row = sqlx::query(
+		r#"
+		SELECT id, tenant_id, name, status::TEXT, source_config, schedule_cron, schedule_timezone,
+		       verification_settings, policy_config, delivery_config, next_run_at, last_scheduled_at, last_run_id,
+		       created_at, updated_at
+		FROM v1_pipelines
+		WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+		FOR UPDATE
+		"#,
+	)
+	.bind(pipeline_id)
+	.bind(tenant_id)
+	.fetch_optional(&mut **tx)
+	.await?;
+	row.map(|row| row_to_pipeline_view(&row)).transpose()
+}
+
 pub async fn update_pipeline(
 	pg_pool: &PgPool,
 	tenant_id: Uuid,
@@ -974,7 +1081,8 @@ pub async fn update_pipeline(
 		.into());
 	}
 
-	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
+	let mut tx = pg_pool.begin().await?;
+	let current = match get_pipeline_for_update(&mut tx, tenant_id, pipeline_id).await? {
 		Some(p) => p,
 		None => return Ok(None),
 	};
@@ -991,7 +1099,7 @@ pub async fn update_pipeline(
 	let next_name = input.name.unwrap_or_else(|| current.name.clone());
 
 	validate_pipeline_input(
-		pg_pool,
+		&mut tx,
 		tenant_id,
 		&next_source,
 		&next_schedule,
@@ -1010,14 +1118,12 @@ pub async fn update_pipeline(
 				&next_schedule.cron,
 				&next_schedule.timezone,
 				Utc::now(),
-				pipeline_config.min_interval_seconds,
 			)?))
 		}
 		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
 			&next_schedule.cron,
 			&next_schedule.timezone,
 			Utc::now(),
-			pipeline_config.min_interval_seconds,
 		)?),
 		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
@@ -1054,8 +1160,9 @@ pub async fn update_pipeline(
 	.bind(serde_json::to_value(&next_policy)?)
 	.bind(serde_json::to_value(&next_delivery)?)
 	.bind(next_run_at)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
+	tx.commit().await?;
 
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
@@ -1085,18 +1192,27 @@ pub async fn set_pipeline_status(
 	status: PipelineStatus,
 	min_interval_seconds: i32,
 ) -> Result<Option<PipelineView>> {
-	let current = match get_pipeline(pg_pool, tenant_id, pipeline_id).await? {
+	let mut tx = pg_pool.begin().await?;
+	let current = match get_pipeline_for_update(&mut tx, tenant_id, pipeline_id).await? {
 		Some(p) => p,
 		None => return Ok(None),
 	};
 	let next_run_at = match (&current.source, &status) {
 		(PipelineSource::Push { .. }, _) => None,
-		(_, &PipelineStatus::Active) => Some(compute_next_run_at(
-			&current.schedule.cron,
-			&current.schedule.timezone,
-			Utc::now(),
-			min_interval_seconds,
-		)?),
+		(_, &PipelineStatus::Active) => {
+			validate_cron_expression(
+				&current.schedule.cron,
+				&current.schedule.timezone,
+				min_interval_seconds,
+				Utc::now(),
+			)
+			.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
+			Some(compute_next_run_at(
+				&current.schedule.cron,
+				&current.schedule.timezone,
+				Utc::now(),
+			)?)
+		}
 		(_, &PipelineStatus::Paused | &PipelineStatus::Deleted) => None,
 	};
 	let row = sqlx::query(
@@ -1115,8 +1231,9 @@ pub async fn set_pipeline_status(
 	.bind(tenant_id)
 	.bind(enum_str(&status))
 	.bind(next_run_at)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
+	tx.commit().await?;
 	row.map(|row| row_to_pipeline_view(&row)).transpose()
 }
 
@@ -1173,7 +1290,7 @@ pub async fn create_manual_pipeline_run(
 
 	tx.commit().await?;
 	if !should_queue_only {
-		execute_pipeline_run(config, pg_pool, run_id).await?;
+		execute_pipeline_run_detached(config, pg_pool, run_id).await?;
 	}
 
 	let actual_status: String =
@@ -1317,7 +1434,7 @@ pub async fn create_push_pipeline_run(
 		.await?;
 	tx.commit().await?;
 
-	execute_pipeline_run(config, pg_pool, run_id).await?;
+	execute_pipeline_run_detached(config, pg_pool, run_id).await?;
 	let run_status: String =
 		sqlx::query_scalar("SELECT status::TEXT FROM v1_pipeline_runs WHERE id = $1")
 			.bind(run_id)
@@ -1489,6 +1606,25 @@ pub async fn maybe_finalize_pipeline_run(
 		return Ok(());
 	};
 	let status = parse_pipeline_run_status(&row.get::<String, _>("status"))?;
+	let result_location: Option<Value> = row.get("result_location");
+	// Reading a run calls this for every run it returns. Finalizing a finished
+	// run again would roll contact state back to that older run and re-send its
+	// delivery webhook.
+	if status.is_terminal() && result_location.is_some() {
+		return Ok(());
+	}
+	// The executor still owns the run until it moves it to running: it may still
+	// be inserting rows, and its own status updates would overwrite a run
+	// finalized here, leaving it active forever.
+	if matches!(
+		status,
+		PipelineRunStatus::Queued
+			| PipelineRunStatus::Preparing
+			| PipelineRunStatus::FetchingSource
+			| PipelineRunStatus::Publishing
+	) {
+		return Ok(());
+	}
 
 	let Some(job_id) = row.get::<Option<i32>, _>("job_id") else {
 		return Ok(());
@@ -1521,12 +1657,8 @@ pub async fn maybe_finalize_pipeline_run(
 			.map(|list_id| format!("/v1/lists/{list_id}/download"))
 	});
 
-	let result_location: Option<Value> = row.get("result_location");
-	let claimed = if status.is_terminal() && result_location.is_some() {
-		Some(run_id)
-	} else {
-		let claim_sql = if status.is_terminal() {
-			r#"
+	let claim_sql = if status.is_terminal() {
+		r#"
 		UPDATE v1_pipeline_runs
 		SET stats = $2,
 		    billed_emails = $3,
@@ -1537,8 +1669,8 @@ pub async fn maybe_finalize_pipeline_run(
 		  AND result_location IS NULL
 		RETURNING id
 		"#
-		} else {
-			r#"
+	} else {
+		r#"
 		UPDATE v1_pipeline_runs
 		SET status = 'delivering'::pipeline_run_status,
 		    stats = $2,
@@ -1548,20 +1680,23 @@ pub async fn maybe_finalize_pipeline_run(
 		WHERE id = $1 AND status = $5::pipeline_run_status
 		RETURNING id
 		"#
-		};
-		sqlx::query(claim_sql)
-			.bind(run_id)
-			.bind(&stats)
-			.bind(stats["billed_emails"].as_i64().unwrap_or_default() as i32)
-			.bind(&download_url)
-			.bind(enum_str(&status))
-			.fetch_optional(pg_pool)
-			.await?
-			.map(|_| run_id)
 	};
+	let claimed = sqlx::query(claim_sql)
+		.bind(run_id)
+		.bind(&stats)
+		.bind(stats["billed_emails"].as_i64().unwrap_or_default() as i32)
+		.bind(&download_url)
+		.bind(enum_str(&status))
+		.fetch_optional(pg_pool)
+		.await?;
 	if claimed.is_none() {
 		return Ok(());
 	}
+
+	// Record contact state before marking the run finished: if this fails, a run
+	// claimed from 'running' stays 'delivering' and the stalled-run sweep
+	// finalizes it again, instead of it ending without contact state.
+	update_pipeline_contact_state_for_run(pg_pool, run_id).await?;
 
 	sqlx::query(
 		r#"
@@ -1583,7 +1718,6 @@ pub async fn maybe_finalize_pipeline_run(
 	.execute(pg_pool)
 	.await?;
 
-	update_pipeline_contact_state_for_run(pg_pool, run_id).await?;
 	if let Err(err) = attempt_pipeline_run_delivery(pg_pool, run_id, false).await {
 		warn!(target: LOG_TARGET, run_id = run_id, error = ?err, "Pipeline run delivery failed");
 	}
@@ -1695,7 +1829,9 @@ async fn execute_pipeline_run(
 ) -> Result<()> {
 	let result = execute_pipeline_run_inner(config, pg_pool, run_id).await;
 	if let Err(err) = &result {
-		if let Err(mark_err) = mark_pipeline_run_execution_failed(pg_pool, run_id, err).await {
+		if let Err(mark_err) =
+			mark_pipeline_run_execution_failed(pg_pool, run_id, "execution_error", err).await
+		{
 			warn!(
 				target: LOG_TARGET,
 				run_id = run_id,
@@ -1705,6 +1841,21 @@ async fn execute_pipeline_run(
 		}
 	}
 	result
+}
+
+/// Runs `execute_pipeline_run` on its own task and waits for it. Request
+/// handlers call this: a handler's future is dropped when the client
+/// disconnects, and executing inline would stop the run midway, leaving it
+/// active with nothing left to finish it.
+async fn execute_pipeline_run_detached(
+	config: Arc<BackendConfig>,
+	pg_pool: &PgPool,
+	run_id: i64,
+) -> Result<()> {
+	let pg_pool = pg_pool.clone();
+	tokio::spawn(async move { execute_pipeline_run(config, &pg_pool, run_id).await })
+		.await
+		.context("Pipeline run execution task did not complete")?
 }
 
 async fn execute_pipeline_run_inner(
@@ -1848,10 +1999,10 @@ async fn execute_pipeline_run_inner(
 		.with_priority(0);
 	let worker_config = config.must_worker_config()?;
 
-	let mut published_unique_groups = 0i32;
-	let mut published_any = false;
-	let mut had_failures = false;
-
+	// Every row gets its task row before anything is published. The worker
+	// settles the job and list as tasks complete, and a row added after the last
+	// completion would leave the list short of its total forever.
+	let mut groups_to_publish = Vec::with_capacity(prepared_list.canonical_groups.len());
 	for (canonical, indices) in &prepared_list.canonical_groups {
 		let primary_index = indices[0];
 		let primary_extra = json!({
@@ -1919,60 +2070,7 @@ async fn execute_pipeline_run_inner(
 			.await?;
 			duplicate_ids.push(dup_id);
 		}
-
-		let task = CheckEmailTask {
-			input: CheckEmailRequest {
-				to_email: canonical.clone(),
-				..Default::default()
-			}
-			.to_check_email_input(Arc::clone(&config)),
-			job_id: CheckEmailJobId::Bulk(job_id),
-			webhook: None,
-			metadata: Some(TaskMetadata {
-				tenant_id: Some(tenant_id.to_string()),
-				request_id: None,
-				correlation_id: None,
-				created_by: Some("pipeline".to_string()),
-				retry_policy: None,
-				dedupe_key: Some(format!(
-					"pipeline:{pipeline_id}:run:{run_id}:row:{primary_index}"
-				)),
-				task_db_id: Some(primary_task_id),
-			}),
-		};
-
-		if let Err(err) =
-			publish_task(worker_config.channel.clone(), task, properties.clone()).await
-		{
-			had_failures = true;
-			warn!(
-				target: LOG_TARGET,
-				pipeline_id = pipeline_id,
-				run_id = run_id,
-				email = %canonical,
-				error = ?err,
-				"Failed to publish pipeline task"
-			);
-			let mut all_failed_ids = vec![primary_task_id];
-			all_failed_ids.extend(duplicate_ids);
-			sqlx::query(
-				r#"
-				UPDATE v1_task_result
-				SET task_state = 'failed'::task_state,
-				    error = 'publish_failed',
-				    completed_at = NOW(),
-				    updated_at = NOW()
-				WHERE id = ANY($1)
-				"#,
-			)
-			.bind(&all_failed_ids)
-			.execute(pg_pool)
-			.await?;
-			continue;
-		}
-
-		published_any = true;
-		published_unique_groups += 1;
+		groups_to_publish.push((canonical, primary_index, primary_task_id, duplicate_ids));
 	}
 
 	for &index in &prepared_list.blank_indices {
@@ -2043,6 +2141,78 @@ async fn execute_pipeline_run_inner(
 		.await?;
 	}
 
+	// Mark the job and list in progress before publishing: the worker moves them
+	// to a final status when the last task finishes, which can happen before the
+	// publish loop ends. The status guards keep a run failed in the meantime
+	// (by the stalled-run sweep) from being revived.
+	sqlx::query(
+		"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1 AND status = 'pending'::job_state",
+	)
+	.bind(job_id)
+	.execute(pg_pool)
+	.await?;
+	sqlx::query(
+		"UPDATE v1_lists SET status = 'processing'::list_status, updated_at = NOW() WHERE id = $1 AND status = 'uploading'::list_status",
+	)
+	.bind(list_id)
+	.execute(pg_pool)
+	.await?;
+
+	let mut published_unique_groups = 0i32;
+	for (canonical, primary_index, primary_task_id, duplicate_ids) in groups_to_publish {
+		let task = CheckEmailTask {
+			input: CheckEmailRequest {
+				to_email: canonical.clone(),
+				..Default::default()
+			}
+			.to_check_email_input(Arc::clone(&config)),
+			job_id: CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: Some(TaskMetadata {
+				tenant_id: Some(tenant_id.to_string()),
+				request_id: None,
+				correlation_id: None,
+				created_by: Some("pipeline".to_string()),
+				retry_policy: None,
+				dedupe_key: Some(format!(
+					"pipeline:{pipeline_id}:run:{run_id}:row:{primary_index}"
+				)),
+				task_db_id: Some(primary_task_id),
+			}),
+		};
+
+		if let Err(err) =
+			publish_task(worker_config.channel.clone(), task, properties.clone()).await
+		{
+			warn!(
+				target: LOG_TARGET,
+				pipeline_id = pipeline_id,
+				run_id = run_id,
+				email = %canonical,
+				error = ?err,
+				"Failed to publish pipeline task"
+			);
+			let mut all_failed_ids = vec![primary_task_id];
+			all_failed_ids.extend(duplicate_ids);
+			sqlx::query(
+				r#"
+				UPDATE v1_task_result
+				SET task_state = 'failed'::task_state,
+				    error = 'publish_failed',
+				    completed_at = NOW(),
+				    updated_at = NOW()
+				WHERE id = ANY($1)
+				"#,
+			)
+			.bind(&all_failed_ids)
+			.execute(pg_pool)
+			.await?;
+			continue;
+		}
+
+		published_unique_groups += 1;
+	}
+
 	let unused_reserved = prepared_list.unique_email_count - published_unique_groups;
 	if unused_reserved > 0 {
 		release_reserved_usage(Some(pg_pool), Some(tenant_id), unused_reserved).await?;
@@ -2068,52 +2238,128 @@ async fn execute_pipeline_run_inner(
 	.execute(pg_pool)
 	.await?;
 
-	let final_job_status = if published_any {
-		"running"
-	} else if had_failures {
-		"failed"
-	} else {
-		"completed"
-	};
-	let final_list_status = if published_any {
-		"processing"
-	} else {
-		"completed"
-	};
-	sqlx::query(
-		"UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1",
-	)
-	.bind(job_id)
-	.bind(final_job_status)
-	.execute(pg_pool)
-	.await?;
-	sqlx::query(
-		"UPDATE v1_lists SET status = $2::list_status, completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1",
-	)
-	.bind(list_id)
-	.bind(final_list_status)
-	.execute(pg_pool)
-	.await?;
+	// Rows that failed to publish, or a list with nothing to verify, leave no
+	// task for the worker to finish, so nothing else would settle these.
+	settle_job_without_outstanding_tasks(pg_pool, job_id).await?;
+	settle_list_without_outstanding_rows(pg_pool, list_id, job_id).await?;
 
+	// Only now hand the run over: maybe_finalize_pipeline_run skips runs that
+	// are still publishing, so the worker cannot finalize it underneath us. The
+	// guard keeps a run the stalled-run sweep failed meanwhile failed.
 	sqlx::query(
-		"UPDATE v1_pipeline_runs SET status = $2::pipeline_run_status, billed_emails = $3, updated_at = NOW() WHERE id = $1",
+		"UPDATE v1_pipeline_runs SET status = 'running'::pipeline_run_status, billed_emails = $2, updated_at = NOW() WHERE id = $1 AND status = 'publishing'::pipeline_run_status",
 	)
 	.bind(run_id)
-	.bind("running")
 	.bind(published_unique_groups)
 	.execute(pg_pool)
 	.await?;
 
-	if final_job_status != "running" {
-		maybe_finalize_pipeline_run(config.as_ref(), pg_pool, run_id).await?;
+	// The job may have finished while the run was publishing, when the worker's
+	// own finalize call skipped it. A failure here leaves the run running with a
+	// finished job, which the stalled-run sweep finalizes later.
+	if let Err(err) = maybe_finalize_pipeline_run(config.as_ref(), pg_pool, run_id).await {
+		warn!(
+			target: LOG_TARGET,
+			run_id = run_id,
+			error = ?err,
+			"Failed to finalize pipeline run after publishing"
+		);
 	}
 
+	Ok(())
+}
+
+/// Gives a pipeline job its final status once none of its tasks is still
+/// queued or running, using the worker's rules: cancelling becomes cancelled,
+/// any failed task makes it failed, otherwise completed.
+async fn settle_job_without_outstanding_tasks(pg_pool: &PgPool, job_id: i32) -> Result<()> {
+	sqlx::query(
+		r#"
+		WITH settled AS (
+			SELECT j.id,
+			       CASE
+			           WHEN j.status = 'cancelling'::job_state THEN 'cancelled'::job_state
+			           WHEN EXISTS (
+			               SELECT 1 FROM v1_task_result t
+			               WHERE t.job_id = j.id
+			                 AND t.task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
+			           ) THEN 'failed'::job_state
+			           ELSE 'completed'::job_state
+			       END AS final_status
+			FROM v1_bulk_job j
+			WHERE j.id = $1
+			  AND j.status IN ('running'::job_state, 'cancelling'::job_state)
+			  AND NOT EXISTS (
+			      SELECT 1 FROM v1_task_result t
+			      WHERE t.job_id = j.id
+			        AND t.task_state IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
+			  )
+		)
+		UPDATE v1_bulk_job j
+		SET status = settled.final_status,
+		    completed_at = CASE
+		        WHEN settled.final_status IN ('completed'::job_state, 'failed'::job_state)
+		        THEN COALESCE(j.completed_at, NOW())
+		        ELSE j.completed_at
+		    END,
+		    cancelled_at = CASE
+		        WHEN settled.final_status = 'cancelled'::job_state THEN COALESCE(j.cancelled_at, NOW())
+		        ELSE j.cancelled_at
+		    END,
+		    updated_at = NOW()
+		FROM settled
+		WHERE j.id = settled.id
+		"#,
+	)
+	.bind(job_id)
+	.execute(pg_pool)
+	.await?;
+	Ok(())
+}
+
+/// Gives a pipeline list its final status once every row has a result, using
+/// the worker's rules: failed if any row failed, otherwise completed.
+async fn settle_list_without_outstanding_rows(
+	pg_pool: &PgPool,
+	list_id: i32,
+	job_id: i32,
+) -> Result<()> {
+	sqlx::query(
+		r#"
+		WITH tally AS (
+			SELECT
+				COUNT(*) FILTER (
+					WHERE (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled'::task_state)
+						AND task_state NOT IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
+				) AS processed,
+				COUNT(*) FILTER (
+					WHERE task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
+				) AS failed
+			FROM v1_task_result
+			WHERE job_id = $2
+		)
+		UPDATE v1_lists l
+		SET status = CASE WHEN tally.failed > 0 THEN 'failed'::list_status ELSE 'completed'::list_status END,
+		    error_message = CASE WHEN tally.failed > 0 THEN COALESCE(l.error_message, 'task_failed') ELSE l.error_message END,
+		    completed_at = COALESCE(l.completed_at, NOW()),
+		    updated_at = NOW()
+		FROM tally
+		WHERE l.id = $1
+		  AND l.status = 'processing'::list_status
+		  AND tally.processed >= l.total_rows
+		"#,
+	)
+	.bind(list_id)
+	.bind(job_id)
+	.execute(pg_pool)
+	.await?;
 	Ok(())
 }
 
 async fn mark_pipeline_run_execution_failed(
 	pg_pool: &PgPool,
 	run_id: i64,
+	error_code: &str,
 	err: &anyhow::Error,
 ) -> Result<()> {
 	let row = sqlx::query(
@@ -2205,7 +2451,7 @@ async fn mark_pipeline_run_execution_failed(
 		r#"
 		UPDATE v1_pipeline_runs
 		SET status = 'failed'::pipeline_run_status,
-		    error_code = COALESCE(error_code, 'execution_error'),
+		    error_code = COALESCE(error_code, $3),
 		    error_message = COALESCE(error_message, $2),
 		    completed_at = COALESCE(completed_at, NOW()),
 		    updated_at = NOW()
@@ -2222,6 +2468,7 @@ async fn mark_pipeline_run_execution_failed(
 	)
 	.bind(run_id)
 	.bind(err.to_string())
+	.bind(error_code)
 	.execute(pg_pool)
 	.await?;
 
@@ -2857,7 +3104,7 @@ async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) ->
 
 	let task_rows = sqlx::query(
 		r#"
-		SELECT id, canonical_email
+		SELECT id, canonical_email, completed_at
 		FROM v1_task_result
 		WHERE job_id = (
 			SELECT job_id FROM v1_pipeline_runs WHERE id = $1
@@ -2875,11 +3122,16 @@ async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) ->
 	for row in task_rows {
 		let canonical_email: String = row.get("canonical_email");
 		let task_id: i32 = row.get("id");
-		task_by_canonical.insert(canonical_email, task_id);
+		// When the address was verified, not when the run was finalized: a
+		// stalled run can be finalized after a newer run of the same pipeline.
+		let verified_at = row
+			.get::<Option<DateTime<Utc>>, _>("completed_at")
+			.unwrap_or(completed_at);
+		task_by_canonical.insert(canonical_email, (task_id, verified_at));
 	}
 
 	for (canonical_email, indices) in canonical_groups {
-		let Some(task_id) = task_by_canonical.get(&canonical_email).copied() else {
+		let Some((task_id, verified_at)) = task_by_canonical.get(&canonical_email).copied() else {
 			continue;
 		};
 		let source_hash = hash_canonical_group(&rows, &indices)?;
@@ -2898,6 +3150,10 @@ async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) ->
 				last_seen_at = EXCLUDED.last_seen_at,
 				last_verified_at = EXCLUDED.last_verified_at,
 				updated_at = NOW()
+			-- Runs can finish out of order (a forced run, a recovered run); an
+			-- older run must not replace the state a newer one recorded.
+			WHERE v1_pipeline_contact_state.last_verified_at IS NULL
+			   OR v1_pipeline_contact_state.last_verified_at <= EXCLUDED.last_verified_at
 			"#,
 		)
 		.bind(pipeline_id)
@@ -2905,7 +3161,7 @@ async fn update_pipeline_contact_state_for_run(pg_pool: &PgPool, run_id: i64) ->
 		.bind(source_hash)
 		.bind(run_id)
 		.bind(task_id)
-		.bind(completed_at)
+		.bind(verified_at)
 		.execute(pg_pool)
 		.await?;
 	}
@@ -2943,12 +3199,15 @@ async fn build_pipeline_run_stats(
 	.fetch_one(pg_pool)
 	.await?;
 
+	// A run that failed before its usage was committed has no usage event linked
+	// to the job; that bills nothing rather than failing every read of the run.
 	let billed_emails = sqlx::query_scalar::<_, Option<i32>>(
 		"SELECT committed_emails FROM v1_usage_events WHERE job_id = $1 ORDER BY id DESC LIMIT 1",
 	)
 	.bind(job_id)
-	.fetch_one(pg_pool)
+	.fetch_optional(pg_pool)
 	.await?
+	.flatten()
 	.unwrap_or(0);
 
 	Ok(json!({
@@ -2974,38 +3233,65 @@ fn merge_pipeline_run_stats(existing: Value, computed: Value) -> Value {
 	Value::Object(merged)
 }
 
+/// How far past its first run a schedule is checked for gaps. Day-of-month
+/// and month fields only repeat yearly, and daylight-saving changes happen
+/// within a year, so a year and a week covers every gap, including the one
+/// into the next cycle. An hourly schedule fires about 8,900 times in that
+/// span, under the run cap below.
+const SCHEDULE_VALIDATION_HORIZON_DAYS: i64 = 366 + 7;
+/// Upper bound on run times inspected, so validating a dense schedule stays cheap.
+const SCHEDULE_VALIDATION_MAX_RUNS: usize = 10_000;
+
+/// Rejects schedules whose runs are ever closer than `min_interval_seconds`.
+///
+/// Every gap in the cycle is checked, not just the next one, so whether a
+/// schedule is accepted does not depend on the time of day it is saved.
 fn validate_cron_expression(
 	expression: &str,
 	timezone: &str,
 	min_interval_seconds: i32,
+	now_utc: DateTime<Utc>,
 ) -> Result<()> {
 	let tz = parse_timezone(timezone)?;
 	let schedule = parse_schedule(expression)?;
-	let now = Utc::now().with_timezone(&tz);
-	let mut upcoming = schedule.after(&now);
+	let mut upcoming = schedule
+		.after(&now_utc.with_timezone(&tz))
+		.take(SCHEDULE_VALIDATION_MAX_RUNS);
 	let first = upcoming
 		.next()
 		.context("Cron expression does not produce any future run times")?;
-	let second = upcoming
-		.next()
-		.context("Cron expression must produce at least two future run times")?;
-	let interval = second.signed_duration_since(first).num_seconds();
-	if interval < i64::from(min_interval_seconds) {
-		bail!(
-			"Cron schedule must be at least {} seconds apart",
-			min_interval_seconds
-		);
+	let horizon = first + Duration::days(SCHEDULE_VALIDATION_HORIZON_DAYS);
+	let mut previous = first;
+	let mut has_second_run = false;
+	for next in upcoming {
+		has_second_run = true;
+		if next.signed_duration_since(previous).num_seconds() < i64::from(min_interval_seconds) {
+			bail!(
+				"Cron schedule must be at least {} seconds apart",
+				min_interval_seconds
+			);
+		}
+		if next > horizon {
+			break;
+		}
+		previous = next;
+	}
+	if !has_second_run {
+		bail!("Cron expression must produce at least two future run times");
 	}
 	Ok(())
 }
 
+/// The first run of the schedule after `now_utc`.
+///
+/// This does not apply the minimum-interval policy: that is enforced when a
+/// schedule is saved, and re-checking it here would pause a pipeline whose
+/// schedule was accepted earlier.
 pub fn compute_next_run_at(
 	expression: &str,
 	timezone: &str,
 	now_utc: DateTime<Utc>,
-	min_interval_seconds: i32,
 ) -> Result<DateTime<Utc>> {
-	validate_cron_expression(expression, timezone, min_interval_seconds)?;
 	let tz = parse_timezone(timezone)?;
 	let now = now_utc.with_timezone(&tz);
 	let schedule = parse_schedule(expression)?;
@@ -3016,8 +3302,11 @@ pub fn compute_next_run_at(
 	Ok(next.with_timezone(&Utc))
 }
 
+/// Takes a connection rather than the pool so `update_pipeline` can validate on
+/// the transaction that holds the pipeline row lock instead of waiting for a
+/// second pooled connection while holding it.
 async fn validate_pipeline_input(
-	pg_pool: &PgPool,
+	conn: &mut sqlx::PgConnection,
 	tenant_id: Uuid,
 	source: &PipelineSource,
 	schedule: &PipelineSchedule,
@@ -3025,8 +3314,13 @@ async fn validate_pipeline_input(
 	delivery: &PipelineDeliveryConfig,
 	min_interval_seconds: i32,
 ) -> std::result::Result<(), PipelineRequestError> {
-	validate_cron_expression(&schedule.cron, &schedule.timezone, min_interval_seconds)
-		.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
+	validate_cron_expression(
+		&schedule.cron,
+		&schedule.timezone,
+		min_interval_seconds,
+		Utc::now(),
+	)
+	.map_err(|err| PipelineRequestError::validation(err.to_string()))?;
 	if policy.missed_run_window_hours < 1 {
 		return Err(PipelineRequestError::validation(
 			"Pipeline missed_run_window_hours must be at least 1",
@@ -3038,7 +3332,7 @@ async fn validate_pipeline_input(
 		)
 		.bind(policy_id)
 		.bind(tenant_id)
-		.fetch_one(pg_pool)
+		.fetch_one(&mut *conn)
 		.await?;
 		if !exists {
 			return Err(PipelineRequestError::validation(
@@ -3067,7 +3361,7 @@ async fn validate_pipeline_input(
 			)
 			.bind(*list_id)
 			.bind(tenant_id)
-			.fetch_one(pg_pool)
+			.fetch_one(&mut *conn)
 			.await?;
 			if !exists {
 				return Err(PipelineRequestError::validation(
@@ -3180,13 +3474,127 @@ fn is_private_ip(ip: std::net::IpAddr) -> bool {
 	}
 }
 
-fn parse_schedule(expression: &str) -> Result<Schedule> {
-	let parts: Vec<&str> = expression.split_whitespace().collect();
-	if parts.len() != 5 {
-		bail!("Cron expression must use standard 5-field syntax");
+/// A five-field cron schedule with standard day semantics.
+///
+/// When both day-of-month and day-of-week are restricted, standard cron runs
+/// on days that match either field, but the `cron` crate requires both, so
+/// "0 9 1 * 1" would only fire on Mondays that fall on the 1st. Such an
+/// expression is split into one schedule per day field, and their run times
+/// are merged in order.
+struct CronSchedule(Vec<Schedule>);
+
+impl CronSchedule {
+	fn after<'a, Z>(&'a self, after: &DateTime<Z>) -> impl Iterator<Item = DateTime<Z>> + 'a
+	where
+		Z: chrono::TimeZone + 'a,
+	{
+		let mut runs: Vec<_> = self
+			.0
+			.iter()
+			.map(|schedule| schedule.after(after).peekable())
+			.collect();
+		std::iter::from_fn(move || {
+			let earliest = runs
+				.iter_mut()
+				.filter_map(|run| run.peek().cloned())
+				.min()?;
+			// A day matching both fields fires once.
+			for run in runs.iter_mut() {
+				while run.peek() == Some(&earliest) {
+					run.next();
+				}
+			}
+			Some(earliest)
+		})
 	}
-	let cron_expression = format!("0 {} *", expression.trim());
-	Schedule::from_str(&cron_expression).context("Invalid cron expression")
+}
+
+fn parse_schedule(expression: &str) -> Result<CronSchedule> {
+	let parts: Vec<&str> = expression.split_whitespace().collect();
+	let [minute, hour, day_of_month, month, day_of_week] = parts.as_slice() else {
+		bail!("Cron expression must use standard 5-field syntax");
+	};
+	let day_of_week = translate_day_of_week_field(day_of_week)?;
+	let build = |day_of_month: &str, day_of_week: &str| {
+		Schedule::from_str(&format!(
+			"0 {minute} {hour} {day_of_month} {month} {day_of_week} *"
+		))
+		.context("Invalid cron expression")
+	};
+	let unrestricted = |field: &str| field == "*" || field == "?";
+	if unrestricted(day_of_month) || unrestricted(&day_of_week) {
+		return Ok(CronSchedule(vec![build(day_of_month, &day_of_week)?]));
+	}
+	Ok(CronSchedule(vec![
+		build(day_of_month, "*")?,
+		build("*", &day_of_week)?,
+	]))
+}
+
+/// Rewrites a standard day-of-week field for the `cron` crate.
+///
+/// Standard cron numbers days 0-7 with 0 and 7 both Sunday and 1 Monday; the
+/// crate numbers them 1 (Sunday) to 7 (Saturday). Passing numbers through made
+/// "0 9 * * 1" run on Sundays and rejected "0". Numeric items, ranges and steps
+/// are expanded to the crate's numbers; day names already mean the same day to
+/// both and pass through unchanged.
+fn translate_day_of_week_field(field: &str) -> Result<String> {
+	let items = field
+		.split(',')
+		.map(translate_day_of_week_item)
+		.collect::<Result<Vec<_>>>()?;
+	Ok(items.join(","))
+}
+
+fn translate_day_of_week_item(item: &str) -> Result<String> {
+	if item == "*" || item == "?" || item.chars().any(|c| c.is_ascii_alphabetic()) {
+		return Ok(item.to_string());
+	}
+	let (base, step) = match item.split_once('/') {
+		Some((base, step)) => (base, parse_cron_number(step, "step")?),
+		None => (item, 1),
+	};
+	if step == 0 {
+		bail!("Day-of-week step must be at least 1");
+	}
+	let (first, last) = match base.split_once('-') {
+		Some((first, last)) => (parse_day_of_week(first)?, parse_day_of_week(last)?),
+		None if base == "*" || base == "?" => (0, 7),
+		// "N/step" runs from N to the end of the week, as in cronie.
+		None if item.contains('/') => (parse_day_of_week(base)?, 7),
+		None => {
+			let day = parse_day_of_week(base)?;
+			(day, day)
+		}
+	};
+	if first > last {
+		bail!("Day-of-week range {} runs backwards", base);
+	}
+	let mut days: Vec<u32> = (first..=last)
+		.step_by(step as usize)
+		.map(|day| day % 7 + 1)
+		.collect();
+	days.sort_unstable();
+	days.dedup();
+	Ok(days
+		.iter()
+		.map(u32::to_string)
+		.collect::<Vec<_>>()
+		.join(","))
+}
+
+fn parse_day_of_week(value: &str) -> Result<u32> {
+	let day = parse_cron_number(value, "day of week")?;
+	if day > 7 {
+		bail!("Day of week must be between 0 and 7, got {}", day);
+	}
+	Ok(day)
+}
+
+fn parse_cron_number(value: &str, what: &str) -> Result<u32> {
+	value
+		.parse()
+		.with_context(|| format!("Invalid {} in cron expression: {:?}", what, value))
 }
 
 fn parse_timezone(timezone: &str) -> Result<Tz> {
@@ -3396,7 +3804,7 @@ mod tests {
 	#[test]
 	fn test_compute_next_run_at_accepts_five_field_cron() {
 		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
-		let next = compute_next_run_at("0 13 * * *", "UTC", now, 3600).unwrap();
+		let next = compute_next_run_at("0 13 * * *", "UTC", now).unwrap();
 		assert!(next > now);
 		assert_eq!(next.date_naive(), now.date_naive());
 		assert_eq!(next.hour(), 13);
@@ -3407,7 +3815,7 @@ mod tests {
 	#[test]
 	fn test_compute_next_run_at_rolls_to_next_day() {
 		let now = Utc.with_ymd_and_hms(2026, 3, 28, 13, 30, 0).unwrap();
-		let next = compute_next_run_at("0 13 * * *", "UTC", now, 3600).unwrap();
+		let next = compute_next_run_at("0 13 * * *", "UTC", now).unwrap();
 		assert!(next > now);
 		assert_eq!(
 			next.date_naive(),
@@ -3426,8 +3834,119 @@ mod tests {
 
 	#[test]
 	fn test_validate_cron_expression_rejects_too_frequent_schedule() {
-		let err = validate_cron_expression("* * * * *", "UTC", 3600).unwrap_err();
+		let err = validate_cron_expression("* * * * *", "UTC", 3600, Utc::now()).unwrap_err();
 		assert!(err.to_string().contains("at least 3600 seconds"));
+	}
+
+	/// Weekdays (1 = Monday .. 7 = Sunday) on which a schedule fires during the
+	/// two weeks after Saturday 2026-03-28.
+	fn fire_weekdays(expression: &str) -> Vec<u32> {
+		use chrono::Datelike;
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let mut days: Vec<u32> = parse_schedule(expression)
+			.unwrap()
+			.after(&now)
+			.take_while(|fire| *fire < now + Duration::days(14))
+			.map(|fire| fire.weekday().number_from_monday())
+			.collect();
+		days.sort_unstable();
+		days.dedup();
+		days
+	}
+
+	#[test]
+	fn test_parse_schedule_uses_standard_day_of_week_numbers() {
+		// Standard cron numbers days 0-7 with 0 and 7 both Sunday; the UI hint
+		// promises "0 9 * * 1" runs on Monday.
+		let cases: &[(&str, &[u32])] = &[
+			("0 9 * * 1", &[1]),
+			("0 9 * * 0", &[7]),
+			("0 9 * * 7", &[7]),
+			("0 9 * * 6", &[6]),
+			("0 9 * * 1-5", &[1, 2, 3, 4, 5]),
+			("0 9 * * 5-7", &[5, 6, 7]),
+			("0 9 * * 0,3", &[3, 7]),
+			("0 9 * * */2", &[2, 4, 6, 7]),
+			("0 9 * * 1-5/2", &[1, 3, 5]),
+			("0 9 * * 1,SAT", &[1, 6]),
+			("0 9 * * MON", &[1]),
+			("0 9 * * sun", &[7]),
+			("0 9 * * MON-FRI", &[1, 2, 3, 4, 5]),
+			("0 9 * * *", &[1, 2, 3, 4, 5, 6, 7]),
+		];
+		for (expression, weekdays) in cases {
+			assert_eq!(
+				fire_weekdays(expression),
+				weekdays.to_vec(),
+				"weekdays for {:?}",
+				expression
+			);
+		}
+		for invalid in ["0 9 * * 8", "0 9 * * 5-1", "0 9 * * 1/0", "0 9 * * 1-"] {
+			assert!(
+				parse_schedule(invalid).is_err(),
+				"{:?} should be rejected",
+				invalid
+			);
+		}
+	}
+
+	#[test]
+	fn test_validate_cron_expression_sees_gaps_across_month_boundaries() {
+		// Saved on Jan 31 after 09:00, the first runs are Feb 1 and Mar 1, a
+		// month apart; the 1-day gap from Mar 31 to Apr 1 comes later.
+		let saved_at = Utc.with_ymd_and_hms(2026, 1, 31, 12, 0, 0).unwrap();
+		let two_days = 2 * 24 * 3600;
+		assert!(validate_cron_expression("0 9 1,31 * *", "UTC", two_days, saved_at).is_err());
+		assert!(validate_cron_expression("0 9 1,15 * *", "UTC", two_days, saved_at).is_ok());
+	}
+
+	#[test]
+	fn test_parse_schedule_runs_when_either_day_field_matches() {
+		use chrono::Datelike;
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let fire_dates = |expression: &str| -> Vec<(u32, u32)> {
+			parse_schedule(expression)
+				.unwrap()
+				.after(&now)
+				.take_while(|fire| *fire < now + Duration::days(36))
+				.map(|fire| (fire.month(), fire.day()))
+				.collect()
+		};
+
+		// Standard cron ORs the two day fields when both are restricted: the
+		// 1st of each month, and every Monday. Run times stay ordered and
+		// a day matching both fields fires once.
+		assert_eq!(
+			fire_dates("0 9 1 * 1"),
+			vec![(3, 30), (4, 1), (4, 6), (4, 13), (4, 20), (4, 27), (5, 1),]
+		);
+		// With one day field left as "*", the other alone decides.
+		assert_eq!(fire_dates("0 9 1 * *"), vec![(4, 1), (5, 1)]);
+		assert_eq!(fire_dates("0 9 * * 1").len(), 5);
+	}
+
+	#[test]
+	fn test_validate_cron_expression_checks_every_gap_regardless_of_save_time() {
+		// 09:00 and 10:00 are an hour apart. Checking only the next two runs
+		// accepted this when saved between 09:00 and 10:00 (next runs 10:00 and
+		// 09:00 tomorrow, 23 hours apart) and rejected it at other times.
+		for hour in [8, 9, 12] {
+			let now = Utc.with_ymd_and_hms(2026, 3, 28, hour, 30, 0).unwrap();
+			assert!(
+				validate_cron_expression("0 9,10 * * *", "UTC", 7200, now).is_err(),
+				"accepted a one-hour gap when saved at {}",
+				now
+			);
+		}
+
+		// Monday and Tuesday runs are a day apart; saved on a Tuesday afternoon the
+		// next two runs (Friday, Monday) are three days apart.
+		let tuesday = Utc.with_ymd_and_hms(2026, 3, 31, 12, 0, 0).unwrap();
+		assert!(validate_cron_expression("0 9 * * 1,2,5", "UTC", 2 * 86_400, tuesday).is_err());
+		assert!(validate_cron_expression("0 9 * * 1,5", "UTC", 2 * 86_400, tuesday).is_ok());
+		assert!(validate_cron_expression("0 9 * * 1", "UTC", 3600, tuesday).is_ok());
+		assert!(validate_cron_expression("0 9 31 2 *", "UTC", 3600, tuesday).is_err());
 	}
 
 	#[test]

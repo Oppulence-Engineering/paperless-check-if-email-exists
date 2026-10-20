@@ -298,12 +298,7 @@ pub async fn sync_finder_results(
 		}
 	}
 
-	completed_results.sort_by(|left, right| {
-		right
-			.score
-			.cmp(&left.score)
-			.then_with(|| left.email.cmp(&right.email))
-	});
+	rank_candidates(&mut completed_results);
 
 	for (index, result) in completed_results.iter().enumerate() {
 		sqlx::query(
@@ -331,14 +326,7 @@ pub async fn sync_finder_results(
 		.map_err(ReacherResponseError::from)?;
 	}
 
-	let best_match = completed_results.first().and_then(|candidate| {
-		confidence_for_score(candidate.score).map(|confidence| FinderBestMatch {
-			email: candidate.email.clone(),
-			score: candidate.score,
-			confidence: confidence.to_string(),
-			pattern: candidate.pattern.clone(),
-		})
-	});
+	let best_match = best_match_from_ranked(&completed_results, &domain_precheck);
 
 	if all_terminal {
 		let final_status = if has_failed { "failed" } else { "completed" };
@@ -367,11 +355,114 @@ pub async fn sync_finder_results(
 	Ok((completed_results, best_match, all_terminal))
 }
 
+/// Orders candidates best first: by score, then by how common the pattern is,
+/// then by email so the order is stable. Candidates often tie on score (every
+/// address on a catch-all domain scores the same), and the pattern is the only
+/// signal left to choose between them.
+fn rank_candidates(results: &mut [FinderCandidateResult]) {
+	results.sort_by(|left, right| {
+		right
+			.score
+			.cmp(&left.score)
+			.then_with(|| pattern_quality(&right.pattern).cmp(&pattern_quality(&left.pattern)))
+			.then_with(|| left.email.cmp(&right.email))
+	});
+}
+
+/// The top-ranked candidate, if its score is good enough to suggest. On a
+/// catch-all domain the server accepts every address, so a good score does not
+/// show that this mailbox exists and the match is reported with low confidence.
+fn best_match_from_ranked(
+	ranked: &[FinderCandidateResult],
+	domain_precheck: &DomainPrecheck,
+) -> Option<FinderBestMatch> {
+	let candidate = ranked.first()?;
+	let confidence = confidence_for_score(candidate.score)?;
+	let confidence = if domain_precheck.is_catch_all {
+		"low"
+	} else {
+		confidence
+	};
+	Some(FinderBestMatch {
+		email: candidate.email.clone(),
+		score: candidate.score,
+		confidence: confidence.to_string(),
+		pattern: candidate.pattern.clone(),
+	})
+}
+
 #[cfg(test)]
 mod tests {
-	use super::{precheck_domain, DomainPrecheck};
+	use super::{
+		best_match_from_ranked, precheck_domain, rank_candidates, DomainPrecheck,
+		FinderCandidateResult,
+	};
 	use crate::config::BackendConfig;
 	use std::sync::Arc;
+
+	fn scored(email: &str, pattern: &str, score: i16) -> FinderCandidateResult {
+		FinderCandidateResult {
+			email: email.to_string(),
+			pattern: pattern.to_string(),
+			score,
+			category: "valid".to_string(),
+			sub_reason: "deliverable".to_string(),
+			is_reachable: "safe".to_string(),
+			confidence: None,
+			result: None,
+		}
+	}
+
+	const PLAIN_DOMAIN: DomainPrecheck = DomainPrecheck {
+		has_mx_records: true,
+		is_catch_all: false,
+	};
+	const CATCH_ALL_DOMAIN: DomainPrecheck = DomainPrecheck {
+		has_mx_records: true,
+		is_catch_all: true,
+	};
+
+	#[test]
+	fn ranking_breaks_score_ties_by_pattern_quality_not_alphabet() {
+		// Alphabetically "doe.john" sorts first, but first.last is the more common
+		// corporate pattern. A higher score still beats a better pattern.
+		let mut results = vec![
+			scored("doe.john@example.com", "last.first", 80),
+			scored("john@example.com", "first", 80),
+			scored("john.doe@example.com", "first.last", 80),
+			scored("jdoe@example.com", "flast", 85),
+		];
+		rank_candidates(&mut results);
+		let order: Vec<&str> = results.iter().map(|r| r.email.as_str()).collect();
+		assert_eq!(
+			order,
+			vec![
+				"jdoe@example.com",
+				"john.doe@example.com",
+				"doe.john@example.com",
+				"john@example.com",
+			]
+		);
+	}
+
+	#[test]
+	fn best_match_confidence_follows_score_and_is_low_on_catch_all_domains() {
+		let strong = vec![scored("john.doe@example.com", "first.last", 95)];
+		let best = best_match_from_ranked(&strong, &PLAIN_DOMAIN).unwrap();
+		assert_eq!(best.email, "john.doe@example.com");
+		assert_eq!(best.confidence, "high");
+
+		// A catch-all domain accepts every candidate, so the same score proves nothing
+		// about which address exists.
+		let best = best_match_from_ranked(&strong, &CATCH_ALL_DOMAIN).unwrap();
+		assert_eq!(best.email, "john.doe@example.com");
+		assert_eq!(best.confidence, "low");
+
+		let weak = vec![scored("john.doe@example.com", "first.last", 60)];
+		assert!(best_match_from_ranked(&weak, &PLAIN_DOMAIN).is_none());
+		assert!(best_match_from_ranked(&weak, &CATCH_ALL_DOMAIN).is_none());
+		assert!(best_match_from_ranked(&[], &PLAIN_DOMAIN).is_none());
+	}
 
 	#[tokio::test]
 	async fn precheck_short_circuits_known_provider_domains() {

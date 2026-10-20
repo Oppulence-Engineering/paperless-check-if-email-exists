@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::shared::paging::{clamp_page, validate_task_state};
 use crate::http::ReacherResponseError;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
@@ -182,12 +183,6 @@ fn with_pg_pool(
 		.boxed()
 }
 
-fn clamp_page(limit: Option<i64>, offset: Option<i64>) -> (i64, i64) {
-	let limit = limit.unwrap_or(50).clamp(1, 200);
-	let offset = offset.unwrap_or(0).max(0);
-	(limit, offset)
-}
-
 fn validate_status(raw: Option<String>) -> Result<Option<String>, warp::Rejection> {
 	match raw {
 		Some(status) => {
@@ -202,24 +197,6 @@ fn validate_status(raw: Option<String>) -> Result<Option<String>, warp::Rejectio
 				)),
 				),
 		}
-		}
-		None => Ok(None),
-	}
-}
-
-fn validate_task_state(raw: Option<String>) -> Result<Option<String>, warp::Rejection> {
-	match raw {
-		Some(state) => {
-			let normalized = state.to_lowercase();
-			match normalized.as_str() {
-				"queued" | "running" | "completed" | "retrying" | "failed" | "cancelled" | "dead_lettered" => {
-					Ok(Some(normalized))
-				}
-				_ => Err(warp::reject::custom(ReacherResponseError::new(
-					StatusCode::BAD_REQUEST,
-					"invalid task state. Expected queued|running|completed|retrying|failed|cancelled|dead_lettered",
-				))),
-			}
 		}
 		None => Ok(None),
 	}

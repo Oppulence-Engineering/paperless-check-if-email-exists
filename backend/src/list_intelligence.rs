@@ -348,7 +348,11 @@ pub fn classify_change(
 	if current_category == Some("invalid") && previous_category != Some("invalid") {
 		return "became_invalid";
 	}
-	if current_category == Some("risky") && previous_category != Some("risky") {
+	// "became_risky" raises a degradation alert, so it only applies when the
+	// address got worse; invalid -> risky is an improvement and is ranked below.
+	if current_category == Some("risky")
+		&& category_rank(previous_category) > category_rank(current_category)
+	{
 		return "became_risky";
 	}
 	if current.safe_to_send == Some(true) && previous.safe_to_send != Some(true)
@@ -457,9 +461,35 @@ pub async fn record_verification_change_event(
 	};
 	let previous = load_previous_snapshot(pg_pool, &current).await?;
 	let change_type = classify_change(previous.as_ref(), &current);
+
+	// A task result can be stored more than once: a delayed recheck rewrites
+	// the same row (e.g. unknown -> valid). Any event already recorded for it
+	// describes the superseded result, so it is replaced, taking its alert
+	// with it (ON DELETE CASCADE). An identical event is left alone, so
+	// storing the same result twice neither duplicates nor resurrects alerts.
 	if change_type == "unchanged" {
+		sqlx::query("DELETE FROM verification_change_events WHERE current_task_result_id = $1")
+			.bind(current.task_id)
+			.execute(pg_pool)
+			.await?;
 		return Ok(());
 	}
+	sqlx::query(
+		r#"
+		DELETE FROM verification_change_events
+		WHERE current_task_result_id = $1
+		  AND (change_type, previous_task_result_id, current_score, current_category, current_safe_to_send)
+		      IS DISTINCT FROM ($2::TEXT, $3::INTEGER, $4::SMALLINT, $5::TEXT, $6::BOOLEAN)
+		"#,
+	)
+	.bind(current.task_id)
+	.bind(change_type)
+	.bind(previous.as_ref().map(|snapshot| snapshot.task_id))
+	.bind(current.score)
+	.bind(&current.category)
+	.bind(current.safe_to_send)
+	.execute(pg_pool)
+	.await?;
 
 	let inserted_event = sqlx::query(
 		r#"
@@ -698,6 +728,24 @@ mod tests {
 			classify_change(
 				Some(&snapshot("valid", true, 95)),
 				&snapshot("risky", false, 55)
+			),
+			"became_risky"
+		);
+	}
+
+	#[test]
+	fn classify_invalid_to_risky_as_improvement_not_degradation_alert() {
+		assert_eq!(
+			classify_change(
+				Some(&snapshot("invalid", false, 0)),
+				&snapshot("risky", false, 55)
+			),
+			"improved"
+		);
+		assert_eq!(
+			classify_change(
+				Some(&snapshot("unknown", false, 50)),
+				&snapshot("risky", false, 40)
 			),
 			"became_risky"
 		);

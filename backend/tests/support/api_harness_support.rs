@@ -1409,8 +1409,8 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 		case!(
 			"POST",
 			"/v1/check-email-with-onboard",
-			ConfigProfile::DbOnly,
-			AuthProfile::None,
+			ConfigProfile::AdminSecret,
+			AuthProfile::AdminSecret,
 			PathProfile::Literal("/v1/check-email-with-onboard"),
 			BodyProfile::JsonOnboard,
 			201,

@@ -1214,6 +1214,114 @@ mod list_intelligence_api_tests {
 		assert_eq!(other_patch.status(), StatusCode::NOT_FOUND);
 	}
 
+	/// A delayed recheck rewrites the same task row, so the change event and
+	/// alert recorded for the first pass must be replaced, not kept.
+	#[tokio::test]
+	#[serial]
+	async fn test_recheck_rewriting_a_task_result_replaces_its_change_event_and_alert() {
+		let db = TestDb::start().await;
+		let (tid, _key) = setup_tenant_with_key(db.pool()).await;
+		let email = "recheck@example.com";
+
+		let previous_job = insert_job(db.pool(), Some(tid), 1, "completed").await;
+		let previous_task = insert_scored_task(
+			db.pool(),
+			previous_job,
+			Some(tid),
+			email,
+			None,
+			Some(scored_result(email, "invalid", 0, false)),
+			"completed",
+			Some(0),
+			Some("invalid"),
+			Some("invalid_recipient"),
+			Some(false),
+			Some(vec!["invalid_recipient".to_string()]),
+			Some(email),
+			false,
+		)
+		.await;
+		set_completed_at(db.pool(), previous_task, "2 hours").await;
+
+		// First pass: greylisted, stored as unknown.
+		let current_job = insert_job(db.pool(), Some(tid), 1, "completed").await;
+		let current_task = insert_scored_task(
+			db.pool(),
+			current_job,
+			Some(tid),
+			email,
+			None,
+			Some(scored_result(email, "unknown", 50, false)),
+			"completed",
+			Some(50),
+			Some("unknown"),
+			Some("smtp_unreachable"),
+			Some(false),
+			Some(vec!["smtp_unreachable".to_string()]),
+			Some(email),
+			false,
+		)
+		.await;
+		set_completed_at(db.pool(), current_task, "1 hour").await;
+
+		let pool = db.pool();
+		let record = move || async move {
+			reacher_backend::list_intelligence::record_verification_change_event(pool, current_task)
+				.await
+				.expect("record change event")
+		};
+		let event_types = move || async move {
+			sqlx::query_scalar::<_, String>(
+				"SELECT change_type FROM verification_change_events WHERE current_task_result_id = $1",
+			)
+			.bind(current_task)
+			.fetch_all(pool)
+			.await
+			.expect("load change events")
+		};
+		let alert_types = move || async move {
+			sqlx::query_scalar::<_, String>(
+				"SELECT type FROM v1_alerts WHERE tenant_id = $1 AND canonical_email = $2 ORDER BY id",
+			)
+			.bind(tid)
+			.bind(email)
+			.fetch_all(pool)
+			.await
+			.expect("load alerts")
+		};
+
+		record().await;
+		assert_eq!(event_types().await, vec!["improved".to_string()]);
+		assert_eq!(alert_types().await, vec!["improved".to_string()]);
+
+		// The delayed recheck lands on the same row: the address is now safe.
+		let rewrite = move |category: &'static str, score: i16, safe: bool| async move {
+			sqlx::query(
+				"UPDATE v1_task_result SET result = $2, score = $3, score_category = $4, safe_to_send = $5 WHERE id = $1",
+			)
+			.bind(current_task)
+			.bind(scored_result(email, category, score, safe))
+			.bind(score)
+			.bind(category)
+			.bind(safe)
+			.execute(pool)
+			.await
+			.expect("rewrite task result");
+		};
+		rewrite("valid", 95, true).await;
+		// Storing the same result twice must not duplicate the alert.
+		record().await;
+		record().await;
+		assert_eq!(event_types().await, vec!["became_safe".to_string()]);
+		assert_eq!(alert_types().await, vec!["became_safe".to_string()]);
+
+		// A later recheck back on the previous verdict leaves nothing to report.
+		rewrite("invalid", 0, false).await;
+		record().await;
+		assert!(event_types().await.is_empty());
+		assert!(alert_types().await.is_empty());
+	}
+
 	#[tokio::test]
 	#[serial]
 	async fn test_list_download_changed_filters_segments_and_policy_labels() {
@@ -1826,6 +1934,42 @@ mod custom_threshold_tests {
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 		assert_eq!(b["job_id"], jid);
 		assert!(b.get("recommendation").is_some());
+
+		// One in-force suppression plus an older merged entry for the same
+		// address count the row once; an expired suppression does not count.
+		for status in ["active", "merged"] {
+			sqlx::query(
+				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, status, reason) \
+				 VALUES ($1, 'good@example.com', 'good@example.com', $2, 'manual'::suppression_reason)",
+			)
+			.bind(tid)
+			.bind(status)
+			.execute(db.pool())
+			.await
+			.unwrap();
+		}
+		let routes = create_routes(worker_config().await);
+		let (routes, key) = (&routes, &key);
+		let suppressed_count = move || async move {
+			let r = request()
+				.path(&format!("/v1/jobs/{}/approval", jid))
+				.method("GET")
+				.header("Authorization", format!("Bearer {}", key))
+				.reply(routes)
+				.await;
+			assert_eq!(r.status(), StatusCode::OK);
+			let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
+			b["risk_flags"]["suppressed_count"].clone()
+		};
+		assert_eq!(suppressed_count().await, 1);
+		sqlx::query(
+			"UPDATE v1_suppression_entries SET expires_at = NOW() - INTERVAL '1 day' WHERE tenant_id = $1 AND status = 'active'",
+		)
+		.bind(tid)
+		.execute(db.pool())
+		.await
+		.unwrap();
+		assert_eq!(suppressed_count().await, 0);
 	}
 }
 
@@ -1939,6 +2083,19 @@ mod alternatives_tests {
 			.bind(fid).bind(task_id).bind(email).bind(pattern)
 			.execute(db.pool()).await.unwrap();
 		}
+		// A candidate whose check failed makes the finished job failed, not completed.
+		let failed_task: i32 = sqlx::query(
+			"INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, error) VALUES ($1, $2, 'failed'::task_state, $3, 'smtp timeout') RETURNING id",
+		)
+		.bind(jid)
+		.bind(serde_json::json!({"input": {"to_email": "j.doe@example.com"}, "job_id": {"bulk": jid}}))
+		.bind(tid)
+		.fetch_one(db.pool()).await.unwrap().get("id");
+		sqlx::query(
+			"INSERT INTO v1_finder_result (finder_job_id, task_result_id, candidate_email, pattern) VALUES ($1, $2, 'j.doe@example.com', 'f.last')",
+		)
+		.bind(fid).bind(failed_task)
+		.execute(db.pool()).await.unwrap();
 		let c = worker_config().await;
 		let r = request()
 			.path(&format!("/v1/find_email/{}", fid))
@@ -1956,5 +2113,6 @@ mod alternatives_tests {
 		// Best match is john.doe (95), alternatives are jdoe (85) and johndoe (70)
 		assert_eq!(alts.len(), 2);
 		assert_eq!(alts[0]["email"], "jdoe@example.com");
+		assert_eq!(b["status"], "failed");
 	}
 }

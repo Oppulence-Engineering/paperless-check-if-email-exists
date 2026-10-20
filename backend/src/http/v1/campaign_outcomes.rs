@@ -290,7 +290,7 @@ async fn list_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let limit = query.limit.unwrap_or(100).clamp(0, 500);
 	let offset = query.offset.unwrap_or(0).max(0);
-	let canonical_email = query.email.as_deref().and_then(canonicalize_email);
+	let canonical_email = parse_email_filter(query.email.as_deref())?;
 	let outcome_type: Option<OutcomeType> = match query.outcome_type.as_deref() {
 		None => None,
 		Some(t) => Some(
@@ -382,4 +382,37 @@ pub fn v1_list_outcomes(
 		.and(warp::query::<OutcomeListQuery>())
 		.and_then(list_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+/// Canonical form of the `email` filter. A blank value means no filter; a
+/// malformed one is a 400, because ignoring it returned every outcome.
+fn parse_email_filter(email: Option<&str>) -> Result<Option<String>, ReacherResponseError> {
+	match email.map(str::trim).filter(|email| !email.is_empty()) {
+		None => Ok(None),
+		Some(email) => canonicalize_email(email).map(Some).ok_or_else(|| {
+			ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("invalid email filter '{}'", email),
+			)
+		}),
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn malformed_email_filter_is_rejected_instead_of_listing_everything() {
+		assert_eq!(
+			parse_email_filter(Some("John.Doe+news@Gmail.com")).unwrap(),
+			Some("johndoe@gmail.com".to_string())
+		);
+		assert_eq!(parse_email_filter(None).unwrap(), None);
+		assert_eq!(parse_email_filter(Some("  ")).unwrap(), None);
+		assert_eq!(
+			parse_email_filter(Some("not-an-email")).unwrap_err().code,
+			StatusCode::BAD_REQUEST
+		);
+	}
 }

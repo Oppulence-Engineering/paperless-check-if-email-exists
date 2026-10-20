@@ -92,6 +92,14 @@ pub struct SignalBundle {
 	pub hard_override_reason: Option<String>,
 }
 
+/// Signals gathered before the final score is known. The history rows are
+/// compared with the final category in [`BounceRiskService::assess`].
+#[derive(Debug)]
+pub struct CollectedBounceRiskSignals {
+	pub signals: SignalBundle,
+	history: Vec<HistoryRow>,
+}
+
 #[derive(Debug, Clone)]
 pub struct BounceRiskResult {
 	pub assessment: BounceRiskAssessment,
@@ -271,33 +279,49 @@ impl BounceRiskService {
 		}
 	}
 
-	pub async fn assess(
+	/// Gathers the domain and history signals. Returns `None` when bounce
+	/// risk is disabled. Scoring reads the domain signals from the result, so
+	/// this runs before the final verification score exists.
+	pub async fn collect_signals(
 		&self,
 		output: &CheckEmailOutput,
-		email_score: &EmailScore,
 		read_pool: Option<&PgPool>,
 		write_pool: Option<&PgPool>,
 		context: &BounceRiskRequestContext,
-	) -> Result<Option<BounceRiskResult>, anyhow::Error> {
+	) -> Result<Option<CollectedBounceRiskSignals>, anyhow::Error> {
 		if !self.runtime.enabled {
 			return Ok(None);
 		}
+		collect_signal_bundle(output, read_pool, write_pool, &self.runtime, context)
+			.await
+			.map(Some)
+	}
 
+	/// Scores bounce risk against the final verification score. History is
+	/// stored with that same contextual category, so comparing against
+	/// anything else reports a conflict on every recheck.
+	pub fn assess(
+		&self,
+		collected: CollectedBounceRiskSignals,
+		email_score: &EmailScore,
+		completed_at: DateTime<Utc>,
+	) -> Result<BounceRiskResult, anyhow::Error> {
 		let model = self.current_model()?;
-		let signals = collect_signal_bundle(
-			output,
-			email_score,
-			read_pool,
-			write_pool,
-			&self.runtime,
-			context,
-		)
-		.await?;
-		let assessment = compute_assessment(email_score, &signals, &model, context.completed_at);
-		Ok(Some(BounceRiskResult {
+		let current_category = serde_json::to_string(&email_score.category)?
+			.trim_matches('"')
+			.to_string();
+		let history = summarize_history(&collected.history, &current_category, completed_at);
+		let signals = SignalBundle {
+			result_consistency: history.consistency,
+			days_since_last_verification: history.days_since_last_verification,
+			hard_override_reason: detect_hard_override_reason(email_score),
+			..collected.signals
+		};
+		let assessment = compute_assessment(email_score, &signals, &model, completed_at);
+		Ok(BounceRiskResult {
 			assessment,
 			signals,
-		}))
+		})
 	}
 
 	fn current_model(&self) -> Result<Arc<BounceRiskModelConfig>, anyhow::Error> {
@@ -397,7 +421,6 @@ struct DomainSignals {
 
 #[derive(Debug)]
 struct HistorySignals {
-	count: Option<u32>,
 	consistency: Option<HistoryConsistency>,
 	days_since_last_verification: Option<i64>,
 }
@@ -410,20 +433,17 @@ struct HistoryRow {
 
 async fn collect_signal_bundle(
 	output: &CheckEmailOutput,
-	email_score: &EmailScore,
 	read_pool: Option<&PgPool>,
 	write_pool: Option<&PgPool>,
 	runtime: &BounceRiskConfig,
 	context: &BounceRiskRequestContext,
-) -> Result<SignalBundle, anyhow::Error> {
-	let hard_override_reason = detect_hard_override_reason(email_score);
+) -> Result<CollectedBounceRiskSignals, anyhow::Error> {
 	let (provider_from_mx, mx_count, mx_priority_spread) = collect_mx_signals(output);
 
-	let history_signals = collect_history_signals(
+	let history = collect_history_rows(
 		read_pool,
 		context.tenant_id,
 		&output.input,
-		&email_score.category,
 		runtime.history_limit,
 		context.completed_at,
 	)
@@ -442,7 +462,7 @@ async fn collect_signal_bundle(
 		}
 	};
 
-	Ok(SignalBundle {
+	let signals = SignalBundle {
 		provider_from_mx: domain_signals.provider_from_mx,
 		free_provider: output.misc.as_ref().ok().map(|misc| misc.is_b2c),
 		mx_count: domain_signals.mx_count,
@@ -464,10 +484,16 @@ async fn collect_signal_bundle(
 			.dns_records
 			.as_ref()
 			.map(|dns_records| dns_records.has_dmarc),
-		historical_verification_count: history_signals.count,
-		result_consistency: history_signals.consistency,
-		days_since_last_verification: history_signals.days_since_last_verification,
-		hard_override_reason,
+		historical_verification_count: history.as_ref().map(|rows| rows.len() as u32),
+		// Filled in by `BounceRiskService::assess` once the final score exists.
+		result_consistency: None,
+		days_since_last_verification: None,
+		hard_override_reason: None,
+	};
+
+	Ok(CollectedBounceRiskSignals {
+		signals,
+		history: history.unwrap_or_default(),
 	})
 }
 
@@ -598,35 +624,24 @@ fn collect_mx_signals(output: &CheckEmailOutput) -> (Option<String>, Option<i32>
 	(provider, mx_count, mx_priority_spread)
 }
 
-async fn collect_history_signals(
+/// Earlier completed verifications of the address, newest first. `None` when
+/// there is no tenant or database to read history from.
+async fn collect_history_rows(
 	read_pool: Option<&PgPool>,
 	tenant_id: Option<Uuid>,
 	email: &str,
-	current_category: &impl Serialize,
 	history_limit: u32,
 	baseline_completed_at: DateTime<Utc>,
-) -> Result<HistorySignals, anyhow::Error> {
-	let Some(pool) = read_pool else {
-		return Ok(HistorySignals {
-			count: None,
-			consistency: None,
-			days_since_last_verification: None,
-		});
-	};
-	let Some(tenant_id) = tenant_id else {
-		return Ok(HistorySignals {
-			count: None,
-			consistency: None,
-			days_since_last_verification: None,
-		});
+) -> Result<Option<Vec<HistoryRow>>, anyhow::Error> {
+	let (Some(pool), Some(tenant_id)) = (read_pool, tenant_id) else {
+		return Ok(None);
 	};
 
 	let canonical_email = canonicalize_email(email);
 	let lowered_email = email.trim().to_lowercase();
-	let current_category = serde_json::to_string(current_category)?
-		.trim_matches('"')
-		.to_string();
 
+	// Failed, cancelled and duplicate rows hold no verdict of their own, and
+	// a task being rechecked is not completed, so it never counts itself.
 	let rows = sqlx::query(
 		r#"
 		SELECT
@@ -634,7 +649,11 @@ async fn collect_history_signals(
 			completed_at
 		FROM v1_task_result
 		WHERE tenant_id = $1
+		  AND task_state = 'completed'
+		  AND result IS NOT NULL
+		  AND is_duplicate = false
 		  AND completed_at IS NOT NULL
+		  AND completed_at < $5
 		  AND (
 			($2::TEXT IS NOT NULL AND canonical_email = $2)
 			OR (
@@ -650,42 +669,41 @@ async fn collect_history_signals(
 	.bind(&canonical_email)
 	.bind(&lowered_email)
 	.bind(i64::from(history_limit))
+	.bind(baseline_completed_at)
 	.fetch_all(pool)
 	.await?;
 
-	let history_rows: Vec<HistoryRow> = rows
-		.into_iter()
-		.filter_map(|row| {
-			row.get::<Option<DateTime<Utc>>, _>("completed_at")
-				.map(|completed_at| HistoryRow {
-					category: row.get::<Option<String>, _>("category"),
-					completed_at,
-				})
-		})
-		.collect();
-
-	Ok(summarize_history(
-		&history_rows,
-		&current_category,
-		baseline_completed_at,
+	Ok(Some(
+		rows.into_iter()
+			.filter_map(|row| {
+				row.get::<Option<DateTime<Utc>>, _>("completed_at")
+					.map(|completed_at| HistoryRow {
+						category: row.get::<Option<String>, _>("category"),
+						completed_at,
+					})
+			})
+			.collect(),
 	))
 }
 
+/// Unknown results say nothing about the mailbox, so they neither agree nor
+/// conflict with the current outcome. Recency only lowers risk when the
+/// address was last seen valid; a recent unknown is not a fresh verification.
 fn summarize_history(
 	rows: &[HistoryRow],
 	current_category: &str,
 	baseline_completed_at: DateTime<Utc>,
 ) -> HistorySignals {
-	if rows.is_empty() {
-		return HistorySignals {
-			count: Some(0),
-			consistency: None,
-			days_since_last_verification: None,
-		};
-	}
+	let verdicts: Vec<&HistoryRow> = rows
+		.iter()
+		.filter(|row| matches!(row.category.as_deref(), Some(category) if category != "unknown"))
+		.collect();
 
-	let categories: BTreeSet<String> = rows.iter().filter_map(|row| row.category.clone()).collect();
-	let consistency = if categories.is_empty() {
+	let categories: BTreeSet<&str> = verdicts
+		.iter()
+		.filter_map(|row| row.category.as_deref())
+		.collect();
+	let consistency = if categories.is_empty() || current_category == "unknown" {
 		None
 	} else if categories.len() == 1 && categories.contains(current_category) {
 		Some(HistoryConsistency::Consistent)
@@ -693,12 +711,14 @@ fn summarize_history(
 		Some(HistoryConsistency::Inconsistent)
 	};
 
-	let most_recent = rows.iter().map(|row| row.completed_at).max();
-	let days_since_last_verification =
-		most_recent.map(|completed_at| (baseline_completed_at - completed_at).num_days().max(0));
+	let days_since_last_verification = verdicts
+		.iter()
+		.filter(|row| row.category.as_deref() == Some("valid"))
+		.map(|row| row.completed_at)
+		.max()
+		.map(|completed_at| (baseline_completed_at - completed_at).num_days().max(0));
 
 	HistorySignals {
-		count: Some(rows.len() as u32),
 		consistency,
 		days_since_last_verification,
 	}
@@ -820,6 +840,11 @@ fn compute_assessment(
 	model: &BounceRiskModelConfig,
 	completed_at: DateTime<Utc>,
 ) -> BounceRiskAssessment {
+	let verdict_present = !email_score.signals.smtp_error
+		&& !matches!(
+			email_score.signals.reachable,
+			check_if_email_exists::Reachable::Unknown
+		);
 	if let Some(override_reason) = signals.hard_override_reason.as_deref() {
 		let score = match override_reason {
 			"invalid_syntax" => model.hard_overrides.invalid_syntax,
@@ -840,7 +865,12 @@ fn compute_assessment(
 		return BounceRiskAssessment {
 			score,
 			category,
-			confidence: compute_confidence(signals, &model.confidence_weights, true),
+			confidence: compute_confidence(
+				signals,
+				&model.confidence_weights,
+				true,
+				verdict_present,
+			),
 			action,
 			model_version: model.model_version.clone(),
 			scored_at: completed_at.to_rfc3339(),
@@ -997,7 +1027,7 @@ fn compute_assessment(
 	factors.retain(|factor| factor.contribution != 0);
 	factors.sort_by_key(|factor| Reverse(i32::from(factor.contribution.abs())));
 
-	let confidence = compute_confidence(signals, &model.confidence_weights, false);
+	let confidence = compute_confidence(signals, &model.confidence_weights, false, verdict_present);
 	let (category, action) = category_and_action(score, &model.thresholds);
 
 	BounceRiskAssessment {
@@ -1027,14 +1057,23 @@ fn push_factor(factors: &mut Vec<RiskFactor>, signal: &str, contribution: i16, d
 	});
 }
 
+/// `verdict_present` is false when SMTP gave no answer about the mailbox. The
+/// core verification weight is then missing, however complete the domain and
+/// history signals are.
 fn compute_confidence(
 	signals: &SignalBundle,
 	weights: &ConfidenceWeightConfig,
 	hard_override: bool,
+	verdict_present: bool,
 ) -> f64 {
 	let mut total = 0.0;
 	let mut available = 0.0;
-	add_confidence_weight(&mut total, &mut available, weights.verification_core, true);
+	add_confidence_weight(
+		&mut total,
+		&mut available,
+		weights.verification_core,
+		verdict_present,
+	);
 	add_confidence_weight(
 		&mut total,
 		&mut available,
@@ -1149,6 +1188,13 @@ fn category_and_action(
 }
 
 fn detect_hard_override_reason(email_score: &EmailScore) -> Option<String> {
+	// A bounce or complaint reported by the tenant's ESP outranks every
+	// verification signal, as it does in contextual scoring.
+	for outcome in ["outcome_hard_bounce", "outcome_complaint"] {
+		if email_score.reason_codes.iter().any(|code| code == outcome) {
+			return Some(outcome.to_string());
+		}
+	}
 	if !email_score.signals.valid_syntax {
 		return Some("invalid_syntax".to_string());
 	}
@@ -1355,6 +1401,7 @@ mod tests {
 			&SignalBundle::default(),
 			&BounceRiskModelConfig::default().confidence_weights,
 			false,
+			false,
 		);
 		assert_eq!(confidence, 0.35);
 	}
@@ -1402,6 +1449,7 @@ mod tests {
 		let mut output = CheckEmailOutput::default();
 		output.is_reachable = check_if_email_exists::Reachable::Safe;
 		output.syntax.is_valid_syntax = true;
+		output.mx = Ok(crate::sandbox::sandbox_mx("example.com."));
 		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails {
 			can_connect_smtp: true,
 			has_full_inbox: true,
@@ -1448,8 +1496,8 @@ mod tests {
 		};
 
 		assert!(
-			compute_confidence(&known_signals, &weights, false)
-				> compute_confidence(&unknown_free_provider, &weights, false)
+			compute_confidence(&known_signals, &weights, false, true)
+				> compute_confidence(&unknown_free_provider, &weights, false, true)
 		);
 	}
 
@@ -1489,6 +1537,96 @@ mod tests {
 		assert_eq!(
 			inconsistent.consistency,
 			Some(HistoryConsistency::Inconsistent)
+		);
+
+		// Unknown results carry no evidence: repeated unknowns are not
+		// "agreement", and they earn no recency credit.
+		let unknown = |days| HistoryRow {
+			category: Some("unknown".to_string()),
+			completed_at: now - ChronoDuration::days(days),
+		};
+		let repeated_unknown = summarize_history(&[unknown(1), unknown(2)], "unknown", now);
+		assert_eq!(repeated_unknown.consistency, None);
+		assert_eq!(repeated_unknown.days_since_last_verification, None);
+
+		let valid_after_unknown = summarize_history(
+			&[
+				unknown(1),
+				HistoryRow {
+					category: Some("valid".to_string()),
+					completed_at: now - ChronoDuration::days(20),
+				},
+			],
+			"valid",
+			now,
+		);
+		assert_eq!(
+			valid_after_unknown.consistency,
+			Some(HistoryConsistency::Consistent)
+		);
+		assert_eq!(valid_after_unknown.days_since_last_verification, Some(20));
+	}
+
+	#[test]
+	fn unverified_mailbox_never_reports_full_model_confidence() {
+		let mut output = CheckEmailOutput::default();
+		output.syntax.is_valid_syntax = true;
+		output.mx = Ok(crate::sandbox::sandbox_mx("example.com."));
+		output.smtp = Err(check_if_email_exists::smtp::SmtpError::from(
+			std::io::Error::other("connection refused"),
+		));
+		let score = crate::scoring::compute_score(&output);
+		let every_signal = SignalBundle {
+			provider_from_mx: Some("other".to_string()),
+			free_provider: Some(false),
+			mx_count: Some(1),
+			mx_priority_spread: Some(0),
+			domain_age_days: Some(4000),
+			website_present: Some(true),
+			has_spf: Some(true),
+			has_dkim: Some(true),
+			has_dmarc: Some(true),
+			historical_verification_count: Some(3),
+			result_consistency: Some(HistoryConsistency::Consistent),
+			days_since_last_verification: Some(1),
+			hard_override_reason: None,
+		};
+		let assessment = compute_assessment(
+			&score,
+			&every_signal,
+			&BounceRiskModelConfig::default(),
+			Utc::now(),
+		);
+		assert!(
+			assessment.confidence < 0.9,
+			"confidence was {}",
+			assessment.confidence
+		);
+	}
+
+	#[test]
+	fn outcome_ground_truth_is_a_hard_override() {
+		let mut output = CheckEmailOutput::default();
+		output.syntax.is_valid_syntax = true;
+		output.is_reachable = check_if_email_exists::Reachable::Safe;
+		output.mx = Ok(crate::sandbox::sandbox_mx("example.com."));
+		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails {
+			can_connect_smtp: true,
+			is_deliverable: true,
+			..Default::default()
+		});
+		let context = crate::scoring::ScoringContext {
+			outcomes: crate::outcomes::OutcomeContext {
+				has_hard_bounce: true,
+				..Default::default()
+			},
+			..Default::default()
+		};
+		let score = crate::scoring::compute_score_with_context(&output, &context).score;
+
+		assert_eq!(
+			detect_hard_override_reason(&score).as_deref(),
+			Some("outcome_hard_bounce")
 		);
 	}
 

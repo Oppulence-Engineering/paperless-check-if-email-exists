@@ -33,14 +33,14 @@ hello_name = "localhost"
 # Env variable: RCH__FROM_EMAIL
 from_email = "hello@localhost"
 
-# Timeout for each SMTP connection, in seconds. Leaving it commented out will
-# not set a timeout, i.e. the connection will wait indefinitely. If using a
-# proxy, this timeout includes both the time to connect to the proxy and the
-# time to connect to perform the whole SMTP verification. Also see:
-# `proxy.timeout_ms`.
+# Timeout for each SMTP connection, in seconds. Commenting it out removes the
+# timeout, so a server that accepts the connection and then stalls holds a
+# worker slot indefinitely. If using a proxy, this timeout includes both the
+# time to connect to the proxy and the time to connect to perform the whole
+# SMTP verification. Also see: `proxy.timeout_ms`.
 #
 # Env variable: RCH__SMTP_TIMEOUT
-# smtp_timeout = 45
+smtp_timeout = 45
 
 # Shared secret between a trusted client and the backend, required in the
 # `x-reacher-secret` header of all incoming requests.

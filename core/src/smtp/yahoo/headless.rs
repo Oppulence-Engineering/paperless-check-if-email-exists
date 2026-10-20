@@ -1,6 +1,8 @@
 use std::pin::Pin;
+use std::time::Duration;
 use std::vec;
-use std::{thread::sleep, time::Duration};
+// std::thread::sleep would block the tokio worker thread and every task on it.
+use tokio::time::sleep;
 
 use fantoccini::error::CmdError;
 use fantoccini::Locator;
@@ -38,7 +40,7 @@ pub async fn check_headless(
 			Err(e) => {
 				last_error = Some(e);
 				if attempts < max_attempts {
-					sleep(Duration::from_secs(1));
+					sleep(Duration::from_secs(1)).await;
 				}
 			}
 		}
@@ -62,7 +64,7 @@ async fn check_headless_inner(
 	let input = c.wait().for_element(Locator::Id("username")).await?;
 	// Sometimes I get "input ... is not reachable by keyboard". Addind this
 	// small sleep helps.
-	sleep(Duration::from_millis(200));
+	sleep(Duration::from_millis(200)).await;
 	input.send_keys(to_email).await?;
 
 	// Click on "Continue"

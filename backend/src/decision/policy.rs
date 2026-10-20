@@ -1,4 +1,5 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskCategory};
+use crate::decision::custom_policy::{evaluate_rules, CustomPolicyFacts, CustomPolicyRules};
 use crate::decision::types::{
 	DecisionReason, DecisionSeverity, PolicyDecision, PolicyEvaluation, PolicyMode,
 };
@@ -16,6 +17,8 @@ pub struct PolicyInput<'a> {
 	pub active_suppression: bool,
 	pub previous_hard_bounce: bool,
 	pub evaluated_at: DateTime<Utc>,
+	/// The tenant's custom profile, loaded when the mode is Custom.
+	pub custom_rules: Option<&'a CustomPolicyRules>,
 }
 
 pub fn evaluate_policy(input: &PolicyInput<'_>) -> PolicyEvaluation {
@@ -47,14 +50,7 @@ pub fn evaluate_policy(input: &PolicyInput<'_>) -> PolicyEvaluation {
 			PolicyMode::Deliverability => evaluate_deliverability(input, &mut reasons),
 			PolicyMode::SignupProtection => evaluate_signup_protection(input, &mut reasons),
 			PolicyMode::EnterpriseStrict => evaluate_enterprise_strict(input, &mut reasons),
-			PolicyMode::Custom => {
-				reasons.push(reason(
-					"custom_policy_unavailable",
-					DecisionSeverity::Warning,
-					"Custom policy profile was not loaded for this evaluation.",
-				));
-				PolicyDecision::Review
-			}
+			PolicyMode::Custom => evaluate_custom(input, &mut reasons),
 		}
 	};
 
@@ -67,6 +63,52 @@ pub fn evaluate_policy(input: &PolicyInput<'_>) -> PolicyEvaluation {
 		result_age_days: Some(input.result_age_days),
 		engine_version: POLICY_ENGINE_VERSION.to_string(),
 	}
+}
+
+fn evaluate_custom(input: &PolicyInput<'_>, reasons: &mut Vec<DecisionReason>) -> PolicyDecision {
+	let Some(rules) = input.custom_rules else {
+		reasons.push(reason(
+			"custom_policy_unavailable",
+			DecisionSeverity::Warning,
+			"Custom policy profile was not loaded for this evaluation.",
+		));
+		return PolicyDecision::Review;
+	};
+	let category = enum_str(&input.score.category);
+	let bounce_risk_category = input.bounce_risk.map(|risk| enum_str(&risk.category));
+	let facts = CustomPolicyFacts {
+		score: input.score.score,
+		category: &category,
+		safe_to_send: input.score.safe_to_send,
+		is_disposable: input.score.signals.is_disposable,
+		is_role_account: input.score.signals.is_role_account,
+		is_catch_all: input.score.signals.smtp_is_catch_all,
+		bounce_risk_category: bounce_risk_category.as_deref(),
+		active_suppression: input.active_suppression,
+	};
+	let (decision, reason_code) = evaluate_rules(rules, &facts);
+	match reason_code {
+		Some(code) => reasons.push(DecisionReason {
+			code,
+			severity: DecisionSeverity::Info,
+			message: "A rule in the custom policy profile decided this result.".to_string(),
+			evidence: serde_json::Value::Null,
+		}),
+		None => reasons.push(reason(
+			"custom_policy_default",
+			DecisionSeverity::Info,
+			"No custom policy rule matched, so the profile default applies.",
+		)),
+	}
+	decision
+}
+
+/// The snake_case name an enum serializes to, e.g. "risky" or "medium".
+fn enum_str(value: &impl serde::Serialize) -> String {
+	serde_json::to_value(value)
+		.ok()
+		.and_then(|value| value.as_str().map(str::to_string))
+		.unwrap_or_default()
 }
 
 fn evaluate_growth(input: &PolicyInput<'_>, reasons: &mut Vec<DecisionReason>) -> PolicyDecision {
@@ -323,6 +365,7 @@ mod tests {
 			active_suppression: false,
 			previous_hard_bounce: false,
 			evaluated_at: "2026-06-30T12:00:00Z".parse::<DateTime<Utc>>().unwrap(),
+			custom_rules: None,
 		}
 	}
 
@@ -451,10 +494,23 @@ mod tests {
 	}
 
 	#[test]
-	fn custom_policy_without_profile_reviews() {
+	fn custom_policy_reviews_without_a_profile_and_applies_one_when_loaded() {
 		let score = base_score();
 		let policy = evaluate_policy(&input(&score, PolicyMode::Custom));
 		assert_eq!(policy.decision, PolicyDecision::Review);
 		assert_eq!(policy.reasons[0].code, "custom_policy_unavailable");
+
+		let rules = crate::decision::custom_policy::parse_and_validate_rules(&serde_json::json!({
+			"default_decision": "review",
+			"rules": [{"field": "score", "operator": "gte", "value": 90,
+				"decision": "send", "reason_code": "high_score"}]
+		}))
+		.unwrap();
+		let policy = evaluate_policy(&PolicyInput {
+			custom_rules: Some(&rules),
+			..input(&score, PolicyMode::Custom)
+		});
+		assert_eq!(policy.decision, PolicyDecision::Send);
+		assert_eq!(policy.reasons[0].code, "high_score");
 	}
 }
