@@ -28,7 +28,7 @@ use crate::http::v1::lists::canonicalize::canonicalize_email;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::{PgConnection, PgPool, Row};
 use uuid::Uuid;
 
 /// SQL enum mirror. Must stay in sync with `outcome_type` in
@@ -301,6 +301,15 @@ async fn ingest_one(
 	let action = decide_action(policy, outcome.outcome_type);
 	let policy_action_label: Option<&'static str> = action_label(&action);
 
+	// The outcome row and the suppressions it causes commit together. A
+	// duplicate row therefore means its action already ran, and a failed
+	// action stores no row, so the client's retry runs it again. Replaying the
+	// action for a duplicate would re-suppress an address that the customer
+	// has removed from the suppression list since.
+	let mut tx = pg_pool
+		.begin()
+		.await
+		.map_err(|err| format!("db begin: {err}"))?;
 	let inserted = sqlx::query_scalar::<_, Option<i64>>(
 		r#"
 		INSERT INTO verification_outcomes
@@ -318,29 +327,17 @@ async fn ingest_one(
 	.bind(outcome.campaign_id.as_deref())
 	.bind(outcome.metadata.as_ref())
 	.bind(policy_action_label)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await
 	.map_err(|err| format!("db insert: {err}"))?;
 
-	if inserted.flatten().is_none() {
-		// Duplicate ingest: accepted with no new action. The suppression is
-		// applied again anyway, because it is idempotent and the first
-		// attempt may have failed after the outcome row committed; without
-		// this a client retry could never repair it.
-		apply_outcome_action(
-			pg_pool,
-			tenant_id,
-			&outcome.email,
-			&canonical,
-			outcome,
-			action,
-		)
-		.await?;
+	let Some(outcome_id) = inserted.flatten() else {
+		// Duplicate ingest: accepted, and its action committed with it.
 		return Ok(false);
-	}
+	};
 
 	let action_taken = apply_outcome_action(
-		pg_pool,
+		&mut tx,
 		tenant_id,
 		&outcome.email,
 		&canonical,
@@ -351,19 +348,16 @@ async fn ingest_one(
 
 	if action_taken {
 		// Re-stamp policy_action with the actual outcome.
-		let _ = sqlx::query(
-			"UPDATE verification_outcomes SET policy_action = $2 WHERE tenant_id = $1 AND canonical_email = $3 AND outcome_type = $4 AND occurred_at = $5 AND source = $6"
-		)
-		.bind(tenant_id)
-		.bind("suppressed")
-		.bind(&canonical)
-		.bind(outcome.outcome_type)
-		.bind(outcome.occurred_at)
-		.bind(&source)
-		.execute(pg_pool)
-		.await;
+		sqlx::query("UPDATE verification_outcomes SET policy_action = 'suppressed' WHERE id = $1")
+			.bind(outcome_id)
+			.execute(&mut *tx)
+			.await
+			.map_err(|err| format!("db update: {err}"))?;
 	}
 
+	tx.commit()
+		.await
+		.map_err(|err| format!("db commit: {err}"))?;
 	Ok(action_taken)
 }
 
@@ -427,11 +421,11 @@ fn action_label(action: &Action) -> Option<&'static str> {
 	})
 }
 
-/// Run the policy action for one outcome. Returns whether a suppression was
-/// created; a failed suppression write is an error, so the client sees the
-/// row as failed and retries it.
+/// Run the policy action for one outcome on the ingest transaction. Returns
+/// whether a suppression was created; a failed suppression write is an
+/// error, so the outcome is not stored and the client retries the row.
 async fn apply_outcome_action(
-	pg_pool: &PgPool,
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
 	email: &str,
 	canonical: &str,
@@ -440,27 +434,29 @@ async fn apply_outcome_action(
 ) -> Result<bool, String> {
 	Ok(match action {
 		Action::Suppress { reason, .. } => {
-			add_to_suppression(pg_pool, tenant_id, email, reason).await?
+			add_to_suppression(conn, tenant_id, email, reason).await?
 		}
 		Action::SuppressAndUnsubscribe { reason, .. } => {
-			let s1 = add_to_suppression(pg_pool, tenant_id, email, reason).await?;
-			let s2 = add_to_suppression(pg_pool, tenant_id, email, "unsubscribe").await?;
+			let s1 = add_to_suppression(conn, tenant_id, email, reason).await?;
+			let s2 = add_to_suppression(conn, tenant_id, email, "unsubscribe").await?;
 			s1 || s2
 		}
 		Action::SuppressAfter {
 			threshold_count,
 			threshold_window_days,
 		} => {
+			// On the transaction, so the outcome just inserted counts.
 			let count = count_recent_outcomes(
-				pg_pool,
+				conn,
 				tenant_id,
 				canonical,
 				outcome.outcome_type,
 				threshold_window_days,
 			)
-			.await;
+			.await
+			.map_err(|err| format!("db count: {err}"))?;
 			if count >= threshold_count {
-				add_to_suppression(pg_pool, tenant_id, email, "bounce").await?
+				add_to_suppression(conn, tenant_id, email, "bounce").await?
 			} else {
 				false
 			}
@@ -471,13 +467,13 @@ async fn apply_outcome_action(
 }
 
 async fn add_to_suppression(
-	pg_pool: &PgPool,
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
 	email: &str,
 	reason: &str,
 ) -> Result<bool, String> {
 	crate::suppression::insert_active_suppression(
-		pg_pool,
+		conn,
 		tenant_id,
 		email,
 		reason,
@@ -498,12 +494,12 @@ async fn add_to_suppression(
 }
 
 async fn count_recent_outcomes(
-	pg_pool: &PgPool,
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
 	canonical_email: &str,
 	outcome_type: OutcomeType,
 	window_days: i32,
-) -> i64 {
+) -> Result<i64, sqlx::Error> {
 	sqlx::query_scalar::<_, i64>(
 		r#"
 		SELECT COUNT(*)
@@ -518,9 +514,8 @@ async fn count_recent_outcomes(
 	.bind(canonical_email)
 	.bind(outcome_type)
 	.bind(window_days)
-	.fetch_one(pg_pool)
+	.fetch_one(conn)
 	.await
-	.unwrap_or(0)
 }
 
 // ----------------------------------------------------------------------------
@@ -709,6 +704,13 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 	let Ok(Some(row)) = row else {
 		return;
 	};
+	let mut conn = match pg_pool.acquire().await {
+		Ok(conn) => conn,
+		Err(error) => {
+			tracing::warn!(target: LOG_TARGET, tenant_id = %tenant_id, error = ?error, "No connection for the post-verification outcome check");
+			return;
+		}
+	};
 	// Failures are logged inside add_to_suppression; the next verification of
 	// this address runs the check again.
 	for (column, rule, reason) in [
@@ -722,7 +724,7 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 			RuleAction::Suppress { .. } | RuleAction::SuppressAndUnsubscribe { .. }
 		);
 		if seen && suppresses {
-			let _ = add_to_suppression(pg_pool, tenant_id, email, reason).await;
+			let _ = add_to_suppression(&mut conn, tenant_id, email, reason).await;
 		}
 	}
 }

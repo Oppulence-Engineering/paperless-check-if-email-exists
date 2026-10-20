@@ -15,7 +15,7 @@
 //! `(tenant_id, email)` unique constraint, and `canonical_email` is NOT NULL.
 
 use crate::http::v1::lists::canonicalize::canonicalize_email;
-use sqlx::PgPool;
+use sqlx::{Acquire, PgConnection, PgPool};
 use uuid::Uuid;
 
 /// The `canonical_email` of a suppression: the same key that list
@@ -63,8 +63,11 @@ pub async fn has_active_suppression(
 /// unsubscribe after complaint) does not overwrite the first. An active row
 /// whose `expires_at` has passed no longer suppresses anything but still
 /// holds the unique index, so it is made permanent again instead.
+///
+/// Runs on `conn`, so a caller inside a transaction can commit the
+/// suppression together with whatever caused it.
 pub async fn insert_active_suppression(
-	pg_pool: &PgPool,
+	conn: &mut PgConnection,
 	tenant_id: Uuid,
 	email: &str,
 	reason: &str,
@@ -78,7 +81,7 @@ pub async fn insert_active_suppression(
 	// The entry and its audit event commit together. Otherwise a failed event
 	// insert leaves an entry that a retry skips (`DO NOTHING`), and the audit
 	// event is never written.
-	let mut tx = pg_pool.begin().await?;
+	let mut tx = conn.begin().await?;
 
 	// `reason` is bound twice: once for the enum column and once for the text
 	// reason code. A single placeholder cannot satisfy both types.
