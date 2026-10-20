@@ -44,7 +44,8 @@ export const families = [
 type Family = (typeof families)[number];
 
 function familyFor(path: string): Family | undefined {
-	if (["/healthz", "/readyz", "/version", "/openapi.json"].includes(path)) return "System";
+	if (["/healthz", "/readyz", "/metrics", "/version", "/openapi.json"].includes(path))
+		return "System";
 	if (path.startsWith("/v0/")) return "Legacy v0";
 	if (path.startsWith("/v1/admin/")) return "Platform admin";
 	if (path === "/v1/check-email-with-onboard") return "Onboarding";
@@ -54,6 +55,7 @@ function familyFor(path: string): Family | undefined {
 	if (
 		[
 			"/v1/check_email",
+			"/v1/operations/",
 			"/v1/emails/",
 			"/v1/find_email",
 			"/v1/reputation/",
@@ -171,7 +173,7 @@ function scopeFor(path: string, method: Uppercase<Method>): string | undefined {
 		return method === "GET" ? "pipelines.read" : "pipelines.write";
 	}
 	const route = path.split("/")[2];
-	if (["check_email", "emails", "alerts"].includes(route)) return "verify";
+	if (["check_email", "operations", "emails", "alerts"].includes(route)) return "verify";
 	if (["bulk", "jobs", "events", "query", "sources"].includes(route)) return "bulk";
 	if (route === "find_email") return "find";
 	if (["lists", "segments"].includes(route)) return "lists";

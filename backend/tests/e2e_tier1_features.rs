@@ -24,6 +24,7 @@ async fn worker_config() -> Arc<BackendConfig> {
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq,
 			concurrency: 4,
 		}),

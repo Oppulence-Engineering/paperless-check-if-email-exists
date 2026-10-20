@@ -5,10 +5,14 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
+
+import { getSmtpMetricsResponseMock } from "./health.faker";
+
+export { getSmtpMetricsResponseMock } from "./health.faker";
 
 export const getHealthzMockHandler = (
   overrideResponse?:
@@ -26,6 +30,33 @@ export const getHealthzMockHandler = (
       }
 
       return new HttpResponse(null, { status: 200 });
+    },
+    options,
+  );
+};
+
+export const getSmtpMetricsMockHandler = (
+  overrideResponse?:
+    | string
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<string> | string),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/metrics",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      const resolvedBody =
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getSmtpMetricsResponseMock();
+      const textBody =
+        typeof resolvedBody === "string"
+          ? resolvedBody
+          : JSON.stringify(resolvedBody ?? null);
+      return HttpResponse.text(textBody, { status: 200 });
     },
     options,
   );
@@ -53,5 +84,6 @@ export const getReadyzMockHandler = (
 };
 export const getHealthMock = () => [
   getHealthzMockHandler(),
+  getSmtpMetricsMockHandler(),
   getReadyzMockHandler(),
 ];

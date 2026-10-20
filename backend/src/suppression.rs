@@ -15,7 +15,7 @@
 //! `(tenant_id, email)` unique constraint, and `canonical_email` is NOT NULL.
 
 use crate::http::v1::lists::canonicalize::canonicalize_email;
-use sqlx::{Acquire, PgConnection, PgPool};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 /// The `canonical_email` of a suppression: the same key that list
@@ -23,34 +23,32 @@ use uuid::Uuid;
 /// so every spelling of one Gmail mailbox shares one suppression. Every
 /// writer and reader of `v1_suppression_entries.canonical_email` must use it.
 pub fn suppression_key(email: &str) -> String {
-	canonicalize_email(email).unwrap_or_else(|| email.trim().to_lowercase())
+	canonicalize_email(email).unwrap_or_else(|| email.trim().to_string())
 }
 
 /// Whether `email` has an active, unexpired suppression for the tenant.
 ///
-/// Entries are keyed by [`suppression_key`]. The lowercased spelling is
-/// checked too, for rows written before every writer used that key.
 pub async fn has_active_suppression(
 	pg_pool: &PgPool,
 	tenant_id: Uuid,
 	email: &str,
 ) -> Result<bool, sqlx::Error> {
-	let lowered = email.trim().to_lowercase();
-	let canonical = suppression_key(email);
+	let Some(canonical) = canonicalize_email(email) else {
+		return Ok(false);
+	};
 	sqlx::query_scalar::<_, bool>(
 		r#"
 		SELECT EXISTS (
 			SELECT 1
 			FROM v1_suppression_entries
 			WHERE tenant_id = $1
-			  AND canonical_email IN ($2, $3)
+			  AND canonical_email = $2
 			  AND status = 'active'
 			  AND (expires_at IS NULL OR expires_at > NOW())
 		)
 		"#,
 	)
 	.bind(tenant_id)
-	.bind(&lowered)
 	.bind(&canonical)
 	.fetch_one(pg_pool)
 	.await
@@ -58,16 +56,10 @@ pub async fn has_active_suppression(
 
 /// Insert one active suppression and its `created` audit event.
 ///
-/// Returns `Ok(false)` when an active row for this address already exists.
-/// The existing row is left unchanged so a second reason (for example
-/// unsubscribe after complaint) does not overwrite the first. An active row
-/// whose `expires_at` has passed no longer suppresses anything but still
-/// holds the unique index, so it is made permanent again instead.
-///
-/// Runs on `conn`, so a caller inside a transaction can commit the
-/// suppression together with whatever caused it.
+/// Returns `Ok(false)` for an unexpired active row. An expired row is reactivated
+/// with the new reason and a durable audit event.
 pub async fn insert_active_suppression(
-	conn: &mut PgConnection,
+	pg_pool: &PgPool,
 	tenant_id: Uuid,
 	email: &str,
 	reason: &str,
@@ -75,53 +67,72 @@ pub async fn insert_active_suppression(
 	source_type: &str,
 	actor: &str,
 ) -> Result<bool, sqlx::Error> {
-	let email = email.trim().to_lowercase();
-	let canonical_email = suppression_key(&email);
-	let canonical_email = canonical_email.as_str();
-	// The entry and its audit event commit together. Otherwise a failed event
-	// insert leaves an entry that a retry skips (`DO NOTHING`), and the audit
-	// event is never written.
-	let mut tx = conn.begin().await?;
+	let mut tx = pg_pool.begin().await?;
+	let inserted = insert_active_suppression_in_tx(
+		&mut tx,
+		tenant_id,
+		email,
+		reason,
+		source,
+		source_type,
+		actor,
+	)
+	.await?;
+	tx.commit().await?;
+	Ok(inserted)
+}
 
+/// Join a caller's transaction so an outcome and its suppression commit together.
+pub async fn insert_active_suppression_in_tx(
+	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+	tenant_id: Uuid,
+	email: &str,
+	reason: &str,
+	source: &str,
+	source_type: &str,
+	actor: &str,
+) -> Result<bool, sqlx::Error> {
+	let Some(canonical_email) = canonicalize_email(email) else {
+		return Err(sqlx::Error::Protocol("Invalid suppression email".into()));
+	};
 	// `reason` is bound twice: once for the enum column and once for the text
 	// reason code. A single placeholder cannot satisfy both types.
-	let entry_id = sqlx::query_scalar::<_, i32>(
+	let entry = sqlx::query_as::<_, (i32, bool)>(
 		r#"
 		INSERT INTO v1_suppression_entries (
 			tenant_id, email, canonical_email, status, reason, source,
 			reason_code, source_type, created_by, last_seen_at
 		)
 		VALUES (
-			$1, $8, $2, 'active', $3::suppression_reason, $4,
+			$1, $2, $8, 'active', $3::suppression_reason, $4,
 			$5, $6, $7, NOW()
 		)
 		ON CONFLICT (tenant_id, canonical_email) WHERE status = 'active'
 		DO UPDATE SET
+			expires_at = NULL,
 			reason = EXCLUDED.reason,
-			source = EXCLUDED.source,
 			reason_code = EXCLUDED.reason_code,
+			source = EXCLUDED.source,
 			source_type = EXCLUDED.source_type,
 			created_by = EXCLUDED.created_by,
-			expires_at = NULL,
 			last_seen_at = NOW(),
 			updated_at = NOW()
-		WHERE v1_suppression_entries.expires_at IS NOT NULL
-			AND v1_suppression_entries.expires_at <= NOW()
-		RETURNING id
+		WHERE v1_suppression_entries.expires_at <= NOW()
+		RETURNING id, (xmax = 0)
 		"#,
 	)
 	.bind(tenant_id)
-	.bind(canonical_email)
+	.bind(email.trim())
 	.bind(reason)
 	.bind(source)
 	.bind(reason)
 	.bind(source_type)
 	.bind(actor)
-	.bind(&email)
-	.fetch_optional(&mut *tx)
+	.bind(&canonical_email)
+	.fetch_optional(&mut **tx)
 	.await?;
 
-	let Some(entry_id) = entry_id else {
+	let Some((entry_id, inserted)) = entry else {
 		return Ok(false);
 	};
 
@@ -131,19 +142,19 @@ pub async fn insert_active_suppression(
 			tenant_id, entry_id, canonical_email, event_type, to_status,
 			reason_code, source_type, source_ref, actor_type, actor_id
 		)
-		VALUES ($1, $2, $3, 'created', 'active', $4, $5, $6, $7, $7)
+		VALUES ($1, $2, $3, $8, 'active', $4, $5, $6, $7, $7)
 		"#,
 	)
 	.bind(tenant_id)
 	.bind(entry_id)
-	.bind(canonical_email)
+	.bind(&canonical_email)
 	.bind(reason)
 	.bind(source_type)
 	.bind(source)
 	.bind(actor)
-	.execute(&mut *tx)
+	.bind(if inserted { "created" } else { "reactivated" })
+	.execute(&mut **tx)
 	.await?;
 
-	tx.commit().await?;
 	Ok(true)
 }

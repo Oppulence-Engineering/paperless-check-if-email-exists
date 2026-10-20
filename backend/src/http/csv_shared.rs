@@ -56,24 +56,29 @@ pub struct CsvDownloadRow {
 pub const CSV_HEADER: &str =
 	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness,recommended_action,recommendation_confidence,recommendation_priority,recommendation_reasons,policy_mode,policy_decision,policy_reasons\n";
 
-/// A CSV cell as a spreadsheet will treat it: a value that a spreadsheet
-/// would run as a formula gets a leading `'` and opens as text. Exported
-/// cells come from uploaded lists, API callers and provider webhooks, so any
-/// of them can carry `=HYPERLINK(...)` or `@SUM(...)`. A plain signed number
-/// (`-5`, `+1 (555) 010-0000`) is left alone, so cleaned lists keep their
-/// phone numbers and amounts.
-pub fn spreadsheet_safe(cell: &str) -> String {
-	let mut chars = cell.chars();
-	let runs_as_formula = match chars.next() {
-		Some('=' | '@' | '\t' | '\r') => true,
-		Some('+' | '-') => !chars
-			.all(|c| c.is_ascii_digit() || matches!(c, ' ' | '.' | ',' | '(' | ')' | '-' | '/')),
-		_ => false,
-	};
-	if runs_as_formula {
-		format!("'{cell}")
+/// CSV is for spreadsheets. JSON/NDJSON retain the exact original field values.
+pub fn spreadsheet_safe_csv(bytes: Vec<u8>) -> Result<Vec<u8>, csv::Error> {
+	let mut reader = csv::ReaderBuilder::new()
+		.has_headers(false)
+		.from_reader(bytes.as_slice());
+	let mut writer = WriterBuilder::new()
+		.has_headers(false)
+		.from_writer(Vec::new());
+	for record in reader.records() {
+		let record = record?;
+		writer.write_record(record.iter().map(spreadsheet_safe))?;
+	}
+	writer.into_inner().map_err(|err| err.into_error().into())
+}
+
+/// Prefix potentially executable spreadsheet cells; JSON keeps the original value.
+pub fn spreadsheet_safe(value: &str) -> String {
+	let significant =
+		value.trim_start_matches(|c: char| c.is_whitespace() || c.is_control() || c == '\u{feff}');
+	if value.starts_with(['\t', '\r', '\n']) || significant.starts_with(['=', '+', '-', '@']) {
+		format!("'{value}")
 	} else {
-		cell.to_string()
+		value.to_string()
 	}
 }
 
@@ -82,12 +87,13 @@ pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 		.has_headers(false)
 		.from_writer(Vec::new());
 	for record in records {
-		let mut row = csv_row(record);
-		row.input = spreadsheet_safe(&row.input);
-		row.error = row.error.as_deref().map(spreadsheet_safe);
-		writer.serialize(row)?;
+		writer.serialize(csv_row(record))?;
 	}
-	writer.into_inner().map_err(|err| err.into_error().into())
+	spreadsheet_safe_csv(
+		writer
+			.into_inner()
+			.map_err(|err| csv::Error::from(err.into_error()))?,
+	)
 }
 
 pub fn ndjson_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, serde_json::Error> {
@@ -309,7 +315,7 @@ fn result_value<'a>(record: &'a TaskResultRecord, path: &[&str]) -> Option<&'a V
 mod tests {
 
 	#[test]
-	fn spreadsheet_safe_neutralizes_formulas_but_keeps_numbers() {
+	fn spreadsheet_safe_neutralizes_formula_prefixes() {
 		for formula in [
 			"=HYPERLINK(\"http://evil\",\"x\")",
 			"=1+2@x.com",
@@ -317,6 +323,8 @@ mod tests {
 			"+cmd|' /C calc'!A0",
 			"-2+3+cmd|' /C calc'!A0",
 			"\tdata",
+			"-5",
+			"+1 (555) 010-0000",
 		] {
 			assert_eq!(
 				spreadsheet_safe(formula),
@@ -324,18 +332,49 @@ mod tests {
 				"{formula}"
 			);
 		}
-		for plain in [
-			"user@example.com",
-			"-5",
-			"+1 (555) 010-0000",
-			"2026-10-19",
-			"",
-		] {
+		for plain in ["user@example.com", "2026-10-19", ""] {
 			assert_eq!(spreadsheet_safe(plain), plain, "{plain}");
 		}
 	}
 
 	use super::*;
+
+	#[test]
+	fn spreadsheet_exports_neutralize_formulas_and_leading_controls() {
+		let fields = [
+			"=1+1",
+			"+SUM(A1)",
+			"-1+1",
+			"@SUM(A1)",
+			" \t=1+1",
+			"\r=1+1",
+			"\ntext",
+			"\ttext",
+			"\u{feff}=1+1",
+			"\0=1+1",
+			"ordinary, \"quoted\" text",
+			"a+b@example.com",
+			"42",
+		];
+		let mut writer = WriterBuilder::new().from_writer(Vec::new());
+		writer.write_record(fields).unwrap();
+		let bytes = spreadsheet_safe_csv(writer.into_inner().unwrap()).unwrap();
+		let mut reader = csv::ReaderBuilder::new()
+			.has_headers(false)
+			.from_reader(bytes.as_slice());
+		let row = reader.records().next().unwrap().unwrap();
+		for (index, original) in fields.iter().enumerate() {
+			assert_eq!(
+				&row[index],
+				if index < 10 {
+					format!("'{original}")
+				} else {
+					original.to_string()
+				}
+			);
+		}
+		assert_eq!(spreadsheet_safe_csv(bytes.clone()).unwrap(), bytes);
+	}
 
 	#[test]
 	fn csv_row_uses_scored_result_payload() {

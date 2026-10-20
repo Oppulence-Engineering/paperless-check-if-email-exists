@@ -8,7 +8,7 @@ pub fn compute_score(
 	let mut score = 100i16;
 
 	for result in blacklist_results {
-		if result.listed {
+		if result.listed == Some(true) {
 			score -= if is_major_provider(&result.provider) {
 				15
 			} else {
@@ -18,9 +18,6 @@ pub fn compute_score(
 	}
 	if !dns_records.has_spf {
 		score -= 10;
-	}
-	if !dns_records.has_dkim {
-		score -= 8;
 	}
 	if !dns_records.has_dmarc {
 		score -= 10;
@@ -36,6 +33,13 @@ pub fn compute_score(
 
 	score = score.clamp(0, 100);
 	let risk_level = match score {
+		80..=100
+			if blacklist_results
+				.iter()
+				.any(|result| result.listed.is_none()) =>
+		{
+			"unknown"
+		}
 		80..=100 => "low",
 		50..=79 => "medium",
 		1..=49 => "high",
@@ -55,24 +59,55 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn unknown_coverage_cannot_be_presented_as_a_clean_low_risk_result() {
+		let dns = DnsRecordResults {
+			has_spf: true,
+			has_dmarc: true,
+			has_mx: true,
+			..Default::default()
+		};
+		let (score, risk) = compute_score(
+			&[BlacklistResult {
+				provider: "test".into(),
+				listed: None,
+				status: super::super::models::BlacklistStatus::Error,
+				answers: vec![],
+				error: Some("timeout".into()),
+				lookup_time_ms: 1,
+			}],
+			&dns,
+			&DomainInfo::default(),
+		);
+		assert_eq!(score, 100);
+		assert_eq!(risk, "unknown");
+	}
+
+	#[test]
 	fn compute_score_penalizes_missing_dns_and_blacklists() {
 		let (score, risk) = compute_score(
 			&[
 				BlacklistResult {
 					provider: "Spamhaus ZEN".into(),
-					listed: true,
+					listed: Some(true),
+					status: super::super::models::BlacklistStatus::Listed,
+					answers: vec!["127.0.0.2".into()],
+					error: None,
 					lookup_time_ms: 10,
 				},
 				BlacklistResult {
 					provider: "PSBL".into(),
-					listed: true,
+					listed: Some(true),
+					status: super::super::models::BlacklistStatus::Listed,
+					answers: vec!["127.0.0.2".into()],
+					error: None,
 					lookup_time_ms: 10,
 				},
 			],
 			&DnsRecordResults {
 				has_spf: false,
-				spf_valid: false,
-				has_dkim: false,
+				spf_policy_explicit: false,
+				has_dkim: None,
+				dkim_selectors: Vec::new(),
 				has_dmarc: false,
 				dmarc_policy: None,
 				has_mx: false,
@@ -85,7 +120,7 @@ mod tests {
 			},
 		);
 
-		assert_eq!(score, 14);
+		assert_eq!(score, 22);
 		assert_eq!(risk, "high");
 	}
 }

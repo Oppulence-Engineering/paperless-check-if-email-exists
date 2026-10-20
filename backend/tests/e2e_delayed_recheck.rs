@@ -40,6 +40,7 @@ async fn worker_config(enable_recheck: bool) -> Arc<BackendConfig> {
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: amqp_url,
 			concurrency: 4,
 		}),
@@ -74,6 +75,7 @@ async fn worker_config_with(
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: amqp_url,
 			concurrency: 4,
 		}),
@@ -97,6 +99,7 @@ async fn worker_config_with(
 
 fn make_task(job_id: i32, email: &str, tenant_id: Option<Uuid>, task_db_id: i32) -> CheckEmailTask {
 	CheckEmailTask {
+		verification_backend: Default::default(),
 		input: check_if_email_exists::CheckEmailInput {
 			to_email: email.to_string(),
 			..Default::default()
@@ -104,6 +107,9 @@ fn make_task(job_id: i32, email: &str, tenant_id: Option<Uuid>, task_db_id: i32)
 		job_id: CheckEmailJobId::Bulk(job_id),
 		webhook: None,
 		metadata: Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: tenant_id.map(|t| t.to_string()),
 			request_id: None,
 			correlation_id: None,
@@ -236,7 +242,8 @@ async fn test_schedule_delayed_recheck_creates_scheduled_row() -> Result<()> {
 		1,
 		&RetryPolicy::default(),
 	)
-	.await;
+	.await
+	.unwrap();
 
 	// The task waits on the recheck, so its job is not finished yet.
 	assert!(awaiting);
@@ -290,7 +297,8 @@ async fn test_schedule_delayed_recheck_skips_singleshot_jobs() -> Result<()> {
 		1,
 		&RetryPolicy::default(),
 	)
-	.await;
+	.await
+	.unwrap();
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 0);
 	Ok(())
@@ -302,7 +310,15 @@ async fn test_schedule_delayed_recheck_upsert_replaces_existing_scheduled_row() 
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "schedule-upsert", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
-	let task_id = insert_task(db.pool(), job_id, "running", Some(tenant_id), None, None).await;
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"completed",
+		Some(tenant_id),
+		Some(serde_json::json!({"is_reachable": "unknown"})),
+		None,
+	)
+	.await;
 	let config = worker_config(true).await;
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
 
@@ -313,7 +329,8 @@ async fn test_schedule_delayed_recheck_upsert_replaces_existing_scheduled_row() 
 		1,
 		&RetryPolicy::default(),
 	)
-	.await;
+	.await
+	.unwrap();
 	schedule_delayed_recheck(
 		&task,
 		Arc::clone(&config),
@@ -321,7 +338,8 @@ async fn test_schedule_delayed_recheck_upsert_replaces_existing_scheduled_row() 
 		2,
 		&RetryPolicy::default(),
 	)
-	.await;
+	.await
+	.unwrap();
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 1);
 	let retry_count: i32 = sqlx::query_scalar(
@@ -340,7 +358,15 @@ async fn test_schedule_delayed_recheck_marks_metadata_actor_and_db_id() -> Resul
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "schedule-metadata", Some(1000), 0).await;
 	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
-	let task_id = insert_task(db.pool(), job_id, "running", Some(tenant_id), None, None).await;
+	let task_id = insert_task(
+		db.pool(),
+		job_id,
+		"completed",
+		Some(tenant_id),
+		Some(serde_json::json!({"is_reachable": "unknown"})),
+		None,
+	)
+	.await;
 	let config = worker_config(true).await;
 
 	let task = make_task(job_id, "user@example.com", Some(tenant_id), task_id);
@@ -351,7 +377,8 @@ async fn test_schedule_delayed_recheck_marks_metadata_actor_and_db_id() -> Resul
 		1,
 		&RetryPolicy::default(),
 	)
-	.await;
+	.await
+	.unwrap();
 
 	let task_json: serde_json::Value = sqlx::query_scalar(
 		"SELECT task FROM verification_delayed_rechecks WHERE task_result_id = $1",
@@ -414,6 +441,20 @@ async fn test_scheduler_claims_due_rechecks_and_publishes() -> Result<()> {
 		0,
 	)
 	.await;
+
+	let mut unavailable = worker_config(true).await;
+	Arc::get_mut(&mut unavailable).unwrap().smtp_health_enabled = true;
+	assert!(run_delayed_recheck_cycle(unavailable, db.pool())
+		.await
+		.is_err());
+	assert_eq!(
+		fetch_recheck_status(db.pool(), recheck_id).await,
+		"scheduled"
+	);
+	assert_eq!(
+		fetch_recheck_publish_attempts(db.pool(), recheck_id).await,
+		0
+	);
 
 	run_delayed_recheck_cycle(Arc::clone(&config), db.pool()).await?;
 
@@ -1065,7 +1106,8 @@ async fn test_disabled_config_skips_scheduling() -> Result<()> {
 			1,
 			&RetryPolicy::default(),
 		)
-		.await;
+		.await
+		.unwrap();
 	}
 
 	assert_eq!(count_recheck_rows(db.pool(), task_id).await, 0);
@@ -1197,19 +1239,19 @@ async fn test_unique_scheduled_index_prevents_duplicate_inserts() -> Result<()> 
 #[serial]
 async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
 	use futures::StreamExt;
-	use lapin::options::{BasicConsumeOptions, BasicPublishOptions, QueuePurgeOptions};
+	use lapin::options::{BasicConsumeOptions, QueuePurgeOptions};
 	use lapin::types::FieldTable;
-	use lapin::BasicProperties;
 	use reacher_backend::worker::consume::CHECK_EMAIL_QUEUE;
 	use reacher_backend::worker::do_work::{do_check_email_work, TaskWebhook, Webhook};
 
 	let db = TestDb::start().await;
 	let tenant_id = insert_tenant(db.pool(), "recheck-fails", Some(1000), 0).await;
-	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
+	let job_id = insert_job(db.pool(), Some(tenant_id), 1, "running").await;
 	// What the first pass stored before scheduling the recheck.
 	let earlier_result = serde_json::json!({
 		"input": "greylisted@example.com",
-		"is_reachable": "unknown"
+		"is_reachable": "unknown",
+		"score": {"score": 0, "category": "unknown"}
 	});
 	let task_id = insert_task(
 		db.pool(),
@@ -1232,6 +1274,7 @@ async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
 	let mut task = make_task(job_id, "greylisted@example.com", Some(tenant_id), task_id);
 	if let Some(metadata) = task.metadata.as_mut() {
 		metadata.created_by = Some("delayed_recheck".to_string());
+		metadata.retry_policy.as_mut().unwrap().max_retries = 0;
 	}
 	task.webhook = Some(TaskWebhook {
 		on_each_email: Some(Webhook {
@@ -1240,16 +1283,16 @@ async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
 			extra: None,
 		}),
 	});
-	channel
-		.basic_publish(
-			"".into(),
-			CHECK_EMAIL_QUEUE.into(),
-			BasicPublishOptions::default(),
-			&serde_json::to_vec(&task)?,
-			BasicProperties::default().with_priority(0),
-		)
-		.await?
+	let mut tx = db.pool().begin().await?;
+	sqlx::query("UPDATE v1_task_result SET task_state = 'retrying' WHERE id = $1")
+		.bind(task_id)
+		.execute(&mut *tx)
 		.await?;
+	reacher_backend::worker::dispatch::enqueue(&mut tx, task, 0).await?;
+	tx.commit().await?;
+	assert!(
+		reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email").await?
+	);
 	let mut deliveries = channel
 		.basic_consume(
 			CHECK_EMAIL_QUEUE.into(),
@@ -1261,6 +1304,7 @@ async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
 	let delivery = tokio::time::timeout(std::time::Duration::from_secs(5), deliveries.next())
 		.await?
 		.expect("delivery stream item")?;
+	let task: CheckEmailTask = serde_json::from_slice(&delivery.data)?;
 
 	do_check_email_work(&task, delivery, Arc::clone(&channel), Arc::clone(&config)).await?;
 	// Stop consuming so later tests' messages aren't delivered to this consumer.

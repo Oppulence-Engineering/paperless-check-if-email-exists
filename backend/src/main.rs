@@ -4,17 +4,17 @@
 use check_if_email_exists::{initialize_crypto_provider, setup_sentry, LOG_TARGET};
 use reacher_backend::config::load_config;
 use reacher_backend::http::run_warp_server;
-use reacher_backend::smtp_egress::log_smtp_egress_checks;
+use reacher_backend::smtp_egress::{monitor_smtp_egress, validate_smtp_identity};
 use reacher_backend::worker::run_worker;
 use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::{interval_at, Instant, MissedTickBehavior};
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-async fn prune_expired_results(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn prune_expired_results(pool: &PgPool) -> Result<(), sqlx::Error> {
 	// ponytail: Delete at most 1000 rows per table each hour; increase the batch if a backlog grows.
 	sqlx::query(
 		"DELETE FROM v1_finder_job WHERE id IN (\
@@ -30,8 +30,12 @@ async fn prune_expired_results(pool: &PgPool) -> Result<(), sqlx::Error> {
 		 SELECT r.id FROM v1_task_result r \
 		 LEFT JOIN v1_bulk_job j ON j.id = r.job_id \
 		 JOIN tenants t ON t.id = COALESCE(r.tenant_id, j.tenant_id) \
-		 WHERE (r.task_state IN ('completed', 'failed', 'cancelled', 'dead_lettered') \
-		 OR r.result IS NOT NULL OR r.error IS NOT NULL) \
+		 WHERE r.task_state IN ('completed', 'failed', 'cancelled', 'dead_lettered') \
+		 AND (r.dispatch_id IS NULL OR r.completion_done) \
+		 AND (r.lease_expires_at IS NULL OR r.lease_expires_at <= NOW()) \
+		 AND (j.id IS NULL OR j.status IN ('completed', 'failed', 'cancelled')) \
+		 AND NOT EXISTS (SELECT 1 FROM verification_dispatch d WHERE d.task_id = r.id) \
+		 AND NOT EXISTS (SELECT 1 FROM idempotency_keys k WHERE k.operation_id = r.operation_id AND (k.expires_at > NOW() OR r.completed_at > NOW() - INTERVAL '24 hours')) \
 		 AND COALESCE(r.completed_at, r.created_at) < NOW() - t.result_retention_days * INTERVAL '1 day' \
 		 ORDER BY r.id LIMIT 1000)",
 	)
@@ -51,10 +55,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
 	info!(target: LOG_TARGET, version=?CARGO_PKG_VERSION, "Running Reacher");
 	let mut config = load_config().await?;
+	validate_smtp_identity(&config)?;
 	config.connect().await?;
-
-	// SECURITY: Don't log full config as it likely contains secrets (DB_URL, etc)
-	debug!(target: LOG_TARGET, "{:#?}", config.get_verif_method());
 
 	// Setup sentry bug tracking.
 	let _guard: sentry::ClientInitGuard;
@@ -67,7 +69,7 @@ async fn main() -> Result<(), anyhow::Error> {
 		// Both the HTTP server (single checks) and the worker open SMTP
 		// connections, so every process checks its own route.
 		let config = Arc::clone(&config);
-		tokio::spawn(async move { log_smtp_egress_checks(&config).await });
+		tokio::spawn(async move { monitor_smtp_egress(config).await });
 	}
 	if let Some(pool) = config.get_pg_pool() {
 		tokio::spawn(async move {

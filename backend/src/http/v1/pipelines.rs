@@ -71,6 +71,9 @@ fn parse_status(value: Option<String>) -> Result<Option<PipelineStatus>, warp::R
 }
 
 fn map_pipeline_request_error(err: anyhow::Error) -> ReacherResponseError {
+	if let Some(response) = err.downcast_ref::<ReacherResponseError>() {
+		return ReacherResponseError::new(response.code, response.to_string());
+	}
 	if let Some(pipeline_err) = err.downcast_ref::<PipelineRequestError>() {
 		return match pipeline_err {
 			PipelineRequestError::Validation(_)

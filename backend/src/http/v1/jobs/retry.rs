@@ -1,15 +1,11 @@
 use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::with_config;
-use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
-use crate::tenant::quota::{
-	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
-};
+use crate::tenant::quota::{reserve_quota_in_tx, QuotaCheckResult};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskWebhook};
 use check_if_email_exists::LOG_TARGET;
-use lapin::BasicProperties;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
@@ -94,7 +90,7 @@ async fn http_handler(
 		r#"
 		SELECT id, payload
 		FROM v1_task_result
-		WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')
+		WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered') AND is_duplicate = false AND (completion_done OR dispatch_id IS NULL) AND (lease_expires_at IS NULL OR lease_expires_at <= NOW())
 		FOR UPDATE
 		"#,
 	)
@@ -115,10 +111,20 @@ async fn http_handler(
 		}));
 	}
 
-	// Check quota before publishing (reject early if over limit).
-	// Quota is charged atomically here, using the same pattern as bulk/post.rs.
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, reserved_count).await {
+	// Quota and the new retry generation commit together.
+	crate::smtp_egress::require_smtp_ready(&config)?;
+	match reserve_quota_in_tx(&mut tx, &tenant_ctx, reserved_count)
+		.await
+		.map_err(ReacherResponseError::from)?
+	{
 		QuotaCheckResult::Allowed => {}
+		QuotaCheckResult::Unavailable => {
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				"Quota service unavailable; no verification was dispatched.",
+			)
+			.into())
+		}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
 			used,
@@ -144,45 +150,12 @@ async fn http_handler(
 		.map(|r| r.get::<i32, _>("id"))
 		.collect();
 
-	// Publish tasks to RabbitMQ BEFORE committing DB changes.
-	// If publish fails, the transaction rolls back and tasks stay in
-	// failed/dead_lettered, which is safe to retry again.
-	let mut published_count = 0_i32;
-	let channel = match config.must_worker_config() {
-		Ok(worker_config) => worker_config.channel,
-		Err(err) => {
-			release_unpublished_retry_quota(
-				&pg_pool,
-				tenant_ctx.tenant_id,
-				reserved_count,
-				published_count,
-			)
-			.await;
-			return Err(ReacherResponseError::from(err).into());
-		}
-	};
-
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1);
-
 	for row in &retryable_tasks {
 		let payload: serde_json::Value = row.get("payload");
 		let task_db_id: i32 = row.get("id");
 
-		let mut task = match task_from_payload(&payload, job_id, Arc::clone(&config)) {
-			Ok(task) => task,
-			Err(err) => {
-				release_unpublished_retry_quota(
-					&pg_pool,
-					tenant_ctx.tenant_id,
-					reserved_count,
-					published_count,
-				)
-				.await;
-				return Err(ReacherResponseError::from(err).into());
-			}
-		};
+		let mut task = task_from_payload(&payload, job_id, Arc::clone(&config))
+			.map_err(ReacherResponseError::from)?;
 
 		if let Some(ref mut metadata) = task.metadata {
 			metadata.task_db_id = Some(task_db_id);
@@ -191,6 +164,9 @@ async fn http_handler(
 			}
 		} else {
 			task.metadata = Some(crate::worker::do_work::TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: task_tenant_id.clone(),
 				request_id: None,
 				correlation_id: None,
@@ -201,20 +177,12 @@ async fn http_handler(
 			});
 		}
 
-		if let Err(err) = publish_task(channel.clone(), task, properties.clone()).await {
-			release_unpublished_retry_quota(
-				&pg_pool,
-				tenant_ctx.tenant_id,
-				reserved_count,
-				published_count,
-			)
-			.await;
-			return Err(err.into());
-		}
-		published_count += 1;
+		crate::worker::dispatch::enqueue(&mut tx, task, 1)
+			.await
+			.map_err(ReacherResponseError::from)?;
 	}
 
-	// All tasks published: reset only the exact rows we locked and published.
+	// Reset exactly the rows whose retry intent is in this transaction.
 	sqlx::query(
 		r#"
 		UPDATE v1_task_result
@@ -270,23 +238,11 @@ async fn http_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
+	sqlx::query("INSERT INTO job_events (job_id, event_type, event_data, actor) VALUES ($1, 'job.retry_requested', $2, 'api')")
+		.bind(job_id).bind(serde_json::json!({"tasks_retried": retryable_count}))
+		.execute(&mut *tx).await.map_err(ReacherResponseError::from)?;
 	tx.commit().await.map_err(ReacherResponseError::from)?;
-
-	info!(
-		target: LOG_TARGET,
-		job_id = job_id,
-		tasks_retried = retryable_count,
-		"Retried failed tasks"
-	);
-
-	// Record event (fire-and-forget)
-	let _ = sqlx::query(
-		"INSERT INTO job_events (job_id, event_type, event_data, actor) VALUES ($1, 'job.retry_requested', $2, 'api')",
-	)
-	.bind(job_id)
-	.bind(serde_json::json!({ "tasks_retried": retryable_count }))
-	.execute(&pg_pool)
-	.await;
+	info!(target: LOG_TARGET, job_id, tasks_retried = retryable_count, "Committed task retries");
 
 	Ok(warp::reply::json(&Response {
 		job_id,
@@ -319,11 +275,14 @@ fn task_from_payload(
 		webhook: Option<TaskWebhook>,
 	}
 
-	if let Ok(task) = CheckEmailTask::deserialize(payload) {
+	if let Ok(mut task) = CheckEmailTask::deserialize(payload) {
+		// An explicit user retry creates a new attempt on the currently selected backend.
+		task.verification_backend = config.verification_backend;
 		return Ok(task);
 	}
 	let stored = StoredTask::deserialize(payload)?;
 	Ok(CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: CheckEmailRequest {
 			to_email: stored.input.to_email,
 			..Default::default()
@@ -333,18 +292,6 @@ fn task_from_payload(
 		webhook: stored.webhook,
 		metadata: None,
 	})
-}
-
-async fn release_unpublished_retry_quota(
-	pg_pool: &PgPool,
-	tenant_id: Option<uuid::Uuid>,
-	reserved_count: i32,
-	published_count: i32,
-) {
-	let refund_count = reserved_count.saturating_sub(published_count);
-	if refund_count > 0 {
-		let _ = release_reserved_usage(Some(pg_pool), tenant_id, refund_count).await;
-	}
 }
 
 /// POST /v1/jobs/{job_id}/retry
@@ -396,6 +343,7 @@ mod tests {
 	fn full_bulk_payload_keeps_its_webhook_on_retry() {
 		let config = Arc::new(BackendConfig::empty());
 		let stored = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: crate::http::CheckEmailRequest {
 				to_email: "a@example.com".into(),
 				..Default::default()
@@ -418,6 +366,18 @@ mod tests {
 				.and_then(|webhook| webhook.on_each_email)
 				.map(|webhook| webhook.url),
 			Some("https://hooks.example.com/each".to_string())
+		);
+		let mut switched = BackendConfig::empty();
+		switched.verification_backend = crate::verification::VerificationBackend::Millionverifier;
+		let task = task_from_payload(
+			&serde_json::to_value(&stored).unwrap(),
+			3,
+			Arc::new(switched),
+		)
+		.unwrap();
+		assert_eq!(
+			task.verification_backend,
+			crate::verification::VerificationBackend::Millionverifier
 		);
 	}
 }

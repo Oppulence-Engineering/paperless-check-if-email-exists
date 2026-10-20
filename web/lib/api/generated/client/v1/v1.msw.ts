@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
@@ -20,6 +20,7 @@ import type {
   ListDetailResponse,
   ListListResponse,
   ListUploadResponse,
+  PendingVerification,
   ReputationCheckResponse,
   ReverificationStatusResponse,
   SourceQualityResponse,
@@ -43,6 +44,7 @@ import {
   getV1FindEmailResponseMock,
   getV1GetFindEmailResponseMock,
   getV1GetListResponseMock,
+  getV1GetVerificationOperationResponseMock,
   getV1ImportSuppressionsResponseMock,
   getV1ListListsResponseMock,
   getV1ListSuppressionEventsResponseMock,
@@ -62,6 +64,7 @@ export {
   getV1DeleteListResponseMock,
   getV1GetListResponseMock,
   getV1DownloadListResponseMock,
+  getV1GetVerificationOperationResponseMock,
   getV1CheckReputationResponseMock,
   getV1UpdateReverificationResponseMock,
   getV1ReverificationStatusResponseMock,
@@ -123,9 +126,13 @@ export const getV1CheckEmailWithOnboardMockHandler = (
 export const getV1CheckEmailMockHandler = (
   overrideResponse?:
     | CheckEmailOutput
+    | PendingVerification
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<CheckEmailOutput> | CheckEmailOutput),
+      ) =>
+        | Promise<CheckEmailOutput | PendingVerification>
+        | CheckEmailOutput
+        | PendingVerification),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
@@ -309,6 +316,34 @@ export const getV1DownloadListMockHandler = (
         status: 200,
         headers: { "Content-Type": "application/octet-stream" },
       });
+    },
+    options,
+  );
+};
+
+export const getV1GetVerificationOperationMockHandler = (
+  overrideResponse?:
+    | CheckEmailOutput
+    | PendingVerification
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) =>
+        | Promise<CheckEmailOutput | PendingVerification>
+        | CheckEmailOutput
+        | PendingVerification),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/operations/:operationId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetVerificationOperationResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -593,6 +628,7 @@ export const getV1Mock = () => [
   getV1DeleteListMockHandler(),
   getV1GetListMockHandler(),
   getV1DownloadListMockHandler(),
+  getV1GetVerificationOperationMockHandler(),
   getV1CheckReputationMockHandler(),
   getV1UpdateReverificationMockHandler(),
   getV1ReverificationStatusMockHandler(),

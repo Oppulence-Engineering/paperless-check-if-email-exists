@@ -3,7 +3,7 @@ use crate::finder::require_tenant_id;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::v1::outcomes::{ingest_outcomes, OutcomeIngestRequest, OutcomeInput};
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
-use crate::pipelines::{validate_resolved_webhook_target, validate_webhook_url};
+use crate::pipelines::validated_webhook_client;
 use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::webhook::{sign_payload, WEBHOOK_SIGNATURE_HEADER};
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -752,8 +752,7 @@ async fn forward_outcomes(
 	else {
 		return Ok(false);
 	};
-	validate_webhook_url(url).map_err(|error| error.to_string())?;
-	validate_resolved_webhook_target(url)
+	let client = validated_webhook_client(url)
 		.await
 		.map_err(|error| error.to_string())?;
 	let source_key = settings
@@ -766,11 +765,6 @@ async fn forward_outcomes(
 		"outcomes": outcomes,
 	});
 	let body = serde_json::to_vec(&payload).map_err(|error| error.to_string())?;
-	let client = reqwest::Client::builder()
-		.timeout(Duration::from_secs(10))
-		.redirect(reqwest::redirect::Policy::none())
-		.build()
-		.map_err(|error| error.to_string())?;
 	let mut request = client
 		.post(url)
 		.header("content-type", "application/json")
@@ -951,7 +945,7 @@ fn normalize_postmark(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) ->
 		message_id.as_ref().map(|message_id| {
 			format!(
 				"{record_type}:{message_id}:{}:{}",
-				email.to_ascii_lowercase(),
+				crate::suppression::suppression_key(&email),
 				occurred_at
 					.map(|at| at.timestamp_millis())
 					.unwrap_or_default()
@@ -1065,7 +1059,7 @@ fn normalize_ses(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<
 			// needs its own dedupe key.
 			let provider_event_id = notification_id
 				.as_ref()
-				.map(|id| format!("{id}:{}", email.to_ascii_lowercase()));
+				.map(|id| format!("{id}:{}", crate::suppression::suppression_key(&email)));
 			make_outcome(
 				endpoint,
 				receipt_id,

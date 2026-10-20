@@ -35,6 +35,7 @@ mod postgres_storage_tests {
 
 	fn make_task(job_id: CheckEmailJobId, metadata: Option<TaskMetadata>) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@example.com".into(),
 				..Default::default()
@@ -290,6 +291,9 @@ mod postgres_storage_tests {
 			let task = make_task(
 				job_id,
 				Some(TaskMetadata {
+					dispatch_id: None,
+					lease_id: None,
+					decision_policy: None,
 					tenant_id: None,
 					request_id: None,
 					correlation_id: None,
@@ -337,6 +341,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_connects() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -351,6 +356,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_queue_exists() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 2,
 		};
@@ -375,6 +381,7 @@ mod rabbitmq_setup_tests {
 	#[serial]
 	async fn test_setup_rabbit_mq_bad_url_fails() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: "amqp://localhost:9999".to_string(),
 			concurrency: 1,
 		};
@@ -398,6 +405,7 @@ mod publish_consume_tests {
 
 	fn make_task(email: &str) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: email.into(),
 				..Default::default()
@@ -413,6 +421,7 @@ mod publish_consume_tests {
 	async fn test_publish_and_consume_task() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -458,6 +467,7 @@ mod publish_consume_tests {
 	async fn test_publish_multiple_tasks() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 10,
 		};
@@ -537,6 +547,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_priority() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -608,6 +619,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_metadata_survives_roundtrip() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -618,6 +630,7 @@ mod publish_consume_tests {
 			.unwrap();
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "meta@test.com".into(),
 				..Default::default()
@@ -625,6 +638,9 @@ mod publish_consume_tests {
 			job_id: CheckEmailJobId::Bulk(42),
 			webhook: None,
 			metadata: Some(reacher_backend::worker::do_work::TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("tid-123".into()),
 				request_id: Some("req-456".into()),
 				correlation_id: None,
@@ -681,6 +697,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_invalid_syntax() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "not-an-email".into(),
 				..Default::default()
@@ -702,6 +719,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_valid_syntax_no_mx() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "user@nonexistent-domain-12345.tld".into(),
 				..Default::default()
@@ -742,6 +760,7 @@ mod full_pipeline_tests {
 		let rmq = TestRabbitMq::start().await;
 
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -762,6 +781,7 @@ mod full_pipeline_tests {
 		let job_id: i32 = job_row.get("id");
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "pipeline@example.com".into(),
 				..Default::default()
@@ -769,6 +789,9 @@ mod full_pipeline_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,

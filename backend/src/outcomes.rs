@@ -28,7 +28,7 @@ use crate::http::v1::lists::canonicalize::canonicalize_email;
 use check_if_email_exists::LOG_TARGET;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgConnection, PgPool, Row};
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 /// SQL enum mirror. Must stay in sync with `outcome_type` in
@@ -321,8 +321,8 @@ async fn ingest_one(
 	let inserted = sqlx::query_scalar::<_, Option<i64>>(
 		r#"
 		INSERT INTO verification_outcomes
-			(tenant_id, canonical_email, outcome_type, occurred_at, source, campaign_id, metadata, policy_action)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			(tenant_id, canonical_email, outcome_type, occurred_at, source, campaign_id, metadata, policy_action, email)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (tenant_id, canonical_email, outcome_type, occurred_at, source) DO NOTHING
 		RETURNING id
 		"#,
@@ -335,6 +335,7 @@ async fn ingest_one(
 	.bind(outcome.campaign_id.as_deref())
 	.bind(outcome.metadata.as_ref())
 	.bind(policy_action_label)
+	.bind(outcome.email.trim())
 	.fetch_optional(&mut *tx)
 	.await
 	.map_err(|err| format!("db insert: {err}"))?;
@@ -433,7 +434,7 @@ fn action_label(action: &Action) -> Option<&'static str> {
 /// whether a suppression was created; a failed suppression write is an
 /// error, so the outcome is not stored and the client retries the row.
 async fn apply_outcome_action(
-	conn: &mut PgConnection,
+	conn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
 	tenant_id: Uuid,
 	email: &str,
 	canonical: &str,
@@ -475,12 +476,12 @@ async fn apply_outcome_action(
 }
 
 async fn add_to_suppression(
-	conn: &mut PgConnection,
+	conn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
 	tenant_id: Uuid,
 	email: &str,
 	reason: &str,
 ) -> Result<bool, String> {
-	crate::suppression::insert_active_suppression(
+	crate::suppression::insert_active_suppression_in_tx(
 		conn,
 		tenant_id,
 		email,
@@ -502,7 +503,7 @@ async fn add_to_suppression(
 }
 
 async fn count_recent_outcomes(
-	conn: &mut PgConnection,
+	conn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
 	tenant_id: Uuid,
 	canonical_email: &str,
 	outcome_type: OutcomeType,
@@ -522,7 +523,7 @@ async fn count_recent_outcomes(
 	.bind(canonical_email)
 	.bind(outcome_type)
 	.bind(window_days)
-	.fetch_one(conn)
+	.fetch_one(&mut **conn)
 	.await
 }
 
@@ -588,7 +589,8 @@ async fn fetch_policy(
 	};
 	let id: i64 = row.get("id");
 	let rules: serde_json::Value = row.get("rules");
-	let rules: OutcomePolicyRules = serde_json::from_value(rules).unwrap_or_default();
+	let rules: OutcomePolicyRules =
+		serde_json::from_value(rules).map_err(|error| sqlx::Error::Decode(Box::new(error)))?;
 	Ok(Some((id, rules)))
 }
 
@@ -634,11 +636,11 @@ pub async fn enrich_outcome_context(
 			BOOL_OR(outcome_type = 'hard_bounce'::outcome_type) AS has_hard_bounce,
 			BOOL_OR(outcome_type = 'complaint'::outcome_type) AS has_complaint,
 			BOOL_OR(outcome_type = 'unsubscribe'::outcome_type) AS has_unsubscribe,
-			COUNT(*) FILTER (WHERE outcome_type = 'delivered'::outcome_type) AS delivered_count,
-			COUNT(*) FILTER (WHERE outcome_type = 'open'::outcome_type) AS open_count,
-			COUNT(*) FILTER (WHERE outcome_type = 'click'::outcome_type) AS click_count,
+			COUNT(*) FILTER (WHERE outcome_type = 'delivered'::outcome_type AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS delivered_count,
+			COUNT(*) FILTER (WHERE outcome_type = 'open'::outcome_type AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS open_count,
+			COUNT(*) FILTER (WHERE outcome_type = 'click'::outcome_type AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS click_count,
 			COUNT(*) FILTER (WHERE outcome_type = 'soft_bounce'::outcome_type) AS soft_bounce_count,
-			MAX(occurred_at) FILTER (WHERE outcome_type IN ('open'::outcome_type, 'click'::outcome_type)) AS latest_engagement
+			MAX(occurred_at) FILTER (WHERE outcome_type IN ('open'::outcome_type, 'click'::outcome_type) AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS latest_engagement
 		FROM verification_outcomes
 		WHERE tenant_id = $1
 			AND canonical_email = $2
@@ -685,13 +687,24 @@ pub async fn enrich_outcome_context(
 /// suppression should be applied even though scoring already ran. (The reverse
 /// case — outcome arrives FIRST then verification runs — is handled by
 /// `enrich_outcome_context` feeding into `ScoringContext`.)
-pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: Uuid, email: &str) {
+pub async fn apply_post_verification_outcome_check(
+	pg_pool: &PgPool,
+	tenant_id: Uuid,
+	email: &str,
+) -> Result<(), sqlx::Error> {
 	let Some(canonical) = canonicalize_email(email) else {
-		return;
+		return Ok(());
 	};
 	// The same policy and expiry as ingestion and scoring, so a verification
 	// never suppresses an address over an outcome the policy ignores.
-	let rules = default_policy_rules(pg_pool, tenant_id).await;
+	let rules = fetch_policy(
+		pg_pool,
+		tenant_id,
+		"SELECT id, rules FROM v1_outcome_policies WHERE tenant_id = $1 AND is_default = true",
+	)
+	.await?
+	.map(|(_, rules)| rules)
+	.unwrap_or_default();
 	let row = sqlx::query(
 		r#"
 		SELECT
@@ -707,34 +720,35 @@ pub async fn apply_post_verification_outcome_check(pg_pool: &PgPool, tenant_id: 
 	.bind(&canonical)
 	.bind(rules.outcome_ttl_days)
 	.fetch_optional(pg_pool)
-	.await;
+	.await?;
 
-	let Ok(Some(row)) = row else {
-		return;
+	let Some(row) = row else {
+		return Ok(());
 	};
-	let mut conn = match pg_pool.acquire().await {
-		Ok(conn) => conn,
-		Err(error) => {
-			tracing::warn!(target: LOG_TARGET, tenant_id = %tenant_id, error = ?error, "No connection for the post-verification outcome check");
-			return;
-		}
-	};
-	// Failures are logged inside add_to_suppression; the next verification of
-	// this address runs the check again.
 	for (column, rule, reason) in [
 		("hard_bounce", &rules.hard_bounce, "bounce"),
 		("complaint", &rules.complaint, "complaint"),
 		("unsubscribe", &rules.unsubscribe, "unsubscribe"),
 	] {
-		let seen: bool = row.try_get(column).ok().flatten().unwrap_or(false);
+		let seen: bool = row.try_get::<Option<bool>, _>(column)?.unwrap_or(false);
 		let suppresses = matches!(
 			rule,
 			RuleAction::Suppress { .. } | RuleAction::SuppressAndUnsubscribe { .. }
 		);
 		if seen && suppresses {
-			let _ = add_to_suppression(&mut conn, tenant_id, email, reason).await;
+			crate::suppression::insert_active_suppression(
+				pg_pool,
+				tenant_id,
+				email,
+				reason,
+				"outcome_feedback",
+				"outcome",
+				"outcome_ingest",
+			)
+			.await?;
 		}
 	}
+	Ok(())
 }
 
 // ----------------------------------------------------------------------------

@@ -81,6 +81,87 @@ pub struct VerifMethod {
 }
 
 impl VerifMethod {
+	/// Apply explicit SMTP settings without replacing proxies or non-SMTP methods.
+	pub fn override_smtp_settings(
+		&mut self,
+		hello_name: Option<&str>,
+		from_email: Option<&str>,
+		smtp_port: Option<u16>,
+		smtp_timeout: Option<Duration>,
+	) {
+		let GmailVerifMethod::Smtp(gmail) = &mut self.gmail;
+		let HotmailB2BVerifMethod::Smtp(hotmailb2b) = &mut self.hotmailb2b;
+		let MimecastVerifMethod::Smtp(mimecast) = &mut self.mimecast;
+		let ProofpointVerifMethod::Smtp(proofpoint) = &mut self.proofpoint;
+		let EverythingElseVerifMethod::Smtp(everything_else) = &mut self.everything_else;
+		let hotmailb2c = match &mut self.hotmailb2c {
+			HotmailB2CVerifMethod::Smtp(c) => Some(c),
+			_ => None,
+		};
+		let yahoo = match &mut self.yahoo {
+			YahooVerifMethod::Smtp(c) => Some(c),
+			_ => None,
+		};
+		for config in IntoIterator::into_iter([
+			Some(gmail),
+			Some(hotmailb2b),
+			Some(mimecast),
+			Some(proofpoint),
+			Some(everything_else),
+			hotmailb2c,
+			yahoo,
+		])
+		.flatten()
+		{
+			if let Some(value) = hello_name {
+				config.hello_name = value.to_owned();
+			}
+			if let Some(value) = from_email {
+				config.from_email = value.to_owned();
+			}
+			if let Some(value) = smtp_port {
+				config.smtp_port = value;
+			}
+			if let Some(value) = smtp_timeout {
+				config.smtp_timeout = Some(value);
+			}
+		}
+	}
+
+	/// SMTP configuration for a provider, or none for HTTP/browser verification.
+	pub fn smtp_config(&self, provider: EmailProvider) -> Option<&VerifMethodSmtpConfig> {
+		match provider {
+			EmailProvider::Gmail => {
+				let GmailVerifMethod::Smtp(c) = &self.gmail;
+				Some(c)
+			}
+			EmailProvider::HotmailB2B => {
+				let HotmailB2BVerifMethod::Smtp(c) = &self.hotmailb2b;
+				Some(c)
+			}
+			EmailProvider::Mimecast => {
+				let MimecastVerifMethod::Smtp(c) = &self.mimecast;
+				Some(c)
+			}
+			EmailProvider::Proofpoint => {
+				let ProofpointVerifMethod::Smtp(c) = &self.proofpoint;
+				Some(c)
+			}
+			EmailProvider::EverythingElse => {
+				let EverythingElseVerifMethod::Smtp(c) = &self.everything_else;
+				Some(c)
+			}
+			EmailProvider::HotmailB2C => match &self.hotmailb2c {
+				HotmailB2CVerifMethod::Smtp(c) => Some(c),
+				_ => None,
+			},
+			EmailProvider::Yahoo => match &self.yahoo {
+				YahooVerifMethod::Smtp(c) => Some(c),
+				_ => None,
+			},
+		}
+	}
+
 	/// Create a new `VerifMethod` with the same configuration for all email
 	/// providers.
 	pub fn new_with_same_config_for_all(
@@ -109,6 +190,7 @@ impl VerifMethod {
 				smtp_port,
 				smtp_timeout,
 				retries,
+				..Default::default()
 			}),
 			hotmailb2b: HotmailB2BVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id.clone(),
@@ -117,6 +199,7 @@ impl VerifMethod {
 				smtp_port,
 				smtp_timeout,
 				retries,
+				..Default::default()
 			}),
 			mimecast: MimecastVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id.clone(),
@@ -125,6 +208,7 @@ impl VerifMethod {
 				smtp_port,
 				smtp_timeout,
 				retries,
+				..Default::default()
 			}),
 			proofpoint: ProofpointVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id.clone(),
@@ -133,6 +217,7 @@ impl VerifMethod {
 				smtp_port,
 				smtp_timeout,
 				retries,
+				..Default::default()
 			}),
 			everything_else: EverythingElseVerifMethod::Smtp(VerifMethodSmtpConfig {
 				proxy: proxy_id,
@@ -141,6 +226,7 @@ impl VerifMethod {
 				smtp_port,
 				smtp_timeout,
 				retries,
+				..Default::default()
 			}),
 			..Default::default()
 		}
@@ -381,6 +467,9 @@ impl Default for EverythingElseVerifMethod {
 #[derive(Debug, Clone, Deserialize, PartialEq, Serialize)]
 #[serde(default)]
 pub struct VerifMethodSmtpConfig {
+	#[cfg(test)]
+	#[serde(skip)]
+	pub(crate) allow_private_test_server: bool,
 	/// Email to use in the `MAIL FROM:` SMTP command.
 	///
 	/// Defaults to "reacher.email@gmail.com", which is an unused addressed
@@ -420,6 +509,8 @@ pub struct VerifMethodSmtpConfig {
 impl Default for VerifMethodSmtpConfig {
 	fn default() -> Self {
 		Self {
+			#[cfg(test)]
+			allow_private_test_server: false,
 			from_email: "reacher@gmail.com".to_string(),
 			hello_name: "gmail.com".to_string(),
 			proxy: None,

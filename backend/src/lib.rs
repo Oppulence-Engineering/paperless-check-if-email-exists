@@ -18,6 +18,7 @@ pub mod storage;
 pub mod suppression;
 pub mod tenant;
 pub mod throttle;
+pub mod verification;
 pub mod worker;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");

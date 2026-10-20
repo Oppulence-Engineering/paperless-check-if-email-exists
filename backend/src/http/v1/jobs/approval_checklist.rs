@@ -120,18 +120,13 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// Count safe rows that an in-force suppression covers. A JOIN counted
-	// merged and expired entries and counted a row once per matching entry.
-	// Suppressions key on the canonical address, as task rows do. Rows
-	// written before that may still hold the lowercased address as entered,
-	// which for list rows only the list's original rows keep (expanded once,
-	// see remediation.rs).
+	// EXISTS counts each covered row once, including supplied list aliases.
 	let suppressed: i64 = sqlx::query_scalar(
 		r#"
 		WITH list_originals AS MATERIALIZED (
 			SELECT l.id AS list_id,
 			       entry.key::INTEGER AS row_index,
-			       LOWER(TRIM(entry.value ->> l.email_column)) AS email
+			       mailbox_identity(entry.value ->> l.email_column) AS email
 			FROM v1_lists l, jsonb_each(l.original_data) AS entry
 			WHERE l.job_id = $1
 		)
@@ -146,7 +141,7 @@ async fn http_handler(
 			  AND s.status = 'active'
 			  AND (s.expires_at IS NULL OR s.expires_at > NOW())
 			  AND s.canonical_email IN (
-				LOWER(TRIM(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))),
+				mailbox_identity(COALESCE(t.result->>'input', t.payload->'input'->>'to_email')),
 				t.canonical_email,
 				o.email
 			  )

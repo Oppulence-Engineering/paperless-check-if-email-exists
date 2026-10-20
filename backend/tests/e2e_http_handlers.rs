@@ -18,13 +18,6 @@ mod tests {
 	use warp::http::StatusCode;
 	use warp::test::request;
 
-	fn sandbox_reply_body(email: &str) -> Vec<u8> {
-		reacher_backend::scoring::response::scored_response_fresh(
-			&reacher_backend::sandbox::sandbox_check(email),
-		)
-		.expect("sandbox reply body")
-	}
-
 	/// BackendConfig with worker mode enabled and a live RabbitMQ connection.
 	async fn worker_config(db_url: &str, rmq_url: &str) -> Arc<BackendConfig> {
 		let mut config = BackendConfig::empty();
@@ -37,6 +30,7 @@ mod tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url.to_string(),
 				concurrency: 4,
 			}),
@@ -551,246 +545,79 @@ mod tests {
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 	}
 
-	// ── v1/check_email with worker mode (RPC) ──────────
-
 	#[tokio::test]
 	#[serial]
-	async fn test_v1_check_email_with_worker_mode() {
+	async fn test_v1_check_email_worker_returns_persisted_result_with_tenant_metadata() {
+		use futures::StreamExt;
+		use reacher_backend::worker::{
+			consume::CHECK_EMAIL_QUEUE,
+			dispatch::publish_next,
+			do_work::{do_check_email_work, CheckEmailTask},
+		};
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
-		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
-
-		// This test exercises the handle_with_worker path in shared/check_email.rs
-		// It publishes to RabbitMQ and waits for a reply. Since no worker is consuming,
-		// it will timeout. But it exercises the publish + queue setup code.
-		let resp = tokio::time::timeout(
-			std::time::Duration::from_secs(10),
-			request()
-				.path("/v1/check_email")
-				.method("POST")
-				.header(REACHER_SECRET_HEADER, "test")
-				.json(
-					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
-						r#"{"to_email": "worker@test.com"}"#,
-					)
-					.unwrap(),
-				)
-				.reply(&create_routes(config)),
-		)
-		.await;
-
-		// Will timeout or return 500 since no worker is consuming
-		// Either way, the code path through handle_with_worker was exercised
-		match resp {
-			Ok(r) => {
-				// If we get a response, it's likely 500 (no worker reply)
-				assert!(
-					r.status() == StatusCode::INTERNAL_SERVER_ERROR || r.status() == StatusCode::OK
-				);
-			}
-			Err(_) => {
-				// Timeout is expected — the handle_with_worker code was still executed
-			}
-		}
-	}
-
-	// ── v1/check_email with worker + background consumer ──
-
-	#[tokio::test]
-	#[serial]
-	async fn test_v1_check_email_full_worker_rpc() {
-		let target_email = "foo@bar";
-		let db = TestDb::start().await;
-		let rmq = TestRabbitMq::start().await;
-		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
-		let routes = create_routes(Arc::clone(&config));
-
-		// Start a background "worker" that consumes tasks and replies
-		let wc = config.must_worker_config().unwrap();
-		let ch = wc.channel;
-		let ch2 = Arc::clone(&ch);
-		tokio::spawn(async move {
-			use futures::StreamExt;
-			let mut consumer = ch
-				.basic_consume(
-					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
-					"test-worker".into(),
-					lapin::options::BasicConsumeOptions::default(),
-					lapin::types::FieldTable::default(),
-				)
-				.await
-				.unwrap();
-
-			while let Some(Ok(delivery)) = consumer.next().await {
-				if let Ok(task) = serde_json::from_slice::<
-					reacher_backend::worker::do_work::CheckEmailTask,
-				>(&delivery.data)
-				{
-					if let (Some(reply_to), Some(corr_id)) = (
-						delivery.properties.reply_to(),
-						delivery.properties.correlation_id(),
-					) {
-						let reply = reacher_backend::worker::single_shot::SingleShotReply::Ok(
-							sandbox_reply_body(&task.input.to_email),
-						);
-						let payload = serde_json::to_vec(&reply).unwrap();
-						let _ = ch2
-							.basic_publish(
-								"".into(),
-								reply_to.as_str().into(),
-								lapin::options::BasicPublishOptions::default(),
-								&payload,
-								lapin::BasicProperties::default()
-									.with_correlation_id(corr_id.to_owned()),
-							)
-							.await;
-					}
-					let _ = delivery
-						.ack(lapin::options::BasicAckOptions::default())
-						.await;
-
-					if task.input.to_email == target_email {
-						break;
-					}
-				}
-			}
-		});
-
-		// Give worker a moment to start consuming
-		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-
-		// Now call the endpoint — it should get a reply from our worker
-		let resp = tokio::time::timeout(
-			std::time::Duration::from_secs(30),
-			request()
-				.path("/v1/check_email")
-				.method("POST")
-				.header(REACHER_SECRET_HEADER, "test")
-				.json(
-					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
-						r#"{"to_email": "foo@bar"}"#,
-					)
-					.unwrap(),
-				)
-				.reply(&routes),
-		)
-		.await;
-
-		match resp {
-			Ok(r) => {
-				assert_eq!(r.status(), StatusCode::OK, "body: {:?}", r.body());
-				let body: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
-				assert!(body["is_reachable"].is_string());
-				assert!(body["score"].is_object());
-				assert!(body["score"]["score"].is_number());
-				assert!(body["score"]["category"].is_string());
-			}
-			Err(_) => {
-				// Timeout is acceptable but not ideal — the code paths were still exercised
-			}
-		}
-	}
-
-	#[tokio::test]
-	#[serial]
-	async fn test_v1_check_email_worker_rpc_preserves_tenant_metadata() {
-		let target_email = "tenant-worker@test.com";
-		let db = TestDb::start().await;
-		let rmq = TestRabbitMq::start().await;
-		let tenant_id = insert_tenant(db.pool(), "worker-rpc-meta", Some(100), 0).await;
+		let tenant_id = insert_tenant(db.pool(), "worker-operation", Some(100), 0).await;
 		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
 		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
 		let routes = create_routes(Arc::clone(&config));
-		let tenant_id_string = tenant_id.to_string();
-
-		let wc = config.must_worker_config().unwrap();
-		let ch = wc.channel;
-		let ch2 = Arc::clone(&ch);
-		let (task_tx, task_rx) = tokio::sync::oneshot::channel();
-
-		tokio::spawn(async move {
-			use futures::StreamExt;
-
-			let mut consumer = ch
-				.basic_consume(
-					reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
-					"test-worker-metadata".into(),
-					lapin::options::BasicConsumeOptions::default(),
-					lapin::types::FieldTable::default(),
-				)
+		let channel = config.must_worker_config().unwrap().channel;
+		channel
+			.queue_purge(CHECK_EMAIL_QUEUE.into(), Default::default())
+			.await
+			.unwrap();
+		let mut consumer = channel
+			.basic_consume(
+				CHECK_EMAIL_QUEUE.into(),
+				"test-operation-worker".into(),
+				Default::default(),
+				Default::default(),
+			)
+			.await
+			.unwrap();
+		let worker = async {
+			tokio::time::timeout(std::time::Duration::from_secs(10), async {
+				while !publish_next(db.pool(), &channel, "check_email")
+					.await
+					.unwrap()
+				{
+					tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+				}
+				let delivery = consumer.next().await.unwrap().unwrap();
+				let task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+				do_check_email_work(&task, delivery, Arc::clone(&channel), Arc::clone(&config))
+					.await
+					.unwrap();
+				task.metadata.unwrap()
+			})
+			.await
+			.expect("worker must durably complete")
+		};
+		let request = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header("Authorization", format!("Bearer {api_key}"))
+			.json(&serde_json::json!({"to_email":"invalid-syntax"}))
+			.reply(&routes);
+		let (response, metadata) = tokio::join!(request, worker);
+		channel
+			.basic_cancel("test-operation-worker".into(), Default::default())
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::OK, "{:?}", response.body());
+		assert_eq!(metadata.tenant_id, Some(tenant_id.to_string()));
+		assert_eq!(metadata.created_by.as_deref(), Some("api"));
+		assert!(metadata.dispatch_id.is_some());
+		let (result, complete): (serde_json::Value, bool) =
+			sqlx::query_as("SELECT result, completion_done FROM v1_task_result WHERE id = $1")
+				.bind(metadata.task_db_id.unwrap())
+				.fetch_one(db.pool())
 				.await
 				.unwrap();
-			let mut task_tx = Some(task_tx);
-
-			while let Some(Ok(delivery)) = consumer.next().await {
-				if let Ok(task) = serde_json::from_slice::<
-					reacher_backend::worker::do_work::CheckEmailTask,
-				>(&delivery.data)
-				{
-					if task.input.to_email == target_email {
-						if let Some(task_tx) = task_tx.take() {
-							let _ = task_tx.send(task.metadata.clone());
-						}
-					}
-
-					if let (Some(reply_to), Some(corr_id)) = (
-						delivery.properties.reply_to(),
-						delivery.properties.correlation_id(),
-					) {
-						let reply = reacher_backend::worker::single_shot::SingleShotReply::Ok(
-							sandbox_reply_body(&task.input.to_email),
-						);
-						let payload = serde_json::to_vec(&reply).unwrap();
-						let _ = ch2
-							.basic_publish(
-								"".into(),
-								reply_to.as_str().into(),
-								lapin::options::BasicPublishOptions::default(),
-								&payload,
-								lapin::BasicProperties::default()
-									.with_correlation_id(corr_id.to_owned()),
-							)
-							.await;
-					}
-
-					let _ = delivery
-						.ack(lapin::options::BasicAckOptions::default())
-						.await;
-
-					if task.input.to_email == target_email {
-						break;
-					}
-				}
-			}
-		});
-
-		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-
-		let resp = tokio::time::timeout(
-			std::time::Duration::from_secs(30),
-			request()
-				.path("/v1/check_email")
-				.method("POST")
-				.header("Authorization", format!("Bearer {api_key}"))
-				.json(
-					&serde_json::from_str::<reacher_backend::http::CheckEmailRequest>(
-						r#"{"to_email": "tenant-worker@test.com"}"#,
-					)
-					.unwrap(),
-				)
-				.reply(&routes),
-		)
-		.await
-		.unwrap();
-
-		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
-		let metadata = task_rx.await.unwrap().expect("task metadata");
+		assert!(complete);
 		assert_eq!(
-			metadata.tenant_id.as_deref(),
-			Some(tenant_id_string.as_str())
+			result,
+			serde_json::from_slice::<serde_json::Value>(response.body()).unwrap()
 		);
-		assert_eq!(metadata.created_by.as_deref(), Some("api"));
-		assert!(metadata.task_db_id.is_none());
 	}
 
 	#[tokio::test]
@@ -803,6 +630,7 @@ mod tests {
 		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "completed").await;
 		// A payload stored before tasks carried metadata.
 		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: target_email.to_string(),
 				..Default::default()
@@ -864,6 +692,11 @@ mod tests {
 			.await;
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
+		let channel = config.must_worker_config().unwrap().channel;
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email")
+			.await
+			.unwrap()
+		{}
 		let metadata = tokio::time::timeout(std::time::Duration::from_secs(10), task_rx)
 			.await
 			.expect("retried task was published")
@@ -945,6 +778,10 @@ mod tests {
 			.await;
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email")
+			.await
+			.unwrap()
+		{}
 		// Run the worker on the republished row.
 		let (task, delivery) = loop {
 			let delivery =

@@ -461,6 +461,7 @@ pub async fn record_verification_change_event(
 	};
 	let previous = load_previous_snapshot(pg_pool, &current).await?;
 	let change_type = classify_change(previous.as_ref(), &current);
+	let mut tx = pg_pool.begin().await?;
 
 	// A task result can be stored more than once: a delayed recheck rewrites
 	// the same row (e.g. unknown -> valid). Any event already recorded for it
@@ -470,8 +471,9 @@ pub async fn record_verification_change_event(
 	if change_type == "unchanged" {
 		sqlx::query("DELETE FROM verification_change_events WHERE current_task_result_id = $1")
 			.bind(current.task_id)
-			.execute(pg_pool)
+			.execute(&mut *tx)
 			.await?;
+		tx.commit().await?;
 		return Ok(());
 	}
 	sqlx::query(
@@ -488,7 +490,7 @@ pub async fn record_verification_change_event(
 	.bind(current.score)
 	.bind(&current.category)
 	.bind(current.safe_to_send)
-	.execute(pg_pool)
+	.execute(&mut *tx)
 	.await?;
 
 	let inserted_event = sqlx::query(
@@ -534,13 +536,14 @@ pub async fn record_verification_change_event(
 			.and_then(|snapshot| snapshot.reason_codes.as_ref()),
 	)
 	.bind(change_type)
-	.fetch_optional(pg_pool)
+	.fetch_optional(&mut *tx)
 	.await?;
 
 	let Some(event_row) = inserted_event else {
 		return Ok(());
 	};
 	if change_type == "new" {
+		tx.commit().await?;
 		return Ok(());
 	}
 
@@ -582,9 +585,10 @@ pub async fn record_verification_change_event(
 		"current_list_id": current.list_id,
 		"previous_list_id": previous.as_ref().and_then(|snapshot| snapshot.list_id),
 	}))
-	.execute(pg_pool)
+	.execute(&mut *tx)
 	.await?;
 
+	tx.commit().await?;
 	Ok(())
 }
 

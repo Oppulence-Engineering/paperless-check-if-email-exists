@@ -42,7 +42,9 @@ async fn http_handler(
 	check_scope(&tenant_ctx, scope::SUPPRESSIONS)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
-	let email = crate::suppression::suppression_key(&query.email);
+	let email = crate::http::v1::lists::canonicalize::canonicalize_email(&query.email).ok_or_else(
+		|| ReacherResponseError::new(warp::http::StatusCode::BAD_REQUEST, "Invalid email"),
+	)?;
 
 	let row = sqlx::query(
 		r#"

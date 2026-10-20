@@ -222,7 +222,8 @@ async fn job_result_csv(
 		BulkError::Csv(CsvError::CsvLibWriter(Box::new(e)))
 	})?;
 
-	Ok(data)
+	crate::http::csv_shared::spreadsheet_safe_csv(data)
+		.map_err(|err| BulkError::Csv(CsvError::CsvLib(err)).into())
 }
 
 /// GET /v0/bulk/{job_id}/results

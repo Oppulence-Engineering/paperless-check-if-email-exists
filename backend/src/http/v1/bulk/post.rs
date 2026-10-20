@@ -1,15 +1,14 @@
 //! This file implements the `POST /v1/bulk` endpoint.
 
-use std::sync::Arc;
+use std::{convert::TryFrom, sync::Arc};
 
 use bytes::Bytes;
 use check_if_email_exists::LOG_TARGET;
-use futures::stream::StreamExt;
 use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 use warp::http::header::CONTENT_TYPE;
 use warp::http::StatusCode;
 use warp::{Filter, Reply};
@@ -25,10 +24,7 @@ use crate::http::CheckEmailRequest;
 use crate::http::ReacherResponseError;
 use crate::http::{check_scope, resolve_tenant};
 use crate::tenant::context::{scope, TenantContext};
-use crate::tenant::quota::{
-	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
-};
-use crate::worker::consume::CHECK_EMAIL_QUEUE;
+use crate::tenant::quota::{reserve_quota_in_tx, QuotaCheckResult};
 use crate::worker::do_work::CheckEmailJobId;
 use crate::worker::do_work::CheckEmailTask;
 use crate::worker::do_work::TaskMetadata;
@@ -121,24 +117,13 @@ async fn http_handler(
 		None => None,
 	};
 
-	let result = create_bulk_job(&tenant_ctx, config, &pg_pool, body).await;
-
-	if let Some(record_id) = idempotency_record_id {
-		let settled = match &result {
-			Ok(response_body) => {
-				complete_idempotency_key(
-					&pg_pool,
-					record_id,
-					StatusCode::OK.as_u16(),
-					response_body,
-				)
-				.await
+	let result = create_bulk_job(&tenant_ctx, config, &pg_pool, body, idempotency_record_id).await;
+	if result.is_err() {
+		if let Some(record_id) = idempotency_record_id {
+			// A committed response is never reopened after an uncertain commit result.
+			if let Err(error) = fail_idempotency_key(&pg_pool, record_id).await {
+				warn!(target: LOG_TARGET, record_id, error = ?error, "Failed to settle bulk idempotency key");
 			}
-			// Failed attempts release the key so the client can retry with it.
-			Err(_) => fail_idempotency_key(&pg_pool, record_id).await,
-		};
-		if let Err(err) = settled {
-			warn!(target: LOG_TARGET, record_id = record_id, error = ?err, "Failed to settle bulk idempotency key");
 		}
 	}
 
@@ -154,21 +139,45 @@ fn json_response(status: StatusCode, body: Vec<u8>) -> warp::reply::Response {
 	response
 }
 
-/// Reserves quota, creates the job and its task rows, and publishes the
-/// tasks. Returns the serialized response body. Any failure after the quota
-/// reservation refunds every email that was not published.
+/// Quota, task rows, dispatch intent and the replayable response commit together.
 async fn create_bulk_job(
 	tenant_ctx: &TenantContext,
 	config: Arc<BackendConfig>,
 	pg_pool: &PgPool,
 	body: Request,
+	idempotency_record_id: Option<i64>,
 ) -> Result<Vec<u8>, ReacherResponseError> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let source_key = normalize_source_key(body.source_key.as_deref());
-
-	// Atomically check and increment quota for all emails in the bulk request.
-	let email_count = body.input.len() as i32;
-	match check_and_increment_quota_for_count(Some(pg_pool), tenant_ctx, email_count).await {
+	let email_count = i32::try_from(body.input.len())
+		.map_err(|_| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Too many emails"))?;
+	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
+	if let Some(id) = idempotency_record_id {
+		let owner: Option<i64> = sqlx::query_scalar(
+			"SELECT id FROM idempotency_keys WHERE id = $1 AND status = 'processing' FOR UPDATE",
+		)
+		.bind(id)
+		.fetch_optional(&mut *tx)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if owner.is_none() {
+			return Err(ReacherResponseError::new(
+				StatusCode::CONFLICT,
+				"Request ownership changed; retry with the same key",
+			));
+		}
+	}
+	match reserve_quota_in_tx(&mut tx, tenant_ctx, email_count)
+		.await
+		.map_err(ReacherResponseError::from)?
+	{
 		QuotaCheckResult::Allowed => {}
+		QuotaCheckResult::Unavailable => {
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				"Quota service unavailable",
+			))
+		}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
 			used,
@@ -177,193 +186,61 @@ async fn create_bulk_job(
 			return Err(ReacherResponseError::new(
 				StatusCode::TOO_MANY_REQUESTS,
 				format!(
-					"Monthly email limit of {} reached ({} used). Resets at {}",
-					limit,
-					used,
-					resets_at.format("%Y-%m-%d %H:%M:%S UTC")
+					"Monthly email limit of {limit} reached ({used} used). Resets at {resets_at}"
 				),
 			));
 		}
 	}
-
-	let tenant_id = tenant_ctx.tenant_id;
-
-	// Create job entry with status = 'pending'
-	let job_id: i32 = match sqlx::query_scalar(
-		r#"
-		INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key)
-		VALUES ($1, $2, 'pending', $3)
-		RETURNING id
-		"#,
-	)
-	.bind(email_count)
-	.bind(tenant_id)
-	.bind(source_key.as_deref())
-	.fetch_one(pg_pool)
-	.await
-	{
-		Ok(job_id) => job_id,
-		Err(err) => {
-			let _ = release_reserved_usage(Some(pg_pool), tenant_id, email_count).await;
-			return Err(ReacherResponseError::from(err));
-		}
-	};
-
-	let task_ids = match insert_queued_tasks(
-		&config,
-		pg_pool,
-		job_id,
-		tenant_id,
-		source_key.as_deref(),
-		&body,
-	)
-	.await
-	{
-		Ok(task_ids) => task_ids,
-		Err(err) => {
-			cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &[]).await;
-			return Err(err);
-		}
-	};
-
-	// Publish tasks to RabbitMQ with metadata.task_db_id
-	let n = body.input.len();
-	let webhook = body.webhook.clone();
-	let emails_with_ids: Vec<(String, i32)> = body.input.into_iter().zip(task_ids).collect();
-	let stream = futures::stream::iter(emails_with_ids.into_iter());
-
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1); // Low priority
-
-	let channel = match config.must_worker_config() {
-		Ok(worker_config) => worker_config.channel,
-		Err(err) => {
-			cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &[]).await;
-			return Err(ReacherResponseError::from(err));
-		}
-	};
-	let publish_results = stream
-		.map(|(to_email, task_db_id)| {
-			let config = Arc::clone(&config);
-			let webhook = webhook.clone();
-			let properties = properties.clone();
-			let channel = Arc::clone(&channel);
-			async move {
-				let input = CheckEmailRequest {
-					to_email,
-					..Default::default()
-				}
-				.to_check_email_input(Arc::clone(&config));
-
-				let task = CheckEmailTask {
-					input,
-					job_id: CheckEmailJobId::Bulk(job_id),
-					webhook,
-					metadata: Some(TaskMetadata {
-						tenant_id: tenant_id.map(|id| id.to_string()),
-						request_id: None,
-						correlation_id: None,
-						created_by: None,
-						retry_policy: None,
-						dedupe_key: None,
-						task_db_id: Some(task_db_id),
-					}),
-				};
-
-				publish_task(channel, task, properties)
-					.await
-					.map(|_| task_db_id)
+	let job_id: i32 = sqlx::query_scalar("INSERT INTO v1_bulk_job (total_records, tenant_id, status, source_key) VALUES ($1, $2, 'pending', $3) RETURNING id")
+        .bind(email_count).bind(tenant_ctx.tenant_id).bind(&source_key)
+        .fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
+	for email in body.input {
+		let mut task = CheckEmailTask {
+			verification_backend: config.verification_backend,
+			input: CheckEmailRequest {
+				to_email: email.clone(),
+				..Default::default()
 			}
-		})
-		.buffer_unordered(10)
-		.collect::<Vec<_>>()
-		.await;
-
-	let mut published_task_ids = Vec::new();
-	let mut publish_error = None;
-	for result in publish_results {
-		match result {
-			Ok(task_id) => published_task_ids.push(task_id),
-			Err(err) if publish_error.is_none() => publish_error = Some(err),
-			Err(_) => {}
-		}
-	}
-	if let Some(err) = publish_error {
-		cleanup_publish_failure(pg_pool, tenant_id, job_id, email_count, &published_task_ids).await;
-		return Err(err);
-	}
-
-	// Every task is published, so the worker may now finish the job. This
-	// leaves a job that is already cancelled alone, and finishes it here if
-	// its tasks all completed while they were being published.
-	crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	// Record job.created event
-	let _ = sqlx::query!(
-		r#"
-		INSERT INTO job_events (job_id, event_type, event_data, actor)
-		VALUES ($1, 'job.created', $2, 'api')
-		"#,
-		job_id,
-		serde_json::json!({ "total_records": n }),
-	)
-	.execute(pg_pool)
-	.await;
-
-	info!(
-		target: LOG_TARGET,
-		queue = CHECK_EMAIL_QUEUE,
-		"Added {n} emails",
-	);
-	serde_json::to_vec(&Response { job_id, source_key }).map_err(ReacherResponseError::from)
-}
-
-/// Pre-create one task result row per input email, in state 'queued'.
-async fn insert_queued_tasks(
-	config: &Arc<BackendConfig>,
-	pg_pool: &PgPool,
-	job_id: i32,
-	tenant_id: Option<uuid::Uuid>,
-	source_key: Option<&str>,
-	body: &Request,
-) -> Result<Vec<i32>, ReacherResponseError> {
-	let mut task_ids: Vec<i32> = Vec::with_capacity(body.input.len());
-	for email in &body.input {
-		let input = CheckEmailRequest {
-			to_email: email.clone(),
-			..Default::default()
-		}
-		.to_check_email_input(Arc::clone(config));
-
-		let payload_json = serde_json::to_value(&CheckEmailTask {
-			input,
+			.to_check_email_input(Arc::clone(&config)),
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: body.webhook.clone(),
-			metadata: None,
-		})
-		.map_err(ReacherResponseError::from)?;
-
-		let task_row: i32 = sqlx::query_scalar(
-			r#"
-			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key)
-			VALUES ($1, $2, 'queued', $3, $4)
-			RETURNING id
-			"#,
-		)
-		.bind(job_id)
-		.bind(payload_json)
-		.bind(tenant_id)
-		.bind(source_key)
-		.fetch_one(pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-		task_ids.push(task_row);
+			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
+				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+				request_id: None,
+				correlation_id: None,
+				created_by: None,
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: None,
+			}),
+		};
+		let task_id = sqlx::query_scalar("INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key) VALUES ($1, $2, 'queued', $3, $4) RETURNING id")
+            .bind(job_id).bind(serde_json::json!({"input":{"to_email": email}, "webhook": body.webhook}))
+            .bind(tenant_ctx.tenant_id).bind(&source_key).fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
+		task.metadata
+			.as_mut()
+			.expect("metadata set above")
+			.task_db_id = Some(task_id);
+		crate::worker::dispatch::enqueue(&mut tx, task, 1)
+			.await
+			.map_err(ReacherResponseError::from)?;
 	}
-	Ok(task_ids)
+	sqlx::query("UPDATE v1_bulk_job SET status = 'running', updated_at = NOW() WHERE id = $1 AND status = 'pending'")
+        .bind(job_id).execute(&mut *tx).await.map_err(ReacherResponseError::from)?;
+	sqlx::query("INSERT INTO job_events (job_id, event_type, event_data, actor) VALUES ($1, 'job.created', $2, 'api')")
+        .bind(job_id).bind(serde_json::json!({"total_records":email_count}))
+        .execute(&mut *tx).await.map_err(ReacherResponseError::from)?;
+	let response =
+		serde_json::to_vec(&Response { job_id, source_key }).map_err(ReacherResponseError::from)?;
+	if let Some(id) = idempotency_record_id {
+		complete_idempotency_key(&mut *tx, id, StatusCode::OK.as_u16(), &response).await?;
+	}
+	tx.commit().await.map_err(ReacherResponseError::from)?;
+	info!(target: LOG_TARGET, job_id, email_count, "Committed bulk verification dispatch");
+	Ok(response)
 }
 
 fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
@@ -375,70 +252,21 @@ fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
 	}
 }
 
-async fn cleanup_publish_failure(
-	pg_pool: &PgPool,
-	tenant_id: Option<uuid::Uuid>,
-	job_id: i32,
-	reserved_count: i32,
-	published_task_ids: &[i32],
-) {
-	let refund_count = reserved_count.saturating_sub(published_task_ids.len() as i32);
-	if refund_count > 0 {
-		let _ = release_reserved_usage(Some(pg_pool), tenant_id, refund_count).await;
-	}
-
-	if let Err(err) = sqlx::query(
-		"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-	)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await
-	{
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark bulk job failed after publish failure");
-	}
-
-	if let Err(err) = sqlx::query(
-		r#"
-		UPDATE v1_task_result
-		SET task_state = 'failed'::task_state,
-		    error = COALESCE(error, 'publish_failed'),
-		    completed_at = COALESCE(completed_at, NOW()),
-		    updated_at = NOW()
-		WHERE job_id = $1
-		  AND task_state = 'queued'::task_state
-		  AND NOT (id = ANY($2::INTEGER[]))
-		"#,
-	)
-	.bind(job_id)
-	.bind(published_task_ids)
-	.execute(pg_pool)
-	.await
-	{
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark queued tasks failed after publish failure");
-	}
-}
-
-/// Publish a task to the "check_email" queue.
+/// Commit task dispatch before returning; the publisher retries broker outages.
 pub async fn publish_task(
-	channel: Arc<Channel>,
+	pool: &PgPool,
 	task: CheckEmailTask,
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
-	let payload = serde_json::to_vec(&task).map_err(ReacherResponseError::from)?;
-
-	publish_payload(&channel, &payload, properties).await?;
-
-	debug!(
-		target: LOG_TARGET,
-		email = ?task.input.to_email,
-		queue = CHECK_EMAIL_QUEUE,
-		"Published task"
-	);
-
+	let mut tx = pool.begin().await.map_err(ReacherResponseError::from)?;
+	crate::worker::dispatch::enqueue(&mut tx, task, properties.priority().unwrap_or(0))
+		.await
+		.map_err(ReacherResponseError::from)?;
+	tx.commit().await.map_err(ReacherResponseError::from)?;
 	Ok(())
 }
 
-/// Publish an already serialized task to the "check_email" queue.
+/// Publish an already serialized task to the environment's queue.
 ///
 /// The message is always made persistent. On a channel in confirm mode (the
 /// channel from `setup_rabbit_mq` is), this returns only after the broker has
@@ -446,13 +274,14 @@ pub async fn publish_task(
 /// callers never treat a task the broker refused as queued.
 pub async fn publish_payload(
 	channel: &Channel,
+	queue: &str,
 	payload: &[u8],
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
 	let confirmation = channel
 		.basic_publish(
 			"".into(),
-			CHECK_EMAIL_QUEUE.into(),
+			queue.into(),
 			BasicPublishOptions::default(),
 			payload,
 			properties.with_delivery_mode(PERSISTENT_DELIVERY_MODE),

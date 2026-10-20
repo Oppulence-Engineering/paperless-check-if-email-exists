@@ -226,7 +226,8 @@ fn render_header() -> Vec<u8> {
 			"updated_at",
 		])
 		.expect("csv header write");
-	writer.into_inner().expect("csv header bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv header bytes"))
+		.expect("valid generated CSV")
 }
 
 fn render_row(row: &SuppressionExportRow) -> Vec<u8> {
@@ -261,7 +262,8 @@ fn render_row(row: &SuppressionExportRow) -> Vec<u8> {
 				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
 		)
 		.expect("csv row write");
-	writer.into_inner().expect("csv row bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv row bytes"))
+		.expect("valid generated CSV")
 }
 
 /// GET /v1/suppressions/export

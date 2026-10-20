@@ -1,15 +1,15 @@
 /// Canonicalize an email address for deduplication.
 ///
 /// Rules:
-/// 1. Trim whitespace, lowercase everything
+/// 1. Trim whitespace, lowercase the domain
 /// 2. Gmail/Googlemail: remove dots, strip +subaddress, normalize domain to gmail.com
-/// 3. All other providers: lowercase only (no +subaddress stripping, since
+/// 3. All other providers: preserve the local part (no +subaddress stripping, since
 ///    '+' is not a universal subaddress convention and some providers treat
 ///    it as significant)
 ///
 /// Returns None if the email doesn't contain exactly one '@'.
 pub fn canonicalize_email(email: &str) -> Option<String> {
-	let email = email.trim().to_lowercase();
+	let email = email.trim();
 
 	// Must contain exactly one '@'
 	if email.matches('@').count() != 1 {
@@ -22,10 +22,15 @@ pub fn canonicalize_email(email: &str) -> Option<String> {
 		return None;
 	}
 
-	let result = match domain {
+	let domain = domain.to_ascii_lowercase();
+	let result = match domain.as_str() {
 		"gmail.com" | "googlemail.com" => {
 			let local = strip_subaddress(local);
-			let local: String = local.chars().filter(|c| *c != '.').collect();
+			let local: String = local
+				.chars()
+				.filter(|c| *c != '.')
+				.map(|c| c.to_ascii_lowercase())
+				.collect();
 			if local.is_empty() {
 				return None;
 			}
@@ -53,7 +58,19 @@ mod tests {
 	fn test_basic_canonicalize() {
 		assert_eq!(
 			canonicalize_email("User@Example.COM"),
-			Some("user@example.com".to_string())
+			Some("User@example.com".to_string())
+		);
+	}
+
+	#[test]
+	fn case_sensitive_local_parts_stay_distinct() {
+		assert_ne!(
+			canonicalize_email("Sales@company.example"),
+			canonicalize_email("sales@company.example")
+		);
+		assert_eq!(
+			canonicalize_email("First.Last+Tag@COMPANY.EXAMPLE"),
+			Some("First.Last+Tag@company.example".into())
 		);
 	}
 

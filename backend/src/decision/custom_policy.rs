@@ -1,11 +1,65 @@
-use crate::decision::types::PolicyDecision;
+use crate::decision::types::{PolicyDecision, PolicyMode};
+use crate::http::ReacherResponseError;
 use check_if_email_exists::LOG_TARGET;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
+use warp::http::StatusCode;
 
 const MAX_RULES: usize = 25;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DecisionPolicy {
+	pub mode: PolicyMode,
+	pub custom_profile: Option<(String, CustomPolicyRules)>,
+}
+
+/// Resolve explicit request settings once so queued execution uses the same policy.
+pub async fn resolve_requested_policy(
+	pool: Option<&PgPool>,
+	tenant_id: Option<Uuid>,
+	mode: Option<PolicyMode>,
+	profile_key: Option<&str>,
+) -> Result<Option<DecisionPolicy>, ReacherResponseError> {
+	if mode.is_none() && profile_key.is_none() {
+		return Ok(None);
+	}
+	let invalid = |message| ReacherResponseError::new(StatusCode::BAD_REQUEST, message);
+	let mode = mode.ok_or_else(|| invalid("policy_profile_key requires policy_mode=custom"))?;
+	if mode != PolicyMode::Custom {
+		if profile_key.is_some() {
+			return Err(invalid("policy_profile_key requires policy_mode=custom"));
+		}
+		return Ok(Some(DecisionPolicy {
+			mode,
+			custom_profile: None,
+		}));
+	}
+	let tenant_id = tenant_id.ok_or_else(|| invalid("Custom policies require a tenant"))?;
+	let pool = pool.ok_or_else(|| {
+		ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"Policy storage unavailable",
+		)
+	})?;
+	let custom_profile = if let Some(key) = profile_key {
+		let row = sqlx::query("SELECT profile_key, rules FROM tenant_policy_profiles WHERE tenant_id = $1 AND profile_key = $2")
+			.bind(tenant_id).bind(key).fetch_optional(pool).await?
+			.ok_or_else(|| invalid("Requested policy profile was not found for this tenant"))?;
+		let rules = parse_and_validate_rules(&row.get::<Value, _>("rules"))
+			.map_err(|error| ReacherResponseError::new(StatusCode::BAD_REQUEST, error))?;
+		Some((row.get("profile_key"), rules))
+	} else {
+		load_active_profile(pool, tenant_id).await?
+	};
+	let custom_profile =
+		custom_profile.ok_or_else(|| invalid("No valid custom policy profile is available"))?;
+	Ok(Some(DecisionPolicy {
+		mode,
+		custom_profile: Some(custom_profile),
+	}))
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CustomPolicyRules {

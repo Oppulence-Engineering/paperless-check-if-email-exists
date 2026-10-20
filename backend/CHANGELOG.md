@@ -1,5 +1,31 @@
 # Changelog
 
+## [4.4.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.1...v4.4.0) (2026-10-20)
+
+
+### Features
+
+* **decision:** evaluate custom policy profiles ([1ddcfa0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1ddcfa0e1cbd3bad1cb10193340feaa3e02a8706))
+* **smtp:** probe the SMTP route through each configured proxy at startup ([078c760](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/078c7602f67b8c478cbd7851a5b0f15690a09c1b))
+* **worker:** report blocked SMTP egress and bad SMTP identity at startup ([4a0250b](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/4a0250b3a438ce24bba20421acb7f11d232db192))
+
+
+### Bug Fixes
+
+* **bulk:** handle idempotency keys reused on another endpoint ([833b1e8](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/833b1e83f1828c670d100227202f75a7df5885de))
+* **decision:** make recommendations agree with the score they explain ([a0f8aac](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/a0f8aac99de8e990b756aac58eb4fae3bcd2ba44))
+* **jobs:** stop failure reports from returning backend secrets ([762ea66](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/762ea66328173de979e2b3e1899fa5145db6182e))
+* **outcomes:** apply the tenant's outcome policy in scoring ([3582e7d](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/3582e7d9786e6f8c10fc4640f9fa11291230f1ea))
+* **pipelines:** check schedule gaps over a full year ([321bf46](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/321bf46ec4228fc577d068f919c5dc3db37d7bc0))
+* **pipelines:** run cron schedules on either day field, as cron does ([0cc758a](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/0cc758a60dcf2c9e2b05d3410c1c6df875df738e))
+* **quota:** only release usage for tenants whose usage is counted ([e4a2450](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/e4a24503b161e0c72a9508db169e401112c76299))
+* **scoring:** don't report a failed or skipped MX lookup as "no MX" ([1e1eea7](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/1e1eea728c56aa81130a82f9481a0442dde869b5))
+* **scoring:** stop unverified mailboxes from scoring as risky ([bbacc9c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/bbacc9c379d04511b96658ce844c4e979a1e5a38))
+* **web:** label the "mail server not reached" confidence factor ([0ac36c1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/0ac36c1541a93aa6004dbd1077c10de0eb7f9305))
+* **worker:** keep jobs open until their delayed rechecks have run ([8a66dcf](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8a66dcfc54b251b60e9e538895af4a9815b96a69))
+* **worker:** make the cancellation check actually read the job status ([fd1b774](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/fd1b774279581ab62394c42323d86e6e8e4062bb))
+* **worker:** never send a webhook unsigned because the secret lookup failed ([8d3edab](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8d3edab28cd19de0f80419102dcfb1ecf7b44cd5))
+
 ## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-18)
 
 

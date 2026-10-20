@@ -52,9 +52,10 @@ pub async fn finalize_bulk_job_if_done(pool: &PgPool, job_id: i32) -> Result<(),
 			updated_at = NOW()
 		WHERE job.id = $1
 			AND job.status IN ('running', 'cancelling')
+			AND (SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1) = job.total_records
 			AND NOT EXISTS (
 				SELECT 1 FROM v1_task_result
-				WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')
+				WHERE job_id = $1 AND (task_state IN ('queued', 'running', 'retrying') OR (dispatch_id IS NOT NULL AND NOT completion_done))
 			)
 		"#,
 	)
@@ -77,6 +78,7 @@ pub async fn finalize_list_if_done(pool: &PgPool, list_id: i32) -> Result<(), sq
 				COUNT(*) FILTER (
 					WHERE (t.result IS NOT NULL OR t.error IS NOT NULL OR t.task_state = 'cancelled')
 						AND t.task_state NOT IN ('queued', 'running', 'retrying')
+						AND (t.dispatch_id IS NULL OR t.completion_done)
 				) AS processed,
 				COUNT(*) FILTER (WHERE t.task_state IN ('failed', 'dead_lettered')) AS failed
 			FROM v1_lists l
@@ -94,7 +96,7 @@ pub async fn finalize_list_if_done(pool: &PgPool, list_id: i32) -> Result<(), sq
 		FROM counts
 		WHERE l.id = $1
 			AND l.status IN ('uploading', 'processing')
-			AND counts.processed >= l.total_rows
+			AND counts.processed = l.total_rows
 		"#,
 	)
 	.bind(list_id)

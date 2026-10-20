@@ -53,6 +53,7 @@ pub async fn run_warp_server(
 	if let Some(pool) = config.get_pg_pool() {
 		idempotency::spawn_idempotency_cleanup(pool.clone());
 		crate::reputation::spawn_cache_cleanup(pool.clone());
+		crate::worker::dispatch::spawn_publisher(Arc::clone(&config), pool.clone());
 
 		if config.delayed_recheck.enable && config.worker.enable {
 			crate::delayed_recheck::spawn_delayed_recheck_scheduler(
@@ -128,7 +129,7 @@ pub async fn run_warp_server(
 		let pg_pool = config.get_pg_pool().expect(
 			"Please set the RCH__STORAGE__POSTGRES__DB_URL environment when RCH_ENABLE_BULK is set",
 		);
-		let runner = v0::bulk::create_job_registry(&pg_pool).await?;
+		let runner = v0::bulk::create_job_registry(&pg_pool, Arc::clone(&config)).await?;
 		Some(runner)
 	} else {
 		None
@@ -174,7 +175,7 @@ fn required_route_scope(path: &str) -> Option<&'static str> {
 	}
 	let route = path.strip_prefix("/v1/")?;
 	match route.split('/').next()? {
-		"check_email" | "emails" => Some(scope::VERIFY),
+		"check_email" | "operations" | "emails" => Some(scope::VERIFY),
 		"bulk" | "jobs" | "events" | "query" | "sources" => Some(scope::BULK),
 		"find_email" => Some(scope::FIND),
 		"lists" | "segments" => Some(scope::LISTS),

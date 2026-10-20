@@ -1,0 +1,47 @@
+{{- if .Values.smtpMonitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "check-if-email-exists.fullname" . }}-smtp
+  labels:
+    {{- include "check-if-email-exists.labels" . | nindent 4 }}
+    {{- with .Values.smtpMonitoring.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "check-if-email-exists.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: backend
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "check-if-email-exists.fullname" . }}-smtp
+  labels:
+    {{- include "check-if-email-exists.labels" . | nindent 4 }}
+    {{- with .Values.smtpMonitoring.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ include "check-if-email-exists.fullname" . }}.smtp
+      rules:
+        - alert: PaperlessSmtpUnavailable
+          expr: (reacher_smtp_capability_ready{namespace="{{ .Release.Namespace }}"} == 0) and (reacher_smtp_required{namespace="{{ .Release.Namespace }}"} == 1)
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: SMTP verification admission is unavailable or monitoring is disabled
+            description: Inspect /readyz SMTP status and the configured route, credentials and DNS identity.
+        - alert: PaperlessSmtpMetricsMissing
+          expr: absent_over_time(reacher_smtp_monitor_enabled{namespace="{{ .Release.Namespace }}"}[5m])
+          labels:
+            severity: warning
+          annotations:
+            summary: SMTP capability metrics have disappeared
+{{- end }}

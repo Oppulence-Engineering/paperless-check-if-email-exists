@@ -4,7 +4,7 @@ use crate::http::CheckEmailRequest;
 use crate::tenant::quota::release_reserved_usage;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use check_if_email_exists::LOG_TARGET;
-use lapin::{BasicProperties, Channel};
+use lapin::BasicProperties;
 use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Duration;
@@ -33,6 +33,7 @@ pub async fn run_reverification_cycle(
 	config: &Arc<BackendConfig>,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
+	crate::smtp_egress::require_smtp_ready(config)?;
 	// Atomically claim due schedules by advancing next_run_at in a single
 	// UPDATE ... RETURNING, preventing concurrent instances from processing
 	// the same schedule (no transaction needed, the UPDATE itself is atomic).
@@ -131,7 +132,7 @@ async fn process_schedule(
 	}
 
 	// Validate worker config early before consuming quota or creating DB records
-	let worker_config = config.must_worker_config()?;
+	config.must_worker_config()?;
 
 	// Check quota
 	let tenant_ctx =
@@ -145,6 +146,9 @@ async fn process_schedule(
 	.await
 	{
 		crate::tenant::quota::QuotaCheckResult::Allowed => {}
+		crate::tenant::quota::QuotaCheckResult::Unavailable => {
+			anyhow::bail!("Quota service unavailable; reverification was not dispatched");
+		}
 		crate::tenant::quota::QuotaCheckResult::ExceededMonthlyLimit { .. } => {
 			info!(
 				target: LOG_TARGET,
@@ -182,15 +186,7 @@ async fn process_schedule(
 	let PublishOutcome {
 		published,
 		insert_error,
-	} = publish_stale_emails(
-		config,
-		pg_pool,
-		&worker_config.channel,
-		schedule.tenant_id,
-		job_id,
-		&stale_emails,
-	)
-	.await;
+	} = publish_stale_emails(config, pg_pool, schedule.tenant_id, job_id, &stale_emails).await;
 
 	let _ = release_reserved_usage(
 		Some(pg_pool),
@@ -254,15 +250,14 @@ struct PublishOutcome {
 	insert_error: Option<sqlx::Error>,
 }
 
-/// Create a task row for each stale email and publish it. Rows whose publish
-/// fails are marked failed so they don't stay orphaned as 'queued'. A failed
+/// Create a task row for each stale email and durably enqueue it. Rows whose dispatch
+/// cannot be committed are marked failed. A failed
 /// row INSERT stops the batch: it usually means Postgres is unavailable, and
 /// trying every remaining email would only wait out the pool timeout each
 /// time.
 async fn publish_stale_emails(
 	config: &Arc<BackendConfig>,
 	pg_pool: &PgPool,
-	channel: &Arc<Channel>,
 	tenant_id: uuid::Uuid,
 	job_id: i32,
 	stale_emails: &[StaleEmail],
@@ -310,7 +305,7 @@ async fn publish_stale_emails(
 			metadata.task_db_id = Some(task_row_id);
 		}
 
-		if let Err(err) = publish_task(Arc::clone(channel), task, properties.clone()).await {
+		if let Err(err) = publish_task(pg_pool, task, properties.clone()).await {
 			warn!(
 				target: LOG_TARGET,
 				email = %stale.email,
@@ -359,6 +354,7 @@ fn reverification_task(
 	email: &str,
 ) -> CheckEmailTask {
 	CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: CheckEmailRequest {
 			to_email: email.to_string(),
 			..Default::default()
@@ -367,6 +363,9 @@ fn reverification_task(
 		job_id: CheckEmailJobId::Bulk(job_id),
 		webhook: None,
 		metadata: Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some(tenant_id.to_string()),
 			request_id: None,
 			correlation_id: None,

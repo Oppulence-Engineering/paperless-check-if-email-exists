@@ -41,6 +41,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 	paths(
 		crate::http::health::liveness::healthz,
 		crate::http::health::readiness::readyz,
+		crate::http::health::metrics::smtp_metrics,
 		crate::http::version::get::get_version,
 		crate::http::openapi::openapi_spec,
 		crate::http::v0::check_email::post::post_check_email,
@@ -49,6 +50,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		crate::http::v0::bulk::results::get_bulk_job_result,
 		crate::http::v1::onboard::v1_check_email_with_onboard,
 		crate::http::v1::check_email::post::v1_check_email,
+		crate::http::v1::check_email::operation::v1_get_verification_operation,
 		crate::http::v1::bulk::post::v1_create_bulk_job,
 		crate::http::v1::bulk::get_progress::v1_get_bulk_job_progress,
 		crate::http::v1::bulk::get_results::v1_get_bulk_job_results,
@@ -1001,6 +1003,20 @@ fn ensure_check_email_output_scored(spec: &mut Value) {
 		json!({ "$ref": "#/components/schemas/EmailScore" }),
 	);
 	properties.insert(
+		"external_verification".to_string(),
+		json!({
+			"type": "object",
+			"description": "External verification evidence. When present, SMTP was not performed locally.",
+			"required": ["service", "result", "result_code", "subresult"],
+			"properties": {
+				"service": {"type": "string"},
+				"result": {"type": "string"},
+				"result_code": {"type": "integer", "format": "int32"},
+				"subresult": {"type": "string"}
+			}
+		}),
+	);
+	properties.insert(
 		"bounce_risk".to_string(),
 		json!({
 			"description": "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
@@ -1154,6 +1170,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 		json!({
 			"type": "string",
 			"enum": [
+				"external_verification",
 				"deliverable",
 				"invalid_syntax",
 				"invalid_recipient",
@@ -1749,10 +1766,13 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"type": "object",
 			"properties": {
 				"provider": { "type": "string" },
-				"listed": { "type": "boolean" },
+				"listed": { "type": "boolean", "nullable": true, "description": "Null for failed or skipped queries; false only for a completed negative lookup." },
+				"status": { "type": "string", "enum": ["listed", "not_listed", "error", "skipped"] },
+				"answers": { "type": "array", "items": { "type": "string" } },
+				"error": { "type": "string", "nullable": true },
 				"lookup_time_ms": { "type": "integer", "format": "int64" }
 			},
-			"required": ["provider", "listed", "lookup_time_ms"]
+			"required": ["provider", "listed", "status", "answers", "error", "lookup_time_ms"]
 		}),
 	);
 	insert_schema(
@@ -1762,14 +1782,23 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"type": "object",
 			"properties": {
 				"has_spf": { "type": "boolean" },
-				"spf_valid": { "type": "boolean" },
-				"has_dkim": { "type": "boolean" },
+				"spf_policy_explicit": { "type": "boolean", "description": "Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization." },
+				"has_dkim": { "type": "boolean", "nullable": true, "description": "True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence." },
+				"dkim_selectors": { "type": "array", "items": {
+					"type": "object",
+					"properties": {
+						"selector": { "type": "string" },
+						"status": { "type": "string", "enum": ["usable_key", "revoked", "invalid", "not_found", "error"] },
+						"error": { "type": "string", "nullable": true }
+					},
+					"required": ["selector", "status", "error"]
+				} },
 				"has_dmarc": { "type": "boolean" },
 				"dmarc_policy": { "type": "string", "nullable": true },
 				"has_mx": { "type": "boolean" },
 				"mx_records": { "type": "array", "items": { "type": "string" } }
 			},
-			"required": ["has_spf", "spf_valid", "has_dkim", "has_dmarc", "has_mx", "mx_records"]
+			"required": ["has_spf", "spf_policy_explicit", "has_dkim", "dkim_selectors", "has_dmarc", "has_mx", "mx_records"]
 		}),
 	);
 	insert_schema(
@@ -2407,6 +2436,27 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		"post",
 		"200",
 		json_response("CheckEmailOutput", "Email verification result"),
+	);
+	for path in ["/v0/check_email", "/v1/check_email"] {
+		set_response(spec, path, "post", "202", json_response("PendingVerification", "Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge."));
+	}
+	insert_schema(
+		spec,
+		"VerificationResponse",
+		json!({
+			"description": "SDK result for either a completed verification (HTTP 200) or its pending operation (HTTP 202).",
+			"oneOf": [
+				{"$ref":"#/components/schemas/CheckEmailOutput"},
+				{"$ref":"#/components/schemas/PendingVerification"}
+			]
+		}),
+	);
+	set_response(
+		spec,
+		"/v1/operations/{operation_id}",
+		"get",
+		"200",
+		json_response("CheckEmailOutput", "Stored verification result"),
 	);
 	set_request_body(
 		spec,

@@ -5,11 +5,20 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
+import type { BlacklistResultStatus } from "./blacklistResultStatus";
 
 export interface BlacklistResult {
-  listed: boolean;
+  answers: string[];
+  /** @nullable */
+  error: string | null;
+  /**
+   * Null for failed or skipped queries; false only for a completed negative lookup.
+   * @nullable
+   */
+  listed: boolean | null;
   lookup_time_ms: number;
   provider: string;
+  status: BlacklistResultStatus;
 }

@@ -5,12 +5,12 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { CheckEmailOutput } from "../model";
+import type { CheckEmailOutput, PendingVerification } from "../model";
 
 import { getPostCheckEmailResponseMock } from "./v0.faker";
 
@@ -82,9 +82,13 @@ export const getGetBulkJobResultMockHandler = (
 export const getPostCheckEmailMockHandler = (
   overrideResponse?:
     | CheckEmailOutput
+    | PendingVerification
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<CheckEmailOutput> | CheckEmailOutput),
+      ) =>
+        | Promise<CheckEmailOutput | PendingVerification>
+        | CheckEmailOutput
+        | PendingVerification),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(

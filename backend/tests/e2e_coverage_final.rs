@@ -44,6 +44,7 @@ mod coverage_final {
 		c.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq,
 				concurrency: 4,
 			}),

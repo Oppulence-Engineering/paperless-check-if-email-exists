@@ -43,7 +43,10 @@ async fn databases_without_the_late_spring_migrations_migrate_to_head() {
 		&["20260402000001", "20260403000001", "20260510000001"][..],
 	] {
 		let db = migrate_scratch_db_to_head(
-			|prefix| !missing.iter().any(|version| prefix.starts_with(version)),
+			|prefix| {
+				prefix < "20261019000001"
+					&& !missing.iter().any(|version| prefix.starts_with(version))
+			},
 			None,
 		)
 		.await;

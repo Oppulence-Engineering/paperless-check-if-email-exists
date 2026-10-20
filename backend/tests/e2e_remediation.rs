@@ -59,11 +59,10 @@ mod tests {
 		)
 		.await;
 
-		// Suppressions store the address as entered, lowercased; the list task
-		// for row 5 stores the Gmail-canonical form without the dot.
+		// Suppressions retain the entered address and use a shared mailbox key.
 		for email in ["suppressed@example.com", "gmail.suppressed@gmail.com"] {
 			sqlx::query(
-				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, $2, 'manual'::suppression_reason)",
+				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, mailbox_identity($2), 'manual'::suppression_reason)",
 			)
 			.bind(tenant_id)
 			.bind(email)

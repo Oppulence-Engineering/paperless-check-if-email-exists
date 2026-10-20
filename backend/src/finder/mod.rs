@@ -157,6 +157,32 @@ pub async fn precheck_domain(
 
 	let probe_local = format!("reacher_probe_{}", uuid::Uuid::new_v4().simple());
 	let probe_email = format!("{}@{}", probe_local, domain);
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		// Paid checks are reserved for candidates; do not buy a random mailbox probe.
+		let syntax = check_if_email_exists::syntax::check_syntax(&probe_email);
+		let mx = tokio::time::timeout(
+			std::time::Duration::from_secs(5),
+			check_if_email_exists::mx::check_mx(&syntax),
+		)
+		.await;
+		let has_mx_records = match mx {
+			Ok(Ok(mx)) => mx
+				.lookup
+				.as_ref()
+				.ok()
+				.is_some_and(|records| records.iter().next().is_some()),
+			_ => {
+				return Err(ReacherResponseError::new(
+					warp::http::StatusCode::SERVICE_UNAVAILABLE,
+					"Domain DNS precheck is unavailable.",
+				))
+			}
+		};
+		return Ok(DomainPrecheck {
+			has_mx_records,
+			is_catch_all: false,
+		});
+	}
 	let input = crate::http::CheckEmailRequest {
 		to_email: probe_email,
 		..Default::default()

@@ -176,21 +176,97 @@ impl ThrottleManager {
 		}
 	}
 
-	pub async fn check_throttle(&self) -> Option<ThrottleResult> {
+	pub async fn try_acquire(&self) -> Option<ThrottleResult> {
 		let mut throttle = self.inner.lock().await;
 		throttle.reset_if_needed();
-		throttle.should_throttle(&self.config)
+		let blocked = throttle.should_throttle(&self.config);
+		if blocked.is_none() {
+			throttle.increment_counters();
+		}
+		blocked
 	}
+}
 
-	pub async fn increment_counters(&self) {
-		self.inner.lock().await.increment_counters();
+/// Reserve all tenant rate windows together on the primary database.
+pub async fn reserve_tenant_rate(
+	pool: &sqlx::PgPool,
+	tenant_id: uuid::Uuid,
+	config: &ThrottleConfig,
+) -> Result<Option<ThrottleResult>, sqlx::Error> {
+	let limits = [
+		(
+			1_i32,
+			config.max_requests_per_second,
+			ThrottleLimit::PerSecond,
+		),
+		(60, config.max_requests_per_minute, ThrottleLimit::PerMinute),
+		(3600, config.max_requests_per_hour, ThrottleLimit::PerHour),
+		(86400, config.max_requests_per_day, ThrottleLimit::PerDay),
+	];
+	if limits.iter().all(|(_, limit, _)| limit.is_none()) {
+		return Ok(None);
 	}
+	let mut tx = pool.begin().await?;
+	for (seconds, limit, limit_type) in limits {
+		let Some(limit) = limit else {
+			continue;
+		};
+		if limit == 0 {
+			return Ok(Some(ThrottleResult {
+				delay: Duration::from_secs(seconds as u64),
+				limit_type,
+			}));
+		}
+		let admitted = sqlx::query_scalar::<_, i64>(
+			"INSERT INTO tenant_rate_windows (tenant_id, window_seconds, used, resets_at)
+			 VALUES ($1, $2, 1, clock_timestamp() + make_interval(secs => $2))
+			 ON CONFLICT (tenant_id, window_seconds) DO UPDATE
+			 SET used = CASE WHEN tenant_rate_windows.resets_at <= clock_timestamp()
+			                 THEN 1 ELSE tenant_rate_windows.used + 1 END,
+			     resets_at = CASE WHEN tenant_rate_windows.resets_at <= clock_timestamp()
+			                 THEN EXCLUDED.resets_at ELSE tenant_rate_windows.resets_at END
+			 WHERE tenant_rate_windows.resets_at <= clock_timestamp() OR tenant_rate_windows.used < $3
+			 RETURNING used",
+		)
+		.bind(tenant_id)
+		.bind(seconds)
+		.bind(i64::from(limit))
+		.fetch_optional(&mut *tx)
+		.await?;
+		if admitted.is_none() {
+			let delay = sqlx::query_scalar::<_, f64>(
+				"SELECT GREATEST(EXTRACT(EPOCH FROM (resets_at - clock_timestamp())), 0)::float8
+				 FROM tenant_rate_windows WHERE tenant_id = $1 AND window_seconds = $2",
+			)
+			.bind(tenant_id)
+			.bind(seconds)
+			.fetch_one(&mut *tx)
+			.await?;
+			tx.rollback().await?;
+			return Ok(Some(ThrottleResult {
+				delay: Duration::from_secs_f64(delay),
+				limit_type,
+			}));
+		}
+	}
+	tx.commit().await?;
+	Ok(None)
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
 	use tokio::time::{sleep, Duration};
+
+	#[tokio::test]
+	async fn concurrent_requests_cannot_share_the_last_slot() {
+		let manager = ThrottleManager::new(ThrottleConfig {
+			max_requests_per_second: Some(1),
+			..ThrottleConfig::new_without_throttle()
+		});
+		let (a, b) = tokio::join!(manager.try_acquire(), manager.try_acquire());
+		assert_eq!(usize::from(a.is_none()) + usize::from(b.is_none()), 1);
+	}
 
 	#[test]
 	fn expired_throttle_windows_have_no_remaining_delay() {
@@ -241,13 +317,11 @@ mod tests {
 		let manager = ThrottleManager::new(config);
 
 		// Should allow initial requests
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
+		assert_eq!(manager.try_acquire().await, None);
+		assert_eq!(manager.try_acquire().await, None);
 
 		// Should throttle after hitting per-second limit
-		let throttle_result = manager.check_throttle().await;
+		let throttle_result = manager.try_acquire().await;
 		assert!(throttle_result.is_some());
 		assert_eq!(
 			throttle_result.unwrap().limit_type,
@@ -258,6 +332,6 @@ mod tests {
 		sleep(Duration::from_secs(1)).await;
 
 		// Should allow more requests
-		assert_eq!(manager.check_throttle().await, None);
+		assert_eq!(manager.try_acquire().await, None);
 	}
 }

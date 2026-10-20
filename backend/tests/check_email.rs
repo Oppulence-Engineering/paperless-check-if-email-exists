@@ -479,12 +479,27 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+	}
 
-		// The decision always uses the tenant's default policy mode, so a
-		// per-request mode is refused instead of being silently ignored.
+	#[tokio::test]
+	async fn test_v1_request_policy_is_honored_and_invalid_combinations_rejected() {
+		let resp = request()
+			.path("/v1/check_email")
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "foobar")
+			.json(&serde_json::json!({
+				"to_email": "a@risky.example.com", "sandbox": true, "policy_mode": "growth"
+			}))
+			.reply(&create_routes(create_backend_config("foobar")))
+			.await;
+		assert_eq!(resp.status(), StatusCode::OK, "{:?}", resp.body());
+		let result = parse_json(resp.body());
+		assert_eq!(result["policy_evaluation"]["mode"], "growth");
+		assert_eq!(result["recommendation"]["policy_mode"], "growth");
+
 		for body in [
-			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_mode": "growth"}),
 			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_profile_key": "strict"}),
+			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_mode": "growth", "policy_profile_key": "strict"}),
 		] {
 			let resp = request()
 				.path("/v1/check_email")
@@ -495,7 +510,7 @@ mod tests {
 				.await;
 			assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
 			let error = parse_json(resp.body())["error"].to_string();
-			assert!(error.contains("default_policy_mode"), "{}", error);
+			assert!(error.contains("policy_mode=custom"), "{}", error);
 		}
 	}
 

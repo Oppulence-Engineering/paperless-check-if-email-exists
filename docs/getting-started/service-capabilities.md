@@ -49,6 +49,10 @@ Every verification response also includes a score object with:
 
 New verification responses can also include an actionable `recommendation` and `policy_evaluation`. Recommendations use actions such as `send`, `send_with_caution`, `review`, `suppress`, `drop`, and `fix_then_send`, with reason codes that explain the decision.
 
+With Postgres, single checks have durable operation identities. Send an `Idempotency-Key` when creating a check. The endpoint waits up to 20 seconds for completion, then returns HTTP `202` with `operation_id`, `status: "pending"`, and `status_url` if work is still pending. Poll `GET /v1/operations/{operation_id}` using the same tenant credentials: it returns `202` while pending, `200` with the saved verification, or `500` with the saved terminal failure. Polling and replaying the original key do not create another check or charge.
+
+Pending work survives a disconnected request or a restarted process. Idempotency records remain available while work is pending and for at least 24 hours after completion. Worker execution and idempotency require Postgres; configurations without it return `503` before dispatch. The web app polls pending checks automatically. Generated Go and TypeScript SDKs return `VerificationResponse`, which represents either `CheckEmailOutput` or `PendingVerification`; inspect the response status before using the result.
+
 ## Bulk Jobs And List Cleaning
 
 Reacher supports asynchronous bulk verification for large email sets.
@@ -59,7 +63,7 @@ Bulk workflows provide:
 - task-level result persistence
 - paginated job result retrieval
 - streaming downloads for completed jobs
-- CSV output for spreadsheet workflows
+- CSV output for spreadsheet workflows. Cells beginning with formula prefixes (`=`, `+`, `-`, `@`), including after whitespace/control characters, or leading tab/CR/LF are prefixed with an apostrophe. This applies to original columns and headers, errors, suppression exports, and remediation exports. Use JSON or NDJSON for exact machine-readable field values.
 - NDJSON output for system-to-system processing
 - source attribution for source-quality reporting
 - job failure-center summaries and downloadable failure reports
@@ -125,3 +129,15 @@ Some endpoints are useful but are not the main product story for this repository
 ## In Short
 
 Reacher is not just an email checker binary. In this repository, it is a tenant-aware backend/API engine for verification, list cleaning, decision policies, remediation, suppressions, source quality, outcome feedback, re-verification, and pipelines.
+
+## Reading domain reputation evidence
+
+Reputation results report what each check established. A DKIM key found at a common selector does not verify a message signature. `has_dkim: null` means the check could not establish a usable key; another selector may contain one. `dkim_selectors` reports each attempted selector separately, including missing, revoked, invalid, and failed lookups.
+
+SPF record presence is reported by `has_spf`. The former `spf_valid` field is replaced by `spf_policy_explicit`, which indicates whether one SPF record contains a terminal `all` or a nonempty redirect. This field does not validate SPF syntax or authorize a sender. Use an SPF evaluator for those decisions.
+
+Each blocklist result includes `status`, `answers`, and an optional `error`. `listed: false` means a completed negative lookup. A failed or skipped query has `listed: null`; it does not establish a clean result. A score reflects known evidence, and an otherwise low-risk result with incomplete blocklist coverage is labeled `unknown`.
+
+## Mailbox identity
+
+The service preserves the supplied address for verification. Domains are compared without ASCII case, while local-part case, dots, and tags remain significant. Consumer Gmail and Googlemail are the supported exception: their case, dot, and plus aliases share one deduplication and suppression identity. This rule does not extend to Google Workspace domains.

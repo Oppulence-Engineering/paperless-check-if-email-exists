@@ -708,7 +708,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists"
-version = "4.3.0"
+version = "4.4.0"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -741,7 +741,7 @@ dependencies = [
 
 [[package]]
 name = "check-if-email-exists-cli"
-version = "4.3.0"
+version = "4.3.1"
 dependencies = [
  "anyhow",
  "check-if-email-exists",
@@ -2872,6 +2872,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "millionverifier-sdk"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "url",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3729,7 +3739,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_backend"
-version = "4.3.1"
+version = "4.4.0"
 dependencies = [
  "anyhow",
  "async-smtp",
@@ -3750,6 +3760,7 @@ dependencies = [
  "hmac 0.13.0",
  "http 1.5.0",
  "lapin",
+ "millionverifier-sdk",
  "openssl",
  "percent-encoding",
  "rand 0.10.3",
@@ -3780,7 +3791,7 @@ dependencies = [
 
 [[package]]
 name = "reacher_sqs"
-version = "4.3.1"
+version = "4.3.2"
 dependencies = [
  "check-if-email-exists",
  "lambda_runtime",

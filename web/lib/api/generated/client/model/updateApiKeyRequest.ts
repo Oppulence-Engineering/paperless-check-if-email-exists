@@ -5,11 +5,14 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 
 export interface UpdateApiKeyRequest {
-  /** @nullable */
+  /**
+   * `null` removes the expiry; an absent field leaves it unchanged.
+   * @nullable
+   */
   expires_at?: string | null;
   /** @nullable */
   name?: string | null;

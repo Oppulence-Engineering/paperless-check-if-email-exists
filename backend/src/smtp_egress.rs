@@ -1,26 +1,135 @@
-//! Startup checks for the outbound SMTP path.
-//!
-//! Every verification depends on opening port 25 to the recipient's mail
-//! server, directly or through a SOCKS5 proxy. When the host or the proxy
-//! blocks that port (most cloud and proxy providers do by default), the proxy
-//! rejects our credentials, or the EHLO identity is rejected, each check comes
-//! back "unknown" and nothing else points at the cause. These checks put it in
-//! the logs at boot.
+//! Cached, bounded SMTP greeting probes; HTTP health requests never open SMTP.
 
 use crate::config::BackendConfig;
+use check_if_email_exists::smtp::verif_method::EmailProvider;
 use check_if_email_exists::smtp::{probe_smtp_greeting, SmtpError};
-use check_if_email_exists::{CheckEmailInputProxy, LOG_TARGET};
+use check_if_email_exists::LOG_TARGET;
 use fast_socks5::SocksError;
-use std::time::Duration;
+use serde::Serialize;
+use std::{
+	collections::{BTreeMap, HashSet},
+	sync::{Arc, RwLock},
+	time::{Duration, Instant},
+};
 use tracing::{error, info, warn};
 
-/// A mail exchanger that greets any host whose port 25 is open, so its
-/// greeting proves the whole route works.
+/// A greeting from this public target demonstrates reachability to that target.
 const PROBE_MX_HOST: &str = "gmail-smtp-in.l.google.com";
-const PROBE_MX_PORT: u16 = 25;
 /// Longer than the 10 second direct connect timeout, so a blocked port shows
 /// up as a connect failure rather than a missing greeting.
 const PROBE_TIMEOUT: Duration = Duration::from_secs(20);
+const PROBE_INTERVAL: Duration = Duration::from_secs(60);
+const MAX_AGE: Duration = Duration::from_secs(180);
+
+#[derive(Debug, Default)]
+pub struct SmtpHealth {
+	last: RwLock<Option<(Instant, SmtpCapability)>>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SmtpCapability {
+	pub status: &'static str,
+	pub checked_at: Option<i64>,
+	routes: BTreeMap<String, Diagnosis>,
+}
+
+impl SmtpHealth {
+	pub fn snapshot(&self, enabled: bool) -> SmtpCapability {
+		let last = self.last.read().expect("SMTP health lock");
+		let mut snapshot =
+			last.as_ref()
+				.map(|(_, value)| value.clone())
+				.unwrap_or(SmtpCapability {
+					status: "pending",
+					checked_at: None,
+					routes: BTreeMap::new(),
+				});
+		if !enabled {
+			snapshot.status = "disabled";
+		} else if last.as_ref().is_some_and(|(at, _)| at.elapsed() > MAX_AGE) {
+			snapshot.status = "stale";
+		}
+		snapshot
+	}
+
+	fn record(&self, routes: BTreeMap<String, Diagnosis>) {
+		let ready = !routes.is_empty() && routes.values().all(|status| *status == Diagnosis::Ready);
+		*self.last.write().expect("SMTP health lock") = Some((
+			Instant::now(),
+			SmtpCapability {
+				status: if ready { "ready" } else { "unavailable" },
+				checked_at: Some(chrono::Utc::now().timestamp()),
+				routes,
+			},
+		));
+	}
+}
+
+pub fn require_smtp_ready(config: &BackendConfig) -> Result<(), crate::http::ReacherResponseError> {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return config
+			.millionverifier
+			.validate(config.verification_backend)
+			.map_err(|_| {
+				crate::http::ReacherResponseError::new(
+				warp::http::StatusCode::SERVICE_UNAVAILABLE,
+				"MillionVerifier is not configured with a live API key; no check was dispatched or charged.",
+			)
+			});
+	}
+	if config.smtp_health_enabled && config.smtp_health.snapshot(true).status != "ready" {
+		return Err(crate::http::ReacherResponseError::new(
+			warp::http::StatusCode::SERVICE_UNAVAILABLE,
+			"SMTP verification capability is unavailable; no new check was dispatched or charged.",
+		));
+	}
+	Ok(())
+}
+
+fn smtp_providers() -> [EmailProvider; 7] {
+	[
+		EmailProvider::Gmail,
+		EmailProvider::HotmailB2B,
+		EmailProvider::HotmailB2C,
+		EmailProvider::Mimecast,
+		EmailProvider::Proofpoint,
+		EmailProvider::Yahoo,
+		EmailProvider::EverythingElse,
+	]
+}
+
+pub fn validate_smtp_identity(config: &BackendConfig) -> Result<(), anyhow::Error> {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return config.millionverifier.validate(config.verification_backend);
+	}
+	if !config.smtp_health_enabled {
+		return Ok(());
+	}
+	let method = config.get_verif_method();
+	for provider in smtp_providers() {
+		if let Some(route) = method.smtp_config(provider) {
+			anyhow::ensure!(smtp_identity_warnings(&route.hello_name, &route.from_email).is_empty(),
+				"SMTP requires a public HELO hostname and valid sender address; configure RCH__HELLO_NAME and RCH__FROM_EMAIL");
+		}
+	}
+	Ok(())
+}
+
+pub async fn monitor_smtp_egress(config: Arc<BackendConfig>) {
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return;
+	}
+	if !config.smtp_health_enabled {
+		warn!(target: LOG_TARGET, "SMTP capability monitoring and admission guard are disabled");
+		return;
+	}
+	let mut interval = tokio::time::interval(PROBE_INTERVAL);
+	interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+	loop {
+		interval.tick().await;
+		log_smtp_egress_checks(&config).await;
+	}
+}
 
 /// Problems with the EHLO name or MAIL FROM address that make receiving
 /// servers reject the conversation before the mailbox is ever checked.
@@ -34,7 +143,9 @@ pub fn smtp_identity_warnings(hello_name: &str, from_email: &str) -> Vec<String>
 		));
 	}
 	let from_domain = from_email.rsplit_once('@').map(|(_, domain)| domain);
-	if !from_domain.map(is_public_domain).unwrap_or(false) {
+	if !from_domain.map(is_public_domain).unwrap_or(false)
+		|| !check_if_email_exists::syntax::check_syntax(from_email).is_valid_syntax
+	{
 		warnings.push(format!(
 			"from_email {:?} does not use a public domain; servers such as Gmail reject the \
 			 MAIL FROM command. Set RCH__FROM_EMAIL to an address on a domain you own.",
@@ -49,17 +160,29 @@ fn is_public_domain(name: &str) -> bool {
 	let Some((_, tld)) = name.rsplit_once('.') else {
 		return false;
 	};
-	!tld.is_empty()
+	name.len() <= 253
+		&& name.parse::<std::net::IpAddr>().is_err()
+		&& tld.len() >= 2
+		&& tld.bytes().all(|byte| byte.is_ascii_alphabetic())
 		&& !matches!(
 			tld,
 			"localhost" | "local" | "internal" | "lan" | "test" | "invalid"
-		) && name.split('.').all(|label| !label.is_empty())
+		) && name.split('.').all(|label| {
+		!label.is_empty()
+			&& label.len() <= 63
+			&& !label.starts_with('-')
+			&& !label.ends_with('-')
+			&& label
+				.bytes()
+				.all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+	})
 }
 
 /// What a probe of one SMTP route found.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 enum Diagnosis {
-	/// The mail server greeted with 220: verifications can run.
+	/// The probe target sent a 220 greeting; recipient acceptance is untested.
 	Ready,
 	/// The mail server answered but refused the session, usually because the
 	/// sending IP is on a blocklist.
@@ -75,6 +198,7 @@ enum Diagnosis {
 	ProxyUnreachable,
 	/// This host could not open port 25 itself.
 	DirectBlocked,
+	IdentityUnresolvable,
 }
 
 fn diagnose(result: &Result<String, SmtpError>) -> Diagnosis {
@@ -92,78 +216,56 @@ fn diagnose(result: &Result<String, SmtpError>) -> Diagnosis {
 	}
 }
 
-/// Logs SMTP identity problems, then opens an SMTP connection the way a
-/// verification would, through each configured proxy and directly when the
-/// default route has none, and logs what it found. Never fails startup.
+/// Probe only configured SMTP routes, without MAIL FROM, RCPT TO or message data.
 pub async fn log_smtp_egress_checks(config: &BackendConfig) {
-	for warning in smtp_identity_warnings(&config.hello_name, &config.from_email) {
-		warn!(target: LOG_TARGET, "{}", warning);
-	}
-
-	if config.proxy.is_none() {
-		probe_route("direct", None).await;
-	}
-	for (proxy_id, proxy) in &config.get_verif_method().proxies {
-		let route = format!("proxy {} ({}:{})", proxy_id, proxy.host, proxy.port);
-		probe_route(&route, Some(proxy)).await;
-	}
+	let method = config.get_verif_method();
+	let routes: HashSet<_> = IntoIterator::into_iter(smtp_providers())
+		.filter_map(|provider| method.smtp_config(provider))
+		.map(|route| {
+			(
+				route.proxy.clone(),
+				route.smtp_port,
+				route.hello_name.clone(),
+			)
+		})
+		.collect();
+	let checks = routes.into_iter().map(|(proxy_id, port, hello)| {
+		let method = &method;
+		async move {
+			let route = format!("{}:{port}/{hello}", proxy_id.as_deref().unwrap_or("direct"));
+			let diagnosis = tokio::time::timeout(PROBE_TIMEOUT, async {
+				if check_if_email_exists::network::resolve_public_addresses(&hello, port)
+					.await
+					.is_err()
+				{
+					return Diagnosis::IdentityUnresolvable;
+				}
+				let proxy = proxy_id.as_ref().and_then(|id| method.proxies.get(id));
+				if proxy_id.is_some() && proxy.is_none() {
+					return Diagnosis::ProxyUnreachable;
+				}
+				diagnose(&probe_smtp_greeting(PROBE_MX_HOST, port, proxy, PROBE_TIMEOUT).await)
+			})
+			.await
+			.unwrap_or(Diagnosis::NoGreeting);
+			log_diagnosis(&route, diagnosis);
+			(route, diagnosis)
+		}
+	});
+	config.smtp_health.record(
+		futures::future::join_all(checks)
+			.await
+			.into_iter()
+			.collect(),
+	);
 }
 
-async fn probe_route(route: &str, proxy: Option<&CheckEmailInputProxy>) {
-	let result = probe_smtp_greeting(PROBE_MX_HOST, PROBE_MX_PORT, proxy, PROBE_TIMEOUT).await;
-	let detail = match &result {
-		Ok(greeting) => greeting.clone(),
-		Err(probe_error) => probe_error.to_string(),
-	};
-	log_diagnosis(route, diagnose(&result), &detail);
-}
-
-fn log_diagnosis(route: &str, diagnosis: Diagnosis, detail: &str) {
-	let probe = format!("{}:{}", PROBE_MX_HOST, PROBE_MX_PORT);
-	match diagnosis {
-		Diagnosis::Ready => info!(
-			target: LOG_TARGET, route, probe, greeting = detail,
-			"SMTP route works: the mail server greeted us"
-		),
-		Diagnosis::SessionRefused => warn!(
-			target: LOG_TARGET, route, probe, greeting = detail,
-			"The mail server answered but refused the session. The sending IP (the proxy's \
-			 exit IP when a proxy is used) may be on a blocklist; verifications on this \
-			 route may come back unknown."
-		),
-		Diagnosis::NoGreeting => error!(
-			target: LOG_TARGET, route, probe, reason = detail,
-			"Connected, but the mail server never sent its greeting, so verifications on \
-			 this route come back unknown. Proxies that block port 25 often drop the traffic \
-			 silently: ask the proxy provider whether outbound port 25 is allowed."
-		),
-		Diagnosis::ProxyAuthRejected => error!(
-			target: LOG_TARGET, route, probe, reason = detail,
-			"The SOCKS5 proxy rejected our credentials, so every verification routed through \
-			 it comes back unknown. Check RCH__PROXY__USERNAME and RCH__PROXY__PASSWORD (or \
-			 the proxy's entry in overrides.proxies)."
-		),
-		Diagnosis::ProxyRefusedTarget => error!(
-			target: LOG_TARGET, route, probe, reason = detail,
-			"The SOCKS5 proxy accepted us but would not connect to the mail server on port \
-			 25, so every verification routed through it comes back unknown. Most proxy \
-			 providers block port 25 to stop spam: ask the provider to enable SMTP on this \
-			 proxy, or switch to a proxy sold for SMTP use."
-		),
-		Diagnosis::ProxyUnreachable => error!(
-			target: LOG_TARGET, route, probe, reason = detail,
-			"Could not reach the SOCKS5 proxy, so every verification routed through it comes \
-			 back unknown. Check RCH__PROXY__HOST and RCH__PROXY__PORT, and that the proxy \
-			 allows connections from this host's IP."
-		),
-		Diagnosis::DirectBlocked => error!(
-			target: LOG_TARGET, route, probe, reason = detail,
-			"Outbound SMTP port 25 is unreachable from this host, so verifications that \
-			 connect directly come back unknown. Ask the hosting provider to lift its port \
-			 25 block (on Hetzner Cloud, a limit request), route SMTP through a SOCKS5 proxy \
-			 that allows port 25 (RCH__PROXY__HOST and RCH__PROXY__PORT), or run the worker \
-			 on a host that allows outbound port 25."
-		),
+fn log_diagnosis(route: &str, diagnosis: Diagnosis) {
+	if diagnosis == Diagnosis::Ready {
+		info!(target: LOG_TARGET, route, probe = PROBE_MX_HOST, "SMTP probe target sent a 220 greeting");
+	} else {
+		error!(target: LOG_TARGET, route, probe = PROBE_MX_HOST, diagnosis = ?diagnosis,
+			"SMTP capability probe failed; new verification admission is paused");
 	}
 }
 
@@ -222,6 +324,8 @@ mod tests {
 			("", "", 2),
 			("mailer", "bounce@mailer", 2),
 			("verify.local", "a@verify.local", 2),
+			("127.0.0.1", "a@127.0.0.1", 2),
+			("bad_.example.com", "@example.com", 2),
 			("example.com", "hello@localhost", 1),
 			("verify.example.com", "verify@example.com", 0),
 			("verify.example.com.", "verify@Example.COM", 0),
@@ -234,5 +338,79 @@ mod tests {
 				from_email
 			);
 		}
+	}
+
+	#[test]
+	fn admission_requires_recent_success_and_identity_validation_covers_overrides() {
+		let mut config = BackendConfig::empty();
+		config.smtp_health_enabled = true;
+		assert!(validate_smtp_identity(&config).is_err());
+		config.hello_name = "verify.example.com".into();
+		config.from_email = "verify@example.com".into();
+		assert!(validate_smtp_identity(&config).is_ok());
+		config.overrides.gmail = Some(
+			check_if_email_exists::smtp::verif_method::GmailVerifMethod::Smtp(
+				check_if_email_exists::smtp::verif_method::VerifMethodSmtpConfig {
+					hello_name: "localhost".into(),
+					..Default::default()
+				},
+			),
+		);
+		assert!(validate_smtp_identity(&config).is_err());
+		config.overrides.gmail = None;
+		assert!(require_smtp_ready(&config).is_err());
+		config
+			.smtp_health
+			.record(BTreeMap::from([("direct".into(), Diagnosis::Ready)]));
+		assert!(require_smtp_ready(&config).is_ok());
+		config.smtp_health.last.write().unwrap().as_mut().unwrap().0 =
+			Instant::now() - MAX_AGE - Duration::from_secs(1);
+		assert_eq!(config.smtp_health.snapshot(true).status, "stale");
+		assert!(require_smtp_ready(&config).is_err());
+		config.smtp_health.record(BTreeMap::from([(
+			"direct".into(),
+			Diagnosis::ProxyRefusedTarget,
+		)]));
+		assert!(require_smtp_ready(&config).is_err());
+		config.smtp_health_enabled = false;
+		assert!(require_smtp_ready(&config).is_ok());
+	}
+
+	#[tokio::test]
+	async fn health_requests_use_cached_evidence_and_liveness_stays_independent() {
+		let mut config = BackendConfig::empty();
+		config.smtp_health_enabled = true;
+		let config = Arc::new(config);
+		let routes = crate::http::create_routes(Arc::clone(&config));
+		for _ in 0..2 {
+			let response = warp::test::request().path("/readyz").reply(&routes).await;
+			assert_eq!(response.status(), 503);
+			let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+			assert_eq!(body["checks"]["smtp"]["status"], "pending");
+			assert!(body["checks"]["smtp"]["checked_at"].is_null());
+		}
+		assert_eq!(
+			warp::test::request()
+				.path("/healthz")
+				.reply(&routes)
+				.await
+				.status(),
+			200
+		);
+		let metrics = warp::test::request().path("/metrics").reply(&routes).await;
+		assert!(std::str::from_utf8(metrics.body())
+			.unwrap()
+			.contains("reacher_smtp_capability_ready 0"));
+		config
+			.smtp_health
+			.record(BTreeMap::from([("direct".into(), Diagnosis::Ready)]));
+		assert_eq!(
+			warp::test::request()
+				.path("/readyz")
+				.reply(&routes)
+				.await
+				.status(),
+			200
+		);
 	}
 }

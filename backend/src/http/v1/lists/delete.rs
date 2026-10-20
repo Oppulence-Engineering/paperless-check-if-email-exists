@@ -23,45 +23,58 @@ async fn http_handler(
 	check_scope(&tenant_ctx, scope::LISTS)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
+	delete_list_records(&pg_pool, tenant_id, list_id).await?;
+	Ok(warp::reply::json(&Response { deleted: true }))
+}
+
+pub async fn delete_list_records(
+	pool: &PgPool,
+	tenant_id: uuid::Uuid,
+	list_id: i32,
+) -> Result<(), ReacherResponseError> {
+	let mut tx = pool.begin().await?;
+	// Retry locks the job first; use the same order before inspecting the list.
+	let job_status: Option<String> = sqlx::query_scalar(
+		"SELECT status::TEXT FROM v1_bulk_job WHERE id = (SELECT job_id FROM v1_lists WHERE id = $1 AND tenant_id = $2) FOR UPDATE",
+	).bind(list_id).bind(tenant_id).fetch_optional(&mut *tx).await?;
 	let row = sqlx::query(
-		"SELECT job_id, status::TEXT AS status FROM v1_lists WHERE id = $1 AND tenant_id = $2",
-	)
-	.bind(list_id)
-	.bind(tenant_id)
-	.fetch_optional(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
-	let row = row.ok_or_else(|| {
-		warp::reject::custom(ReacherResponseError::new(
-			StatusCode::NOT_FOUND,
-			"List not found",
-		))
-	})?;
-
-	if row.get::<String, _>("status") == "processing" {
-		return Err(
-			ReacherResponseError::new(StatusCode::CONFLICT, "List is still processing").into(),
-		);
+		"SELECT job_id, status::TEXT AS status FROM v1_lists WHERE id = $1 AND tenant_id = $2 FOR UPDATE",
+	).bind(list_id).bind(tenant_id).fetch_optional(&mut *tx).await?
+		.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "List not found"))?;
+	let job_id: Option<i32> = row.get("job_id");
+	let active: bool = sqlx::query_scalar(
+		"SELECT EXISTS(SELECT 1 FROM v1_task_result t WHERE (job_id = $1 OR extra->>'list_id' = $2) AND (task_state IN ('queued', 'running', 'retrying') OR (dispatch_id IS NOT NULL AND NOT completion_done) OR EXISTS(SELECT 1 FROM verification_dispatch d WHERE d.task_id = t.id)))",
+	).bind(job_id).bind(list_id.to_string()).fetch_one(&mut *tx).await?;
+	if !matches!(
+		row.get::<String, _>("status").as_str(),
+		"completed" | "failed" | "deleted"
+	) || job_status
+		.as_deref()
+		.is_some_and(|status| !matches!(status, "completed" | "failed" | "cancelled"))
+		|| active
+	{
+		return Err(ReacherResponseError::new(
+			StatusCode::CONFLICT,
+			"List has active or unpublished work",
+		));
 	}
-
-	let job_id: i32 = row.get("job_id");
-	sqlx::query("DELETE FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1")
-		.bind(list_id)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
+	sqlx::query("DELETE FROM v1_task_result WHERE job_id = $1 OR extra->>'list_id' = $2")
+		.bind(job_id)
+		.bind(list_id.to_string())
+		.execute(&mut *tx)
+		.await?;
 	sqlx::query("DELETE FROM v1_lists WHERE id = $1")
 		.bind(list_id)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
-	sqlx::query("DELETE FROM v1_bulk_job WHERE id = $1")
-		.bind(job_id)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)?;
-
-	Ok(warp::reply::json(&Response { deleted: true }))
+		.execute(&mut *tx)
+		.await?;
+	if let Some(job_id) = job_id {
+		sqlx::query("DELETE FROM v1_bulk_job WHERE id = $1")
+			.bind(job_id)
+			.execute(&mut *tx)
+			.await?;
+	}
+	tx.commit().await?;
+	Ok(())
 }
 
 /// DELETE /v1/lists/{list_id}

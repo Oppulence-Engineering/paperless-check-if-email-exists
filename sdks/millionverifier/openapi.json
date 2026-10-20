@@ -1,0 +1,210 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "https://api.millionverifier.com",
+      "description": "MillionVerifier Single API"
+    }
+  ],
+  "info": {
+    "description": "API stands for Application Programming Interface. You can connect our system with your website, landing page, application or software to verify emails in real time or to send us files programmatically.\n\nUsing MillionVerifier's API you can avoid bad emails added to your email lists. You may also use our API to resell our services. \n\n# Authentication\nUse your API key to identify your account when making an API call. Each endpoint contains an example of how to use our API. \nSimply just replace \"your-api-key\" with your API key you can find on this page: https://app.millionverifier.com/api\n\nTest API key for development: \"API_KEY_FOR_TEST\". This API key will return random results.\n\n# SSL Information\nThe following versions (or above) are supported to make a succesful request in certain programming languages:\n  - PHP 5.4.45 <=\n  - Python (Requests module) 1.0.0 <=\n  - cURL 7.65.3 <= \n  - Java (OpenJDK) 10 <=\n  - NodeJS 0.10.28 <=\n  - C# (.NET Core) 2.1 <=\n\n# Servers\n- Single API base URL: https://api.millionverifier.com \n- Bulk API base URL: https://bulkapi.millionverifier.com\n",
+    "version": "3.1.0",
+    "title": "MillionVerifier API"
+  },
+  "tags": [
+    {
+      "name": "Single API",
+      "description": "Verify an email address in real time as your subscriber signs up to your newsletter. For cleaning larger databases please use our Bulk API.\n\nSpecial characters in the email address should be encoded.\n\nDemo API keys:\n  - API_KEY_FOR_TEST\n      - Returns with a random response\n  - API_KEY_FOR_UNVERIFIED\n  - API_KEY_FOR_OK\n  - API_KEY_FOR_CATCH_ALL\n  - API_KEY_FOR_INVALID\n  - API_KEY_FOR_UNKOWN\n  - API_KEY_FOR_DISPOSABLE\n  - API_KEY_FOR_ERROR_NO_EMAIL\n  - API_KEY_FOR_ERROR_NO_APIKEY\n  - API_KEY_FOR_ERROR_INVALID_APIKEY\n  - API_KEY_FOR_ERROR_INSUFFICIENT_CREDITS\n  - API_KEY_FOR_ERROR_IP_ADDRESS_BLOCKED\n  - API_KEY_FOR_ERROR_INTERNAL_ERROR\n"
+    },
+    {
+      "name": "Bulk API",
+      "description": "Send your emails in a CSV file programmatically and retrieve your results."
+    },
+    {
+      "name": "API credits",
+      "description": "Get information of the available credits on your account."
+    }
+  ],
+  "paths": {
+    "/api/v3/credits": {
+      "get": {
+        "tags": [
+          "API credits"
+        ],
+        "summary": "API credits",
+        "description": "Check the amount of available credits",
+        "operationId": "api-credits",
+        "parameters": [
+          {
+            "name": "api",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credits": {
+                      "type": "integer",
+                      "description": "Remaining credits",
+                      "example": 12345
+                    },
+                    "bulk_credits": {
+                      "type": "integer",
+                      "description": "Remaining credits, same as \"credits\"",
+                      "example": 12345
+                    },
+                    "renewing_credits": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "plan": {
+                      "type": "integer",
+                      "example": 4
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/": {
+      "get": {
+        "tags": [
+          "Single API"
+        ],
+        "summary": "Verify an email address in real time",
+        "description": "Verify an email address in real time and get resutls in just a second.",
+        "operationId": "single-verification",
+        "parameters": [
+          {
+            "name": "api",
+            "in": "query",
+            "description": "Your API key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "your-api-key"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email address that needs to be verified",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "test@example.com"
+            }
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "Time in seconds to terminate the connection in case no response recevied from the recipient server. You can set between 2 and 60 seconds. Default timeout is 20 seconds.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succesful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SingleApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SingleApiResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The verified email address.",
+            "example": "bademail@gmal.com"
+          },
+          "quality": {
+            "type": "string",
+            "description": "The quality of the email address.",
+            "example": "good"
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of email verification.",
+            "example": "invalid"
+          },
+          "resultcode": {
+            "type": "integer",
+            "description": "The result of email verification as an integer. 1 (ok), 2 (catch_all), 3 (unknown), 4 (error), 5 (disposable), 6 (invalid)",
+            "example": 6
+          },
+          "subresult": {
+            "$ref": "#/components/schemas/Subresult",
+            "example": "bad_domain"
+          },
+          "free": {
+            "type": "boolean",
+            "description": "True if the email address is provided by a free email service such as Gmail or Yahoo.",
+            "example": false
+          },
+          "role": {
+            "type": "boolean",
+            "description": "True if the email address if linked to a role as opposed to a person. For example: admin@, sales@",
+            "example": false
+          },
+          "didyoumean": {
+            "type": "string",
+            "description": "Autocorrection suggestion for common typos.",
+            "example": "bademail@gmail.com"
+          },
+          "credits": {
+            "type": "integer",
+            "description": "Remaining credits in your account.",
+            "example": 3454
+          },
+          "executiontime": {
+            "type": "integer",
+            "description": "The time in milliseconds for the email verification.",
+            "example": 2
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message displayed here if result is \"error\".",
+            "example": ""
+          },
+          "livemode": {
+            "type": "boolean",
+            "description": "Whether the request was made with a real or demo API key",
+            "example": true
+          }
+        }
+      },
+      "Subresult": {
+        "description": "Subresult of email verification.",
+        "type": "string"
+      }
+    }
+  }
+}

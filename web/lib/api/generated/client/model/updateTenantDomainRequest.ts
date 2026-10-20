@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 
 export interface UpdateTenantDomainRequest {
@@ -13,7 +13,10 @@ export interface UpdateTenantDomainRequest {
   domain?: string | null;
   /** @nullable */
   is_active?: boolean | null;
-  /** @nullable */
+  /**
+   * Only read to refuse it: verification is not the tenant's to declare.
+   * @nullable
+   */
   is_verified?: boolean | null;
   /** @nullable */
   notes?: string | null;

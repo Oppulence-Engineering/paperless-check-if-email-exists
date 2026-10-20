@@ -111,9 +111,13 @@ pub fn collect_explanations(input: &ExplanationInput<'_>) -> Vec<DecisionReason>
 
 fn weak_mail_infrastructure(input: &ExplanationInput<'_>) -> bool {
 	let signals = &input.score.signals;
+	let external = input
+		.score
+		.reason_codes
+		.iter()
+		.any(|code| code == "external_verification");
 	!signals.has_mx_records
-		|| signals.smtp_error
-		|| !signals.smtp_can_connect
+		|| (!external && (signals.smtp_error || !signals.smtp_can_connect))
 		|| input
 			.bounce_risk
 			.map(|risk| {

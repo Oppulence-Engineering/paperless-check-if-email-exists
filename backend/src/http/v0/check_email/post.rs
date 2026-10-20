@@ -45,6 +45,23 @@ pub struct CheckEmailRequest {
 }
 
 impl CheckEmailRequest {
+	pub fn validate_routing_overrides(&self, config: &BackendConfig) -> Result<(), &'static str> {
+		if let Some(proxy) = &self.proxy {
+			if !config
+				.get_verif_method()
+				.proxies
+				.values()
+				.any(|allowed| allowed == proxy)
+			{
+				return Err("Request proxy must match a proxy configured by the server operator.");
+			}
+		}
+		if self.smtp_port.is_some_and(|port| port != 25) {
+			return Err("Request SMTP port must be 25; alternate routes must be configured by the server operator.");
+		}
+		Ok(())
+	}
+
 	pub fn to_check_email_input(&self, config: Arc<BackendConfig>) -> CheckEmailInput {
 		let hello_name = self
 			.hello_name
@@ -72,6 +89,12 @@ impl CheckEmailRequest {
 		} else {
 			config.get_verif_method()
 		};
+		verif_method.override_smtp_settings(
+			self.hello_name.as_deref(),
+			self.from_email.as_deref(),
+			self.smtp_port,
+			self.smtp_timeout,
+		);
 
 		if let Some(yahoo_verif_method) = &self.yahoo_verif_method {
 			verif_method.yahoo = yahoo_verif_method.to_yahoo_verif_method(
@@ -169,4 +192,71 @@ pub fn with_config(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (Arc<BackendConfig>,), Error = std::convert::Infallible> + Clone {
 	warp::any().map(move || Arc::clone(&config))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use check_if_email_exists::smtp::verif_method::{EmailProvider, HotmailB2CVerifMethod};
+
+	#[test]
+	fn routing_overrides_require_an_operator_configured_proxy_and_mail_port() {
+		let mut config = BackendConfig::empty();
+		let mut request = CheckEmailRequest::default();
+		assert!(request.validate_routing_overrides(&config).is_ok());
+		request.smtp_port = Some(22);
+		assert!(request.validate_routing_overrides(&config).is_err());
+		request.smtp_port = Some(25);
+		request.proxy = Some(CheckEmailInputProxy {
+			host: "proxy.example".into(),
+			port: 1080,
+			..Default::default()
+		});
+		assert!(request.validate_routing_overrides(&config).is_err());
+		config.proxy = request.proxy.clone();
+		assert!(request.validate_routing_overrides(&config).is_ok());
+		request.proxy.as_mut().unwrap().port = 8080;
+		assert!(request.validate_routing_overrides(&config).is_err());
+	}
+
+	#[test]
+	fn explicit_smtp_settings_apply_without_replacing_configured_methods() {
+		for proxy in [
+			None,
+			Some(CheckEmailInputProxy {
+				host: "proxy.example".into(),
+				port: 1080,
+				username: None,
+				password: None,
+				timeout_ms: None,
+			}),
+		] {
+			let request = CheckEmailRequest {
+				to_email: "target@example.org".into(),
+				hello_name: Some("requested.example".into()),
+				from_email: Some("sender@requested.example".into()),
+				smtp_port: Some(2525),
+				smtp_timeout: Some(Duration::from_secs(2)),
+				proxy: proxy.clone(),
+				..Default::default()
+			};
+			let input = request.to_check_email_input(Arc::new(BackendConfig::empty()));
+			let smtp = input
+				.verif_method
+				.smtp_config(EmailProvider::EverythingElse)
+				.unwrap();
+			assert_eq!(smtp.hello_name, "requested.example");
+			assert_eq!(smtp.from_email, "sender@requested.example");
+			assert_eq!(smtp.smtp_port, 2525);
+			assert_eq!(smtp.smtp_timeout, Some(Duration::from_secs(2)));
+			assert_eq!(
+				input.verif_method.get_proxy(EmailProvider::EverythingElse),
+				proxy.as_ref()
+			);
+			assert!(matches!(
+				input.verif_method.hotmailb2c,
+				HotmailB2CVerifMethod::Headless
+			));
+		}
+	}
 }

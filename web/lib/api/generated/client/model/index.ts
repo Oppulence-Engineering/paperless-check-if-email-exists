@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 
 export * from "./addSuppressionsRequest";
@@ -31,6 +31,7 @@ export * from "./auditEvent";
 export * from "./auditEventEventData";
 export * from "./auditEventList";
 export * from "./blacklistResult";
+export * from "./blacklistResultStatus";
 export * from "./bounceRiskAssessment";
 export * from "./bounceRiskCategory";
 export * from "./bulkCreateRequest";
@@ -43,6 +44,7 @@ export * from "./catchAllScore";
 export * from "./catchAllSeverity";
 export * from "./checkEmailInputProxy";
 export * from "./checkEmailOutput";
+export * from "./checkEmailOutputExternalVerification";
 export * from "./checkEmailRequest";
 export * from "./confidenceExplanation";
 export * from "./confidenceExplanationLevel";
@@ -64,6 +66,8 @@ export * from "./deletePipelineResponse";
 export * from "./diffGroup";
 export * from "./diffRow";
 export * from "./dnsRecordResults";
+export * from "./dnsRecordResultsDkimSelectorsItem";
+export * from "./dnsRecordResultsDkimSelectorsItemStatus";
 export * from "./domainInfo";
 export * from "./duration";
 export * from "./emailCategory";
@@ -121,6 +125,7 @@ export * from "./outcomeRuleActionAction";
 export * from "./outcomeType";
 export * from "./outcomeView";
 export * from "./partialConfidence";
+export * from "./pendingVerification";
 export * from "./pipelineDeliveryConfig";
 export * from "./pipelineDeliveryStatus";
 export * from "./pipelineDeliveryWebhook";
@@ -249,6 +254,7 @@ export * from "./v1ListSuppressionsParams";
 export * from "./v1QueryResultsParams";
 export * from "./v1SourceQualityParams";
 export * from "./v1UploadCampaignOutcomesBody";
+export * from "./verificationResponse";
 export * from "./verifMethod";
 export * from "./verifMethodType";
 export * from "./verifMethodVerifMethod";

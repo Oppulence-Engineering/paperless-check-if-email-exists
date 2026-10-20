@@ -181,6 +181,7 @@ export const SMTP_UNCERTAINTY_LABELS: Record<string, string> = {
 
 /** Reason codes and sub reasons share most values, so one map serves both. */
 export const REASON_LABELS: Record<string, string> = {
+	external_verification: "Checked by an external service",
 	deliverable: "The mailbox accepts mail",
 	invalid_syntax: "The address format is not valid",
 	invalid_recipient: "The mailbox does not exist",
@@ -306,6 +307,7 @@ export const remediationClass = entry({
 
 /** Domain reputation risk levels (backend/src/reputation/scorer.rs). */
 export const reputationRisk = entry({
+	unknown: { label: "Incomplete", tone: "gray" },
 	low: { label: "Low risk", tone: "green" },
 	medium: { label: "Medium risk", tone: "yellow" },
 	high: { label: "High risk", tone: "red" },
