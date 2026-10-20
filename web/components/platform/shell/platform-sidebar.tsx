@@ -434,7 +434,7 @@ export function PlatformSidebar({
 		<TooltipProvider>
 			<aside
 				className={cn(
-					"sticky top-0 hidden h-screen w-14 shrink-0 flex-col items-center border-r border-white/[0.04] py-3 md:flex",
+					"sticky top-0 hidden h-[var(--app-vh)] w-14 shrink-0 flex-col items-center border-r border-white/[0.04] py-3 md:flex",
 					surface.base,
 				)}
 				data-slot="app-sidebar"

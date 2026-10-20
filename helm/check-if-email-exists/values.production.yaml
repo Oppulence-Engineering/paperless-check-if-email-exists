@@ -25,6 +25,9 @@ config:
   env:
     RCH__VERIFICATION_BACKEND: millionverifier
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
+    # Leave room for rolling replacements on the shared 47-connection cluster.
+    RCH__DB_MAX_CONNECTIONS: "3"
+    DATABASE_POOL_MAX: "2"
 
 # The Resend key comes from Infisical (/frontend/apps/sim, prod). The Infisical
 # operator syncs it into this secret in each cluster. An env entry overrides the
