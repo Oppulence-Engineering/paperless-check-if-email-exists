@@ -22,7 +22,6 @@ export function AcceptPanel({ className, invitationId, returnTo, ...props }: Acc
 		<Page
 			description="Review this action before joining the organization and switching your active workspace."
 			title="Accept organization invitation?"
-			width="sm"
 		>
 			<section
 				data-slot="accept-panel"

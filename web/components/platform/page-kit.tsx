@@ -9,28 +9,19 @@ import { cn } from "@/lib/utils";
  * left and a control on the right, status pills, and a roomy empty state.
  */
 
-const PAGE_WIDTH = { md: "max-w-3xl", sm: "max-w-2xl", xl: "max-w-7xl" } as const;
-
 export function Page({
 	actions,
 	children,
 	description,
 	title,
-	width = "xl",
 }: {
 	actions?: ReactNode;
 	children: ReactNode;
 	description?: ReactNode;
 	title: string;
-	width?: keyof typeof PAGE_WIDTH;
 }) {
 	return (
-		<main
-			className={cn(
-				"mx-auto flex w-full flex-col gap-8 px-4 pt-8 pb-16 md:px-8",
-				PAGE_WIDTH[width],
-			)}
-		>
+		<main className="flex w-full min-w-0 flex-col gap-8 px-4 pt-8 pb-16 md:px-8">
 			<header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div className="min-w-0">
 					<h1 className="text-2xl font-medium tracking-tight text-white">{title}</h1>

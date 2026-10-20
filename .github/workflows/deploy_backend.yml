@@ -88,6 +88,8 @@ jobs:
     needs: docker
     strategy:
       fail-fast: false
+      # The regional pods share a small Postgres connection budget.
+      max-parallel: 1
       matrix:
         cluster: [us-east, eu-central, us-west]
     uses: ./.github/workflows/deploy-helm-direct-template.yml
@@ -133,6 +135,7 @@ jobs:
     needs: docker
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         cluster: [us-east, eu-central, us-west]
     uses: ./.github/workflows/deploy-helm-direct-template.yml

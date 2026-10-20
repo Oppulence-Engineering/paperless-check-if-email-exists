@@ -69,7 +69,7 @@ export function SettingsDashboardRoute({
 
 	const linkRow = "flex items-center gap-4 p-5 transition-colors hover:bg-white/[0.02]";
 	return (
-		<Page title="Settings" width="md">
+		<Page title="Settings">
 			<section
 				className={cn("flex flex-col gap-10", className)}
 				data-slot="settings-dashboard-route"
