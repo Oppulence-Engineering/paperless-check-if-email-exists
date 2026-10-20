@@ -46,7 +46,10 @@ export function ProductDashboardClient({
 					workspaces={workspaces}
 				/>
 				<div
-					className={cn("flex min-h-screen flex-col text-foreground md:flex-row", surface.base)}
+					className={cn(
+						"flex min-h-[var(--app-vh)] flex-col text-foreground md:flex-row",
+						surface.base,
+					)}
 					data-slot="dashboard-shell"
 				>
 					<PlatformSidebar
@@ -58,7 +61,7 @@ export function ProductDashboardClient({
 					<div className="min-w-0 flex-1 md:py-2 md:pr-2">
 						<div
 							className={cn(
-								"min-h-full md:min-h-[calc(100vh-1rem)] md:rounded-2xl md:border md:shadow-xs",
+								"min-h-full md:min-h-[calc(var(--app-vh)-1rem)] md:rounded-2xl md:border md:shadow-xs",
 								surface.panel,
 								surface.border,
 							)}
