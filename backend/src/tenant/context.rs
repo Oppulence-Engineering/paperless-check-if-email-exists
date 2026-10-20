@@ -25,6 +25,8 @@ pub struct TenantContext {
 }
 
 pub mod scope {
+	// Only the server administration API may grant this service credential marker.
+	pub const INTERNAL_VERIFICATION: &str = "internal:verification";
 	pub const VERIFY: &str = "verify";
 	pub const BULK: &str = "bulk";
 	pub const FIND: &str = "find";

@@ -190,3 +190,12 @@ preserves decimal session IDs through SDK callers, counts international names an
 roles by Unicode characters in both services, and stops polling rows without an
 active cell run or result. Import-session completion is deliberately not used to
 stop active research-column jobs, whose lifecycle is separate.
+
+First-party verification credentials carry an admin-only `internal:verification`
+marker. For Free and Starter tenants this permits only `POST /v1/check_email` and
+`GET /v1/operations/{id}`; tenant identity, the `verify` scope, quota, revocation,
+and result ownership still apply. Customer API-key create/update cannot grant the
+marker. This keeps in-app research independent of the paid public-API entitlement
+without sending the admin secret on verification requests. Existing deployment
+service credentials need the marker added through the trusted administration API.
+The regression reproduced the original 403, then passed with the fix.
