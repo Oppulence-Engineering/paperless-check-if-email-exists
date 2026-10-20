@@ -13,9 +13,15 @@ WHERE canonical_email ~ '^[^@]+@(gmail|googlemail)\.com$'
   AND replace(split_part(split_part(canonical_email, '@', 1), '+', 1), '.', '') <> '';
 
 -- Several active spellings of one mailbox would collide on the unique index
--- of active rows. Keep the newest, as 20260630000002 did, and merge the rest.
+-- of active rows, so one stays active and the rest are merged into it. The
+-- one that stays is the one that suppresses longest: a permanent entry, or
+-- else the latest expiry; the newest breaks ties. Its expiry is then the
+-- combined coverage of the spellings, and its reason, source and other
+-- columns stay those of the entry that provides it. Keeping the newest
+-- regardless could leave a newer expired or temporary entry in place of an
+-- older permanent one. Inactive and merged rows are not part of this.
 WITH keyed AS (
-    SELECT e.id, e.tenant_id, e.created_at,
+    SELECT e.id, e.tenant_id, e.created_at, e.expires_at,
            COALESCE(r.new_key, e.canonical_email) AS key
     FROM v1_suppression_entries e
     LEFT JOIN suppression_rekey r ON r.id = e.id
@@ -25,7 +31,7 @@ ranked AS (
     SELECT id,
            ROW_NUMBER() OVER (
                PARTITION BY tenant_id, key
-               ORDER BY created_at DESC, id DESC
+               ORDER BY expires_at DESC NULLS FIRST, created_at DESC, id DESC
            ) AS row_number
     FROM keyed
 )
