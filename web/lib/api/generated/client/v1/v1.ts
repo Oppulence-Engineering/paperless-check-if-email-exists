@@ -982,12 +982,12 @@ export type v1GetResearchResponseError = v1GetResearchResponseDefault & {
 export type v1GetResearchResponse =
   v1GetResearchResponseSuccess | v1GetResearchResponseError;
 
-export const getV1GetResearchUrl = (sessionId: number) => {
+export const getV1GetResearchUrl = (sessionId: string) => {
   return `/v1/research/${sessionId}`;
 };
 
 export const v1GetResearch = async (
-  sessionId: number,
+  sessionId: string,
   options?: RequestInit,
 ): Promise<v1GetResearchResponse> => {
   const res = await fetch(getV1GetResearchUrl(sessionId), {
@@ -1025,12 +1025,12 @@ export type v1ExportResearchResponseError = v1ExportResearchResponseDefault & {
 export type v1ExportResearchResponse =
   v1ExportResearchResponseSuccess | v1ExportResearchResponseError;
 
-export const getV1ExportResearchUrl = (sessionId: number) => {
+export const getV1ExportResearchUrl = (sessionId: string) => {
   return `/v1/research/${sessionId}/export`;
 };
 
 export const v1ExportResearch = async (
-  sessionId: number,
+  sessionId: string,
   researchExportRequest: ResearchExportRequest,
   options?: RequestInit,
 ): Promise<v1ExportResearchResponse> => {

@@ -166,10 +166,10 @@ type V1API interface {
 	V1ExportResearch Method for V1ExportResearch
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param sessionId Research session
+	@param sessionId Research session ID as a positive decimal string
 	@return V1APIV1ExportResearchRequest
 	*/
-	V1ExportResearch(ctx context.Context, sessionId int64) V1APIV1ExportResearchRequest
+	V1ExportResearch(ctx context.Context, sessionId string) V1APIV1ExportResearchRequest
 
 	// V1ExportResearchExecute executes the request
 	//  @return ResearchExportResponse
@@ -229,10 +229,10 @@ type V1API interface {
 	V1GetResearch Method for V1GetResearch
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param sessionId Research session
+	@param sessionId Research session ID as a positive decimal string
 	@return V1APIV1GetResearchRequest
 	*/
-	V1GetResearch(ctx context.Context, sessionId int64) V1APIV1GetResearchRequest
+	V1GetResearch(ctx context.Context, sessionId string) V1APIV1GetResearchRequest
 
 	// V1GetResearchExecute executes the request
 	//  @return ResearchDetail
@@ -1862,7 +1862,7 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 type V1APIV1ExportResearchRequest struct {
 	ctx context.Context
 	ApiService V1API
-	sessionId int64
+	sessionId string
 	researchExportRequest *ResearchExportRequest
 }
 
@@ -1879,10 +1879,10 @@ func (r V1APIV1ExportResearchRequest) Execute() (*ResearchExportResponse, *http.
 V1ExportResearch Method for V1ExportResearch
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param sessionId Research session
+ @param sessionId Research session ID as a positive decimal string
  @return V1APIV1ExportResearchRequest
 */
-func (a *V1APIService) V1ExportResearch(ctx context.Context, sessionId int64) V1APIV1ExportResearchRequest {
+func (a *V1APIService) V1ExportResearch(ctx context.Context, sessionId string) V1APIV1ExportResearchRequest {
 	return V1APIV1ExportResearchRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1911,9 +1911,6 @@ func (a *V1APIService) V1ExportResearchExecute(r V1APIV1ExportResearchRequest) (
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.sessionId < 0 {
-		return localVarReturnValue, nil, reportError("sessionId must be greater than 0")
-	}
 	if r.researchExportRequest == nil {
 		return localVarReturnValue, nil, reportError("researchExportRequest is required and must be specified")
 	}
@@ -2548,7 +2545,7 @@ func (a *V1APIService) V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailRes
 type V1APIV1GetResearchRequest struct {
 	ctx context.Context
 	ApiService V1API
-	sessionId int64
+	sessionId string
 }
 
 func (r V1APIV1GetResearchRequest) Execute() (*ResearchDetail, *http.Response, error) {
@@ -2559,10 +2556,10 @@ func (r V1APIV1GetResearchRequest) Execute() (*ResearchDetail, *http.Response, e
 V1GetResearch Method for V1GetResearch
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param sessionId Research session
+ @param sessionId Research session ID as a positive decimal string
  @return V1APIV1GetResearchRequest
 */
-func (a *V1APIService) V1GetResearch(ctx context.Context, sessionId int64) V1APIV1GetResearchRequest {
+func (a *V1APIService) V1GetResearch(ctx context.Context, sessionId string) V1APIV1GetResearchRequest {
 	return V1APIV1GetResearchRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -2591,9 +2588,6 @@ func (a *V1APIService) V1GetResearchExecute(r V1APIV1GetResearchRequest) (*Resea
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.sessionId < 0 {
-		return localVarReturnValue, nil, reportError("sessionId must be greater than 0")
-	}
 
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

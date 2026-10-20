@@ -18,8 +18,11 @@ through a trusted server endpoint. Workspace credentials stay on servers and are
 encrypted in storage; the reverse verification client uses the original Rust
 tenant so its quotas and suppression policy continue to apply.
 
-Mailbox checks use MillionVerifier, with persisted operations and stable retry
-keys. Research failure never triggers an SMTP/proxy fallback. Keep provider
+Paperless's managed staging and production deployments route mailbox checks to
+MillionVerifier, with persisted operations and stable retry keys. Research failure
+never triggers an SMTP/proxy fallback. The generic self-hosted Reacher defaults
+still support the legacy engine; this deployment guarantee does not change those
+defaults. Keep provider
 observations tenant-private unless the source's license independently permits
 the intended shared use; Parallel-derived global contact tables are not part of
 this release. Existing licensed or independently sourced Go company data retains

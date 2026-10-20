@@ -151,7 +151,7 @@ it("only selects ready rows for approved export and reports fresh policy exclusi
 	);
 	await waitFor(() =>
 		expect(exportRows).toHaveBeenCalledWith({
-			sessionId: 42,
+			sessionId: "42",
 			researchExportRequest: { mode: "approved", row_keys: ["ready-1"] },
 		}),
 	);
@@ -165,4 +165,12 @@ it("stops polling completed runs", () => {
 	expect(researchRefetchInterval("running")).toBe(5_000);
 	expect(researchRefetchInterval("completed")).toBe(false);
 	expect(researchRefetchInterval()).toBe(false);
+});
+
+it("preserves session IDs beyond JavaScript integer precision", async () => {
+	setup("9007199254740993");
+	await screen.findByText("jane@acme.com");
+	expect(V1Api.prototype.v1GetResearch).toHaveBeenCalledWith({
+		sessionId: "9007199254740993",
+	});
 });

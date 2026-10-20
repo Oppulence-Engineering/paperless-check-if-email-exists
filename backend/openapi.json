@@ -1372,18 +1372,24 @@
           },
           "max_candidates": {
             "format": "int32",
-            "minimum": 0,
+            "maximum": 3,
+            "minimum": 1,
             "type": "integer"
           },
           "max_verifications": {
             "format": "int32",
-            "minimum": 0,
+            "maximum": 30,
+            "minimum": 1,
             "type": "integer"
           },
           "name": {
+            "maxLength": 100,
+            "minLength": 1,
             "type": "string"
           },
           "target_role": {
+            "maxLength": 120,
+            "minLength": 1,
             "type": "string"
           }
         },
@@ -11929,14 +11935,12 @@
         "operationId": "v1_get_research",
         "parameters": [
           {
-            "description": "Research session",
+            "description": "Research session ID as a positive decimal string",
             "in": "path",
             "name": "session_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -11972,14 +11976,12 @@
         "operationId": "v1_export_research",
         "parameters": [
           {
-            "description": "Research session",
+            "description": "Research session ID as a positive decimal string",
             "in": "path",
             "name": "session_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

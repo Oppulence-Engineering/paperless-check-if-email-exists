@@ -569,12 +569,12 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
-         * @param {number} sessionId Research session
+         * @param {string} sessionId Research session ID as a positive decimal string
          * @param {ResearchExportRequest} researchExportRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ExportResearch: async (sessionId: number, researchExportRequest: ResearchExportRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1ExportResearch: async (sessionId: string, researchExportRequest: ResearchExportRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'sessionId' is not null or undefined
             assertParamExists('v1ExportResearch', 'sessionId', sessionId)
             // verify required parameter 'researchExportRequest' is not null or undefined
@@ -787,11 +787,11 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
-         * @param {number} sessionId Research session
+         * @param {string} sessionId Research session ID as a positive decimal string
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1GetResearch: async (sessionId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1GetResearch: async (sessionId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'sessionId' is not null or undefined
             assertParamExists('v1GetResearch', 'sessionId', sessionId)
             const localVarPath = `/v1/research/{session_id}`
@@ -1370,12 +1370,12 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
-         * @param {number} sessionId Research session
+         * @param {string} sessionId Research session ID as a positive decimal string
          * @param {ResearchExportRequest} researchExportRequest
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ExportResearch(sessionId: number, researchExportRequest: ResearchExportRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchExportResponse>> {
+        async v1ExportResearch(sessionId: string, researchExportRequest: ResearchExportRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchExportResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ExportResearch(sessionId, researchExportRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1ExportResearch']?.[localVarOperationServerIndex]?.url;
@@ -1440,11 +1440,11 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
-         * @param {number} sessionId Research session
+         * @param {string} sessionId Research session ID as a positive decimal string
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1GetResearch(sessionId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchDetail>> {
+        async v1GetResearch(sessionId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchDetail>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetResearch(sessionId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1GetResearch']?.[localVarOperationServerIndex]?.url;
@@ -2332,11 +2332,11 @@ export interface V1ApiV1DownloadListRequest {
  */
 export interface V1ApiV1ExportResearchRequest {
     /**
-     * Research session
-     * @type {number}
+     * Research session ID as a positive decimal string
+     * @type {string}
      * @memberof V1ApiV1ExportResearch
      */
-    readonly sessionId: number
+    readonly sessionId: string
 
     /**
      *
@@ -2444,11 +2444,11 @@ export interface V1ApiV1GetListRequest {
  */
 export interface V1ApiV1GetResearchRequest {
     /**
-     * Research session
-     * @type {number}
+     * Research session ID as a positive decimal string
+     * @type {string}
      * @memberof V1ApiV1GetResearch
      */
-    readonly sessionId: number
+    readonly sessionId: string
 }
 
 /**
