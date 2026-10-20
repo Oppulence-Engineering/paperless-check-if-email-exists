@@ -198,6 +198,40 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_v1_find_email_refuses_before_probing_when_quota_is_used_up() {
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "finder-quota-spent", Some(100), 100).await;
+		let (api_key, _) = insert_api_key(db.pool(), tenant_id).await;
+		let config = worker_config(db.db_url(), &rmq.amqp_url, "phase2").await;
+
+		// The precheck probes the domain from our servers, so a tenant with no
+		// quota left is refused before it runs, whatever the domain turns out
+		// to be. A domain without MX records is otherwise answered for free.
+		let response = request()
+			.method("POST")
+			.path("/v1/find_email")
+			.header("authorization", format!("Bearer {}", api_key))
+			.json(&serde_json::json!({
+				"first_name": "John",
+				"last_name": "Doe",
+				"domain": "invalid.invalid"
+			}))
+			.reply(&create_routes(config))
+			.await;
+
+		assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+		let used_this_period: i32 =
+			sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id = $1")
+				.bind(tenant_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(used_this_period, 100);
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_v1_find_email_charges_quota_for_generated_candidate_count() {
 		let db = TestDb::start().await;
 		let rmq = TestRabbitMq::start().await;
