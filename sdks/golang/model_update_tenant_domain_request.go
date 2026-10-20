@@ -22,6 +22,7 @@ var _ MappedNullable = &UpdateTenantDomainRequest{}
 type UpdateTenantDomainRequest struct {
 	Domain NullableString `json:"domain,omitempty"`
 	IsActive NullableBool `json:"is_active,omitempty"`
+	// Only read to refuse it: verification is not the tenant's to declare.
 	IsVerified NullableBool `json:"is_verified,omitempty"`
 	Notes NullableString `json:"notes,omitempty"`
 }

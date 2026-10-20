@@ -290,6 +290,9 @@ mod postgres_storage_tests {
 			let task = make_task(
 				job_id,
 				Some(TaskMetadata {
+					dispatch_id: None,
+					lease_id: None,
+					decision_policy: None,
 					tenant_id: None,
 					request_id: None,
 					correlation_id: None,

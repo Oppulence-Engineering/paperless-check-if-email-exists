@@ -9,7 +9,10 @@
  */
 
 export interface UpdateApiKeyRequest {
-  /** @nullable */
+  /**
+   * `null` removes the expiry; an absent field leaves it unchanged.
+   * @nullable
+   */
   expires_at?: string | null;
   /** @nullable */
   name?: string | null;

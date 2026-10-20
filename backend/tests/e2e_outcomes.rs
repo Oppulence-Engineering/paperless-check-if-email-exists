@@ -763,7 +763,8 @@ async fn test_concurrent_soft_bounces_still_cross_the_threshold() -> Result<()> 
 		}
 		assert!(
 			tokio::time::Instant::now() < deadline,
-			"both requests should be waiting, {waiting} are"
+			"both requests should be waiting, {} are",
+			waiting
 		);
 		tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 	}

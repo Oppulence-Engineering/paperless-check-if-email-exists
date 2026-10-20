@@ -4,14 +4,16 @@ Scope: every finding B01–B36 in [bugs.md](../../bugs.md), followed by computer
 
 Base: `da6741786ebf26e80166dda546f3e8a36b81e4e1`; branch: `fix/email-verification-audit`.
 
+The audit checkpoint `92491e1f` was reconciled with deployed develop revision `40065fdd` (PR #106) in local merge `fdea8520`. The integration preserves that revision's independent fixes and migration checksums alongside the audit's durable operations, dispatch fencing, policy propagation and mailbox identity changes. Local checks below do not imply that this merge is pushed or deployed.
+
 ## Work and evidence
 
 | Findings | Required change | Current state |
 | --- | --- | --- |
 | B01–B03 | Approved working SMTP route, valid identity, maintained capability health | Identity validation, cached periodic capability, readiness/metrics and no-charge admission guards implemented. Unit, HTTP and scheduler regressions pass; provider identity, live monitoring and route proof remain pending |
-| B04–B08 | Policy errors, catch-all uncertainty/target probe, MX failover, bounded cleanup | Implemented; core suite 51 passed, 4 existing external-service tests ignored |
+| B04–B08 | Policy errors, catch-all uncertainty/target probe, MX failover, bounded cleanup | Implemented; integrated core suite 52 passed, 4 existing external-service tests ignored |
 | B09–B10 | Restrict/pin SMTP, proxy, and webhook destinations | Code implemented; SMTP negative/SOCKS and webhook pinning tests pass. Helm egress isolation, exact dependency exceptions, DNS and monitoring render tests pass; live policy enforcement remains pending |
-| B11–B14 | Durable idempotent single-check operation, persistence before reply, aligned deadlines | Durable admission, HTTP timeout/replay, disconnected-request recovery, terminal failure/refund and direct execution regressions pass. Actual broker-backed HTTP completion returns the saved result. SDK pending/completed response test passes; new operation scope/family mappings are included. A worker throttle regression now verifies eventual delivery instead of permanently dropping durable operations; full validation in progress |
+| B11–B14 | Durable idempotent single-check operation, persistence before reply, aligned deadlines | Durable admission, HTTP timeout/replay, disconnected-request recovery, terminal failure/refund and direct execution regressions pass. Actual broker-backed HTTP completion returns the saved result. SDK pending/completed response and durable-operation throttling regressions pass |
 | B15–B17 | Atomic distributed admission and fail-closed quota | Implemented; two-pool rate race and quota failure integration tests passed; backend unit suite passed |
 | B18–B22 | Transactional job publication/retry, monotonic finalization, durable follow-up actions | B18 list insertion rollback and B20 retry transaction/publication fault tests pass. B19/B21 tests pass. B22 saved-result recovery, lease/generation fencing, action-failure, worker loop/storage, and all 25 delayed-recheck regressions pass |
 | B23–B26 | Suppression reactivation/identity, durable outcome actions, consistent safety reads | B23/B25 rollback/retry, B26 lagging-replica, and B24 writer/migration tests pass |
@@ -19,8 +21,8 @@ Base: `da6741786ebf26e80166dda546f3e8a36b81e4e1`; branch: `fix/email-verificatio
 | B30–B31 | Shared spreadsheet-safe CSV and secret-free database logs | Implemented across CSV writers; formula/control-character and existing export unit tests pass |
 | B32–B34 | Honest DKIM/SPF/DNSBL evidence and error semantics | Backend/UI/schema changes, generated SDKs/contracts, unit/UI tests and web typecheck pass |
 | B35–B36 | Transactional legacy pruning and lifecycle-safe list deletion | B35 rollback/retry test passes. B36 transactional deletion and lifecycle race tests pass; worker redelivery fencing still depends on B22 |
-| Contracts/fixtures | Regenerate affected contracts and update all consumers | Reputation contracts regenerated. TypeScript SDK build, Go compile, web typecheck, production build and contract drift check pass; repeat after remaining contract changes |
-| Validation | Focused regressions, Rust suites, isolated DB/broker fault/concurrency tests, contracts/builds | Pending |
+| Contracts/fixtures | Regenerate affected contracts and update all consumers | Integrated contracts regenerated. TypeScript SDK build, Go tests, web typecheck, production build and contract drift check pass |
+| Validation | Focused regressions, Rust suites, isolated DB/broker fault/concurrency tests, contracts/builds | Local checks pass: 977 Rust tests, 688 web tests, browser journey, SDK/contracts/builds and static checks, with the limitations below |
 | Oxylabs | Inspect actual account/product support using computer use; provision only a verified suitable exit | Pending |
 | Deployment | Deploy validated revision/configuration; verify regional SMTP and controlled end-to-end checks | Pending |
 
@@ -46,19 +48,22 @@ DNSBL `listed` is nullable with explicit `listed`, `not_listed`, `error`, or `sk
 
 ## Validation checkpoints
 
-- Core: 51 passed, 4 pre-existing external-service tests ignored (`remediation-core-identity.log`), including case-sensitive recipient replies.
-- Backend: 366 unit tests, 7 API harness tests, 15 pipeline tests and 4 durable operation tests passed (`remediation-capability-tests.log`). Before the capability additions, 17 audit, 5 dispatch/retention, 19 HTTP handler, 7 HTTP/database and 11 idempotency regressions passed. Test helpers now pin Postgres 16, matching compose/CI, rather than the module's old Postgres 11 default.
-- Web: the first full run passed 675 tests but found four suites blocked by a missing operation-family mapping, which is corrected. The next full run passed 681 of 688 tests; seven UI timing failures during excessive compilation load all passed in a single-worker rerun (17 tests). Formatting, lint, types and generation checks pass. Capability/OpenAPI compatibility passes after refreshing the stale version. Production build and remaining checks are running.
-- SDKs: regenerated TypeScript build passes; Go's HTTP 202/200 union decoding regression passes (`remediation-final-go-sdk.log`).
+- Core: integrated suite 52 passed, 4 pre-existing external-service tests ignored (`integrated-all-rust-tests.log`), including case-sensitive recipient replies.
+- Rust workspace: 977 passed, zero unresolved failures, 4 pre-existing ignored external-service tests, counting the latest result for each of 43 test/doc targets across `integrated-all-rust-tests.log`, `integrated-rust-resumed.log`, `integrated-http-handlers-final.log`, `integrated-sqs-tests.log` and `integrated-doc-tests.log`. This includes 371 backend unit tests, all 17 audit regressions, all 10 failure-injection tests, and the worker-kill-before-ack regression. The resumed run found two newly merged retry fixtures that omitted the outbox publisher; after adding that stage, all 22 HTTP handler tests pass. Test helpers pin Postgres 16, matching compose/CI.
+- Web: all 216 suites / 688 tests pass (`integrated-web-tests.log`). Formatting, lint, types, 30 generation tests, OpenAPI compatibility, production build and contract drift checks pass. Architecture/query checks and knip also passed before integration; application source was unchanged by that merge.
+- SDKs: integrated TypeScript build and Go tests pass, including HTTP 202/200 union decoding (`integrated-sdk-build.log`, `integrated-go-sdk.log`).
+- Static checks: final workspace/all-target Clippy passes with warnings (`integrated-final-clippy.log`). Gitleaks and Semgrep passed (one Semgrep rule timed out on generated v1 code). Web OSV scan passes with the existing documented dev-only braces advisory exclusion.
 - Local tool workaround: use `/opt/homebrew/opt/node@22/bin` in PATH because the default Homebrew Node binary cannot load its simdutf library. Installed existing frozen web dependencies and locked SDK dependencies without changing lockfiles.
 - Refreshed the frozen local SDK dependency after generation/build so the web install contains newly generated ESM files.
-- Full Rust integration suite, deployment and live SMTP proof remain pending. Logs are in `/tmp/paperless-audit-20261020/`; none of these local checks proves deployed behavior.
+- Browser: the real Better Auth → BFF/SDK → Rust → Postgres/RabbitMQ journey passes in 49.5 seconds (`integrated-browser-journey-pass.log`). It verifies sign-in, sample checking, list upload, free-plan API-key rejection, operator-seeded Professional access, API scope enforcement, tenant isolation, history and sign-out. Only its newly created synthetic local tenant receives the test plan through the existing admin API. Final test-file lint and web types pass.
+- Earlier local runs encountered cold compilation deadlines, followed by host disk exhaustion and an unresponsive Docker VM. Obsolete compilation objects were removed, Docker restarted, and the isolated Postgres/broker restored without resetting their data. A damaged disposable Next development cache was removed and routes warmed before the passing journey. The browser stack uses its own database/vhost, synthetic auth, and disabled SMTP health solely for the synthetic local journey.
+- Deployment and live SMTP proof remain pending. Logs are in `/tmp/paperless-audit-20261020/`; none of these local checks proves deployed behavior.
 
 ## Mailbox identity
 
 B24/B29 implementation uses one provider-aware identity across suppression API/import, worker actions, both outcome paths, history, list comparisons and suppression-aware exports. SMTP routing retains the supplied address. The [migration and reconciliation plan](mailbox-identity-migration.md) preserves old rows/events, avoids merging case-distinct mailboxes, and requires review/reverification of historical lists whose original address differs from the actual checked address before resuming their automated use.
 
-The writer regression also exposed a missing `tenants.settings` column used by the existing auto-suppression hook. Migration `20261020000003` supplies its operator-managed JSON object with an empty default. No tenant automatically gains a new suppression rule. B22 still requires durable hook execution and error propagation.
+The writer regression also exposed a missing `tenants.settings` column used by the existing auto-suppression hook. Migration `20261020000003` supplies its operator-managed JSON object with an empty default. No tenant automatically gains a new suppression rule. Required hook execution now uses the durable completion lifecycle and propagates failures.
 
 Added Cargo tracking for the migrations directory: otherwise SQLx's embedded migrator could omit a newly added migration in an incremental build. The identity test suite passed after rebuilding with all three new migrations.
 
@@ -78,7 +83,7 @@ Migration `20261020000005` adds the operation identity and original quota period
 
 Before applying migration `20261020000004`, stop admission and drain/stop old workers in every region. Old binaries do not enforce the new lease fence and must not overlap new execution. Deploy the migration, publisher and workers together, then reconcile and resume. Do not roll back by dropping pending dispatch records.
 
-B31 removes the database URL from connection-error context and the startup verification-method dump, which could contain proxy credentials.
+B31 removes the database URL from connection-error context, the startup verification-method dump, and the SQS handler's configuration dump, which could contain credentials.
 
 ## SMTP admission and deployment safeguards
 
@@ -86,4 +91,14 @@ The [SMTP capability contract](../advanced/smtp-capability.md) documents the 60-
 
 The Helm egress policy denies private/reserved destinations except exact operator-configured dependency addresses/ports. Rendering tests cover all three value overlays, IPv4/IPv6 negative cases, public routes, DNS scope and exception isolation. Deployment still needs the actual regional dependency inventory, CNI enforcement and additive-policy checks. The US East cluster did not have Prometheus Operator PodMonitor/PrometheusRule CRDs at inspection; live metrics and alert delivery are not yet configured or proven.
 
-Full-workspace validation is limited to two Cargo build jobs with incremental compilation disabled to avoid memory/disk pressure. Disposable repository incremental cache was removed; source and test databases were preserved. The worker failure suite now kills an owned subprocess after durable completion and before acknowledgement; it must pass before claiming crash recovery is verified.
+Full-workspace validation is limited to two Cargo build jobs with incremental compilation disabled to avoid memory/disk pressure. Disposable repository incremental cache and obsolete compilation objects were removed; source and test databases were preserved. The worker failure suite kills an owned subprocess after durable completion and before acknowledgement; it passes on the reconciled implementation.
+
+## Provider inspection after local validation
+
+Computer use confirmed an existing active Oxylabs Dedicated ISP subscription with five assigned IPs, including two in the US. The proxy-list UI explicitly allows Oxylabs to replace assigned IPs after disruptions. The visible controls cover assignments, users and whitelists; no PTR control was present. Current DNS queries found no PTR on four assignments and a provider-owned PTR on the fifth.
+
+The running staging configuration still uses the residential gateway; its configured proxy user differs from the Dedicated ISP user. No credentials were reset, IPs replaced, subscription purchased, provider message sent, or cluster configuration changed during this inspection.
+
+Oxylabs documents SOCKS5 support for self-service Dedicated ISP proxies, but that alone does not establish SMTP access or PTR control. Its [Dedicated ISP guide](https://developers.oxylabs.io/help-center/getting-started/start-using-dedicated-isp-proxies) says additional ports on the Enterprise product require compliance verification. A support request is prepared to confirm TCP 25 for recipient verification, exclusive stable assignment, custom PTR, permitted use and pricing. Provider confirmation and provisioning remain required before deployment.
+
+All three staging regions were rechecked after local validation: one ready replica each, still running `40065fdd60c87136c6d07f8684c9c71248a39a4c`. They do not yet contain this remediation.

@@ -327,7 +327,7 @@ export const getV1UpdateTenantDomainUrl = (domain: string) => {
 };
 
 /**
- * Update the domain value, status, verification state, or metadata notes.
+ * Update the domain value, active status, or notes. Setting `is_verified` is refused.
  * @summary PATCH /v1/me/domains/{domain}
  */
 export const v1UpdateTenantDomain = async (

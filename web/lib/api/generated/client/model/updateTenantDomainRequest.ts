@@ -13,7 +13,10 @@ export interface UpdateTenantDomainRequest {
   domain?: string | null;
   /** @nullable */
   is_active?: boolean | null;
-  /** @nullable */
+  /**
+   * Only read to refuse it: verification is not the tenant's to declare.
+   * @nullable
+   */
   is_verified?: boolean | null;
   /** @nullable */
   notes?: string | null;

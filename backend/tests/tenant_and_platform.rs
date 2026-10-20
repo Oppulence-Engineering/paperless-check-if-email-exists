@@ -399,16 +399,16 @@ mod quota_tests {
 	}
 
 	#[tokio::test]
-	async fn test_no_db_pool_fails_open() {
+	async fn test_no_db_pool_fails_closed() {
 		let ctx = make_tenant_ctx(Some(10), 100, false);
-		// Without a PgPool, quota check fails open (allows)
-		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Allowed);
+		// Limited tenants require a successful shared quota check.
+		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Unavailable);
 	}
 
 	#[tokio::test]
-	async fn test_expired_period_allows() {
+	async fn test_expired_period_requires_database_reset() {
 		let ctx = make_tenant_ctx(Some(10), 100, true);
-		// Period expired — would reset counter, so allowed
-		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Allowed);
+		// The reset must commit before the next reservation is allowed.
+		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Unavailable);
 	}
 }

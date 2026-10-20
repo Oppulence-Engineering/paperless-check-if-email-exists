@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ExpiresAt** | Pointer to **NullableString** |  | [optional]
+**ExpiresAt** | Pointer to **NullableString** | &#x60;null&#x60; removes the expiry; an absent field leaves it unchanged. | [optional]
 **Name** | Pointer to **NullableString** |  | [optional]
 **Scopes** | Pointer to **[]string** |  | [optional]
 

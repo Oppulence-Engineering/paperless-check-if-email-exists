@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**expires_at** | **string** |  | [optional]
+**expires_at** | **string** | &#x60;null&#x60; removes the expiry; an absent field leaves it unchanged. | [optional]
 **name** | **string** |  | [optional]
 **scopes** | **Array&lt;string&gt;** |  | [optional]
 

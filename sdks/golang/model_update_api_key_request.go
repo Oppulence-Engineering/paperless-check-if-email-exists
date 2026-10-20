@@ -20,6 +20,7 @@ var _ MappedNullable = &UpdateApiKeyRequest{}
 
 // UpdateApiKeyRequest struct for UpdateApiKeyRequest
 type UpdateApiKeyRequest struct {
+	// `null` removes the expiry; an absent field leaves it unchanged.
 	ExpiresAt NullableString `json:"expires_at,omitempty"`
 	Name NullableString `json:"name,omitempty"`
 	Scopes []string `json:"scopes,omitempty"`

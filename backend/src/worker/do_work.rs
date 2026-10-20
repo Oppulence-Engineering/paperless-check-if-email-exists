@@ -295,6 +295,29 @@ pub async fn do_check_email_work(
 	if task.metadata.as_ref().and_then(|m| m.task_db_id).is_some() {
 		return super::lifecycle::process_delivery(task, delivery, channel, config).await;
 	}
+	// Older queued messages can have a parent job without a task row identity.
+	if let (CheckEmailJobId::Bulk(job_id), Some(pool)) = (&task.job_id, config.get_pg_pool()) {
+		let status =
+			sqlx::query_scalar::<_, String>("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+				.bind(job_id)
+				.fetch_optional(&pool)
+				.await;
+		match status {
+			Ok(Some(status)) if matches!(status.as_str(), "cancelling" | "cancelled") => {
+				sync_related_entities(&config, task).await?;
+				delivery.ack(BasicAckOptions::default()).await?;
+				return Ok(());
+			}
+			Err(error) => {
+				tokio::time::sleep(Duration::from_secs(1)).await;
+				delivery
+					.reject(BasicRejectOptions { requeue: true })
+					.await?;
+				return Err(error.into());
+			}
+			_ => {}
+		}
+	}
 	if let Err(error) = crate::smtp_egress::require_smtp_ready(&config) {
 		tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 		delivery

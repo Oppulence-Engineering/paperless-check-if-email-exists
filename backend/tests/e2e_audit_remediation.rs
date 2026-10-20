@@ -432,6 +432,9 @@ async fn finalization_fails_closed_on_count_errors_and_rolls_back_related_states
 	sync_task_entities(&config, Some(task), Some(job))
 		.await
 		.unwrap();
+	reacher_backend::worker::job_lifecycle::finalize_bulk_job_if_done(db.pool(), job)
+		.await
+		.unwrap();
 	let status: String = sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
 		.bind(job)
 		.fetch_one(db.pool())
@@ -493,6 +496,27 @@ async fn finalization_fails_closed_on_count_errors_and_rolls_back_related_states
 	.await;
 	sqlx::query("UPDATE v1_task_result SET extra = jsonb_build_object('list_id',$2::INTEGER) WHERE job_id = $1")
 		.bind(job).bind(list).execute(db.pool()).await.unwrap();
+	sqlx::query("UPDATE v1_task_result SET dispatch_id = gen_random_uuid(), completion_done = false WHERE id = $1")
+		.bind(task).execute(db.pool()).await.unwrap();
+	reacher_backend::worker::job_lifecycle::finalize_bulk_job_if_done(db.pool(), job)
+		.await
+		.unwrap();
+	reacher_backend::worker::job_lifecycle::finalize_list_if_done(db.pool(), list)
+		.await
+		.unwrap();
+	let states: (String, String) = sqlx::query_as(
+		"SELECT j.status::TEXT, l.status::TEXT FROM v1_bulk_job j JOIN v1_lists l ON l.job_id = j.id WHERE j.id = $1")
+		.bind(job).fetch_one(db.pool()).await.unwrap();
+	assert_eq!(
+		states,
+		("running".into(), "processing".into()),
+		"creator-side finalization must wait for durable completion effects"
+	);
+	sqlx::query("UPDATE v1_task_result SET completion_done = true WHERE id = $1")
+		.bind(task)
+		.execute(db.pool())
+		.await
+		.unwrap();
 	sqlx::raw_sql("CREATE FUNCTION audit_fail_finalize() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'audit finalization failure'; END $$; CREATE TRIGGER audit_fail_finalize BEFORE UPDATE ON v1_bulk_job FOR EACH ROW EXECUTE FUNCTION audit_fail_finalize();")
 		.execute(db.pool()).await.unwrap();
 	let failed = sync_task_entities(&config, Some(task), Some(job)).await;
@@ -993,7 +1017,7 @@ async fn list_deletion_is_atomic_and_rechecks_lifecycle_after_waiting_for_retry(
 		.execute(db.pool())
 		.await
 		.unwrap();
-	sqlx::raw_sql("CREATE FUNCTION audit_fail_list_delete() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected list delete failure'; END $$; CREATE TRIGGER audit_fail_list_delete BEFORE DELETE ON v1_lists FOR EACH ROW EXECUTE FUNCTION audit_fail_list_delete();")
+	sqlx::raw_sql("CREATE OR REPLACE FUNCTION audit_fail_list_delete() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected list delete failure'; END $$; CREATE TRIGGER audit_fail_list_delete BEFORE DELETE ON v1_lists FOR EACH ROW EXECUTE FUNCTION audit_fail_list_delete();")
 		.execute(db.pool()).await.unwrap();
 	assert!(delete_list_records(db.pool(), tenant, list).await.is_err());
 	let remains: bool =
@@ -1006,10 +1030,12 @@ async fn list_deletion_is_atomic_and_rechecks_lifecycle_after_waiting_for_retry(
 		remains,
 		"failed parent deletion must roll back child deletion"
 	);
-	sqlx::query("DROP TRIGGER audit_fail_list_delete ON v1_lists")
-		.execute(db.pool())
-		.await
-		.unwrap();
+	sqlx::raw_sql(
+		"DROP TRIGGER audit_fail_list_delete ON v1_lists; DROP FUNCTION audit_fail_list_delete()",
+	)
+	.execute(db.pool())
+	.await
+	.unwrap();
 	let mut retry = db.pool().begin().await.unwrap();
 	sqlx::query("SELECT id FROM v1_bulk_job WHERE id = $1 FOR UPDATE")
 		.bind(job)

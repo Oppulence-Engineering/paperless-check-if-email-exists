@@ -8,7 +8,7 @@ use reacher_backend::worker::do_work::{
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -65,6 +65,9 @@ impl CheckEmailPartialTask {
 			job_id: self.job_id,
 			webhook: self.webhook,
 			metadata: message_id.map(|message_id| TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -110,7 +113,6 @@ async fn handler(event: LambdaEvent<SQSPayload>) -> Result<SQSBatchResponse, Err
 	}
 
 	let backend_config = Arc::new(load_config().await?);
-	debug!("{:#?}", backend_config);
 	let total_records = request.records.len();
 	let mut processed = 0_usize;
 	let mut batch_item_failures = Vec::new();

@@ -21,7 +21,7 @@
  */
 export interface UpdateApiKeyRequest {
     /**
-     *
+     * `null` removes the expiry; an absent field leaves it unchanged.
      * @type {string}
      * @memberof UpdateApiKeyRequest
      */

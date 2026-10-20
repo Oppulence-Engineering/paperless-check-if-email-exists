@@ -687,6 +687,11 @@ mod tests {
 			.await;
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
+		let channel = config.must_worker_config().unwrap().channel;
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
+			.await
+			.unwrap()
+		{}
 		let metadata = tokio::time::timeout(std::time::Duration::from_secs(10), task_rx)
 			.await
 			.expect("retried task was published")
@@ -768,6 +773,10 @@ mod tests {
 			.await;
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
+			.await
+			.unwrap()
+		{}
 		// Run the worker on the republished row.
 		let (task, delivery) = loop {
 			let delivery =

@@ -2643,8 +2643,8 @@ paths:
       tags:
       - Tenant
     patch:
-      description: "Update the domain value, status, verification state, or metadata\
-        \ notes."
+      description: "Update the domain value, active status, or notes. Setting `is_verified`\
+        \ is refused."
       operationId: v1_update_tenant_domain
       parameters:
       - description: Domain identifier
@@ -10866,6 +10866,7 @@ components:
         - scopes
       properties:
         expires_at:
+          description: '`null` removes the expiry; an absent field leaves it unchanged.'
           nullable: true
           type: string
         name:
@@ -11093,6 +11094,8 @@ components:
           nullable: true
           type: boolean
         is_verified:
+          description: "Only read to refuse it: verification is not the tenant's to\
+            \ declare."
           nullable: true
           type: boolean
         notes:

@@ -119,7 +119,12 @@ export const UpdateTenantApiKeyParams = zod.object({
 });
 
 export const UpdateTenantApiKeyBody = zod.strictObject({
-  expires_at: zod.string().nullish(),
+  expires_at: zod
+    .string()
+    .nullish()
+    .describe(
+      "`null` removes the expiry; an absent field leaves it unchanged.",
+    ),
   name: zod.string().nullish(),
   scopes: zod.array(zod.string()).nullish(),
 });

@@ -937,7 +937,7 @@ const { status, data } = await apiInstance.v1UpdateScorePolicy(
 # **v1UpdateTenantDomain**
 > v1UpdateTenantDomain(updateTenantDomainRequest)
 
-Update the domain value, status, verification state, or metadata notes.
+Update the domain value, active status, or notes. Setting `is_verified` is refused.
 
 ### Example
 

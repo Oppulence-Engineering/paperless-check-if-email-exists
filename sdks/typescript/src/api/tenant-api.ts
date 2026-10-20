@@ -735,7 +735,7 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         * Update the domain value, status, verification state, or metadata notes.
+         * Update the domain value, active status, or notes. Setting `is_verified` is refused.
          * @summary PATCH /v1/me/domains/{domain}
          * @param {string} domain Domain identifier
          * @param {UpdateTenantDomainRequest} updateTenantDomainRequest
@@ -1094,7 +1094,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Update the domain value, status, verification state, or metadata notes.
+         * Update the domain value, active status, or notes. Setting `is_verified` is refused.
          * @summary PATCH /v1/me/domains/{domain}
          * @param {string} domain Domain identifier
          * @param {UpdateTenantDomainRequest} updateTenantDomainRequest
@@ -1314,7 +1314,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.v1UpdateScorePolicy(requestParameters.policyId, requestParameters.updateScorePolicyRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Update the domain value, status, verification state, or metadata notes.
+         * Update the domain value, active status, or notes. Setting `is_verified` is refused.
          * @summary PATCH /v1/me/domains/{domain}
          * @param {TenantApiV1UpdateTenantDomainRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1523,7 +1523,7 @@ export interface TenantApiInterface {
     v1UpdateScorePolicy(requestParameters: TenantApiV1UpdateScorePolicyRequest, options?: RawAxiosRequestConfig): AxiosPromise<ScorePolicyView>;
 
     /**
-     * Update the domain value, status, verification state, or metadata notes.
+     * Update the domain value, active status, or notes. Setting `is_verified` is refused.
      * @summary PATCH /v1/me/domains/{domain}
      * @param {TenantApiV1UpdateTenantDomainRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2027,7 +2027,7 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
     }
 
     /**
-     * Update the domain value, status, verification state, or metadata notes.
+     * Update the domain value, active status, or notes. Setting `is_verified` is refused.
      * @summary PATCH /v1/me/domains/{domain}
      * @param {TenantApiV1UpdateTenantDomainRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

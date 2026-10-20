@@ -261,7 +261,7 @@ type TenantAPI interface {
 	/*
 	V1UpdateTenantDomain PATCH /v1/me/domains/{domain}
 
-	Update the domain value, status, verification state, or metadata notes.
+	Update the domain value, active status, or notes. Setting `is_verified` is refused.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param domain Domain identifier
@@ -2549,7 +2549,7 @@ func (r TenantAPIV1UpdateTenantDomainRequest) Execute() (*http.Response, error) 
 /*
 V1UpdateTenantDomain PATCH /v1/me/domains/{domain}
 
-Update the domain value, status, verification state, or metadata notes.
+Update the domain value, active status, or notes. Setting `is_verified` is refused.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param domain Domain identifier

@@ -33,7 +33,7 @@ export interface UpdateTenantDomainRequest {
      */
     'is_active'?: boolean | null;
     /**
-     *
+     * Only read to refuse it: verification is not the tenant\'s to declare.
      * @type {boolean}
      * @memberof UpdateTenantDomainRequest
      */
