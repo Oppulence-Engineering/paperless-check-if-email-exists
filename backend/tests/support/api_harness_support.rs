@@ -3385,6 +3385,18 @@ pub fn missing_resource_cases() -> Vec<HarnessCase> {
 pub fn conflict_cases() -> Vec<HarnessCase> {
 	vec![
 		case!(
+			"GET",
+			"/v1/lists/{list_id}/remediation-exports/{export_id}/download",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::ListRemediationExportDownload,
+			BodyProfile::None,
+			409,
+			Expectation::Error(
+				"Verification results or suppressions changed. Rebuild the cleanup plan before exporting.",
+			),
+		),
+		case!(
 			"POST",
 			"/v1/jobs/{job_id}/cancel",
 			ConfigProfile::PseudoWorker,
@@ -3442,9 +3454,15 @@ pub async fn execute_cases(
 	fixtures: &HarnessFixtures,
 	runtime: &HarnessRuntime,
 ) {
+	let mut remediation_download_url: Option<String> = None;
 	for case in cases {
 		let config = Arc::clone(config_for_case(runtime, case.config));
-		let path = render_path(case.path, fixtures);
+		let path = match case.path {
+			PathProfile::ListRemediationExportDownload => remediation_download_url
+				.clone()
+				.unwrap_or_else(|| render_path(case.path, fixtures)),
+			_ => render_path(case.path, fixtures),
+		};
 		let route_key = format!("{} {}", case.key.method, case.key.path);
 		let builder = request().method(case.key.method).path(&path);
 		let builder = apply_auth(builder, case.auth, fixtures);
@@ -3465,6 +3483,14 @@ pub async fn execute_cases(
 				let value: serde_json::Value =
 					serde_json::from_slice(response.body()).expect("json response");
 				assert_json_fields(&value, fields);
+				if matches!(case.path, PathProfile::ListRemediationExportCreate) {
+					remediation_download_url = Some(
+						value["download_url"]
+							.as_str()
+							.expect("download URL")
+							.to_string(),
+					);
+				}
 			}
 			Expectation::Error(message) => {
 				header_prefix(response.headers(), "content-type", "application/json");
