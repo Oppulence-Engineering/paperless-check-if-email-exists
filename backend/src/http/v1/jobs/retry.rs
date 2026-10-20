@@ -266,6 +266,9 @@ async fn http_handler(
 		}
 		_ => status.as_str(),
 	};
+	crate::worker::job_lifecycle::reopen_lists_for_retry(&mut tx, job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	tx.commit().await.map_err(ReacherResponseError::from)?;
 

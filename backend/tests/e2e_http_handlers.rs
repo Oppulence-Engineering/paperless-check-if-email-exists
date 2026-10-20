@@ -879,6 +879,112 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn test_v1_job_retry_reopens_its_failed_list_so_a_successful_retry_completes_it() {
+		use futures::StreamExt;
+		use reacher_backend::worker::do_work::{do_check_email_work, CheckEmailTask};
+
+		let db = TestDb::start().await;
+		let rmq = TestRabbitMq::start().await;
+		let tenant_id = insert_tenant(db.pool(), "retry-list-tenant", Some(100), 0).await;
+		let job_id = insert_job(db.pool(), Some(tenant_id), 1, "failed").await;
+		let list_id = crate::test_helpers::insert_list(
+			db.pool(),
+			tenant_id,
+			job_id,
+			"retried list",
+			"failed",
+			1,
+			&["email"],
+			serde_json::json!({"0": {"email": "bad-syntax"}}),
+		)
+		.await;
+		sqlx::query(
+			"UPDATE v1_lists SET error_message = 'task_failed', completed_at = NOW() WHERE id = $1",
+		)
+		.bind(list_id)
+		.execute(db.pool())
+		.await
+		.unwrap();
+		// The row's first attempt failed. An address that fails syntax is
+		// checked without any network access, so the retry succeeds here.
+		let task_id: i32 = sqlx::query_scalar(
+			r#"
+			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, error)
+			VALUES ($1, $2, $3, 'failed', $4, 'timeout')
+			RETURNING id
+			"#,
+		)
+		.bind(job_id)
+		.bind(serde_json::json!({
+			"input": {"to_email": "bad-syntax"},
+			"job_id": {"bulk": job_id},
+			"webhook": null
+		}))
+		.bind(serde_json::json!({"list_id": list_id, "row_index": 0, "email_column": "email"}))
+		.bind(tenant_id)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+		let config = worker_config(db.db_url(), &rmq.amqp_url).await;
+		let channel = config.must_worker_config().unwrap().channel;
+		let mut deliveries = channel
+			.basic_consume(
+				reacher_backend::worker::consume::CHECK_EMAIL_QUEUE.into(),
+				"test-retry-list".into(),
+				lapin::options::BasicConsumeOptions::default(),
+				lapin::types::FieldTable::default(),
+			)
+			.await
+			.unwrap();
+
+		let resp = request()
+			.path(&format!("/v1/jobs/{}/retry", job_id))
+			.method("POST")
+			.header(REACHER_SECRET_HEADER, "test")
+			.reply(&create_routes(Arc::clone(&config)))
+			.await;
+		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
+
+		// Run the worker on the republished row.
+		let (task, delivery) = loop {
+			let delivery =
+				tokio::time::timeout(std::time::Duration::from_secs(10), deliveries.next())
+					.await
+					.expect("retried task was published")
+					.unwrap()
+					.unwrap();
+			let task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+			if task.metadata.as_ref().and_then(|m| m.task_db_id) == Some(task_id) {
+				break (task, delivery);
+			}
+			delivery
+				.ack(lapin::options::BasicAckOptions::default())
+				.await
+				.unwrap();
+		};
+		do_check_email_work(&task, delivery, Arc::clone(&channel), Arc::clone(&config))
+			.await
+			.expect("worker stores the retried row");
+
+		let list =
+			sqlx::query("SELECT status::TEXT AS status, error_message FROM v1_lists WHERE id = $1")
+				.bind(list_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(list.get::<String, _>("status"), "completed");
+		assert_eq!(list.get::<Option<String>, _>("error_message"), None);
+		let job_status: String =
+			sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+				.bind(job_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(job_status, "completed");
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_v1_check_email_sandbox_ignores_tenant_history_for_bounce_risk() {
 		let db = TestDb::start().await;
 		let tenant_with_history =

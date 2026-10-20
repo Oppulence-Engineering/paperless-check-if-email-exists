@@ -7,10 +7,13 @@
 //! and move the job to `running` before publishing, which is equally safe.)
 //! The worker only finishes jobs that are `running` or `cancelling`. While
 //! tasks are still being added the worker can finish every task published so
-//! far, and a `pending` job must not be finished then. Every write checks the current status, so a late
-//! write never moves a finished job or list back to an open status.
+//! far, and a `pending` job must not be finished then. Every write checks the
+//! current status, so a late write never moves a finished job or list back to
+//! an open status. Retrying a job's failed rows is the one deliberate way
+//! back: the retry reopens the job and, with [`reopen_lists_for_retry`], its
+//! lists.
 
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
 /// Mark a job `running` once its creator has published every task, then
 /// finish it if its tasks already finished while it was being published.
@@ -110,4 +113,22 @@ pub async fn start_list(pool: &PgPool, list_id: i32) -> Result<(), sqlx::Error> 
 	.execute(pool)
 	.await?;
 	finalize_list_if_done(pool, list_id).await
+}
+
+/// Move the finished lists of a job back to `processing` when its failed rows
+/// are retried, in the retry's transaction. Without this a list stays
+/// `failed` after its rows succeed on retry, because [`finalize_list_if_done`]
+/// only finishes open lists. The error that finalization recorded is cleared;
+/// finalization records it again if a row still fails.
+pub async fn reopen_lists_for_retry(
+	conn: &mut PgConnection,
+	job_id: i32,
+) -> Result<(), sqlx::Error> {
+	sqlx::query(
+		"UPDATE v1_lists SET status = 'processing'::list_status, completed_at = NULL, error_message = NULL, updated_at = NOW() WHERE job_id = $1 AND status IN ('completed', 'failed')",
+	)
+	.bind(job_id)
+	.execute(conn)
+	.await?;
+	Ok(())
 }
