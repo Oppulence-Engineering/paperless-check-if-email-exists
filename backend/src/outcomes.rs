@@ -310,6 +310,14 @@ async fn ingest_one(
 		.begin()
 		.await
 		.map_err(|err| format!("db begin: {err}"))?;
+	// Ingests for one mailbox take turns. A threshold rule counts the
+	// mailbox's outcomes on this transaction, and two concurrent requests
+	// would each see only their own new row, so neither would suppress.
+	sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+		.bind(format!("verification_outcomes:{tenant_id}:{canonical}"))
+		.execute(&mut *tx)
+		.await
+		.map_err(|err| format!("db lock: {err}"))?;
 	let inserted = sqlx::query_scalar::<_, Option<i64>>(
 		r#"
 		INSERT INTO verification_outcomes

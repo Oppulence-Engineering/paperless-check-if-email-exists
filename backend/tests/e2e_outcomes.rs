@@ -691,6 +691,99 @@ async fn test_outcome_whose_suppression_fails_is_not_stored_and_a_retry_applies_
 	Ok(())
 }
 
+/// Advisory lock key that the test below holds to keep both requests in
+/// flight at once.
+const OUTCOME_INSERT_GATE: i64 = 7_201_901;
+
+#[tokio::test]
+#[serial]
+async fn test_concurrent_soft_bounces_still_cross_the_threshold() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "outcomes-sb-race", Some(1000), 0).await;
+	let policy = default_outcome_policy_rules();
+	let email = "race@example.com";
+	let soft_bounce = |source: &str, days_ago: i64| {
+		let mut outcome = ingest(email, OutcomeType::SoftBounce);
+		outcome.occurred_at = Utc::now() - ChronoDuration::days(days_ago);
+		outcome.source = Some(source.to_string());
+		outcome
+	};
+	// One bounce on record; the default policy suppresses at the third.
+	ingest_outcomes(db.pool(), tenant_id, &policy, &[soft_bounce("src-0", 2)]).await;
+
+	// Every further insert for this address waits on a lock the test holds,
+	// so two requests can both be in their transactions before either ends.
+	sqlx::query(&format!(
+		"CREATE OR REPLACE FUNCTION test_hold_outcome_insert() RETURNS trigger AS $$ \
+		 BEGIN PERFORM pg_advisory_xact_lock_shared({OUTCOME_INSERT_GATE}); RETURN NULL; END; \
+		 $$ LANGUAGE plpgsql"
+	))
+	.execute(db.pool())
+	.await?;
+	sqlx::query("DROP TRIGGER IF EXISTS test_hold_outcome_insert ON verification_outcomes")
+		.execute(db.pool())
+		.await?;
+	sqlx::query(
+		"CREATE TRIGGER test_hold_outcome_insert AFTER INSERT ON verification_outcomes FOR EACH ROW WHEN (NEW.canonical_email = 'race@example.com') EXECUTE FUNCTION test_hold_outcome_insert()",
+	)
+	.execute(db.pool())
+	.await?;
+	let mut gate = db.pool().acquire().await?;
+	sqlx::query("SELECT pg_advisory_lock($1)")
+		.bind(OUTCOME_INSERT_GATE)
+		.execute(&mut *gate)
+		.await?;
+
+	let spawn_ingest = |outcome: IngestOutcome| {
+		let pool = db.pool_owned();
+		let policy = policy.clone();
+		tokio::spawn(async move { ingest_outcomes(&pool, tenant_id, &policy, &[outcome]).await })
+	};
+	let first = spawn_ingest(soft_bounce("src-1", 1));
+	let second = spawn_ingest(soft_bounce("src-2", 0));
+
+	// Both requests are blocked: on the gate, or one on the gate and the
+	// other behind it.
+	let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(10);
+	loop {
+		let waiting: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM pg_locks WHERE locktype = 'advisory' AND NOT granted \
+			 AND database = (SELECT oid FROM pg_database WHERE datname = current_database())",
+		)
+		.fetch_one(db.pool())
+		.await?;
+		if waiting >= 2 {
+			break;
+		}
+		assert!(
+			tokio::time::Instant::now() < deadline,
+			"both requests should be waiting, {waiting} are"
+		);
+		tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+	}
+	sqlx::query("SELECT pg_advisory_unlock($1)")
+		.bind(OUTCOME_INSERT_GATE)
+		.execute(&mut *gate)
+		.await?;
+	let (first, second) = (first.await?, second.await?);
+
+	sqlx::query("DROP TRIGGER test_hold_outcome_insert ON verification_outcomes")
+		.execute(db.pool())
+		.await?;
+	sqlx::query("DROP FUNCTION test_hold_outcome_insert()")
+		.execute(db.pool())
+		.await?;
+
+	assert_eq!(first.accepted + second.accepted, 2);
+	assert_eq!(count_outcomes(db.pool(), tenant_id, email).await, 3);
+	assert_eq!(
+		count_active_suppressions(db.pool(), tenant_id, email).await,
+		1,
+		"three soft bounces are stored, so the third must suppress"
+	);
+	Ok(())
+}
+
 #[tokio::test]
 #[serial]
 async fn test_soft_bounce_threshold_required_for_suppression() -> Result<()> {
