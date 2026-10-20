@@ -607,6 +607,13 @@ mod settlement_after_failure {
 		.execute(&pool)
 		.await
 		.expect("age the earlier verification");
+		let suppressed_task =
+			insert_task(&pool, old_job, "completed", Some(tenant_id), None, None).await;
+		sqlx::query("UPDATE v1_task_result SET payload = jsonb_set(payload, '{input,to_email}', '\"blocked@example.com\"'), completed_at = NOW() - INTERVAL '90 days' WHERE id = $1")
+			.bind(suppressed_task).execute(&pool).await.unwrap();
+		sqlx::query("INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, 'blocked@example.com', 'blocked@example.com', 'manual'::suppression_reason)")
+			.bind(tenant_id).execute(&pool).await.unwrap();
+
 		sqlx::query(
 			"INSERT INTO reverification_schedules (tenant_id, staleness_days, batch_size) VALUES ($1, 30, 10)",
 		)

@@ -44,8 +44,18 @@ export function CampaignUpload({ className, ...props }: CampaignUploadProps) {
 		onSuccess: async () => {
 			// The first upload creates the default outcome policy.
 			await Promise.all([
-				client.invalidateQueries({ queryKey: workflowQueryKey("campaign-outcomes") }),
-				client.invalidateQueries({ queryKey: workflowQueryKey("outcome-policies") }),
+				client.invalidateQueries({
+					queryKey: workflowQueryKey("campaign-outcomes"),
+				}),
+				client.invalidateQueries({
+					queryKey: workflowQueryKey("outcome-policies"),
+				}),
+				...["suppressions", "source-quality", "list-detail", "overview", "v1-email-history"].map(
+					(key) =>
+						client.invalidateQueries({
+							queryKey: workflowQueryKey(key),
+						}),
+				),
 			]);
 		},
 	});

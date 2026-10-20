@@ -86,3 +86,9 @@ Exports stream as CSV in 500-row batches. The original columns are preserved and
 - `effective_email`
 - `remediation_changed`
 - `remediation_reasons`
+
+## Send-ready safety
+
+A suggested correction that changes the mailbox stays in `review` until the corrected address is verified in a new check or import. Format-only changes that preserve mailbox identity can remain `fixed`. Keeping suppressed rows in a plan never makes them send-ready.
+
+Plan version `remediation_v2` checks current verification and suppression state when creating or downloading an export. Changed state or an older rule version returns HTTP 409; rebuild the plan, review it, then export again. Downloaded files remain snapshots and must not be treated as permanently current suppression lists.

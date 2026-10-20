@@ -3,9 +3,11 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import * as downloads from "@/lib/downloads";
 
 import { SourceQuality } from "./source-quality";
 
@@ -72,6 +74,22 @@ describe("SourceQuality", () => {
 		});
 		expect(within(source).getByText("Send with caution")).toBeInTheDocument();
 		expect(within(source).getByText("Complaint")).toBeInTheDocument();
+		const download = vi.spyOn(downloads, "saveFile").mockImplementation(() => {});
+		fireEvent.click(screen.getByRole("button", { name: "Download report CSV" }));
+		expect(download).toHaveBeenCalledWith(
+			expect.stringContaining('"webinar","F"'),
+			"lead-source-quality.csv",
+		);
+		fireEvent.change(screen.getByLabelText("Lead source"), { target: { value: "webinar" } });
+		fireEvent.change(screen.getByLabelText("Minimum records"), { target: { value: "100" } });
+		fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
+		await waitFor(() =>
+			expect(quality).toHaveBeenLastCalledWith({
+				sourceKey: "webinar",
+				minRecords: 100,
+				limit: 50,
+			}),
+		);
 	});
 
 	it("explains how to get data when there are no sources", async () => {

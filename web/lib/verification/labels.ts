@@ -433,6 +433,7 @@ export const jobEventType = entry({
 
 /** Source quality grades from A (best) to F (`quality_grade` in source_quality.rs). */
 export const qualityGrade = entry({
+	pending: { label: "Awaiting checks", tone: "gray" },
 	A: { label: "Grade A", tone: "green" },
 	B: { label: "Grade B", tone: "green" },
 	C: { label: "Grade C", tone: "yellow" },

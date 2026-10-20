@@ -130,6 +130,24 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 									{upload.isPending ? "Uploading…" : "Upload"}
 								</Button>
 							</div>
+							<div className="flex flex-col gap-1.5">
+								<Label className={fieldLabel} htmlFor="list-source-key">
+									Lead source
+								</Label>
+								<Input
+									aria-describedby="list-source-key-help"
+									className="h-10 rounded-lg"
+									id="list-source-key"
+									onChange={(event) => {
+										setSourceKey(event.target.value);
+									}}
+									placeholder="hubspot"
+									value={sourceKey}
+								/>
+								<p className="text-xs text-[#858585]" id="list-source-key-help">
+									Where the list came from. Insights compare quality by source.
+								</p>
+							</div>
 							<details>
 								<summary className="cursor-pointer text-sm text-[#858585] hover:text-neutral-200">
 									More options
@@ -148,24 +166,6 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 											placeholder="Found from the header"
 											value={emailColumn}
 										/>
-									</div>
-									<div className="flex flex-col gap-1.5">
-										<Label className={fieldLabel} htmlFor="list-source-key">
-											Source key
-										</Label>
-										<Input
-											aria-describedby="list-source-key-help"
-											className="h-10 rounded-lg"
-											id="list-source-key"
-											onChange={(event) => {
-												setSourceKey(event.target.value);
-											}}
-											placeholder="hubspot"
-											value={sourceKey}
-										/>
-										<p className="text-xs text-[#858585]" id="list-source-key-help">
-											Where the list came from. Insights compare quality by source.
-										</p>
 									</div>
 								</div>
 							</details>
