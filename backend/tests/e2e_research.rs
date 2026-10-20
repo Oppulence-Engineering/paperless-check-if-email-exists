@@ -30,7 +30,7 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
 		Some(tenant),
 		"jane@acme.com",
 		None,
-		Some(verification),
+		Some(verification.clone()),
 		"completed",
 		Some(100),
 		Some("valid"),
@@ -68,7 +68,11 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
         if path.ends_with("/columns") {
             return warp::reply::json(&json!({"columns":[{"id":"9","columnKey":"prospect_contact","executorKind":"prospect_contact","configJson":STANDARD.encode(json!({"target_role":"CEO","max_candidates":2,"max_verifications":3}).to_string())}]})).into_response();
         }
-        let evidence = json!({"status":"ready","reason":"published_person_and_matching_title_with_verified_mailbox","domain":"acme.com","candidates":[{"name":"Jane Doe","title":"CEO","email":"jane@acme.com","email_source":"published","person_status":"published","employment_status":"published_on_company_site","role_status":"title_matches","evidence_url":"https://acme.com/team","observed_at":"2026-10-20T12:00:00Z","verification":{"external_verification":{"service":"millionverifier","result":"ok"},"recommendation":{"action":"send"},"is_catch_all":false}}]});
+        let mut evidence = json!({"status":"ready","reason":"published_person_and_matching_title_with_verified_mailbox","domain":"acme.com","candidates":[{"name":"Jane Doe","title":"CEO","email":"jane@acme.com","email_source":"published","person_status":"published","employment_status":"published_on_company_site","role_status":"title_matches","evidence_url":"https://acme.com/team","observed_at":"2026-10-20T12:00:00Z","verification":{"external_verification":{"service":"millionverifier","result":"ok"},"recommendation":{"action":"send"},"is_catch_all":false}}]});
+        let mut alternative = evidence["candidates"][0].clone();
+        alternative["name"] = json!("Alex Doe");
+        alternative["email"] = json!("alex@acme.com");
+        evidence["candidates"].as_array_mut().unwrap().push(alternative);
         warp::reply::json(&json!({"session":{"id":"42","prompt":"Pilot","rowsTotal":1},"verificationRequests":1,"rows":[{"rowKey":"row-1","leadId":"7","companyName":"=Acme","cells":[{"columnKey":"prospect_contact","provider":"prospect_contact","evidenceJson":STANDARD.encode(evidence.to_string())}]}]})).into_response()
     });
 	let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -135,6 +139,7 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
 		"stale",
 		"negative_feedback",
 		"new_pending",
+		"eligible_alternative",
 	] {
 		match phase {
 			"suppressed" => {
@@ -190,6 +195,27 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
 				)
 				.await;
 			}
+			"eligible_alternative" => {
+				let mut alternative = verification.clone();
+				alternative["input"] = json!("alex@acme.com");
+				insert_scored_task(
+					db.pool(),
+					job,
+					Some(tenant),
+					"alex@acme.com",
+					None,
+					Some(alternative),
+					"completed",
+					Some(100),
+					Some("valid"),
+					Some("deliverable"),
+					Some(true),
+					Some(vec![]),
+					Some("alex@acme.com"),
+					false,
+				)
+				.await;
+			}
 			_ => {}
 		}
 		let response = warp::test::request()
@@ -203,11 +229,19 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
 		let output: Value = serde_json::from_slice(response.body()).unwrap();
 		assert_eq!(
 			output["exported_rows"],
-			if phase == "allowed" { 1 } else { 0 },
+			if matches!(phase, "allowed" | "eligible_alternative") {
+				1
+			} else {
+				0
+			},
 			"{phase}: {output}"
 		);
 		if phase == "allowed" {
 			assert!(output["csv"].as_str().unwrap().contains("'=Acme"));
+		} else if phase == "eligible_alternative" {
+			assert!(output["csv"].as_str().unwrap().contains("alex@acme.com"));
+			assert!(!output["csv"].as_str().unwrap().contains("jane@acme.com"));
+			assert_eq!(output["excluded_row_keys"], json!([]));
 		} else {
 			assert_eq!(output["excluded_row_keys"], json!(["row-1"]));
 		}
@@ -221,7 +255,7 @@ async fn import_review_export_reuses_creation_and_rechecks_current_tenant_policy
 		.await;
 	assert_eq!(response.status(), 200);
 	let output: Value = serde_json::from_slice(response.body()).unwrap();
-	assert_eq!(output["exported_rows"], 1);
+	assert_eq!(output["exported_rows"], 2);
 	assert_eq!(
 		requests.load(Ordering::SeqCst),
 		2,

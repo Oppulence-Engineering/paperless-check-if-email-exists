@@ -519,17 +519,19 @@ async fn export(
 		}
 		let candidates: Vec<Option<&ResearchCandidate>> =
 			if input.mode == ResearchExportMode::Approved {
-				let candidate = row
+				let mut eligible = None;
+				for candidate in row
 					.candidates
 					.iter()
-					.find(|c| row.status == "ready" && ready_candidate(c));
-				if let Some(candidate) = candidate {
+					.filter(|c| row.status == "ready" && ready_candidate(c))
+				{
 					if current_policy_allows(&config, tenant_id, &candidate.email).await? {
-						vec![Some(candidate)]
-					} else {
-						excluded.push(row.row_key.clone());
-						continue;
+						eligible = Some(candidate);
+						break;
 					}
+				}
+				if let Some(candidate) = eligible {
+					vec![Some(candidate)]
 				} else {
 					excluded.push(row.row_key.clone());
 					continue;
