@@ -1,4 +1,5 @@
 use crate::config::BackendConfig;
+use crate::http::shared::paging::clamp_page;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
@@ -51,8 +52,7 @@ async fn http_handler(
 		return Err(ReacherResponseError::new(StatusCode::NOT_FOUND, "Job not found").into());
 	}
 
-	let limit = query.limit.unwrap_or(50).min(200);
-	let offset = query.offset.unwrap_or(0);
+	let (limit, offset) = clamp_page(query.limit, query.offset);
 
 	let total = sqlx::query_scalar!("SELECT COUNT(*) FROM job_events WHERE job_id = $1", job_id,)
 		.fetch_one(&pg_pool)

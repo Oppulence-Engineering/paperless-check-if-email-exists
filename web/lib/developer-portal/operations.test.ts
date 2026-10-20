@@ -93,6 +93,8 @@ it("builds the public reference without admin operations", () => {
 	const paths = Object.keys(document.paths);
 	expect(paths.some((path) => path.startsWith("/v1/admin"))).toBe(false);
 	expect(paths).not.toContain("/version");
+	// It takes the operator secret, like the admin routes.
+	expect(paths).not.toContain("/v1/check-email-with-onboard");
 	expect(paths).toContain("/v1/check_email");
 	expect(paths).toContain("/v1/inbound/providers/{provider}/{endpoint_id}/{delivery_token}");
 	expect(document.security).toEqual([{ Authorization: [] }]);

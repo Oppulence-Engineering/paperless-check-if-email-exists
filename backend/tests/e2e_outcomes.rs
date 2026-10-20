@@ -1,7 +1,8 @@
 mod test_helpers;
 
 use crate::test_helpers::{
-	ensure_test_amqp_url, insert_api_key_with_scopes, insert_tenant, test_db_url, TestDb,
+	ensure_test_amqp_url, insert_api_key_with_scopes, insert_job, insert_scored_task,
+	insert_tenant, test_db_url, TestDb,
 };
 use anyhow::Result;
 use chrono::{Duration as ChronoDuration, Utc};
@@ -634,6 +635,112 @@ async fn test_apply_post_verification_hook_suppresses_when_outcome_exists() -> R
 // Scoring integration
 // ----------------------------------------------------------------------------
 
+/// A full single-check response for a clean mailbox, read against this
+/// tenant's history and suppressions: failed and unknown history rows carry no
+/// evidence and leave both scores alone, and an active suppression drops it.
+#[tokio::test]
+#[serial]
+async fn test_single_check_reads_suppressions_and_ignores_unverified_history() -> Result<()> {
+	use reacher_backend::decision::types::RecommendedAction;
+	use reacher_backend::scoring::response::prepare_verification_response;
+
+	let db = TestDb::start().await;
+	let mut config = BackendConfig::empty();
+	config.storage = Some(StorageConfig::Postgres(PostgresConfig {
+		db_url: test_db_url(),
+		read_replica_url: None,
+		extra: None,
+	}));
+	config.bounce_risk.enabled = true;
+	config.bounce_risk.config_path =
+		concat!(env!("CARGO_MANIFEST_DIR"), "/bounce_risk.toml").into();
+	config.connect().await?;
+
+	let pool = db.pool();
+	let tenant_id = insert_tenant(pool, "single-check-state", Some(1000), 0).await;
+	let email = "jane.doe@example.com";
+	let output = reacher_backend::sandbox::sandbox_check(email);
+
+	let first =
+		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
+	assert_eq!(first.score.score, 100);
+
+	// One failed check and one that could not reach the mail server.
+	let job_id = insert_job(pool, Some(tenant_id), 2, "completed").await;
+	insert_scored_task(
+		pool,
+		job_id,
+		Some(tenant_id),
+		email,
+		None,
+		None,
+		"failed",
+		None,
+		None,
+		None,
+		None,
+		None,
+		Some(email),
+		false,
+	)
+	.await;
+	insert_scored_task(
+		pool,
+		job_id,
+		Some(tenant_id),
+		email,
+		None,
+		Some(json!({"input": email})),
+		"completed",
+		Some(33),
+		Some("unknown"),
+		Some("unknown"),
+		Some(false),
+		None,
+		Some(email),
+		false,
+	)
+	.await;
+
+	let recheck =
+		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
+	assert_eq!(recheck.score.score, first.score.score);
+	assert!(!recheck
+		.score
+		.reason_codes
+		.contains(&"tenant_history_inconsistent".to_string()));
+	let signals = recheck.bounce_risk_signals.expect("bounce risk is enabled");
+	assert!(signals["result_consistency"].is_null(), "{}", signals);
+	assert!(
+		signals["days_since_last_verification"].is_null(),
+		"{}",
+		signals
+	);
+	assert_eq!(
+		recheck
+			.recommendation
+			.map(|recommendation| recommendation.action),
+		Some(RecommendedAction::Send)
+	);
+
+	sqlx::query(
+		"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason, reason_code, source_type, last_seen_at) VALUES ($1, $2, $2, 'manual', 'manual', 'harness', NOW())",
+	)
+	.bind(tenant_id)
+	.bind(email)
+	.execute(pool)
+	.await?;
+	let suppressed =
+		prepare_verification_response(&config, &output, Some(tenant_id), Utc::now(), false).await?;
+	assert_eq!(
+		suppressed
+			.recommendation
+			.map(|recommendation| recommendation.action),
+		Some(RecommendedAction::Drop)
+	);
+	Ok(())
+}
+
 #[tokio::test]
 #[serial]
 async fn test_scoring_unaffected_when_no_outcomes() -> Result<()> {
@@ -814,6 +921,21 @@ async fn test_old_outcomes_ignored_by_ttl() -> Result<()> {
 		ctx.delivered_count, 0,
 		"30-day-old outcome should be filtered by 7-day TTL"
 	);
+
+	// The post-verification hook honours the same TTL: an expired hard
+	// bounce neither forces invalid in scoring nor suppresses afterwards.
+	sqlx::query(
+		"INSERT INTO verification_outcomes (tenant_id, canonical_email, outcome_type, occurred_at, source) VALUES ($1, $2, 'hard_bounce', NOW() - INTERVAL '30 days', 'old')",
+	)
+	.bind(tenant_id)
+	.bind("ttl@example.com")
+	.execute(db.pool())
+	.await?;
+	apply_post_verification_outcome_check(db.pool(), tenant_id, "ttl@example.com").await;
+	assert_eq!(
+		count_suppressions(db.pool(), tenant_id, "ttl@example.com").await,
+		0
+	);
 	Ok(())
 }
 
@@ -850,6 +972,15 @@ async fn test_list_outcomes_filter_by_email() -> Result<()> {
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["total"], 1);
 	assert_eq!(body["outcomes"][0]["email"], "a@example.com");
+
+	// A malformed filter used to be dropped, returning every outcome.
+	let response = request()
+		.method("GET")
+		.path("/v1/campaign-outcomes?email=not-an-email")
+		.header("authorization", format!("Bearer {}", api_key))
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+	assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 	Ok(())
 }
 

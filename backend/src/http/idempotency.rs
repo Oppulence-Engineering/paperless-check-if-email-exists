@@ -1,6 +1,6 @@
 use check_if_email_exists::LOG_TARGET;
 use sha2::{Digest, Sha256};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use tracing::{debug, warn};
 use warp::http::StatusCode;
 
@@ -25,6 +25,8 @@ pub enum IdempotencyCheck {
 	Cached(CachedResponse),
 	/// Body hash mismatch — same key, different request body.
 	BodyMismatch,
+	/// The key was first used on another endpoint.
+	PathMismatch,
 }
 
 /// Hash a request body using SHA-256.
@@ -66,15 +68,15 @@ pub async fn check_idempotency_key(
 	}
 
 	// Conflict — fetch the existing record
-	let existing = sqlx::query!(
+	let existing = sqlx::query(
 		r#"
-		SELECT id, status, request_body_hash, response_status_code, response_body, response_headers
+		SELECT id, status, request_path, request_body_hash, response_status_code, response_body, response_headers
 		FROM idempotency_keys
 		WHERE tenant_id = $1 AND idempotency_key = $2
 		"#,
-		tenant_id,
-		idempotency_key,
 	)
+	.bind(tenant_id)
+	.bind(idempotency_key)
 	.fetch_optional(pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -90,21 +92,34 @@ pub async fn check_idempotency_key(
 		}
 	};
 
+	// Keys are unique per tenant, not per path. /v0 and /v1 check_email take
+	// the same body, so without this a key reused across them would replay
+	// the other endpoint's response.
+	if existing.get::<String, _>("request_path") != request_path {
+		return Ok(IdempotencyCheck::PathMismatch);
+	}
+
 	// Check body hash match
-	if existing.request_body_hash != request_body_hash {
+	if existing.get::<Vec<u8>, _>("request_body_hash") != request_body_hash {
 		return Ok(IdempotencyCheck::BodyMismatch);
 	}
 
-	match existing.status.as_str() {
+	let existing_id: i64 = existing.get("id");
+	let status: String = existing.get("status");
+	match status.as_str() {
 		"processing" => Ok(IdempotencyCheck::InProgress),
 		"completed" => Ok(IdempotencyCheck::Cached(CachedResponse {
-			status_code: existing.response_status_code.unwrap_or(200) as u16,
-			body: existing.response_body.unwrap_or_default(),
-			headers: existing.response_headers,
+			status_code: existing
+				.get::<Option<i16>, _>("response_status_code")
+				.unwrap_or(200) as u16,
+			body: existing
+				.get::<Option<Vec<u8>>, _>("response_body")
+				.unwrap_or_default(),
+			headers: existing.get("response_headers"),
 		})),
 		"failed" => {
 			// Delete the failed record and re-insert as processing
-			sqlx::query!("DELETE FROM idempotency_keys WHERE id = $1", existing.id,)
+			sqlx::query!("DELETE FROM idempotency_keys WHERE id = $1", existing_id,)
 				.execute(pg_pool)
 				.await
 				.map_err(ReacherResponseError::from)?;
@@ -129,7 +144,7 @@ pub async fn check_idempotency_key(
 		}
 		_ => Err(ReacherResponseError::new(
 			StatusCode::INTERNAL_SERVER_ERROR,
-			format!("Unknown idempotency status: {}", existing.status),
+			format!("Unknown idempotency status: {}", status),
 		)),
 	}
 }

@@ -4,6 +4,57 @@ use super::error::SmtpError;
 use crate::EmailAddress;
 use async_smtp::error::Error as AsyncSmtpError;
 
+/// What a rejected `RCPT TO` tells us about the mailbox.
+#[derive(Debug, PartialEq, Eq)]
+pub enum RcptRejection {
+	/// The reply says nothing reliable about the mailbox.
+	Inconclusive,
+	/// The mailbox doesn't exist.
+	Invalid,
+	/// The provider disabled the mailbox.
+	Disabled,
+	/// The mailbox exists but has no room for new mail.
+	FullInbox,
+	/// The mailbox exists and is throttling incoming mail.
+	Deliverable,
+}
+
+/// Classify the error that async-smtp returned for `RCPT TO`, lowercased.
+/// Its text starts with "permanent: " for 5xx replies and "transient: " for
+/// 4xx replies.
+pub fn classify_rcpt_rejection(e: &str, email: &EmailAddress) -> RcptRejection {
+	// Greylisting and blocks on our side are often worded like recipient
+	// rejections ("Recipient address rejected: Greylisted", "Sender address
+	// rejected: User unknown"), so they must be ruled out first.
+	if is_greylisted(e) || is_rejected_by_policy(e) {
+		return RcptRejection::Inconclusive;
+	}
+
+	// A 4xx reply defers the decision, e.g. "Recipient address rejected:
+	// unverified address: Address verification in progress", so only a 5xx
+	// reply can show that a mailbox is gone or disabled.
+	let permanent = e.starts_with("permanent: ");
+	if permanent && is_disabled_account(e) {
+		return RcptRejection::Disabled;
+	}
+	// Over quota is usually a 4xx reply (4.2.2), and it still shows that the
+	// mailbox exists.
+	if is_full_inbox(e) {
+		return RcptRejection::FullInbox;
+	}
+	// 4.2.1 The user you are trying to contact is receiving mail at a rate that
+	if e.contains("the user you are trying to contact is receiving mail at a rate that") {
+		return RcptRejection::Deliverable;
+	}
+	// Microsoft 365 answers with a 4.4.4 deferral for tenants that have no
+	// mailboxes at all, and retrying never changes it.
+	let known_final_transient = e.contains("no mail-enabled subscriptions");
+	if (permanent || known_final_transient) && is_invalid(e, email) {
+		return RcptRejection::Invalid;
+	}
+	RcptRejection::Inconclusive
+}
+
 /// is_greylisted checks for SMTP responses meaning that the server
 /// temporarily deferred the recipient because of greylisting. These responses
 /// often also contain "recipient address rejected", so they must be checked
@@ -20,7 +71,8 @@ pub fn is_greylisted(e: &str) -> bool {
 }
 
 /// is_invalid checks for SMTP responses meaning that the email is invalid,
-/// i.e. that the mailbox doesn't exist.
+/// i.e. that the mailbox doesn't exist. It only looks at the wording;
+/// `classify_rcpt_rejection` also requires a permanent reply.
 pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 Address rejected
 	// 550 5.1.1 : Recipient address rejected
@@ -59,7 +111,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 No such user here
 	|| e.contains("no such user")
 	// permanent: 5.1.1 MXIN501 mailbox <EMAIL> unknown (on @virginmedia.com)
-	|| e.contains(format!("mailbox {email} unknown").as_str())
+	// `e` is lowercased, so the address has to be as well.
+	|| e.contains(format!("mailbox {} unknown", email.to_string().to_lowercase()).as_str())
 	// 550 5.1.1 : Mailbox not found
 	// 550 Unknown address error ‘MAILBOX NOT FOUND’
 	|| e.contains("mailbox not found")
@@ -79,6 +132,9 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("no such recipient")
 	// 554 delivery error: This user doesn’t have an account
 	|| e.contains("have an account")
+	// 554 delivery error: dd This user doesn't have a yahoo.com account (<EMAIL>) [0] - mta4466.mail.bf1.yahoo.com (on @yahoo.com, @aol.com)
+	// "doesn" matches both the straight and the curly apostrophe.
+	|| (e.contains("this user doesn") && e.contains(" account"))
 	// permanent: Unknown local part <USER> in <USER@flabeg.com> (on @flabeg.com)
 	|| e.contains("unknown local part")
 	// 5.1.1 RCP-P1 Domain facebook.com no longer available https://www.facebook.com/postmaster/response_codes?ip=3.80.111.155#RCP-P1
@@ -103,21 +159,24 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	|| e.contains("email doesn't exist")
 	// permanent: verify address failed, User not found ***@salemall.vn (on @salemall.vn)
 	|| e.contains("verify address failed")
-	// transient: unable to verify user (on @computan.net)
+	// transient: unable to verify user (on @computan.net). Only the 5xx form
+	// counts: `classify_rcpt_rejection` treats the 4xx one as a deferral.
 	|| e.contains("unable to verify user")
 	// permanent: 5.1.1 Utilisateur inconnu (on @sante.fr)
 	|| e.contains("utilisateur inconnu")
 	// transient: 4.4.4 Mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. (on Microsoft 365 tenants without Exchange Online, e.g. @biked.com)
 	|| e.contains("no mail-enabled subscriptions")
-	// permanent: 5.1.1
+	// permanent: 5.1.1 (bad destination mailbox address). There is no such
+	// catch-all for 5.7.1, which is a policy rejection, e.g. "5.7.1 Service
+	// unavailable; Client host [IP] blocked using zen.spamhaus.org".
 	|| e.contains("permanent: 5.1.1")
-	// permanent: 5.7.1
-	|| e.contains("permanent: 5.7.1")
 }
 
 /// Check that the mailbox has a full inbox.
 pub fn is_full_inbox(e: &str) -> bool {
-	e.contains("insufficient")
+	// Only storage of the mailbox counts. "452 4.3.1 Insufficient system
+	// resources" means the server as a whole is short on disk or memory.
+	(e.contains("insufficient") && (e.contains("mailbox") || e.contains("quota")))
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
 	|| e.contains("mailbox full")
 	// https://answers.microsoft.com/en-us/outlook_com/forum/all/how-do-i-interpret-the-delivery-failure-message/2f1bf9c0-8b03-4f8f-aacc-5f6ba60a73f3
@@ -150,19 +209,51 @@ pub fn is_err_io_errors(e: &SmtpError) -> bool {
 	}
 }
 
-/// Check if the IP is blacklisted.
-pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
-	let e = match e {
+/// The lowercased text of an SMTP error reply, without the "permanent: " or
+/// "transient: " prefix. `None` for errors that aren't replies.
+fn reply_text(e: &SmtpError) -> Option<String> {
+	match e {
 		SmtpError::AsyncSmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
 			// TODO We can use .to_string() after:
 			// https://github.com/async-email/async-smtp/pull/53
-			r.message.join("; ").to_lowercase()
+			Some(r.message.join("; ").to_lowercase())
 		}
-		_ => {
-			return false;
-		}
-	};
+		_ => None,
+	}
+}
 
+/// Check whether the server refused us rather than the recipient: our IP is
+/// on a blocklist or has no reverse DNS, or the server rejected our client
+/// host, HELO name or MAIL FROM address. These replies say nothing about the
+/// mailbox.
+fn is_rejected_by_policy(e: &str) -> bool {
+	is_ip_blocked(e)
+	|| needs_rdns(e)
+	// 550 5.1.0 <FROM_EMAIL>: Sender address rejected: User unknown in local recipient table
+	|| e.contains("sender address rejected")
+	// 554 5.7.1 <unknown[IP]>: Client host rejected: Access denied
+	|| e.contains("client host rejected")
+	// 504 5.5.2 <HELO_NAME>: Helo command rejected: need fully-qualified hostname
+	|| e.contains("helo command rejected")
+}
+
+/// Check if the IP is blacklisted.
+pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
+	reply_text(e).is_some_and(|e| {
+		is_ip_blocked(&e)
+		// 5.7.1 Email cannot be delivered. Reason: Email detected as Spam by spam filters.
+		|| e.contains("spam")
+		// 5.7.1 <unknown[23.129.64.100]>: Client host rejected: Access denied
+		// 4.7.1 <EMAIL>: Relay access denied
+		|| e.contains("access denied")
+	})
+}
+
+/// The patterns of `is_err_ip_blacklisted` that are specific enough to
+/// override a recipient verdict. "access denied" isn't: Microsoft 365 rejects
+/// unknown recipients with "550 5.4.1 Recipient address rejected: Access
+/// denied". Nor is a bare "spam".
+fn is_ip_blocked(e: &str) -> bool {
 	// Permanent errors
 
 	// 5.7.1 IP address blacklisted by recipient
@@ -174,23 +265,18 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	// 5.7.1 Recipient not authorized, your IP has been found on a block list
 	// gmx.net (mxgmx117) Nemesis ESMTP Service not available; No SMTP service; IP address is block listed.; For explanation visit https://www.gmx.net/mail/senderguidelines?c=bl (on @gmx.net, @web.de)
 	|| e.contains("block list")
-	// Unable to add <EMAIL> because host 23.129.64.184 is listed on zen.spamhaus.org
-	// 5.7.1 Service unavailable, Client host [23.129.64.184] blocked using Spamhaus.
-	// 5.7.1 Email cannot be delivered. Reason: Email detected as Spam by spam filters.
-	|| e.contains("spam")
 	// host 23.129.64.216 is listed at combined.mail.abusix.zone (127.0.0.12,
 	|| e.contains("abusix")
 	// 5.7.1 Relaying denied. IP name possibly forged [45.154.35.252]
 	// 5.7.1 Relaying denied: You must check for new mail before sending mail. [23.129.64.216]
 	|| e.contains("relaying denied")
-	// 5.7.1 <unknown[23.129.64.100]>: Client host rejected: Access denied
-	|| e.contains("access denied")
 	// sorry, mail from your location [5.79.109.48] is administratively denied (#5.7.1)
 	|| e.contains("administratively denied")
 	// 5.7.606 Access denied, banned sending IP [23.129.64.216]
 	|| e.contains("banned")
 	// Blocked - see https://ipcheck.proofpoint.com/?ip=23.129.64.192
 	// 5.7.1 Mail from 23.129.64.183 has been blocked by Trend Micro Email Reputation Service.
+	// 5.7.1 Service unavailable, Client host [23.129.64.184] blocked using Spamhaus.
 	|| e.contains("blocked")
 	// Connection rejected by policy [7.3] 38206, please visit https://support.symantec.com/en_US/article.TECH246726.html for more details about this error message.
 	|| e.contains("connection rejected")
@@ -205,15 +291,13 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 	|| e.contains("dnsbl")
 	// smtp-fw-9107.amazon.com; SBRS score too low: http://www.senderbase.org/ (on @amazon.com)
 	|| e.contains("sbrs score too low")
+	// Unable to add <EMAIL> because host 23.129.64.184 is listed on zen.spamhaus.org
 	// https://www.spamhaus.org/sbl/query/SBLCSShttps://www.spamhaus.org/query/ip/3.238.201.74 (on @knollridges.com.ph)
 	|| e.contains("spamhaus")
 
-    // Transient errors
+	// Transient errors ("blocked" above also covers "Blocked - see
+	// https://www.spamcop.net/bl.shtml?23.129.64.211")
 
-	// Blocked - see https://www.spamcop.net/bl.shtml?23.129.64.211
-	|| e.contains("blocked")
-	// 4.7.1 <EMAIL>: Relay access denied
-	|| e.contains("access denied")
 	// relay not permitted!
 	|| e.contains("relay not permitted")
 	// 23.129.64.216 is not yet authorized to deliver mail from
@@ -222,17 +306,10 @@ pub fn is_err_ip_blacklisted(e: &SmtpError) -> bool {
 
 /// Check if the IP needs a reverse DNS.
 pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
-	let e = match e {
-		SmtpError::AsyncSmtpError(AsyncSmtpError::Transient(r) | AsyncSmtpError::Permanent(r)) => {
-			// TODO We can use .to_string() after:
-			// https://github.com/async-email/async-smtp/pull/53
-			r.message.join("; ").to_lowercase()
-		}
-		_ => {
-			return false;
-		}
-	};
+	reply_text(e).is_some_and(|e| needs_rdns(&e))
+}
 
+fn needs_rdns(e: &str) -> bool {
 	// 4.7.25 Client host rejected: cannot find your hostname, [147.75.45.223]
 	// 4.7.1 Client host rejected: cannot find your reverse hostname, [147.75.45.223]
 	// 5.7.1 Client host rejected: cannot find your reverse hostname, [23.129.64.184]
@@ -244,7 +321,7 @@ pub fn is_err_needs_rdns(e: &SmtpError) -> bool {
 #[cfg(test)]
 mod tests {
 
-	use super::{is_err_ip_blacklisted, is_full_inbox, is_greylisted, is_invalid};
+	use super::{classify_rcpt_rejection, is_err_ip_blacklisted, RcptRejection};
 	use crate::EmailAddress;
 	use crate::SmtpError::AsyncSmtpError;
 	use async_smtp::{
@@ -253,59 +330,119 @@ mod tests {
 	};
 	use std::str::FromStr;
 
+	/// Replies as `check_email_deliverability` sees them: async-smtp's error
+	/// string ("permanent: " for 5xx, "transient: " for 4xx), lowercased.
 	#[test]
-	fn test_is_invalid() {
-		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
+	fn test_classify_rcpt_rejection() {
+		use RcptRejection::*;
+		// Mixed case on purpose: servers echo the address back in lowercase.
+		let email = EmailAddress::from_str("Foo@Bar.baz").unwrap();
 
-		assert!(!is_invalid(
-			"554 5.7.1 <mta.voipdir.net[]>: Client host rejected: Access denied",
-			&email
-		));
+		let cases = [
+			// The mailbox doesn't exist.
+			(
+				"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown in virtual mailbox table",
+				Invalid,
+			),
+			("permanent: rcpt (***@stigpods.com.cn) dosn't exist", Invalid),
+			// On @virginmedia.com, minus the enhanced status code, which
+			// servers that don't support it leave out.
+			("permanent: mxin501 mailbox foo@bar.baz unknown", Invalid),
+			// On @yahoo.com and @aol.com.
+			(
+				"permanent: delivery error: dd this user doesn't have a yahoo.com account (foo@bar.baz) [0] - mta4466.mail.bf1.yahoo.com",
+				Invalid,
+			),
+			// Microsoft 365 directory-based edge blocking. "Access denied"
+			// here is about the recipient, not about us.
+			(
+				"permanent: 5.4.1 recipient address rejected: access denied. as(201806281) [bn8nam12ft036.eop-nam12.prod.protection.outlook.com]",
+				Invalid,
+			),
+			// 5.7.1 is invalid when the text says so.
+			(
+				"permanent: 5.7.1 email doesn't exist. please forward it or send it to contact@magency.fr",
+				Invalid,
+			),
+			// A Microsoft 365 tenant without mailboxes defers, but retrying
+			// never helps. https://github.com/reacherhq/check-if-email-exists/issues/1666
+			(
+				"transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. attr5 [sj5pepf000001cc.namprd05.prod.outlook.com 2026-10-13t12:16:22.797z 08df2669f6c8e25d]",
+				Invalid,
+			),
+			// Blocks on our IP, reverse DNS, HELO name or sender address say
+			// nothing about the mailbox, even when worded like a recipient
+			// rejection.
+			(
+				"permanent: 5.7.1 service unavailable; client host [203.0.113.5] blocked using zen.spamhaus.org; https://www.spamhaus.org/query/ip/203.0.113.5",
+				Inconclusive,
+			),
+			(
+				"permanent: 5.7.1 [203.0.113.5] the ip you're using to send mail is not authorized to send; 5.7.1 email directly to our servers. please use the smtp relay at your; 5.7.1 service provider instead. https://support.google.com/mail/?p=notauthorizederror - gsmtp",
+				Inconclusive,
+			),
+			(
+				"permanent: 5.1.0 <me@example.org>: sender address rejected: user unknown in local recipient table",
+				Inconclusive,
+			),
+			(
+				"permanent: 5.7.1 <mta.voipdir.net[]>: client host rejected: access denied",
+				Inconclusive,
+			),
+			(
+				"permanent: 5.5.2 <localhost>: helo command rejected: need fully-qualified hostname",
+				Inconclusive,
+			),
+			(
+				"transient: 4.7.1 client host rejected: cannot find your reverse hostname, [203.0.113.5]",
+				Inconclusive,
+			),
+			// A 4xx deferral doesn't prove the mailbox is missing.
+			(
+				"transient: 4.1.1 <foo@bar.baz>: recipient address rejected: unverified address: address verification in progress",
+				Inconclusive,
+			),
+			// https://github.com/reacherhq/check-if-email-exists/issues/1658
+			(
+				"transient: 4.2.0 <foo@bar.baz>: recipient address rejected: greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html",
+				Inconclusive,
+			),
+			(
+				"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisting in action, please come back later",
+				Inconclusive,
+			),
+			// The whole server is short on resources, not this mailbox.
+			("transient: 4.3.1 insufficient system resources", Inconclusive),
+			// https://github.com/reacherhq/check-if-email-exists/issues/1464
+			(
+				"permanent: requested mail action aborted: exceeded storage allocation",
+				FullInbox,
+			),
+			("permanent: 5.2.2 quota exceeded", FullInbox),
+			// Over quota is a deferral, but it does tell us the mailbox exists.
+			(
+				"transient: 4.2.2 the recipient's inbox is out of storage space. please direct the; 4.2.2 recipient to; 4.2.2  https://support.google.com/mail/?p=overquotatemp 41be03b00d2f7-801d5c00011si4287631a12.311 - gsmtp",
+				FullInbox,
+			),
+			(
+				"permanent: 5.2.1 the email account that you tried to reach is disabled. learn more at; 5.2.1  https://support.google.com/mail/?p=disableduser - gsmtp",
+				Disabled,
+			),
+			(
+				"transient: 4.2.1 the user you are trying to contact is receiving mail at a rate that; 4.2.1 prevents additional messages from being delivered. - gsmtp",
+				Deliverable,
+			),
+		];
 
-		assert!(is_invalid(
-			"RCPT (***@stigpods.com.cn) dosn't exist",
-			&email
-		));
-
-		assert!(is_invalid(
-			"permanent: 5.1.1 MXIN501 mailbox foo@bar.baz unknown (on @virginmedia.com)",
-			&email
-		));
-
-		// https://github.com/reacherhq/check-if-email-exists/issues/1666
-		let msg = "transient: 4.4.4 mail received as unauthenticated, incoming to a recipient domain configured in a hosted tenant which has no mail-enabled subscriptions. attr5 [sj5pepf000001cc.namprd05.prod.outlook.com 2026-10-13t12:16:22.797z 08df2669f6c8e25d]";
-		assert!(!is_greylisted(msg));
-		assert!(is_invalid(msg, &email));
-	}
-
-	#[test]
-	fn test_is_greylisted() {
-		let email = EmailAddress::from_str("foo@bar.baz").unwrap();
-
-		// https://github.com/reacherhq/check-if-email-exists/issues/1658
-		for msg in [
-			"transient: 4.2.0 <foo@bar.baz>: recipient address rejected: greylisted, see http://postgrey.schweikert.ch/help/creativeconcern.com.html",
-			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisting in action, please come back later",
-			"transient: 4.7.1 <foo@bar.baz>: recipient address rejected: greylisted for 38 seconds",
-		] {
-			assert!(is_greylisted(msg), "{}", msg);
-			// Greylisting messages would otherwise be flagged as invalid,
-			// which is why `is_greylisted` must be checked first.
-			assert!(is_invalid(msg, &email), "{}", msg);
-		}
-
-		assert!(!is_greylisted(
-			"permanent: 5.1.1 <foo@bar.baz>: recipient address rejected: user unknown"
-		));
-	}
-
-	#[test]
-	fn test_is_full_inbox() {
-		// https://github.com/reacherhq/check-if-email-exists/issues/1464
-		assert!(is_full_inbox(
-			"permanent: requested mail action aborted: exceeded storage allocation"
-		));
-		assert!(is_full_inbox("permanent: 5.2.2 quota exceeded"));
+		let misclassified: Vec<String> = cases
+			.iter()
+			.map(|(reply, expected)| (reply, expected, classify_rcpt_rejection(reply, &email)))
+			.filter(|(_, expected, actual)| actual != *expected)
+			.map(|(reply, expected, actual)| {
+				format!("expected {:?}, got {:?}: {}", expected, actual, reply)
+			})
+			.collect();
+		assert!(misclassified.is_empty(), "{:#?}", misclassified);
 	}
 
 	#[test]

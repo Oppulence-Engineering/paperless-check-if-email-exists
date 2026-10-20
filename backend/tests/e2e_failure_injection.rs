@@ -321,3 +321,330 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 	let _ = publisher.close(0, "test cleanup".into()).await;
 	let _ = consumer.close(0, "test cleanup".into()).await;
 }
+
+/// Failures that hit after work was reserved or done: the task, the quota
+/// and the job must all end up accounted for.
+mod settlement_after_failure {
+	use super::*;
+	use crate::test_helpers::{insert_keys_for_existing_tenant, insert_tenant};
+	use lapin::options::BasicAckOptions;
+	use lapin::types::AMQPValue;
+	use reacher_backend::reverification::run_reverification_cycle;
+	use reacher_backend::worker::do_work::{
+		delivery_attempt, DELIVERY_ATTEMPT_HEADER, MAX_STORE_FAILURE_REQUEUES,
+	};
+
+	async fn publish_task_message(channel: &lapin::Channel, payload: &[u8], attempt: Option<u32>) {
+		let mut properties = BasicProperties::default().with_priority(1);
+		if let Some(attempt) = attempt {
+			let mut headers = FieldTable::default();
+			headers.insert(DELIVERY_ATTEMPT_HEADER.into(), AMQPValue::LongUInt(attempt));
+			properties = properties.with_headers(headers);
+		}
+		channel
+			.basic_publish(
+				"".into(),
+				CHECK_EMAIL_QUEUE.into(),
+				BasicPublishOptions::default(),
+				payload,
+				properties,
+			)
+			.await
+			.expect("publish task")
+			.await
+			.expect("confirm publish");
+	}
+
+	async fn used_this_period(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> i32 {
+		sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id = $1")
+			.bind(tenant_id)
+			.fetch_one(pool)
+			.await
+			.expect("read tenant usage")
+	}
+
+	/// Deleting a list deletes its job and, by cascade, its task rows, so a
+	/// task already in flight can never store its result (the fallback INSERT
+	/// violates the job foreign key). The result must not be acked away, and
+	/// the requeueing must stop at the cap.
+	#[tokio::test]
+	#[serial]
+	async fn unstorable_result_is_requeued_with_a_counted_attempt_and_dropped_at_the_cap() {
+		let env = OwnedResilienceEnv::start().await;
+		let pool = env.postgres.pool().await;
+		let job_id = insert_job(&pool, None, 1, "running").await;
+		let task_db_id = insert_task(&pool, job_id, "running", None, None, None).await;
+		sqlx::query("DELETE FROM v1_bulk_job WHERE id = $1")
+			.bind(job_id)
+			.execute(&pool)
+			.await
+			.expect("delete job mid-flight");
+		pool.close().await;
+
+		let config = build_test_config(
+			ConfigProfile::WorkerRabbit,
+			Some(env.postgres.db_url()),
+			Some(env.rabbitmq.amqp_url()),
+		)
+		.await;
+		let channel = config.must_worker_config().expect("worker config").channel;
+
+		let task = CheckEmailTask {
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: "bad-syntax".into(),
+				..Default::default()
+			},
+			job_id: CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: Some(TaskMetadata {
+				tenant_id: None,
+				request_id: None,
+				correlation_id: None,
+				created_by: None,
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: Some(task_db_id),
+			}),
+		};
+		let payload = serde_json::to_vec(&task).expect("serialize task");
+		publish_task_message(&channel, &payload, None).await;
+
+		let mut deliveries = channel
+			.basic_consume(
+				CHECK_EMAIL_QUEUE.into(),
+				"unstorable-result-consumer".into(),
+				BasicConsumeOptions::default(),
+				FieldTable::default(),
+			)
+			.await
+			.expect("basic consume");
+		let first = tokio::time::timeout(Duration::from_secs(5), deliveries.next())
+			.await
+			.expect("receive first delivery")
+			.expect("delivery stream item")
+			.expect("lapin delivery");
+		assert_eq!(delivery_attempt(&first.properties), 0);
+
+		let result =
+			do_check_email_work(&task, first, Arc::clone(&channel), Arc::clone(&config)).await;
+		assert!(
+			result.is_err(),
+			"an unstored result must not be reported as done"
+		);
+
+		let requeued = tokio::time::timeout(Duration::from_secs(15), deliveries.next())
+			.await
+			.expect("the task must come back instead of being acked away")
+			.expect("delivery stream item")
+			.expect("lapin delivery");
+		assert_eq!(delivery_attempt(&requeued.properties), 1);
+		requeued
+			.ack(BasicAckOptions::default())
+			.await
+			.expect("ack requeued copy");
+
+		publish_task_message(&channel, &payload, Some(MAX_STORE_FAILURE_REQUEUES)).await;
+		let at_cap = tokio::time::timeout(Duration::from_secs(5), deliveries.next())
+			.await
+			.expect("receive delivery at the cap")
+			.expect("delivery stream item")
+			.expect("lapin delivery");
+		let result =
+			do_check_email_work(&task, at_cap, Arc::clone(&channel), Arc::clone(&config)).await;
+		assert!(result.is_err());
+		assert!(
+			tokio::time::timeout(Duration::from_secs(3), deliveries.next())
+				.await
+				.is_err(),
+			"a task at the requeue cap must be dropped, not looped"
+		);
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn cancelling_job_is_finalized_when_the_worker_skips_its_last_task() {
+		let env = OwnedResilienceEnv::start().await;
+		let pool = env.postgres.pool().await;
+		let job_id = insert_job(&pool, None, 1, "cancelling").await;
+		// The task was running when the cancel came in, so the cancel endpoint
+		// left it alone; then its worker died and the message was redelivered.
+		let task_db_id = insert_task(&pool, job_id, "running", None, None, None).await;
+
+		let config = build_test_config(
+			ConfigProfile::WorkerRabbit,
+			Some(env.postgres.db_url()),
+			Some(env.rabbitmq.amqp_url()),
+		)
+		.await;
+		let task = CheckEmailTask {
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: "cancelled@example.com".into(),
+				..Default::default()
+			},
+			job_id: CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: Some(TaskMetadata {
+				tenant_id: None,
+				request_id: None,
+				correlation_id: None,
+				created_by: None,
+				retry_policy: None,
+				dedupe_key: None,
+				task_db_id: Some(task_db_id),
+			}),
+		};
+		let channel = config.must_worker_config().expect("worker config").channel;
+		publish_task_message(
+			&channel,
+			&serde_json::to_vec(&task).expect("serialize task"),
+			None,
+		)
+		.await;
+
+		let worker = tokio::spawn(reacher_backend::worker::run_worker(Arc::clone(&config)));
+		let mut job_status = String::new();
+		for _ in 0..40 {
+			job_status = sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")
+				.bind(job_id)
+				.fetch_one(&pool)
+				.await
+				.expect("read job status");
+			if job_status == "cancelled" {
+				break;
+			}
+			tokio::time::sleep(Duration::from_millis(250)).await;
+		}
+		worker.abort();
+
+		let task_state: String =
+			sqlx::query_scalar("SELECT task_state::TEXT FROM v1_task_result WHERE id = $1")
+				.bind(task_db_id)
+				.fetch_one(&pool)
+				.await
+				.expect("read task state");
+		assert_eq!(task_state, "cancelled");
+		assert_eq!(
+			job_status, "cancelled",
+			"the job must not stay 'cancelling'"
+		);
+		pool.close().await;
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn bulk_job_whose_task_rows_cannot_be_stored_refunds_its_quota() {
+		let env = OwnedResilienceEnv::start().await;
+		let pool = env.postgres.pool().await;
+		let tenant_id = insert_tenant(&pool, "bulk-insert-failure", Some(100), 0).await;
+		let keys = insert_keys_for_existing_tenant(&pool, tenant_id).await;
+		let config = build_test_config(
+			ConfigProfile::WorkerRabbit,
+			Some(env.postgres.db_url()),
+			Some(env.rabbitmq.amqp_url()),
+		)
+		.await;
+
+		// Postgres jsonb cannot hold U+0000, so the second task row INSERT
+		// fails after quota for the whole request has been reserved.
+		let response = request()
+			.method("POST")
+			.path("/v1/bulk")
+			.header("Authorization", format!("Bearer {}", keys.full_access_key))
+			.json(&serde_json::json!({
+				"input": ["fine@example.com", "nul\u{0000}byte@example.com"]
+			}))
+			.reply(&create_routes(Arc::clone(&config)))
+			.await;
+		assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+		assert_eq!(used_this_period(&pool, tenant_id).await, 0);
+		let job_statuses: Vec<String> =
+			sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE tenant_id = $1")
+				.bind(tenant_id)
+				.fetch_all(&pool)
+				.await
+				.expect("load jobs");
+		assert_eq!(job_statuses, vec!["failed".to_string()]);
+		let queued: i64 = sqlx::query_scalar(
+			"SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1 AND task_state = 'queued'",
+		)
+		.bind(tenant_id)
+		.fetch_one(&pool)
+		.await
+		.expect("count queued tasks");
+		assert_eq!(
+			queued, 0,
+			"no task may stay queued for a job that was never published"
+		);
+		pool.close().await;
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn reverification_that_cannot_publish_refunds_quota_and_fails_its_job() {
+		let env = OwnedResilienceEnv::start().await;
+		let pool = env.postgres.pool().await;
+		let tenant_id = insert_tenant(&pool, "reverify-publish-failure", Some(100), 0).await;
+		let old_job = insert_job(&pool, Some(tenant_id), 1, "completed").await;
+		let old_task = insert_task(&pool, old_job, "completed", Some(tenant_id), None, None).await;
+		sqlx::query(
+			"UPDATE v1_task_result SET completed_at = NOW() - INTERVAL '90 days' WHERE id = $1",
+		)
+		.bind(old_task)
+		.execute(&pool)
+		.await
+		.expect("age the earlier verification");
+		sqlx::query(
+			"INSERT INTO reverification_schedules (tenant_id, staleness_days, batch_size) VALUES ($1, 30, 10)",
+		)
+		.bind(tenant_id)
+		.execute(&pool)
+		.await
+		.expect("insert schedule");
+
+		let config = build_test_config(
+			ConfigProfile::WorkerRabbit,
+			Some(env.postgres.db_url()),
+			Some(env.rabbitmq.amqp_url()),
+		)
+		.await;
+		// The broker channel is gone, so every publish fails.
+		config
+			.must_worker_config()
+			.expect("worker config")
+			.channel
+			.close(0, "test: broker channel lost".into())
+			.await
+			.expect("close channel");
+
+		run_reverification_cycle(&config.reverification, &config, &pool)
+			.await
+			.expect("reverification cycle");
+
+		assert_eq!(used_this_period(&pool, tenant_id).await, 0);
+		let job_status: String = sqlx::query_scalar(
+			"SELECT status::TEXT FROM v1_bulk_job WHERE tenant_id = $1 AND metadata->>'source' = 'reverification'",
+		)
+		.bind(tenant_id)
+		.fetch_one(&pool)
+		.await
+		.expect("load reverification job");
+		assert_eq!(
+			job_status, "failed",
+			"a job nothing was published for must not stay running"
+		);
+
+		// The row keeps a full task payload, so it can be retried later.
+		let payload: serde_json::Value = sqlx::query_scalar(
+			"SELECT t.payload FROM v1_task_result t JOIN v1_bulk_job j ON j.id = t.job_id WHERE j.tenant_id = $1 AND j.metadata->>'source' = 'reverification'",
+		)
+		.bind(tenant_id)
+		.fetch_one(&pool)
+		.await
+		.expect("load reverification task payload");
+		let stored: CheckEmailTask =
+			serde_json::from_value(payload).expect("payload is a full CheckEmailTask");
+		assert_eq!(stored.input.to_email, "t@e.com");
+		pool.close().await;
+	}
+}

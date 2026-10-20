@@ -1,5 +1,5 @@
 {
-  "version": "2026-03-28",
+  "version": "2026-10-19",
   "providers": [
     {
       "provider": "gmail",
@@ -22,6 +22,7 @@
       "must_start_with_alphanumeric": true,
       "consecutive_special_allowed": false,
       "leading_trailing_special_allowed": false,
+      "unrestricted_special_chars": ["_", "-"],
       "plus_addressing": true,
       "reserved_words": []
     },
@@ -35,7 +36,7 @@
       "consecutive_special_allowed": false,
       "leading_trailing_special_allowed": false,
       "plus_addressing": false,
-      "reserved_words": ["admin", "abuse", "hostmaster", "postmaster", "webmaster"]
+      "reserved_words": []
     }
   ]
 }

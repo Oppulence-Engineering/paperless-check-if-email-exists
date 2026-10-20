@@ -130,6 +130,13 @@ pub async fn handle_check_email(
 					)
 					.into());
 				}
+				IdempotencyCheck::PathMismatch => {
+					return Err(ReacherResponseError::new(
+						StatusCode::UNPROCESSABLE_ENTITY,
+						"Idempotency key was already used on another endpoint",
+					)
+					.into());
+				}
 				IdempotencyCheck::Cached(cached) => {
 					let cached_status = StatusCode::from_u16(cached.status_code).map_err(|e| {
 						ReacherResponseError::new(
@@ -218,6 +225,9 @@ pub async fn handle_check_email(
 			}
 		}
 	} else {
+		// The direct path counts a request once its check is done; the worker
+		// path counts it on dispatch, since the reply may never arrive here.
+		throttle_manager.increment_counters().await;
 		let response = handle_with_worker(Arc::clone(&config), body, tenant_ctx).await;
 		match response {
 			Ok(body) => {
@@ -255,7 +265,9 @@ async fn handle_without_worker(
 	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
 	let result = check_email(&input).await;
-	let prepared = prepare_check_email_success(
+	// The caller gets an error on either failure below, so the check reserved
+	// from the monthly quota is given back.
+	let prepared = match prepare_check_email_success(
 		config.as_ref(),
 		result,
 		tenant_ctx.tenant_id,
@@ -263,12 +275,18 @@ async fn handle_without_worker(
 		true,
 	)
 	.await
-	.map_err(ReacherResponseError::from)?;
+	{
+		Ok(prepared) => prepared,
+		Err(err) => {
+			release_single_reserved_usage(&config, tenant_ctx).await;
+			return Err(ReacherResponseError::from(err).into());
+		}
+	};
 
 	throttle_manager.increment_counters().await;
 
 	let storage = Arc::clone(&config).get_storage_adapter();
-	storage
+	if let Err(err) = storage
 		.store_prepared(
 			&CheckEmailTask {
 				input: body.to_check_email_input(Arc::clone(&config)),
@@ -288,7 +306,10 @@ async fn handle_without_worker(
 			storage.get_extra(),
 		)
 		.await
-		.map_err(ReacherResponseError::from)?;
+	{
+		release_single_reserved_usage(&config, tenant_ctx).await;
+		return Err(ReacherResponseError::from(err).into());
+	}
 
 	// Evaluate conditional actions (auto-suppression) for direct (non-worker) path
 	if let Some(pool) = config.get_pg_pool() {
@@ -378,7 +399,10 @@ async fn handle_with_worker(
 		return Err(err.into());
 	}
 
-	let mut consumer = channel
+	// The caller gets an error and no result when the reply queue cannot be
+	// consumed, so give the reserved check back. A timeout further down does
+	// not: the worker may still finish and store the result.
+	let mut consumer = match channel
 		.basic_consume(
 			reply_queue.name().clone(),
 			format!("rpc.{}", correlation_id).into(),
@@ -386,7 +410,13 @@ async fn handle_with_worker(
 			FieldTable::default(),
 		)
 		.await
-		.map_err(ReacherResponseError::from)?;
+	{
+		Ok(consumer) => consumer,
+		Err(err) => {
+			release_single_reserved_usage(&config, tenant_ctx).await;
+			return Err(ReacherResponseError::from(err).into());
+		}
+	};
 
 	let delivery = tokio::time::timeout(
 		Duration::from_secs(WORKER_RPC_TIMEOUT_SECONDS),
@@ -445,6 +475,8 @@ async fn handle_with_worker(
 				return Ok(body);
 			}
 			SingleShotReply::Err((e, code)) => {
+				// The worker could not check the address; the caller is not charged.
+				release_single_reserved_usage(&config, tenant_ctx).await;
 				let status_code = StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
 				return Err(ReacherResponseError::new(status_code, e).into());
 			}
@@ -471,4 +503,49 @@ async fn handle_with_worker(
 async fn release_single_reserved_usage(config: &BackendConfig, tenant_ctx: &TenantContext) {
 	let pg_pool = config.get_pg_pool();
 	let _ = release_reserved_usage(pg_pool.as_ref(), tenant_ctx.tenant_id, 1).await;
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::config::ThrottleConfig;
+
+	#[tokio::test]
+	async fn worker_mode_requests_count_toward_the_tenant_throttle() {
+		// Worker mode without a RabbitMQ channel: each dispatch fails after the
+		// throttle check, which is enough to see whether the request counted.
+		let mut config = BackendConfig::empty();
+		config.worker.enable = true;
+		let config = Arc::new(config);
+		let mut tenant_ctx = TenantContext::legacy(ThrottleConfig {
+			max_requests_per_second: Some(1),
+			..ThrottleConfig::new_without_throttle()
+		});
+		tenant_ctx.is_legacy = false;
+		tenant_ctx.tenant_id = Some(uuid::Uuid::new_v4());
+		let body = CheckEmailRequest {
+			to_email: "someone@example.com".into(),
+			..Default::default()
+		};
+		let status = || async {
+			handle_check_email(
+				Arc::clone(&config),
+				b"{}",
+				&body,
+				&tenant_ctx,
+				"/v1/check_email",
+				None,
+			)
+			.await
+			.err()
+			.and_then(|rejection| {
+				rejection
+					.find::<ReacherResponseError>()
+					.map(|error| error.code)
+			})
+		};
+
+		assert_ne!(status().await, Some(StatusCode::TOO_MANY_REQUESTS));
+		assert_eq!(status().await, Some(StatusCode::TOO_MANY_REQUESTS));
+	}
 }
