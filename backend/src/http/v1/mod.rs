@@ -18,6 +18,7 @@ pub mod pipelines;
 pub mod provider_outcomes;
 pub mod query;
 pub mod reputation;
+pub mod research;
 pub mod reverification;
 pub mod saved_segments;
 pub mod score_policies;

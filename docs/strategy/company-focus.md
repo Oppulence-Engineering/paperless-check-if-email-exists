@@ -1,80 +1,62 @@
-# Company Focus: One Pager
+# Paperless product focus
 
-**Product:** Check If Email Exists · **Status:** Draft · **Date:** 2026-10-16
+Updated 2026-10-20. This replaces the sender-only positioning from 2026-10-16.
 
-## Focus
+Paperless helps small B2B agencies, founders, and sales teams turn target-account
+lists into relevant, current contacts with verifiable evidence and predictable
+costs. Verification and ongoing list hygiene remain supported workflows.
 
-We help teams that send email keep their lists clean, so their mail gets to the inbox.
+## First connected workflow
 
-We are the system that decides if an address is safe to send to. We do not send email.
+Upload company names/domains and optional known people, choose the target role and
+spending limit, review the research plan, run research, review evidence and mailbox
+status, and export approved contacts. Missing, ambiguous, stale, and conflicting
+evidence must remain visible. A deliverable mailbox does not establish a person's
+identity, employment, purchasing responsibility, consent, or inbox placement.
 
-We add finder, search, and enrichment data (RFC 0011–0015). This data serves list repair, account coverage, and segmentation for senders. It is not a cold-prospecting product.
+The first release combines company-list research, person matching, email finding,
+list repair, verification, evidence review, and CSV export. Broad company discovery,
+employment-change monitoring, and CRM synchronization follow measured pilot value.
 
-## Our buyer
+## Existing systems and ownership
 
-Our buyer is a team that **already has the addresses** and **sends email to them**.
+- The existing Next.js verification application is the customer entry point.
+- The Go Paperless backend owns company resolution, research, source observations,
+  and contact discovery. Reuse its research sessions, import parsing, and spend controls.
+- The Rust backend owns verification operations, tenant quotas, lists, suppression,
+  outcome policies, and clean exports. All deployed mailbox verification uses
+  MillionVerifier; errors never fall back to SMTP or a proxy.
+- Workspace mappings and service credentials stay server-side. One customer must
+  never read another customer's evidence or pay for their provider calls.
 
-| | |
-|---|---|
-| **Who buys** | Lifecycle and email marketing leads, marketing operations, deliverability owners, and engineers who own signup and transactional email. |
-| **Company type** | B2C and B2B senders with large lists. SaaS products with signup forms. Platforms and agencies that send on behalf of their customers. |
-| **Their pain** | Bounces and spam traps damage their sender reputation. Mail goes to spam. The ESP warns or suspends the account. Old lists decay with no warning. |
-| **What they want** | A clear "send / do not send" answer for each address. Proof that the list stays clean over time. |
+Each contact separates mailbox verification, person identity, employment, and role
+relevance, with sources and observation dates for the facts actually established.
+An inferred address and a published address are different kinds of evidence.
 
-**Not our buyer:** sales teams that look for new contacts to prospect. Hunter.io, Apollo, and similar tools serve them. We do not compete for that budget.
+## Spending and rights
 
-## Why we win with this buyer
+Prefer permitted existing observations and first-party website evidence before
+paid research. Bound candidate verification and stop once the requested contacts
+are found. Show the maximum customer charge before a run; persist provider attempts
+and reuse completed operations on retries.
 
-1. **We use real delivery results.** SendGrid, Mailgun, Postmark, and SES webhooks tell us which addresses bounced. Hunter gets this data only from its own sending tool.
-2. **We grade catch-all domains.** Other tools mark catch-all as "risky" and stop. We give a severity tier now, and we will give a measured bounce rate.
-3. **We keep lists clean over time.** Suppressions, scheduled reverification, pipelines, and list quality scores work after the first check.
-4. **We give one decision for each address.** The score, the reason codes, and the policy modes (strict, balanced, aggressive) give a clear "safe to send" result.
+Do not use Parallel output to populate a shared commercial contact database. Its
+customer-private integration allowance does not itself establish permission for
+all contact-data products. Enable a provider only for the uses covered by its
+contract; the initial integration must work without assuming a Parallel waiver.
 
-## How we differ from Hunter.io
+The proposed $19/$39/$79 plans are hypotheses, not implemented entitlements or
+claims of sustainable margins. Set included research usage after measuring cost
+per usable contact, including unsuccessful searches, verification, and review.
 
-| | Hunter.io | Us |
-|---|---|---|
-| Main product | Contact data for prospecting | Send decisions for lists you already have |
-| Email check | Add-on, 0.5 credit | Core product |
-| Catch-all | Confidence score based on web sources | Severity tier now, measured bounce rate next |
-| Delivery feedback | Only from its own sending tool | From the customer's ESP |
+## Evidence of success
 
-## Priorities: next two quarters
+North-star metric: total cost per correctly matched, usable B2B contact. A usable
+contact meets the requested role, has sufficient current person/company evidence,
+and passes the customer's verification and suppression policy.
 
-1. **Measured catch-all risk.** Calculate a bounce rate for each catch-all domain from ESP delivery results. Show it in each result.
-2. **More ESP and marketing platform connections.** We already have SendGrid, Mailgun, Postmark, and SES. Add Klaviyo, Mailchimp, Customer.io, Braze, and HubSpot Marketing. These platforms are where our buyer works.
-3. **Signup protection.** Make the real-time API fast and easy to add to signup forms. Stop bad addresses before they enter the list.
-4. **Address repair.** When a known contact bounces, use the finder to suggest the new address at the same domain. Teach the finder each domain's pattern from our own results. We use the finder to repair lists, not to prospect.
-5. **AI and automation access.** Ship an MCP server and Zapier and Make connectors on top of the current API.
-6. **Hunter.io data parity, framed for senders.** Build in this order:
-   1. Shared foundations: credits, spend guardrails, privacy, and the Legal Review (RFC 0015).
-   2. Finder and list repair with calibrated confidence (RFC 0011).
-   3. Enrichment with a job-change warning and monitor (RFC 0014).
-   4. Domain Search for account coverage (RFC 0012).
-   5. Discover with lookalike accounts (RFC 0013).
+Evaluate coverage, false matches, stale roles, uncertain outcomes, cost, and manual
+review time on a stratified benchmark and paid pilots. Do not advertise superior
+accuracy or cost before the comparison supports it.
 
-   Data comes from Parallel Web Systems. Legal review is a release gate.
-
-## What we do not build
-
-1. Our own web crawler or a bought contact database.
-2. Email sequences, inbox warm-up, or domain purchase.
-3. Discover or Domain Search as the main entry point of the product. Entry points start from the tenant's lists.
-
-## How we measure success
-
-| Metric | Why it matters |
-|---|---|
-| Customer bounce rate after cleaning | It shows that our core promise works. |
-| Share of tenants with an ESP webhook connected | It shows activation and feeds our data advantage. |
-| Share of catch-all results with a measured risk | It shows progress on our main difference. |
-| Reverification and pipeline volume per tenant | It shows ongoing use, not a single check. |
-| Gross margin on data features (target: 85% or more) | It keeps the data features profitable (RFC 0015 section 16). |
-
-We must set the targets before the start of the quarter.
-
-## Open decisions
-
-1. Do we price per check, per list size, or by a monthly plan with ongoing monitoring?
-2. Which marketing platform do we connect first?
-3. Can catch-all bounce rates be shared across tenants? Each tenant must opt in, and we must share only domain-level numbers.
+Execution and acceptance criteria: [Go integration](../paperless-research-integration.md).

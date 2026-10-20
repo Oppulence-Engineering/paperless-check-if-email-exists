@@ -54,6 +54,24 @@ macro_rules! api_routes {
 }
 
 api_routes!(
+	(route_v1_research_create, "POST", "/v1/research", |config| {
+		crate::http::v1::research::v1_create_research(config)
+	}),
+	(route_v1_research_list, "GET", "/v1/research", |config| {
+		crate::http::v1::research::v1_list_research(config)
+	}),
+	(
+		route_v1_research_get,
+		"GET",
+		"/v1/research/{session_id}",
+		|config| crate::http::v1::research::v1_get_research(config)
+	),
+	(
+		route_v1_research_export,
+		"POST",
+		"/v1/research/{session_id}/export",
+		|config| crate::http::v1::research::v1_export_research(config)
+	),
 	(route_healthz, "GET", "/healthz", |_config| {
 		crate::http::health::liveness::healthz()
 	}),

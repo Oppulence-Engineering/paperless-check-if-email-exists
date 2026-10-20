@@ -34,6 +34,8 @@ pub struct JwtAuthConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BackendConfig {
+	#[serde(default)]
+	pub research: crate::research::ResearchConfig,
 	/// Server-selected verification engine; captured when a task is admitted.
 	#[serde(default)]
 	pub verification_backend: crate::verification::VerificationBackend,
@@ -132,6 +134,7 @@ impl BackendConfig {
 	/// Create an empty BackendConfig. This is useful for testing purposes.
 	pub fn empty() -> Self {
 		Self {
+			research: Default::default(),
 			verification_backend: Default::default(),
 			millionverifier: Default::default(),
 			backend_name: "".to_string(),
@@ -634,6 +637,7 @@ pub async fn load_config() -> Result<BackendConfig, anyhow::Error> {
 	// `proxies` field.
 	cfg.get_verif_method().validate_proxies()?;
 	cfg.millionverifier.validate(cfg.verification_backend)?;
+	cfg.research.validate()?;
 	if cfg.verification_backend == crate::verification::VerificationBackend::Millionverifier
 		&& !matches!(cfg.storage, Some(StorageConfig::Postgres(_)))
 	{

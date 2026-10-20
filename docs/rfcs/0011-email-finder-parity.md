@@ -2,14 +2,28 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft; architecture revised 2026-10-20 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
 | **Depends on** | RFC 0015 (Data Platform Foundations) |
 | **Used by** | RFC 0012 (domain sourcing), RFC 0013 ("Find email" on people rows) |
 | **Release gates** | RFC 0015 Legal Review sign-off; shadow mode exit criteria; Definition Of Done met |
 
-## Summary
+## Implementation decision — 2026-10-20
+
+The [company-to-contact integration](../paperless-research-integration.md) is the
+current implementation plan. Go owns company/person research and source evidence;
+Rust owns finder orchestration, verification, tenant quotas, suppression, and
+approved export. Candidate checks use MillionVerifier through the existing Rust
+API, with stable retry keys and bounded attempts. SMTP/proxy fallback is disabled.
+Catch-all results remain review items and never establish mailbox ownership.
+
+The SMTP pipeline and new Rust sourcing services described below are historical
+proposals, not instructions for this release. Calibrated confidence and superiority
+claims require benchmark evidence; current results expose separate person,
+employer, role, and mailbox claims instead. Preserve the existing finder contract.
+
+## Earlier proposal
 
 Make the email finder as good as the Hunter.io Email Finder, and better on catch-all domains. The new finder uses evidence in this order:
 

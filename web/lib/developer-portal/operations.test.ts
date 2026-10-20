@@ -140,3 +140,15 @@ it("links each operation to its Scalar anchor", () => {
 		}
 	}
 });
+
+it("links research operations to the company workflow with the find scope", () => {
+	const research = operations.filter((operation) => operation.path.startsWith("/v1/research"));
+	expect(research).toHaveLength(4);
+	for (const operation of research) {
+		expect(operation.scope).toBe("find");
+		expect(workflowDestination(operation)).toEqual({
+			href: "/app/research",
+			label: "Open company research",
+		});
+	}
+});

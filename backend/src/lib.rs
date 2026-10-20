@@ -10,6 +10,7 @@ pub mod list_intelligence;
 pub mod outcomes;
 pub mod pipelines;
 pub mod reputation;
+pub mod research;
 pub mod reverification;
 pub mod sandbox;
 pub mod scoring;

@@ -11,16 +11,20 @@ Method | HTTP request | Description
 [**V1CheckSuppression**](V1API.md#V1CheckSuppression) | **Get** /v1/suppressions/check | GET /v1/suppressions/check
 [**V1CreateBulkJob**](V1API.md#V1CreateBulkJob) | **Post** /v1/bulk | Create the v1 bulk endpoint.
 [**V1CreateList**](V1API.md#V1CreateList) | **Post** /v1/lists | POST /v1/lists
+[**V1CreateResearch**](V1API.md#V1CreateResearch) | **Post** /v1/research |
 [**V1DeleteList**](V1API.md#V1DeleteList) | **Delete** /v1/lists/{list_id} | DELETE /v1/lists/{list_id}
 [**V1DeleteSuppression**](V1API.md#V1DeleteSuppression) | **Delete** /v1/suppressions/{id} | DELETE /v1/suppressions/{id}
 [**V1DownloadList**](V1API.md#V1DownloadList) | **Get** /v1/lists/{list_id}/download | GET /v1/lists/{list_id}/download
+[**V1ExportResearch**](V1API.md#V1ExportResearch) | **Post** /v1/research/{session_id}/export |
 [**V1ExportSuppressions**](V1API.md#V1ExportSuppressions) | **Get** /v1/suppressions/export | Export suppressions
 [**V1FindEmail**](V1API.md#V1FindEmail) | **Post** /v1/find_email | POST /v1/find_email
 [**V1GetFindEmail**](V1API.md#V1GetFindEmail) | **Get** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+[**V1GetResearch**](V1API.md#V1GetResearch) | **Get** /v1/research/{session_id} |
 [**V1GetVerificationOperation**](V1API.md#V1GetVerificationOperation) | **Get** /v1/operations/{operation_id} |
 [**V1ImportSuppressions**](V1API.md#V1ImportSuppressions) | **Post** /v1/suppressions/import | Import suppressions
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
+[**V1ListResearch**](V1API.md#V1ListResearch) | **Get** /v1/research |
 [**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
@@ -491,6 +495,70 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1CreateResearch
+
+> ResearchCreated V1CreateResearch(ctx).CreateResearchRequest(createResearchRequest).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	createResearchRequest := *openapiclient.NewCreateResearchRequest("IdempotencyKey_example", "ImportContent_example", openapiclient.ResearchImportFormat("csv"), int32(123), int32(123), "Name_example", "TargetRole_example") // CreateResearchRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1CreateResearch(context.Background()).CreateResearchRequest(createResearchRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateResearch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1CreateResearch`: ResearchCreated
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1CreateResearch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1CreateResearchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **createResearchRequest** | [**CreateResearchRequest**](CreateResearchRequest.md) |  |
+
+### Return type
+
+[**ResearchCreated**](ResearchCreated.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1DeleteList
 
 > ListDeleteResponse V1DeleteList(ctx, listId).Execute()
@@ -697,6 +765,76 @@ Name | Type | Description  | Notes
 
 - **Content-Type**: Not defined
 - **Accept**: text/csv, application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ExportResearch
+
+> ResearchExportResponse V1ExportResearch(ctx, sessionId).ResearchExportRequest(researchExportRequest).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	sessionId := int64(789) // int64 | Research session
+	researchExportRequest := *openapiclient.NewResearchExportRequest(openapiclient.ResearchExportMode("approved"), []string{"RowKeys_example"}) // ResearchExportRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ExportResearch(context.Background(), sessionId).ResearchExportRequest(researchExportRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ExportResearch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ExportResearch`: ResearchExportResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ExportResearch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**sessionId** | **int64** | Research session |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ExportResearchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **researchExportRequest** | [**ResearchExportRequest**](ResearchExportRequest.md) |  |
+
+### Return type
+
+[**ResearchExportResponse**](ResearchExportResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -977,6 +1115,74 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## V1GetResearch
+
+> ResearchDetail V1GetResearch(ctx, sessionId).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	sessionId := int64(789) // int64 | Research session
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1GetResearch(context.Background(), sessionId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1GetResearch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetResearch`: ResearchDetail
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1GetResearch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**sessionId** | **int64** | Research session |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetResearchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**ResearchDetail**](ResearchDetail.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## V1GetVerificationOperation
 
 > VerificationResponse V1GetVerificationOperation(ctx, operationId).Execute()
@@ -1160,6 +1366,65 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListListResponse**](ListListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ListResearch
+
+> ResearchList V1ListResearch(ctx).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1ListResearch(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1ListResearch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListResearch`: ResearchList
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1ListResearch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListResearchRequest struct via the builder pattern
+
+
+### Return type
+
+[**ResearchList**](ResearchList.md)
 
 ### Authorization
 

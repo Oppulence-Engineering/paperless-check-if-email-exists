@@ -17,15 +17,21 @@ resources:
 config:
   env:
     RCH__VERIFICATION_BACKEND: millionverifier
+    RCH__RESEARCH__URL: http://lead-scraper-service-leads-scraper-service:8080
     RCH__WORKER__RABBITMQ__QUEUE: check_email_staging
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
     # Staging and production share one Postgres cluster with about 47
     # connections. Bound both pools to leave room for rolling replacements.
-    RCH__DB_MAX_CONNECTIONS: "3"
-    DATABASE_POOL_MAX: "2"
+    RCH__DB_MAX_CONNECTIONS: "2"
+    DATABASE_POOL_MAX: "1"
 
 # The Resend key comes from Infisical, as in values.production.yaml.
 extraEnv:
+  - name: RCH__RESEARCH__BOOTSTRAP_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: lead-scraper-gateway-api-key
+        key: LEAD_SCRAPER_GATEWAY_API_KEY
   - name: RCH__MILLIONVERIFIER__API_KEY
     valueFrom:
       secretKeyRef:
