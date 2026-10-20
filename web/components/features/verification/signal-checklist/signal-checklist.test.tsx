@@ -48,4 +48,32 @@ describe("SignalChecklist", () => {
 		expect(screen.getByText("Catch-all risk")).toBeInTheDocument();
 		expect(screen.getByText("High")).toBeInTheDocument();
 	});
+
+	it.each(["ok", "catch_all", "unknown"])(
+		"does not present unavailable SMTP or MX checks as facts for external %s results",
+		(result) => {
+			render(
+				<SignalChecklist
+					result={{
+						...SAMPLE_CHECK_RESULT,
+						external_verification: {
+							service: "millionverifier",
+							result,
+							result_code: 1,
+							subresult: "ok",
+						},
+					}}
+				/>,
+			);
+			expect(
+				screen.getByText(/Individual SMTP and MX checks were not returned/),
+			).toBeInTheDocument();
+			expect(screen.queryByText(/Mailbox accepts mail:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Mail server answers:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Domain has a mail server:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Mailbox is disabled:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Domain accepts all addresses:/)).not.toBeInTheDocument();
+			expect(screen.getByText("Valid address format: yes")).toBeInTheDocument();
+		},
+	);
 });

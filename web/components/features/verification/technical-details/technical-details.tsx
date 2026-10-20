@@ -75,7 +75,11 @@ export function TechnicalDetails({ className, result, ...props }: TechnicalDetai
 						/>
 					</Row>
 					<Row label="Mail servers (MX)" layout="stacked">
-						{mx.error ? (
+						{result.external_verification ? (
+							<p className="text-sm text-neutral-300">
+								Individual MX diagnostics were not returned by the verification service.
+							</p>
+						) : mx.error ? (
 							<CheckError error={mx.error} />
 						) : (
 							<div className="flex flex-col gap-2">
