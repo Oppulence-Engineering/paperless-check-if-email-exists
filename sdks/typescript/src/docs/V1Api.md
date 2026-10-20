@@ -647,7 +647,7 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-let sessionId: number; //Research session (default to undefined)
+let sessionId: string; //Research session ID as a positive decimal string (default to undefined)
 let researchExportRequest: ResearchExportRequest; //
 
 const { status, data } = await apiInstance.v1ExportResearch(
@@ -661,7 +661,7 @@ const { status, data } = await apiInstance.v1ExportResearch(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **researchExportRequest** | **ResearchExportRequest**|  | |
-| **sessionId** | [**number**] | Research session | defaults to undefined|
+| **sessionId** | [**string**] | Research session ID as a positive decimal string | defaults to undefined|
 
 
 ### Return type
@@ -921,7 +921,7 @@ import {
 const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
-let sessionId: number; //Research session (default to undefined)
+let sessionId: string; //Research session ID as a positive decimal string (default to undefined)
 
 const { status, data } = await apiInstance.v1GetResearch(
     sessionId
@@ -932,7 +932,7 @@ const { status, data } = await apiInstance.v1GetResearch(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **sessionId** | [**number**] | Research session | defaults to undefined|
+| **sessionId** | [**string**] | Research session ID as a positive decimal string | defaults to undefined|
 
 
 ### Return type

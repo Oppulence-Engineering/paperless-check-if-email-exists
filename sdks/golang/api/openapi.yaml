@@ -4023,15 +4023,13 @@ paths:
     get:
       operationId: v1_get_research
       parameters:
-      - description: Research session
+      - description: Research session ID as a positive decimal string
         explode: false
         in: path
         name: session_id
         required: true
         schema:
-          format: int64
-          minimum: 0
-          type: integer
+          type: string
         style: simple
       responses:
         "200":
@@ -4052,15 +4050,13 @@ paths:
     post:
       operationId: v1_export_research
       parameters:
-      - description: Research session
+      - description: Research session ID as a positive decimal string
         explode: false
         in: path
         name: session_id
         required: true
         schema:
-          format: int64
-          minimum: 0
-          type: integer
+          type: string
         style: simple
       requestBody:
         content:
@@ -6460,9 +6456,9 @@ components:
     CreateResearchRequest:
       additionalProperties: false
       example:
-        max_candidates: 0
+        max_candidates: 1
         import_format: csv
-        max_verifications: 0
+        max_verifications: 18
         name: name
         idempotency_key: idempotency_key
         target_role: target_role
@@ -6476,15 +6472,21 @@ components:
           $ref: "#/components/schemas/ResearchImportFormat"
         max_candidates:
           format: int32
-          minimum: 0
+          maximum: 3
+          minimum: 1
           type: integer
         max_verifications:
           format: int32
-          minimum: 0
+          maximum: 30
+          minimum: 1
           type: integer
         name:
+          maxLength: 100
+          minLength: 1
           type: string
         target_role:
+          maxLength: 120
+          minLength: 1
           type: string
       required:
       - idempotency_key

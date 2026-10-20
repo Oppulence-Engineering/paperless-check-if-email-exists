@@ -182,19 +182,20 @@ export function ResearchPanel({ initialSessionId, className, ...props }: Researc
 		queryKey: workflowQueryKey("research", sessionId),
 		enabled: !!sessionId,
 		queryFn: async () => {
-			const id = Number(sessionId);
-			if (!Number.isSafeInteger(id) || id < 1) throw new Error("Select a valid research run.");
-			return V1GetResearch200Response.parse((await api.v1GetResearch({ sessionId: id })).data);
+			if (!sessionId || !/^[1-9]\d*$/.test(sessionId))
+				throw new Error("Select a valid research run.");
+			return V1GetResearch200Response.parse((await api.v1GetResearch({ sessionId })).data);
 		},
 		refetchInterval: (query) => researchRefetchInterval(query.state.data?.status),
 	});
 	const download = useMutation({
 		mutationFn: async (mode: ResearchExportMode) => {
-			if (!sessionId || !selected.length) throw new Error("Select contacts to export.");
+			if (!sessionId || !/^[1-9]\d*$/.test(sessionId) || !selected.length)
+				throw new Error("Select contacts to export.");
 			return V1ExportResearch200Response.parse(
 				(
 					await api.v1ExportResearch({
-						sessionId: Number(sessionId),
+						sessionId,
 						researchExportRequest: { mode, row_keys: selected },
 					})
 				).data,

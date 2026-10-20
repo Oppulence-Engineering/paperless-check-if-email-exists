@@ -19,11 +19,15 @@ const COLUMN_KEY: &str = "prospect_contact";
 #[derive(Deserialize, Serialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CreateResearchRequest {
+	#[schema(min_length = 1, max_length = 100)]
 	pub name: String,
+	#[schema(min_length = 1, max_length = 120)]
 	pub target_role: String,
 	pub import_content: String,
 	pub import_format: ResearchImportFormat,
+	#[schema(minimum = 1, maximum = 3)]
 	pub max_candidates: u8,
+	#[schema(minimum = 1, maximum = 30)]
 	pub max_verifications: u16,
 	pub idempotency_key: String,
 }
@@ -130,9 +134,9 @@ fn upstream(error: ResearchError) -> warp::Rejection {
 
 fn validate(input: &CreateResearchRequest) -> Result<(), warp::Rejection> {
 	if input.name.trim().is_empty()
-		|| input.name.len() > 100
+		|| input.name.chars().count() > 100
 		|| input.target_role.trim().is_empty()
-		|| input.target_role.len() > 120
+		|| input.target_role.chars().count() > 120
 		|| input.import_content.trim().is_empty()
 		|| input.import_content.len() > 1_048_576
 		|| !(1..=3).contains(&input.max_candidates)
@@ -332,8 +336,8 @@ fn normalize_detail(raw: &Value, columns: &Value) -> Result<ResearchDetail, warp
 			row_key: text(row, "rowKey"),
 			company_name: text(row, "companyName"),
 			company_domain: field("company_domain"),
-			status: "queued".into(),
-			reason: "research_pending".into(),
+			status: "needs_review".into(),
+			reason: "research_did_not_complete".into(),
 			candidates: vec![],
 			checked_pages: vec![],
 		};
@@ -361,11 +365,15 @@ fn normalize_detail(raw: &Value, columns: &Value) -> Result<ResearchDetail, warp
 			}
 		} else if let Some(run) = run {
 			match text(run, "status").as_str() {
-				"failed" | "cancelled" | "completed" => {
-					result.status = "needs_review".into();
-					result.reason = "research_did_not_complete".into();
+				"planned" | "queued" | "running" => {
+					result.status = if text(run, "status") == "running" {
+						"running"
+					} else {
+						"queued"
+					}
+					.into();
+					result.reason = "research_pending".into();
 				}
-				"running" => result.status = "running".into(),
 				_ => {}
 			}
 		}
@@ -704,7 +712,7 @@ pub fn v1_list_research(
 		.and_then(list)
 }
 
-#[utoipa::path(get,path="/v1/research/{session_id}",tag="v1",params(("session_id"=u64,Path,description="Research session")),responses((status=200,description="Research evidence and progress",body=ResearchDetail)))]
+#[utoipa::path(get,path="/v1/research/{session_id}",tag="v1",params(("session_id"=String,Path,description="Research session ID as a positive decimal string")),responses((status=200,description="Research evidence and progress",body=ResearchDetail)))]
 pub fn v1_get_research(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -715,7 +723,7 @@ pub fn v1_get_research(
 		.and_then(detail)
 }
 
-#[utoipa::path(post,path="/v1/research/{session_id}/export",tag="v1",params(("session_id"=u64,Path,description="Research session")),request_body=ResearchExportRequest,responses((status=200,description="Selected evidence or currently approved contacts as CSV",body=ResearchExportResponse)))]
+#[utoipa::path(post,path="/v1/research/{session_id}/export",tag="v1",params(("session_id"=String,Path,description="Research session ID as a positive decimal string")),request_body=ResearchExportRequest,responses((status=200,description="Selected evidence or currently approved contacts as CSV",body=ResearchExportResponse)))]
 pub fn v1_export_research(
 	config: Arc<BackendConfig>,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -745,6 +753,45 @@ mod tests {
 		let detail = normalize_detail(&raw, &columns).unwrap();
 		assert_eq!(detail.rows[0].status, "needs_review");
 		assert!(detail.rows[0].candidates.is_empty());
+	}
+
+	#[test]
+	fn only_active_cell_runs_keep_polling_after_import_completes() {
+		let (mut raw, columns) = fixture("user_import", "send");
+		raw["session"]["status"] = json!("completed");
+		for status in [
+			"planned",
+			"queued",
+			"running",
+			"completed",
+			"failed",
+			"cancelled",
+			"unknown",
+		] {
+			raw["cellRuns"][0]["status"] = json!(status);
+			let detail = normalize_detail(&raw, &columns).unwrap();
+			if matches!(status, "planned" | "queued" | "running") {
+				assert_eq!(detail.status, "running");
+			} else {
+				assert_eq!(detail.status, "completed");
+				assert_eq!(detail.rows[0].status, "needs_review");
+			}
+		}
+		raw["cellRuns"] = json!([]);
+		let detail = normalize_detail(&raw, &columns).unwrap();
+		assert_eq!(detail.status, "completed");
+		assert_eq!(detail.rows[0].reason, "research_did_not_complete");
+	}
+
+	#[test]
+	fn request_limits_count_unicode_characters() {
+		let mut input: CreateResearchRequest = serde_json::from_value(json!({"name":"界".repeat(100),"target_role":"é".repeat(120),"import_content":"company,domain\nAcme,acme.com","import_format":"csv","max_candidates":1,"max_verifications":1,"idempotency_key":uuid::Uuid::new_v4().to_string()})).unwrap();
+		assert!(validate(&input).is_ok());
+		input.name.push('界');
+		assert!(validate(&input).is_err());
+		input.name.pop();
+		input.target_role.push('é');
+		assert!(validate(&input).is_err());
 	}
 
 	#[test]

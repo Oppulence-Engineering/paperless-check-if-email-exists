@@ -2064,18 +2064,25 @@ export const V1ListResearchDefaultResponse = zod.object({
   error: zod.string(),
 });
 
-export const v1CreateResearchBodyMaxCandidatesMin = 0;
+export const v1CreateResearchBodyMaxCandidatesMax = 3;
 
-export const v1CreateResearchBodyMaxVerificationsMin = 0;
+export const v1CreateResearchBodyMaxVerificationsMax = 30;
+
+export const v1CreateResearchBodyNameMax = 100;
+
+export const v1CreateResearchBodyTargetRoleMax = 120;
 
 export const V1CreateResearchBody = zod.strictObject({
   idempotency_key: zod.string(),
   import_content: zod.string(),
   import_format: zod.enum(["csv", "json"]),
-  max_candidates: zod.int().min(v1CreateResearchBodyMaxCandidatesMin),
-  max_verifications: zod.int().min(v1CreateResearchBodyMaxVerificationsMin),
-  name: zod.string(),
-  target_role: zod.string(),
+  max_candidates: zod.int().min(1).max(v1CreateResearchBodyMaxCandidatesMax),
+  max_verifications: zod
+    .int()
+    .min(1)
+    .max(v1CreateResearchBodyMaxVerificationsMax),
+  name: zod.string().min(1).max(v1CreateResearchBodyNameMax),
+  target_role: zod.string().min(1).max(v1CreateResearchBodyTargetRoleMax),
 });
 
 export const V1CreateResearch200Response = zod.object({
@@ -2086,14 +2093,10 @@ export const V1CreateResearchDefaultResponse = zod.object({
   error: zod.string(),
 });
 
-export const v1GetResearchPathSessionIdMin = 0;
-
 export const V1GetResearchParams = zod.object({
-  session_id: zod.coerce
-    .number()
-    .int()
-    .min(v1GetResearchPathSessionIdMin)
-    .describe("Research session"),
+  session_id: zod
+    .string()
+    .describe("Research session ID as a positive decimal string"),
 });
 
 export const v1GetResearch200ResponseMaxCandidatesMin = 0;
@@ -2161,14 +2164,10 @@ export const V1GetResearchDefaultResponse = zod.object({
   error: zod.string(),
 });
 
-export const v1ExportResearchPathSessionIdMin = 0;
-
 export const V1ExportResearchParams = zod.object({
-  session_id: zod.coerce
-    .number()
-    .int()
-    .min(v1ExportResearchPathSessionIdMin)
-    .describe("Research session"),
+  session_id: zod
+    .string()
+    .describe("Research session ID as a positive decimal string"),
 });
 
 export const V1ExportResearchBody = zod.strictObject({

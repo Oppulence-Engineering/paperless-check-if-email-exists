@@ -4,7 +4,7 @@ Objective: connect the Go Paperless research backend to the current signed-in
 Paperless application and MillionVerifier-backed Rust service. This checklist
 tracks the complete first connected workflow, not just a compatible API client.
 
-## Workspaces
+## Implementation workspaces (local only)
 
 - Verification app: `paperless-check-if-email-exists`, branch
   `feat/paperless-contact-research`.
@@ -80,11 +80,12 @@ tracks the complete first connected workflow, not just a compatible API client.
   unresolved outcomes are retained for review and never automatically repurchased.
   Website research uses the existing bounded crawler without paid research providers.
   Credit reservations are not reported as measured dollar expenditure.
-- Live read-only check on 2026-10-20: the Go gateway and lead-scraper deployments
+- Initial read-only check on 2026-10-20: the Go gateway and lead-scraper deployments
   are at zero replicas in both `paperless-staging` and `paperless-production` on
   `oppulence-us-east`. Verification app deployments remain at one replica. Do not
   call the integration deployed until compatible Go services are restored and
-  their database/queue capacity is verified.
+  their database/queue capacity is verified. The release work below restores
+  those dependencies rather than relying on the retired database/Redis hosts.
 
 ## Validation evidence
 
@@ -107,7 +108,8 @@ Local checks completed:
 - Go cap concurrency test on PostgreSQL: three of ten requests admitted at cap three.
 - Rust `e2e_research`: passed import creation/retry, cross-tenant refusals, approved
   export, CSV formula escaping, fresh suppression, stale history, new complaint
-  feedback, and newer pending verification. No export/provider repurchase.
+  feedback, newer pending verification, and an eligible alternative when the
+  first candidate is no longer allowed. No export/provider repurchase.
 - Rust complete API harness: seven tests passed, including every live route,
   runtime OpenAPI inventory, auth, validation, missing resources and conflicts.
 - Generated TypeScript and Go SDKs, copied web OpenAPI and Orval runtime contracts.
@@ -120,7 +122,7 @@ Local checks completed:
   13 tests. The generated OpenAPI snapshot preserves repository formatting.
 - Actual local browser -> Rust -> Go -> Redis worker -> review CSV passed using an
   isolated PostgreSQL 18 database. A missing-domain row remains Needs review,
-  cannot enter approved export, and consumes zero verification requests. Proof:
+  cannot enter approved export, and consumes zero verification requests. Local-only proof:
   `/Users/dyomba/Documents/Codex/proofs/paperless-research-20261020/local-review-export.png`.
 - The browser check exposed a fresh-schema migration bug: the webhook tombstone
   model replaced the full table model. The fix retains the generated columns;
@@ -138,8 +140,49 @@ Local checks completed:
   credential encryption key, and separate research queue credentials. No key is
   included in the repository or browser response.
 
-These are local and stub-provider checks. Compatible merge/deployment and the
-controlled real provider workflow remain outstanding. Full Go hooks were blocked
-by a MinIO image pull and then local disk exhaustion; focused relevant race tests
-passed. Only regenerable task build artifacts were cleared. No provider
-performance or gross-margin claim has been made.
+## Release evidence
+
+- Go PR #1191 merged as `94d7a598c9474489fb541e5cfe7f930c5aeff559`.
+  The application image was built from that exact source tree and pushed with
+  digest `sha256:ff8fe4d9ad875cd5d24ae4d4265ec53f402c152794b2638c3f70e6cd64951fcc`.
+- Go PR #1192 merged as `b584adce16836e95530836cbf950375c2851129a`.
+  Its chart-only correction gives production the same 15-minute migration/startup
+  allowance as staging; no application binary changed.
+- Go PR #1193 merged as `9a97d58891cf95247f0640bed864b02e91b94bbc`.
+  Unicode role limits passed focused race tests. Its release image digest is
+  `sha256:a5279464042aeba30354abee80d10af62f26b3a4c12b7139910237c766fdb385`.
+- Verifier PR #123 merged as `c9219dbf28afa6dcc8bdc9d5e6f55faf378da2cb` after
+  all eight CI jobs passed on `da7a14ff4e1808fc469598114655be0254491fde`.
+  The merge has the identical source tree. Gates included the full Rust suite,
+  HTTP API harness, migration upgrade, complete web suite/build, and security scans.
+- New, separate Go staging/production databases and scoped users were provisioned
+  in the existing managed PostgreSQL cluster. Infisical is the credential source.
+  Encryption keys use the base64 encoding accepted by the Go credential cipher.
+- The verifier's network policy permits only same-namespace Go HTTP pods on TCP
+  8080. The rendered isolation checks pass; a live authenticated service path is
+  reachable and an unauthenticated provisioning request returns 401.
+- All six Go staging and production deployments completed their rollouts. A deployed staging import
+  provisioned its workspace, ran through the persistent queue and worker, and
+  returned `needs_review / company_domain_required` with zero provider requests.
+  Test tenant: `99a0b1d7-a0b5-48f0-a3d3-136da5c0ba30`, research session: `1`.
+- The merged verifier staging image `c9219dbf28afa6dcc8bdc9d5e6f55faf378da2cb`
+  passed authenticated research detail and export checks: completed review row,
+  zero verification requests, zero approved exports, one review export. The
+  temporary API key was revoked and the isolated test tenant's plan restored.
+- GitHub Actions remains disabled in the Go repository. The attempted staging
+  dispatch `39504112233` has no jobs and never executed; GitHub rejects both its
+  cancellation (409, not yet queued) and deletion (403). Clear that pending
+  dispatch before re-enabling repository Actions. The Go release uses the verified
+  Depot image and direct Helm deployment instead.
+
+Merged-image deployment and the controlled production browser/provider workflow
+remain outstanding. Full Go hooks were blocked by a MinIO image pull and then local
+disk exhaustion; focused relevant race tests and service vet passed. Only
+regenerable task build artifacts were cleared. No provider performance or
+gross-margin claim has been made.
+
+Production review follow-up aligns published request limits with runtime checks,
+preserves decimal session IDs through SDK callers, counts international names and
+roles by Unicode characters in both services, and stops polling rows without an
+active cell run or result. Import-session completion is deliberately not used to
+stop active research-column jobs, whose lifecycle is separate.

@@ -790,7 +790,7 @@ import (
 )
 
 func main() {
-	sessionId := int64(789) // int64 | Research session
+	sessionId := "sessionId_example" // string | Research session ID as a positive decimal string
 	researchExportRequest := *openapiclient.NewResearchExportRequest(openapiclient.ResearchExportMode("approved"), []string{"RowKeys_example"}) // ResearchExportRequest |
 
 	configuration := openapiclient.NewConfiguration()
@@ -811,7 +811,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**sessionId** | **int64** | Research session |
+**sessionId** | **string** | Research session ID as a positive decimal string |
 
 ### Other Parameters
 
@@ -1134,7 +1134,7 @@ import (
 )
 
 func main() {
-	sessionId := int64(789) // int64 | Research session
+	sessionId := "sessionId_example" // string | Research session ID as a positive decimal string
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -1154,7 +1154,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**sessionId** | **int64** | Research session |
+**sessionId** | **string** | Research session ID as a positive decimal string |
 
 ### Other Parameters
 

@@ -13,10 +13,24 @@ export interface CreateResearchRequest {
   idempotency_key: string;
   import_content: string;
   import_format: ResearchImportFormat;
-  /** @minimum 0 */
+  /**
+   * @minimum 1
+   * @maximum 3
+   */
   max_candidates: number;
-  /** @minimum 0 */
+  /**
+   * @minimum 1
+   * @maximum 30
+   */
   max_verifications: number;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
   name: string;
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
   target_role: string;
 }
