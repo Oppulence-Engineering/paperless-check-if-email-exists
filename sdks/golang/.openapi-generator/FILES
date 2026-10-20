@@ -77,6 +77,7 @@ docs/DeletePipelineResponse.md
 docs/DiffGroup.md
 docs/DiffRow.md
 docs/DnsRecordResults.md
+docs/DnsRecordResultsDkimSelectorsInner.md
 docs/DomainInfo.md
 docs/Duration.md
 docs/EmailCategory.md
@@ -130,6 +131,7 @@ docs/OutcomeType.md
 docs/OutcomeView.md
 docs/OutcomesAPI.md
 docs/PartialConfidence.md
+docs/PendingVerification.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
@@ -224,6 +226,7 @@ docs/V1UploadCampaignOutcomesRequest.md
 docs/VerifMethod.md
 docs/VerifMethodVerifMethod.md
 docs/VerificationAPI.md
+docs/VerificationResponse.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
 git_push.sh
@@ -281,6 +284,7 @@ model_delete_pipeline_response.go
 model_diff_group.go
 model_diff_row.go
 model_dns_record_results.go
+model_dns_record_results_dkim_selectors_inner.go
 model_domain_info.go
 model_duration.go
 model_email_category.go
@@ -329,6 +333,7 @@ model_outcome_rule_action.go
 model_outcome_type.go
 model_outcome_view.go
 model_partial_confidence.go
+model_pending_verification.go
 model_pipeline_delivery_config.go
 model_pipeline_delivery_status.go
 model_pipeline_delivery_webhook.go
@@ -416,6 +421,7 @@ model_v1_email_history_200_response.go
 model_v1_upload_campaign_outcomes_request.go
 model_verif_method.go
 model_verif_method_verif_method.go
+model_verification_response.go
 model_webhook.go
 model_yahoo_verif_method.go
 response.go

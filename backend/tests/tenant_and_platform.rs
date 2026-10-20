@@ -177,14 +177,14 @@ mod throttle_tests {
 
 		// Get throttle manager for tenant A and exhaust it
 		let mgr_a = config.get_tenant_throttle_manager(Some(tenant_a), &throttle_config);
-		mgr_a.increment_counters().await;
+		mgr_a.try_acquire().await;
 
 		// Tenant A should be throttled
-		assert!(mgr_a.check_throttle().await.is_some());
+		assert!(mgr_a.try_acquire().await.is_some());
 
 		// Tenant B should NOT be throttled (isolated)
 		let mgr_b = config.get_tenant_throttle_manager(Some(tenant_b), &throttle_config);
-		assert!(mgr_b.check_throttle().await.is_none());
+		assert!(mgr_b.try_acquire().await.is_none());
 	}
 
 	#[tokio::test]
@@ -197,7 +197,7 @@ mod throttle_tests {
 		let mgr2 = config.get_tenant_throttle_manager(Some(tenant_id), &throttle_config);
 
 		// Increment on one should affect the other (same Arc)
-		mgr1.increment_counters().await;
+		mgr1.try_acquire().await;
 		// Both point to the same inner state
 		assert!(Arc::ptr_eq(&mgr1, &mgr2));
 	}
@@ -220,9 +220,9 @@ mod throttle_tests {
 
 		// Should never throttle with no limits configured
 		for _ in 0..100 {
-			mgr.increment_counters().await;
+			mgr.try_acquire().await;
 		}
-		assert!(mgr.check_throttle().await.is_none());
+		assert!(mgr.try_acquire().await.is_none());
 	}
 
 	#[tokio::test]
@@ -235,13 +235,11 @@ mod throttle_tests {
 		});
 
 		// First two should pass
-		assert!(mgr.check_throttle().await.is_none());
-		mgr.increment_counters().await;
-		assert!(mgr.check_throttle().await.is_none());
-		mgr.increment_counters().await;
+		assert!(mgr.try_acquire().await.is_none());
+		assert!(mgr.try_acquire().await.is_none());
 
 		// Third should be throttled
-		let result = mgr.check_throttle().await;
+		let result = mgr.try_acquire().await;
 		assert!(result.is_some());
 		assert_eq!(
 			result.unwrap().limit_type,
@@ -312,6 +310,9 @@ mod task_metadata_tests {
 	#[test]
 	fn test_task_metadata_serialization() {
 		let metadata = TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some("123".into()),
 			request_id: None,
 			correlation_id: Some("corr-1".into()),

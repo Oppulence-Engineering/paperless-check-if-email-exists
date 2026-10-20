@@ -30,6 +30,10 @@ jobs:
               --show-only templates/deployment.yaml \
               | awk '/^  replicas:/ { found=1; if ($2 < 1) exit 1 } END { if (!found) exit 1 }'
           done
+      - name: Check egress isolation and SMTP monitoring templates
+        run: |
+          python3 -m pip install PyYAML==6.0.3
+          python3 scripts/check_egress_policy.py
 
   web:
     runs-on: ubuntu-latest

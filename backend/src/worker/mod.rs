@@ -6,7 +6,9 @@
 
 pub mod actions;
 pub mod consume;
+pub mod dispatch;
 pub mod do_work;
+pub mod lifecycle;
 pub mod single_shot;
 
 pub use consume::{run_worker, setup_rabbit_mq};

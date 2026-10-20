@@ -11,6 +11,8 @@ use crate::tenant::context::TenantContext;
 pub enum QuotaCheckResult {
 	/// Quota is available (or unlimited).
 	Allowed,
+	/// Admission could not be established; no work may be dispatched.
+	Unavailable,
 	/// Monthly limit has been reached.
 	ExceededMonthlyLimit {
 		limit: i32,
@@ -32,29 +34,29 @@ pub async fn check_quota(pg_pool: Option<&PgPool>, tenant_ctx: &TenantContext) -
 
 	let tenant_id = match tenant_ctx.tenant_id {
 		Some(id) => id,
-		None => return QuotaCheckResult::Allowed,
+		None if tenant_ctx.is_legacy => return QuotaCheckResult::Allowed,
+		None => return QuotaCheckResult::Unavailable,
 	};
 
 	let pool = match pg_pool {
 		Some(p) => p,
-		None => return QuotaCheckResult::Allowed,
+		None => return QuotaCheckResult::Unavailable,
 	};
 
 	// If the period has elapsed, reset the counter atomically
 	if Utc::now() >= tenant_ctx.period_reset_at {
 		if let Err(e) = reset_period(pool, tenant_id).await {
 			warn!(target: LOG_TARGET, tenant_id=?tenant_id, error=?e, "Failed to reset billing period");
+			return QuotaCheckResult::Unavailable;
 		}
-		// After reset, used = 0, so we're allowed
-		return QuotaCheckResult::Allowed;
 	}
 
 	// Fetch fresh counter from DB (the context snapshot may be stale)
 	let current_usage = match fetch_current_usage(pool, tenant_id).await {
 		Ok(u) => u,
 		Err(e) => {
-			warn!(target: LOG_TARGET, tenant_id=?tenant_id, error=?e, "Failed to fetch usage, allowing request");
-			return QuotaCheckResult::Allowed;
+			warn!(target: LOG_TARGET, tenant_id=?tenant_id, error=?e, "Failed to fetch usage");
+			return QuotaCheckResult::Unavailable;
 		}
 	};
 
@@ -69,7 +71,7 @@ pub async fn check_quota(pg_pool: Option<&PgPool>, tenant_ctx: &TenantContext) -
 	}
 }
 
-/// Atomically check quota AND increment in a single query, avoiding TOCTOU races.
+/// Atomically check quota and increment, avoiding TOCTOU races.
 /// Returns Allowed if the increment succeeded, or ExceededMonthlyLimit if at limit.
 pub async fn check_and_increment_quota(
 	pg_pool: Option<&PgPool>,
@@ -78,74 +80,83 @@ pub async fn check_and_increment_quota(
 	check_and_increment_quota_for_count(pg_pool, tenant_ctx, 1).await
 }
 
-/// Atomically check quota and increment by `count` in a single query, avoiding TOCTOU races.
+/// Atomically check quota and increment by `count`, avoiding TOCTOU races.
 /// Returns Allowed if the increment succeeded, or ExceededMonthlyLimit if at limit.
 pub async fn check_and_increment_quota_for_count(
 	pg_pool: Option<&PgPool>,
 	tenant_ctx: &TenantContext,
 	count: i32,
 ) -> QuotaCheckResult {
-	let limit = match tenant_ctx.monthly_email_limit {
-		Some(l) if l > 0 => l,
-		Some(_) => return QuotaCheckResult::Allowed,
-		None => return QuotaCheckResult::Allowed,
-	};
-	let tenant_id = match tenant_ctx.tenant_id {
-		Some(id) => id,
-		None => return QuotaCheckResult::Allowed,
-	};
-	let pool = match pg_pool {
-		Some(p) => p,
-		None => return QuotaCheckResult::Allowed,
-	};
-
-	// If period expired, reset first
-	if Utc::now() >= tenant_ctx.period_reset_at {
-		if let Err(e) = reset_period(pool, tenant_id).await {
-			warn!(target: LOG_TARGET, tenant_id=?tenant_id, error=?e, "Failed to reset billing period");
-		}
-	}
-
-	// Avoid a no-op update on non-positive counts.
-	let request_count = count.max(0);
-	if request_count == 0 {
+	if tenant_ctx
+		.monthly_email_limit
+		.map_or(true, |limit| limit <= 0)
+	{
 		return QuotaCheckResult::Allowed;
 	}
-
-	let result = sqlx::query(
-		"UPDATE tenants \
-		 SET used_this_period = used_this_period + $2 \
-		 WHERE id = $1 \
-		 AND (monthly_email_limit IS NULL OR monthly_email_limit <= 0 OR used_this_period + $2 <= monthly_email_limit) \
-		 RETURNING used_this_period"
-	)
-	.bind(tenant_id)
-	.bind(request_count)
-	.fetch_optional(pool)
-	.await;
-
-	match result {
-		Ok(Some(_)) => QuotaCheckResult::Allowed,
-		Ok(None) => {
-			// 0 rows updated — could be over limit OR tenant deleted
-			match fetch_current_usage(pool, tenant_id).await {
-				Ok(used) => QuotaCheckResult::ExceededMonthlyLimit {
-					limit,
-					used,
-					resets_at: tenant_ctx.period_reset_at,
-				},
-				Err(_) => {
-					// Tenant row doesn't exist — fail open rather than false 429
-					warn!(target: LOG_TARGET, tenant_id=?tenant_id, "Tenant not found during quota check, allowing");
-					QuotaCheckResult::Allowed
-				}
-			}
+	if tenant_ctx.is_legacy && tenant_ctx.tenant_id.is_none() {
+		return QuotaCheckResult::Allowed;
+	}
+	let Some(pool) = pg_pool else {
+		return QuotaCheckResult::Unavailable;
+	};
+	let result = async {
+		let mut tx = pool.begin().await?;
+		let result = reserve_quota_in_tx(&mut tx, tenant_ctx, count).await?;
+		if result == QuotaCheckResult::Allowed {
+			tx.commit().await?;
 		}
-		Err(e) => {
-			warn!(target: LOG_TARGET, tenant_id=?tenant_id, error=?e, "Quota check failed, allowing request");
-			QuotaCheckResult::Allowed
+		Ok::<_, sqlx::Error>(result)
+	}
+	.await;
+	match result {
+		Ok(result) => result,
+		Err(error) => {
+			warn!(target: LOG_TARGET, tenant_id=?tenant_ctx.tenant_id, error=?error, "Quota reservation unavailable");
+			QuotaCheckResult::Unavailable
 		}
 	}
+}
+
+/// Reserve quota in the transaction that creates the work, so both roll back together.
+pub async fn reserve_quota_in_tx(
+	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+	tenant_ctx: &TenantContext,
+	count: i32,
+) -> Result<QuotaCheckResult, sqlx::Error> {
+	let Some(tenant_id) = tenant_ctx.tenant_id else {
+		return Ok(if tenant_ctx.is_legacy {
+			QuotaCheckResult::Allowed
+		} else {
+			QuotaCheckResult::Unavailable
+		});
+	};
+	let (limit, mut used, mut resets_at): (Option<i32>, i32, chrono::DateTime<Utc>) = sqlx::query_as(
+		"SELECT monthly_email_limit, used_this_period, period_reset_at FROM tenants WHERE id = $1 FOR UPDATE",
+	).bind(tenant_id).fetch_one(&mut **tx).await?;
+	let Some(limit) = limit.filter(|limit| *limit > 0) else {
+		return Ok(QuotaCheckResult::Allowed);
+	};
+	if count <= 0 {
+		return Ok(QuotaCheckResult::Allowed);
+	}
+	if resets_at <= Utc::now() {
+		(used, resets_at) = sqlx::query_as(
+			"UPDATE tenants SET used_this_period = 0, period_reset_at = date_trunc('month', NOW()) + INTERVAL '1 month' WHERE id = $1 RETURNING used_this_period, period_reset_at",
+		).bind(tenant_id).fetch_one(&mut **tx).await?;
+	}
+	if used.checked_add(count).map_or(true, |next| next > limit) {
+		return Ok(QuotaCheckResult::ExceededMonthlyLimit {
+			limit,
+			used,
+			resets_at,
+		});
+	}
+	sqlx::query("UPDATE tenants SET used_this_period = used_this_period + $2 WHERE id = $1")
+		.bind(tenant_id)
+		.bind(count)
+		.execute(&mut **tx)
+		.await?;
+	Ok(QuotaCheckResult::Allowed)
 }
 
 /// Atomically increment the tenant's used_this_period counter.
@@ -277,18 +288,31 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_no_pool_always_allowed() {
+	async fn metered_tenant_requires_a_database() {
 		let ctx = make_ctx(Some(100), 200, false);
-		// No PgPool available — fail-open
-		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Allowed);
+		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Unavailable);
+		assert_eq!(
+			check_and_increment_quota(None, &ctx).await,
+			QuotaCheckResult::Unavailable
+		);
 	}
 
 	#[tokio::test]
-	async fn test_period_expired_resets() {
-		// When period is expired, the check returns Allowed because
-		// the counter gets reset (or would, with a real DB)
-		let ctx = make_ctx(Some(100), 200, true);
-		// Without a DB pool, this falls through to Allowed
-		assert_eq!(check_quota(None, &ctx).await, QuotaCheckResult::Allowed);
+	async fn failed_usage_read_or_period_reset_never_admits_work() {
+		let pool = sqlx::postgres::PgPoolOptions::new()
+			.connect_lazy("postgres://unused:unused@127.0.0.1/unused")
+			.unwrap();
+		pool.close().await;
+		for expired in [false, true] {
+			let ctx = make_ctx(Some(100), 200, expired);
+			assert_eq!(
+				check_quota(Some(&pool), &ctx).await,
+				QuotaCheckResult::Unavailable
+			);
+			assert_eq!(
+				check_and_increment_quota(Some(&pool), &ctx).await,
+				QuotaCheckResult::Unavailable
+			);
+		}
 	}
 }

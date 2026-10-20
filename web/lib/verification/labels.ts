@@ -306,6 +306,7 @@ export const remediationClass = entry({
 
 /** Domain reputation risk levels (backend/src/reputation/scorer.rs). */
 export const reputationRisk = entry({
+	unknown: { label: "Incomplete", tone: "gray" },
 	low: { label: "Low risk", tone: "green" },
 	medium: { label: "Medium risk", tone: "yellow" },
 	high: { label: "High risk", tone: "red" },

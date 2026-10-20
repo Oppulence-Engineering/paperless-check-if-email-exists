@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -75,8 +75,8 @@ type V0API interface {
 	PostCheckEmail(ctx context.Context) V0APIPostCheckEmailRequest
 
 	// PostCheckEmailExecute executes the request
-	//  @return CheckEmailOutput
-	PostCheckEmailExecute(r V0APIPostCheckEmailRequest) (*CheckEmailOutput, *http.Response, error)
+	//  @return VerificationResponse
+	PostCheckEmailExecute(r V0APIPostCheckEmailRequest) (*VerificationResponse, *http.Response, error)
 }
 
 // V0APIService V0API service
@@ -414,7 +414,7 @@ func (r V0APIPostCheckEmailRequest) IdempotencyKey(idempotencyKey string) V0APIP
 	return r
 }
 
-func (r V0APIPostCheckEmailRequest) Execute() (*CheckEmailOutput, *http.Response, error) {
+func (r V0APIPostCheckEmailRequest) Execute() (*VerificationResponse, *http.Response, error) {
 	return r.ApiService.PostCheckEmailExecute(r)
 }
 
@@ -434,13 +434,13 @@ func (a *V0APIService) PostCheckEmail(ctx context.Context) V0APIPostCheckEmailRe
 }
 
 // Execute executes the request
-//  @return CheckEmailOutput
-func (a *V0APIService) PostCheckEmailExecute(r V0APIPostCheckEmailRequest) (*CheckEmailOutput, *http.Response, error) {
+//  @return VerificationResponse
+func (a *V0APIService) PostCheckEmailExecute(r V0APIPostCheckEmailRequest) (*VerificationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *CheckEmailOutput
+		localVarReturnValue  *VerificationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V0APIService.PostCheckEmail")

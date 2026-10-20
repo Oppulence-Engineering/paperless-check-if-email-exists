@@ -1,5 +1,5 @@
 use super::dns_records::found_or_absent;
-use super::models::BlacklistResult;
+use super::models::{BlacklistResult, BlacklistStatus};
 use anyhow::Context;
 use check_if_email_exists::mx::MxLookup;
 use hickory_resolver::lookup::Lookup;
@@ -40,11 +40,8 @@ fn ipv4_answers(lookup: &Lookup) -> impl Iterator<Item = Ipv4Addr> + '_ {
 
 /// Checks the first MX host of `domain` against the DNSBL zones.
 ///
-/// Fails when the MX or address lookup fails for a reason other than the record
-/// not existing, since then no list was actually consulted. A failed query to a
-/// single list counts as "not listed": an error must never read as a listing,
-/// and some zones are permanently unreachable, which would otherwise make every
-/// check fail.
+/// MX/address failures fail the check. Per-provider failures remain explicit
+/// unknown results; only a completed negative DNS answer is "not listed".
 pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::Error> {
 	let resolver = TokioResolver::builder_tokio()?.build()?;
 	let mx_lookup = found_or_absent(resolver.mx_lookup(domain).await)
@@ -57,55 +54,124 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 				.collect()
 		})
 		.unwrap_or_default();
-	let first_host = match mx_hosts.first() {
-		Some(host) => host.clone(),
-		None => {
-			return Ok(PROVIDERS
-				.iter()
-				.map(|(provider, _)| BlacklistResult {
-					provider: (*provider).to_string(),
-					listed: false,
-					lookup_time_ms: 0,
-				})
-				.collect())
-		}
+	let first_host = mx_hosts.iter().find(|host| host.as_str() != ".");
+	let ip = if let Some(host) = first_host {
+		let lookup = found_or_absent(resolver.ipv4_lookup(host.as_str()).await)
+			.with_context(|| format!("A lookup for MX host {} failed", host))?;
+		lookup.and_then(|lookup| ipv4_answers(&lookup).next())
+	} else {
+		None
 	};
-
-	let ip_lookup = found_or_absent(resolver.ipv4_lookup(first_host.as_str()).await)
-		.with_context(|| format!("A lookup for MX host {} failed", first_host))?;
-	let ip = ip_lookup.and_then(|lookup| ipv4_answers(&lookup).next());
 
 	let mut results = Vec::new();
 	for (provider, zone) in PROVIDERS {
 		let started = Instant::now();
-		let listed = if let Some(ip) = ip {
+		let result = if let Some(ip) = ip {
 			let octets = ip.octets();
 			let query = format!(
 				"{}.{}.{}.{}.{}",
 				octets[3], octets[2], octets[1], octets[0], zone
 			);
-			resolver
-				.ipv4_lookup(query)
-				.await
-				.ok()
-				.is_some_and(|lookup| ipv4_answers(&lookup).any(is_listing_answer))
+			Some(
+				found_or_absent(resolver.ipv4_lookup(query).await)
+					.map(|lookup| lookup.map(|lookup| ipv4_answers(&lookup).collect::<Vec<_>>()))
+					.map_err(|error| error.to_string()),
+			)
 		} else {
-			false
+			None
 		};
-		results.push(BlacklistResult {
-			provider: (*provider).to_string(),
-			listed,
-			lookup_time_ms: started.elapsed().as_millis() as u64,
-		});
+		results.push(classify_query(
+			provider,
+			result,
+			started.elapsed().as_millis() as u64,
+		));
 	}
 
 	Ok(results)
 }
 
+fn classify_query(
+	provider: &str,
+	result: Option<Result<Option<Vec<Ipv4Addr>>, String>>,
+	lookup_time_ms: u64,
+) -> BlacklistResult {
+	let (listed, status, answers, error) = match result {
+		None => (
+			None,
+			BlacklistStatus::Skipped,
+			Vec::new(),
+			Some("No applicable MX IPv4 address".into()),
+		),
+		Some(Err(error)) => (None, BlacklistStatus::Error, Vec::new(), Some(error)),
+		Some(Ok(None)) => (Some(false), BlacklistStatus::NotListed, Vec::new(), None),
+		Some(Ok(Some(answers))) => {
+			let listed = !answers.is_empty() && answers.iter().copied().all(is_listing_answer);
+			let answers = answers.iter().map(ToString::to_string).collect();
+			if listed {
+				(Some(true), BlacklistStatus::Listed, answers, None)
+			} else {
+				(
+					None,
+					BlacklistStatus::Error,
+					answers,
+					Some("Provider returned an error or unrecognized answer".into()),
+				)
+			}
+		}
+	};
+	BlacklistResult {
+		provider: provider.into(),
+		listed,
+		status,
+		answers,
+		error,
+		lookup_time_ms,
+	}
+}
+
 #[cfg(test)]
 mod tests {
-	use super::is_listing_answer;
+	use super::*;
 	use std::net::Ipv4Addr;
+
+	#[test]
+	fn failures_and_skips_are_not_negative_evidence() {
+		for error in ["timeout", "refused", "servfail"] {
+			let result = classify_query("Spamhaus ZEN", Some(Err(error.into())), 1);
+			assert_eq!(result.listed, None);
+			assert_eq!(result.status, BlacklistStatus::Error);
+		}
+		for answer in [
+			"127.255.255.252",
+			"127.255.255.254",
+			"127.255.255.255",
+			"93.184.216.34",
+		] {
+			let result = classify_query(
+				"Spamhaus ZEN",
+				Some(Ok(Some(vec![answer.parse().unwrap()]))),
+				1,
+			);
+			assert_eq!(result.listed, None);
+			assert_eq!(result.status, BlacklistStatus::Error);
+		}
+		assert_eq!(
+			classify_query("test", None, 0).status,
+			BlacklistStatus::Skipped
+		);
+		let negative = classify_query("test", Some(Ok(None)), 1);
+		assert_eq!(negative.listed, Some(false));
+		assert_eq!(negative.status, BlacklistStatus::NotListed);
+		assert_eq!(
+			classify_query(
+				"test",
+				Some(Ok(Some(vec!["127.0.0.2".parse().unwrap()]))),
+				1
+			)
+			.listed,
+			Some(true)
+		);
+	}
 
 	#[test]
 	fn only_127_0_0_x_return_codes_count_as_listings() {

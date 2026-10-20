@@ -6,7 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**V1AddSuppressions**](V1API.md#V1AddSuppressions) | **Post** /v1/suppressions | POST /v1/suppressions
 [**V1CheckEmail**](V1API.md#V1CheckEmail) | **Post** /v1/check_email | POST /v1/check_email
-[**V1CheckEmailWithOnboard**](V1API.md#V1CheckEmailWithOnboard) | **Post** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+[**V1CheckEmailWithOnboard**](V1API.md#V1CheckEmailWithOnboard) | **Post** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.
 [**V1CheckReputation**](V1API.md#V1CheckReputation) | **Post** /v1/reputation/check | POST /v1/reputation/check
 [**V1CheckSuppression**](V1API.md#V1CheckSuppression) | **Get** /v1/suppressions/check | GET /v1/suppressions/check
 [**V1CreateBulkJob**](V1API.md#V1CreateBulkJob) | **Post** /v1/bulk | Create the v1 bulk endpoint.
@@ -18,6 +18,7 @@ Method | HTTP request | Description
 [**V1FindEmail**](V1API.md#V1FindEmail) | **Post** /v1/find_email | POST /v1/find_email
 [**V1GetFindEmail**](V1API.md#V1GetFindEmail) | **Get** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 [**V1GetList**](V1API.md#V1GetList) | **Get** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+[**V1GetVerificationOperation**](V1API.md#V1GetVerificationOperation) | **Get** /v1/operations/{operation_id} |
 [**V1ImportSuppressions**](V1API.md#V1ImportSuppressions) | **Post** /v1/suppressions/import | Import suppressions
 [**V1ListLists**](V1API.md#V1ListLists) | **Get** /v1/lists | GET /v1/lists
 [**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
@@ -94,7 +95,7 @@ Name | Type | Description  | Notes
 
 ## V1CheckEmail
 
-> CheckEmailOutput V1CheckEmail(ctx).CheckEmailRequest(checkEmailRequest).IdempotencyKey(idempotencyKey).Execute()
+> VerificationResponse V1CheckEmail(ctx).CheckEmailRequest(checkEmailRequest).IdempotencyKey(idempotencyKey).Execute()
 
 POST /v1/check_email
 
@@ -123,7 +124,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CheckEmail``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1CheckEmail`: CheckEmailOutput
+	// response from `V1CheckEmail`: VerificationResponse
 	fmt.Fprintf(os.Stdout, "Response from `V1API.V1CheckEmail`: %v\n", resp)
 }
 ```
@@ -144,7 +145,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**CheckEmailOutput**](CheckEmailOutput.md)
+[**VerificationResponse**](VerificationResponse.md)
 
 ### Authorization
 
@@ -164,7 +165,7 @@ Name | Type | Description  | Notes
 
 > V1CheckEmailWithOnboard(ctx).OnboardRequest(onboardRequest).Execute()
 
-POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.
 
 ### Example
 
@@ -210,7 +211,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -961,6 +962,74 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListDetailResponse**](ListDetailResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1GetVerificationOperation
+
+> VerificationResponse V1GetVerificationOperation(ctx, operationId).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	operationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // string | Verification operation identifier
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1GetVerificationOperation(context.Background(), operationId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1GetVerificationOperation``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1GetVerificationOperation`: VerificationResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1GetVerificationOperation`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**operationId** | **string** | Verification operation identifier |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1GetVerificationOperationRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**VerificationResponse**](VerificationResponse.md)
 
 ### Authorization
 

@@ -620,7 +620,19 @@
 			},
 			"BlacklistResult": {
 				"properties": {
+					"answers": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"error": {
+						"nullable": true,
+						"type": "string"
+					},
 					"listed": {
+						"description": "Null for failed or skipped queries; false only for a completed negative lookup.",
+						"nullable": true,
 						"type": "boolean"
 					},
 					"lookup_time_ms": {
@@ -629,9 +641,13 @@
 					},
 					"provider": {
 						"type": "string"
+					},
+					"status": {
+						"enum": ["listed", "not_listed", "error", "skipped"],
+						"type": "string"
 					}
 				},
-				"required": ["provider", "listed", "lookup_time_ms"],
+				"required": ["provider", "listed", "status", "answers", "error", "lookup_time_ms"],
 				"type": "object"
 			},
 			"BounceRiskAssessment": {
@@ -644,7 +660,7 @@
 					},
 					"confidence": {
 						"format": "double",
-						"maximum": 1,
+						"maximum": 1.0,
 						"minimum": 0.35,
 						"type": "number"
 					},
@@ -1387,11 +1403,33 @@
 			},
 			"DnsRecordResults": {
 				"properties": {
+					"dkim_selectors": {
+						"items": {
+							"properties": {
+								"error": {
+									"nullable": true,
+									"type": "string"
+								},
+								"selector": {
+									"type": "string"
+								},
+								"status": {
+									"enum": ["usable_key", "revoked", "invalid", "not_found", "error"],
+									"type": "string"
+								}
+							},
+							"required": ["selector", "status", "error"],
+							"type": "object"
+						},
+						"type": "array"
+					},
 					"dmarc_policy": {
 						"nullable": true,
 						"type": "string"
 					},
 					"has_dkim": {
+						"description": "True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence.",
+						"nullable": true,
 						"type": "boolean"
 					},
 					"has_dmarc": {
@@ -1409,11 +1447,20 @@
 						},
 						"type": "array"
 					},
-					"spf_valid": {
+					"spf_policy_explicit": {
+						"description": "Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization.",
 						"type": "boolean"
 					}
 				},
-				"required": ["has_spf", "spf_valid", "has_dkim", "has_dmarc", "has_mx", "mx_records"],
+				"required": [
+					"has_spf",
+					"spf_policy_explicit",
+					"has_dkim",
+					"dkim_selectors",
+					"has_dmarc",
+					"has_mx",
+					"mx_records"
+				],
 				"type": "object"
 			},
 			"DomainInfo": {
@@ -2691,6 +2738,22 @@
 					}
 				},
 				"required": ["confidence", "classification", "factors"],
+				"type": "object"
+			},
+			"PendingVerification": {
+				"properties": {
+					"operation_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"status_url": {
+						"type": "string"
+					}
+				},
+				"required": ["operation_id", "status", "status_url"],
 				"type": "object"
 			},
 			"PipelineDeliveryConfig": {
@@ -5135,6 +5198,17 @@
 				"title": "VerifMethod",
 				"type": "object"
 			},
+			"VerificationResponse": {
+				"description": "SDK result for either a completed verification (HTTP 200) or its pending operation (HTTP 202).",
+				"oneOf": [
+					{
+						"$ref": "#/components/schemas/CheckEmailOutput"
+					},
+					{
+						"$ref": "#/components/schemas/PendingVerification"
+					}
+				]
+			},
 			"Webhook": {
 				"description": "Configuration for a webhook to receive email verification results. The method will be POST, and the body will contain the email verification response.",
 				"properties": {
@@ -5200,7 +5274,7 @@
 		},
 		"termsOfService": "https://github.com/reacherhq/policies/blob/master/terms/index.fr.md",
 		"title": "Reacher",
-		"version": "4.3.1"
+		"version": "4.4.0"
 	},
 	"openapi": "3.0.0",
 	"paths": {
@@ -5215,6 +5289,24 @@
 				},
 				"security": [],
 				"summary": "GET /healthz",
+				"tags": ["Health"]
+			}
+		},
+		"/metrics": {
+			"get": {
+				"operationId": "smtp_metrics",
+				"responses": {
+					"200": {
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						},
+						"description": "Cached SMTP capability gauges"
+					}
+				},
 				"tags": ["Health"]
 			}
 		},
@@ -5359,6 +5451,16 @@
 							}
 						},
 						"description": "Email verification result"
+					},
+					"202": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PendingVerification"
+								}
+							}
+						},
+						"description": "Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge."
 					}
 				},
 				"security": [
@@ -6913,7 +7015,7 @@
 						"AdminSecret": []
 					}
 				],
-				"summary": "POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call.\nRequires the backend admin secret: it creates a tenant with the requested\nplan, generates a non-admin API key, verifies the email, and returns all three.\nWorkspaces sign up through the web app instead.",
+				"summary": "POST /v1/check-email-with-onboard \u2014 Operator onboarding + email verification in one call.\nRequires the backend admin secret: it creates a tenant with the requested\nplan, generates a non-admin API key, verifies the email, and returns all three.\nWorkspaces sign up through the web app instead.",
 				"tags": ["v1"]
 			}
 		},
@@ -6953,6 +7055,16 @@
 							}
 						},
 						"description": "Email verification result"
+					},
+					"202": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PendingVerification"
+								}
+							}
+						},
+						"description": "Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge."
 					},
 					"default": {
 						"content": {
@@ -8975,6 +9087,56 @@
 				},
 				"summary": "PATCH /v1/me/webhook",
 				"tags": ["Tenant"]
+			}
+		},
+		"/v1/operations/{operation_id}": {
+			"get": {
+				"operationId": "v1_get_verification_operation",
+				"parameters": [
+					{
+						"description": "Verification operation identifier",
+						"in": "path",
+						"name": "operation_id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CheckEmailOutput"
+								}
+							}
+						},
+						"description": "Stored verification result"
+					},
+					"202": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PendingVerification"
+								}
+							}
+						},
+						"description": "Verification is pending"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
+				"tags": ["v1"]
 			}
 		},
 		"/v1/outcome-policies": {

@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import * as zod from "zod";
 
@@ -636,6 +636,12 @@ export const V1CheckEmail200Response = zod
       .describe("Validation of the email address syntax."),
   })
   .describe("The result of the email verification process.");
+
+export const V1CheckEmail202Response = zod.object({
+  operation_id: zod.uuid(),
+  status: zod.string(),
+  status_url: zod.string(),
+});
 
 export const V1CheckEmailDefaultResponse = zod.object({
   error: zod.string(),
@@ -1419,6 +1425,510 @@ export const V1DownloadListDefaultResponse = zod.object({
   error: zod.string(),
 });
 
+export const V1GetVerificationOperationParams = zod.object({
+  operation_id: zod.uuid().describe("Verification operation identifier"),
+});
+
+export const v1GetVerificationOperation200ResponseBounceRiskOneConfidenceMin = 0.35;
+export const v1GetVerificationOperation200ResponseBounceRiskOneConfidenceMax = 1;
+
+export const v1GetVerificationOperation200ResponseBounceRiskOneScoreMin = 0;
+export const v1GetVerificationOperation200ResponseBounceRiskOneScoreMax = 100;
+
+export const v1GetVerificationOperation200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin = 0;
+
+export const v1GetVerificationOperation200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin = 0;
+
+export const v1GetVerificationOperation200ResponseScoreCatchAllConfidenceMin = 0;
+export const v1GetVerificationOperation200ResponseScoreCatchAllConfidenceMax = 100;
+
+export const v1GetVerificationOperation200ResponseScoreConfidenceMin = 0;
+export const v1GetVerificationOperation200ResponseScoreConfidenceMax = 100;
+
+export const v1GetVerificationOperation200ResponseScorePartialConfidenceConfidenceMin = 0;
+export const v1GetVerificationOperation200ResponseScorePartialConfidenceConfidenceMax = 100;
+
+export const v1GetVerificationOperation200ResponseScoreScoreMin = 0;
+export const v1GetVerificationOperation200ResponseScoreScoreMax = 100;
+
+export const V1GetVerificationOperation200Response = zod
+  .object({
+    bounce_risk: zod
+      .union([
+        zod.object({
+          action: zod.enum([
+            "send",
+            "send_with_caution",
+            "verify_manually",
+            "do_not_send",
+          ]),
+          category: zod.enum(["safe", "low", "medium", "high", "dangerous"]),
+          confidence: zod
+            .number()
+            .min(
+              v1GetVerificationOperation200ResponseBounceRiskOneConfidenceMin,
+            )
+            .max(
+              v1GetVerificationOperation200ResponseBounceRiskOneConfidenceMax,
+            ),
+          model_version: zod.string(),
+          risk_factors: zod.array(
+            zod.object({
+              contribution: zod.int(),
+              description: zod.string(),
+              direction: zod.enum(["increases_risk", "decreases_risk"]),
+              signal: zod.string(),
+            }),
+          ),
+          score: zod
+            .int()
+            .min(v1GetVerificationOperation200ResponseBounceRiskOneScoreMin)
+            .max(v1GetVerificationOperation200ResponseBounceRiskOneScoreMax),
+          scored_at: zod.iso.datetime({ offset: true }),
+        }),
+        zod.null(),
+      ])
+      .optional()
+      .describe(
+        "Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable.",
+      ),
+    debug: zod
+      .object({
+        backend_name: zod
+          .string()
+          .describe("The name of the backend that performed the verification."),
+        duration: zod
+          .object({
+            nanos: zod.number().describe("Duration in nanoseconds."),
+            secs: zod.number().describe("Duration in seconds."),
+          })
+          .describe(
+            "An object representing a duration in seconds and nanoseconds.",
+          ),
+        end_time: zod
+          .string()
+          .describe("The timestamp when the email verification ended."),
+        reacher_version: zod
+          .string()
+          .optional()
+          .describe(
+            'The version of the backend that performed the verification, e.g. "4.3.0".',
+          ),
+        smtp: zod
+          .object({
+            verif_method: zod
+              .object({
+                host: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The mail server host the check connected to. Only for Smtp.",
+                  ),
+                type: zod
+                  .enum(["Smtp", "Headless", "Api", "Skipped"])
+                  .describe("The method used for the email verification."),
+                verif_method: zod
+                  .object({
+                    from_email: zod.string().optional(),
+                    hello_name: zod.string().optional(),
+                    proxy: zod.string().nullish(),
+                    retries: zod
+                      .int()
+                      .min(
+                        v1GetVerificationOperation200ResponseDebugSmtpVerifMethodVerifMethodRetriesMin,
+                      )
+                      .optional(),
+                    smtp_port: zod
+                      .int()
+                      .min(
+                        v1GetVerificationOperation200ResponseDebugSmtpVerifMethodVerifMethodSmtpPortMin,
+                      )
+                      .optional(),
+                    smtp_timeout: zod
+                      .union([
+                        zod
+                          .object({
+                            nanos: zod
+                              .number()
+                              .describe("Duration in nanoseconds."),
+                            secs: zod.number().describe("Duration in seconds."),
+                          })
+                          .describe(
+                            "An object representing a duration in seconds and nanoseconds.",
+                          ),
+                        zod.null(),
+                      ])
+                      .optional(),
+                  })
+                  .optional()
+                  .describe("The SMTP settings the check used. Only for Smtp."),
+              })
+              .optional()
+              .describe("The method used for email verification."),
+          })
+          .describe(
+            "SMTP details used for debugging, including the verification method.",
+          ),
+        start_time: zod
+          .string()
+          .describe("The timestamp when the email verification started."),
+      })
+      .optional(),
+    input: zod.string().describe("The email address that was verified."),
+    is_reachable: zod
+      .enum(["invalid", "unknown", "safe", "risky"])
+      .describe(
+        "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
+      ),
+    misc: zod
+      .union([
+        zod
+          .object({
+            gravatar_url: zod
+              .string()
+              .nullable()
+              .describe(
+                "URL to the Gravatar profile picture associated with the email, if available and requested.",
+              ),
+            haveibeenpwned: zod.boolean().nullable(),
+            is_b2c: zod.boolean().describe("Is this a B2C email address?"),
+            is_disposable: zod
+              .boolean()
+              .describe(
+                "Indicates if the email address is from a known disposable email provider.",
+              ),
+            is_role_account: zod
+              .boolean()
+              .describe(
+                "Indicates if the email address is a role-based account.",
+              ),
+            is_spam_trap_domain: zod.boolean(),
+          })
+          .describe("Additional information about the email account."),
+        zod
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
+          })
+          .describe(
+            "The error that one part of the check returned instead of its details.",
+          ),
+      ])
+      .describe("Additional information about the email account."),
+    mx: zod
+      .union([
+        zod
+          .object({
+            accepts_mail: zod
+              .boolean()
+              .describe("Indicates if the mail server accepts emails."),
+            records: zod
+              .array(zod.string())
+              .describe(
+                "List of Fully Qualified Domain Names (FQDN) of the mail server.",
+              ),
+          })
+          .describe("Details about the mail server's MX records."),
+        zod
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
+          })
+          .describe(
+            "The error that one part of the check returned instead of its details.",
+          ),
+      ])
+      .describe("Details obtained from querying the mail server's MX records."),
+    policy_evaluation: zod.unknown().optional(),
+    provider: zod
+      .union([
+        zod.enum([
+          "gmail",
+          "google_workspace",
+          "outlook_consumer",
+          "microsoft365",
+          "yahoo",
+          "apple_icloud",
+          "proton",
+          "zoho",
+        ]),
+        zod.null(),
+      ])
+      .optional(),
+    provider_confidence: zod
+      .union([zod.enum(["high", "medium", "low"]), zod.null()])
+      .optional(),
+    provider_rejection_reason: zod
+      .union([
+        zod.enum([
+          "provider_local_part_too_short",
+          "provider_local_part_too_long",
+          "provider_invalid_character",
+          "provider_consecutive_special_characters",
+          "provider_invalid_start_character",
+          "provider_invalid_end_character",
+          "provider_plus_addressing_not_supported",
+          "provider_reserved_word",
+          "provider_format_violation",
+        ]),
+        zod.null(),
+      ])
+      .optional(),
+    provider_rules_applied: zod.boolean(),
+    recommendation: zod.unknown().optional(),
+    score: zod.object({
+      age_days: zod.int().optional(),
+      catch_all: zod
+        .object({
+          confidence: zod
+            .int()
+            .min(
+              v1GetVerificationOperation200ResponseScoreCatchAllConfidenceMin,
+            )
+            .max(
+              v1GetVerificationOperation200ResponseScoreCatchAllConfidenceMax,
+            ),
+          factors: zod.array(zod.string()),
+          severity: zod.enum(["low", "medium", "high"]),
+        })
+        .optional(),
+      catch_all_severity: zod
+        .enum(["low", "medium", "high"])
+        .optional()
+        .describe(
+          "Severity tier for catch-all domains. low=free provider with no other negative signal; medium=contextual score insights softened a corporate catch-all; high=corporate domain, or any catch-all carrying another negative signal. Only the high tier blocks safe_to_send.",
+        ),
+      category: zod.enum(["valid", "risky", "unknown", "invalid"]),
+      confidence: zod
+        .int()
+        .min(v1GetVerificationOperation200ResponseScoreConfidenceMin)
+        .max(v1GetVerificationOperation200ResponseScoreConfidenceMax)
+        .optional(),
+      confidence_factors: zod.array(zod.string()).optional(),
+      confidence_level: zod
+        .enum(["high", "medium", "low", "very_low"])
+        .optional(),
+      domain_suggestion: zod
+        .string()
+        .optional()
+        .describe(
+          "Suggested corrected email when a likely domain typo is detected",
+        ),
+      freshness: zod
+        .enum(["fresh", "recent", "aging", "stale", "expired"])
+        .optional(),
+      normalized_email: zod
+        .string()
+        .optional()
+        .describe(
+          "Canonical form of the email after alias/plus-address normalization",
+        ),
+      partial_confidence: zod
+        .object({
+          classification: zod.enum([
+            "transient",
+            "policy_block",
+            "timeout",
+            "network",
+            "ambiguous_response",
+            "smtp_unreachable",
+          ]),
+          confidence: zod
+            .int()
+            .min(
+              v1GetVerificationOperation200ResponseScorePartialConfidenceConfidenceMin,
+            )
+            .max(
+              v1GetVerificationOperation200ResponseScorePartialConfidenceConfidenceMax,
+            ),
+          factors: zod.array(zod.string()),
+        })
+        .optional(),
+      reason_codes: zod.array(
+        zod.enum([
+          "deliverable",
+          "invalid_syntax",
+          "invalid_recipient",
+          "provider_rejected",
+          "provider_local_part_too_short",
+          "provider_local_part_too_long",
+          "provider_invalid_character",
+          "provider_consecutive_special_characters",
+          "provider_invalid_start_character",
+          "provider_invalid_end_character",
+          "provider_plus_addressing_not_supported",
+          "provider_reserved_word",
+          "provider_format_violation",
+          "smtp_undeliverable",
+          "disabled_mailbox",
+          "no_mx",
+          "smtp_error",
+          "smtp_unreachable",
+          "catch_all",
+          "full_inbox",
+          "disposable",
+          "role_account",
+          "spam_trap",
+          "unknown_deliverability",
+          "free_provider",
+          "possible_typo",
+          "provider_reputation",
+          "tenant_history_positive",
+          "tenant_history_inconsistent",
+          "catch_all_low_confidence",
+          "catch_all_medium_confidence",
+          "catch_all_high_risk",
+          "partial_confidence",
+          "transient_smtp",
+          "smtp_policy_block",
+          "smtp_timeout",
+          "smtp_network",
+          "smtp_ambiguous",
+          "outcome_hard_bounce",
+          "outcome_complaint",
+          "outcome_engagement",
+        ]),
+      ),
+      safe_to_send: zod.boolean(),
+      score: zod
+        .int()
+        .min(v1GetVerificationOperation200ResponseScoreScoreMin)
+        .max(v1GetVerificationOperation200ResponseScoreScoreMax),
+      signals: zod.object({
+        has_domain_suggestion: zod.boolean(),
+        has_mx_records: zod.boolean(),
+        is_disposable: zod.boolean(),
+        is_free_provider: zod.boolean(),
+        is_role_account: zod.boolean(),
+        is_spam_trap_domain: zod.boolean(),
+        reachable: zod
+          .enum(["invalid", "unknown", "safe", "risky"])
+          .describe(
+            "An enumeration describing the confidence level that the recipient address is valid: `safe`, `risky`, `invalid`, or `unknown`. Refer to our FAQ for detailed definitions: https://help.reacher.email/email-attributes-inside-json.",
+          ),
+        smtp_can_connect: zod.boolean(),
+        smtp_error: zod.boolean(),
+        smtp_has_full_inbox: zod.boolean(),
+        smtp_is_catch_all: zod.boolean(),
+        smtp_is_deliverable: zod.boolean(),
+        smtp_is_disabled: zod.boolean(),
+        valid_syntax: zod.boolean(),
+      }),
+      sub_reason: zod.enum([
+        "deliverable",
+        "invalid_syntax",
+        "invalid_recipient",
+        "provider_rejected",
+        "smtp_undeliverable",
+        "disabled_mailbox",
+        "no_mx",
+        "smtp_error",
+        "smtp_unreachable",
+        "catch_all",
+        "full_inbox",
+        "disposable",
+        "role_account",
+        "spam_trap",
+        "risky",
+        "unknown",
+      ]),
+      verified_at: zod.iso.datetime({ offset: true }).optional(),
+    }),
+    smtp: zod
+      .union([
+        zod
+          .object({
+            can_connect_smtp: zod
+              .boolean()
+              .describe(
+                "Indicates if the mail exchanger can be contacted successfully.",
+              ),
+            has_full_inbox: zod
+              .boolean()
+              .describe("Indicates if the mailbox is full."),
+            is_catch_all: zod
+              .boolean()
+              .describe(
+                "Indicates if the email address is a catch-all address.",
+              ),
+            is_deliverable: zod
+              .boolean()
+              .describe(
+                "Indicates if an email sent to this address is deliverable.",
+              ),
+            is_disabled: zod
+              .boolean()
+              .describe(
+                "Indicates if the email address has been disabled by the provider.",
+              ),
+          })
+          .describe(
+            "Results from SMTP connection attempts to the mail server.",
+          ),
+        zod
+          .object({
+            description: zod
+              .enum(["IpBlacklisted", "NeedsRDNS"])
+              .optional()
+              .describe("The category of an SMTP error, when it is known."),
+            error: zod.object({
+              message: zod
+                .unknown()
+                .optional()
+                .describe("The error details. Usually a string."),
+              type: zod.string().describe("The type of error."),
+            }),
+          })
+          .describe(
+            "The error that one part of the check returned instead of its details.",
+          ),
+      ])
+      .describe("Results from connecting to the mail server via SMTP."),
+    syntax: zod
+      .object({
+        address: zod.string().nullable(),
+        domain: zod.string().describe("The domain part of the email address."),
+        is_valid_syntax: zod
+          .boolean()
+          .describe("Indicates if the email address syntax is valid."),
+        normalized_email: zod.string().nullable(),
+        suggestion: zod.string().nullable(),
+        username: zod
+          .string()
+          .describe("The username part of the email address."),
+      })
+      .describe("Validation of the email address syntax."),
+  })
+  .describe("The result of the email verification process.");
+
+export const V1GetVerificationOperation202Response = zod.object({
+  operation_id: zod.uuid(),
+  status: zod.string(),
+  status_url: zod.string(),
+});
+
+export const V1GetVerificationOperationDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 /**
  * @summary POST /v1/reputation/check
  */
@@ -1437,20 +1947,50 @@ export const v1CheckReputation200ResponseScoreMax = 100;
 export const V1CheckReputation200Response = zod.object({
   blacklist_results: zod.array(
     zod.object({
-      listed: zod.boolean(),
+      answers: zod.array(zod.string()),
+      error: zod.string().nullable(),
+      listed: zod
+        .boolean()
+        .nullable()
+        .describe(
+          "Null for failed or skipped queries; false only for a completed negative lookup.",
+        ),
       lookup_time_ms: zod.int(),
       provider: zod.string(),
+      status: zod.enum(["listed", "not_listed", "error", "skipped"]),
     }),
   ),
   cached: zod.boolean(),
   dns_records: zod.object({
+    dkim_selectors: zod.array(
+      zod.object({
+        error: zod.string().nullable(),
+        selector: zod.string(),
+        status: zod.enum([
+          "usable_key",
+          "revoked",
+          "invalid",
+          "not_found",
+          "error",
+        ]),
+      }),
+    ),
     dmarc_policy: zod.string().nullish(),
-    has_dkim: zod.boolean(),
+    has_dkim: zod
+      .boolean()
+      .nullable()
+      .describe(
+        "True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence.",
+      ),
     has_dmarc: zod.boolean(),
     has_mx: zod.boolean(),
     has_spf: zod.boolean(),
     mx_records: zod.array(zod.string()),
-    spf_valid: zod.boolean(),
+    spf_policy_explicit: zod
+      .boolean()
+      .describe(
+        "Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization.",
+      ),
   }),
   domain: zod.string(),
   domain_info: zod.object({

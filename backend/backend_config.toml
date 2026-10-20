@@ -33,6 +33,12 @@ hello_name = "localhost"
 # Env variable: RCH__FROM_EMAIL
 from_email = "hello@localhost"
 
+# Require a public SMTP identity and a recent successful route greeting before
+# accepting verification work. /readyz reports cached capability; /healthz is
+# independent. Disable only for explicit offline/development use.
+# Env variable: RCH__SMTP_HEALTH_ENABLED
+smtp_health_enabled = true
+
 # Timeout for each SMTP connection, in seconds. Commenting it out removes the
 # timeout, so a server that accepts the connection and then stalls holds a
 # worker slot indefinitely. If using a proxy, this timeout includes both the

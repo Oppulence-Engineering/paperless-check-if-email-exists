@@ -66,6 +66,7 @@
 mod haveibeenpwned;
 pub mod misc;
 pub mod mx;
+pub mod network;
 pub mod provider;
 mod rules;
 pub mod smtp;
@@ -78,7 +79,7 @@ use provider::{
 	detect_provider, should_apply_provider_rule, validate_provider_email, DetectedProvider,
 };
 use rustls::crypto::ring;
-use smtp::{check_smtp, SmtpDebug, SmtpDetails, SmtpError};
+use smtp::{check_smtp_mx, SmtpDebug, SmtpDetails, SmtpError};
 pub use smtp::{is_gmail, is_hotmail, is_hotmail_b2b, is_hotmail_b2c, is_yahoo};
 use std::sync::Once;
 use std::time::{Duration, SystemTime};
@@ -353,12 +354,17 @@ pub async fn check_email(input: &CheckEmailInput) -> CheckEmailOutput {
 		}
 	}
 
-	let (my_smtp, smtp_debug) = check_smtp(
+	let (my_smtp, smtp_debug) = check_smtp_mx(
 		my_syntax
 			.address
 			.as_ref()
 			.expect("We already checked that the email has valid format. qed."),
-		&host.exchange,
+		&my_mx
+			.lookup
+			.as_ref()
+			.expect("MX lookup checked above")
+			.iter()
+			.collect::<Vec<_>>(),
 		my_syntax.domain.as_ref(),
 		input,
 	)

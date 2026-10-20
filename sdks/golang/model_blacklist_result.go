@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -22,9 +22,13 @@ var _ MappedNullable = &BlacklistResult{}
 
 // BlacklistResult struct for BlacklistResult
 type BlacklistResult struct {
-	Listed bool `json:"listed"`
+	Answers []string `json:"answers"`
+	Error NullableString `json:"error"`
+	// Null for failed or skipped queries; false only for a completed negative lookup.
+	Listed NullableBool `json:"listed"`
 	LookupTimeMs int64 `json:"lookup_time_ms"`
 	Provider string `json:"provider"`
+	Status string `json:"status"`
 }
 
 type _BlacklistResult BlacklistResult
@@ -33,11 +37,14 @@ type _BlacklistResult BlacklistResult
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewBlacklistResult(listed bool, lookupTimeMs int64, provider string) *BlacklistResult {
+func NewBlacklistResult(answers []string, error_ NullableString, listed NullableBool, lookupTimeMs int64, provider string, status string) *BlacklistResult {
 	this := BlacklistResult{}
+	this.Answers = answers
+	this.Error = error_
 	this.Listed = listed
 	this.LookupTimeMs = lookupTimeMs
 	this.Provider = provider
+	this.Status = status
 	return &this
 }
 
@@ -49,28 +56,80 @@ func NewBlacklistResultWithDefaults() *BlacklistResult {
 	return &this
 }
 
-// GetListed returns the Listed field value
-func (o *BlacklistResult) GetListed() bool {
+// GetAnswers returns the Answers field value
+func (o *BlacklistResult) GetAnswers() []string {
 	if o == nil {
+		var ret []string
+		return ret
+	}
+
+	return o.Answers
+}
+
+// GetAnswersOk returns a tuple with the Answers field value
+// and a boolean to check if the value has been set.
+func (o *BlacklistResult) GetAnswersOk() ([]string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Answers, true
+}
+
+// SetAnswers sets field value
+func (o *BlacklistResult) SetAnswers(v []string) {
+	o.Answers = v
+}
+
+// GetError returns the Error field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *BlacklistResult) GetError() string {
+	if o == nil || o.Error.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.Error.Get()
+}
+
+// GetErrorOk returns a tuple with the Error field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *BlacklistResult) GetErrorOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Error.Get(), o.Error.IsSet()
+}
+
+// SetError sets field value
+func (o *BlacklistResult) SetError(v string) {
+	o.Error.Set(&v)
+}
+
+// GetListed returns the Listed field value
+// If the value is explicit nil, the zero value for bool will be returned
+func (o *BlacklistResult) GetListed() bool {
+	if o == nil || o.Listed.Get() == nil {
 		var ret bool
 		return ret
 	}
 
-	return o.Listed
+	return *o.Listed.Get()
 }
 
 // GetListedOk returns a tuple with the Listed field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *BlacklistResult) GetListedOk() (*bool, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Listed, true
+	return o.Listed.Get(), o.Listed.IsSet()
 }
 
 // SetListed sets field value
 func (o *BlacklistResult) SetListed(v bool) {
-	o.Listed = v
+	o.Listed.Set(&v)
 }
 
 // GetLookupTimeMs returns the LookupTimeMs field value
@@ -121,6 +180,30 @@ func (o *BlacklistResult) SetProvider(v string) {
 	o.Provider = v
 }
 
+// GetStatus returns the Status field value
+func (o *BlacklistResult) GetStatus() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Status
+}
+
+// GetStatusOk returns a tuple with the Status field value
+// and a boolean to check if the value has been set.
+func (o *BlacklistResult) GetStatusOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Status, true
+}
+
+// SetStatus sets field value
+func (o *BlacklistResult) SetStatus(v string) {
+	o.Status = v
+}
+
 func (o BlacklistResult) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -131,9 +214,12 @@ func (o BlacklistResult) MarshalJSON() ([]byte, error) {
 
 func (o BlacklistResult) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["listed"] = o.Listed
+	toSerialize["answers"] = o.Answers
+	toSerialize["error"] = o.Error.Get()
+	toSerialize["listed"] = o.Listed.Get()
 	toSerialize["lookup_time_ms"] = o.LookupTimeMs
 	toSerialize["provider"] = o.Provider
+	toSerialize["status"] = o.Status
 	return toSerialize, nil
 }
 
@@ -142,9 +228,12 @@ func (o *BlacklistResult) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"answers",
+		"error",
 		"listed",
 		"lookup_time_ms",
 		"provider",
+		"status",
 	}
 
 	allProperties := make(map[string]interface{})

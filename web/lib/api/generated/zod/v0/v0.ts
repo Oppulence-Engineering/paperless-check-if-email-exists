@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import * as zod from "zod";
 
@@ -604,3 +604,9 @@ export const PostCheckEmail200Response = zod
       .describe("Validation of the email address syntax."),
   })
   .describe("The result of the email verification process.");
+
+export const PostCheckEmail202Response = zod.object({
+  operation_id: zod.uuid(),
+  status: zod.string(),
+  status_url: zod.string(),
+});

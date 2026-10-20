@@ -120,6 +120,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -199,6 +202,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -329,6 +335,64 @@ mod worker_loop_tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn throttled_durable_single_operation_eventually_completes() {
+		let db = TestDb::start().await;
+		let config = make_worker_config(ThrottleConfig {
+			max_requests_per_second: Some(1),
+			max_requests_per_minute: None,
+			max_requests_per_hour: None,
+			max_requests_per_day: None,
+		})
+		.await;
+		let channel = config.must_worker_config().unwrap().channel;
+		purge(&channel).await;
+		let id: i32 = sqlx::query_scalar("INSERT INTO v1_task_result (operation_id, payload, task_state) VALUES ($1, '{}', 'queued') RETURNING id")
+			.bind(uuid::Uuid::new_v4()).fetch_one(db.pool()).await.unwrap();
+		let task = CheckEmailTask {
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: "invalid-syntax".into(),
+				..Default::default()
+			},
+			job_id: CheckEmailJobId::SingleShot,
+			webhook: None,
+			metadata: Some(serde_json::from_value(serde_json::json!({"task_db_id":id})).unwrap()),
+		};
+		let mut tx = db.pool().begin().await.unwrap();
+		reacher_backend::worker::dispatch::enqueue(&mut tx, task, 5)
+			.await
+			.unwrap();
+		tx.commit().await.unwrap();
+		assert!(
+			reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
+				.await
+				.unwrap()
+		);
+		assert!(config.get_throttle_manager().try_acquire().await.is_none());
+		let started = std::time::Instant::now();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
+		let completed = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+			loop {
+				let done: bool =
+					sqlx::query_scalar("SELECT completion_done FROM v1_task_result WHERE id = $1")
+						.bind(id)
+						.fetch_one(db.pool())
+						.await
+						.unwrap();
+				if done {
+					break;
+				}
+				tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+			}
+		})
+		.await;
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
+		completed.expect("Throttling must not discard the durable delivery");
+		assert!(started.elapsed() >= std::time::Duration::from_millis(800));
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_worker_throttle_requeues_bulk() {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig {
@@ -434,6 +498,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,

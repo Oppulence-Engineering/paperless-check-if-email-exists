@@ -76,9 +76,9 @@ async fn http_handler(
 		)
 	})?;
 	let limit = query.limit.unwrap_or(50).clamp(0, 200);
-	let email_lower = email.to_lowercase();
+	let original_email = email.trim();
 	let canonical_email = crate::http::v1::lists::canonicalize::canonicalize_email(&email)
-		.unwrap_or_else(|| email_lower.clone());
+		.unwrap_or_else(|| original_email.to_string());
 
 	let total: i64 = sqlx::query_scalar(
 		r#"
@@ -86,14 +86,13 @@ async fn http_handler(
 		WHERE (tenant_id = $1 OR $1 IS NULL)
 		  AND (
 			canonical_email = $2
-			OR LOWER(COALESCE(result->>'input', payload->'input'->>'to_email')) = $3
+			OR (canonical_email IS NULL AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2)
 		  )
 		  AND task_state IN ('completed', 'failed', 'dead_lettered')
 		"#,
 	)
 	.bind(tenant_ctx.tenant_id)
 	.bind(&canonical_email)
-	.bind(&email_lower)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -149,16 +148,15 @@ async fn http_handler(
 		WHERE (r.tenant_id = $1 OR $1 IS NULL)
 		  AND (
 			r.canonical_email = $2
-			OR LOWER(COALESCE(r.result->>'input', r.payload->'input'->>'to_email')) = $3
+			OR (r.canonical_email IS NULL AND mailbox_identity(COALESCE(r.result->>'input', r.payload->'input'->>'to_email')) = $2)
 		  )
 		  AND r.task_state IN ('completed', 'failed', 'dead_lettered')
 		ORDER BY r.completed_at DESC NULLS LAST, r.id DESC
-		LIMIT $4
+		LIMIT $3
 		"#,
 	)
 	.bind(tenant_ctx.tenant_id)
 	.bind(&canonical_email)
-	.bind(&email_lower)
 	.bind(limit)
 	.fetch_all(&pg_pool)
 	.await
@@ -238,7 +236,7 @@ async fn http_handler(
 		.collect();
 
 	Ok(warp::reply::json(&Response {
-		email: email_lower,
+		email: original_email.to_string(),
 		history,
 		total,
 	}))

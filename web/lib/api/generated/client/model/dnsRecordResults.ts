@@ -5,16 +5,23 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
+import type { DnsRecordResultsDkimSelectorsItem } from "./dnsRecordResultsDkimSelectorsItem";
 
 export interface DnsRecordResults {
+  dkim_selectors: DnsRecordResultsDkimSelectorsItem[];
   /** @nullable */
   dmarc_policy?: string | null;
-  has_dkim: boolean;
+  /**
+   * True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence.
+   * @nullable
+   */
+  has_dkim: boolean | null;
   has_dmarc: boolean;
   has_mx: boolean;
   has_spf: boolean;
   mx_records: string[];
-  spf_valid: boolean;
+  /** Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization. */
+  spf_policy_explicit: boolean;
 }

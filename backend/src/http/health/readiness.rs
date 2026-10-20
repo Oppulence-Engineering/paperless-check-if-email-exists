@@ -16,6 +16,7 @@ struct CheckStatus {
 struct Checks {
 	postgres: CheckStatus,
 	rabbitmq: CheckStatus,
+	smtp: crate::smtp_egress::SmtpCapability,
 }
 
 #[derive(Serialize)]
@@ -78,11 +79,15 @@ async fn handler(config: Arc<BackendConfig>) -> Result<impl warp::Reply, warp::R
 		}
 	};
 
-	let overall = match (pg_check.status, rmq_check.status) {
+	let mut overall = match (pg_check.status, rmq_check.status) {
 		("ok", "ok") | ("ok", "not_configured") | ("not_configured", "not_configured") => "ok",
 		("unavailable", _) | (_, "unavailable") => "unavailable",
 		_ => "degraded",
 	};
+	let smtp = config.smtp_health.snapshot(config.smtp_health_enabled);
+	if !matches!(smtp.status, "ready" | "disabled") {
+		overall = "unavailable";
+	}
 
 	let status_code = if overall == "ok" {
 		StatusCode::OK
@@ -95,6 +100,7 @@ async fn handler(config: Arc<BackendConfig>) -> Result<impl warp::Reply, warp::R
 		checks: Checks {
 			postgres: pg_check,
 			rabbitmq: rmq_check,
+			smtp,
 		},
 	};
 

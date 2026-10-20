@@ -33,6 +33,7 @@ pub async fn run_reverification_cycle(
 	config: &Arc<BackendConfig>,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
+	crate::smtp_egress::require_smtp_ready(config)?;
 	// Atomically claim due schedules by advancing next_run_at in a single
 	// UPDATE ... RETURNING, preventing concurrent instances from processing
 	// the same schedule (no transaction needed, the UPDATE itself is atomic).
@@ -139,6 +140,9 @@ async fn process_schedule(
 	.await
 	{
 		crate::tenant::quota::QuotaCheckResult::Allowed => {}
+		crate::tenant::quota::QuotaCheckResult::Unavailable => {
+			anyhow::bail!("Quota service unavailable; reverification was not dispatched");
+		}
 		crate::tenant::quota::QuotaCheckResult::ExceededMonthlyLimit { .. } => {
 			info!(
 				target: LOG_TARGET,
@@ -357,6 +361,9 @@ fn reverification_task(
 		job_id: CheckEmailJobId::Bulk(job_id),
 		webhook: None,
 		metadata: Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some(tenant_id.to_string()),
 			request_id: None,
 			correlation_id: None,

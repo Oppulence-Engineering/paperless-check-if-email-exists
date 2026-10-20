@@ -1,5 +1,6 @@
 use crate::bounce_risk::{BounceRiskAssessment, BounceRiskRequestContext, SignalBundle};
 use crate::config::BackendConfig;
+use crate::decision::custom_policy::DecisionPolicy;
 use crate::decision::engine::{evaluate as evaluate_decision, DecisionInput};
 use crate::decision::types::{PolicyEvaluation, PolicyMode, Recommendation};
 use crate::scoring::{
@@ -213,13 +214,15 @@ pub async fn prepare_check_email_success(
 	tenant_id: Option<Uuid>,
 	completed_at: DateTime<Utc>,
 	allow_external_enrichment: bool,
+	decision_policy: Option<&DecisionPolicy>,
 ) -> Result<PreparedCheckEmailSuccess, anyhow::Error> {
-	let response = prepare_verification_response(
+	let response = prepare_verification_response_with_policy(
 		config,
 		&output,
 		tenant_id,
 		completed_at,
 		allow_external_enrichment,
+		decision_policy,
 	)
 	.await?;
 
@@ -232,6 +235,25 @@ pub async fn prepare_verification_response(
 	tenant_id: Option<Uuid>,
 	completed_at: DateTime<Utc>,
 	allow_external_enrichment: bool,
+) -> Result<PreparedVerificationResponse, anyhow::Error> {
+	prepare_verification_response_with_policy(
+		config,
+		output,
+		tenant_id,
+		completed_at,
+		allow_external_enrichment,
+		None,
+	)
+	.await
+}
+
+pub async fn prepare_verification_response_with_policy(
+	config: &BackendConfig,
+	output: &CheckEmailOutput,
+	tenant_id: Option<Uuid>,
+	completed_at: DateTime<Utc>,
+	allow_external_enrichment: bool,
+	decision_policy: Option<&DecisionPolicy>,
 ) -> Result<PreparedVerificationResponse, anyhow::Error> {
 	let canonical_email = crate::http::v1::lists::canonicalize::canonicalize_email(&output.input);
 	let read_pool = config.get_read_pg_pool();
@@ -314,7 +336,9 @@ pub async fn prepare_verification_response(
 
 	let evaluated_at = Utc::now();
 	// ponytail: Read the tenant default per check; carry it in task context if DB load grows.
-	let policy_mode = if let (Some(tenant_id), Some(pool)) =
+	let policy_mode = if let Some(policy) = decision_policy {
+		policy.mode
+	} else if let (Some(tenant_id), Some(pool)) =
 		(tenant_id, write_pool.as_ref().or(read_pool.as_ref()))
 	{
 		let configured: String =
@@ -328,17 +352,21 @@ pub async fn prepare_verification_response(
 	};
 	// A single check must honour the tenant's suppression list and bounce
 	// history like list remediation does, or a suppressed address gets "Send".
-	let active_suppression = match (tenant_id, read_pool.as_ref()) {
+	let active_suppression = match (tenant_id, write_pool.as_ref()) {
 		(Some(tenant_id), Some(pool)) => {
 			crate::suppression::has_active_suppression(pool, tenant_id, &output.input).await?
 		}
 		_ => false,
 	};
-	let custom_profile = match (policy_mode, tenant_id, read_pool.as_ref()) {
-		(PolicyMode::Custom, Some(tenant_id), Some(pool)) => {
-			crate::decision::custom_policy::load_active_profile(pool, tenant_id).await?
+	let custom_profile = if let Some(policy) = decision_policy {
+		policy.custom_profile.clone()
+	} else {
+		match (policy_mode, tenant_id, write_pool.as_ref()) {
+			(PolicyMode::Custom, Some(tenant_id), Some(pool)) => {
+				crate::decision::custom_policy::load_active_profile(pool, tenant_id).await?
+			}
+			_ => None,
 		}
-		_ => None,
 	};
 	let decision_input = DecisionInput {
 		score: &email_score,
@@ -418,7 +446,7 @@ async fn build_scoring_context(
 		}
 
 		let canonical = crate::http::v1::lists::canonicalize::canonicalize_email(&output.input)
-			.unwrap_or_else(|| output.input.trim().to_lowercase());
+			.unwrap_or_else(|| output.input.trim().to_string());
 		context.outcomes = crate::outcomes::enrich_outcome_context(
 			Some(pool),
 			Some(tenant_id),
@@ -454,11 +482,11 @@ async fn enrich_tenant_scoring_context(
 		  AND result IS NOT NULL
 		  AND is_duplicate = false
 		  AND completed_at IS NOT NULL
-		  AND completed_at >= $4 - INTERVAL '180 days'
-		  AND completed_at < $4
+		  AND completed_at >= $3 - INTERVAL '180 days'
+		  AND completed_at < $3
 		  AND (
 			($2::TEXT IS NOT NULL AND canonical_email = $2)
-			OR lower(COALESCE(canonical_email, payload->'input'->>'to_email', result->>'input', '')) = $3
+			OR (canonical_email IS NULL AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2)
 		  )
 		ORDER BY completed_at DESC
 		LIMIT 20
@@ -466,7 +494,6 @@ async fn enrich_tenant_scoring_context(
 	)
 	.bind(tenant_id)
 	.bind(&canonical_email)
-	.bind(&lowered_email)
 	.bind(completed_at)
 	.fetch_all(pool)
 	.await?;

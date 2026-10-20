@@ -79,6 +79,7 @@ docs/DeletePipelineResponse.md
 docs/DiffGroup.md
 docs/DiffRow.md
 docs/DnsRecordResults.md
+docs/DnsRecordResultsDkimSelectorsInner.md
 docs/DomainInfo.md
 docs/Duration.md
 docs/EmailCategory.md
@@ -131,6 +132,7 @@ docs/OutcomeType.md
 docs/OutcomeView.md
 docs/OutcomesApi.md
 docs/PartialConfidence.md
+docs/PendingVerification.md
 docs/PipelineDeliveryConfig.md
 docs/PipelineDeliveryStatus.md
 docs/PipelineDeliveryWebhook.md
@@ -224,6 +226,7 @@ docs/V1EmailHistory200Response.md
 docs/VerifMethod.md
 docs/VerifMethodVerifMethod.md
 docs/VerificationApi.md
+docs/VerificationResponse.md
 docs/Webhook.md
 docs/YahooVerifMethod.md
 git_push.sh
@@ -281,6 +284,7 @@ models/debug-details.ts
 models/delete-pipeline-response.ts
 models/diff-group.ts
 models/diff-row.ts
+models/dns-record-results-dkim-selectors-inner.ts
 models/dns-record-results.ts
 models/domain-info.ts
 models/duration.ts
@@ -330,6 +334,7 @@ models/outcome-rule-action.ts
 models/outcome-type.ts
 models/outcome-view.ts
 models/partial-confidence.ts
+models/pending-verification.ts
 models/pipeline-delivery-config.ts
 models/pipeline-delivery-status.ts
 models/pipeline-delivery-webhook.ts
@@ -416,6 +421,7 @@ models/update-webhook-request.ts
 models/v1-email-history200-response.ts
 models/verif-method-verif-method.ts
 models/verif-method.ts
+models/verification-response.ts
 models/webhook.ts
 models/yahoo-verif-method.ts
 package.json

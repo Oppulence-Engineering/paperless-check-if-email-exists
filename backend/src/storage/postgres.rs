@@ -53,7 +53,7 @@ impl PostgresStorage {
 		extra: Option<serde_json::Value>,
 		max_connections: u32,
 	) -> Result<Self, StorageError> {
-		debug!(target: LOG_TARGET, "Connecting to DB: {}", db_url);
+		debug!(target: LOG_TARGET, "Connecting to database");
 		let pg_pool = Self::configured_pool_options(max_connections)
 			.connect(db_url)
 			.await?;
@@ -185,10 +185,12 @@ impl PostgresStorage {
 				    policy_evaluation = $23,
 				    policy_decision = $24,
 				    policy_evaluated_at = $25,
-				    task_state = 'completed'::task_state,
+				    task_state = CASE WHEN $28::UUID IS NULL THEN 'completed'::task_state ELSE 'running'::task_state END,
+				    verification_stored = true,
 				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
-				WHERE id = $26
+				WHERE id = $26 AND dispatch_id IS NOT DISTINCT FROM $27::UUID
+                    AND (($28::UUID IS NULL AND lease_id IS NULL) OR (lease_id = $28 AND lease_expires_at > NOW()))
 				RETURNING id
 				"#,
 			)
@@ -218,14 +220,11 @@ impl PostgresStorage {
 			.bind(&columns.policy_decision)
 			.bind(columns.policy_evaluated_at)
 			.bind(db_id)
+            .bind(task.metadata.as_ref().and_then(|m| m.dispatch_id))
+            .bind(task.metadata.as_ref().and_then(|m| m.lease_id))
 			.fetch_optional(&self.pg_pool)
 			.await?;
-			if let Some(updated_id) = updated_id {
-				updated_id
-			} else {
-				self.insert_success(task, payload_json, tenant_id, columns, extra)
-					.await?
-			}
+			updated_id.ok_or(sqlx::Error::RowNotFound)?
 		} else {
 			self.insert_success(task, payload_json, tenant_id, columns, extra)
 				.await?
@@ -360,10 +359,12 @@ impl PostgresStorage {
 				    policy_evaluation = NULL,
 				    policy_decision = NULL,
 				    policy_evaluated_at = NULL,
-				    task_state = 'failed'::task_state,
+				    task_state = CASE WHEN $8::UUID IS NULL THEN 'failed'::task_state ELSE 'running'::task_state END,
+				    verification_stored = true,
 				    completed_at = COALESCE(completed_at, NOW()),
 				    updated_at = NOW()
-				WHERE id = $6
+				WHERE id = $6 AND dispatch_id IS NOT DISTINCT FROM $7::UUID
+                    AND (($8::UUID IS NULL AND lease_id IS NULL) OR (lease_id = $8 AND lease_expires_at > NOW()))
 				"#,
 			)
 			.bind(payload_json)
@@ -372,11 +373,12 @@ impl PostgresStorage {
 			.bind(tenant_id)
 			.bind(&canonical_email)
 			.bind(db_id)
+            .bind(task.metadata.as_ref().and_then(|m| m.dispatch_id))
+            .bind(task.metadata.as_ref().and_then(|m| m.lease_id))
 			.execute(&self.pg_pool)
 			.await?;
 			if upd.rows_affected() == 0 {
-				self.insert_error(task, payload_json, tenant_id, err, extra, canonical_email)
-					.await?;
+				return Err(sqlx::Error::RowNotFound.into());
 			}
 		} else {
 			self.insert_error(task, payload_json, tenant_id, err, extra, canonical_email)

@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -47,11 +47,11 @@ type V1API interface {
 	V1CheckEmail(ctx context.Context) V1APIV1CheckEmailRequest
 
 	// V1CheckEmailExecute executes the request
-	//  @return CheckEmailOutput
-	V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*CheckEmailOutput, *http.Response, error)
+	//  @return VerificationResponse
+	V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*VerificationResponse, *http.Response, error)
 
 	/*
-	V1CheckEmailWithOnboard POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+	V1CheckEmailWithOnboard POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return V1APIV1CheckEmailWithOnboardRequest
@@ -199,6 +199,19 @@ type V1API interface {
 	// V1GetListExecute executes the request
 	//  @return ListDetailResponse
 	V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailResponse, *http.Response, error)
+
+	/*
+	V1GetVerificationOperation Method for V1GetVerificationOperation
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param operationId Verification operation identifier
+	@return V1APIV1GetVerificationOperationRequest
+	*/
+	V1GetVerificationOperation(ctx context.Context, operationId string) V1APIV1GetVerificationOperationRequest
+
+	// V1GetVerificationOperationExecute executes the request
+	//  @return VerificationResponse
+	V1GetVerificationOperationExecute(r V1APIV1GetVerificationOperationRequest) (*VerificationResponse, *http.Response, error)
 
 	/*
 	V1ImportSuppressions Import suppressions
@@ -437,7 +450,7 @@ func (r V1APIV1CheckEmailRequest) IdempotencyKey(idempotencyKey string) V1APIV1C
 	return r
 }
 
-func (r V1APIV1CheckEmailRequest) Execute() (*CheckEmailOutput, *http.Response, error) {
+func (r V1APIV1CheckEmailRequest) Execute() (*VerificationResponse, *http.Response, error) {
 	return r.ApiService.V1CheckEmailExecute(r)
 }
 
@@ -457,13 +470,13 @@ func (a *V1APIService) V1CheckEmail(ctx context.Context) V1APIV1CheckEmailReques
 }
 
 // Execute executes the request
-//  @return CheckEmailOutput
-func (a *V1APIService) V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*CheckEmailOutput, *http.Response, error) {
+//  @return VerificationResponse
+func (a *V1APIService) V1CheckEmailExecute(r V1APIV1CheckEmailRequest) (*VerificationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *CheckEmailOutput
+		localVarReturnValue  *VerificationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1CheckEmail")
@@ -577,7 +590,7 @@ func (r V1APIV1CheckEmailWithOnboardRequest) Execute() (*http.Response, error) {
 }
 
 /*
-V1CheckEmailWithOnboard POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+V1CheckEmailWithOnboard POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return V1APIV1CheckEmailWithOnboardRequest
@@ -630,6 +643,20 @@ func (a *V1APIService) V1CheckEmailWithOnboardExecute(r V1APIV1CheckEmailWithOnb
 	}
 	// body params
 	localVarPostBody = r.onboardRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["AdminSecret"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["x-reacher-secret"] = key
+			}
+		}
+	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -2120,6 +2147,129 @@ func (a *V1APIService) V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailRes
 
 	localVarPath := localBasePath + "/v1/lists/{list_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"list_id"+"}", url.PathEscape(parameterValueToString(r.listId, "listId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1GetVerificationOperationRequest struct {
+	ctx context.Context
+	ApiService V1API
+	operationId string
+}
+
+func (r V1APIV1GetVerificationOperationRequest) Execute() (*VerificationResponse, *http.Response, error) {
+	return r.ApiService.V1GetVerificationOperationExecute(r)
+}
+
+/*
+V1GetVerificationOperation Method for V1GetVerificationOperation
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param operationId Verification operation identifier
+ @return V1APIV1GetVerificationOperationRequest
+*/
+func (a *V1APIService) V1GetVerificationOperation(ctx context.Context, operationId string) V1APIV1GetVerificationOperationRequest {
+	return V1APIV1GetVerificationOperationRequest{
+		ApiService: a,
+		ctx: ctx,
+		operationId: operationId,
+	}
+}
+
+// Execute executes the request
+//  @return VerificationResponse
+func (a *V1APIService) V1GetVerificationOperationExecute(r V1APIV1GetVerificationOperationRequest) (*VerificationResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *VerificationResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1GetVerificationOperation")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/operations/{operation_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"operation_id"+"}", url.PathEscape(parameterValueToString(r.operationId, "operationId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

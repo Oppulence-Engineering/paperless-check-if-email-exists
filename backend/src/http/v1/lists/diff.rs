@@ -247,7 +247,7 @@ async fn load_list_snapshot(
 			completed_at
 		FROM (
 			SELECT *,
-			       COALESCE(canonical_email, LOWER(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
+			       COALESCE(canonical_email, mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
 			FROM v1_task_result
 			WHERE (extra->>'list_id')::INTEGER = $1
 			  AND task_state = 'completed'::task_state

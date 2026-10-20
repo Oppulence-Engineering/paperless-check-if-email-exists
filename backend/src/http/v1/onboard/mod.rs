@@ -114,6 +114,7 @@ async fn onboard_handler(
 	pg_pool: PgPool,
 	body: OnboardRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	// ── Validate ────────────────────────────────────
 	if body.email_to_verify.is_empty() {
 		return Err(ReacherResponseError::new(

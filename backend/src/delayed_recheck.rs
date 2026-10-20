@@ -15,13 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::config::BackendConfig;
-use crate::http::v1::bulk::post::publish_task;
 use crate::worker::do_work::{
 	sync_task_entities, CheckEmailJobId, CheckEmailTask, RetryPolicy, TaskMetadata,
 };
 use check_if_email_exists::LOG_TARGET;
 use chrono::{Duration as ChronoDuration, Utc};
-use lapin::{BasicProperties, Channel};
+use lapin::Channel;
 use serde_json::Value;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
@@ -116,176 +115,71 @@ pub async fn schedule_delayed_recheck(
 	task_db_id: i32,
 	retry_count: i32,
 	retry_policy: &RetryPolicy,
-) -> bool {
+) -> Result<bool, anyhow::Error> {
 	let CheckEmailJobId::Bulk(job_id) = task.job_id else {
-		return false;
+		return Ok(false);
 	};
-	let Some(pg_pool) = config.get_pg_pool() else {
-		warn!(
-			target: LOG_TARGET,
-			task_id = task_db_id,
-			"Cannot schedule delayed recheck without Postgres"
-		);
-		return false;
-	};
-
-	if let Err(error) =
-		sqlx::query("UPDATE v1_task_result SET retry_count = $2, updated_at = NOW() WHERE id = $1")
-			.bind(task_db_id)
-			.bind(retry_count)
-			.execute(&pg_pool)
-			.await
-	{
-		warn!(
-			target: LOG_TARGET,
-			task_id = task_db_id,
-			error = ?error,
-			"Failed to update delayed recheck retry count"
-		);
+	let pool = config
+		.get_pg_pool()
+		.ok_or_else(|| anyhow::anyhow!("Delayed recheck requires Postgres"))?;
+	let mut tx = pool.begin().await?;
+	sqlx::query("SELECT id FROM v1_bulk_job WHERE id = $1 FOR UPDATE")
+		.bind(job_id)
+		.fetch_one(&mut *tx)
+		.await?;
+	let dispatch_id = task.metadata.as_ref().and_then(|m| m.dispatch_id);
+	let lease_id = task.metadata.as_ref().and_then(|m| m.lease_id);
+	sqlx::query("SELECT id FROM v1_task_result WHERE id = $1 AND dispatch_id IS NOT DISTINCT FROM $2::UUID AND ($3::UUID IS NULL OR (lease_id = $3 AND lease_expires_at > NOW())) AND result IS NOT NULL FOR UPDATE")
+        .bind(task_db_id).bind(dispatch_id).bind(lease_id).fetch_one(&mut *tx).await?;
+	if let Some(id) = dispatch_id {
+		let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM verification_delayed_rechecks WHERE task_result_id = $1 AND task->'metadata'->>'dispatch_id' = $2)")
+            .bind(task_db_id).bind(id.to_string()).fetch_one(&mut *tx).await?;
+		if exists {
+			return Ok(true);
+		}
 	}
-
 	let delay_seconds = delayed_recheck_delay_seconds(retry_policy, retry_count);
 	let run_at = Utc::now() + ChronoDuration::seconds(delay_seconds.min(i64::MAX as u64) as i64);
 	let mut recheck_task = task.clone();
-	let tenant_id_string = recheck_task
-		.metadata
-		.as_ref()
-		.and_then(|metadata| metadata.tenant_id.as_deref())
-		.map(ToOwned::to_owned);
-	let tenant_id = tenant_id_string
+	let metadata = recheck_task.metadata.get_or_insert_with(|| TaskMetadata {
+		dispatch_id: None,
+		lease_id: None,
+		decision_policy: None,
+		tenant_id: None,
+		request_id: None,
+		correlation_id: None,
+		created_by: None,
+		retry_policy: Some(retry_policy.clone()),
+		dedupe_key: None,
+		task_db_id: Some(task_db_id),
+	});
+	metadata.created_by = Some(DELAYED_RECHECK_ACTOR.to_string());
+	metadata.task_db_id = Some(task_db_id);
+	let tenant_id = metadata
+		.tenant_id
 		.as_deref()
-		.and_then(|raw| raw.parse::<uuid::Uuid>().ok());
-
-	match recheck_task.metadata.as_mut() {
-		Some(metadata) => {
-			metadata.created_by = Some(DELAYED_RECHECK_ACTOR.to_string());
-			metadata.task_db_id = Some(task_db_id);
-		}
-		None => {
-			recheck_task.metadata = Some(TaskMetadata {
-				tenant_id: tenant_id_string,
-				request_id: None,
-				correlation_id: None,
-				created_by: Some(DELAYED_RECHECK_ACTOR.to_string()),
-				retry_policy: Some(retry_policy.clone()),
-				dedupe_key: None,
-				task_db_id: Some(task_db_id),
-			});
-		}
+		.and_then(|id| id.parse::<uuid::Uuid>().ok());
+	let task_json = serde_json::to_value(&recheck_task)?;
+	sqlx::query("INSERT INTO verification_delayed_rechecks (task_result_id, job_id, tenant_id, task, retry_count, run_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (task_result_id) WHERE status = 'scheduled' DO UPDATE SET task = EXCLUDED.task, retry_count = EXCLUDED.retry_count, run_at = EXCLUDED.run_at, updated_at = NOW()")
+        .bind(task_db_id).bind(job_id).bind(tenant_id).bind(task_json).bind(retry_count).bind(run_at)
+        .execute(&mut *tx).await?;
+	sqlx::query("UPDATE v1_task_result SET task_state = 'retrying', retry_count = $2, updated_at = NOW() WHERE id = $1")
+        .bind(task_db_id).bind(retry_count).execute(&mut *tx).await?;
+	for event_type in ["task.partial_confidence", "task.delayed_recheck_scheduled"] {
+		sqlx::query("INSERT INTO job_events (job_id, task_id, event_type, event_data, actor) VALUES ($1, $2, $3, $4, $5)")
+            .bind(job_id).bind(task_db_id).bind(event_type)
+            .bind(serde_json::json!({"retry_count":retry_count,"delay_seconds":delay_seconds,"run_at":run_at}))
+            .bind(&config.backend_name).execute(&mut *tx).await?;
 	}
-
-	let task_json = match serde_json::to_value(&recheck_task) {
-		Ok(value) => value,
-		Err(error) => {
-			warn!(
-				target: LOG_TARGET,
-				task_id = task_db_id,
-				error = ?error,
-				"Failed to serialize delayed recheck task"
-			);
-			return false;
-		}
-	};
-
-	// One statement, so the task never waits on a recheck row that was not
-	// written. Data-modifying CTEs all run even though only the last one's
-	// rows are returned.
-	let schedule_result = sqlx::query_scalar::<_, i32>(
-		r#"
-		WITH updated AS (
-			UPDATE verification_delayed_rechecks
-			SET job_id = $2,
-				tenant_id = $3,
-				task = $4,
-				retry_count = $5,
-				run_at = $6,
-				status = 'scheduled',
-				publish_attempts = 0,
-				last_error = NULL,
-				updated_at = NOW(),
-				published_at = NULL
-			WHERE task_result_id = $1 AND status = 'scheduled'
-			RETURNING id
-		)
-		, inserted AS (
-			INSERT INTO verification_delayed_rechecks (
-				task_result_id, job_id, tenant_id, task, retry_count, run_at
-			)
-			SELECT $1, $2, $3, $4, $5, $6
-			WHERE NOT EXISTS (SELECT 1 FROM updated)
-			RETURNING id
-		)
-		UPDATE v1_task_result
-		SET task_state = 'retrying'::task_state, updated_at = NOW()
-		WHERE id = $1
-			AND task_state = 'completed'::task_state
-			AND result IS NOT NULL
-		RETURNING id
-		"#,
-	)
-	.bind(task_db_id)
-	.bind(job_id)
-	.bind(tenant_id)
-	.bind(task_json)
-	.bind(retry_count)
-	.bind(run_at)
-	.fetch_optional(&pg_pool)
-	.await;
-
-	let awaiting_recheck = match schedule_result {
-		Ok(task_row) => task_row.is_some(),
-		Err(error) => {
-			warn!(
-				target: LOG_TARGET,
-				task_id = task_db_id,
-				error = ?error,
-				"Failed to persist delayed recheck task"
-			);
-			record_job_event(
-				&pg_pool,
-				&config,
-				job_id,
-				Some(task_db_id),
-				"task.delayed_recheck_failed",
-				Some(serde_json::json!({
-					"retry_count": retry_count,
-					"reason": "schedule_persistence_failed"
-				})),
-			)
-			.await;
-			return false;
-		}
-	};
-
-	record_job_event(
-		&pg_pool,
-		&config,
-		job_id,
-		Some(task_db_id),
-		"task.partial_confidence",
-		Some(serde_json::json!({ "retry_count": retry_count })),
-	)
-	.await;
-	record_job_event(
-		&pg_pool,
-		&config,
-		job_id,
-		Some(task_db_id),
-		"task.delayed_recheck_scheduled",
-		Some(serde_json::json!({
-			"retry_count": retry_count,
-			"delay_seconds": delay_seconds,
-			"run_at": run_at
-		})),
-	)
-	.await;
-	awaiting_recheck
+	tx.commit().await?;
+	Ok(true)
 }
 
 pub async fn run_delayed_recheck_cycle(
 	config: Arc<BackendConfig>,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let worker_config = match config.must_worker_config() {
 		Ok(worker_config) => worker_config,
 		Err(error) => {
@@ -416,7 +310,7 @@ async fn claim_due_rechecks(
 async fn publish_claimed_recheck(
 	config: &BackendConfig,
 	pg_pool: &PgPool,
-	channel: Arc<Channel>,
+	_channel: Arc<Channel>,
 	recheck: DelayedRecheckRow,
 ) {
 	let task = match serde_json::from_value::<CheckEmailTask>(recheck.task.clone()) {
@@ -449,35 +343,22 @@ async fn publish_claimed_recheck(
 		}
 	};
 
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(0);
-
-	match publish_task(channel, task, properties).await {
+	let publication: Result<(), anyhow::Error> = async {
+        let mut tx = pg_pool.begin().await?;
+        sqlx::query("SELECT id FROM v1_bulk_job WHERE id = $1 FOR UPDATE").bind(recheck.job_id).fetch_one(&mut *tx).await?;
+        sqlx::query("SELECT id FROM verification_delayed_rechecks WHERE id = $1 AND status = 'publishing' FOR UPDATE")
+            .bind(recheck.id).fetch_one(&mut *tx).await?;
+        let ready: bool = sqlx::query_scalar("SELECT completion_done OR dispatch_id IS NULL FROM v1_task_result WHERE id = $1 AND (lease_expires_at IS NULL OR lease_expires_at <= NOW()) FOR UPDATE")
+            .bind(recheck.task_result_id).fetch_one(&mut *tx).await?;
+        anyhow::ensure!(ready, "Previous verification effects are still pending");
+        crate::worker::dispatch::enqueue(&mut tx, task, 0).await?;
+        sqlx::query("UPDATE verification_delayed_rechecks SET status = 'published', published_at = NOW(), updated_at = NOW(), last_error = NULL WHERE id = $1")
+            .bind(recheck.id).execute(&mut *tx).await?;
+        tx.commit().await?;
+        Ok(())
+    }.await;
+	match publication {
 		Ok(()) => {
-			if let Err(error) = sqlx::query(
-				r#"
-				UPDATE verification_delayed_rechecks
-				SET status = 'published',
-					published_at = NOW(),
-					last_error = NULL,
-					updated_at = NOW()
-				WHERE id = $1
-				"#,
-			)
-			.bind(recheck.id)
-			.execute(pg_pool)
-			.await
-			{
-				warn!(
-					target: LOG_TARGET,
-					recheck_id = recheck.id,
-					task_id = recheck.task_result_id,
-					error = ?error,
-					"Failed to mark delayed recheck published"
-				);
-			}
-
 			record_job_event(
 				pg_pool,
 				config,
@@ -591,7 +472,12 @@ async fn release_task_awaiting_recheck(
 	.execute(pg_pool)
 	.await;
 	match released {
-		Ok(_) => sync_task_entities(config, Some(task_result_id), Some(job_id)).await,
+		Ok(_) => {
+			if let Err(error) = sync_task_entities(config, Some(task_result_id), Some(job_id)).await
+			{
+				warn!(target: LOG_TARGET, task_id = task_result_id, error = ?error, "Failed to finalize entities after delayed recheck release");
+			}
+		}
 		Err(error) => warn!(
 			target: LOG_TARGET,
 			task_id = task_result_id,

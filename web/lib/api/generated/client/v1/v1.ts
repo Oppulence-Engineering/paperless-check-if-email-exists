@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import type {
   AddSuppressionsRequest,
@@ -24,6 +24,7 @@ import type {
   ListUploadRequest,
   ListUploadResponse,
   OnboardRequest,
+  PendingVerification,
   ReputationCheckRequest,
   ReputationCheckResponse,
   ReverificationStatusResponse,
@@ -241,12 +242,19 @@ export type v1CheckEmailResponse200 = {
   status: 200;
 };
 
-export type v1CheckEmailResponseDefault = {
-  data: ErrorEnvelope;
-  status: Exclude<HTTPStatusCodes, 200>;
+export type v1CheckEmailResponse202 = {
+  data: PendingVerification;
+  status: 202;
 };
 
-export type v1CheckEmailResponseSuccess = v1CheckEmailResponse200 & {
+export type v1CheckEmailResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200 | 202>;
+};
+
+export type v1CheckEmailResponseSuccess = (
+  v1CheckEmailResponse200 | v1CheckEmailResponse202
+) & {
   headers: Headers;
 };
 export type v1CheckEmailResponseError = v1CheckEmailResponseDefault & {
@@ -708,6 +716,60 @@ export const v1DownloadList = async (
     status: res.status,
     headers: res.headers,
   } as v1DownloadListResponse;
+};
+
+export type v1GetVerificationOperationResponse200 = {
+  data: CheckEmailOutput;
+  status: 200;
+};
+
+export type v1GetVerificationOperationResponse202 = {
+  data: PendingVerification;
+  status: 202;
+};
+
+export type v1GetVerificationOperationResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200 | 202>;
+};
+
+export type v1GetVerificationOperationResponseSuccess = (
+  v1GetVerificationOperationResponse200 | v1GetVerificationOperationResponse202
+) & {
+  headers: Headers;
+};
+export type v1GetVerificationOperationResponseError =
+  v1GetVerificationOperationResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1GetVerificationOperationResponse =
+  | v1GetVerificationOperationResponseSuccess
+  | v1GetVerificationOperationResponseError;
+
+export const getV1GetVerificationOperationUrl = (operationId: string) => {
+  return `/v1/operations/${operationId}`;
+};
+
+export const v1GetVerificationOperation = async (
+  operationId: string,
+  options?: RequestInit,
+): Promise<v1GetVerificationOperationResponse> => {
+  const res = await fetch(getV1GetVerificationOperationUrl(operationId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1GetVerificationOperationResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1GetVerificationOperationResponse;
 };
 
 export type v1CheckReputationResponse200 = {

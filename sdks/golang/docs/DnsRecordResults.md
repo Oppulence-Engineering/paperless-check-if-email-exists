@@ -4,19 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**DkimSelectors** | [**[]DnsRecordResultsDkimSelectorsInner**](DnsRecordResultsDkimSelectorsInner.md) |  | [required]
 **DmarcPolicy** | Pointer to **NullableString** |  | [optional]
-**HasDkim** | **bool** |  | [required]
+**HasDkim** | **NullableBool** | True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence. | [required]
 **HasDmarc** | **bool** |  | [required]
 **HasMx** | **bool** |  | [required]
 **HasSpf** | **bool** |  | [required]
 **MxRecords** | **[]string** |  | [required]
-**SpfValid** | **bool** |  | [required]
+**SpfPolicyExplicit** | **bool** | Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization. | [required]
 
 ## Methods
 
 ### NewDnsRecordResults
 
-`func NewDnsRecordResults(hasDkim bool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfValid bool) *DnsRecordResults`
+`func NewDnsRecordResults(dkimSelectors []DnsRecordResultsDkimSelectorsInner, hasDkim NullableBool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfPolicyExplicit bool) *DnsRecordResults`
 
 NewDnsRecordResults instantiates a new DnsRecordResults object
 This constructor will assign default values to properties that have it defined,
@@ -30,6 +31,26 @@ will change when the set of required properties is changed
 NewDnsRecordResultsWithDefaults instantiates a new DnsRecordResults object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetDkimSelectors
+
+`func (o *DnsRecordResults) GetDkimSelectors() []DnsRecordResultsDkimSelectorsInner`
+
+GetDkimSelectors returns the DkimSelectors field if non-nil, zero value otherwise.
+
+### GetDkimSelectorsOk
+
+`func (o *DnsRecordResults) GetDkimSelectorsOk() ([]DnsRecordResultsDkimSelectorsInner, bool)`
+
+GetDkimSelectorsOk returns a tuple with the DkimSelectors field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDkimSelectors
+
+`func (o *DnsRecordResults) SetDkimSelectors(v []DnsRecordResultsDkimSelectorsInner)`
+
+SetDkimSelectors sets DkimSelectors field to given value.
+
 
 ### GetDmarcPolicy
 
@@ -167,24 +188,24 @@ and a boolean to check if the value has been set.
 SetMxRecords sets MxRecords field to given value.
 
 
-### GetSpfValid
+### GetSpfPolicyExplicit
 
-`func (o *DnsRecordResults) GetSpfValid() bool`
+`func (o *DnsRecordResults) GetSpfPolicyExplicit() bool`
 
-GetSpfValid returns the SpfValid field if non-nil, zero value otherwise.
+GetSpfPolicyExplicit returns the SpfPolicyExplicit field if non-nil, zero value otherwise.
 
-### GetSpfValidOk
+### GetSpfPolicyExplicitOk
 
-`func (o *DnsRecordResults) GetSpfValidOk() (*bool, bool)`
+`func (o *DnsRecordResults) GetSpfPolicyExplicitOk() (*bool, bool)`
 
-GetSpfValidOk returns a tuple with the SpfValid field if it's non-nil, zero value otherwise
+GetSpfPolicyExplicitOk returns a tuple with the SpfPolicyExplicit field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetSpfValid
+### SetSpfPolicyExplicit
 
-`func (o *DnsRecordResults) SetSpfValid(v bool)`
+`func (o *DnsRecordResults) SetSpfPolicyExplicit(v bool)`
 
-SetSpfValid sets SpfValid field to given value.
+SetSpfPolicyExplicit sets SpfPolicyExplicit field to given value.
 
 
 

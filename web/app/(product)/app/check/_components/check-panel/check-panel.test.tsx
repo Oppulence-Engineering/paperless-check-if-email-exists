@@ -42,7 +42,10 @@ it("checks the ?email= address once and shows the verdict layout", async () => {
 	expect(await screen.findByText("Quality score")).toBeVisible();
 	expect(check).toHaveBeenCalledTimes(1);
 	expect(check).toHaveBeenCalledWith(
-		{ checkEmailRequest: { to_email: "maya@brightlane.co", sandbox: false } },
+		{
+			checkEmailRequest: { to_email: "maya@brightlane.co", sandbox: false },
+			idempotencyKey: expect.any(String),
+		},
 		expect.any(Object),
 	);
 	expect(screen.getByText("Domain has a mail server: yes")).toBeVisible();
@@ -90,7 +93,10 @@ it("shows loading and backend errors for an SDK check", async () => {
 	fireEvent.click(screen.getByRole("button", { name: "Check email" }));
 	await waitFor(() =>
 		expect(check).toHaveBeenCalledWith(
-			{ checkEmailRequest: { to_email: "user@example.com", sandbox: false } },
+			{
+				checkEmailRequest: { to_email: "user@example.com", sandbox: false },
+				idempotencyKey: expect.any(String),
+			},
 			expect.any(Object),
 		),
 	);

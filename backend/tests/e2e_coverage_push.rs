@@ -23,13 +23,11 @@ mod throttle_coverage {
 		let manager = ThrottleManager::new(config);
 
 		// First two should be allowed
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
+		assert_eq!(manager.try_acquire().await, None);
+		assert_eq!(manager.try_acquire().await, None);
 
 		// Third request should hit the per-minute limit
-		let result = manager.check_throttle().await;
+		let result = manager.try_acquire().await;
 		assert!(result.is_some());
 		assert_eq!(result.unwrap().limit_type, ThrottleLimit::PerMinute);
 	}
@@ -45,12 +43,10 @@ mod throttle_coverage {
 		};
 		let manager = ThrottleManager::new(config);
 
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
+		assert_eq!(manager.try_acquire().await, None);
+		assert_eq!(manager.try_acquire().await, None);
 
-		let result = manager.check_throttle().await;
+		let result = manager.try_acquire().await;
 		assert!(result.is_some());
 		assert_eq!(result.unwrap().limit_type, ThrottleLimit::PerHour);
 	}
@@ -66,12 +62,10 @@ mod throttle_coverage {
 		};
 		let manager = ThrottleManager::new(config);
 
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
+		assert_eq!(manager.try_acquire().await, None);
+		assert_eq!(manager.try_acquire().await, None);
 
-		let result = manager.check_throttle().await;
+		let result = manager.try_acquire().await;
 		assert!(result.is_some());
 		assert_eq!(result.unwrap().limit_type, ThrottleLimit::PerDay);
 	}
@@ -98,8 +92,7 @@ mod throttle_coverage {
 		let manager = ThrottleManager::new(config);
 
 		for _ in 0..100 {
-			assert_eq!(manager.check_throttle().await, None);
-			manager.increment_counters().await;
+			assert_eq!(manager.try_acquire().await, None);
 		}
 	}
 
@@ -115,10 +108,9 @@ mod throttle_coverage {
 		};
 		let manager = ThrottleManager::new(config);
 
-		assert_eq!(manager.check_throttle().await, None);
-		manager.increment_counters().await;
+		assert_eq!(manager.try_acquire().await, None);
 
-		let result = manager.check_throttle().await;
+		let result = manager.try_acquire().await;
 		assert!(result.is_some());
 		assert_eq!(result.unwrap().limit_type, ThrottleLimit::PerSecond);
 	}

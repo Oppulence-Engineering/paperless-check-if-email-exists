@@ -648,6 +648,23 @@ def fix_typescript_library_build() -> None:
     )
     write_if_changed(common, content)
 
+def fix_pending_verification_responses() -> None:
+    # The generator picks only the first 2xx schema; expose both successful responses.
+    for name in ("v0", "v1"):
+        path = GO_SDK_DIR / f"api_{name}.go"
+        content = re.sub(r"\bCheckEmailOutput\b", "VerificationResponse", path.read_text())
+        assert "VerificationResponse" in content, f"Missing verification response in {path}"
+        write_if_changed(path, content)
+        path = ROOT / "sdks" / "typescript" / "src" / "api" / f"{name}-api.ts"
+        content = re.sub(r"\bCheckEmailOutput\b", "VerificationResponse", path.read_text())
+        content = content.replace("../models/check-email-output", "../models/verification-response")
+        assert "VerificationResponse" in content, f"Missing verification response in {path}"
+        write_if_changed(path, content)
+    for root, names in ((GO_DOCS_DIR, ("V0API.md", "V1API.md")), (TS_DOCS_DIR, ("V0Api.md", "V1Api.md"))):
+        for name in names:
+            path = root / name
+            write_if_changed(path, re.sub(r"\bCheckEmailOutput\b", "VerificationResponse", path.read_text()))
+
 
 def main() -> None:
     remove_obsolete_outcome_files()
@@ -656,6 +673,7 @@ def main() -> None:
     normalize_typescript_docs()
     normalize_typescript_readme()
     fix_typescript_library_build()
+    fix_pending_verification_responses()
     normalize_generated_whitespace()
 
 

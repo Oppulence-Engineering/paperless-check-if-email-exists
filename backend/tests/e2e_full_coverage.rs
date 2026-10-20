@@ -121,6 +121,9 @@ mod do_work_coverage {
 			job_id: CheckEmailJobId::Bulk(1),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("t1".into()),
 				request_id: Some("r1".into()),
 				correlation_id: Some("c1".into()),
@@ -158,6 +161,9 @@ mod do_work_coverage {
 			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -853,6 +859,9 @@ mod do_check_email_work_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -958,6 +967,9 @@ mod do_check_email_work_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -1173,6 +1185,9 @@ mod do_check_email_work_retry_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -1337,6 +1352,9 @@ mod postgres_storage_coverage {
 		let tid: uuid::Uuid = sqlx::Row::get(&row, "id");
 
 		let task = make_task(Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some(tid.to_string()),
 			request_id: None,
 			correlation_id: None,

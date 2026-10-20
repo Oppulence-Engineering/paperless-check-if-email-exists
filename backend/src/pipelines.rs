@@ -7,6 +7,7 @@ use crate::tenant::quota::release_reserved_usage;
 use crate::tenant::webhook::{sign_payload, WEBHOOK_SIGNATURE_HEADER};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use anyhow::{bail, Context, Result};
+use check_if_email_exists::network::is_private_ip;
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use chrono::{DateTime, Duration, Utc};
 use chrono_tz::Tz;
@@ -422,6 +423,10 @@ pub async fn run_pipeline_scheduler_cycle(
 		return Ok(());
 	}
 
+	recover_stranded_pending_deliveries(pg_pool).await?;
+	retry_due_pipeline_deliveries(pg_pool, config.pipelines.max_due_per_tick).await?;
+	crate::smtp_egress::require_smtp_ready(&config)?;
+
 	recover_stalled_pipeline_runs(config.as_ref(), pg_pool, config.pipelines.max_due_per_tick)
 		.await?;
 
@@ -450,9 +455,6 @@ pub async fn run_pipeline_scheduler_cycle(
 			spawn_pipeline_run_execution(Arc::clone(&config), pg_pool.clone(), run);
 		}
 	}
-
-	recover_stranded_pending_deliveries(pg_pool).await?;
-	retry_due_pipeline_deliveries(pg_pool, config.pipelines.max_due_per_tick).await?;
 
 	Ok(())
 }
@@ -1245,6 +1247,7 @@ pub async fn create_manual_pipeline_run(
 	force: bool,
 	reason: Option<String>,
 ) -> Result<TriggerPipelineResponse> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let mut tx = pg_pool.begin().await?;
 	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
 		Some(row) if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
@@ -1313,6 +1316,7 @@ pub async fn create_push_pipeline_run(
 	idempotency_key: String,
 	input: PushPipelineInput,
 ) -> Result<PushPipelineResponse> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let idempotency_key = idempotency_key.trim();
 	if idempotency_key.is_empty() || idempotency_key.len() > 200 {
 		return Err(PipelineRequestError::validation(
@@ -2005,6 +2009,12 @@ async fn execute_pipeline_run_inner(
 	let mut groups_to_publish = Vec::with_capacity(prepared_list.canonical_groups.len());
 	for (canonical, indices) in &prepared_list.canonical_groups {
 		let primary_index = indices[0];
+		let routing_email = prepared_list.rows[primary_index]
+			.get(&prepared_list.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
 		let primary_extra = json!({
 			"list_id": list_id,
 			"row_index": primary_index as i32,
@@ -2021,7 +2031,7 @@ async fn execute_pipeline_run_inner(
 		)
 		.bind(job_id)
 		.bind(json!({
-				"input": {"to_email": canonical},
+				"input": {"to_email": routing_email},
 				"job_id": {"bulk": job_id},
 				"webhook": null
 			}))
@@ -2162,13 +2172,21 @@ async fn execute_pipeline_run_inner(
 	for (canonical, primary_index, primary_task_id, duplicate_ids) in groups_to_publish {
 		let task = CheckEmailTask {
 			input: CheckEmailRequest {
-				to_email: canonical.clone(),
+				to_email: prepared_list.rows[primary_index]
+					.get(&prepared_list.email_column)
+					.and_then(Value::as_str)
+					.unwrap_or_default()
+					.trim()
+					.to_string(),
 				..Default::default()
 			}
 			.to_check_email_input(Arc::clone(&config)),
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,
@@ -2866,12 +2884,7 @@ async fn deliver_pipeline_run_summary(
 		"download_url": list_id.map(|list_id| format!("/v1/lists/{list_id}/download")),
 	});
 
-	validate_webhook_url(&url)?;
-	validate_resolved_webhook_target(&url).await?;
-	let client = reqwest::Client::builder()
-		.timeout(std::time::Duration::from_secs(10))
-		.redirect(reqwest::redirect::Policy::none())
-		.build()?;
+	let client = validated_webhook_client(&url).await?;
 	let mut request = client.post(url).json(&payload);
 	for (name, value) in headers {
 		request = request.header(&name, value);
@@ -3406,7 +3419,11 @@ pub(crate) fn validate_webhook_url(url: &str) -> Result<()> {
 		{
 			bail!("Webhook URL must not target localhost or loopback addresses");
 		}
-		if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+		if let Ok(ip) = host
+			.trim_start_matches('[')
+			.trim_end_matches(']')
+			.parse::<std::net::IpAddr>()
+		{
 			if is_private_ip(ip) {
 				bail!("Webhook URL must not target private or reserved IP addresses");
 			}
@@ -3417,7 +3434,9 @@ pub(crate) fn validate_webhook_url(url: &str) -> Result<()> {
 	Ok(())
 }
 
-pub(crate) async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
+pub(crate) async fn validate_resolved_webhook_target(
+	url: &str,
+) -> Result<Vec<std::net::SocketAddr>> {
 	let parsed = reqwest::Url::parse(url).context("Invalid webhook URL")?;
 	let host = parsed
 		.host_str()
@@ -3425,53 +3444,29 @@ pub(crate) async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
 	let port = parsed
 		.port_or_known_default()
 		.context("Webhook URL must use a known port")?;
-	let addrs = tokio::net::lookup_host((host, port))
-		.await
-		.with_context(|| format!("Failed to resolve webhook host: {host}"))?
-		.collect::<Vec<_>>();
-	if addrs.is_empty() {
-		bail!("Webhook URL host did not resolve to any addresses");
-	}
-	if addrs.iter().any(|addr| is_private_ip(addr.ip())) {
-		bail!("Webhook URL must not resolve to private or reserved IP addresses");
-	}
-	Ok(())
+	let addrs = check_if_email_exists::network::resolve_public_addresses(
+		host.trim_start_matches('[').trim_end_matches(']'),
+		port,
+	)
+	.await
+	.with_context(|| format!("Invalid webhook destination: {host}"))?;
+	Ok(addrs)
 }
 
-fn is_private_ip(ip: std::net::IpAddr) -> bool {
-	match ip {
-		std::net::IpAddr::V4(v4) => {
-			v4.is_loopback()
-				|| v4.is_private()
-				|| v4.is_link_local()
-				|| v4.is_broadcast()
-				|| v4.is_multicast()
-				|| v4.is_unspecified()
-				|| v4.octets()[0] == 169 && v4.octets()[1] == 254 // link-local
-				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64 // CGN 100.64/10
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 0 // 192.0.0.0/24 IETF protocol assignments
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 2 // 192.0.2.0/24 TEST-NET-1
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 18 // 198.18.0.0/15 benchmark
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 19
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 51 && v4.octets()[2] == 100 // 198.51.100.0/24 TEST-NET-2
-				|| v4.octets()[0] == 203 && v4.octets()[1] == 0 && v4.octets()[2] == 113 // 203.0.113.0/24 TEST-NET-3
-				|| v4.octets()[0] >= 240 // reserved + limited broadcast block
-		}
-		std::net::IpAddr::V6(v6) => {
-			let first_segment = v6.segments()[0];
-			let mapped_private = v6
-				.to_ipv4_mapped()
-				.is_some_and(|mapped| is_private_ip(std::net::IpAddr::V4(mapped)));
-			v6.is_loopback()
-				|| v6.is_unspecified()
-				|| v6.is_multicast()
-				|| (first_segment & 0xffc0) == 0xfe80 // fe80::/10 link-local
-				|| (first_segment & 0xfe00) == 0xfc00 // fc00::/7 unique local
-				|| (first_segment & 0xffc0) == 0xfec0 // fec0::/10 site-local (deprecated but non-global)
-				|| (first_segment == 0x2001 && v6.segments()[1] == 0x0db8) // 2001:db8::/32 documentation
-				|| mapped_private
-		}
-	}
+pub(crate) async fn validated_webhook_client(url: &str) -> Result<reqwest::Client> {
+	validate_webhook_url(url)?;
+	let addrs = validate_resolved_webhook_target(url).await?;
+	let parsed = reqwest::Url::parse(url)?;
+	pinned_webhook_client(parsed.host_str().context("Missing webhook host")?, &addrs)
+}
+
+fn pinned_webhook_client(host: &str, addrs: &[std::net::SocketAddr]) -> Result<reqwest::Client> {
+	Ok(reqwest::Client::builder()
+		.no_proxy()
+		.timeout(std::time::Duration::from_secs(10))
+		.redirect(reqwest::redirect::Policy::none())
+		.resolve_to_addrs(host.trim_start_matches('[').trim_end_matches(']'), addrs)
+		.build()?)
 }
 
 /// A five-field cron schedule with standard day semantics.
@@ -3800,6 +3795,38 @@ fn parse_pipeline_source_snapshot(source_snapshot: &Value) -> Result<PipelineSou
 mod tests {
 	use super::*;
 	use chrono::{TimeZone, Timelike};
+
+	#[tokio::test]
+	async fn webhook_connection_uses_the_validated_address_without_another_dns_lookup() {
+		use tokio::io::{AsyncReadExt, AsyncWriteExt};
+		let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let address = listener.local_addr().unwrap();
+		let server = tokio::spawn(async move {
+			let (mut socket, _) = listener.accept().await.unwrap();
+			let mut request = [0; 2048];
+			let count = socket.read(&mut request).await.unwrap();
+			assert!(String::from_utf8_lossy(&request[..count]).contains("rebind.invalid"));
+			socket
+				.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok")
+				.await
+				.unwrap();
+		});
+		// Exercise address pinning independently of the public-address validation.
+		let client = pinned_webhook_client("rebind.invalid", &[address]).unwrap();
+		let response = client
+			.get(format!("http://rebind.invalid:{}/", address.port()))
+			.send()
+			.await
+			.unwrap();
+		assert_eq!(response.status(), reqwest::StatusCode::OK);
+		server.await.unwrap();
+		assert!(validated_webhook_client("https://127.0.0.1/hook")
+			.await
+			.is_err());
+		assert!(validated_webhook_client("https://[::1]/hook")
+			.await
+			.is_err());
+	}
 
 	#[test]
 	fn test_compute_next_run_at_accepts_five_field_cron() {

@@ -546,6 +546,9 @@ mod publish_consume_tests {
 			job_id: CheckEmailJobId::Bulk(42),
 			webhook: None,
 			metadata: Some(reacher_backend::worker::do_work::TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("tid-123".into()),
 				request_id: Some("req-456".into()),
 				correlation_id: None,
@@ -690,6 +693,9 @@ mod full_pipeline_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,

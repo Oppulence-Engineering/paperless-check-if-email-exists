@@ -146,6 +146,7 @@ pub async fn ensure_test_db_url() -> String {
 			let mut last_error = None;
 			for attempt in 1..=3 {
 				match Postgres::default()
+					.with_tag("16-alpine")
 					.with_startup_timeout(Duration::from_secs(120))
 					.start()
 					.await

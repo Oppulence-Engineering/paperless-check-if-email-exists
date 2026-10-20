@@ -556,17 +556,12 @@ async fn load_task_rows(
 	list_id: i32,
 	tenant_id: uuid::Uuid,
 ) -> Result<Vec<RawTaskRow>, ReacherResponseError> {
-	// Suppressions are keyed on the lowercased address as entered, but list
-	// tasks store the Gmail-canonical form (dots and +tag removed), so a
-	// suppressed john.doe@gmail.com never matched johndoe@gmail.com. The
-	// address as entered only survives in the list's original rows. They are
-	// expanded once (MATERIALIZED) so the large original_data value is not
-	// decoded again for every task row.
+	// Expand originals once to check their identities without repeatedly decoding the list.
 	let rows = sqlx::query(
 		r#"
 		WITH list_originals AS MATERIALIZED (
 			SELECT entry.key::INTEGER AS row_index,
-			       LOWER(TRIM(entry.value ->> l.email_column)) AS email
+			       mailbox_identity(entry.value ->> l.email_column) AS email
 			FROM v1_lists l, jsonb_each(l.original_data) AS entry
 			WHERE l.id = $1 AND l.tenant_id = $2
 		)
@@ -1180,7 +1175,8 @@ fn render_export_header(headers: &[String]) -> Vec<u8> {
 		"remediation_reasons".to_string(),
 	]);
 	writer.write_record(&row).expect("csv header write");
-	writer.into_inner().expect("csv header bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv header bytes"))
+		.expect("valid generated CSV")
 }
 
 fn render_export_row(headers: &[String], row: &ExportRow) -> Vec<u8> {
@@ -1205,7 +1201,8 @@ fn render_export_row(headers: &[String], row: &ExportRow) -> Vec<u8> {
 	record.push((row.original_email.trim() != row.effective_email).to_string());
 	record.push(compact_export_reason_codes(&row.reasons));
 	writer.write_record(&record).expect("csv row write");
-	writer.into_inner().expect("csv row bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv row bytes"))
+		.expect("valid generated CSV")
 }
 
 fn value_to_cell(value: &Value) -> String {

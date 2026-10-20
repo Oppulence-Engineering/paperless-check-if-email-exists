@@ -13,6 +13,8 @@ use super::task::{submit_job, TaskInput};
 use crate::config::BackendConfig;
 use crate::http::check_header;
 use crate::http::deprecation::add_deprecation_headers;
+use crate::http::v0::check_email::post::{with_config, CheckEmailRequest};
+use crate::http::ReacherResponseError;
 
 /// Endpoint request body.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -73,10 +75,23 @@ struct CreateBulkResponseBody {
 /// handles input, creates db entry for job and tasks for verification
 async fn create_bulk_request(
 	conn_pool: Pool<Postgres>,
+	config: Arc<BackendConfig>,
 	body: CreateBulkRequestBody,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	if body.input.is_empty() {
 		return Err(BulkError::EmptyInput.into());
+	}
+	for port in body.smtp_ports.as_deref().unwrap_or(&[25]) {
+		CheckEmailRequest {
+			proxy: body.proxy.clone(),
+			smtp_port: Some(*port),
+			..Default::default()
+		}
+		.validate_routing_overrides(&config)
+		.map_err(|message| {
+			ReacherResponseError::new(warp::http::StatusCode::BAD_REQUEST, message)
+		})?;
 	}
 
 	// create job entry
@@ -93,8 +108,8 @@ async fn create_bulk_request(
 	.map_err(|e| {
 		error!(
 			target: LOG_TARGET,
-			"Failed to create job record for [body={:?}] with [error={}]",
-			&body, e
+			"Failed to create job record with [error={}]",
+			e
 		);
 		BulkError::from(e)
 	})?;
@@ -131,8 +146,9 @@ pub fn create_bulk_job(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
 	warp::path!("v0" / "bulk")
 		.and(warp::post())
-		.and(check_header(config))
+		.and(check_header(Arc::clone(&config)))
 		.and(with_db(o))
+		.and(with_config(config))
 		// When accepting a body, we want a JSON body (and to reject huge
 		// payloads)...
 		// TODO: Configure max size limit for a bulk job

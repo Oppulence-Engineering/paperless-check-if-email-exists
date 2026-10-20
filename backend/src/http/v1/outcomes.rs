@@ -132,11 +132,10 @@ pub(crate) async fn ingest_outcomes(
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
 	for outcome in &body.outcomes {
-		let canonical_email = normalize_email(&outcome.email);
-		if canonical_email.is_empty() {
+		let Some(canonical_email) = normalize_email(&outcome.email) else {
 			ignored += 1;
 			continue;
-		}
+		};
 		validate_event_type(&outcome.event_type)?;
 		let metadata = metadata_for_outcome(outcome).map_err(warp::reject::custom)?;
 		let source_key = normalize_source_key(outcome.source_key.as_deref())
@@ -186,7 +185,7 @@ pub(crate) async fn ingest_outcomes(
 			upsert_outcome_suppression(
 				&mut tx,
 				tenant_id,
-				&canonical_email,
+				&outcome.email,
 				reason,
 				&provider,
 				outcome.campaign_id.as_deref(),
@@ -216,7 +215,13 @@ async fn list_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let limit = query.limit.unwrap_or(100).clamp(1, 500);
 	let offset = query.offset.unwrap_or(0).max(0);
-	let email = query.email.map(|value| normalize_email(&value));
+	let email = query
+		.email
+		.map(|value| {
+			normalize_email(&value)
+				.ok_or_else(|| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid email"))
+		})
+		.transpose()?;
 	let event_type = query
 		.event_type
 		.map(|value| value.trim().to_ascii_lowercase());
@@ -277,13 +282,15 @@ async fn list_handler(
 async fn upsert_outcome_suppression(
 	tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
 	tenant_id: uuid::Uuid,
-	canonical_email: &str,
+	email: &str,
 	reason: &str,
 	provider: &str,
 	campaign_id: Option<&str>,
 	outcome_id: i64,
 	metadata: &Value,
 ) -> Result<(), ReacherResponseError> {
+	let canonical_email = normalize_email(email)
+		.ok_or_else(|| ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid email"))?;
 	let source_ref = campaign_id
 		.map(ToOwned::to_owned)
 		.unwrap_or_else(|| provider.to_string());
@@ -296,7 +303,7 @@ async fn upsert_outcome_suppression(
 			last_seen_at, metadata
 		)
 		VALUES (
-			$1, $2, $2, 'active', $3::suppression_reason, $4, NULL,
+			$1, $2, $8, 'active', $3::suppression_reason, $4, NULL,
 			$3, $5, 'outcome', $6, 'outcome_ingest', NOW(), $7
 		)
 		ON CONFLICT (tenant_id, canonical_email) WHERE status = 'active'
@@ -307,6 +314,7 @@ async fn upsert_outcome_suppression(
 			reason_detail = EXCLUDED.reason_detail,
 			source_type = EXCLUDED.source_type,
 			source_ref = EXCLUDED.source_ref,
+			expires_at = NULL,
 			last_seen_at = NOW(),
 			metadata = v1_suppression_entries.metadata || EXCLUDED.metadata,
 			updated_at = NOW()
@@ -314,12 +322,13 @@ async fn upsert_outcome_suppression(
 		"#,
 	)
 	.bind(tenant_id)
-	.bind(canonical_email)
+	.bind(email.trim())
 	.bind(reason)
 	.bind(provider)
 	.bind(format!("Auto-suppressed from {} outcome.", provider))
 	.bind(&source_ref)
 	.bind(&suppression_metadata)
+	.bind(&canonical_email)
 	.fetch_one(&mut **tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -337,7 +346,7 @@ async fn upsert_outcome_suppression(
 	)
 	.bind(tenant_id)
 	.bind(entry_id)
-	.bind(canonical_email)
+	.bind(&canonical_email)
 	.bind(if inserted { "created" } else { "updated" })
 	.bind(if inserted { None } else { Some("active") })
 	.bind(reason)
@@ -376,8 +385,8 @@ fn suppression_reason_for_event(event_type: &str) -> Option<&'static str> {
 	}
 }
 
-fn normalize_email(email: &str) -> String {
-	email.trim().to_ascii_lowercase()
+fn normalize_email(email: &str) -> Option<String> {
+	crate::http::v1::lists::canonicalize::canonicalize_email(email)
 }
 
 fn normalize_source_key(source_key: Option<&str>) -> Option<String> {

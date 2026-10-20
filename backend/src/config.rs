@@ -21,6 +21,10 @@ use std::time::Duration;
 use tracing::warn;
 use uuid::Uuid;
 
+fn smtp_health_enabled_by_default() -> bool {
+	true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JwtAuthConfig {
 	pub jwks_url: String,
@@ -39,6 +43,11 @@ pub struct BackendConfig {
 	/// Timeout for each SMTP connection, in seconds. Leaving it commented out
 	/// will not set a timeout, i.e. the connection will wait indefinitely.
 	pub smtp_timeout: Option<u64>,
+	/// Maintain SMTP capability and stop admission while its evidence is unavailable.
+	#[serde(default = "smtp_health_enabled_by_default")]
+	pub smtp_health_enabled: bool,
+	#[serde(skip)]
+	pub smtp_health: Arc<crate::smtp_egress::SmtpHealth>,
 	// This field is deprecated, but kept for backwards compatibility. If set,
 	// it will be moved to the "default" proxy in the `verif_method.proxies`
 	// field.
@@ -124,6 +133,8 @@ impl BackendConfig {
 			from_email: "".to_string(),
 			hello_name: "".to_string(),
 			smtp_timeout: None,
+			smtp_health_enabled: false,
+			smtp_health: Arc::new(crate::smtp_egress::SmtpHealth::default()),
 			proxy: None,
 			overrides: OverridesConfig::default(),
 			http_host: "127.0.0.1".to_string(),
@@ -229,7 +240,7 @@ impl BackendConfig {
 					self.db_max_connections,
 				)
 				.await
-				.with_context(|| format!("Connecting to postgres DB {}", config.db_url))?;
+				.context("Connecting to Postgres")?;
 
 				self.storage_adapter = Arc::new(StorageAdapter::Postgres(storage));
 			}
@@ -855,14 +866,14 @@ db_url = "postgres://localhost:5432/test1"
 		};
 
 		let manager = config.get_tenant_throttle_manager(Some(tenant_id), &one_per_second);
-		manager.increment_counters().await;
+		manager.try_acquire().await;
 		// Same limits: the same manager keeps counting.
 		let same = config.get_tenant_throttle_manager(Some(tenant_id), &one_per_second);
-		assert!(same.check_throttle().await.is_some());
+		assert!(same.try_acquire().await.is_some());
 
 		// An operator lifts the limit; the next request must see it.
 		let lifted = config
 			.get_tenant_throttle_manager(Some(tenant_id), &ThrottleConfig::new_without_throttle());
-		assert!(lifted.check_throttle().await.is_none());
+		assert!(lifted.try_acquire().await.is_none());
 	}
 }

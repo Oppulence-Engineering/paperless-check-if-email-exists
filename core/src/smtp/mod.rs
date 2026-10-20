@@ -12,7 +12,9 @@ use crate::util::input_output::CheckEmailInput;
 use crate::EmailAddress;
 use connect::check_smtp_with_retry;
 pub use connect::probe_smtp_greeting;
+use hickory_proto::rr::rdata::MX;
 use hickory_proto::rr::Name;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use verif_method::{
@@ -65,6 +67,77 @@ pub struct SmtpDetails {
 pub struct SmtpDebug {
 	/// The verification method used for the email.
 	pub verif_method: SmtpDebugVerifMethod,
+}
+
+/// Try MX hosts within one budget, without replacing a definitive recipient answer.
+pub(crate) async fn check_smtp_mx(
+	to_email: &EmailAddress,
+	hosts: &[&MX],
+	domain: &str,
+	input: &CheckEmailInput,
+) -> (Result<SmtpDetails, SmtpError>, SmtpDebug) {
+	let mut hosts = hosts.to_vec();
+	hosts.shuffle(&mut rand::rng());
+	hosts.sort_by_key(|mx| mx.preference);
+	let budget = hosts
+		.iter()
+		.filter_map(|mx| {
+			input
+				.verif_method
+				.smtp_config(EmailProvider::from_mx_host(&mx.exchange.to_string()))
+				.and_then(|config| config.smtp_timeout)
+		})
+		.max()
+		.unwrap_or(std::time::Duration::from_secs(60));
+	let deadline = tokio::time::Instant::now() + budget;
+	let mut last = (Err(SmtpError::Timeout(budget)), SmtpDebug::default());
+	for (index, mx) in hosts.iter().enumerate() {
+		let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+		if remaining.is_zero() {
+			break;
+		}
+		// Leave a chance for backups even when the preferred server never responds.
+		let attempt_budget = remaining / (hosts.len() - index) as u32;
+		last = match tokio::time::timeout(
+			attempt_budget,
+			check_smtp(to_email, &mx.exchange, domain, input),
+		)
+		.await
+		{
+			Ok(result) => result,
+			Err(_) => {
+				let debug = input
+					.verif_method
+					.smtp_config(EmailProvider::from_mx_host(&mx.exchange.to_string()))
+					.map(|config| SmtpDebug {
+						verif_method: SmtpDebugVerifMethod::Smtp(SmtpDebugVerifMethodSmtp {
+							host: mx.exchange.to_string(),
+							verif_method: config.clone(),
+						}),
+					})
+					.unwrap_or_default();
+				(Err(SmtpError::Timeout(attempt_budget)), debug)
+			}
+		};
+		tracing::debug!(target: crate::LOG_TARGET, mx_host=%mx.exchange, result=?last.0, "MX attempt completed");
+		let retryable = matches!(
+			&last.0,
+			Err(SmtpError::IOError(_) | SmtpError::Timeout(_))
+				| Err(SmtpError::AsyncSmtpError(
+					async_smtp::error::Error::Io(_) | async_smtp::error::Error::Transient(_)
+				)) | Err(SmtpError::Socks5(fast_socks5::SocksError::ReplyError(
+				fast_socks5::ReplyError::NetworkUnreachable
+					| fast_socks5::ReplyError::HostUnreachable
+					| fast_socks5::ReplyError::ConnectionRefused
+					| fast_socks5::ReplyError::ConnectionTimeout
+					| fast_socks5::ReplyError::TtlExpired
+			)))
+		);
+		if !retryable || !matches!(last.1.verif_method, SmtpDebugVerifMethod::Smtp(_)) {
+			break;
+		}
+	}
+	last
 }
 
 /// Get all email details we can from one single `EmailAddress`, without

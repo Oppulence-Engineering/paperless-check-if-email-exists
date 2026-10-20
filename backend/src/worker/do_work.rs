@@ -3,6 +3,7 @@ use crate::http::v1::bulk::post::publish_payload;
 use crate::scoring::response::{prepare_check_email_success, PreparedCheckEmailSuccess};
 use crate::throttle::ThrottleResult;
 use crate::worker::single_shot::send_single_shot_reply;
+use check_if_email_exists::network::is_private_ip;
 use check_if_email_exists::{check_email, CheckEmailInput, Reachable, LOG_TARGET};
 use chrono::Utc;
 use http::HeaderMap;
@@ -67,6 +68,12 @@ pub enum CheckEmailJobId {
 /// lifecycle tracking.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TaskMetadata {
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub dispatch_id: Option<uuid::Uuid>,
+	#[serde(skip)]
+	pub lease_id: Option<uuid::Uuid>,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub decision_policy: Option<crate::decision::custom_policy::DecisionPolicy>,
 	pub tenant_id: Option<String>,
 	pub request_id: Option<String>,
 	pub correlation_id: Option<String>,
@@ -228,7 +235,7 @@ async fn update_task_state(
 	}
 }
 
-async fn maybe_pause_before_delivery_settle() {
+pub(super) async fn maybe_pause_before_delivery_settle() {
 	if let Ok(raw_delay) = std::env::var("RCH_TEST_PRE_ACK_DELAY_MS") {
 		if let Ok(delay_ms) = raw_delay.parse::<u64>() {
 			if delay_ms > 0 {
@@ -285,6 +292,16 @@ pub async fn do_check_email_work(
 	channel: Arc<Channel>,
 	config: Arc<BackendConfig>,
 ) -> Result<(), anyhow::Error> {
+	if task.metadata.as_ref().and_then(|m| m.task_db_id).is_some() {
+		return super::lifecycle::process_delivery(task, delivery, channel, config).await;
+	}
+	if let Err(error) = crate::smtp_egress::require_smtp_ready(&config) {
+		tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+		delivery
+			.reject(lapin::options::BasicRejectOptions { requeue: true })
+			.await?;
+		return Err(error.into());
+	}
 	let task_db_id = task.metadata.as_ref().and_then(|m| m.task_db_id);
 	let retry_policy = task
 		.metadata
@@ -426,7 +443,7 @@ pub async fn do_check_email_work(
 			.reject(BasicRejectOptions { requeue: false })
 			.await?;
 
-		sync_related_entities(&config, task).await;
+		sync_related_entities(&config, task).await?;
 
 		info!(target: LOG_TARGET, email=?&task.input.to_email, "Dead-lettered terminal task result");
 	} else {
@@ -467,7 +484,7 @@ pub async fn do_check_email_work(
 					delayed_recheck_count,
 					&retry_policy,
 				)
-				.await
+				.await?
 			}
 			_ => false,
 		};
@@ -538,7 +555,7 @@ pub async fn do_check_email_work(
 								.unwrap_or_else(|| "unknown".to_string()),
 						),
 					)
-					.await;
+					.await?;
 
 					// If outcomes were ingested before this verification ran, ensure
 					// suppression still fires (the scorer already saw them via
@@ -548,12 +565,12 @@ pub async fn do_check_email_work(
 						tenant_uuid,
 						&task.input.to_email,
 					)
-					.await;
+					.await?;
 				}
 			}
 		}
 
-		sync_related_entities(&config, task).await;
+		sync_related_entities(&config, task).await?;
 
 		info!(target: LOG_TARGET,
 			email=task.input.to_email,
@@ -846,7 +863,7 @@ async fn skip_webhook_without_secret(
 	}
 }
 
-/// Finalize delivery: send single-shot reply and store result.
+/// Persist the result before publishing a successful RPC response.
 async fn delivery_finalize(
 	task: &CheckEmailTask,
 	delivery: &Delivery,
@@ -855,10 +872,6 @@ async fn delivery_finalize(
 	worker_output: &Result<PreparedCheckEmailSuccess, TaskError>,
 ) -> Result<(), anyhow::Error> {
 	let storage = config.get_storage_adapter();
-
-	if let CheckEmailJobId::SingleShot = task.job_id {
-		send_single_shot_reply(channel, delivery, worker_output).await?;
-	}
 
 	match worker_output {
 		Ok(success) => {
@@ -873,12 +886,19 @@ async fn delivery_finalize(
 		}
 	}
 
+	if let CheckEmailJobId::SingleShot = task.job_id {
+		send_single_shot_reply(channel, delivery, worker_output).await?;
+	}
+
 	Ok(())
 }
 
 /// Finalize whatever the task belongs to (finder job, duplicate rows, list,
 /// bulk job, pipeline run) once its row has reached a terminal state.
-pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEmailTask) {
+pub(crate) async fn sync_related_entities(
+	config: &BackendConfig,
+	task: &CheckEmailTask,
+) -> Result<(), anyhow::Error> {
 	let task_db_id = task
 		.metadata
 		.as_ref()
@@ -887,39 +907,39 @@ pub(crate) async fn sync_related_entities(config: &BackendConfig, task: &CheckEm
 		CheckEmailJobId::Bulk(job_id) => Some(job_id),
 		CheckEmailJobId::SingleShot => None,
 	};
-	sync_task_entities(config, task_db_id, bulk_job_id).await;
+	sync_task_entities(config, task_db_id, bulk_job_id).await
 }
 
 /// [`sync_related_entities`] for callers that only have the task row's id
 /// and its bulk job id, such as the delayed recheck scheduler.
-pub(crate) async fn sync_task_entities(
+pub async fn sync_task_entities(
 	config: &BackendConfig,
 	task_db_id: Option<i32>,
 	bulk_job_id: Option<i32>,
-) {
+) -> Result<(), anyhow::Error> {
 	let Some(pool) = config.get_pg_pool() else {
-		return;
+		return Ok(());
+	};
+	let mut tx = pool.begin().await?;
+	// Match retry/delete lock order; neither may change the lifecycle mid-count.
+	let job = if let Some(job_id) = bulk_job_id {
+		Some(
+			sqlx::query_as::<_, (String, i32)>(
+				"SELECT status::TEXT, total_records FROM v1_bulk_job WHERE id = $1 FOR UPDATE",
+			)
+			.bind(job_id)
+			.fetch_one(&mut *tx)
+			.await?,
+		)
+	} else {
+		None
 	};
 
 	if let Some(task_db_id) = task_db_id {
-		if let Ok(rows) =
-			sqlx::query("SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1")
-				.bind(task_db_id)
-				.fetch_all(&pool)
-				.await
-		{
-			for row in rows {
-				let finder_job_id: i32 = sqlx::Row::get(&row, "finder_job_id");
-				let _ = crate::finder::sync_finder_results(&pool, finder_job_id).await;
-			}
-		}
-
-		// Propagate results (including errors) to duplicate task rows and
-		// transition them to 'completed' (they were 'queued' until now).
-		let _ = sqlx::query(
+		sqlx::query(
 			r#"
 			UPDATE v1_task_result AS dup
-			SET task_state = 'completed'::task_state,
+			SET task_state = pri.task_state,
 				result = pri.result, error = pri.error,
 				score = pri.score, score_category = pri.score_category,
 				sub_reason = pri.sub_reason, safe_to_send = pri.safe_to_send,
@@ -943,113 +963,69 @@ pub(crate) async fn sync_task_entities(
 				completed_at = NOW(), updated_at = NOW()
 			FROM v1_task_result AS pri
 			WHERE dup.canonical_task_id = $1 AND pri.id = $1 AND dup.is_duplicate = true
+			  AND dup.canonical_email = pri.canonical_email
+			  AND pri.task_state IN ('completed', 'failed', 'dead_lettered', 'cancelled')
+              AND (pri.dispatch_id IS NULL OR pri.completion_done)
 			"#,
 		)
 		.bind(task_db_id)
-		.execute(&pool)
-		.await;
+		.execute(&mut *tx)
+		.await?;
+	}
 
-		if let Ok(list_id) = sqlx::query_scalar::<_, Option<i32>>(
-			"SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $1",
-		)
-		.bind(task_db_id)
-		.fetch_one(&pool)
-		.await
-		{
-			if let Some(list_id) = list_id {
-				let total_rows =
-					sqlx::query_scalar::<_, i32>("SELECT total_rows FROM v1_lists WHERE id = $1")
-						.bind(list_id)
-						.fetch_optional(&pool)
-						.await
-						.ok()
-						.flatten()
-						.unwrap_or_default();
-				// Count rows with results, errors, or cancelled state as
-				// terminal. A row being rechecked already holds a result but
-				// is not done yet.
-				let processed = sqlx::query_scalar::<_, i64>(
-					"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled') AND task_state NOT IN ('queued', 'running', 'retrying')",
-				)
-				.bind(list_id)
-				.fetch_one(&pool)
-				.await
-				.unwrap_or(0);
-				if processed >= i64::from(total_rows) {
-					let failed = sqlx::query_scalar::<_, i64>(
-						"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
-					)
-					.bind(list_id)
-					.fetch_one(&pool)
-					.await
-					.unwrap_or(0);
-					let final_status = if failed > 0 { "failed" } else { "completed" };
-					let _ = sqlx::query(
-						"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-					)
-					.bind(list_id)
-					.bind(final_status)
-					.execute(&pool)
-					.await;
-				}
+	let lists = sqlx::query_as::<_, (i32, i32, String)>(
+		"SELECT id, total_rows, status::TEXT FROM v1_lists WHERE job_id = $1 OR id = (SELECT (extra->>'list_id')::INTEGER FROM v1_task_result WHERE id = $2) ORDER BY id FOR UPDATE",
+	).bind(bulk_job_id).bind(task_db_id).fetch_all(&mut *tx).await?;
+	for (list_id, total_rows, status) in lists {
+		if !matches!(status.as_str(), "uploading" | "processing") {
+			continue;
+		}
+		let (processed, failed): (i64, i64) = sqlx::query_as(
+			r#"SELECT
+			COUNT(*) FILTER (WHERE (dispatch_id IS NULL OR completion_done) AND task_state IN ('completed', 'failed', 'dead_lettered', 'cancelled') AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')),
+			COUNT(*) FILTER (WHERE task_state IN ('failed', 'dead_lettered'))
+			FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1"#,
+		).bind(list_id).fetch_one(&mut *tx).await?;
+		if processed == i64::from(total_rows) {
+			let final_status = if failed > 0 { "failed" } else { "completed" };
+			sqlx::query("UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1")
+				.bind(list_id).bind(final_status).execute(&mut *tx).await?;
+		}
+	}
+
+	if let (Some(job_id), Some((status, total_records))) = (bulk_job_id, job) {
+		if matches!(status.as_str(), "pending" | "running" | "cancelling") {
+			let (total, non_terminal, failed): (i64, i64, i64) = sqlx::query_as(
+				"SELECT COUNT(*), COUNT(*) FILTER (WHERE task_state IN ('queued', 'running', 'retrying') OR (dispatch_id IS NOT NULL AND NOT completion_done)), COUNT(*) FILTER (WHERE task_state IN ('failed', 'dead_lettered')) FROM v1_task_result WHERE job_id = $1",
+			).bind(job_id).fetch_one(&mut *tx).await?;
+			if total == i64::from(total_records) && non_terminal == 0 {
+				let final_status = match status.as_str() {
+					"cancelling" => "cancelled",
+					_ if failed > 0 => "failed",
+					_ => "completed",
+				};
+				sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN COALESCE(completed_at, NOW()) ELSE completed_at END, cancelled_at = CASE WHEN $2 = 'cancelled' THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END, updated_at = NOW() WHERE id = $1")
+					.bind(job_id).bind(final_status).execute(&mut *tx).await?;
 			}
 		}
 	}
+	tx.commit().await?;
 
-	if let Some(job_id) = bulk_job_id {
-		let status = sqlx::query_scalar::<_, Option<String>>(
-			"SELECT status::TEXT FROM v1_bulk_job WHERE id = $1",
+	if let Some(task_db_id) = task_db_id {
+		let finder_ids: Vec<i32> = sqlx::query_scalar(
+			"SELECT finder_job_id FROM v1_finder_result WHERE task_result_id = $1",
 		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.ok()
-		.flatten()
-		.unwrap_or_else(|| "running".to_string());
-
-		let non_terminal = sqlx::query_scalar::<_, i64>(
-			"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')",
-		)
-		.bind(job_id)
-		.fetch_one(&pool)
-		.await
-		.unwrap_or(0);
-
-		if non_terminal == 0 {
-			let failed = sqlx::query_scalar::<_, i64>(
-				"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('failed', 'dead_lettered')",
-			)
-			.bind(job_id)
-			.fetch_one(&pool)
-			.await
-			.unwrap_or(0);
-
-			let final_status = match status.as_str() {
-				"cancelling" | "cancelled" => "cancelled",
-				_ if failed > 0 => "failed",
-				_ => "completed",
-			};
-
-			let _ = sqlx::query(
-				"UPDATE v1_bulk_job SET status = $2::job_state, completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN COALESCE(completed_at, NOW()) ELSE completed_at END, cancelled_at = CASE WHEN $2 = 'cancelled' THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END, updated_at = NOW() WHERE id = $1",
-			)
-			.bind(job_id)
-			.bind(final_status)
-			.execute(&pool)
-			.await;
-		}
-
-		if let Err(err) =
-			crate::pipelines::maybe_finalize_pipeline_run_for_job(config, &pool, job_id).await
-		{
-			warn!(
-				target: LOG_TARGET,
-				job_id = job_id,
-				error = ?err,
-				"Failed to finalize pipeline run for job"
-			);
+		.bind(task_db_id)
+		.fetch_all(&pool)
+		.await?;
+		for finder_id in finder_ids {
+			crate::finder::sync_finder_results(&pool, finder_id).await?;
 		}
 	}
+	if let Some(job_id) = bulk_job_id {
+		crate::pipelines::maybe_finalize_pipeline_run_for_job(config, &pool, job_id).await?;
+	}
+	Ok(())
 }
 
 fn validate_webhook_url(url: &str) -> Result<reqwest::Url, TaskError> {
@@ -1097,67 +1073,10 @@ fn validate_webhook_url(url: &str) -> Result<reqwest::Url, TaskError> {
 }
 
 async fn validate_resolved_webhook_target(url: &reqwest::Url) -> Result<(), TaskError> {
-	let host = url
-		.host_str()
-		.ok_or_else(|| TaskError::WebhookValidation("missing host".to_string()))?;
-	let port = url
-		.port_or_known_default()
-		.ok_or_else(|| TaskError::WebhookValidation("missing port".to_string()))?;
-	let lookup_host = host.trim_start_matches('[').trim_end_matches(']');
-	let addrs = tokio::net::lookup_host((lookup_host, port))
+	crate::pipelines::validate_resolved_webhook_target(url.as_str())
 		.await
-		.map_err(|err| {
-			TaskError::WebhookValidation(format!("failed to resolve webhook host: {}", err))
-		})?
-		.collect::<Vec<_>>();
-	if addrs.is_empty() {
-		return Err(TaskError::WebhookValidation(
-			"host did not resolve to any addresses".to_string(),
-		));
-	}
-	if addrs.iter().any(|addr| is_private_ip(addr.ip())) {
-		return Err(TaskError::WebhookValidation(
-			"host resolves to a private or reserved IP address".to_string(),
-		));
-	}
-
-	Ok(())
-}
-
-fn is_private_ip(ip: IpAddr) -> bool {
-	match ip {
-		IpAddr::V4(v4) => {
-			v4.is_loopback()
-				|| v4.is_private()
-				|| v4.is_link_local()
-				|| v4.is_broadcast()
-				|| v4.is_multicast()
-				|| v4.is_unspecified()
-				|| v4.octets()[0] == 169 && v4.octets()[1] == 254
-				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 0
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 2
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 18
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 19
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 51 && v4.octets()[2] == 100
-				|| v4.octets()[0] == 203 && v4.octets()[1] == 0 && v4.octets()[2] == 113
-				|| v4.octets()[0] >= 240
-		}
-		IpAddr::V6(v6) => {
-			let first_segment = v6.segments()[0];
-			let mapped_private = v6
-				.to_ipv4_mapped()
-				.is_some_and(|mapped| is_private_ip(IpAddr::V4(mapped)));
-			v6.is_loopback()
-				|| v6.is_unspecified()
-				|| v6.is_multicast()
-				|| (first_segment & 0xffc0) == 0xfe80
-				|| (first_segment & 0xfe00) == 0xfc00
-				|| (first_segment & 0xffc0) == 0xfec0
-				|| (first_segment == 0x2001 && v6.segments()[1] == 0x0db8)
-				|| mapped_private
-		}
-	}
+		.map(|_| ())
+		.map_err(|err| TaskError::WebhookValidation(err.to_string()))
 }
 
 /// Checks the email and sends the result to the webhook.
@@ -1192,9 +1111,18 @@ pub async fn check_email_and_prepare_result_with_config(
 		.as_ref()
 		.and_then(|metadata| metadata.tenant_id.as_ref())
 		.and_then(|tenant_id| tenant_id.parse::<uuid::Uuid>().ok());
-	let success = prepare_check_email_success(config.as_ref(), output, tenant_id, Utc::now(), true)
-		.await
-		.map_err(|error| TaskError::Prepare(error.to_string()))?;
+	let success = prepare_check_email_success(
+		config.as_ref(),
+		output,
+		tenant_id,
+		Utc::now(),
+		true,
+		task.metadata
+			.as_ref()
+			.and_then(|metadata| metadata.decision_policy.as_ref()),
+	)
+	.await
+	.map_err(|error| TaskError::Prepare(error.to_string()))?;
 
 	Ok(success)
 }
@@ -1217,16 +1145,30 @@ async fn send_task_webhook(
 	success: &PreparedCheckEmailSuccess,
 	webhook_signing_secret: Option<&str>,
 ) -> Result<(), TaskError> {
+	send_task_webhook_json(task, &success.response.json, webhook_signing_secret).await
+}
+
+pub(crate) async fn send_task_webhook_json(
+	task: &CheckEmailTask,
+	result: &serde_json::Value,
+	webhook_signing_secret: Option<&str>,
+) -> Result<(), TaskError> {
 	if let Some(TaskWebhook {
 		on_each_email: Some(webhook),
 	}) = &task.webhook
 	{
 		let webhook_output = WebhookOutput {
-			result: &success.response.json,
+			result,
 			extra: &webhook.extra,
 		};
 
 		let mut headers: HeaderMap = (&webhook.headers).try_into()?;
+		if let Some(id) = task.metadata.as_ref().and_then(|m| m.dispatch_id) {
+			headers.insert(
+				"idempotency-key",
+				id.to_string().parse().expect("UUID header"),
+			);
+		}
 
 		// Sign the webhook payload if a signing secret is available (loaded from DB)
 		if let Some(secret) = webhook_signing_secret {
@@ -1239,11 +1181,9 @@ async fn send_task_webhook(
 		}
 
 		let webhook_url = validate_webhook_url(&webhook.url)?;
-		validate_resolved_webhook_target(&webhook_url).await?;
-		let client = reqwest::Client::builder()
-			.timeout(Duration::from_secs(10))
-			.redirect(reqwest::redirect::Policy::none())
-			.build()?;
+		let client = crate::pipelines::validated_webhook_client(webhook_url.as_str())
+			.await
+			.map_err(|error| TaskError::WebhookValidation(error.to_string()))?;
 		let res = client
 			.post(webhook_url)
 			.json(&webhook_output)
@@ -1255,7 +1195,7 @@ async fn send_task_webhook(
 		if let Some(error) = webhook_status_error(status) {
 			return Err(error);
 		}
-		debug!(target: LOG_TARGET, email=?success.output.input,res=?body, "Received webhook response");
+		debug!(target: LOG_TARGET, email=?task.input.to_email,res=?body, "Received webhook response");
 	}
 
 	Ok(())
@@ -1316,6 +1256,9 @@ mod tests {
 	#[test]
 	fn test_task_metadata_serde() {
 		let m = TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some("tid".into()),
 			request_id: Some("rid".into()),
 			correlation_id: None,
@@ -1333,6 +1276,9 @@ mod tests {
 	#[test]
 	fn test_task_metadata_none_fields() {
 		let m = TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: None,
 			request_id: None,
 			correlation_id: None,
@@ -1520,6 +1466,9 @@ mod tests {
 			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("t1".into()),
 				request_id: None,
 				correlation_id: None,

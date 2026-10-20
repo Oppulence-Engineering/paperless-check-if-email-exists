@@ -1,16 +1,15 @@
 //! This file implements the `POST /bulk` endpoint.
 
+use crate::config::BackendConfig;
+use crate::http::CheckEmailRequest;
 use check_if_email_exists::{
-	check_email,
-	smtp::verif_method::{VerifMethod, VerifMethodSmtpConfig},
-	CheckEmailInput, CheckEmailInputBuilder, CheckEmailInputProxy, CheckEmailOutput, Reachable,
-	LOG_TARGET,
+	check_email, CheckEmailInput, CheckEmailInputProxy, CheckEmailOutput, Reachable, LOG_TARGET,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use sqlxmq::{job, CurrentJob};
-use std::env;
 use std::error::Error;
+use std::sync::Arc;
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -26,71 +25,24 @@ pub struct TaskInput {
 	pub from_email: Option<String>,
 }
 
-pub struct TaskInputIterator {
-	body: TaskInput,
-	index: usize,
-}
-
-impl IntoIterator for TaskInput {
-	type Item = CheckEmailInput;
-	type IntoIter = TaskInputIterator;
-
-	fn into_iter(self) -> Self::IntoIter {
-		TaskInputIterator {
-			body: self,
-			index: 0,
-		}
-	}
-}
-
-/// Iterate through all the `smtp_ports`.
-impl Iterator for TaskInputIterator {
-	type Item = CheckEmailInput;
-
-	fn next(&mut self) -> Option<Self::Item> {
-		if self.index < self.body.smtp_ports.len() {
-			let hello_name = self
-				.body
-				.hello_name
-				.clone()
-				.unwrap_or_else(|| VerifMethodSmtpConfig::default().hello_name);
-			let from_email = self
-				.body
-				.from_email
-				.clone()
-				.unwrap_or_else(|| VerifMethodSmtpConfig::default().from_email);
-
-			let verif_method = VerifMethod::new_with_same_config_for_all(
-				self.body.proxy.clone(),
-				hello_name,
-				from_email,
-				self.body.smtp_ports[self.index],
-				None,
-				1,
-			);
-
-			let mut item = CheckEmailInputBuilder::default();
-			let item: &mut CheckEmailInputBuilder = item.to_email(self.body.to_email.clone());
-
-			// Currently, for the legacy and deprecated /v0/bulk endpoints, we
-			// don't pass in a BackendConfig to the job. Therefore, we must create
-			// an ad-hoc ReacherConfig here, using the legacy env::var() method.
-			// This is a temporary solution until the /v0/bulk endpoints are
-			// removed.
-			let backend_name = env::var("RCH_BACKEND_NAME").unwrap_or_else(|_| "reacher".into());
-			let sentry_dsn = env::var("RCH_SENTRY_DSN");
-			let webdriver_addr =
-				env::var("RCH_WEBDRIVER_ADDR").unwrap_or_else(|_| "http://localhost:9515".into());
-			item.verif_method(verif_method);
-			item.backend_name(backend_name);
-			item.sentry_dsn(sentry_dsn.ok());
-			item.webdriver_addr(webdriver_addr);
-
-			self.index += 1;
-			Some(item.build().unwrap())
-		} else {
-			None
-		}
+impl TaskInput {
+	fn to_check_email_input(
+		&self,
+		config: Arc<BackendConfig>,
+		port: u16,
+	) -> Result<CheckEmailInput, std::io::Error> {
+		let request = CheckEmailRequest {
+			to_email: self.to_email.clone(),
+			smtp_port: Some(port),
+			proxy: self.proxy.clone(),
+			hello_name: self.hello_name.clone(),
+			from_email: self.from_email.clone(),
+			..Default::default()
+		};
+		request
+			.validate_routing_overrides(&config)
+			.map_err(std::io::Error::other)?;
+		Ok(request.to_check_email_input(config))
 	}
 }
 
@@ -117,8 +69,8 @@ pub async fn submit_job(
 		.map_err(|e| {
 			error!(
 				target: LOG_TARGET,
-				"Failed to submit task with the following [input={:?}] with [error={}]",
-				task_payload.input, e
+				"Failed to serialize task for [job={}] with [error={}]",
+				job_id, e
 			);
 
 			BulkError::Json(e)
@@ -150,15 +102,19 @@ pub async fn submit_job(
 #[job]
 pub async fn email_verification_task(
 	mut current_job: CurrentJob,
-	// Additional arguments are optional, but can be used to access context
-	// provided via [`JobRegistry::set_context`].
+	config: Arc<BackendConfig>,
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let task_payload: TaskPayload = current_job.json()?.ok_or("Got empty task.")?;
 	let job_id = task_payload.id;
 
 	let mut final_response: Option<CheckEmailOutput> = None;
 
-	for check_email_input in task_payload.input {
+	for port in &task_payload.input.smtp_ports {
+		crate::smtp_egress::require_smtp_ready(&config)?;
+		let check_email_input = task_payload
+			.input
+			.to_check_email_input(Arc::clone(&config), *port)?;
 		debug!(
 			target: LOG_TARGET,
 			"Starting task [email={}] for [job={}] and [uuid={}]",
@@ -236,4 +192,49 @@ pub async fn email_verification_task(
 
 	current_job.complete().await?;
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use check_if_email_exists::smtp::verif_method::EmailProvider;
+	use std::time::Duration;
+
+	#[test]
+	fn legacy_job_uses_operator_identity_route_and_deadline() {
+		let mut config = BackendConfig::empty();
+		config.hello_name = "verify.example.com".into();
+		config.from_email = "verify@example.com".into();
+		config.smtp_timeout = Some(17);
+		config.proxy = Some(CheckEmailInputProxy {
+			host: "proxy.example.com".into(),
+			port: 1080,
+			..Default::default()
+		});
+		let config = Arc::new(config);
+		let input = TaskInput {
+			to_email: "Sales@example.com".into(),
+			smtp_ports: vec![25],
+			proxy: None,
+			hello_name: None,
+			from_email: None,
+		};
+		let check = input.to_check_email_input(Arc::clone(&config), 25).unwrap();
+		let route = check
+			.verif_method
+			.smtp_config(EmailProvider::EverythingElse)
+			.unwrap();
+		assert_eq!(check.to_email, "Sales@example.com");
+		assert_eq!(route.hello_name, config.hello_name);
+		assert_eq!(route.from_email, config.from_email);
+		assert_eq!(route.smtp_timeout, Some(Duration::from_secs(17)));
+		assert_eq!(
+			check
+				.verif_method
+				.proxies
+				.get(route.proxy.as_ref().unwrap()),
+			config.proxy.as_ref()
+		);
+		assert!(input.to_check_email_input(config, 22).is_err());
+	}
 }

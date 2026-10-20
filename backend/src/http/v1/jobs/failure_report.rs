@@ -205,7 +205,11 @@ fn render_csv_rows(rows: &[FailureReportRow]) -> Result<Vec<u8>, csv::Error> {
 			row.extra.to_string(),
 		])?;
 	}
-	writer.into_inner().map_err(|err| err.into_error().into())
+	crate::http::csv_shared::spreadsheet_safe_csv(
+		writer
+			.into_inner()
+			.map_err(|err| csv::Error::from(err.into_error()))?,
+	)
 }
 
 fn render_ndjson_rows(rows: &[FailureReportRow]) -> Result<Vec<u8>, serde_json::Error> {

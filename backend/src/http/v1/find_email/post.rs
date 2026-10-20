@@ -47,6 +47,7 @@ async fn http_handler(
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::FIND)?;
+	crate::smtp_egress::require_smtp_ready(&config)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let normalized_first = normalize_name(&body.first_name);
@@ -98,6 +99,13 @@ async fn http_handler(
 		.await
 		{
 			QuotaCheckResult::Allowed => {}
+			QuotaCheckResult::Unavailable => {
+				return Err(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Quota service unavailable; no verification was dispatched.",
+				)
+				.into())
+			}
 			QuotaCheckResult::ExceededMonthlyLimit {
 				limit,
 				used,
@@ -244,6 +252,9 @@ async fn http_handler(
 			job_id: CheckEmailJobId::Bulk(bulk_job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,

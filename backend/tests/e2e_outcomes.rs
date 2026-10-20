@@ -120,8 +120,12 @@ async fn test_post_single_outcome_creates_row() -> Result<()> {
 	assert_eq!(response.status(), StatusCode::ACCEPTED);
 
 	assert_eq!(
-		count_outcomes(db.pool(), tenant_id, "user@example.com").await,
+		count_outcomes(db.pool(), tenant_id, "User@example.com").await,
 		1
+	);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_id, "user@example.com").await,
+		0
 	);
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["accepted"], 1);
@@ -438,7 +442,9 @@ async fn test_lazy_default_policy_created_on_first_ingest() -> Result<()> {
 			.await?;
 	assert_eq!(before, 0);
 
-	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id).await;
+	let (id, rules) = fetch_or_create_default_policy(db.pool(), tenant_id)
+		.await
+		.unwrap();
 	assert!(id > 0);
 	assert_eq!(rules.outcome_ttl_days, 90);
 
@@ -623,7 +629,9 @@ async fn test_apply_post_verification_hook_suppresses_when_outcome_exists() -> R
 		0
 	);
 
-	apply_post_verification_outcome_check(db.pool(), tenant_id, "posthook@example.com").await;
+	apply_post_verification_outcome_check(db.pool(), tenant_id, "posthook@example.com")
+		.await
+		.unwrap();
 	assert_eq!(
 		count_suppressions(db.pool(), tenant_id, "posthook@example.com").await,
 		1
@@ -931,7 +939,9 @@ async fn test_old_outcomes_ignored_by_ttl() -> Result<()> {
 	.bind("ttl@example.com")
 	.execute(db.pool())
 	.await?;
-	apply_post_verification_outcome_check(db.pool(), tenant_id, "ttl@example.com").await;
+	apply_post_verification_outcome_check(db.pool(), tenant_id, "ttl@example.com")
+		.await
+		.unwrap();
 	assert_eq!(
 		count_suppressions(db.pool(), tenant_id, "ttl@example.com").await,
 		0

@@ -15,7 +15,10 @@ use tracing::info;
 pub use task::email_verification_task;
 
 /// Create a job registry with one task: the email verification task.
-pub async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandle, sqlx::Error> {
+pub async fn create_job_registry(
+	pool: &Pool<Postgres>,
+	config: std::sync::Arc<crate::config::BackendConfig>,
+) -> Result<JobRunnerHandle, sqlx::Error> {
 	let min_task_conc = env::var("RCH_MINIMUM_TASK_CONCURRENCY").map_or(10, |var| {
 		var.parse::<usize>()
 			.expect("Environment variable RCH_MINIMUM_TASK_CONCURRENCY should parse to usize")
@@ -26,7 +29,8 @@ pub async fn create_job_registry(pool: &Pool<Postgres>) -> Result<JobRunnerHandl
 	});
 
 	// registry needs to be given list of jobs it can accept
-	let registry = JobRegistry::new(&[email_verification_task]);
+	let mut registry = JobRegistry::new(&[email_verification_task]);
+	registry.set_context(config);
 
 	// create runner for the message queue associated
 	// with this job registry

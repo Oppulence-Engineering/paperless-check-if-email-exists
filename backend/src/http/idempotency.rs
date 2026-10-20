@@ -118,29 +118,28 @@ pub async fn check_idempotency_key(
 			headers: existing.get("response_headers"),
 		})),
 		"failed" => {
-			// Delete the failed record and re-insert as processing
-			sqlx::query!("DELETE FROM idempotency_keys WHERE id = $1", existing_id,)
-				.execute(pg_pool)
-				.await
-				.map_err(ReacherResponseError::from)?;
-
-			let new_id = sqlx::query_scalar!(
+			// Rotate the owner ID atomically; late writes from the failed attempt stay fenced out.
+			let new_id = sqlx::query_scalar::<_, i64>(
 				r#"
-				INSERT INTO idempotency_keys (tenant_id, idempotency_key, request_path, request_body_hash, locked_at, locked_by)
-				VALUES ($1, $2, $3, $4, NOW(), $5)
+				UPDATE idempotency_keys
+				SET id = nextval(pg_get_serial_sequence('idempotency_keys', 'id')),
+				    status = 'processing', locked_at = NOW(), locked_by = $2,
+				    updated_at = NOW(), expires_at = NOW() + INTERVAL '24 hours',
+				    response_status_code = NULL, response_body = NULL, response_headers = NULL
+				WHERE id = $1 AND status = 'failed'
 				RETURNING id
 				"#,
-				tenant_id,
-				idempotency_key,
-				request_path,
-				request_body_hash,
-				locked_by,
 			)
-			.fetch_one(pg_pool)
+			.bind(existing_id)
+			.bind(locked_by)
+			.fetch_optional(pg_pool)
 			.await
 			.map_err(ReacherResponseError::from)?;
 
-			Ok(IdempotencyCheck::New { record_id: new_id })
+			Ok(match new_id {
+				Some(record_id) => IdempotencyCheck::New { record_id },
+				None => IdempotencyCheck::InProgress,
+			})
 		}
 		_ => Err(ReacherResponseError::new(
 			StatusCode::INTERNAL_SERVER_ERROR,
@@ -150,8 +149,8 @@ pub async fn check_idempotency_key(
 }
 
 /// Mark an idempotency key as completed with the response data.
-pub async fn complete_idempotency_key(
-	pg_pool: &PgPool,
+pub async fn complete_idempotency_key<'a>(
+	pg_pool: impl sqlx::Executor<'a, Database = sqlx::Postgres>,
 	record_id: i64,
 	status_code: u16,
 	response_body: &[u8],
@@ -177,10 +176,10 @@ pub async fn fail_idempotency_key(
 	pg_pool: &PgPool,
 	record_id: i64,
 ) -> Result<(), ReacherResponseError> {
-	sqlx::query!(
-		"UPDATE idempotency_keys SET status = 'failed', updated_at = NOW() WHERE id = $1",
-		record_id,
+	sqlx::query(
+		"UPDATE idempotency_keys SET status = 'failed', updated_at = NOW() WHERE id = $1 AND status = 'processing'",
 	)
+	.bind(record_id)
 	.execute(pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -190,8 +189,10 @@ pub async fn fail_idempotency_key(
 /// Background cleanup task. Call this in a tokio::spawn loop.
 /// Deletes expired completed/failed records and marks stale processing records as failed.
 pub async fn cleanup_idempotency_keys(pg_pool: &PgPool) {
-	let deleted = sqlx::query!(
-		"DELETE FROM idempotency_keys WHERE expires_at < NOW() AND status != 'processing'"
+	let deleted = sqlx::query(
+		"DELETE FROM idempotency_keys k WHERE expires_at < NOW() AND status != 'processing'
+		 AND NOT EXISTS (SELECT 1 FROM v1_task_result t WHERE t.operation_id = k.operation_id
+		     AND (NOT t.completion_done OR t.completed_at > NOW() - INTERVAL '24 hours'))",
 	)
 	.execute(pg_pool)
 	.await;
@@ -205,8 +206,8 @@ pub async fn cleanup_idempotency_keys(pg_pool: &PgPool) {
 		Err(e) => warn!(target: LOG_TARGET, error=?e, "Failed to clean up idempotency keys"),
 	}
 
-	let stale = sqlx::query!(
-		"UPDATE idempotency_keys SET status = 'failed', updated_at = NOW() WHERE status = 'processing' AND locked_at < NOW() - INTERVAL '5 minutes'"
+	let stale = sqlx::query(
+		"UPDATE idempotency_keys SET status = 'failed', updated_at = NOW() WHERE status = 'processing' AND operation_id IS NULL AND locked_at < NOW() - INTERVAL '5 minutes'"
 	)
 	.execute(pg_pool)
 	.await;

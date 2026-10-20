@@ -1,4 +1,4 @@
-## @oppulence/reacher-sdk@4.3.0
+## @oppulence/reacher-sdk@4.4.0
 
 This generator creates TypeScript/JavaScript client that utilizes [axios](https://github.com/axios/axios). The generated Node module can be used in the following environments:
 
@@ -36,7 +36,7 @@ navigate to the folder of your consuming project and run one of the following co
 _published:_
 
 ```
-npm install @oppulence/reacher-sdk@4.3.0 --save
+npm install @oppulence/reacher-sdk@4.4.0 --save
 ```
 
 _unPublished (not recommended):_
@@ -83,6 +83,7 @@ Class | Method | HTTP request | Description
 *EventsApi* | [**v1ListEvents**](docs/EventsApi.md#v1listevents) | **GET** /v1/events | GET /v1/events
 *HealthApi* | [**healthz**](docs/HealthApi.md#healthz) | **GET** /healthz | GET /healthz
 *HealthApi* | [**readyz**](docs/HealthApi.md#readyz) | **GET** /readyz | GET /readyz
+*HealthApi* | [**smtpMetrics**](docs/HealthApi.md#smtpmetrics) | **GET** /metrics |
 *JobsApi* | [**v1CancelJob**](docs/JobsApi.md#v1canceljob) | **POST** /v1/jobs/{job_id}/cancel | POST /v1/jobs/{job_id}/cancel
 *JobsApi* | [**v1DownloadJobResults**](docs/JobsApi.md#v1downloadjobresults) | **GET** /v1/jobs/{job_id}/download | GET /v1/jobs/{job_id}/download
 *JobsApi* | [**v1GetBulkJobProgress**](docs/JobsApi.md#v1getbulkjobprogress) | **GET** /v1/bulk/{job_id} | GET /v1/bulk/{job_id}
@@ -157,7 +158,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V0Api* | [**postCheckEmail**](docs/V0Api.md#postcheckemail) | **POST** /v0/check_email | POST /v0/check_email
 *V1Api* | [**v1AddSuppressions**](docs/V1Api.md#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions
 *V1Api* | [**v1CheckEmail**](docs/V1Api.md#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email
-*V1Api* | [**v1CheckEmailWithOnboard**](docs/V1Api.md#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.
+*V1Api* | [**v1CheckEmailWithOnboard**](docs/V1Api.md#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.
 *V1Api* | [**v1CheckReputation**](docs/V1Api.md#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check
 *V1Api* | [**v1CheckSuppression**](docs/V1Api.md#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check
 *V1Api* | [**v1CreateBulkJob**](docs/V1Api.md#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.
@@ -169,6 +170,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1FindEmail**](docs/V1Api.md#v1findemail) | **POST** /v1/find_email | POST /v1/find_email
 *V1Api* | [**v1GetFindEmail**](docs/V1Api.md#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}
 *V1Api* | [**v1GetList**](docs/V1Api.md#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}
+*V1Api* | [**v1GetVerificationOperation**](docs/V1Api.md#v1getverificationoperation) | **GET** /v1/operations/{operation_id} |
 *V1Api* | [**v1ImportSuppressions**](docs/V1Api.md#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions
 *V1Api* | [**v1ListLists**](docs/V1Api.md#v1listlists) | **GET** /v1/lists | GET /v1/lists
 *V1Api* | [**v1ListSuppressionEvents**](docs/V1Api.md#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events
@@ -237,6 +239,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [DiffGroup](docs/DiffGroup.md)
  - [DiffRow](docs/DiffRow.md)
  - [DnsRecordResults](docs/DnsRecordResults.md)
+ - [DnsRecordResultsDkimSelectorsInner](docs/DnsRecordResultsDkimSelectorsInner.md)
  - [DomainInfo](docs/DomainInfo.md)
  - [Duration](docs/Duration.md)
  - [EmailCategory](docs/EmailCategory.md)
@@ -284,6 +287,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [OutcomeType](docs/OutcomeType.md)
  - [OutcomeView](docs/OutcomeView.md)
  - [PartialConfidence](docs/PartialConfidence.md)
+ - [PendingVerification](docs/PendingVerification.md)
  - [PipelineDeliveryConfig](docs/PipelineDeliveryConfig.md)
  - [PipelineDeliveryStatus](docs/PipelineDeliveryStatus.md)
  - [PipelineDeliveryWebhook](docs/PipelineDeliveryWebhook.md)
@@ -370,6 +374,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [V1EmailHistory200Response](docs/V1EmailHistory200Response.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [VerifMethodVerifMethod](docs/VerifMethodVerifMethod.md)
+ - [VerificationResponse](docs/VerificationResponse.md)
  - [Webhook](docs/Webhook.md)
  - [YahooVerifMethod](docs/YahooVerifMethod.md)
 

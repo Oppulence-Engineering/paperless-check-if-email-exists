@@ -56,6 +56,32 @@ pub struct CsvDownloadRow {
 pub const CSV_HEADER: &str =
 	"input,is_reachable,score,category,sub_reason,safe_to_send,reason_codes,is_disposable,is_role_account,mx_accepts_mail,smtp_can_connect,smtp_is_catch_all,smtp_is_deliverable,error,verified_at,age_days,freshness,recommended_action,recommendation_confidence,recommendation_priority,recommendation_reasons,policy_mode,policy_decision,policy_reasons\n";
 
+/// CSV is for spreadsheets. JSON/NDJSON retain the exact original field values.
+pub fn spreadsheet_safe_csv(bytes: Vec<u8>) -> Result<Vec<u8>, csv::Error> {
+	let mut reader = csv::ReaderBuilder::new()
+		.has_headers(false)
+		.from_reader(bytes.as_slice());
+	let mut writer = WriterBuilder::new()
+		.has_headers(false)
+		.from_writer(Vec::new());
+	for record in reader.records() {
+		let record = record?;
+		writer.write_record(record.iter().map(|value| {
+			let significant = value.trim_start_matches(|c: char| {
+				c.is_whitespace() || c.is_control() || c == '\u{feff}'
+			});
+			if value.starts_with(['\t', '\r', '\n'])
+				|| significant.starts_with(['=', '+', '-', '@'])
+			{
+				std::borrow::Cow::Owned(format!("'{value}").into_bytes())
+			} else {
+				std::borrow::Cow::Borrowed(value.as_bytes())
+			}
+		}))?;
+	}
+	writer.into_inner().map_err(|err| err.into_error().into())
+}
+
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	let mut writer = WriterBuilder::new()
 		.has_headers(false)
@@ -63,7 +89,11 @@ pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
 	for record in records {
 		writer.serialize(csv_row(record))?;
 	}
-	writer.into_inner().map_err(|err| err.into_error().into())
+	spreadsheet_safe_csv(
+		writer
+			.into_inner()
+			.map_err(|err| csv::Error::from(err.into_error()))?,
+	)
 }
 
 pub fn ndjson_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, serde_json::Error> {
@@ -284,6 +314,43 @@ fn result_value<'a>(record: &'a TaskResultRecord, path: &[&str]) -> Option<&'a V
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn spreadsheet_exports_neutralize_formulas_and_leading_controls() {
+		let fields = [
+			"=1+1",
+			"+SUM(A1)",
+			"-1+1",
+			"@SUM(A1)",
+			" \t=1+1",
+			"\r=1+1",
+			"\ntext",
+			"\ttext",
+			"\u{feff}=1+1",
+			"\0=1+1",
+			"ordinary, \"quoted\" text",
+			"a+b@example.com",
+			"42",
+		];
+		let mut writer = WriterBuilder::new().from_writer(Vec::new());
+		writer.write_record(fields).unwrap();
+		let bytes = spreadsheet_safe_csv(writer.into_inner().unwrap()).unwrap();
+		let mut reader = csv::ReaderBuilder::new()
+			.has_headers(false)
+			.from_reader(bytes.as_slice());
+		let row = reader.records().next().unwrap().unwrap();
+		for (index, original) in fields.iter().enumerate() {
+			assert_eq!(
+				&row[index],
+				if index < 10 {
+					format!("'{original}")
+				} else {
+					original.to_string()
+				}
+			);
+		}
+		assert_eq!(spreadsheet_safe_csv(bytes.clone()).unwrap(), bytes);
+	}
 
 	#[test]
 	fn csv_row_uses_scored_result_payload() {

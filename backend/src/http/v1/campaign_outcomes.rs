@@ -82,7 +82,9 @@ async fn ingest_handler(
 		.into());
 	}
 
-	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id).await;
+	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 	let summary = ingest_outcomes(&pg_pool, tenant_id, &policy, &body.outcomes).await;
 
 	let response = IngestOutcomesResponse {
@@ -144,7 +146,9 @@ async fn upload_handler(
 		}
 	}
 
-	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id).await;
+	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 	let mut summary = ingest_outcomes(&pg_pool, tenant_id, &policy, &outcomes).await;
 	summary.rejected += errors.len();
 	summary.errors.extend(errors);

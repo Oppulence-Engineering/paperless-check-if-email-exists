@@ -31,10 +31,10 @@ pub async fn check_domain(
 			.map_err(ReacherResponseError::from)?
 			{
 				let value: serde_json::Value = cached.get("response");
-				let mut response: ReputationCheckResponse =
-					serde_json::from_value(value).map_err(ReacherResponseError::from)?;
-				response.cached = true;
-				return Ok(response);
+				if let Ok(mut response) = serde_json::from_value::<ReputationCheckResponse>(value) {
+					response.cached = true;
+					return Ok(response);
+				}
 			}
 		}
 	}
@@ -71,7 +71,17 @@ pub async fn check_domain(
 		cached: false,
 	};
 
-	if let Some(pool) = pg_pool {
+	if let Some(pool) = pg_pool.filter(|_| {
+		response
+			.blacklist_results
+			.iter()
+			.all(|result| result.status != super::models::BlacklistStatus::Error)
+			&& response
+				.dns_records
+				.dkim_selectors
+				.iter()
+				.all(|result| result.status != super::models::DkimKeyStatus::Error)
+	}) {
 		sqlx::query(
 			r#"
 			INSERT INTO reputation_cache (domain, response, score, risk_level, expires_at)
