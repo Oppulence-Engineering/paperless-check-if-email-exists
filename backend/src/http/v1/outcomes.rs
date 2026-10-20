@@ -295,6 +295,10 @@ async fn upsert_outcome_suppression(
 		.map(ToOwned::to_owned)
 		.unwrap_or_else(|| provider.to_string());
 	let suppression_metadata = outcome_suppression_metadata(provider, outcome_id, metadata);
+	// A bounce, complaint or unsubscribe is permanent, so it clears any expiry
+	// (an expired row still holds the unique index and would otherwise keep
+	// the address unsuppressed). The first reason recorded on a live row is
+	// kept, as in `crate::suppression::insert_active_suppression`.
 	let row = sqlx::query(
 		r#"
 		INSERT INTO v1_suppression_entries (
@@ -308,12 +312,12 @@ async fn upsert_outcome_suppression(
 		)
 		ON CONFLICT (tenant_id, canonical_email) WHERE status = 'active'
 		DO UPDATE SET
-			reason = EXCLUDED.reason,
-			source = EXCLUDED.source,
-			reason_code = EXCLUDED.reason_code,
-			reason_detail = EXCLUDED.reason_detail,
-			source_type = EXCLUDED.source_type,
-			source_ref = EXCLUDED.source_ref,
+			reason = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.reason ELSE v1_suppression_entries.reason END,
+			source = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.source ELSE v1_suppression_entries.source END,
+			reason_code = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.reason_code ELSE v1_suppression_entries.reason_code END,
+			reason_detail = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.reason_detail ELSE v1_suppression_entries.reason_detail END,
+			source_type = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.source_type ELSE v1_suppression_entries.source_type END,
+			source_ref = CASE WHEN v1_suppression_entries.expires_at <= NOW() THEN EXCLUDED.source_ref ELSE v1_suppression_entries.source_ref END,
 			expires_at = NULL,
 			last_seen_at = NOW(),
 			metadata = v1_suppression_entries.metadata || EXCLUDED.metadata,

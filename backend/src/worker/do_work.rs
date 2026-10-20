@@ -309,25 +309,6 @@ pub async fn do_check_email_work(
 		.and_then(|m| m.retry_policy.clone())
 		.unwrap_or_default();
 
-	// Mark task as running
-	if let Some(id) = task_db_id {
-		update_task_state(&config, id, "running", None).await;
-
-		// Update started_at
-		if let Some(pool) = config.get_pg_pool() {
-			let _ = sqlx::query!(
-				"UPDATE v1_task_result SET started_at = NOW() WHERE id = $1",
-				id,
-			)
-			.execute(&pool)
-			.await;
-		}
-	}
-
-	// Load webhook signing secret from DB if tenant_id is present. A failed
-	// read stays an error rather than "no secret": sending unsigned would fail
-	// at receivers that verify signatures and look authentic at those that
-	// don't.
 	let tenant_uuid = task
 		.metadata
 		.as_ref()

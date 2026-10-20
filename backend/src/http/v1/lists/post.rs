@@ -43,8 +43,12 @@ async fn http_handler(
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
-	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
-		.map_err(warp::reject::custom)?;
+	let parsed = parse_csv(
+		&upload.file_bytes,
+		upload.email_column.as_deref(),
+		Some(plan_row_limit(&tenant_ctx)),
+	)
+	.map_err(warp::reject::custom)?;
 	let source_key = normalize_source_key(upload.source_key.as_deref());
 
 	if let Some(policy_id) = upload.policy_id {
@@ -444,8 +448,10 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 				filename = Some(part_filename.unwrap_or_else(|| "upload.csv".to_string()));
 			}
 			"name" => name = Some(String::from_utf8_lossy(&collected).trim().to_string()),
+			// An empty field (as HTML forms send) means "auto-detect".
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
+					.filter(|column| !column.is_empty())
 			}
 			"source_key" | "source" => {
 				source_key = Some(String::from_utf8_lossy(&collected).trim().to_string())
@@ -508,17 +514,25 @@ async fn blank_email_result(
 	prepare_verification_response(config, &output, None, Utc::now(), false).await
 }
 
-fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
-	let limit = match tenant_ctx.plan_tier {
+fn plan_row_limit(tenant_ctx: &TenantContext) -> usize {
+	match tenant_ctx.plan_tier {
 		PlanTier::Free => 1_000usize,
 		PlanTier::Starter => 10_000usize,
 		PlanTier::Professional => 50_000usize,
 		PlanTier::Enterprise => 100_000usize,
-	};
+	}
+}
+
+fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
+	let limit = plan_row_limit(tenant_ctx);
 	if rows > limit {
+		// Parsing stops one row past the limit, so the real count is unknown.
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			format!("List contains {} rows but plan allows {}", rows, limit),
+			format!(
+				"List contains more than {} rows; plan allows {}",
+				limit, limit
+			),
 		)
 		.into());
 	}

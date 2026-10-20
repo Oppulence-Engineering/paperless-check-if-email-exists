@@ -152,6 +152,22 @@ pub fn route_allowed(role: &str, method: &str, path: &str) -> bool {
 	}
 }
 
+/// Why a backend token was refused. The HTTP layer answers 401 for
+/// `Invalid`, 403 for `Forbidden` and 503 for `Unavailable`, so that clients
+/// do not treat a missing permission or an outage as an expired session.
+#[derive(Debug, thiserror::Error)]
+pub enum JwtAuthError {
+	/// The token is malformed, expired, or not signed by the web app.
+	#[error("{0}")]
+	Invalid(anyhow::Error),
+	/// The token is valid, but its role or workspace may not make the request.
+	#[error("{0}")]
+	Forbidden(anyhow::Error),
+	/// The signing keys or the database could not be reached.
+	#[error("{0}")]
+	Unavailable(anyhow::Error),
+}
+
 pub async fn resolve_from_jwt(
 	pool: &PgPool,
 	token: &str,
@@ -159,21 +175,16 @@ pub async fn resolve_from_jwt(
 	global_throttle: &ThrottleConfig,
 	method: &str,
 	path: &str,
-) -> Result<TenantContext> {
+) -> std::result::Result<TenantContext, JwtAuthError> {
 	// ponytail: Fetch keys per request; cache them if this becomes a measured latency cost.
-	let jwks = reqwest::Client::builder()
-		.timeout(std::time::Duration::from_secs(5))
-		.redirect(reqwest::redirect::Policy::none())
-		.build()?
-		.get(&config.jwks_url)
-		.send()
-		.await?
-		.error_for_status()?
-		.json::<Jwks>()
-		.await?;
-	let claims = verify(token, &jwks, config)?;
+	let jwks = fetch_jwks(config)
+		.await
+		.map_err(JwtAuthError::Unavailable)?;
+	let claims = verify(token, &jwks, config).map_err(JwtAuthError::Invalid)?;
 	if !route_allowed(&claims.org_role, method, path) {
-		bail!("Organization role cannot call this operation");
+		return Err(JwtAuthError::Forbidden(anyhow::anyhow!(
+			"Organization role cannot call this operation"
+		)));
 	}
 	let tenant_id = Uuid::new_v5(&Uuid::NAMESPACE_OID, claims.org_id.as_bytes());
 	sync_tenant_from_claims(
@@ -183,8 +194,19 @@ pub async fn resolve_from_jwt(
 		&claims.email,
 		claims.plan.as_deref(),
 	)
-	.await?;
-	let mut context = resolve_tenant_context_by_id(pool, tenant_id).await?;
+	.await
+	.map_err(JwtAuthError::Unavailable)?;
+	let mut context = resolve_tenant_context_by_id(pool, tenant_id)
+		.await
+		.map_err(|error| {
+			// A database failure is an outage; anything else (a suspended or
+			// deactivated workspace) is a refusal.
+			if error.downcast_ref::<sqlx::Error>().is_some() {
+				JwtAuthError::Unavailable(error)
+			} else {
+				JwtAuthError::Forbidden(error)
+			}
+		})?;
 	// Same limits as the tenant's API keys get. Without the server-wide
 	// fallback, console requests ran unthrottled, and the tenant's throttle
 	// manager was rebuilt each time a request switched between the two.
@@ -200,6 +222,19 @@ pub async fn resolve_from_jwt(
 		]
 	};
 	Ok(context)
+}
+
+async fn fetch_jwks(config: &JwtAuthConfig) -> Result<Jwks> {
+	Ok(reqwest::Client::builder()
+		.timeout(std::time::Duration::from_secs(5))
+		.redirect(reqwest::redirect::Policy::none())
+		.build()?
+		.get(&config.jwks_url)
+		.send()
+		.await?
+		.error_for_status()?
+		.json::<Jwks>()
+		.await?)
 }
 
 /// Creates or updates the tenant for a workspace from the session token.

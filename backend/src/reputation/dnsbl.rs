@@ -38,7 +38,7 @@ fn ipv4_answers(lookup: &Lookup) -> impl Iterator<Item = Ipv4Addr> + '_ {
 		})
 }
 
-/// Checks the first MX host of `domain` against the DNSBL zones.
+/// Checks the preferred MX host of `domain` against the DNSBL zones.
 ///
 /// MX/address failures fail the check. Per-provider failures remain explicit
 /// unknown results; only a completed negative DNS answer is "not listed".
@@ -46,15 +46,14 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 	let resolver = TokioResolver::builder_tokio()?.build()?;
 	let mx_lookup = found_or_absent(resolver.mx_lookup(domain).await)
 		.with_context(|| format!("MX lookup for {} failed", domain))?;
-	let mx_hosts: Vec<String> = mx_lookup
-		.map(|lookup| {
-			MxLookup::from(lookup)
-				.iter()
-				.map(|record| record.exchange.to_string())
-				.collect()
-		})
-		.unwrap_or_default();
-	let first_host = mx_hosts.iter().find(|host| host.as_str() != ".");
+	let preferred_host = mx_lookup.and_then(|lookup| {
+		MxLookup::from(lookup)
+			.iter()
+			.filter(|record| record.exchange.to_string() != ".")
+			.min_by_key(|record| record.preference)
+			.map(|record| record.exchange.to_string())
+	});
+	let first_host = preferred_host.as_ref();
 	let ip = if let Some(host) = first_host {
 		let lookup = found_or_absent(resolver.ipv4_lookup(host.as_str()).await)
 			.with_context(|| format!("A lookup for MX host {} failed", host))?;

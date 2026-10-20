@@ -13,7 +13,7 @@ mod version;
 use crate::config::BackendConfig;
 use crate::tenant::auth::resolve_from_api_key;
 use crate::tenant::context::{scope, TenantContext};
-use crate::tenant::jwt::resolve_from_jwt;
+use crate::tenant::jwt::{resolve_from_jwt, JwtAuthError};
 use check_if_email_exists::LOG_TARGET;
 use error::handle_rejection;
 pub use error::ReacherResponseError;
@@ -141,6 +141,20 @@ pub async fn run_warp_server(
 	Ok(runner)
 }
 
+/// Deserializes a PATCH field that may be absent, `null` or a value.
+///
+/// With `#[serde(default, deserialize_with = "crate::http::present_nullable")]`
+/// on an `Option<Option<T>>`, an absent field stays `None` (leave unchanged)
+/// and `null` becomes `Some(None)` (clear the column). Plain serde maps both
+/// to `None`, so a client could never clear a nullable column.
+pub(crate) fn present_nullable<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+	D: serde::Deserializer<'de>,
+	T: serde::Deserialize<'de>,
+{
+	<Option<T> as serde::Deserialize>::deserialize(deserializer).map(Some)
+}
+
 /// Check that the tenant context has the required scope.
 /// Returns 403 Forbidden if the scope is missing.
 pub fn check_scope(ctx: &TenantContext, scope: &str) -> Result<(), warp::Rejection> {
@@ -250,10 +264,15 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 						if let (Some(auth_config), Some(pool)) = (&config.auth, config.get_pg_pool()) {
 								let ctx = resolve_from_jwt(&pool, token, auth_config, &config.throttle, method.as_str(), path.as_str())
 									.await
-									.map_err(|_| warp::reject::custom(ReacherResponseError::new(
-										StatusCode::UNAUTHORIZED,
-										"Invalid or unauthorized backend token",
-									)))?;
+									.map_err(|error| {
+										let (status, message) = match error {
+											JwtAuthError::Invalid(_) => (StatusCode::UNAUTHORIZED, "Invalid or unauthorized backend token"),
+											JwtAuthError::Forbidden(_) => (StatusCode::FORBIDDEN, "This workspace role or account cannot perform this operation"),
+											JwtAuthError::Unavailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "Authentication is temporarily unavailable"),
+										};
+										debug!(target: LOG_TARGET, error = %error, "Backend token refused");
+										warp::reject::custom(ReacherResponseError::new(status, message))
+									})?;
 								check_route_scope(&ctx, path.as_str())?;
 								return Ok(ctx);
 						}
@@ -267,7 +286,11 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 				// Path 2: Legacy x-reacher-secret header
 				if let Some(secret) = &secret_header {
 					if let Some(expected) = &config.header_secret {
-						if !expected.is_empty() && secret == expected {
+						if !expected.is_empty()
+							&& crate::tenant::webhook::constant_time_eq(
+								secret.as_bytes(),
+								expected.as_bytes(),
+							) {
 							return Ok(TenantContext::legacy(config.throttle.clone()));
 						} else if !expected.is_empty() {
 							return Err(warp::reject::custom(ReacherResponseError::new(
@@ -317,18 +340,39 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 
 /// Legacy check_header for v0 bulk routes that don't use TenantContext.
 /// Kept for backward compatibility with v0 bulk which passes through to sqlxmq.
+/// A missing or wrong secret is a 401, and the comparison takes the same time
+/// for every wrong secret of the right length.
 pub fn check_header(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<()> {
-	if let Some(secret) = config.header_secret.clone() {
-		if secret.is_empty() {
-			return warp::any().boxed();
-		}
-
-		let secret: &'static str = Box::leak(Box::new(secret));
-
-		warp::header::exact(REACHER_SECRET_HEADER, secret).boxed()
-	} else {
-		warp::any().boxed()
-	}
+	let Some(secret) = config
+		.header_secret
+		.clone()
+		.filter(|secret| !secret.is_empty())
+	else {
+		return warp::any().boxed();
+	};
+	let secret = Arc::new(secret);
+	warp::header::optional::<String>(REACHER_SECRET_HEADER)
+		.and_then(move |provided: Option<String>| {
+			let secret = Arc::clone(&secret);
+			async move {
+				match provided {
+					Some(provided)
+						if crate::tenant::webhook::constant_time_eq(
+							provided.as_bytes(),
+							secret.as_bytes(),
+						) =>
+					{
+						Ok(())
+					}
+					_ => Err(warp::reject::custom(ReacherResponseError::new(
+						StatusCode::UNAUTHORIZED,
+						"Missing or invalid x-reacher-secret header",
+					))),
+				}
+			}
+		})
+		.untuple_one()
+		.boxed()
 }
 
 /// Control-plane routes must not inherit the legacy open-mode behavior.

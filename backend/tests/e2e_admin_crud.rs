@@ -244,19 +244,20 @@ mod tenant_crud {
 			.unwrap()
 			.to_string();
 
-		// Note: JSON `null` for Option<Option<i32>> is deserialized by serde as `None`
-		// (field absent), not `Some(None)`. The handler sees no fields to update and
-		// returns 400 "No fields to update". This is a known serde limitation with
-		// double-Option types.
+		// `null` clears the limit (unlimited); an absent field leaves it alone.
 		let resp = request()
 			.path(&format!("/v1/admin/tenants/{}", id))
 			.method("PUT")
 			.header(REACHER_SECRET_HEADER, "admin-secret")
-			.json(&serde_json::json!({"monthly_email_limit": null}))
+			.json(&serde_json::json!({"monthly_email_limit": null, "max_requests_per_day": null}))
 			.reply(&routes)
 			.await;
 
-		assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+		assert_eq!(resp.status(), StatusCode::OK);
+		let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
+		assert!(body["monthly_email_limit"].is_null());
+		assert!(body["max_requests_per_day"].is_null());
+		assert_eq!(body["name"], "Limited");
 	}
 
 	#[tokio::test]
@@ -1363,6 +1364,31 @@ mod api_key_crud {
 		assert_eq!(body["id"], key_id);
 		assert_eq!(body["name"], "Updated Key");
 		assert_eq!(body["scopes"][0], "admin");
+
+		// An expiry can be set and then removed again with null.
+		for (expires_at, expect_null) in [
+			(serde_json::json!("2030-01-01T00:00:00Z"), false),
+			(serde_json::Value::Null, true),
+		] {
+			let patch_resp = request()
+				.path(&format!(
+					"/v1/admin/tenants/{}/api-keys/{}",
+					tenant_id, key_id
+				))
+				.method("PATCH")
+				.header(REACHER_SECRET_HEADER, "admin-secret")
+				.json(&serde_json::json!({ "expires_at": expires_at }))
+				.reply(&routes)
+				.await;
+			assert_eq!(
+				patch_resp.status(),
+				StatusCode::OK,
+				"{:?}",
+				patch_resp.body()
+			);
+			let body: serde_json::Value = serde_json::from_slice(patch_resp.body()).unwrap();
+			assert_eq!(body["expires_at"].is_null(), expect_null, "{}", body);
+		}
 	}
 
 	#[tokio::test]

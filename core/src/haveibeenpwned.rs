@@ -21,7 +21,13 @@ fn breached_account_url(to_email: &str) -> Url {
 /// This function will return the number of times the email has been found in
 /// any breach.
 pub async fn check_haveibeenpwned(to_email: &str, api_key: Option<String>) -> Option<bool> {
-	let client = Client::new();
+	// The lookup runs before SMTP and outside the SMTP timeout, so it needs
+	// its own bound.
+	let client = Client::builder()
+		.connect_timeout(std::time::Duration::from_secs(5))
+		.timeout(std::time::Duration::from_secs(10))
+		.build()
+		.ok()?;
 	let url = breached_account_url(to_email);
 
 	let request = client

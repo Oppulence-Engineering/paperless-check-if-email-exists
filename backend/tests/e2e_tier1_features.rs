@@ -241,6 +241,34 @@ mod events_tests {
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 		assert!(b["events"].as_array().unwrap().len() <= 1);
 	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_negative_pagination_is_clamped() {
+		let db = TestDb::start().await;
+		let (tid, key) = setup_tenant_with_key(db.pool()).await;
+		let jid = setup_job_with_tasks(db.pool(), tid).await;
+		let suppression_id = insert_suppression(db.pool(), tid, "gone@example.com", "manual").await;
+		let routes = create_routes(worker_config().await);
+		// Postgres rejects a negative LIMIT or OFFSET, which surfaced as a 500.
+		for path in [
+			format!("/v1/jobs/{}/events?limit=-1&offset=-5", jid),
+			format!("/v1/jobs/{}/failure-center?preview_limit=-1", jid),
+			"/v1/suppressions?limit=-1&offset=-5".to_string(),
+			format!(
+				"/v1/suppressions/{}/events?limit=-1&offset=-5",
+				suppression_id
+			),
+		] {
+			let r = request()
+				.path(&path)
+				.method("GET")
+				.header("Authorization", format!("Bearer {}", key))
+				.reply(&routes)
+				.await;
+			assert_eq!(r.status(), StatusCode::OK, "{}: {:?}", path, r.body());
+		}
+	}
 }
 
 // ===== #28: Historical Verification Timeline =====
@@ -1531,14 +1559,14 @@ mod list_intelligence_api_tests {
 		let db = TestDb::start().await;
 		let (tid, key) = setup_tenant_with_key(db.pool()).await;
 
-		let base_job = insert_job(db.pool(), Some(tid), 7, "completed").await;
+		let base_job = insert_job(db.pool(), Some(tid), 8, "completed").await;
 		let base_list = insert_list(
 			db.pool(),
 			tid,
 			base_job,
 			"Base full diff",
 			"completed",
-			7,
+			8,
 			&["email", "source"],
 			original_rows(&[
 				"same@example.com",
@@ -1548,6 +1576,7 @@ mod list_intelligence_api_tests {
 				"risky@example.com",
 				"safe@example.com",
 				"removed@example.com",
+				"errored@example.com",
 			]),
 		)
 		.await;
@@ -1559,6 +1588,7 @@ mod list_intelligence_api_tests {
 			(4, "risky@example.com", "valid", 90, true),
 			(5, "safe@example.com", "risky", 50, false),
 			(6, "removed@example.com", "valid", 88, true),
+			(7, "errored@example.com", "valid", 88, true),
 		] {
 			insert_list_row(
 				db.pool(),
@@ -1575,14 +1605,14 @@ mod list_intelligence_api_tests {
 			.await;
 		}
 
-		let compare_job = insert_job(db.pool(), Some(tid), 8, "completed").await;
+		let compare_job = insert_job(db.pool(), Some(tid), 9, "completed").await;
 		let compare_list = insert_list(
 			db.pool(),
 			tid,
 			compare_job,
 			"Compare full diff",
 			"completed",
-			8,
+			9,
 			&["email", "source"],
 			original_rows(&[
 				"same@example.com",
@@ -1593,6 +1623,7 @@ mod list_intelligence_api_tests {
 				"safe@example.com",
 				"added@example.com",
 				"same@example.com",
+				"errored@example.com",
 			]),
 		)
 		.await;
@@ -1632,6 +1663,30 @@ mod list_intelligence_api_tests {
 			true,
 		)
 		.await;
+		// In both lists, but its check failed in the compare list: it is not
+		// "removed", there is just nothing to compare it with.
+		let errored_task = insert_scored_task(
+			db.pool(),
+			compare_job,
+			Some(tid),
+			"errored@example.com",
+			Some(serde_json::json!({"list_id": compare_list, "row_index": 8})),
+			None,
+			"failed",
+			None,
+			None,
+			None,
+			None,
+			None,
+			Some("errored@example.com"),
+			false,
+		)
+		.await;
+		sqlx::query("UPDATE v1_task_result SET error = 'smtp timeout' WHERE id = $1")
+			.bind(errored_task)
+			.execute(db.pool())
+			.await
+			.unwrap();
 
 		let c = worker_config().await;
 		let diff = request()

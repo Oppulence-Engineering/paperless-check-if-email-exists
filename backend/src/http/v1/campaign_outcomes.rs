@@ -134,7 +134,7 @@ async fn upload_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 
 	let upload = read_csv_upload(form).await?;
-	let parsed = parse_csv(&upload.file_bytes, Some("email"))?;
+	let parsed = parse_csv(&upload.file_bytes, Some("email"), None)?;
 
 	let mut outcomes = Vec::with_capacity(parsed.rows.len());
 	let mut errors: Vec<IngestRowError> = Vec::new();

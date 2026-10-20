@@ -18,6 +18,14 @@ use crate::http::v1::lists::canonicalize::canonicalize_email;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// The `canonical_email` of a suppression: the same key that list
+/// deduplication, outcomes and scoring use. Gmail ignores dots and `+tags`,
+/// so every spelling of one Gmail mailbox shares one suppression. Every
+/// writer and reader of `v1_suppression_entries.canonical_email` must use it.
+pub fn suppression_key(email: &str) -> String {
+	canonicalize_email(email).unwrap_or_else(|| email.trim().to_string())
+}
+
 /// Whether `email` has an active, unexpired suppression for the tenant.
 ///
 pub async fn has_active_suppression(

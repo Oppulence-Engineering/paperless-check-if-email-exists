@@ -130,6 +130,41 @@ fn validate_status(status: &str) -> Result<String, ReacherResponseError> {
 	}
 }
 
+/// Parses allowlist entries and stores them in canonical form, so the same
+/// address written as `2001:DB8::1` or `::ffff:192.0.2.1` matches the peer
+/// address the server sees.
+fn normalize_allowed_ips(values: &[String]) -> Result<Vec<String>, warp::Rejection> {
+	values
+		.iter()
+		.map(|value| {
+			value
+				.trim()
+				.parse::<std::net::IpAddr>()
+				.map(|ip| ip.to_canonical().to_string())
+				.map_err(|_| {
+					ReacherResponseError::new(
+						StatusCode::BAD_REQUEST,
+						"allowed_ips contains an invalid IP",
+					)
+					.into()
+				})
+		})
+		.collect()
+}
+
+/// Compares parsed addresses rather than strings. Rows written before
+/// entries were normalized may hold uppercase IPv6 or IPv4-mapped forms, and
+/// a dual-stack listener reports IPv4 peers as IPv4-mapped IPv6.
+fn ip_is_allowlisted(allowed_ips: &[String], remote: std::net::IpAddr) -> bool {
+	let remote = remote.to_canonical();
+	allowed_ips.iter().any(|entry| {
+		entry
+			.trim()
+			.parse::<std::net::IpAddr>()
+			.is_ok_and(|ip| ip.to_canonical() == remote)
+	})
+}
+
 fn generate_delivery_token() -> String {
 	let mut bytes = [0u8; 32];
 	rand::rng().fill_bytes(&mut bytes);
@@ -213,14 +248,7 @@ async fn create_handler(
 	if label.is_empty() || label.len() > 200 {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "label is invalid").into());
 	}
-	for value in &input.allowed_ips {
-		value.parse::<std::net::IpAddr>().map_err(|_| {
-			ReacherResponseError::new(
-				StatusCode::BAD_REQUEST,
-				"allowed_ips contains an invalid IP",
-			)
-		})?;
-	}
+	let allowed_ips = normalize_allowed_ips(&input.allowed_ips)?;
 	let endpoint_id = Uuid::new_v4();
 	let token = generate_delivery_token();
 	let row = sqlx::query(
@@ -233,7 +261,7 @@ async fn create_handler(
 	.bind(status)
 	.bind(token_hash(&token))
 	.bind(input.provider_config)
-	.bind(input.allowed_ips)
+	.bind(allowed_ips)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
@@ -256,16 +284,11 @@ async fn update_handler(
 	if label.is_some_and(|value| value.is_empty() || value.len() > 200) {
 		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "label is invalid").into());
 	}
-	if let Some(values) = &input.allowed_ips {
-		for value in values {
-			value.parse::<std::net::IpAddr>().map_err(|_| {
-				ReacherResponseError::new(
-					StatusCode::BAD_REQUEST,
-					"allowed_ips contains an invalid IP",
-				)
-			})?;
-		}
-	}
+	let allowed_ips = input
+		.allowed_ips
+		.as_deref()
+		.map(normalize_allowed_ips)
+		.transpose()?;
 	let token = input.rotate_delivery_token.then(generate_delivery_token);
 	let row = sqlx::query(
 		r#"
@@ -282,7 +305,7 @@ async fn update_handler(
 	.bind(label)
 	.bind(status)
 	.bind(input.provider_config)
-	.bind(input.allowed_ips)
+	.bind(allowed_ips)
 	.bind(token.as_deref().map(token_hash))
 	.fetch_optional(&pg_pool)
 	.await
@@ -643,7 +666,8 @@ fn event_family(event_type: &str) -> String {
 fn normalize_event_type(value: &str) -> Option<String> {
 	match value.trim().to_ascii_lowercase().as_str() {
 		"delivered" | "delivery" => Some("delivered".to_string()),
-		"bounce" | "bounced" | "bounce_hard" | "bounce_soft" => Some("bounced".to_string()),
+		// A soft bounce is temporary and must not suppress the address.
+		"bounce" | "bounced" | "bounce_hard" => Some("bounced".to_string()),
 		"spamreport" | "complaint" | "complained" => Some("complained".to_string()),
 		"unsubscribe" | "unsubscribed" => Some("unsubscribed".to_string()),
 		"open" | "opened" => Some("opened".to_string()),
@@ -657,9 +681,23 @@ fn timestamp_from_value(value: Option<&Value>) -> Option<DateTime<Utc>> {
 		Some(Value::String(value)) => DateTime::parse_from_rfc3339(value)
 			.ok()
 			.map(|value| value.with_timezone(&Utc)),
-		Some(Value::Number(value)) => value
-			.as_i64()
-			.and_then(|value| Utc.timestamp_opt(value, 0).single()),
+		// Mailgun sends fractional epoch seconds.
+		Some(Value::Number(value)) => match value.as_i64() {
+			Some(seconds) => Utc.timestamp_opt(seconds, 0).single(),
+			None => value
+				.as_f64()
+				.filter(|seconds| seconds.is_finite())
+				.and_then(|seconds| Utc.timestamp_millis_opt((seconds * 1000.0) as i64).single()),
+		},
+		_ => None,
+	}
+}
+
+/// A provider event id given as a string or a number (Postmark's `ID`).
+fn id_from_value(value: Option<&Value>) -> Option<String> {
+	match value? {
+		Value::String(value) if !value.is_empty() => Some(value.clone()),
+		Value::Number(value) => Some(value.to_string()),
 		_ => None,
 	}
 }
@@ -761,12 +799,23 @@ async fn forward_outcomes(
 	Ok(true)
 }
 
+/// SendGrid reports a temporary block (for example a rate limit at the
+/// receiver) as a `bounce` event of type `blocked`; only type `bounce` means
+/// the address does not exist.
+fn sendgrid_event_type(event: &Value) -> Option<String> {
+	let name = event.get("event")?.as_str()?;
+	if name == "bounce" && event.get("type").and_then(Value::as_str) == Some("blocked") {
+		return None;
+	}
+	normalize_event_type(name)
+}
+
 fn normalize_sendgrid(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<OutcomeInput> {
 	body.as_array()
 		.into_iter()
 		.flatten()
 		.filter_map(|event| {
-			let event_type = normalize_event_type(event.get("event")?.as_str()?)?;
+			let event_type = sendgrid_event_type(event)?;
 			Some(make_outcome(
 				endpoint,
 				receipt_id,
@@ -799,7 +848,11 @@ fn mailgun_event_type(event: &Value) -> Option<String> {
 }
 
 /// Postmark names a spam complaint `SpamComplaint` and an unsubscribe a
-/// `SubscriptionChange` that suppresses sending.
+/// `SubscriptionChange` that suppresses sending. A `Bounce` record also
+/// covers soft bounces, auto-replies and DNS errors; only a hard bounce, a bad
+/// address, or a record that deactivated the address is a bounce here. A
+/// `SubscriptionChange` that Postmark makes because of a hard bounce or a
+/// complaint reports that cause, not an unsubscribe.
 fn postmark_event_type(body: &Value) -> Option<String> {
 	let name = body
 		.get("RecordType")
@@ -807,9 +860,26 @@ fn postmark_event_type(body: &Value) -> Option<String> {
 		.and_then(Value::as_str)?;
 	match name {
 		"SpamComplaint" => Some("complained".to_string()),
-		"SubscriptionChange" => (body.get("SuppressSending").and_then(Value::as_bool)
-			== Some(true))
-		.then(|| "unsubscribed".to_string()),
+		"SubscriptionChange" => {
+			if body.get("SuppressSending").and_then(Value::as_bool) != Some(true) {
+				return None;
+			}
+			Some(
+				match body.get("SuppressionReason").and_then(Value::as_str) {
+					Some("HardBounce") => "bounced",
+					Some("SpamComplaint") => "complained",
+					_ => "unsubscribed",
+				}
+				.to_string(),
+			)
+		}
+		"Bounce" => {
+			let permanent = matches!(
+				body.get("Type").and_then(Value::as_str),
+				Some("HardBounce" | "BadEmailAddress")
+			) || body.get("Inactive").and_then(Value::as_bool) == Some(true);
+			permanent.then(|| "bounced".to_string())
+		}
 		_ => normalize_event_type(name),
 	}
 }
@@ -858,20 +928,96 @@ fn normalize_postmark(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) ->
 	if email.is_empty() {
 		return Vec::new();
 	}
+	let record_type = body
+		.get("RecordType")
+		.and_then(Value::as_str)
+		.unwrap_or("Unknown");
+	let occurred_at = ["BouncedAt", "DeliveredAt", "ReceivedAt", "ChangedAt"]
+		.iter()
+		.find_map(|field| timestamp_from_value(body.get(*field)));
+	let message_id = body
+		.get("MessageID")
+		.and_then(Value::as_str)
+		.map(ToOwned::to_owned);
+	// Bounce and complaint records carry a numeric `ID`; the other record
+	// types have none, so derive a key that a redelivery repeats.
+	let provider_event_id = id_from_value(body.get("ID")).or_else(|| {
+		message_id.as_ref().map(|message_id| {
+			format!(
+				"{record_type}:{message_id}:{}:{}",
+				crate::suppression::suppression_key(&email),
+				occurred_at
+					.map(|at| at.timestamp_millis())
+					.unwrap_or_default()
+			)
+		})
+	});
 	vec![make_outcome(
 		endpoint,
 		receipt_id,
 		email.to_string(),
 		event_type,
-		body.get("ID")
-			.and_then(Value::as_str)
-			.map(ToOwned::to_owned),
-		body.get("MessageID")
-			.and_then(Value::as_str)
-			.map(ToOwned::to_owned),
-		timestamp_from_value(body.get("ReceivedAt").or_else(|| body.get("DeliveredAt"))),
+		provider_event_id,
+		message_id,
+		occurred_at,
 		body.clone(),
 	)]
+}
+
+/// The event type of an SES notification (`notificationType`) or of an SES
+/// event-publishing record (`eventType`). Only a permanent bounce is a
+/// bounce: SES retries transient ones itself, and an undetermined one says
+/// nothing about the address.
+fn ses_event_type(message: &Value) -> Option<String> {
+	let name = message
+		.get("notificationType")
+		.or_else(|| message.get("eventType"))
+		.and_then(Value::as_str)?;
+	if name == "Bounce" {
+		let permanent = message
+			.get("bounce")
+			.and_then(|bounce| bounce.get("bounceType"))
+			.and_then(Value::as_str)
+			== Some("Permanent");
+		return permanent.then(|| "bounced".to_string());
+	}
+	normalize_event_type(name)
+}
+
+/// The recipients that an SES notification is about. A bounce or complaint
+/// lists the affected recipients; `mail.destination` lists every recipient
+/// of the original message, including ones that received it.
+fn ses_recipients(message: &Value) -> Vec<String> {
+	let addresses = |section: &str, list: &str| -> Option<Vec<String>> {
+		let entries = message.get(section)?.get(list)?.as_array()?;
+		Some(
+			entries
+				.iter()
+				.filter_map(|entry| {
+					entry
+						.get("emailAddress")
+						.and_then(Value::as_str)
+						.or_else(|| entry.as_str())
+				})
+				.map(ToOwned::to_owned)
+				.collect(),
+		)
+	};
+	addresses("bounce", "bouncedRecipients")
+		.or_else(|| addresses("complaint", "complainedRecipients"))
+		.or_else(|| addresses("delivery", "recipients"))
+		.or_else(|| {
+			let first = message
+				.get("mail")?
+				.get("destination")?
+				.as_array()?
+				.first()?;
+			Some(vec![first.as_str()?.to_string()])
+		})
+		.unwrap_or_default()
+		.into_iter()
+		.filter(|email| !email.is_empty())
+		.collect()
 }
 
 fn normalize_ses(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<OutcomeInput> {
@@ -882,39 +1028,50 @@ fn normalize_ses(endpoint: &EndpointRow, receipt_id: Uuid, body: &Value) -> Vec<
 	let Ok(message): Result<Value, _> = serde_json::from_str(message) else {
 		return Vec::new();
 	};
-	let notification = message
-		.get("notificationType")
-		.and_then(Value::as_str)
-		.unwrap_or_default();
-	let Some(event_type) = normalize_event_type(notification) else {
+	let Some(event_type) = ses_event_type(&message) else {
 		return Vec::new();
 	};
-	let email = message
-		.get("mail")
-		.and_then(|value| value.get("destination"))
-		.and_then(Value::as_array)
-		.and_then(|value| value.first())
+	let notification_id = body
+		.get("MessageId")
 		.and_then(Value::as_str)
-		.unwrap_or_default();
-	if email.is_empty() {
-		return Vec::new();
-	}
-	vec![make_outcome(
-		endpoint,
-		receipt_id,
-		email.to_string(),
-		event_type,
-		body.get("MessageId")
-			.and_then(Value::as_str)
-			.map(ToOwned::to_owned),
-		message
-			.get("mail")
-			.and_then(|value| value.get("messageId"))
-			.and_then(Value::as_str)
-			.map(ToOwned::to_owned),
-		timestamp_from_value(message.get("mail").and_then(|value| value.get("timestamp"))),
-		message,
-	)]
+		.map(ToOwned::to_owned);
+	let message_id = message
+		.get("mail")
+		.and_then(|value| value.get("messageId"))
+		.and_then(Value::as_str)
+		.map(ToOwned::to_owned);
+	let occurred_at = ["bounce", "complaint", "delivery"]
+		.iter()
+		.find_map(|section| {
+			timestamp_from_value(
+				message
+					.get(*section)
+					.and_then(|value| value.get("timestamp")),
+			)
+		})
+		.or_else(|| {
+			timestamp_from_value(message.get("mail").and_then(|value| value.get("timestamp")))
+		});
+	ses_recipients(&message)
+		.into_iter()
+		.map(|email| {
+			// One notification can cover several recipients; each outcome
+			// needs its own dedupe key.
+			let provider_event_id = notification_id
+				.as_ref()
+				.map(|id| format!("{id}:{}", crate::suppression::suppression_key(&email)));
+			make_outcome(
+				endpoint,
+				receipt_id,
+				email,
+				event_type.clone(),
+				provider_event_id,
+				message_id.clone(),
+				occurred_at,
+				message.clone(),
+			)
+		})
+		.collect()
 }
 
 async fn inbound_handler(
@@ -955,12 +1112,8 @@ async fn inbound_handler(
 		.into());
 	}
 	if !endpoint.allowed_ips.is_empty()
-		&& !remote.is_some_and(|addr| {
-			endpoint
-				.allowed_ips
-				.iter()
-				.any(|ip| ip == &addr.ip().to_string())
-		}) {
+		&& !remote.is_some_and(|addr| ip_is_allowlisted(&endpoint.allowed_ips, addr.ip()))
+	{
 		return Err(ReacherResponseError::new(
 			StatusCode::FORBIDDEN,
 			"Source IP is not allowlisted",
@@ -1236,7 +1389,19 @@ pub fn v1_ingest_provider_outcomes(
 		.and(warp::body::bytes())
 		.and(with_worker_db(config))
 		.and_then(inbound_handler)
-		.with(warp::log(LOG_TARGET))
+		// `warp::log` would write the full path, and its last segment is
+		// the endpoint's delivery token: anyone who can read the logs could
+		// post forged outcomes. Log the route without it.
+		.with(warp::log::custom(|info| {
+			tracing::info!(
+				target: LOG_TARGET,
+				method = %info.method(),
+				path = "/v1/inbound/providers/{provider}/{endpoint_id}/{token}",
+				status = info.status().as_u16(),
+				elapsed_ms = info.elapsed().as_millis() as u64,
+				"Provider outcome callback"
+			);
+		}))
 }
 
 #[cfg(test)]
@@ -1276,8 +1441,84 @@ mod tests {
 			None
 		);
 		assert_eq!(
-			postmark_event_type(&json!({"RecordType": "Bounce"})).as_deref(),
+			postmark_event_type(&json!({"RecordType": "Bounce", "Type": "HardBounce"})).as_deref(),
 			Some("bounced")
+		);
+		assert_eq!(
+			postmark_event_type(&json!({"RecordType": "Bounce", "Type": "SoftBounce"})),
+			None
+		);
+		assert_eq!(
+			postmark_event_type(
+				&json!({"RecordType": "Bounce", "Type": "Transient", "Inactive": true})
+			)
+			.as_deref(),
+			Some("bounced"),
+			"a record that deactivated the address is permanent"
+		);
+		assert_eq!(
+			postmark_event_type(&json!({
+				"RecordType": "SubscriptionChange",
+				"SuppressSending": true,
+				"SuppressionReason": "HardBounce"
+			}))
+			.as_deref(),
+			Some("bounced")
+		);
+		assert_eq!(
+			sendgrid_event_type(&json!({"event": "bounce", "type": "blocked"})),
+			None
+		);
+		assert_eq!(
+			sendgrid_event_type(&json!({"event": "bounce", "type": "bounce"})).as_deref(),
+			Some("bounced")
+		);
+	}
+
+	#[test]
+	fn allowlist_matches_addresses_not_their_spelling() {
+		let stored = normalize_allowed_ips(&[" 2001:DB8::1 ".into(), "::ffff:192.0.2.1".into()])
+			.expect("valid addresses");
+		assert_eq!(
+			stored,
+			vec!["2001:db8::1".to_string(), "192.0.2.1".to_string()]
+		);
+		assert!(normalize_allowed_ips(&["not-an-ip".into()]).is_err());
+
+		// Rows saved before normalization keep their original spelling.
+		let legacy = vec!["2001:DB8::1".to_string(), "192.0.2.1".to_string()];
+		assert!(ip_is_allowlisted(&legacy, "2001:db8::1".parse().unwrap()));
+		// A dual-stack listener reports IPv4 peers as IPv4-mapped IPv6.
+		assert!(ip_is_allowlisted(
+			&legacy,
+			"::ffff:192.0.2.1".parse().unwrap()
+		));
+		assert!(!ip_is_allowlisted(&legacy, "192.0.2.2".parse().unwrap()));
+	}
+
+	#[test]
+	fn ses_reports_permanent_bounces_for_each_bounced_recipient() {
+		use serde_json::json;
+		let bounce = |bounce_type: &str| {
+			json!({
+				"notificationType": "Bounce",
+				"bounce": {
+					"bounceType": bounce_type,
+					"bouncedRecipients": [{"emailAddress": "b@y.test"}, {"emailAddress": "c@y.test"}]
+				},
+				"mail": {"destination": ["a@x.test", "b@y.test", "c@y.test"]}
+			})
+		};
+		assert_eq!(
+			ses_event_type(&bounce("Permanent")).as_deref(),
+			Some("bounced")
+		);
+		assert_eq!(ses_event_type(&bounce("Transient")), None);
+		assert_eq!(ses_event_type(&bounce("Undetermined")), None);
+		assert_eq!(
+			ses_recipients(&bounce("Permanent")),
+			vec!["b@y.test".to_string(), "c@y.test".to_string()],
+			"the recipient that received the message is not the bounce"
 		);
 	}
 

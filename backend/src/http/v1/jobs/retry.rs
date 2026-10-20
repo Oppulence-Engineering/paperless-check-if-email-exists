@@ -32,7 +32,7 @@ async fn http_handler(
 
 	// Lock the job row (tenant-scoped)
 	let job = sqlx::query(
-		"SELECT status::TEXT as status FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) FOR UPDATE",
+		"SELECT status::TEXT as status, tenant_id FROM v1_bulk_job WHERE id = $1 AND (tenant_id = $2 OR $2 IS NULL) FOR UPDATE",
 	)
 	.bind(job_id)
 	.bind(tenant_ctx.tenant_id)
@@ -48,6 +48,14 @@ async fn http_handler(
 	};
 
 	let status: String = sqlx::Row::get(&job, "status");
+	// The worker reads the task's tenant for its policy mode, suppressions
+	// and webhook. An admin-secret caller has no tenant, and payloads stored
+	// before tasks carried metadata have none either, so the job's tenant
+	// is used.
+	let task_tenant_id = job
+		.get::<Option<uuid::Uuid>, _>("tenant_id")
+		.or(tenant_ctx.tenant_id)
+		.map(|id| id.to_string());
 
 	// Only completed, failed, or running jobs can be retried
 	match status.as_str() {
@@ -151,12 +159,15 @@ async fn http_handler(
 
 		if let Some(ref mut metadata) = task.metadata {
 			metadata.task_db_id = Some(task_db_id);
+			if metadata.tenant_id.is_none() {
+				metadata.tenant_id = task_tenant_id.clone();
+			}
 		} else {
 			task.metadata = Some(crate::worker::do_work::TaskMetadata {
 				dispatch_id: None,
 				lease_id: None,
 				decision_policy: None,
-				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
+				tenant_id: task_tenant_id.clone(),
 				request_id: None,
 				correlation_id: None,
 				created_by: None,
@@ -223,9 +234,10 @@ async fn http_handler(
 		}
 		_ => status.as_str(),
 	};
+	crate::worker::job_lifecycle::reopen_lists_for_retry(&mut tx, job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
-	sqlx::query("UPDATE v1_lists SET status = 'processing', completed_at = NULL, updated_at = NOW() WHERE job_id = $1 AND status IN ('completed', 'failed')")
-		.bind(job_id).execute(&mut *tx).await.map_err(ReacherResponseError::from)?;
 	sqlx::query("INSERT INTO job_events (job_id, event_type, event_data, actor) VALUES ($1, 'job.retry_requested', $2, 'api')")
 		.bind(job_id).bind(serde_json::json!({"tasks_retried": retryable_count}))
 		.execute(&mut *tx).await.map_err(ReacherResponseError::from)?;

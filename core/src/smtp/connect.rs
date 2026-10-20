@@ -364,7 +364,16 @@ async fn check_smtp_without_retry(
 ) -> Result<SmtpDetails, SmtpError> {
 	let fut = create_smtp_future(to_email, mx_host, domain, verif_method);
 
-	let (is_catch_all, deliverability) = match verif_method.config.smtp_timeout {
+	// Some servers (listed in rules.json) take about 30s to answer RCPT, so
+	// a shorter configured timeout would always end in an unknown result.
+	let smtp_timeout = verif_method.config.smtp_timeout.map(|timeout| {
+		if has_rule(domain, mx_host, &Rule::SmtpTimeout45s) {
+			timeout.max(std::time::Duration::from_secs(45))
+		} else {
+			timeout
+		}
+	});
+	let (is_catch_all, deliverability) = match smtp_timeout {
 		Some(smtp_timeout) => {
 			let timeout = tokio::time::timeout(smtp_timeout, fut);
 

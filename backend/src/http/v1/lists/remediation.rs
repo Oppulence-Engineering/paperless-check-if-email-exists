@@ -876,13 +876,11 @@ fn classify_row(
 	} else {
 		None
 	};
+	// The canonical address is a matching key (Gmail dots and +tags removed);
+	// exporting it would hand the customer a different contact than the one
+	// they uploaded, so the export uses the normalized spelling.
 	let effective_email = suggested_email
 		.clone()
-		.or_else(|| {
-			row.canonical_email
-				.clone()
-				.filter(|_| options.normalize_emails)
-		})
 		.unwrap_or_else(|| normalized_email.clone());
 	let after = row_after(&before, email_column, &effective_email);
 	let changed = original_email.trim() != effective_email;

@@ -8,6 +8,7 @@ pub mod actions;
 pub mod consume;
 pub mod dispatch;
 pub mod do_work;
+pub mod job_lifecycle;
 pub mod lifecycle;
 pub mod single_shot;
 

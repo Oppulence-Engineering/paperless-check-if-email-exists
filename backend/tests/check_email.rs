@@ -354,6 +354,20 @@ mod tests {
 		let body = parse_json(resp.body());
 		assert_eq!(body["bounce_risk"]["score"], 98);
 		assert_eq!(body["score"]["verified_at"], "2025-01-01T00:00:00+00:00");
+		// Evaluated at the fixed completion time: identical on every run, and
+		// never read as a result that is years old.
+		assert_eq!(
+			body["recommendation"]["evaluated_at"],
+			"2025-01-01T00:00:00Z"
+		);
+		let reasons = body["recommendation"]["reasons"].as_array().unwrap();
+		assert!(
+			reasons
+				.iter()
+				.all(|reason| reason["code"] != "result_stale"),
+			"{:?}",
+			reasons
+		);
 	}
 
 	#[tokio::test]
@@ -465,6 +479,24 @@ mod tests {
 			.await;
 
 		assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+
+		// The decision always uses the tenant's default policy mode, so a
+		// per-request mode is refused instead of being silently ignored.
+		for body in [
+			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_mode": "growth"}),
+			serde_json::json!({"to_email": "a@risky.example.com", "sandbox": true, "policy_profile_key": "strict"}),
+		] {
+			let resp = request()
+				.path("/v1/check_email")
+				.method("POST")
+				.header(REACHER_SECRET_HEADER, "foobar")
+				.json(&body)
+				.reply(&create_routes(create_backend_config("foobar")))
+				.await;
+			assert_eq!(resp.status(), StatusCode::BAD_REQUEST, "{:?}", resp.body());
+			let error = parse_json(resp.body())["error"].to_string();
+			assert!(error.contains("default_policy_mode"), "{}", error);
+		}
 	}
 
 	// --- Version endpoint still works ---

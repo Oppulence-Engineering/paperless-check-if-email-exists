@@ -102,7 +102,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 		)
 	);
 	let outcomes: Vec<String> = sqlx::query_scalar(
-		"SELECT canonical_email FROM v1_contact_outcomes ORDER BY canonical_email",
+		"SELECT canonical_email FROM v1_contact_outcomes ORDER BY canonical_email COLLATE \"C\"",
 	)
 	.fetch_all(db.pool())
 	.await
@@ -611,7 +611,7 @@ async fn duplicate_completion_cannot_copy_across_case_distinct_mailboxes() {
 	sync_task_entities(&config, Some(primary), Some(job))
 		.await
 		.unwrap();
-	let rows: Vec<(String,String,bool)> = sqlx::query_as("SELECT canonical_email,task_state::TEXT,result IS NOT NULL FROM v1_task_result WHERE canonical_task_id = $1 ORDER BY canonical_email")
+	let rows: Vec<(String,String,bool)> = sqlx::query_as("SELECT canonical_email,task_state::TEXT,result IS NOT NULL FROM v1_task_result WHERE canonical_task_id = $1 ORDER BY canonical_email COLLATE \"C\"")
 		.bind(primary).fetch_all(db.pool()).await.unwrap();
 	assert_eq!(
 		rows,

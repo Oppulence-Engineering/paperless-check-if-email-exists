@@ -369,7 +369,8 @@ mod shared_check_email_coverage {
 		.await
 		.unwrap();
 		let status: Option<i16> = row.get("response_status_code");
-		assert_eq!(status, Some(200));
+		// The key keeps its durable operation pointer; replay reads the completed operation.
+		assert_eq!(status, Some(202));
 	}
 }
 

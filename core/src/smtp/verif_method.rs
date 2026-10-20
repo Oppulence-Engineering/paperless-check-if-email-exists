@@ -273,6 +273,30 @@ impl VerifMethod {
 			}
 		};
 
+		match &self.mimecast {
+			MimecastVerifMethod::Smtp(c) => {
+				if let Some(proxy_id) = &c.proxy {
+					self.proxies.get(proxy_id).ok_or_else(|| {
+						VerifMethodError::InvalidProxies(format!(
+							"Invalid Mimecast proxy {proxy_id}"
+						))
+					})?;
+				}
+			}
+		};
+
+		match &self.proofpoint {
+			ProofpointVerifMethod::Smtp(c) => {
+				if let Some(proxy_id) = &c.proxy {
+					self.proxies.get(proxy_id).ok_or_else(|| {
+						VerifMethodError::InvalidProxies(format!(
+							"Invalid Proofpoint proxy {proxy_id}"
+						))
+					})?;
+				}
+			}
+		};
+
 		match &self.everything_else {
 			EverythingElseVerifMethod::Smtp(c) => {
 				if let Some(proxy_id) = &c.proxy {

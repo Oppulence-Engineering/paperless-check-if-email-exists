@@ -66,20 +66,20 @@ pub fn spreadsheet_safe_csv(bytes: Vec<u8>) -> Result<Vec<u8>, csv::Error> {
 		.from_writer(Vec::new());
 	for record in reader.records() {
 		let record = record?;
-		writer.write_record(record.iter().map(|value| {
-			let significant = value.trim_start_matches(|c: char| {
-				c.is_whitespace() || c.is_control() || c == '\u{feff}'
-			});
-			if value.starts_with(['\t', '\r', '\n'])
-				|| significant.starts_with(['=', '+', '-', '@'])
-			{
-				std::borrow::Cow::Owned(format!("'{value}").into_bytes())
-			} else {
-				std::borrow::Cow::Borrowed(value.as_bytes())
-			}
-		}))?;
+		writer.write_record(record.iter().map(spreadsheet_safe))?;
 	}
 	writer.into_inner().map_err(|err| err.into_error().into())
+}
+
+/// Prefix potentially executable spreadsheet cells; JSON keeps the original value.
+pub fn spreadsheet_safe(value: &str) -> String {
+	let significant =
+		value.trim_start_matches(|c: char| c.is_whitespace() || c.is_control() || c == '\u{feff}');
+	if value.starts_with(['\t', '\r', '\n']) || significant.starts_with(['=', '+', '-', '@']) {
+		format!("'{value}")
+	} else {
+		value.to_string()
+	}
 }
 
 pub fn csv_rows(records: &[TaskResultRecord]) -> Result<Vec<u8>, csv::Error> {
@@ -313,6 +313,30 @@ fn result_value<'a>(record: &'a TaskResultRecord, path: &[&str]) -> Option<&'a V
 
 #[cfg(test)]
 mod tests {
+
+	#[test]
+	fn spreadsheet_safe_neutralizes_formula_prefixes() {
+		for formula in [
+			"=HYPERLINK(\"http://evil\",\"x\")",
+			"=1+2@x.com",
+			"@SUM(A1)",
+			"+cmd|' /C calc'!A0",
+			"-2+3+cmd|' /C calc'!A0",
+			"\tdata",
+			"-5",
+			"+1 (555) 010-0000",
+		] {
+			assert_eq!(
+				spreadsheet_safe(formula),
+				format!("'{formula}"),
+				"{formula}"
+			);
+		}
+		for plain in ["user@example.com", "2026-10-19", ""] {
+			assert_eq!(spreadsheet_safe(plain), plain, "{plain}");
+		}
+	}
+
 	use super::*;
 
 	#[test]

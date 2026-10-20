@@ -524,6 +524,9 @@ mod tests {
 	fn validation_rules_allow_expected_variants() {
 		let gmail = detect_provider("gmail.com", None).unwrap();
 		assert!(validate_provider_email(&gmail, "valid.user+tag").is_ok());
+		// The tag is not held to Gmail's username rules.
+		assert!(validate_provider_email(&gmail, "jane.doe+news-letter").is_ok());
+		assert!(validate_provider_email(&gmail, "johnathan.smithson+subscriptions").is_ok());
 
 		let yahoo = detect_provider("yahoo.com", None).unwrap();
 		assert!(validate_provider_email(&yahoo, "valid_user").is_ok());

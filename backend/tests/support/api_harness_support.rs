@@ -3225,7 +3225,7 @@ pub fn auth_failure_cases() -> Vec<HarnessCase> {
 			AuthProfile::AdminSecretInvalid,
 			PathProfile::Literal("/v1/admin/tenants"),
 			BodyProfile::None,
-			400,
+			401,
 			Expectation::StatusOnly,
 		),
 		case!(
