@@ -219,6 +219,14 @@ impl Default for DebugDetails {
 }
 
 /// The result of the [check_email](check_email) function.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ExternalVerification {
+	pub service: String,
+	pub result: String,
+	pub result_code: i32,
+	pub subresult: String,
+}
+
 #[derive(Debug)]
 pub struct CheckEmailOutput {
 	/// Input by the user.
@@ -242,6 +250,8 @@ pub struct CheckEmailOutput {
 	pub provider_confidence: Option<ProviderConfidence>,
 	/// Details about the email verification used for debugging.
 	pub debug: DebugDetails,
+	/// Evidence supplied by an external verification service. Local SMTP was not performed.
+	pub external_verification: Option<ExternalVerification>,
 }
 
 impl Default for CheckEmailOutput {
@@ -258,6 +268,7 @@ impl Default for CheckEmailOutput {
 			provider_rejection_reason: None,
 			provider_confidence: None,
 			debug: DebugDetails::default(),
+			external_verification: None,
 		}
 	}
 }
@@ -323,6 +334,9 @@ impl Serialize for CheckEmailOutput {
 			map.serialize_entry("provider_confidence", confidence)?;
 		}
 		map.serialize_entry("debug", &self.debug)?;
+		if let Some(external) = &self.external_verification {
+			map.serialize_entry("external_verification", external)?;
+		}
 		map.end()
 	}
 }
@@ -376,6 +390,7 @@ mod tests {
 			);
 
 			CheckEmailOutput {
+				external_verification: None,
 				input: "foo".to_string(),
 				is_reachable: super::Reachable::Unknown,
 				misc: Ok(super::MiscDetails::default()),

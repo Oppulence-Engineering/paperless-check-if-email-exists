@@ -152,7 +152,11 @@ export function VerificationSettings({
 	const saveReverification = useMutation({
 		mutationFn: async (body: { enabled: boolean; staleness_days: number; batch_size: number }) =>
 			V1ReverificationStatus200Response.parse(
-				(await v1Api.v1UpdateReverification({ updateReverificationRequest: body })).data,
+				(
+					await v1Api.v1UpdateReverification({
+						updateReverificationRequest: body,
+					})
+				).data,
 			),
 		onSuccess: (data) => {
 			queryClient.setQueryData(workflowQueryKey("reverification-status", organizationId), data);
@@ -465,7 +469,8 @@ export function VerificationSettings({
 					) : null}
 					{showDefaults ? (
 						<Section
-							description="Track stale-address checks and the next scheduled batch."
+							id="reverification"
+							description="Re-check stale addresses across this workspace. Each submitted address uses one verification credit; the batch size caps usage per run. Suppressed addresses are excluded."
 							title="Reverification schedule"
 						>
 							<form

@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -21,6 +21,7 @@ type ReasonCode string
 
 // List of ReasonCode
 const (
+	REASONCODE_EXTERNAL_VERIFICATION ReasonCode = "external_verification"
 	REASONCODE_DELIVERABLE ReasonCode = "deliverable"
 	REASONCODE_INVALID_SYNTAX ReasonCode = "invalid_syntax"
 	REASONCODE_INVALID_RECIPIENT ReasonCode = "invalid_recipient"
@@ -66,6 +67,7 @@ const (
 
 // All allowed values of ReasonCode enum
 var AllowedReasonCodeEnumValues = []ReasonCode{
+	"external_verification",
 	"deliverable",
 	"invalid_syntax",
 	"invalid_recipient",

@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **BounceRisk** | Pointer to [**NullableBounceRiskAssessment**](BounceRiskAssessment.md) | Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable. | [optional]
 **Debug** | Pointer to [**DebugDetails**](DebugDetails.md) |  | [optional]
+**ExternalVerification** | Pointer to [**CheckEmailOutputExternalVerification**](CheckEmailOutputExternalVerification.md) |  | [optional]
 **Input** | **string** | The email address that was verified. | [required]
 **IsReachable** | [**Reachable**](Reachable.md) |  | [required]
 **Misc** | [**CheckEmailOutputMisc**](CheckEmailOutputMisc.md) |  | [required]
@@ -99,6 +100,31 @@ SetDebug sets Debug field to given value.
 `func (o *CheckEmailOutput) HasDebug() bool`
 
 HasDebug returns a boolean if a field has been set.
+
+### GetExternalVerification
+
+`func (o *CheckEmailOutput) GetExternalVerification() CheckEmailOutputExternalVerification`
+
+GetExternalVerification returns the ExternalVerification field if non-nil, zero value otherwise.
+
+### GetExternalVerificationOk
+
+`func (o *CheckEmailOutput) GetExternalVerificationOk() (*CheckEmailOutputExternalVerification, bool)`
+
+GetExternalVerificationOk returns a tuple with the ExternalVerification field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExternalVerification
+
+`func (o *CheckEmailOutput) SetExternalVerification(v CheckEmailOutputExternalVerification)`
+
+SetExternalVerification sets ExternalVerification field to given value.
+
+### HasExternalVerification
+
+`func (o *CheckEmailOutput) HasExternalVerification() bool`
+
+HasExternalVerification returns a boolean if a field has been set.
 
 ### GetInput
 

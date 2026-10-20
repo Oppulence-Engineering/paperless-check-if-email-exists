@@ -7,6 +7,7 @@ use crate::tenant::quota::release_reserved_usage;
 use crate::tenant::webhook::{sign_payload, WEBHOOK_SIGNATURE_HEADER};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use anyhow::{bail, Context, Result};
+use check_if_email_exists::network::is_private_ip;
 use check_if_email_exists::{Reachable, LOG_TARGET};
 use chrono::{DateTime, Duration, Utc};
 use chrono_tz::Tz;
@@ -422,6 +423,10 @@ pub async fn run_pipeline_scheduler_cycle(
 		return Ok(());
 	}
 
+	recover_stranded_pending_deliveries(pg_pool).await?;
+	retry_due_pipeline_deliveries(pg_pool, config.pipelines.max_due_per_tick).await?;
+	crate::smtp_egress::require_smtp_ready(&config)?;
+
 	recover_stalled_pipeline_runs(config.as_ref(), pg_pool, config.pipelines.max_due_per_tick)
 		.await?;
 
@@ -450,9 +455,6 @@ pub async fn run_pipeline_scheduler_cycle(
 			spawn_pipeline_run_execution(Arc::clone(&config), pg_pool.clone(), run);
 		}
 	}
-
-	recover_stranded_pending_deliveries(pg_pool).await?;
-	retry_due_pipeline_deliveries(pg_pool, config.pipelines.max_due_per_tick).await?;
 
 	Ok(())
 }
@@ -731,6 +733,11 @@ async fn recover_stranded_queued_pipeline_runs(
 		SET updated_at = NOW()
 		FROM candidates c
 		WHERE pr.id = c.id
+		  -- Checked again here: PostgreSQL re-checks this WHERE against the
+		  -- latest row after waiting for a lock, but not the CTE's filters,
+		  -- so without it two replicas could recover the same run.
+		  AND pr.status = 'queued'::pipeline_run_status
+		  AND pr.updated_at < NOW() - INTERVAL '5 minutes'
 		RETURNING pr.id, c.pipeline_id
 		"#,
 	)
@@ -1245,6 +1252,7 @@ pub async fn create_manual_pipeline_run(
 	force: bool,
 	reason: Option<String>,
 ) -> Result<TriggerPipelineResponse> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let mut tx = pg_pool.begin().await?;
 	let pipeline = match fetch_pipeline_row_for_update(&mut tx, pipeline_id).await? {
 		Some(row) if row.tenant_id == tenant_id && row.deleted_at.is_none() => row,
@@ -1313,6 +1321,7 @@ pub async fn create_push_pipeline_run(
 	idempotency_key: String,
 	input: PushPipelineInput,
 ) -> Result<PushPipelineResponse> {
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	let idempotency_key = idempotency_key.trim();
 	if idempotency_key.is_empty() || idempotency_key.len() > 200 {
 		return Err(PipelineRequestError::validation(
@@ -1743,7 +1752,10 @@ async fn reserve_pipeline_usage_event(
 ) -> Result<PipelineUsageReservation> {
 	let mut tx = pg_pool.begin().await?;
 
-	if let Some(limit) = tenant_ctx.monthly_email_limit.filter(|value| *value > 0) {
+	if tenant_ctx
+		.monthly_email_limit
+		.is_some_and(|value| value > 0)
+	{
 		if Utc::now() >= tenant_ctx.period_reset_at {
 			sqlx::query(
 				r#"
@@ -1779,20 +1791,11 @@ async fn reserve_pipeline_usage_event(
 			.await?;
 
 			if usage_updated.is_none() {
-				let current_usage = sqlx::query_scalar::<_, Option<i32>>(
-					"SELECT used_this_period FROM tenants WHERE id = $1",
-				)
-				.bind(tenant_id)
-				.fetch_one(&mut *tx)
-				.await?
-				.unwrap_or_default();
-
+				// The guarded update fails exactly when this run would go over
+				// the limit, including when some credits are left but fewer
+				// than the run needs; that is a shortfall, not an error.
 				tx.rollback().await?;
-				if current_usage >= limit {
-					return Ok(PipelineUsageReservation::ExceededMonthlyLimit);
-				}
-
-				bail!("Tenant quota reservation failed for pipeline run");
+				return Ok(PipelineUsageReservation::ExceededMonthlyLimit);
 			}
 		}
 	}
@@ -1895,12 +1898,17 @@ async fn execute_pipeline_run_inner(
 	let delivery: PipelineDeliveryConfig =
 		serde_json::from_value(run.get::<Value, _>("delivery_config")).unwrap_or_default();
 
-	sqlx::query(
-		"UPDATE v1_pipeline_runs SET status = 'preparing'::pipeline_run_status, started_at = COALESCE(started_at, NOW()), updated_at = NOW() WHERE id = $1",
+	// Only one executor may take a queued run; another one that read the run
+	// before this claim stops here instead of publishing every email again.
+	let claimed = sqlx::query(
+		"UPDATE v1_pipeline_runs SET status = 'preparing'::pipeline_run_status, started_at = COALESCE(started_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'queued'::pipeline_run_status",
 	)
 	.bind(run_id)
 	.execute(pg_pool)
 	.await?;
+	if claimed.rows_affected() == 0 {
+		return Ok(());
+	}
 
 	let prepared_list = load_pipeline_source(pg_pool, tenant_id, &source, &source_snapshot).await?;
 	let (prepared_list, delta_summary) =
@@ -1997,14 +2005,21 @@ async fn execute_pipeline_run_inner(
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
 		.with_priority(0);
-	let worker_config = config.must_worker_config()?;
+	config.must_worker_config()?;
 
 	// Every row gets its task row before anything is published. The worker
 	// settles the job and list as tasks complete, and a row added after the last
 	// completion would leave the list short of its total forever.
 	let mut groups_to_publish = Vec::with_capacity(prepared_list.canonical_groups.len());
-	for (canonical, indices) in &prepared_list.canonical_groups {
+	for (group_number, (canonical, indices)) in prepared_list.canonical_groups.iter().enumerate() {
+		heartbeat_pipeline_run(pg_pool, run_id, group_number).await?;
 		let primary_index = indices[0];
+		let routing_email = prepared_list.rows[primary_index]
+			.get(&prepared_list.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
 		let primary_extra = json!({
 			"list_id": list_id,
 			"row_index": primary_index as i32,
@@ -2021,7 +2036,7 @@ async fn execute_pipeline_run_inner(
 		)
 		.bind(job_id)
 		.bind(json!({
-				"input": {"to_email": canonical},
+				"input": {"to_email": routing_email},
 				"job_id": {"bulk": job_id},
 				"webhook": null
 			}))
@@ -2159,16 +2174,28 @@ async fn execute_pipeline_run_inner(
 	.await?;
 
 	let mut published_unique_groups = 0i32;
-	for (canonical, primary_index, primary_task_id, duplicate_ids) in groups_to_publish {
+	for (group_number, (canonical, primary_index, primary_task_id, duplicate_ids)) in
+		groups_to_publish.into_iter().enumerate()
+	{
+		heartbeat_pipeline_run(pg_pool, run_id, group_number).await?;
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
-				to_email: canonical.clone(),
+				to_email: prepared_list.rows[primary_index]
+					.get(&prepared_list.email_column)
+					.and_then(Value::as_str)
+					.unwrap_or_default()
+					.trim()
+					.to_string(),
 				..Default::default()
 			}
 			.to_check_email_input(Arc::clone(&config)),
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,
@@ -2181,9 +2208,7 @@ async fn execute_pipeline_run_inner(
 			}),
 		};
 
-		if let Err(err) =
-			publish_task(worker_config.channel.clone(), task, properties.clone()).await
-		{
+		if let Err(err) = publish_task(pg_pool, task, properties.clone()).await {
 			warn!(
 				target: LOG_TARGET,
 				pipeline_id = pipeline_id,
@@ -2240,8 +2265,8 @@ async fn execute_pipeline_run_inner(
 
 	// Rows that failed to publish, or a list with nothing to verify, leave no
 	// task for the worker to finish, so nothing else would settle these.
-	settle_job_without_outstanding_tasks(pg_pool, job_id).await?;
-	settle_list_without_outstanding_rows(pg_pool, list_id, job_id).await?;
+	crate::worker::job_lifecycle::finalize_bulk_job_if_done(pg_pool, job_id).await?;
+	crate::worker::job_lifecycle::finalize_list_if_done(pg_pool, list_id).await?;
 
 	// Only now hand the run over: maybe_finalize_pipeline_run skips runs that
 	// are still publishing, so the worker cannot finalize it underneath us. The
@@ -2269,90 +2294,19 @@ async fn execute_pipeline_run_inner(
 	Ok(())
 }
 
-/// Gives a pipeline job its final status once none of its tasks is still
-/// queued or running, using the worker's rules: cancelling becomes cancelled,
-/// any failed task makes it failed, otherwise completed.
-async fn settle_job_without_outstanding_tasks(pg_pool: &PgPool, job_id: i32) -> Result<()> {
-	sqlx::query(
-		r#"
-		WITH settled AS (
-			SELECT j.id,
-			       CASE
-			           WHEN j.status = 'cancelling'::job_state THEN 'cancelled'::job_state
-			           WHEN EXISTS (
-			               SELECT 1 FROM v1_task_result t
-			               WHERE t.job_id = j.id
-			                 AND t.task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
-			           ) THEN 'failed'::job_state
-			           ELSE 'completed'::job_state
-			       END AS final_status
-			FROM v1_bulk_job j
-			WHERE j.id = $1
-			  AND j.status IN ('running'::job_state, 'cancelling'::job_state)
-			  AND NOT EXISTS (
-			      SELECT 1 FROM v1_task_result t
-			      WHERE t.job_id = j.id
-			        AND t.task_state IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
-			  )
-		)
-		UPDATE v1_bulk_job j
-		SET status = settled.final_status,
-		    completed_at = CASE
-		        WHEN settled.final_status IN ('completed'::job_state, 'failed'::job_state)
-		        THEN COALESCE(j.completed_at, NOW())
-		        ELSE j.completed_at
-		    END,
-		    cancelled_at = CASE
-		        WHEN settled.final_status = 'cancelled'::job_state THEN COALESCE(j.cancelled_at, NOW())
-		        ELSE j.cancelled_at
-		    END,
-		    updated_at = NOW()
-		FROM settled
-		WHERE j.id = settled.id
-		"#,
-	)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await?;
-	Ok(())
-}
+/// Rows between progress marks while a run inserts or publishes its rows.
+const PIPELINE_RUN_HEARTBEAT_ROWS: usize = 500;
 
-/// Gives a pipeline list its final status once every row has a result, using
-/// the worker's rules: failed if any row failed, otherwise completed.
-async fn settle_list_without_outstanding_rows(
-	pg_pool: &PgPool,
-	list_id: i32,
-	job_id: i32,
-) -> Result<()> {
-	sqlx::query(
-		r#"
-		WITH tally AS (
-			SELECT
-				COUNT(*) FILTER (
-					WHERE (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled'::task_state)
-						AND task_state NOT IN ('queued'::task_state, 'running'::task_state, 'retrying'::task_state)
-				) AS processed,
-				COUNT(*) FILTER (
-					WHERE task_state IN ('failed'::task_state, 'dead_lettered'::task_state)
-				) AS failed
-			FROM v1_task_result
-			WHERE job_id = $2
-		)
-		UPDATE v1_lists l
-		SET status = CASE WHEN tally.failed > 0 THEN 'failed'::list_status ELSE 'completed'::list_status END,
-		    error_message = CASE WHEN tally.failed > 0 THEN COALESCE(l.error_message, 'task_failed') ELSE l.error_message END,
-		    completed_at = COALESCE(l.completed_at, NOW()),
-		    updated_at = NOW()
-		FROM tally
-		WHERE l.id = $1
-		  AND l.status = 'processing'::list_status
-		  AND tally.processed >= l.total_rows
-		"#,
-	)
-	.bind(list_id)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await?;
+/// Refreshes the run's `updated_at` every few hundred rows. The stalled-run
+/// sweep fails runs that go quiet for 30 minutes, and a large list can take
+/// that long to insert or publish while its executor is alive.
+async fn heartbeat_pipeline_run(pg_pool: &PgPool, run_id: i64, row_number: usize) -> Result<()> {
+	if row_number > 0 && row_number.is_multiple_of(PIPELINE_RUN_HEARTBEAT_ROWS) {
+		sqlx::query("UPDATE v1_pipeline_runs SET updated_at = NOW() WHERE id = $1")
+			.bind(run_id)
+			.execute(pg_pool)
+			.await?;
+	}
 	Ok(())
 }
 
@@ -2751,9 +2705,14 @@ async fn apply_delta_selection(
 		state_by_email.insert(state.canonical_email.clone(), state);
 	}
 
+	// Checked arithmetic: `freshness_days` comes from the API unbounded, and
+	// an overflowing subtraction panics, which would kill the run task and
+	// leave the run stuck in `preparing`. A cutoff before the representable
+	// range marks nothing as stale, like any very long freshness window.
 	let freshness_cutoff = verification
 		.freshness_days
-		.map(|days| Utc::now() - Duration::days(i64::from(days.max(0))));
+		.and_then(|days| Duration::try_days(i64::from(days.max(0))))
+		.and_then(|age| Utc::now().checked_sub_signed(age));
 
 	let mut selected_indices = Vec::new();
 	let mut skipped_unchanged = 0i32;
@@ -2866,12 +2825,7 @@ async fn deliver_pipeline_run_summary(
 		"download_url": list_id.map(|list_id| format!("/v1/lists/{list_id}/download")),
 	});
 
-	validate_webhook_url(&url)?;
-	validate_resolved_webhook_target(&url).await?;
-	let client = reqwest::Client::builder()
-		.timeout(std::time::Duration::from_secs(10))
-		.redirect(reqwest::redirect::Policy::none())
-		.build()?;
+	let client = validated_webhook_client(&url).await?;
 	let mut request = client.post(url).json(&payload);
 	for (name, value) in headers {
 		request = request.header(&name, value);
@@ -3295,11 +3249,15 @@ pub fn compute_next_run_at(
 	let tz = parse_timezone(timezone)?;
 	let now = now_utc.with_timezone(&tz);
 	let schedule = parse_schedule(expression)?;
+	// On a DST fall-back day an ambiguous local time resolves to its earlier
+	// instant, which can already be past; a past next run would fire on every
+	// scheduler tick until the clock catches up.
 	let next = schedule
 		.after(&now)
-		.next()
+		.map(|next| next.with_timezone(&Utc))
+		.find(|next| *next > now_utc)
 		.context("Cron expression did not produce a next run")?;
-	Ok(next.with_timezone(&Utc))
+	Ok(next)
 }
 
 /// Takes a connection rather than the pool so `update_pipeline` can validate on
@@ -3406,7 +3364,11 @@ pub(crate) fn validate_webhook_url(url: &str) -> Result<()> {
 		{
 			bail!("Webhook URL must not target localhost or loopback addresses");
 		}
-		if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+		if let Ok(ip) = host
+			.trim_start_matches('[')
+			.trim_end_matches(']')
+			.parse::<std::net::IpAddr>()
+		{
 			if is_private_ip(ip) {
 				bail!("Webhook URL must not target private or reserved IP addresses");
 			}
@@ -3417,7 +3379,9 @@ pub(crate) fn validate_webhook_url(url: &str) -> Result<()> {
 	Ok(())
 }
 
-pub(crate) async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
+pub(crate) async fn validate_resolved_webhook_target(
+	url: &str,
+) -> Result<Vec<std::net::SocketAddr>> {
 	let parsed = reqwest::Url::parse(url).context("Invalid webhook URL")?;
 	let host = parsed
 		.host_str()
@@ -3425,53 +3389,29 @@ pub(crate) async fn validate_resolved_webhook_target(url: &str) -> Result<()> {
 	let port = parsed
 		.port_or_known_default()
 		.context("Webhook URL must use a known port")?;
-	let addrs = tokio::net::lookup_host((host, port))
-		.await
-		.with_context(|| format!("Failed to resolve webhook host: {host}"))?
-		.collect::<Vec<_>>();
-	if addrs.is_empty() {
-		bail!("Webhook URL host did not resolve to any addresses");
-	}
-	if addrs.iter().any(|addr| is_private_ip(addr.ip())) {
-		bail!("Webhook URL must not resolve to private or reserved IP addresses");
-	}
-	Ok(())
+	let addrs = check_if_email_exists::network::resolve_public_addresses(
+		host.trim_start_matches('[').trim_end_matches(']'),
+		port,
+	)
+	.await
+	.with_context(|| format!("Invalid webhook destination: {host}"))?;
+	Ok(addrs)
 }
 
-fn is_private_ip(ip: std::net::IpAddr) -> bool {
-	match ip {
-		std::net::IpAddr::V4(v4) => {
-			v4.is_loopback()
-				|| v4.is_private()
-				|| v4.is_link_local()
-				|| v4.is_broadcast()
-				|| v4.is_multicast()
-				|| v4.is_unspecified()
-				|| v4.octets()[0] == 169 && v4.octets()[1] == 254 // link-local
-				|| v4.octets()[0] == 100 && (v4.octets()[1] & 0xC0) == 64 // CGN 100.64/10
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 0 // 192.0.0.0/24 IETF protocol assignments
-				|| v4.octets()[0] == 192 && v4.octets()[1] == 0 && v4.octets()[2] == 2 // 192.0.2.0/24 TEST-NET-1
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 18 // 198.18.0.0/15 benchmark
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 19
-				|| v4.octets()[0] == 198 && v4.octets()[1] == 51 && v4.octets()[2] == 100 // 198.51.100.0/24 TEST-NET-2
-				|| v4.octets()[0] == 203 && v4.octets()[1] == 0 && v4.octets()[2] == 113 // 203.0.113.0/24 TEST-NET-3
-				|| v4.octets()[0] >= 240 // reserved + limited broadcast block
-		}
-		std::net::IpAddr::V6(v6) => {
-			let first_segment = v6.segments()[0];
-			let mapped_private = v6
-				.to_ipv4_mapped()
-				.is_some_and(|mapped| is_private_ip(std::net::IpAddr::V4(mapped)));
-			v6.is_loopback()
-				|| v6.is_unspecified()
-				|| v6.is_multicast()
-				|| (first_segment & 0xffc0) == 0xfe80 // fe80::/10 link-local
-				|| (first_segment & 0xfe00) == 0xfc00 // fc00::/7 unique local
-				|| (first_segment & 0xffc0) == 0xfec0 // fec0::/10 site-local (deprecated but non-global)
-				|| (first_segment == 0x2001 && v6.segments()[1] == 0x0db8) // 2001:db8::/32 documentation
-				|| mapped_private
-		}
-	}
+pub(crate) async fn validated_webhook_client(url: &str) -> Result<reqwest::Client> {
+	validate_webhook_url(url)?;
+	let addrs = validate_resolved_webhook_target(url).await?;
+	let parsed = reqwest::Url::parse(url)?;
+	pinned_webhook_client(parsed.host_str().context("Missing webhook host")?, &addrs)
+}
+
+fn pinned_webhook_client(host: &str, addrs: &[std::net::SocketAddr]) -> Result<reqwest::Client> {
+	Ok(reqwest::Client::builder()
+		.no_proxy()
+		.timeout(std::time::Duration::from_secs(10))
+		.redirect(reqwest::redirect::Policy::none())
+		.resolve_to_addrs(host.trim_start_matches('[').trim_end_matches(']'), addrs)
+		.build()?)
 }
 
 /// A five-field cron schedule with standard day semantics.
@@ -3801,6 +3741,38 @@ mod tests {
 	use super::*;
 	use chrono::{TimeZone, Timelike};
 
+	#[tokio::test]
+	async fn webhook_connection_uses_the_validated_address_without_another_dns_lookup() {
+		use tokio::io::{AsyncReadExt, AsyncWriteExt};
+		let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let address = listener.local_addr().unwrap();
+		let server = tokio::spawn(async move {
+			let (mut socket, _) = listener.accept().await.unwrap();
+			let mut request = [0; 2048];
+			let count = socket.read(&mut request).await.unwrap();
+			assert!(String::from_utf8_lossy(&request[..count]).contains("rebind.invalid"));
+			socket
+				.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok")
+				.await
+				.unwrap();
+		});
+		// Exercise address pinning independently of the public-address validation.
+		let client = pinned_webhook_client("rebind.invalid", &[address]).unwrap();
+		let response = client
+			.get(format!("http://rebind.invalid:{}/", address.port()))
+			.send()
+			.await
+			.unwrap();
+		assert_eq!(response.status(), reqwest::StatusCode::OK);
+		server.await.unwrap();
+		assert!(validated_webhook_client("https://127.0.0.1/hook")
+			.await
+			.is_err());
+		assert!(validated_webhook_client("https://[::1]/hook")
+			.await
+			.is_err());
+	}
+
 	#[test]
 	fn test_compute_next_run_at_accepts_five_field_cron() {
 		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
@@ -3830,6 +3802,31 @@ mod tests {
 	fn test_compute_delivery_retry_delay_clamps_large_base_delay() {
 		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 1), 86_400);
 		assert_eq!(compute_delivery_retry_delay_seconds(120_000, 4), 86_400);
+	}
+
+	#[test]
+	fn test_compute_next_run_at_uses_standard_day_of_week_numbers() {
+		use chrono::{Datelike, Weekday};
+		// 2026-03-28 is a Saturday.
+		let now = Utc.with_ymd_and_hms(2026, 3, 28, 12, 0, 0).unwrap();
+		let weekday = |expression: &str| {
+			compute_next_run_at(expression, "UTC", now)
+				.unwrap()
+				.weekday()
+		};
+		assert_eq!(weekday("0 9 * * 1"), Weekday::Mon);
+		assert_eq!(weekday("0 9 * * 0"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * 7"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * 1-5"), Weekday::Mon);
+		assert_eq!(weekday("0 9 * * 5-7"), Weekday::Sun);
+		assert_eq!(weekday("0 9 * * MON"), Weekday::Mon);
+		assert!(compute_next_run_at("0 9 * * 8", "UTC", now).is_err());
+	}
+
+	#[test]
+	fn test_validate_cron_expression_checks_the_shortest_gap() {
+		// 30 minutes apart once a day: too frequent at any time of day.
+		assert!(validate_cron_expression("0,30 9 * * *", "UTC", 3600, Utc::now()).is_err());
 	}
 
 	#[test]

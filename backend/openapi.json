@@ -650,7 +650,19 @@
       },
       "BlacklistResult": {
         "properties": {
+          "answers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "error": {
+            "nullable": true,
+            "type": "string"
+          },
           "listed": {
+            "description": "Null for failed or skipped queries; false only for a completed negative lookup.",
+            "nullable": true,
             "type": "boolean"
           },
           "lookup_time_ms": {
@@ -659,11 +671,23 @@
           },
           "provider": {
             "type": "string"
+          },
+          "status": {
+            "enum": [
+              "listed",
+              "not_listed",
+              "error",
+              "skipped"
+            ],
+            "type": "string"
           }
         },
         "required": [
           "provider",
           "listed",
+          "status",
+          "answers",
+          "error",
           "lookup_time_ms"
         ],
         "type": "object"
@@ -926,6 +950,31 @@
           },
           "debug": {
             "$ref": "#/components/schemas/DebugDetails"
+          },
+          "external_verification": {
+            "description": "External verification evidence. When present, SMTP was not performed locally.",
+            "properties": {
+              "result": {
+                "type": "string"
+              },
+              "result_code": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "service": {
+                "type": "string"
+              },
+              "subresult": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "service",
+              "result",
+              "result_code",
+              "subresult"
+            ],
+            "type": "object"
           },
           "input": {
             "description": "The email address that was verified.",
@@ -1507,11 +1556,43 @@
       },
       "DnsRecordResults": {
         "properties": {
+          "dkim_selectors": {
+            "items": {
+              "properties": {
+                "error": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "usable_key",
+                    "revoked",
+                    "invalid",
+                    "not_found",
+                    "error"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "selector",
+                "status",
+                "error"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "dmarc_policy": {
             "nullable": true,
             "type": "string"
           },
           "has_dkim": {
+            "description": "True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence.",
+            "nullable": true,
             "type": "boolean"
           },
           "has_dmarc": {
@@ -1529,14 +1610,16 @@
             },
             "type": "array"
           },
-          "spf_valid": {
+          "spf_policy_explicit": {
+            "description": "Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization.",
             "type": "boolean"
           }
         },
         "required": [
           "has_spf",
-          "spf_valid",
+          "spf_policy_explicit",
           "has_dkim",
+          "dkim_selectors",
           "has_dmarc",
           "has_mx",
           "mx_records"
@@ -2977,6 +3060,26 @@
         ],
         "type": "object"
       },
+      "PendingVerification": {
+        "properties": {
+          "operation_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "status_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "status",
+          "status_url"
+        ],
+        "type": "object"
+      },
       "PipelineDeliveryConfig": {
         "example": {
           "dashboard": true,
@@ -3886,6 +3989,7 @@
       },
       "ReasonCode": {
         "enum": [
+          "external_verification",
           "deliverable",
           "invalid_syntax",
           "invalid_recipient",
@@ -5270,6 +5374,7 @@
       "UpdateApiKeyRequest": {
         "properties": {
           "expires_at": {
+            "description": "`null` removes the expiry; an absent field leaves it unchanged.",
             "nullable": true,
             "type": "string"
           },
@@ -5479,6 +5584,7 @@
             "type": "boolean"
           },
           "is_verified": {
+            "description": "Only read to refuse it: verification is not the tenant's to declare.",
             "nullable": true,
             "type": "boolean"
           },
@@ -5594,6 +5700,17 @@
         "title": "VerifMethod",
         "type": "object"
       },
+      "VerificationResponse": {
+        "description": "SDK result for either a completed verification (HTTP 200) or its pending operation (HTTP 202).",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CheckEmailOutput"
+          },
+          {
+            "$ref": "#/components/schemas/PendingVerification"
+          }
+        ]
+      },
       "Webhook": {
         "description": "Configuration for a webhook to receive email verification results. The method will be POST, and the body will contain the email verification response.",
         "properties": {
@@ -5665,7 +5782,7 @@
     },
     "termsOfService": "https://github.com/reacherhq/policies/blob/master/terms/index.fr.md",
     "title": "Reacher",
-    "version": "4.3.1"
+    "version": "4.4.0"
   },
   "openapi": "3.0.0",
   "paths": {
@@ -5680,6 +5797,26 @@
         },
         "security": [],
         "summary": "GET /healthz",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "smtp_metrics",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Cached SMTP capability gauges"
+          }
+        },
         "tags": [
           "Health"
         ]
@@ -5836,6 +5973,16 @@
               }
             },
             "description": "Email verification result"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingVerification"
+                }
+              }
+            },
+            "description": "Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge."
           }
         },
         "security": [
@@ -7492,6 +7639,16 @@
               }
             },
             "description": "Email verification result"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingVerification"
+                }
+              }
+            },
+            "description": "Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge."
           },
           "default": {
             "content": {
@@ -9371,7 +9528,7 @@
         ]
       },
       "patch": {
-        "description": "Update the domain value, status, verification state, or metadata notes.",
+        "description": "Update the domain value, active status, or notes. Setting `is_verified` is refused.",
         "operationId": "v1_update_tenant_domain",
         "parameters": [
           {
@@ -9611,6 +9768,58 @@
         "summary": "PATCH /v1/me/webhook",
         "tags": [
           "Tenant"
+        ]
+      }
+    },
+    "/v1/operations/{operation_id}": {
+      "get": {
+        "operationId": "v1_get_verification_operation",
+        "parameters": [
+          {
+            "description": "Verification operation identifier",
+            "in": "path",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckEmailOutput"
+                }
+              }
+            },
+            "description": "Stored verification result"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingVerification"
+                }
+              }
+            },
+            "description": "Verification is pending"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request error"
+          }
+        },
+        "tags": [
+          "v1"
         ]
       }
     },

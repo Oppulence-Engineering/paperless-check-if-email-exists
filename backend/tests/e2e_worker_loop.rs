@@ -27,6 +27,7 @@ mod worker_loop_tests {
 	}
 	async fn rabbitmq_config() -> RabbitMQConfig {
 		RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		}
@@ -43,6 +44,7 @@ mod worker_loop_tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -113,6 +115,7 @@ mod worker_loop_tests {
 
 		// Publish task with invalid email (returns Invalid → success path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad-syntax".into(),
 				..Default::default()
@@ -120,6 +123,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -192,6 +198,7 @@ mod worker_loop_tests {
 
 		// Publish task for the cancelled job
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "cancel@test.com".into(),
 				..Default::default()
@@ -199,6 +206,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -223,14 +233,66 @@ mod worker_loop_tests {
 				.unwrap()
 				.get(0);
 
-		// The consumer may have been from a previous test's tokio::spawn — accept completed too
-		assert!(
-			state == "cancelled" || state == "completed" || state == "dead_lettered",
-			"Expected cancelled/completed/dead_lettered, got: {}",
-			state
-		);
+		assert_eq!(state, "cancelled");
 		worker.abort();
 		assert!(worker.await.unwrap_err().is_cancelled());
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_legacy_cancelled_job_without_task_identity_is_not_verified() {
+		use futures::StreamExt;
+		use reacher_backend::worker::do_work::do_check_email_work;
+
+		let db = TestDb::start().await;
+		let config = make_worker_config(ThrottleConfig::new_without_throttle()).await;
+		let channel = config.must_worker_config().unwrap().channel;
+		purge(&channel).await;
+		let job_id: i32 = sqlx::query_scalar(
+			"INSERT INTO v1_bulk_job (total_records, status) VALUES (1, 'cancelled') RETURNING id",
+		)
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+		let task = CheckEmailTask {
+			verification_backend: Default::default(),
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: "invalid-syntax".into(),
+				..Default::default()
+			},
+			job_id: CheckEmailJobId::Bulk(job_id),
+			webhook: None,
+			metadata: None,
+		};
+		let mut consumer = channel
+			.basic_consume(
+				CHECK_EMAIL_QUEUE.into(),
+				"legacy-cancel-test".into(),
+				Default::default(),
+				Default::default(),
+			)
+			.await
+			.unwrap();
+		publish(&channel, &task, 1).await;
+		tokio::time::timeout(std::time::Duration::from_secs(10), async {
+			let delivery = consumer.next().await.unwrap().unwrap();
+			do_check_email_work(&task, delivery, Arc::clone(&channel), config)
+				.await
+				.unwrap();
+		})
+		.await
+		.unwrap();
+		let count: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1")
+				.bind(job_id)
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		assert_eq!(count, 0, "a cancelled legacy job must not create a result");
+		channel
+			.basic_cancel("legacy-cancel-test".into(), Default::default())
+			.await
+			.unwrap();
 	}
 
 	// ── Test: throttle path — single shot rejected ──────
@@ -271,6 +333,7 @@ mod worker_loop_tests {
 		// Publish 2 single-shot tasks rapidly — second should be throttled
 		for i in 0..2 {
 			let task = CheckEmailTask {
+				verification_backend: Default::default(),
 				input: check_if_email_exists::CheckEmailInput {
 					to_email: format!("throttle{}@test.com", i),
 					..Default::default()
@@ -329,6 +392,67 @@ mod worker_loop_tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn throttled_durable_single_operation_eventually_completes() {
+		let db = TestDb::start().await;
+		let config = make_worker_config(ThrottleConfig {
+			max_requests_per_second: Some(1),
+			max_requests_per_minute: None,
+			max_requests_per_hour: None,
+			max_requests_per_day: None,
+		})
+		.await;
+		let channel = config.must_worker_config().unwrap().channel;
+		purge(&channel).await;
+		let id: i32 = sqlx::query_scalar("INSERT INTO v1_task_result (operation_id, payload, task_state) VALUES ($1, '{}', 'queued') RETURNING id")
+			.bind(uuid::Uuid::new_v4()).fetch_one(db.pool()).await.unwrap();
+		let task = CheckEmailTask {
+			verification_backend: Default::default(),
+			input: check_if_email_exists::CheckEmailInput {
+				to_email: "invalid-syntax".into(),
+				..Default::default()
+			},
+			job_id: CheckEmailJobId::SingleShot,
+			webhook: None,
+			metadata: Some(serde_json::from_value(serde_json::json!({"task_db_id":id})).unwrap()),
+		};
+		let mut tx = db.pool().begin().await.unwrap();
+		reacher_backend::worker::dispatch::enqueue(&mut tx, task, 5)
+			.await
+			.unwrap();
+		tx.commit().await.unwrap();
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			db.pool(),
+			&channel,
+			"check_email"
+		)
+		.await
+		.unwrap());
+		assert!(config.get_throttle_manager().try_acquire().await.is_none());
+		let started = std::time::Instant::now();
+		let worker = tokio::spawn(run_worker(Arc::clone(&config)));
+		let completed = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+			loop {
+				let done: bool =
+					sqlx::query_scalar("SELECT completion_done FROM v1_task_result WHERE id = $1")
+						.bind(id)
+						.fetch_one(db.pool())
+						.await
+						.unwrap();
+				if done {
+					break;
+				}
+				tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+			}
+		})
+		.await;
+		worker.abort();
+		assert!(worker.await.unwrap_err().is_cancelled());
+		completed.expect("Throttling must not discard the durable delivery");
+		assert!(started.elapsed() >= std::time::Duration::from_millis(800));
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn test_worker_throttle_requeues_bulk() {
 		let db = TestDb::start().await;
 		let config = make_worker_config(ThrottleConfig {
@@ -356,6 +480,7 @@ mod worker_loop_tests {
 		// Publish 2 bulk tasks
 		for i in 0..2 {
 			let task = CheckEmailTask {
+				verification_backend: Default::default(),
 				input: check_if_email_exists::CheckEmailInput {
 					to_email: format!("bulk-throttle{}@test.com", i),
 					..Default::default()
@@ -427,6 +552,7 @@ mod worker_loop_tests {
 
 		// Use nonexistent domain that will return Invalid (success path) or Unknown (retry path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "syntax-bad".into(),
 				..Default::default()
@@ -434,6 +560,9 @@ mod worker_loop_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,

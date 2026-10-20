@@ -77,7 +77,7 @@ async fn http_handler(
 			COUNT(*) FILTER (WHERE score_category = 'invalid') AS invalid,
 			COUNT(*) FILTER (WHERE safe_to_send = true) AS safe_to_send,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_disposable' = 'true') AS disposable,
-			COUNT(*) FILTER (WHERE result->'smtp'->>'is_catch_all' = 'true') AS catch_all,
+			COUNT(*) FILTER (WHERE COALESCE(result->'score'->'signals'->>'smtp_is_catch_all', result->'smtp'->>'is_catch_all') = 'true') AS catch_all,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_role_account' = 'true') AS role_account,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_spam_trap_domain' = 'true') AS spam_trap,
 			COUNT(*) FILTER (WHERE result->'smtp'->>'has_full_inbox' = 'true') AS full_inbox

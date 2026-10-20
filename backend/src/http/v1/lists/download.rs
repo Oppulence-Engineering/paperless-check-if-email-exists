@@ -273,7 +273,7 @@ async fn fetch_batch(
 		SELECT
 			id,
 			(extra->>'row_index')::INTEGER AS row_index,
-			COALESCE(canonical_email, LOWER(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key,
+			COALESCE(canonical_email, mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key,
 			payload,
 			result,
 			error,
@@ -392,7 +392,8 @@ fn render_row(
 	row.push(policy_decision.unwrap_or_default().to_string());
 	row.push(change_type.unwrap_or_default().to_string());
 	writer.write_record(&row).expect("csv row write");
-	writer.into_inner().expect("csv row bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv row bytes"))
+		.expect("valid generated CSV")
 }
 
 fn render_header(headers: &[String]) -> Vec<u8> {
@@ -423,7 +424,8 @@ fn render_header(headers: &[String]) -> Vec<u8> {
 		"change_type".to_string(),
 	]);
 	writer.write_record(&row).expect("csv header write");
-	writer.into_inner().expect("csv header bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv header bytes"))
+		.expect("valid generated CSV")
 }
 
 async fn ensure_list_completed(pg_pool: &PgPool, list_id: i32) -> Result<(), warp::Rejection> {
@@ -483,7 +485,7 @@ async fn load_comparison_baseline(
 			completed_at
 		FROM (
 			SELECT *,
-			       COALESCE(canonical_email, LOWER(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
+			       COALESCE(canonical_email, mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
 			FROM v1_task_result
 			WHERE (extra->>'list_id')::INTEGER = $1
 			  AND task_state = 'completed'::task_state

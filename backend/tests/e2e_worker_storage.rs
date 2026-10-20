@@ -27,12 +27,15 @@ mod postgres_storage_tests {
 	use crate::test_helpers::TestDb;
 	use check_if_email_exists::{CheckEmailOutput, Reachable};
 	use reacher_backend::storage::postgres::PostgresStorage;
-	use reacher_backend::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
+	use reacher_backend::worker::do_work::{
+		CheckEmailJobId, CheckEmailTask, TaskError, TaskMetadata,
+	};
 	use serial_test::serial;
 	use sqlx::Row;
 
 	fn make_task(job_id: CheckEmailJobId, metadata: Option<TaskMetadata>) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@example.com".into(),
 				..Default::default()
@@ -244,6 +247,86 @@ mod postgres_storage_tests {
 		let stored_extra: Option<serde_json::Value> = row.get("extra");
 		assert_eq!(stored_extra, Some(extra));
 	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_single_shot_rows_cannot_share_a_dedupe_key() {
+		// SQS can hand one message to two invocations at once. Both find no
+		// row for its key and insert; the database must keep only one, so
+		// the loser fails and SQS's redelivery updates the winner's row.
+		let db = TestDb::start().await;
+		let insert = || {
+			sqlx::query(
+				"INSERT INTO v1_task_result (payload, dedupe_key) VALUES ('{}'::jsonb, 'sqs:message-1')",
+			)
+			.execute(db.pool())
+		};
+
+		insert().await.unwrap();
+		let duplicate = insert().await;
+
+		assert!(duplicate.is_err());
+	}
+
+	#[tokio::test]
+	#[serial]
+	async fn test_redelivered_task_keeps_one_row() {
+		// SQS redelivers a message after a retryable error, and every
+		// delivery stores its outcome. Keyed by the message, the deliveries
+		// share one row, which ends with the last outcome.
+		let db = TestDb::start().await;
+		let storage = PostgresStorage::new(db.db_url(), None, None, 2)
+			.await
+			.unwrap();
+		let bulk_job_id: i32 =
+			sqlx::query_scalar("INSERT INTO v1_bulk_job (total_records) VALUES (1) RETURNING id")
+				.fetch_one(db.pool())
+				.await
+				.unwrap();
+		for job_id in [
+			CheckEmailJobId::SingleShot,
+			CheckEmailJobId::Bulk(bulk_job_id),
+		] {
+			let key = format!("sqs:{}", uuid::Uuid::new_v4());
+			let task = make_task(
+				job_id,
+				Some(TaskMetadata {
+					dispatch_id: None,
+					lease_id: None,
+					decision_policy: None,
+					tenant_id: None,
+					request_id: None,
+					correlation_id: None,
+					created_by: Some("sqs".into()),
+					retry_policy: None,
+					dedupe_key: Some(key.clone()),
+					task_db_id: None,
+				}),
+			);
+			let timeout = TaskError::Prepare("smtp timeout".into());
+			for _ in 0..2 {
+				storage
+					.store_error_only(&task, &timeout, None)
+					.await
+					.unwrap();
+			}
+			storage
+				.store(&task, &Ok(make_output(Reachable::Invalid)), None)
+				.await
+				.unwrap();
+
+			let rows = sqlx::query(
+				"SELECT task_state::TEXT AS state, error FROM v1_task_result WHERE payload->'metadata'->>'dedupe_key' = $1 OR dedupe_key = $1",
+			)
+			.bind(&key)
+			.fetch_all(db.pool())
+			.await
+			.unwrap();
+			assert_eq!(rows.len(), 1, "{:?}", task.job_id);
+			assert_eq!(rows[0].get::<String, _>("state"), "completed");
+			assert!(rows[0].get::<Option<String>, _>("error").is_none());
+		}
+	}
 }
 
 #[cfg(test)]
@@ -258,6 +341,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_connects() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -272,6 +356,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_queue_exists() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 2,
 		};
@@ -296,6 +381,7 @@ mod rabbitmq_setup_tests {
 	#[serial]
 	async fn test_setup_rabbit_mq_bad_url_fails() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: "amqp://localhost:9999".to_string(),
 			concurrency: 1,
 		};
@@ -319,6 +405,7 @@ mod publish_consume_tests {
 
 	fn make_task(email: &str) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: email.into(),
 				..Default::default()
@@ -334,6 +421,7 @@ mod publish_consume_tests {
 	async fn test_publish_and_consume_task() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -379,6 +467,7 @@ mod publish_consume_tests {
 	async fn test_publish_multiple_tasks() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 10,
 		};
@@ -458,6 +547,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_priority() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -529,6 +619,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_metadata_survives_roundtrip() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -539,6 +630,7 @@ mod publish_consume_tests {
 			.unwrap();
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "meta@test.com".into(),
 				..Default::default()
@@ -546,6 +638,9 @@ mod publish_consume_tests {
 			job_id: CheckEmailJobId::Bulk(42),
 			webhook: None,
 			metadata: Some(reacher_backend::worker::do_work::TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("tid-123".into()),
 				request_id: Some("req-456".into()),
 				correlation_id: None,
@@ -602,6 +697,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_invalid_syntax() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "not-an-email".into(),
 				..Default::default()
@@ -623,6 +719,7 @@ mod check_email_result_tests {
 	#[serial]
 	async fn test_check_email_valid_syntax_no_mx() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "user@nonexistent-domain-12345.tld".into(),
 				..Default::default()
@@ -663,6 +760,7 @@ mod full_pipeline_tests {
 		let rmq = TestRabbitMq::start().await;
 
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -683,6 +781,7 @@ mod full_pipeline_tests {
 		let job_id: i32 = job_row.get("id");
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "pipeline@example.com".into(),
 				..Default::default()
@@ -690,6 +789,9 @@ mod full_pipeline_tests {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,

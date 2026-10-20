@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -22,13 +22,16 @@ var _ MappedNullable = &DnsRecordResults{}
 
 // DnsRecordResults struct for DnsRecordResults
 type DnsRecordResults struct {
+	DkimSelectors []DnsRecordResultsDkimSelectorsInner `json:"dkim_selectors"`
 	DmarcPolicy NullableString `json:"dmarc_policy,omitempty"`
-	HasDkim bool `json:"has_dkim"`
+	// True if a probed selector has usable key material; null when unknown. Does not verify a message signature or establish absence.
+	HasDkim NullableBool `json:"has_dkim"`
 	HasDmarc bool `json:"has_dmarc"`
 	HasMx bool `json:"has_mx"`
 	HasSpf bool `json:"has_spf"`
 	MxRecords []string `json:"mx_records"`
-	SpfValid bool `json:"spf_valid"`
+	// Heuristic: a single SPF record has a terminal all or nonempty redirect. Does not validate syntax or evaluate sender authorization.
+	SpfPolicyExplicit bool `json:"spf_policy_explicit"`
 }
 
 type _DnsRecordResults DnsRecordResults
@@ -37,14 +40,15 @@ type _DnsRecordResults DnsRecordResults
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDnsRecordResults(hasDkim bool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfValid bool) *DnsRecordResults {
+func NewDnsRecordResults(dkimSelectors []DnsRecordResultsDkimSelectorsInner, hasDkim NullableBool, hasDmarc bool, hasMx bool, hasSpf bool, mxRecords []string, spfPolicyExplicit bool) *DnsRecordResults {
 	this := DnsRecordResults{}
+	this.DkimSelectors = dkimSelectors
 	this.HasDkim = hasDkim
 	this.HasDmarc = hasDmarc
 	this.HasMx = hasMx
 	this.HasSpf = hasSpf
 	this.MxRecords = mxRecords
-	this.SpfValid = spfValid
+	this.SpfPolicyExplicit = spfPolicyExplicit
 	return &this
 }
 
@@ -54,6 +58,30 @@ func NewDnsRecordResults(hasDkim bool, hasDmarc bool, hasMx bool, hasSpf bool, m
 func NewDnsRecordResultsWithDefaults() *DnsRecordResults {
 	this := DnsRecordResults{}
 	return &this
+}
+
+// GetDkimSelectors returns the DkimSelectors field value
+func (o *DnsRecordResults) GetDkimSelectors() []DnsRecordResultsDkimSelectorsInner {
+	if o == nil {
+		var ret []DnsRecordResultsDkimSelectorsInner
+		return ret
+	}
+
+	return o.DkimSelectors
+}
+
+// GetDkimSelectorsOk returns a tuple with the DkimSelectors field value
+// and a boolean to check if the value has been set.
+func (o *DnsRecordResults) GetDkimSelectorsOk() ([]DnsRecordResultsDkimSelectorsInner, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.DkimSelectors, true
+}
+
+// SetDkimSelectors sets field value
+func (o *DnsRecordResults) SetDkimSelectors(v []DnsRecordResultsDkimSelectorsInner) {
+	o.DkimSelectors = v
 }
 
 // GetDmarcPolicy returns the DmarcPolicy field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -99,27 +127,29 @@ func (o *DnsRecordResults) UnsetDmarcPolicy() {
 }
 
 // GetHasDkim returns the HasDkim field value
+// If the value is explicit nil, the zero value for bool will be returned
 func (o *DnsRecordResults) GetHasDkim() bool {
-	if o == nil {
+	if o == nil || o.HasDkim.Get() == nil {
 		var ret bool
 		return ret
 	}
 
-	return o.HasDkim
+	return *o.HasDkim.Get()
 }
 
 // GetHasDkimOk returns a tuple with the HasDkim field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *DnsRecordResults) GetHasDkimOk() (*bool, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.HasDkim, true
+	return o.HasDkim.Get(), o.HasDkim.IsSet()
 }
 
 // SetHasDkim sets field value
 func (o *DnsRecordResults) SetHasDkim(v bool) {
-	o.HasDkim = v
+	o.HasDkim.Set(&v)
 }
 
 // GetHasDmarc returns the HasDmarc field value
@@ -218,28 +248,28 @@ func (o *DnsRecordResults) SetMxRecords(v []string) {
 	o.MxRecords = v
 }
 
-// GetSpfValid returns the SpfValid field value
-func (o *DnsRecordResults) GetSpfValid() bool {
+// GetSpfPolicyExplicit returns the SpfPolicyExplicit field value
+func (o *DnsRecordResults) GetSpfPolicyExplicit() bool {
 	if o == nil {
 		var ret bool
 		return ret
 	}
 
-	return o.SpfValid
+	return o.SpfPolicyExplicit
 }
 
-// GetSpfValidOk returns a tuple with the SpfValid field value
+// GetSpfPolicyExplicitOk returns a tuple with the SpfPolicyExplicit field value
 // and a boolean to check if the value has been set.
-func (o *DnsRecordResults) GetSpfValidOk() (*bool, bool) {
+func (o *DnsRecordResults) GetSpfPolicyExplicitOk() (*bool, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.SpfValid, true
+	return &o.SpfPolicyExplicit, true
 }
 
-// SetSpfValid sets field value
-func (o *DnsRecordResults) SetSpfValid(v bool) {
-	o.SpfValid = v
+// SetSpfPolicyExplicit sets field value
+func (o *DnsRecordResults) SetSpfPolicyExplicit(v bool) {
+	o.SpfPolicyExplicit = v
 }
 
 func (o DnsRecordResults) MarshalJSON() ([]byte, error) {
@@ -252,15 +282,16 @@ func (o DnsRecordResults) MarshalJSON() ([]byte, error) {
 
 func (o DnsRecordResults) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["dkim_selectors"] = o.DkimSelectors
 	if o.DmarcPolicy.IsSet() {
 		toSerialize["dmarc_policy"] = o.DmarcPolicy.Get()
 	}
-	toSerialize["has_dkim"] = o.HasDkim
+	toSerialize["has_dkim"] = o.HasDkim.Get()
 	toSerialize["has_dmarc"] = o.HasDmarc
 	toSerialize["has_mx"] = o.HasMx
 	toSerialize["has_spf"] = o.HasSpf
 	toSerialize["mx_records"] = o.MxRecords
-	toSerialize["spf_valid"] = o.SpfValid
+	toSerialize["spf_policy_explicit"] = o.SpfPolicyExplicit
 	return toSerialize, nil
 }
 
@@ -269,12 +300,13 @@ func (o *DnsRecordResults) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"dkim_selectors",
 		"has_dkim",
 		"has_dmarc",
 		"has_mx",
 		"has_spf",
 		"mx_records",
-		"spf_valid",
+		"spf_policy_explicit",
 	}
 
 	allProperties := make(map[string]interface{})

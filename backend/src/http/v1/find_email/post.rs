@@ -47,6 +47,7 @@ async fn http_handler(
 	body: Request,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::FIND)?;
+	crate::smtp_egress::require_smtp_ready(&config)?;
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let normalized_first = normalize_name(&body.first_name);
@@ -85,6 +86,28 @@ async fn http_handler(
 		.into());
 	}
 
+	// The precheck probes the domain's mail server from our IPs before any
+	// quota is reserved, so it counts against the tenant's rate limits like a
+	// single check does. Without this, repeated requests probe arbitrary
+	// domains unthrottled.
+	let throttle = if let Some(tenant_id) = tenant_ctx.tenant_id {
+		crate::throttle::reserve_tenant_rate(&pg_pool, tenant_id, &tenant_ctx.throttle)
+			.await
+			.map_err(ReacherResponseError::from)?
+	} else {
+		config.get_throttle_manager().try_acquire().await
+	};
+	if let Some(throttle_result) = throttle {
+		return Err(ReacherResponseError::new(
+			StatusCode::TOO_MANY_REQUESTS,
+			format!(
+				"Rate limit {} exceeded, please wait {:?}",
+				throttle_result.limit_type, throttle_result.delay
+			),
+		)
+		.into());
+	}
+
 	let precheck = precheck_domain(Arc::clone(&config), &normalized_domain)
 		.await
 		.map_err(warp::reject::custom)?;
@@ -98,6 +121,13 @@ async fn http_handler(
 		.await
 		{
 			QuotaCheckResult::Allowed => {}
+			QuotaCheckResult::Unavailable => {
+				return Err(ReacherResponseError::new(
+					StatusCode::SERVICE_UNAVAILABLE,
+					"Quota service unavailable; no verification was dispatched.",
+				)
+				.into())
+			}
 			QuotaCheckResult::ExceededMonthlyLimit {
 				limit,
 				used,
@@ -236,6 +266,7 @@ async fn http_handler(
 		.map_err(ReacherResponseError::from)?;
 
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
 				to_email: candidate.email.clone(),
 				..Default::default()
@@ -244,6 +275,9 @@ async fn http_handler(
 			job_id: CheckEmailJobId::Bulk(bulk_job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,
@@ -253,8 +287,8 @@ async fn http_handler(
 				task_db_id: Some(task_row_id),
 			}),
 		};
-		let channel = match config.must_worker_config() {
-			Ok(worker_config) => worker_config.channel,
+		match config.must_worker_config() {
+			Ok(_) => (),
 			Err(err) => {
 				cleanup_finder_publish_failure(
 					&pg_pool,
@@ -268,7 +302,7 @@ async fn http_handler(
 				return Err(ReacherResponseError::from(err).into());
 			}
 		};
-		if let Err(err) = publish_task(channel, task, properties.clone()).await {
+		if let Err(err) = publish_task(&pg_pool, task, properties.clone()).await {
 			cleanup_finder_publish_failure(
 				&pg_pool,
 				Some(tenant_id),
@@ -283,13 +317,9 @@ async fn http_handler(
 		published_task_ids.push(task_row_id);
 	}
 
-	sqlx::query(
-		"UPDATE v1_bulk_job SET status = 'running'::job_state, updated_at = NOW() WHERE id = $1",
-	)
-	.bind(bulk_job_id)
-	.execute(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	crate::worker::job_lifecycle::start_bulk_job(&pg_pool, bulk_job_id)
+		.await
+		.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {

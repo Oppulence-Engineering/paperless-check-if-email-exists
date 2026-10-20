@@ -1,34 +1,26 @@
+use crate::decision::custom_policy::{resolve_requested_policy, DecisionPolicy};
 use crate::http::idempotency::{
-	check_idempotency_key, complete_idempotency_key, fail_idempotency_key, hash_request_body,
-	IdempotencyCheck,
+	check_idempotency_key, fail_idempotency_key, hash_request_body, IdempotencyCheck,
 };
 use check_if_email_exists::{check_email, LOG_TARGET};
-use futures::StreamExt;
-use lapin::options::{
-	BasicAckOptions, BasicConsumeOptions, BasicRejectOptions, QueueDeclareOptions,
-};
-use lapin::types::FieldTable;
-use lapin::BasicProperties;
 use std::sync::Arc;
 use tracing::{info, warn};
 use warp::http::StatusCode;
 
+use super::verification_operation::{
+	admit_operation, read_operation, wait_for_operation, PendingVerification,
+};
 use crate::config::BackendConfig;
 use crate::http::v0::check_email::post::CheckEmailRequest;
-use crate::http::v1::bulk::post::publish_task;
 use crate::http::ReacherResponseError;
 use crate::scoring::response::{
-	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response,
+	inject_freshness_into_result_at, prepare_check_email_success, prepare_verification_response_at,
+	VerificationTimes,
 };
 use crate::tenant::context::TenantContext;
 use crate::tenant::quota::{check_and_increment_quota, release_reserved_usage, QuotaCheckResult};
-use crate::worker::consume::MAX_QUEUE_PRIORITY;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask};
-use crate::worker::single_shot::SingleShotReply;
 use chrono::{TimeZone, Utc};
-use std::time::Duration;
-
-const WORKER_RPC_TIMEOUT_SECONDS: u64 = 20;
 
 #[derive(Debug)]
 pub struct CheckEmailResponse {
@@ -39,17 +31,6 @@ pub struct CheckEmailResponse {
 async fn mark_idempotency_failed(pool: &sqlx::PgPool, record_id: i64) {
 	if let Err(e) = fail_idempotency_key(pool, record_id).await {
 		warn!(target: LOG_TARGET, record_id = ?record_id, error = ?e, "Failed to mark idempotency key as failed");
-	}
-}
-
-async fn mark_idempotency_complete(
-	pool: &sqlx::PgPool,
-	record_id: i64,
-	status_code: u16,
-	response_body: &[u8],
-) {
-	if let Err(e) = complete_idempotency_key(pool, record_id, status_code, response_body).await {
-		warn!(target: LOG_TARGET, record_id = ?record_id, error = ?e, "Failed to mark idempotency key as completed");
 	}
 }
 
@@ -71,20 +52,39 @@ pub async fn handle_check_email(
 		)
 		.into());
 	}
+	body.validate_routing_overrides(&config)
+		.map_err(|message| ReacherResponseError::new(StatusCode::BAD_REQUEST, message))?;
 
 	// Sandbox mode: return deterministic mock results without SMTP,
 	// throttle checks, or quota consumption. Freshness fields are
 	// hardcoded so responses are fully deterministic across time.
 	if body.sandbox {
+		let pool = config.get_pg_pool();
+		let decision_policy = resolve_requested_policy(
+			pool.as_ref(),
+			tenant_ctx.tenant_id,
+			body.policy_mode,
+			body.policy_profile_key.as_deref(),
+		)
+		.await?;
 		let mock_result = crate::sandbox::sandbox_check(&body.to_email);
 		let completed_at = Utc
 			.with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
 			.single()
 			.expect("static sandbox timestamp");
-		let mut prepared =
-			prepare_verification_response(config.as_ref(), &mock_result, None, completed_at, false)
-				.await
-				.map_err(ReacherResponseError::from)?;
+		let mut prepared = prepare_verification_response_at(
+			config.as_ref(),
+			&mock_result,
+			VerificationTimes {
+				completed_at,
+				evaluated_at: completed_at,
+			},
+			None,
+			false,
+			decision_policy.as_ref(),
+		)
+		.await
+		.map_err(ReacherResponseError::from)?;
 		inject_freshness_into_result_at(&mut prepared.json, completed_at, completed_at);
 		prepared.body = serde_json::to_vec(&prepared.json).map_err(ReacherResponseError::from)?;
 		return Ok(CheckEmailResponse {
@@ -95,6 +95,12 @@ pub async fn handle_check_email(
 
 	let mut idempotency_record_id: Option<i64> = None;
 	let mut idempotency_pool: Option<sqlx::PgPool> = None;
+	if config.get_pg_pool().is_none() && (config.worker.enable || idempotency_key.is_some()) {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"Durable worker execution and idempotency require Postgres; no verification was dispatched.",
+		).into());
+	}
 
 	if let Some(idempotency_key) = idempotency_key {
 		if let Some(pool) = config.get_pg_pool() {
@@ -138,6 +144,13 @@ pub async fn handle_check_email(
 					.into());
 				}
 				IdempotencyCheck::Cached(cached) => {
+					if cached.status_code == StatusCode::ACCEPTED.as_u16() {
+						let pending: PendingVerification = serde_json::from_slice(&cached.body)
+							.map_err(ReacherResponseError::from)?;
+						return read_operation(&pool, pending.operation_id, tenant_ctx)
+							.await
+							.map_err(Into::into);
+					}
 					let cached_status = StatusCode::from_u16(cached.status_code).map_err(|e| {
 						ReacherResponseError::new(
 							StatusCode::INTERNAL_SERVER_ERROR,
@@ -153,12 +166,57 @@ pub async fn handle_check_email(
 		}
 	}
 
-	// Get per-tenant throttle manager
-	let throttle_manager =
-		config.get_tenant_throttle_manager(tenant_ctx.tenant_id, &tenant_ctx.throttle);
-
-	// Check throttle
-	if let Some(throttle_result) = throttle_manager.check_throttle().await {
+	let pg_pool = config.get_pg_pool();
+	let decision_policy = match resolve_requested_policy(
+		pg_pool.as_ref(),
+		tenant_ctx.tenant_id,
+		body.policy_mode,
+		body.policy_profile_key.as_deref(),
+	)
+	.await
+	{
+		Ok(policy) => policy,
+		Err(error) => {
+			if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
+				mark_idempotency_failed(&pool, record_id).await;
+			}
+			return Err(error.into());
+		}
+	};
+	let throttle = match (tenant_ctx.tenant_id, pg_pool.as_ref()) {
+		(Some(tenant_id), Some(pool)) => {
+			crate::throttle::reserve_tenant_rate(pool, tenant_id, &tenant_ctx.throttle).await
+		}
+		(Some(_), None)
+			if [
+				tenant_ctx.throttle.max_requests_per_second,
+				tenant_ctx.throttle.max_requests_per_minute,
+				tenant_ctx.throttle.max_requests_per_hour,
+				tenant_ctx.throttle.max_requests_per_day,
+			]
+			.iter()
+			.any(Option::is_some) =>
+		{
+			Err(sqlx::Error::PoolClosed)
+		}
+		(None, _) if !config.worker.enable => Ok(config.get_throttle_manager().try_acquire().await),
+		_ => Ok(None),
+	};
+	let throttle = match throttle {
+		Ok(result) => result,
+		Err(error) => {
+			warn!(target: LOG_TARGET, error=?error, "Tenant rate reservation unavailable");
+			if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
+				mark_idempotency_failed(&pool, record_id).await;
+			}
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				"Rate limit service unavailable; no verification was dispatched.",
+			)
+			.into());
+		}
+	};
+	if let Some(throttle_result) = throttle {
 		if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
 			mark_idempotency_failed(&pool, record_id).await;
 		}
@@ -172,10 +230,54 @@ pub async fn handle_check_email(
 		.into());
 	}
 
+	if let Some(pool) = pg_pool.as_ref() {
+		let admitted = admit_operation(
+			Arc::clone(&config),
+			pool,
+			body,
+			tenant_ctx,
+			decision_policy,
+			idempotency_record_id,
+		)
+		.await;
+		let (operation_id, dispatch_id) = match admitted {
+			Ok(ids) => ids,
+			Err(error) => {
+				if let Some(id) = idempotency_record_id {
+					mark_idempotency_failed(pool, id).await;
+				}
+				return Err(error.into());
+			}
+		};
+		if !config.worker.enable {
+			let pool = pool.clone();
+			tokio::spawn(async move {
+				if let Err(error) =
+					crate::worker::dispatch::execute_local(&pool, config, dispatch_id).await
+				{
+					warn!(target: LOG_TARGET, operation_id = %operation_id, error = ?error, "Direct operation awaits durable recovery");
+				}
+			});
+		}
+		return wait_for_operation(pool, operation_id, tenant_ctx)
+			.await
+			.map_err(Into::into);
+	}
+
 	// Atomically check + increment monthly quota (avoids TOCTOU race)
-	let pg_pool = config.get_pg_pool();
+	crate::smtp_egress::require_smtp_ready(&config)?;
 	match check_and_increment_quota(pg_pool.as_ref(), tenant_ctx).await {
 		QuotaCheckResult::Allowed => {} // Quota already incremented atomically
+		QuotaCheckResult::Unavailable => {
+			if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
+				mark_idempotency_failed(&pool, record_id).await;
+			}
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				"Quota service unavailable; no verification was dispatched.",
+			)
+			.into());
+		}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
 			used,
@@ -197,73 +299,28 @@ pub async fn handle_check_email(
 		}
 	}
 
-	if !config.worker.enable {
-		let response =
-			handle_without_worker(Arc::clone(&config), body, &throttle_manager, tenant_ctx).await;
-		match response {
-			Ok(body) => {
-				let response = CheckEmailResponse {
-					status_code: StatusCode::OK,
-					body,
-				};
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_complete(
-						&pool,
-						record_id,
-						response.status_code.as_u16(),
-						&response.body,
-					)
-					.await;
-				}
-				Ok(response)
-			}
-			Err(error) => {
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_failed(&pool, record_id).await;
-				}
-				Err(error)
-			}
-		}
-	} else {
-		// The direct path counts a request once its check is done; the worker
-		// path counts it on dispatch, since the reply may never arrive here.
-		throttle_manager.increment_counters().await;
-		let response = handle_with_worker(Arc::clone(&config), body, tenant_ctx).await;
-		match response {
-			Ok(body) => {
-				let response = CheckEmailResponse {
-					status_code: StatusCode::OK,
-					body,
-				};
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_complete(
-						&pool,
-						record_id,
-						response.status_code.as_u16(),
-						&response.body,
-					)
-					.await;
-				}
-				Ok(response)
-			}
-			Err(error) => {
-				if let (Some(pool), Some(record_id)) = (idempotency_pool, idempotency_record_id) {
-					mark_idempotency_failed(&pool, record_id).await;
-				}
-				Err(error)
-			}
-		}
-	}
+	let body = handle_without_worker(config, body, tenant_ctx, decision_policy).await?;
+	Ok(CheckEmailResponse {
+		status_code: StatusCode::OK,
+		body,
+	})
 }
 
 async fn handle_without_worker(
 	config: Arc<BackendConfig>,
 	body: &CheckEmailRequest,
-	throttle_manager: &crate::throttle::ThrottleManager,
 	tenant_ctx: &TenantContext,
+	decision_policy: Option<DecisionPolicy>,
 ) -> Result<Vec<u8>, warp::Rejection> {
 	info!(target: LOG_TARGET, email=body.to_email, "Starting verification");
 	let input = body.to_check_email_input(Arc::clone(&config));
+	if config.verification_backend == crate::verification::VerificationBackend::Millionverifier {
+		return Err(ReacherResponseError::new(
+			StatusCode::SERVICE_UNAVAILABLE,
+			"MillionVerifier requires durable Postgres operations.",
+		)
+		.into());
+	}
 	let result = check_email(&input).await;
 	// The caller gets an error on either failure below, so the check reserved
 	// from the monthly quota is given back.
@@ -273,6 +330,7 @@ async fn handle_without_worker(
 		tenant_ctx.tenant_id,
 		Utc::now(),
 		true,
+		decision_policy.as_ref(),
 	)
 	.await
 	{
@@ -283,16 +341,18 @@ async fn handle_without_worker(
 		}
 	};
 
-	throttle_manager.increment_counters().await;
-
 	let storage = Arc::clone(&config).get_storage_adapter();
 	if let Err(err) = storage
 		.store_prepared(
 			&CheckEmailTask {
+				verification_backend: config.verification_backend,
 				input: body.to_check_email_input(Arc::clone(&config)),
 				job_id: CheckEmailJobId::SingleShot,
 				webhook: None,
 				metadata: Some(crate::worker::do_work::TaskMetadata {
+					dispatch_id: None,
+					lease_id: None,
+					decision_policy,
 					tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
 					request_id: None,
 					correlation_id: None,
@@ -326,178 +386,13 @@ async fn handle_without_worker(
 						.unwrap_or_else(|| "unknown".to_string()),
 				),
 			)
-			.await;
+			.await
+			.map_err(ReacherResponseError::from)?;
 		}
 	}
 
 	info!(target: LOG_TARGET, email=body.to_email, is_reachable=?prepared.output.is_reachable, "Done verification");
 	Ok(prepared.response.body)
-}
-
-async fn handle_with_worker(
-	config: Arc<BackendConfig>,
-	body: &CheckEmailRequest,
-	tenant_ctx: &TenantContext,
-) -> Result<Vec<u8>, warp::Rejection> {
-	let channel = match config.must_worker_config() {
-		Ok(worker_config) => worker_config.channel,
-		Err(err) => {
-			release_single_reserved_usage(&config, tenant_ctx).await;
-			return Err(ReacherResponseError::from(err).into());
-		}
-	};
-
-	let correlation_id = uuid::Uuid::new_v4();
-	let correlation_id_str = correlation_id.to_string();
-	let reply_queue = match channel
-		.queue_declare(
-			"".into(),
-			QueueDeclareOptions {
-				auto_delete: true,
-				durable: false,
-				exclusive: true,
-				..Default::default()
-			},
-			FieldTable::default(),
-		)
-		.await
-	{
-		Ok(reply_queue) => reply_queue,
-		Err(err) => {
-			release_single_reserved_usage(&config, tenant_ctx).await;
-			return Err(ReacherResponseError::from(err).into());
-		}
-	};
-
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(MAX_QUEUE_PRIORITY)
-		.with_correlation_id(correlation_id_str.clone().into())
-		.with_reply_to(reply_queue.name().to_owned());
-
-	if let Err(err) = publish_task(
-		channel.clone(),
-		CheckEmailTask {
-			input: body.to_check_email_input(config.clone()),
-			job_id: CheckEmailJobId::SingleShot,
-			webhook: None,
-			metadata: Some(crate::worker::do_work::TaskMetadata {
-				tenant_id: tenant_ctx.tenant_id.map(|id| id.to_string()),
-				request_id: None,
-				correlation_id: None,
-				created_by: Some("api".to_string()),
-				retry_policy: None,
-				dedupe_key: None,
-				task_db_id: None,
-			}),
-		},
-		properties,
-	)
-	.await
-	{
-		release_single_reserved_usage(&config, tenant_ctx).await;
-		return Err(err.into());
-	}
-
-	// The caller gets an error and no result when the reply queue cannot be
-	// consumed, so give the reserved check back. A timeout further down does
-	// not: the worker may still finish and store the result.
-	let mut consumer = match channel
-		.basic_consume(
-			reply_queue.name().clone(),
-			format!("rpc.{}", correlation_id).into(),
-			BasicConsumeOptions::default(),
-			FieldTable::default(),
-		)
-		.await
-	{
-		Ok(consumer) => consumer,
-		Err(err) => {
-			release_single_reserved_usage(&config, tenant_ctx).await;
-			return Err(ReacherResponseError::from(err).into());
-		}
-	};
-
-	let delivery = tokio::time::timeout(
-		Duration::from_secs(WORKER_RPC_TIMEOUT_SECONDS),
-		consumer.next(),
-	)
-	.await;
-
-	let Some(delivery) = (match delivery {
-		Ok(delivery) => delivery,
-		Err(_) => {
-			warn!(
-				target: LOG_TARGET,
-				correlation_id = %correlation_id_str,
-				reply_queue = %reply_queue.name().as_str(),
-				timeout_seconds = WORKER_RPC_TIMEOUT_SECONDS,
-				"Timed out waiting for worker RPC reply"
-			);
-			return Err(ReacherResponseError::new(
-				StatusCode::GATEWAY_TIMEOUT,
-				"Timed out waiting for worker reply.",
-			)
-			.into());
-		}
-	}) else {
-		warn!(
-			target: LOG_TARGET,
-			correlation_id = %correlation_id_str,
-			reply_queue = %reply_queue.name().as_str(),
-			"Worker RPC consumer closed before reply"
-		);
-		return Err(ReacherResponseError::new(
-			StatusCode::SERVICE_UNAVAILABLE,
-			"Worker reply channel closed before a response arrived.",
-		)
-		.into());
-	};
-	let delivery = delivery.map_err(ReacherResponseError::from)?;
-
-	if delivery
-		.properties
-		.correlation_id()
-		.as_ref()
-		.map(|s| s.as_str())
-		== Some(correlation_id_str.as_str())
-	{
-		delivery
-			.ack(BasicAckOptions::default())
-			.await
-			.map_err(ReacherResponseError::from)?;
-
-		let single_shot_response = serde_json::from_slice::<SingleShotReply>(&delivery.data)
-			.map_err(ReacherResponseError::from)?;
-
-		match single_shot_response {
-			SingleShotReply::Ok(body) => {
-				return Ok(body);
-			}
-			SingleShotReply::Err((e, code)) => {
-				// The worker could not check the address; the caller is not charged.
-				release_single_reserved_usage(&config, tenant_ctx).await;
-				let status_code = StatusCode::from_u16(code).map_err(ReacherResponseError::from)?;
-				return Err(ReacherResponseError::new(status_code, e).into());
-			}
-		}
-	}
-
-	warn!(
-		target: LOG_TARGET,
-		expected_correlation_id = %correlation_id_str,
-		actual_correlation_id = ?delivery.properties.correlation_id().as_ref().map(|value| value.as_str().to_string()),
-		"Worker RPC reply carried an unexpected correlation id"
-	);
-	delivery
-		.reject(BasicRejectOptions { requeue: false })
-		.await
-		.map_err(ReacherResponseError::from)?;
-	Err(ReacherResponseError::new(
-		StatusCode::INTERNAL_SERVER_ERROR,
-		"Failed to get a reply from the worker.",
-	)
-	.into())
 }
 
 async fn release_single_reserved_usage(config: &BackendConfig, tenant_ctx: &TenantContext) {
@@ -511,9 +406,7 @@ mod tests {
 	use crate::config::ThrottleConfig;
 
 	#[tokio::test]
-	async fn worker_mode_requests_count_toward_the_tenant_throttle() {
-		// Worker mode without a RabbitMQ channel: each dispatch fails after the
-		// throttle check, which is enough to see whether the request counted.
+	async fn worker_mode_tenant_throttle_requires_the_shared_database() {
 		let mut config = BackendConfig::empty();
 		config.worker.enable = true;
 		let config = Arc::new(config);
@@ -545,7 +438,7 @@ mod tests {
 			})
 		};
 
-		assert_ne!(status().await, Some(StatusCode::TOO_MANY_REQUESTS));
-		assert_eq!(status().await, Some(StatusCode::TOO_MANY_REQUESTS));
+		assert_eq!(status().await, Some(StatusCode::SERVICE_UNAVAILABLE));
+		assert_eq!(status().await, Some(StatusCode::SERVICE_UNAVAILABLE));
 	}
 }

@@ -133,8 +133,9 @@ async fn job_result_as_iter(
 		LIMIT $2 OFFSET $3
 		"#,
 		job_id,
-		limit.map(|l| l as i64),
-		offset as i64
+		// u64 values above i64::MAX would wrap negative and fail the query.
+		limit.map(|l| l.min(i64::MAX as u64) as i64),
+		offset.min(i64::MAX as u64) as i64
 	);
 
 	let rows = conn_pool.fetch_all(query).await.map_err(|e| {
@@ -221,7 +222,8 @@ async fn job_result_csv(
 		BulkError::Csv(CsvError::CsvLibWriter(Box::new(e)))
 	})?;
 
-	Ok(data)
+	crate::http::csv_shared::spreadsheet_safe_csv(data)
+		.map_err(|err| BulkError::Csv(CsvError::CsvLib(err)).into())
 }
 
 /// GET /v0/bulk/{job_id}/results

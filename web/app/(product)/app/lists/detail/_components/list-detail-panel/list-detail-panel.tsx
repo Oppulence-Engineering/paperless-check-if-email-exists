@@ -100,18 +100,28 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 		enabled: !!listId,
 		queryFn: async () =>
 			commentsSchema.parse(
-				(await commentsApi.v1ListComments({ listId: selectedListId(), limit: 50 })).data,
+				(
+					await commentsApi.v1ListComments({
+						listId: selectedListId(),
+						limit: 50,
+					})
+				).data,
 			),
 	});
 	const addComment = useMutation({
 		mutationFn: async () => {
 			await commentsApi.v1CreateComment({
-				createCommentRequest: { list_id: selectedListId(), body: comment.trim() },
+				createCommentRequest: {
+					list_id: selectedListId(),
+					body: comment.trim(),
+				},
 			});
 		},
 		onSuccess: async () => {
 			setComment("");
-			await client.invalidateQueries({ queryKey: workflowQueryKey(...key, "comments") });
+			await client.invalidateQueries({
+				queryKey: workflowQueryKey(...key, "comments"),
+			});
 		},
 	});
 	const removeComment = useMutation({
@@ -119,7 +129,9 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 			await commentsApi.v1DeleteComment({ commentId });
 		},
 		onSuccess: async () => {
-			await client.invalidateQueries({ queryKey: workflowQueryKey(...key, "comments") });
+			await client.invalidateQueries({
+				queryKey: workflowQueryKey(...key, "comments"),
+			});
 		},
 	});
 	const removeList = useMutation({
@@ -284,6 +296,25 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 								)}
 							</TabsContent>
 						</Tabs>
+						<Section
+							title="Ongoing list health"
+							description="Compare refreshed lists to find addresses that became invalid or risky. Scheduled checks cover stale addresses across your workspace and appear as separate jobs."
+						>
+							<div className="flex flex-wrap gap-4 text-sm text-neutral-300">
+								<Link
+									className="underline underline-offset-4"
+									href="/app/settings?settings=verification#reverification"
+								>
+									Manage scheduled checks
+								</Link>
+								<Link className="underline underline-offset-4" href="/app/outcomes">
+									Record bounces and complaints
+								</Link>
+								<Link className="underline underline-offset-4" href="/app/analytics">
+									View lead source reports
+								</Link>
+							</div>
+						</Section>
 						<Section title="Team comments">
 							<form
 								className="flex gap-2"

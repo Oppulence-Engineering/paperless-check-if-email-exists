@@ -23,7 +23,9 @@ struct CreateApiKeyRequest {
 struct UpdateApiKeyRequest {
 	pub name: Option<String>,
 	pub scopes: Option<Vec<String>>,
-	pub expires_at: Option<String>,
+	/// `null` removes the expiry; an absent field leaves it unchanged.
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
+	pub expires_at: Option<Option<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -289,15 +291,7 @@ async fn update_handler(
 		query = query.bind(scopes);
 	}
 	if let Some(expires_at) = body.expires_at {
-		let parsed = chrono::DateTime::parse_from_rfc3339(&expires_at)
-			.map(|dt| dt.with_timezone(&Utc))
-			.map_err(|_| {
-				warp::reject::custom(ReacherResponseError::new(
-					StatusCode::BAD_REQUEST,
-					"expires_at must be RFC3339 timestamp",
-				))
-			})?;
-		query = query.bind(parsed);
+		query = query.bind(parse_expiry(expires_at)?);
 	}
 
 	let row = query

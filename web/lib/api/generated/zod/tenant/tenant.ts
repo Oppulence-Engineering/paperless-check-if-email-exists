@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import * as zod from "zod";
 
@@ -64,7 +64,7 @@ export const V1GetTenantDomainDefaultResponse = zod.object({
 });
 
 /**
- * Update the domain value, status, verification state, or metadata notes.
+ * Update the domain value, active status, or notes. Setting `is_verified` is refused.
  * @summary PATCH /v1/me/domains/{domain}
  */
 export const V1UpdateTenantDomainParams = zod.object({
@@ -74,7 +74,12 @@ export const V1UpdateTenantDomainParams = zod.object({
 export const V1UpdateTenantDomainBody = zod.strictObject({
   domain: zod.string().nullish(),
   is_active: zod.boolean().nullish(),
-  is_verified: zod.boolean().nullish(),
+  is_verified: zod
+    .boolean()
+    .nullish()
+    .describe(
+      "Only read to refuse it: verification is not the tenant's to declare.",
+    ),
   notes: zod.string().nullish(),
 });
 

@@ -579,6 +579,7 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		(retry_task_two, "retry2@example.com"),
 	] {
 		let payload = serde_json::to_value(reacher_backend::worker::do_work::CheckEmailTask {
+			verification_backend: Default::default(),
 			input: reacher_backend::http::CheckEmailRequest {
 				to_email: email.to_string(),
 				..Default::default()
@@ -587,6 +588,9 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 			job_id: reacher_backend::worker::do_work::CheckEmailJobId::Bulk(job_retry),
 			webhook: None,
 			metadata: Some(reacher_backend::worker::do_work::TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant.tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,
@@ -1047,8 +1051,9 @@ pub async fn seed_fixtures(pool: &PgPool) -> HarnessFixtures {
 		"blacklist_results": [],
 		"dns_records": {
 			"has_spf": true,
-			"spf_valid": true,
+			"spf_policy_explicit": true,
 			"has_dkim": true,
+			"dkim_selectors": [],
 			"has_dmarc": true,
 			"dmarc_policy": "reject",
 			"has_mx": true,
@@ -1326,6 +1331,16 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 
 pub fn canonical_cases() -> Vec<HarnessCase> {
 	vec![
+		case!(
+			"GET",
+			"/metrics",
+			ConfigProfile::Public,
+			AuthProfile::None,
+			PathProfile::Literal("/metrics"),
+			BodyProfile::None,
+			200,
+			Expectation::StatusOnly
+		),
 		upgrade_case!(
 			"GET",
 			"/healthz",
@@ -1435,6 +1450,16 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 			BodyProfile::JsonFindEmailCreate,
 			202,
 			Expectation::Json(&["job_id", "bulk_job_id", "status"])
+		),
+		case!(
+			"GET",
+			"/v1/operations/{operation_id}",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/operations/00000000-0000-0000-0000-000000000000"),
+			BodyProfile::None,
+			404,
+			Expectation::Error("Verification operation not found")
 		),
 		case!(
 			"GET",
@@ -3201,7 +3226,7 @@ pub fn auth_failure_cases() -> Vec<HarnessCase> {
 			AuthProfile::AdminSecretInvalid,
 			PathProfile::Literal("/v1/admin/tenants"),
 			BodyProfile::None,
-			400,
+			401,
 			Expectation::StatusOnly,
 		),
 		case!(

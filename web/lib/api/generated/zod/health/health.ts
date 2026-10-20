@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import * as zod from "zod";
 
@@ -14,6 +14,8 @@ import * as zod from "zod";
  * @summary GET /healthz
  */
 export const Healthz200Response = zod.unknown();
+
+export const SmtpMetrics200Response = zod.string();
 
 /**
  * Performs dependency checks for Postgres and RabbitMQ and returns readiness status.

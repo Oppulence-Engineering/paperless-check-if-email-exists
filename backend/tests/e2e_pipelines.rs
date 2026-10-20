@@ -33,6 +33,7 @@ async fn worker_pipeline_config(enable_scheduler: bool) -> Arc<BackendConfig> {
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: amqp_url,
 			concurrency: 4,
 		}),
@@ -353,6 +354,18 @@ async fn test_pipeline_scheduler_cycle_creates_run_and_usage() -> Result<()> {
 		.execute(db.pool())
 		.await
 		.unwrap();
+
+	let mut unavailable = worker_pipeline_config(true).await;
+	Arc::get_mut(&mut unavailable).unwrap().smtp_health_enabled = true;
+	assert!(run_pipeline_scheduler_cycle(unavailable, db.pool())
+		.await
+		.is_err());
+	let before: i64 =
+		sqlx::query_scalar("SELECT COUNT(*) FROM v1_pipeline_runs WHERE pipeline_id = $1")
+			.bind(pipeline.id)
+			.fetch_one(db.pool())
+			.await?;
+	assert_eq!(before, 0, "Unavailable SMTP must leave due work unclaimed");
 
 	run_pipeline_scheduler_cycle(Arc::clone(&config), db.pool())
 		.await

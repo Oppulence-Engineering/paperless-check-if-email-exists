@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 
@@ -22,6 +22,7 @@ var _ MappedNullable = &UpdateTenantDomainRequest{}
 type UpdateTenantDomainRequest struct {
 	Domain NullableString `json:"domain,omitempty"`
 	IsActive NullableBool `json:"is_active,omitempty"`
+	// Only read to refuse it: verification is not the tenant's to declare.
 	IsVerified NullableBool `json:"is_verified,omitempty"`
 	Notes NullableString `json:"notes,omitempty"`
 }

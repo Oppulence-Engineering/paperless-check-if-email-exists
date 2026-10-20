@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import type { TenantApiKey } from "./tenantApiKey";
 

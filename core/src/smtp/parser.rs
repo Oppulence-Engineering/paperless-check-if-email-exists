@@ -78,7 +78,8 @@ pub fn is_invalid(e: &str, email: &EmailAddress) -> bool {
 	// 550 5.1.1 : Recipient address rejected
 	// 550 5.1.1 : Recipient address rejected: User unknown in virtual alias table
 	// 550 5.1.1 <EMAIL: Recipient address rejected: User unknown in relay recipient table
-	e.contains("address rejected")
+	// A "Sender address rejected" reply is about our MAIL FROM, not the mailbox.
+	(e.contains("address rejected") && !e.contains("sender address rejected"))
 	// 550 5.1.1 : Unrouteable address
 	|| e.contains("unrouteable")
 	// 550 5.1.1 : The email account that you tried to reach does not exist
@@ -227,7 +228,18 @@ fn reply_text(e: &SmtpError) -> Option<String> {
 /// host, HELO name or MAIL FROM address. These replies say nothing about the
 /// mailbox.
 fn is_rejected_by_policy(e: &str) -> bool {
-	is_ip_blocked(e)
+	// Enhanced security/policy status takes precedence over ambiguous wording.
+	e.split_whitespace().any(|word| {
+		let word = word.trim_matches(|c: char| !c.is_ascii_digit() && c != '.');
+		let mut parts = word.split('.');
+		matches!(parts.next(), Some("4" | "5"))
+			&& parts.next() == Some("7")
+			&& parts.next().is_some_and(|detail| {
+				!detail.is_empty() && detail.len() <= 3 && detail.bytes().all(|c| c.is_ascii_digit())
+			})
+			&& parts.next().is_none()
+	})
+	|| is_ip_blocked(e)
 	|| needs_rdns(e)
 	// 550 5.1.0 <FROM_EMAIL>: Sender address rejected: User unknown in local recipient table
 	|| e.contains("sender address rejected")
@@ -359,10 +371,18 @@ mod tests {
 				"permanent: 5.4.1 recipient address rejected: access denied. as(201806281) [bn8nam12ft036.eop-nam12.prod.protection.outlook.com]",
 				Invalid,
 			),
-			// 5.7.1 is invalid when the text says so.
+			// Policy status cannot establish mailbox absence, even with misleading text.
 			(
 				"permanent: 5.7.1 email doesn't exist. please forward it or send it to contact@magency.fr",
-				Invalid,
+				Inconclusive,
+			),
+			(
+				"permanent: 5.7.1 recipient address rejected: authentication required",
+				Inconclusive,
+			),
+			(
+				"permanent: recipient address rejected (#5.7.606)",
+				Inconclusive,
 			),
 			// A Microsoft 365 tenant without mailboxes defers, but retrying
 			// never helps. https://github.com/reacherhq/check-if-email-exists/issues/1666

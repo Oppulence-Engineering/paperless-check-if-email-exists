@@ -36,6 +36,7 @@ mod tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: amqp_url.to_string(),
 				concurrency: 2,
 			}),
@@ -395,7 +396,7 @@ mod tests {
 		let bulk_job_id: i32 = sqlx::query_scalar(
 			"INSERT INTO v1_bulk_job (total_records, tenant_id, status) VALUES ($1, $2, 'running'::job_state) RETURNING id",
 		)
-		.bind(2_i32)
+		.bind(3_i32)
 		.bind(tenant_id)
 		.fetch_one(db.pool())
 		.await
@@ -407,7 +408,7 @@ mod tests {
 				normalized_first_name, normalized_last_name, status,
 				domain_has_mx, domain_is_catch_all, candidates_checked
 			)
-			VALUES ($1, $2, 'John', 'Doe', 'example.com', 'john', 'doe', 'running'::job_state, true, false, 2)
+			VALUES ($1, $2, 'John', 'Doe', 'example.com', 'john', 'doe', 'running'::job_state, true, false, 3)
 			RETURNING id
 			"#,
 		)
@@ -462,17 +463,44 @@ mod tests {
 		.await
 		.unwrap();
 
+		// Same score as john.doe, but generated later and first alphabetically:
+		// a tie must keep the generator's pattern order, not sort by address.
+		let tied_task_id: i32 = sqlx::query_scalar(
+			r#"
+			INSERT INTO v1_task_result (
+				job_id, payload, tenant_id, task_state, result, score, score_category, sub_reason, safe_to_send, reason_codes, completed_at
+			)
+			VALUES ($1, $2, $3, 'completed'::task_state, $4, 95, 'valid', 'deliverable', true, ARRAY['deliverable'], NOW())
+			RETURNING id
+			"#,
+		)
+		.bind(bulk_job_id)
+		.bind(task_payload("doe.john@example.com", bulk_job_id))
+		.bind(tenant_id)
+		.bind(scored_result(
+			"doe.john@example.com",
+			"safe",
+			95,
+			"valid",
+			"deliverable",
+		))
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+
 		sqlx::query(
 			r#"
 			INSERT INTO v1_finder_result (finder_job_id, task_result_id, candidate_email, pattern)
 			VALUES
 				($1, $2, 'john.doe@example.com', 'first.last'),
-				($1, $3, 'jdoe@example.com', 'flast')
+				($1, $3, 'jdoe@example.com', 'flast'),
+				($1, $4, 'doe.john@example.com', 'last.first')
 			"#,
 		)
 		.bind(finder_job_id)
 		.bind(high_task_id)
 		.bind(low_task_id)
+		.bind(tied_task_id)
 		.execute(db.pool())
 		.await
 		.unwrap();
@@ -487,10 +515,11 @@ mod tests {
 		assert_eq!(response.status(), StatusCode::OK);
 		let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
 		assert_eq!(body["status"], "completed");
-		assert_eq!(body["results"].as_array().unwrap().len(), 2);
+		assert_eq!(body["results"].as_array().unwrap().len(), 3);
 		assert_eq!(body["results"][0]["email"], "john.doe@example.com");
 		assert_eq!(body["results"][0]["score"], 95);
-		assert_eq!(body["results"][1]["email"], "jdoe@example.com");
+		assert_eq!(body["results"][1]["email"], "doe.john@example.com");
+		assert_eq!(body["results"][2]["email"], "jdoe@example.com");
 		assert_eq!(body["best_match"]["email"], "john.doe@example.com");
 		assert_eq!(body["best_match"]["confidence"], "high");
 

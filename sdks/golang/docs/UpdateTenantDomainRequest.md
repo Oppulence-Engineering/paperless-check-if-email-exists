@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Domain** | Pointer to **NullableString** |  | [optional]
 **IsActive** | Pointer to **NullableBool** |  | [optional]
-**IsVerified** | Pointer to **NullableBool** |  | [optional]
+**IsVerified** | Pointer to **NullableBool** | Only read to refuse it: verification is not the tenant&#39;s to declare. | [optional]
 **Notes** | Pointer to **NullableString** |  | [optional]
 
 ## Methods

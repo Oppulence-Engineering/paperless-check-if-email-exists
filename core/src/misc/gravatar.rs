@@ -11,7 +11,11 @@ fn gravatar_url(email: &str) -> String {
 }
 
 pub async fn check_gravatar(to_email: &str) -> Option<String> {
-	let client = reqwest::Client::new();
+	let client = reqwest::Client::builder()
+		.connect_timeout(std::time::Duration::from_secs(5))
+		.timeout(std::time::Duration::from_secs(10))
+		.build()
+		.ok()?;
 
 	let url = gravatar_url(to_email);
 

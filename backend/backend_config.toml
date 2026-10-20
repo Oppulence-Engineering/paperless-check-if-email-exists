@@ -5,6 +5,12 @@
 # Env variable: RCH__BACKEND_NAME
 backend_name = "backend-dev"
 
+# Set to "millionverifier" to use HTTPS verification without SMTP/proxies.
+# Set RCH__MILLIONVERIFIER__API_KEY through the secret store, never this file.
+# MillionVerifier requires Postgres. Drain existing jobs before switching.
+# Env variable: RCH__VERIFICATION_BACKEND
+verification_backend = "reacher"
+
 # Host to bind the backend to.
 #
 # Env variable: RCH__HTTP_HOST
@@ -32,6 +38,12 @@ hello_name = "localhost"
 #
 # Env variable: RCH__FROM_EMAIL
 from_email = "hello@localhost"
+
+# Require a public SMTP identity and a recent successful route greeting before
+# accepting verification work. /readyz reports cached capability; /healthz is
+# independent. Disable only for explicit offline/development use.
+# Env variable: RCH__SMTP_HEALTH_ENABLED
+smtp_health_enabled = true
 
 # Timeout for each SMTP connection, in seconds. Commenting it out removes the
 # timeout, so a server that accepts the connection and then stalls holds a
@@ -206,6 +218,8 @@ enable = false
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
+# Env variable: RCH__WORKER__RABBITMQ__QUEUE. Isolate environments sharing a broker.
+queue = "check_email"
 # Env variable: RCH__WORKER__RABBITMQ__URL
 url = "amqp://guest:guest@localhost:5672"
 

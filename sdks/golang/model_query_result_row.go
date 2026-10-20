@@ -3,7 +3,7 @@ Reacher
 
 ### What is Reacher?  Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
 
-API version: 4.3.0
+API version: 4.4.0
 Contact: amaury@reacher.email
 */
 

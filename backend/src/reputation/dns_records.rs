@@ -1,5 +1,6 @@
-use super::models::DnsRecordResults;
+use super::models::{DkimKeyStatus, DkimSelectorResult, DnsRecordResults};
 use anyhow::Context;
+use base64::Engine;
 use check_if_email_exists::mx::MxLookup;
 use hickory_resolver::lookup::Lookup;
 use hickory_resolver::net::NetError;
@@ -72,11 +73,9 @@ fn is_all_mechanism(term: &str) -> bool {
 	term.eq_ignore_ascii_case("all")
 }
 
-/// Returns `(has_spf, spf_valid)` for the TXT records of a domain. A domain
-/// with two SPF records gets a permerror from receivers (RFC 7208 4.5), and a
-/// record must end its mechanisms with `all` or hand off with `redirect=`, or it
-/// never states a policy for unlisted senders.
-fn assess_spf(txt_records: &[String]) -> (bool, bool) {
+/// Returns presence and an explicit terminal policy heuristic, not SPF validity.
+// shortcut: this does not parse SPF syntax or evaluate DNS mechanisms; use an SPF evaluator for sender authorization.
+fn assess_spf_policy(txt_records: &[String]) -> (bool, bool) {
 	let spf_records: Vec<&String> = txt_records
 		.iter()
 		.filter(|record| is_spf_record(record))
@@ -93,9 +92,86 @@ fn assess_spf(txt_records: &[String]) -> (bool, bool) {
 	// RFC 7208 6.1: redirect is ignored when the record has an "all" mechanism.
 	let redirects = modifiers.iter().any(|term| {
 		term.split_once('=')
-			.is_some_and(|(name, _)| name.eq_ignore_ascii_case("redirect"))
+			.is_some_and(|(name, value)| name.eq_ignore_ascii_case("redirect") && !value.is_empty())
 	});
 	(true, ends_with_all || (!has_all && redirects))
+}
+
+fn detected_dkim(selectors: &[DkimSelectorResult]) -> Option<bool> {
+	selectors
+		.iter()
+		.any(|result| result.status == DkimKeyStatus::UsableKey)
+		.then_some(true)
+}
+
+fn assess_dkim_key(records: &[String]) -> DkimKeyStatus {
+	use DkimKeyStatus::*;
+	if records.is_empty() {
+		return NotFound;
+	}
+	let [record] = records else { return Invalid };
+	let mut tags = std::collections::HashMap::new();
+	let record = record.trim();
+	let record = record.strip_suffix(';').unwrap_or(record);
+	for (index, term) in record.split(';').enumerate() {
+		let Some((name, value)) = term.trim().split_once('=') else {
+			return Invalid;
+		};
+		let name = name.trim();
+		let value = value.trim();
+		if !name.starts_with(|c: char| c.is_ascii_alphabetic())
+			|| !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+			|| tags.insert(name, value).is_some()
+			|| (name == "v" && (index != 0 || value != "DKIM1"))
+		{
+			return Invalid;
+		}
+	}
+	let Some(key) = tags.get("p") else {
+		return Invalid;
+	};
+	let key = key
+		.chars()
+		.filter(|c| !c.is_ascii_whitespace())
+		.collect::<String>();
+	if key.is_empty() {
+		return Revoked;
+	}
+	if tags
+		.get("h")
+		.is_some_and(|hashes| !hashes.split(':').any(|h| h.trim() == "sha256"))
+		|| tags.get("s").is_some_and(|services| {
+			!services
+				.split(':')
+				.any(|s| matches!(s.trim(), "*" | "email"))
+		}) {
+		return Invalid;
+	}
+	let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(key) else {
+		return Invalid;
+	};
+	let usable = match tags.get("k").copied().unwrap_or("rsa") {
+		"rsa" => openssl::rsa::Rsa::public_key_from_der(&bytes).is_ok_and(|key| {
+			key.n().num_bits() >= 1024
+				&& key.e().num_bits() >= 2
+				&& key.e().is_odd()
+				&& key.public_key_to_der().is_ok_and(|der| der == bytes)
+		}),
+		"ed25519" => {
+			bytes.len() == 32
+				&& openssl::pkey::PKey::public_key_from_raw_bytes(
+					&bytes,
+					openssl::pkey::Id::ED25519,
+				)
+				.is_ok()
+		}
+		_ => false,
+	};
+	if usable {
+		UsableKey
+	} else {
+		Invalid
+	}
 }
 
 /// Looks up the mail authentication records of a domain.
@@ -121,34 +197,32 @@ pub async fn check_dns_records(domain: &str) -> Result<DnsRecordResults, anyhow:
 		.unwrap_or_else(Vec::new);
 	let has_mx = !mx_records.is_empty();
 
-	let (has_spf, spf_valid) = assess_spf(&txt_values);
+	let (has_spf, spf_policy_explicit) = assess_spf_policy(&txt_values);
 	let dmarc_value = dmarc_values
 		.iter()
 		.find(|value| value.to_lowercase().starts_with("v=dmarc1"))
 		.cloned();
 
-	let mut has_dkim = false;
-	let mut dkim_error = None;
+	let mut dkim_selectors = Vec::new();
 	for selector in ["default", "google", "selector1", "selector2", "k1"] {
 		let name = format!("{}._domainkey.{}", selector, domain);
-		match txt_lookup_records(&resolver, &name).await {
-			Ok(records) if !records.is_empty() => {
-				has_dkim = true;
-				break;
-			}
-			Ok(_) => {}
-			// Keep probing: another selector may still answer and settle it.
-			Err(err) => dkim_error = Some(err),
-		}
+		let (status, error) = match txt_lookup_records(&resolver, &name).await {
+			Ok(records) => (assess_dkim_key(&records), None),
+			Err(error) => (DkimKeyStatus::Error, Some(error.to_string())),
+		};
+		dkim_selectors.push(DkimSelectorResult {
+			selector: selector.into(),
+			status,
+			error,
+		});
 	}
-	if let (false, Some(err)) = (has_dkim, dkim_error) {
-		return Err(err);
-	}
+	let has_dkim = detected_dkim(&dkim_selectors);
 
 	Ok(DnsRecordResults {
 		has_spf,
-		spf_valid,
+		spf_policy_explicit,
 		has_dkim,
+		dkim_selectors,
 		has_dmarc: dmarc_value.is_some(),
 		dmarc_policy: dmarc_value.as_deref().and_then(parse_dmarc_policy),
 		has_mx,
@@ -165,7 +239,7 @@ fn parse_dmarc_policy(value: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-	use super::{assess_spf, record_text};
+	use super::*;
 	use hickory_resolver::proto::rr::rdata::TXT;
 
 	fn txt(strings: &[&str]) -> TXT {
@@ -191,23 +265,23 @@ mod tests {
 	}
 
 	#[test]
-	fn spf_is_valid_only_for_one_record_that_ends_in_all_or_redirects() {
+	fn spf_policy_heuristic_never_claims_syntax_validity() {
 		assert_eq!(
-			assess_spf(&records(&["v=spf1 include:_spf.google.com ~all"])),
+			assess_spf_policy(&records(&["v=spf1 include:_spf.google.com ~all"])),
 			(true, true)
 		);
 		assert_eq!(
-			assess_spf(&records(&["v=spf1 redirect=_spf.example.com"])),
+			assess_spf_policy(&records(&["v=spf1 redirect=_spf.example.com"])),
 			(true, true)
 		);
 		assert_eq!(
-			assess_spf(&records(&["V=SPF1 MX -ALL exp=explain.example.com"])),
+			assess_spf_policy(&records(&["V=SPF1 MX -ALL exp=explain.example.com"])),
 			(true, true),
 			"version and mechanisms are case-insensitive, and modifiers may follow all"
 		);
 		// Two SPF records is a permerror (RFC 7208 4.5).
 		assert_eq!(
-			assess_spf(&records(&[
+			assess_spf_policy(&records(&[
 				"v=spf1 include:a.example.com -all",
 				"v=spf1 include:b.example.com -all",
 			])),
@@ -215,18 +289,72 @@ mod tests {
 		);
 		// A record that never says what to do with other senders.
 		assert_eq!(
-			assess_spf(&records(&["v=spf1 include:_spf.example.com"])),
+			assess_spf_policy(&records(&["v=spf1 include:_spf.example.com"])),
 			(true, false)
 		);
 		// Mechanisms after "all" are never evaluated, so "all" must come last.
 		assert_eq!(
-			assess_spf(&records(&["v=spf1 -all include:_spf.example.com"])),
+			assess_spf_policy(&records(&["v=spf1 -all include:_spf.example.com"])),
 			(true, false)
 		);
 		// Only the exact version tag counts, and unrelated TXT records are ignored.
 		assert_eq!(
-			assess_spf(&records(&["v=spf10 -all", "google-site-verification=abc"])),
+			assess_spf_policy(&records(&["v=spf10 -all", "google-site-verification=abc"])),
 			(false, false)
 		);
+		assert_eq!(assess_spf_policy(&records(&["v=spf1 a"])), (true, false));
+		assert_eq!(
+			assess_spf_policy(&records(&["v=spf1 nonsense -all"])),
+			(true, true)
+		);
+		assert_eq!(
+			assess_spf_policy(&records(&["v=spf1 redirect="])),
+			(true, false)
+		);
+		assert_eq!(
+			assess_spf_policy(&records(&["v=spf1 redirect=example.com a"])),
+			(true, true)
+		);
+	}
+
+	#[test]
+	fn dkim_reports_selector_evidence_without_claiming_absence() {
+		use DkimKeyStatus::*;
+		assert_eq!(assess_dkim_key(&[]), NotFound);
+		for record in [
+			"unrelated TXT",
+			"v=DKIM1; p=broken",
+			"v=DKIM1; k=rsa; p=YWJj",
+			"v=DKIM1; p=a; p=b",
+			"p=YWJj; v=DKIM1",
+		] {
+			assert_eq!(assess_dkim_key(&records(&[record])), Invalid);
+		}
+		assert_eq!(assess_dkim_key(&records(&["v=DKIM1; p= "])), Revoked);
+		let key = openssl::rsa::Rsa::generate(1024).unwrap();
+		let key_text =
+			base64::engine::general_purpose::STANDARD.encode(key.public_key_to_der().unwrap());
+		let record = format!("v=DKIM1; k=rsa; p={key_text}");
+		assert_eq!(assess_dkim_key(&[record.clone()]), UsableKey);
+		assert_eq!(assess_dkim_key(&[format!("{record}; h=sha1")]), Invalid);
+		let ed25519 = openssl::pkey::PKey::generate_ed25519().unwrap();
+		let ed25519 =
+			base64::engine::general_purpose::STANDARD.encode(ed25519.raw_public_key().unwrap());
+		assert_eq!(
+			assess_dkim_key(&[format!("v=DKIM1; k=ed25519; p={ed25519}")]),
+			UsableKey
+		);
+		let mut selectors = vec![DkimSelectorResult {
+			selector: "default".into(),
+			status: NotFound,
+			error: None,
+		}];
+		assert_eq!(detected_dkim(&selectors), None);
+		selectors.push(DkimSelectorResult {
+			selector: "october2026".into(),
+			status: assess_dkim_key(&[record]),
+			error: None,
+		});
+		assert_eq!(detected_dkim(&selectors), Some(true));
 	}
 }

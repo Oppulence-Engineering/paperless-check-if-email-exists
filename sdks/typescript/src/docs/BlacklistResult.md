@@ -5,9 +5,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**listed** | **boolean** |  | [required]
+**answers** | **Array&lt;string&gt;** |  | [required]
+**error** | **string** |  | [required]
+**listed** | **boolean** | Null for failed or skipped queries; false only for a completed negative lookup. | [required]
 **lookup_time_ms** | **number** |  | [required]
 **provider** | **string** |  | [required]
+**status** | **string** |  | [required]
 
 ## Example
 
@@ -15,9 +18,12 @@ Name | Type | Description | Notes
 import { BlacklistResult } from '@oppulence/reacher-sdk';
 
 const instance: BlacklistResult = {
+    answers: [],
+    error: 'example',
     listed: true,
     lookup_time_ms: 0,
     provider: 'mailchimp',
+    status: 'example',
 };
 ```
 

@@ -57,6 +57,31 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	const listId = ownLists.lists[0]?.id;
 	expect(listId).toBeDefined();
 
+	const freePlanKeyResponse = await page.request.post("/api/backend/v1/me/api-keys", {
+		headers: { origin: new URL(page.url()).origin },
+		data: { name: "E2E free-plan rejection", scopes: ["verify"] },
+	});
+	expect(freePlanKeyResponse.status()).toBe(403);
+	expect(await freePlanKeyResponse.text()).toContain("Professional or Enterprise");
+
+	// Seed this new test tenant through the operator API before testing paid API access.
+	const meResponse = await page.request.get("/api/backend/v1/me");
+	expect(meResponse.ok()).toBe(true);
+	const tenantId = (await meResponse.json()).tenant_id as string;
+	expect(tenantId).toMatch(/^[0-9a-f-]{36}$/);
+	const planResponse = await request.put(
+		new URL(`/v1/admin/tenants/${tenantId}`, process.env.BACKEND_API_URL || "http://127.0.0.1:8081")
+			.href,
+		{
+			headers: {
+				"x-reacher-secret":
+					process.env.RCH__HEADER_SECRET || "local-backend-secret-for-development-only",
+			},
+			data: { plan_tier: "professional" },
+		},
+	);
+	expect(planResponse.status(), await planResponse.text()).toBe(200);
+
 	const apiKeyResponse = await page.request.post("/api/backend/v1/me/api-keys", {
 		headers: { origin: new URL(page.url()).origin },
 		data: { name: "E2E verification", scopes: ["verify"] },

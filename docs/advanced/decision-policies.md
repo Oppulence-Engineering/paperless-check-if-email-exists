@@ -75,6 +75,8 @@ Use `policy_mode` on check-email requests when the same verification result shou
 
 `/v1/me/settings` exposes `default_policy_mode`, which defaults to `deliverability`.
 
+An explicit mode overrides the tenant default for that check. With `custom`, a named profile must belong to the current tenant; it can be selected explicitly even when it is not the active default. Without a name, the active custom profile is used. Unknown or invalid profiles return an error before credits are reserved. The selected rules are captured with the task, so queued execution, stored decisions, exports, and an idempotent replay use the same selection. `policy_profile_key` requires `policy_mode: "custom"`.
+
 ## Custom Policy Rules
 
 Custom policies are constrained JSON rules stored in `tenant_policy_profiles.rules`.

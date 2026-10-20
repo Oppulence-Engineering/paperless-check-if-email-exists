@@ -35,6 +35,111 @@ mod tests {
 
 	#[tokio::test]
 	#[serial]
+	async fn source_report_uses_checked_records_and_includes_campaign_feedback() {
+		let db = TestDb::start().await;
+		let tenant = insert_tenant(db.pool(), "source-report", Some(1000), 0).await;
+		let other = insert_tenant(db.pool(), "other-source-report", Some(1000), 0).await;
+		let (key, _) = insert_api_key_with_scopes(db.pool(), tenant, &["*"]).await;
+		for (owner, email, state, category, duplicate, source) in [
+			(
+				tenant,
+				"bad@example.com",
+				"completed",
+				Some("invalid"),
+				false,
+				"webinar",
+			),
+			(
+				tenant,
+				"bad@example.com",
+				"completed",
+				Some("invalid"),
+				true,
+				"webinar",
+			),
+			(
+				tenant,
+				"pending@example.com",
+				"queued",
+				None,
+				false,
+				"webinar",
+			),
+			(
+				tenant,
+				"unchecked@example.com",
+				"queued",
+				None,
+				false,
+				"new-source",
+			),
+			(
+				other,
+				"other@example.com",
+				"completed",
+				Some("valid"),
+				false,
+				"webinar",
+			),
+		] {
+			let job = insert_job(db.pool(), Some(owner), 1, "running").await;
+			let id = insert_scored_task(
+				db.pool(),
+				job,
+				Some(owner),
+				email,
+				None,
+				category.map(|_| result_json(email, "invalid", true, false)),
+				state,
+				None,
+				category,
+				None,
+				Some(false),
+				None,
+				Some(email),
+				duplicate,
+			)
+			.await;
+			sqlx::query("UPDATE v1_task_result SET source_key = $2 WHERE id = $1")
+				.bind(id)
+				.bind(source)
+				.execute(db.pool())
+				.await
+				.unwrap();
+		}
+		sqlx::query("INSERT INTO verification_outcomes (tenant_id, canonical_email, outcome_type, occurred_at, source) VALUES ($1, 'bad@example.com', 'complaint', NOW(), 'postmark')")
+			.bind(tenant).execute(db.pool()).await.unwrap();
+		let config = build_test_config(ConfigProfile::PseudoWorker, Some(db.db_url()), None).await;
+		let routes = create_routes(config);
+		let response = request()
+			.path("/v1/sources/quality")
+			.header("Authorization", format!("Bearer {key}"))
+			.reply(&routes)
+			.await;
+		assert_eq!(response.status(), StatusCode::OK, "{:?}", response.body());
+		let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+		let sources = body["sources"].as_array().unwrap();
+		assert_eq!(sources.len(), 2);
+		let source = sources
+			.iter()
+			.find(|s| s["source_key"] == "webinar")
+			.unwrap();
+		assert_eq!(source["total_records"], 2);
+		assert_eq!(source["processed_records"], 1);
+		assert_eq!(source["invalid_pct"], 100.0);
+		assert_eq!(source["complained_count"], 1);
+		assert_eq!(source["quality_grade"], "F");
+		assert_eq!(
+			sources
+				.iter()
+				.find(|s| s["source_key"] == "new-source")
+				.unwrap()["quality_grade"],
+			"pending"
+		);
+	}
+
+	#[tokio::test]
+	#[serial]
 	async fn creates_gets_downloads_and_reuses_remediation_plan() {
 		let db = TestDb::start().await;
 		let tenant_id = insert_tenant(db.pool(), "remediation-main", Some(10_000), 0).await;
@@ -59,11 +164,10 @@ mod tests {
 		)
 		.await;
 
-		// Suppressions store the address as entered, lowercased; the list task
-		// for row 5 stores the Gmail-canonical form without the dot.
+		// Suppressions retain the entered address and use a shared mailbox key.
 		for email in ["suppressed@example.com", "gmail.suppressed@gmail.com"] {
 			sqlx::query(
-				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, $2, 'manual'::suppression_reason)",
+				"INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, $2, mailbox_identity($2), 'manual'::suppression_reason)",
 			)
 			.bind(tenant_id)
 			.bind(email)
@@ -263,6 +367,38 @@ mod tests {
 		assert!(!csv.contains("suppressed@example.com"));
 		assert!(!csv.contains("suppressed@gmail.com"), "{}", csv);
 		assert!(!csv.contains("bad,"));
+
+		// Feedback received after a plan was built must invalidate its send-ready export.
+		sqlx::query("INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, 'good@example.com', 'good@example.com', 'manual'::suppression_reason)")
+			.bind(tenant_id).execute(db.pool()).await.unwrap();
+		let stale_download = request()
+			.path(&format!(
+				"/v1/lists/{list_id}/remediation-exports/{export_id}/download"
+			))
+			.header("Authorization", format!("Bearer {key}"))
+			.reply(&routes)
+			.await;
+		assert_eq!(stale_download.status(), StatusCode::CONFLICT);
+		let stale_export = request()
+			.path(&format!("/v1/lists/{list_id}/remediation-exports"))
+			.method("POST")
+			.header("Authorization", format!("Bearer {key}"))
+			.json(&serde_json::json!({"plan_id": plan_id, "partitions": ["safe_to_send"]}))
+			.reply(&routes)
+			.await;
+		assert_eq!(stale_export.status(), StatusCode::CONFLICT);
+		let refreshed = request()
+			.path(&format!("/v1/lists/{list_id}/remediation-plan"))
+			.method("POST")
+			.header("Authorization", format!("Bearer {key}"))
+			.json(&serde_json::json!({}))
+			.reply(&routes)
+			.await;
+		assert_eq!(refreshed.status(), StatusCode::CREATED);
+		let refreshed: serde_json::Value = serde_json::from_slice(refreshed.body()).unwrap();
+		assert_ne!(refreshed["id"], plan_id);
+		assert_eq!(refreshed["summary_counts"]["safe"], 1);
+		assert_eq!(refreshed["summary_counts"]["drop"], 4);
 	}
 
 	#[tokio::test]

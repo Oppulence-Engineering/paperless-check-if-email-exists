@@ -44,8 +44,9 @@ export const NoMailServer: Story = {
 				risk_level: "medium",
 				dns_records: {
 					has_spf: false,
-					spf_valid: false,
-					has_dkim: false,
+					spf_policy_explicit: false,
+					has_dkim: null,
+					dkim_selectors: [],
 					has_dmarc: false,
 					dmarc_policy: null,
 					has_mx: false,

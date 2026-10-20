@@ -4,7 +4,7 @@ use crate::http::CheckEmailRequest;
 use crate::tenant::quota::release_reserved_usage;
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use check_if_email_exists::LOG_TARGET;
-use lapin::{BasicProperties, Channel};
+use lapin::BasicProperties;
 use sqlx::PgPool;
 use std::sync::Arc;
 use std::time::Duration;
@@ -33,6 +33,7 @@ pub async fn run_reverification_cycle(
 	config: &Arc<BackendConfig>,
 	pg_pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
+	crate::smtp_egress::require_smtp_ready(config)?;
 	// Atomically claim due schedules by advancing next_run_at in a single
 	// UPDATE ... RETURNING, preventing concurrent instances from processing
 	// the same schedule (no transaction needed, the UPDATE itself is atomic).
@@ -96,6 +97,12 @@ async fn process_schedule(
 			WHERE tenant_id = $1
 			  AND task_state = 'completed'
 			  AND completed_at IS NOT NULL
+			  -- Duplicates share their primary's result, and blank or
+			  -- malformed rows were never verified; re-verifying them
+			  -- would only spend credits.
+			  AND is_duplicate IS NOT TRUE
+			  AND COALESCE(payload->'input'->>'to_email', '') <> ''
+			  AND sub_reason IS DISTINCT FROM 'invalid_syntax'
 			GROUP BY payload->'input'->>'to_email'
 		) sub
 		WHERE sub.latest_completed < NOW() - make_interval(days => $2)
@@ -105,6 +112,13 @@ async fn process_schedule(
 			  AND t2.payload->'input'->>'to_email' = sub.email
 			  AND t2.task_state IN ('queued', 'running', 'retrying')
 		  )
+		  AND NOT EXISTS (
+			SELECT 1 FROM v1_suppression_entries se
+			WHERE se.tenant_id = $1 AND se.status = 'active'
+			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
+			  AND se.canonical_email = mailbox_identity(sub.email)
+		  )
+		ORDER BY sub.latest_completed ASC, sub.email ASC
 		LIMIT $3
 		"#,
 	)
@@ -125,7 +139,7 @@ async fn process_schedule(
 	}
 
 	// Validate worker config early before consuming quota or creating DB records
-	let worker_config = config.must_worker_config()?;
+	config.must_worker_config()?;
 
 	// Check quota
 	let tenant_ctx =
@@ -139,6 +153,9 @@ async fn process_schedule(
 	.await
 	{
 		crate::tenant::quota::QuotaCheckResult::Allowed => {}
+		crate::tenant::quota::QuotaCheckResult::Unavailable => {
+			anyhow::bail!("Quota service unavailable; reverification was not dispatched");
+		}
 		crate::tenant::quota::QuotaCheckResult::ExceededMonthlyLimit { .. } => {
 			info!(
 				target: LOG_TARGET,
@@ -155,7 +172,7 @@ async fn process_schedule(
 	let job_id: i32 = match sqlx::query_scalar(
 		r#"
 		INSERT INTO v1_bulk_job (total_records, tenant_id, status, metadata)
-		VALUES ($1, $2, 'running'::job_state, '{"source": "reverification"}'::jsonb)
+		VALUES ($1, $2, 'pending'::job_state, '{"source": "reverification"}'::jsonb)
 		RETURNING id
 		"#,
 	)
@@ -176,15 +193,7 @@ async fn process_schedule(
 	let PublishOutcome {
 		published,
 		insert_error,
-	} = publish_stale_emails(
-		config,
-		pg_pool,
-		&worker_config.channel,
-		schedule.tenant_id,
-		job_id,
-		&stale_emails,
-	)
-	.await;
+	} = publish_stale_emails(config, pg_pool, schedule.tenant_id, job_id, &stale_emails).await;
 
 	let _ = release_reserved_usage(
 		Some(pg_pool),
@@ -193,18 +202,22 @@ async fn process_schedule(
 	)
 	.await;
 
-	// With nothing published no worker will ever finalize the job, which
-	// would otherwise stay 'running' forever.
-	if published == 0 {
-		if let Err(err) = sqlx::query(
-			"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
+	// The job stays 'pending' while its rows are created and published, so
+	// the worker cannot finish it after the first task. With nothing published
+	// no worker will ever finalize it, so it fails here.
+	let settled = if published > 0 {
+		crate::worker::job_lifecycle::start_bulk_job(pg_pool, job_id).await
+	} else {
+		sqlx::query(
+			"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1 AND status = 'pending'",
 		)
 		.bind(job_id)
 		.execute(pg_pool)
 		.await
-		{
-			warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark unpublished reverification job failed");
-		}
+		.map(|_| ())
+	};
+	if let Err(err) = settled {
+		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to settle reverification job");
 	}
 
 	// Update schedule (next_run_at already set by the atomic claim)
@@ -244,15 +257,14 @@ struct PublishOutcome {
 	insert_error: Option<sqlx::Error>,
 }
 
-/// Create a task row for each stale email and publish it. Rows whose publish
-/// fails are marked failed so they don't stay orphaned as 'queued'. A failed
+/// Create a task row for each stale email and durably enqueue it. Rows whose dispatch
+/// cannot be committed are marked failed. A failed
 /// row INSERT stops the batch: it usually means Postgres is unavailable, and
 /// trying every remaining email would only wait out the pool timeout each
 /// time.
 async fn publish_stale_emails(
 	config: &Arc<BackendConfig>,
 	pg_pool: &PgPool,
-	channel: &Arc<Channel>,
 	tenant_id: uuid::Uuid,
 	job_id: i32,
 	stale_emails: &[StaleEmail],
@@ -300,7 +312,7 @@ async fn publish_stale_emails(
 			metadata.task_db_id = Some(task_row_id);
 		}
 
-		if let Err(err) = publish_task(Arc::clone(channel), task, properties.clone()).await {
+		if let Err(err) = publish_task(pg_pool, task, properties.clone()).await {
 			warn!(
 				target: LOG_TARGET,
 				email = %stale.email,
@@ -349,6 +361,7 @@ fn reverification_task(
 	email: &str,
 ) -> CheckEmailTask {
 	CheckEmailTask {
+		verification_backend: config.verification_backend,
 		input: CheckEmailRequest {
 			to_email: email.to_string(),
 			..Default::default()
@@ -357,6 +370,9 @@ fn reverification_task(
 		job_id: CheckEmailJobId::Bulk(job_id),
 		webhook: None,
 		metadata: Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some(tenant_id.to_string()),
 			request_id: None,
 			correlation_id: None,

@@ -21,6 +21,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_connects_and_declares_queue() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -46,6 +47,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_sets_qos() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 8,
 		};
@@ -57,6 +59,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_bad_url() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: "amqp://bad:9999".into(),
 			concurrency: 1,
 		};
@@ -95,6 +98,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_check_email_returns_invalid_for_bad_syntax() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "not-email".into(),
 				..Default::default()
@@ -114,6 +118,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_check_email_with_metadata() {
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad".into(),
 				..Default::default()
@@ -121,6 +126,9 @@ mod do_work_coverage {
 			job_id: CheckEmailJobId::Bulk(1),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some("t1".into()),
 				request_id: Some("r1".into()),
 				correlation_id: Some("c1".into()),
@@ -141,6 +149,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_publish_consume_roundtrip() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -151,6 +160,7 @@ mod do_work_coverage {
 			.await;
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "roundtrip@test.com".into(),
 				..Default::default()
@@ -158,6 +168,9 @@ mod do_work_coverage {
 			job_id: CheckEmailJobId::SingleShot,
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -209,6 +222,7 @@ mod do_work_coverage {
 	async fn test_task_with_webhook_no_url() {
 		// Webhook with None on_each_email should not send anything
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "noemail".into(),
 				..Default::default()
@@ -363,7 +377,8 @@ mod shared_check_email_coverage {
 		.await
 		.unwrap();
 		let status: Option<i16> = row.get("response_status_code");
-		assert_eq!(status, Some(200));
+		// The key keeps its durable operation pointer; replay reads the completed operation.
+		assert_eq!(status, Some(202));
 	}
 }
 
@@ -808,6 +823,7 @@ mod do_check_email_work_coverage {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -823,6 +839,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -846,6 +863,7 @@ mod do_check_email_work_coverage {
 
 		// Publish a task with invalid email (will return Invalid = success path)
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "invalid-syntax".into(),
 				..Default::default()
@@ -853,6 +871,9 @@ mod do_check_email_work_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -934,6 +955,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -951,6 +973,7 @@ mod do_check_email_work_coverage {
 		// Use an email that will return Unknown (triggers retry path)
 		// But with max_retries=0 and retry_count already at 2, it should dead-letter
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@nonexistent-domain-xyz123.tld".into(),
 				..Default::default()
@@ -958,6 +981,9 @@ mod do_check_email_work_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -1058,6 +1084,7 @@ mod do_check_email_work_retry_coverage {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -1073,6 +1100,7 @@ mod do_check_email_work_retry_coverage {
 		let _db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -1098,6 +1126,7 @@ mod do_check_email_work_retry_coverage {
 		let correlation_id = uuid::Uuid::new_v4().to_string();
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad".into(),
 				..Default::default()
@@ -1150,6 +1179,7 @@ mod do_check_email_work_retry_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -1166,6 +1196,7 @@ mod do_check_email_work_retry_coverage {
 
 		// Task with high max_retries — will trigger retry path for Unknown results
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "user@nonexistent-domain-abc999.tld".into(),
 				..Default::default()
@@ -1173,6 +1204,9 @@ mod do_check_email_work_retry_coverage {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -1253,6 +1287,7 @@ mod postgres_storage_coverage {
 
 	fn make_task(metadata: Option<TaskMetadata>) -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "store@test.com".into(),
 				..Default::default()
@@ -1337,6 +1372,9 @@ mod postgres_storage_coverage {
 		let tid: uuid::Uuid = sqlx::Row::get(&row, "id");
 
 		let task = make_task(Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: Some(tid.to_string()),
 			request_id: None,
 			correlation_id: None,

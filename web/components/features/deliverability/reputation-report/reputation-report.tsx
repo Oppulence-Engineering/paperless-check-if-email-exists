@@ -29,14 +29,20 @@ const MISSING = { tone: "red", value: "Not found" } as const;
 export function ReputationReport({ action, className, report, ...props }: ReputationReportProps) {
 	const dns = report.dns_records;
 	const info = report.domain_info;
-	const listed = report.blacklist_results.filter((result) => result.listed).length;
+	const listed = report.blacklist_results.filter((result) => result.listed === true).length;
+	const unknown = report.blacklist_results.filter((result) => result.listed == null).length;
 	const checks: Check[] = [
 		{
 			label: "SPF",
-			...(dns.has_spf ? (dns.spf_valid ? FOUND : { tone: "yellow", value: "Not valid" }) : MISSING),
+			...(dns.has_spf ? { tone: "gray", value: "Record found · syntax not checked" } : MISSING),
 		},
-		// Only a few common selectors are looked up, so a miss is a warning, not a failure.
-		{ label: "DKIM", ...(dns.has_dkim ? FOUND : { tone: "yellow", value: "Not found" }) },
+		// Selector coverage is incomplete; no discovered key means unknown.
+		{
+			label: "DKIM",
+			...(dns.has_dkim === true
+				? { ...FOUND, value: "Key detected" }
+				: { tone: "gray", value: "Unknown" }),
+		},
 		{
 			label: "DMARC policy",
 			...(dns.has_dmarc
@@ -51,15 +57,13 @@ export function ReputationReport({ action, className, report, ...props }: Reputa
 		},
 		{
 			label: "Blocklists",
-			// Without an MX host the backend skips the lookups and reports every list as clear.
 			...(!dns.has_mx
 				? { tone: "gray", value: "Not checked" }
 				: listed
-					? {
-							tone: "red",
-							value: `Listed on ${String(listed)} of ${String(report.blacklist_results.length)}`,
-						}
-					: { tone: "green", value: "Not listed" }),
+					? { tone: "red", value: `Listed on ${String(listed)} · ${String(unknown)} unknown` }
+					: unknown
+						? { tone: "yellow", value: `Incomplete · ${String(unknown)} unknown` }
+						: { tone: "green", value: "Not listed" }),
 		},
 	];
 	const registration = [
@@ -108,8 +112,8 @@ export function ReputationReport({ action, className, report, ...props }: Reputa
 					<ul className="space-y-1 text-xs text-[#858585]">
 						{!dns.has_dkim ? (
 							<li>
-								DKIM: the check looks only at the selectors default, google, selector1, selector2,
-								and k1. A key at a different selector does not show here.
+								DKIM: only common selectors were checked. Another selector may contain a key. This
+								check does not verify a message signature.
 							</li>
 						) : null}
 						{!dns.has_mx ? (
@@ -145,8 +149,14 @@ export function ReputationReport({ action, className, report, ...props }: Reputa
 								key={result.provider}
 							>
 								{result.provider}
-								<Pill tone={result.listed ? "red" : "green"}>
-									{result.listed ? "Listed" : "Not listed"}
+								<Pill tone={result.listed == null ? "gray" : result.listed ? "red" : "green"}>
+									{result.status === "skipped"
+										? "Not checked"
+										: result.listed == null
+											? "Query failed"
+											: result.listed
+												? "Listed"
+												: "Not listed"}
 								</Pill>
 							</li>
 						))}

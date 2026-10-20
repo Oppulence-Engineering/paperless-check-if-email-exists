@@ -4,7 +4,8 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	dotenv::dotenv().expect("Unable to load environment variables from .env file");
+	// A .env file is optional: containers pass the variables directly.
+	dotenv::dotenv().ok();
 	tracing_subscriber::fmt::init();
 
 	let db_url = std::env::var("DATABASE_URL").expect("Unable to read DATABASE_URL env var");
@@ -35,46 +36,24 @@ async fn main() -> Result<()> {
 		(true, _) => info!("Job ids to delete {:?}", job_ids_to_delete),
 		(false, true) => info!("No jobs to delete"),
 		(false, false) => {
-			// Start a transaction
-			let tx = pool.begin().await?;
-
-			// Before deleting from bulk_jobs, delete the corresponding records from email_results in a batch
-			let delete_email_results_query =
-				"DELETE FROM email_results WHERE job_id = ANY($1::int[])";
-
-			// Convert job_ids_to_delete to Vec<i32> before binding
-			let job_ids_to_delete_vec: Vec<i32> =
-				job_ids_to_delete.iter().map(|&(id,)| id).collect();
-
-			// Execute the delete query for email_results in a batch within the transaction
-			sqlx::query(delete_email_results_query)
-				.bind(&job_ids_to_delete_vec)
-				.execute(&pool) // Use execute on the query builder
-				.await?;
-
-			info!(
-				"Email results for job IDs {:?} deleted successfully.",
-				job_ids_to_delete
-			);
-
-			// safely delete the records from bulk_jobs
-			let delete_bulk_jobs_query = "DELETE FROM bulk_jobs WHERE id = ANY($1::int[])";
-
-			// Execute the delete query for bulk_jobs in a batch within the transaction
-			sqlx::query(delete_bulk_jobs_query)
-				.bind(&job_ids_to_delete_vec)
-				.execute(&pool) // Use execute on the query builder
-				.await?;
-
-			info!(
-				"Bulk jobs records with IDs {:?} deleted successfully.",
-				job_ids_to_delete
-			);
-
-			// Commit the transaction if both deletes are successful
-			tx.commit().await?;
+			let ids: Vec<i32> = job_ids_to_delete.iter().map(|&(id,)| id).collect();
+			prune_jobs(&pool, &ids).await?;
+			info!("Deleted jobs and results for IDs {:?}", ids);
 		}
 	}
 
 	Ok(())
+}
+
+pub async fn prune_jobs(pool: &PgPool, ids: &[i32]) -> Result<()> {
+	let mut tx = pool.begin().await?;
+	sqlx::query("DELETE FROM email_results WHERE job_id = ANY($1::int[])")
+		.bind(ids)
+		.execute(&mut *tx)
+		.await?;
+	sqlx::query("DELETE FROM bulk_jobs WHERE id = ANY($1::int[])")
+		.bind(ids)
+		.execute(&mut *tx)
+		.await?;
+	tx.commit().await
 }

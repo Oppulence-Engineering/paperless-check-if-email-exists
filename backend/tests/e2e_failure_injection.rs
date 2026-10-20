@@ -126,7 +126,7 @@ async fn readiness_reports_rabbitmq_unavailable_after_outage() {
 
 #[tokio::test]
 #[serial]
-async fn worker_backed_check_email_fails_fast_when_rabbitmq_is_down() {
+async fn worker_backed_check_email_retains_pending_work_when_rabbitmq_is_down() {
 	let env = OwnedResilienceEnv::start().await;
 	let config = build_test_config(
 		ConfigProfile::WorkerRabbit,
@@ -138,7 +138,7 @@ async fn worker_backed_check_email_fails_fast_when_rabbitmq_is_down() {
 	env.rabbitmq.stop().await;
 
 	let response = tokio::time::timeout(
-		Duration::from_secs(5),
+		Duration::from_secs(25),
 		request()
 			.method("POST")
 			.path("/v1/check_email")
@@ -149,22 +149,24 @@ async fn worker_backed_check_email_fails_fast_when_rabbitmq_is_down() {
 			.reply(&create_routes(Arc::clone(&config))),
 	)
 	.await
-	.expect("worker-backed request should fail fast");
+	.expect("worker-backed request must return its pending operation");
 
-	assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+	assert_eq!(response.status(), StatusCode::ACCEPTED);
 	let body = parse_json(response.body());
-	assert!(
-		body["error"]
-			.as_str()
-			.is_some_and(|message| !message.is_empty()),
-		"expected worker error body: {body}",
-		body = body
-	);
+	assert_eq!(body["status"], "pending");
+	assert!(body["operation_id"].is_string());
+	let pool = env.postgres.pool().await;
+	let pending: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM verification_dispatch")
+		.fetch_one(&pool)
+		.await
+		.unwrap();
+	assert_eq!(pending, 1);
+	pool.close().await;
 }
 
 #[tokio::test]
 #[serial]
-async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
+async fn killed_worker_before_ack_does_not_duplicate_completion_side_effects() {
 	let env = OwnedResilienceEnv::start().await;
 	let pool = env.postgres.pool().await;
 	let job_id = insert_job(&pool, None, 1, "running").await;
@@ -172,6 +174,7 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 	pool.close().await;
 
 	let rabbitmq_config = RabbitMQConfig {
+		queue: "check_email".into(),
 		url: env.rabbitmq.amqp_url().to_string(),
 		concurrency: 4,
 	};
@@ -182,14 +185,8 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		.queue_purge(CHECK_EMAIL_QUEUE.into(), QueuePurgeOptions::default())
 		.await;
 
-	let config = build_test_config(
-		ConfigProfile::WorkerRabbit,
-		Some(env.postgres.db_url()),
-		Some(env.rabbitmq.amqp_url()),
-	)
-	.await;
-
 	let task = CheckEmailTask {
+		verification_backend: Default::default(),
 		input: check_if_email_exists::CheckEmailInput {
 			to_email: "bad-syntax".into(),
 			..Default::default()
@@ -197,6 +194,9 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		job_id: CheckEmailJobId::Bulk(job_id),
 		webhook: None,
 		metadata: Some(TaskMetadata {
+			dispatch_id: None,
+			lease_id: None,
+			decision_policy: None,
 			tenant_id: None,
 			request_id: None,
 			correlation_id: None,
@@ -208,8 +208,6 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 	};
 
 	let task_json = serde_json::to_vec(&task).expect("serialize task");
-	let task_for_first_attempt: CheckEmailTask =
-		serde_json::from_slice(&task_json).expect("deserialize cloned task");
 	publisher
 		.basic_publish(
 			"".into(),
@@ -225,9 +223,44 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 		.await
 		.expect("confirm publish");
 
+	let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+		.args(["--exact", "owned_worker_child", "--nocapture"])
+		.env("RCH_TEST_WORKER_CHILD", "1")
+		.env("RCH_TEST_CHILD_DATABASE_URL", env.postgres.db_url())
+		.env("RCH_TEST_CHILD_AMQP_URL", env.rabbitmq.amqp_url())
+		.env("RCH_TEST_PRE_ACK_DELAY_MS", "30000")
+		.stdout(std::process::Stdio::null())
+		.stderr(std::process::Stdio::null())
+		.kill_on_drop(true)
+		.spawn()
+		.unwrap();
+	let pool = env.postgres.pool().await;
+	let stored = tokio::time::timeout(Duration::from_secs(15), async {
+		loop {
+			let done: bool =
+				sqlx::query_scalar("SELECT completion_done FROM v1_task_result WHERE id = $1")
+					.bind(task_db_id)
+					.fetch_one(&pool)
+					.await
+					.unwrap();
+			if done {
+				break;
+			}
+			tokio::time::sleep(Duration::from_millis(50)).await;
+		}
+	})
+	.await;
+	child
+		.kill()
+		.await
+		.expect("kill owned worker process before broker ack");
+	child.wait().await.unwrap();
+	stored.expect("worker must durably complete before being killed");
+	pool.close().await;
+
 	let consumer = setup_rabbit_mq("mid-job-consumer", &rabbitmq_config)
 		.await
-		.expect("consumer channel");
+		.unwrap();
 	let mut deliveries = consumer
 		.basic_consume(
 			CHECK_EMAIL_QUEUE.into(),
@@ -236,29 +269,7 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 			FieldTable::default(),
 		)
 		.await
-		.expect("basic consume");
-	let delivery = tokio::time::timeout(Duration::from_secs(5), deliveries.next())
-		.await
-		.expect("receive first delivery")
-		.expect("delivery stream item")
-		.expect("lapin delivery");
-
-	std::env::set_var("RCH_TEST_FORCE_REQUEUE_BEFORE_ACK", "1");
-	let first_attempt = tokio::spawn({
-		let channel = config.must_worker_config().expect("worker config").channel;
-		let config = Arc::clone(&config);
-		async move { do_check_email_work(&task_for_first_attempt, delivery, channel, config).await }
-	});
-
-	let first_result = tokio::time::timeout(Duration::from_secs(5), first_attempt)
-		.await
-		.expect("first attempt should fail within timeout")
-		.expect("first attempt join");
-	std::env::remove_var("RCH_TEST_FORCE_REQUEUE_BEFORE_ACK");
-	assert!(
-		first_result.is_err(),
-		"first attempt should fail before ack and requeue the delivery"
-	);
+		.unwrap();
 
 	let recovery_delivery = tokio::time::timeout(Duration::from_secs(10), deliveries.next())
 		.await
@@ -322,17 +333,25 @@ async fn pre_ack_requeue_does_not_duplicate_completion_side_effects() {
 	let _ = consumer.close(0, "test cleanup".into()).await;
 }
 
+#[tokio::test]
+async fn owned_worker_child() {
+	if std::env::var("RCH_TEST_WORKER_CHILD").as_deref() != Ok("1") {
+		return;
+	}
+	let db = std::env::var("RCH_TEST_CHILD_DATABASE_URL").unwrap();
+	let amqp = std::env::var("RCH_TEST_CHILD_AMQP_URL").unwrap();
+	let config = build_test_config(ConfigProfile::WorkerRabbit, Some(&db), Some(&amqp)).await;
+	reacher_backend::worker::run_worker(config).await.unwrap();
+}
+
 /// Failures that hit after work was reserved or done: the task, the quota
 /// and the job must all end up accounted for.
 mod settlement_after_failure {
 	use super::*;
 	use crate::test_helpers::{insert_keys_for_existing_tenant, insert_tenant};
-	use lapin::options::BasicAckOptions;
 	use lapin::types::AMQPValue;
 	use reacher_backend::reverification::run_reverification_cycle;
-	use reacher_backend::worker::do_work::{
-		delivery_attempt, DELIVERY_ATTEMPT_HEADER, MAX_STORE_FAILURE_REQUEUES,
-	};
+	use reacher_backend::worker::do_work::DELIVERY_ATTEMPT_HEADER;
 
 	async fn publish_task_message(channel: &lapin::Channel, payload: &[u8], attempt: Option<u32>) {
 		let mut properties = BasicProperties::default().with_priority(1);
@@ -369,7 +388,7 @@ mod settlement_after_failure {
 	/// the requeueing must stop at the cap.
 	#[tokio::test]
 	#[serial]
-	async fn unstorable_result_is_requeued_with_a_counted_attempt_and_dropped_at_the_cap() {
+	async fn deleted_job_delivery_cannot_recreate_its_results() {
 		let env = OwnedResilienceEnv::start().await;
 		let pool = env.postgres.pool().await;
 		let job_id = insert_job(&pool, None, 1, "running").await;
@@ -390,6 +409,7 @@ mod settlement_after_failure {
 		let channel = config.must_worker_config().expect("worker config").channel;
 
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "bad-syntax".into(),
 				..Default::default()
@@ -397,6 +417,9 @@ mod settlement_after_failure {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -423,41 +446,24 @@ mod settlement_after_failure {
 			.expect("receive first delivery")
 			.expect("delivery stream item")
 			.expect("lapin delivery");
-		assert_eq!(delivery_attempt(&first.properties), 0);
-
-		let result =
-			do_check_email_work(&task, first, Arc::clone(&channel), Arc::clone(&config)).await;
+		do_check_email_work(&task, first, Arc::clone(&channel), Arc::clone(&config))
+			.await
+			.expect("deleted work is obsolete and must be acknowledged");
 		assert!(
-			result.is_err(),
-			"an unstored result must not be reported as done"
-		);
-
-		let requeued = tokio::time::timeout(Duration::from_secs(15), deliveries.next())
-			.await
-			.expect("the task must come back instead of being acked away")
-			.expect("delivery stream item")
-			.expect("lapin delivery");
-		assert_eq!(delivery_attempt(&requeued.properties), 1);
-		requeued
-			.ack(BasicAckOptions::default())
-			.await
-			.expect("ack requeued copy");
-
-		publish_task_message(&channel, &payload, Some(MAX_STORE_FAILURE_REQUEUES)).await;
-		let at_cap = tokio::time::timeout(Duration::from_secs(5), deliveries.next())
-			.await
-			.expect("receive delivery at the cap")
-			.expect("delivery stream item")
-			.expect("lapin delivery");
-		let result =
-			do_check_email_work(&task, at_cap, Arc::clone(&channel), Arc::clone(&config)).await;
-		assert!(result.is_err());
-		assert!(
-			tokio::time::timeout(Duration::from_secs(3), deliveries.next())
+			tokio::time::timeout(Duration::from_secs(2), deliveries.next())
 				.await
-				.is_err(),
-			"a task at the requeue cap must be dropped, not looped"
+				.is_err()
 		);
+		let pool = env.postgres.pool().await;
+		let rows: i64 =
+			sqlx::query_scalar("SELECT COUNT(*) FROM v1_task_result WHERE id = $1 OR job_id = $2")
+				.bind(task_db_id)
+				.bind(job_id)
+				.fetch_one(&pool)
+				.await
+				.unwrap();
+		assert_eq!(rows, 0, "redelivery must never resurrect deleted results");
+		pool.close().await;
 	}
 
 	#[tokio::test]
@@ -477,6 +483,7 @@ mod settlement_after_failure {
 		)
 		.await;
 		let task = CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "cancelled@example.com".into(),
 				..Default::default()
@@ -484,6 +491,9 @@ mod settlement_after_failure {
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: None,
 				request_id: None,
 				correlation_id: None,
@@ -564,7 +574,10 @@ mod settlement_after_failure {
 				.fetch_all(&pool)
 				.await
 				.expect("load jobs");
-		assert_eq!(job_statuses, vec!["failed".to_string()]);
+		assert!(
+			job_statuses.is_empty(),
+			"failed admission must roll back the parent job"
+		);
 		let queued: i64 = sqlx::query_scalar(
 			"SELECT COUNT(*) FROM v1_task_result WHERE tenant_id = $1 AND task_state = 'queued'",
 		)
@@ -581,7 +594,7 @@ mod settlement_after_failure {
 
 	#[tokio::test]
 	#[serial]
-	async fn reverification_that_cannot_publish_refunds_quota_and_fails_its_job() {
+	async fn reverification_keeps_durable_work_reserved_during_a_broker_outage() {
 		let env = OwnedResilienceEnv::start().await;
 		let pool = env.postgres.pool().await;
 		let tenant_id = insert_tenant(&pool, "reverify-publish-failure", Some(100), 0).await;
@@ -594,6 +607,13 @@ mod settlement_after_failure {
 		.execute(&pool)
 		.await
 		.expect("age the earlier verification");
+		let suppressed_task =
+			insert_task(&pool, old_job, "completed", Some(tenant_id), None, None).await;
+		sqlx::query("UPDATE v1_task_result SET payload = jsonb_set(payload, '{input,to_email}', '\"blocked@example.com\"'), completed_at = NOW() - INTERVAL '90 days' WHERE id = $1")
+			.bind(suppressed_task).execute(&pool).await.unwrap();
+		sqlx::query("INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason) VALUES ($1, 'blocked@example.com', 'blocked@example.com', 'manual'::suppression_reason)")
+			.bind(tenant_id).execute(&pool).await.unwrap();
+
 		sqlx::query(
 			"INSERT INTO reverification_schedules (tenant_id, staleness_days, batch_size) VALUES ($1, 30, 10)",
 		)
@@ -621,7 +641,7 @@ mod settlement_after_failure {
 			.await
 			.expect("reverification cycle");
 
-		assert_eq!(used_this_period(&pool, tenant_id).await, 0);
+		assert_eq!(used_this_period(&pool, tenant_id).await, 1);
 		let job_status: String = sqlx::query_scalar(
 			"SELECT status::TEXT FROM v1_bulk_job WHERE tenant_id = $1 AND metadata->>'source' = 'reverification'",
 		)
@@ -630,9 +650,45 @@ mod settlement_after_failure {
 		.await
 		.expect("load reverification job");
 		assert_eq!(
-			job_status, "failed",
-			"a job nothing was published for must not stay running"
+			job_status, "running",
+			"durable work stays reserved until the broker recovers"
 		);
+		let worker = config.must_worker_config().unwrap();
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			&pool,
+			&worker.channel,
+			&worker.rabbitmq.queue,
+		)
+		.await
+		.unwrap());
+		let pending: i64 = sqlx::query_scalar("SELECT count(*) FROM verification_dispatch")
+			.fetch_one(&pool)
+			.await
+			.unwrap();
+		assert_eq!(pending, 1, "a lost broker must retain dispatch intent");
+		let recovered = setup_rabbit_mq("reverification-recovered", &worker.rabbitmq)
+			.await
+			.unwrap();
+		sqlx::query("UPDATE verification_dispatch SET next_attempt_at = NOW()")
+			.execute(&pool)
+			.await
+			.unwrap();
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			&pool,
+			&recovered,
+			&worker.rabbitmq.queue,
+		)
+		.await
+		.unwrap());
+		let delivery = recovered
+			.basic_get(worker.rabbitmq.queue.as_str().into(), Default::default())
+			.await
+			.unwrap()
+			.expect("recovered scheduled task");
+		let task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+		assert!(task.metadata.unwrap().dispatch_id.is_some());
+		delivery.ack(Default::default()).await.unwrap();
+		assert_eq!(used_this_period(&pool, tenant_id).await, 1);
 
 		// The row keeps a full task payload, so it can be retried later.
 		let payload: serde_json::Value = sqlx::query_scalar(

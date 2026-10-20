@@ -40,6 +40,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 	let syntax = check_syntax(email);
 	if !syntax.is_valid_syntax {
 		return CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Invalid,
 			syntax,
@@ -64,6 +65,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 
 	match domain_lower.as_str() {
 		"invalid.example.com" => CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Invalid,
 			misc: Ok(MiscDetails::default()),
@@ -83,6 +85,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			debug: Default::default(),
 		},
 		"risky.example.com" => CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Risky,
 			misc: Ok(MiscDetails::default()),
@@ -102,6 +105,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			debug: Default::default(),
 		},
 		"unknown.example.com" => CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Unknown,
 			misc: Ok(MiscDetails::default()),
@@ -117,6 +121,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			debug: Default::default(),
 		},
 		"disposable.example.com" => CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Risky,
 			misc: Ok(MiscDetails {
@@ -139,6 +144,7 @@ pub fn sandbox_check(email: &str) -> CheckEmailOutput {
 			debug: Default::default(),
 		},
 		_ => CheckEmailOutput {
+			external_verification: None,
 			input: email.to_string(),
 			is_reachable: Reachable::Safe,
 			misc: Ok(MiscDetails::default()),

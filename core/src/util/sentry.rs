@@ -65,7 +65,9 @@ fn error(err: SentryError, result: &CheckEmailOutput, backend_name: &str) {
 		level: Level::Error,
 		environment: Some("production".into()),
 		release: Some(format!("v{CARGO_PKG_VERSION}").into()),
-		message: Some(format!("{result:#?}")),
+		// The dump holds the address in several fields (input, address,
+		// normalized email), so it gets the same redaction as the exception.
+		message: Some(redact(&format!("{result:#?}"), &result.syntax.username)),
 		server_name: Some(backend_name.to_string().into()),
 		transaction: Some(format!("check_email:{}", result.syntax.domain)),
 		..Default::default()

@@ -68,6 +68,7 @@ mod tests {
 
 	fn make_task() -> CheckEmailTask {
 		CheckEmailTask {
+			verification_backend: Default::default(),
 			input: check_if_email_exists::CheckEmailInput {
 				to_email: "test@example.com".into(),
 				..Default::default()

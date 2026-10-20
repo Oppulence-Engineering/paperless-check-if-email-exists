@@ -76,15 +76,14 @@ async fn http_handler(
 	let mut unique_emails = Vec::new();
 	let mut seen = BTreeSet::new();
 	for email in &body.emails {
-		let normalized = normalize_suppression_email(email);
-		if normalized.is_empty() {
+		let Some(normalized) = normalize_suppression_email(email) else {
 			continue;
-		}
+		};
 		if !seen.insert(normalized.clone()) {
 			duplicates += 1;
 			continue;
 		}
-		unique_emails.push(normalized);
+		unique_emails.push((email.trim(), normalized));
 	}
 
 	if unique_emails.is_empty() {
@@ -114,7 +113,7 @@ async fn http_handler(
 	let mut entry_ids = Vec::new();
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
-	for email in &unique_emails {
+	for (email, canonical) in &unique_emails {
 		let row = sqlx::query(
 			r#"
 			INSERT INTO v1_suppression_entries (
@@ -123,7 +122,7 @@ async fn http_handler(
 				expires_at, last_seen_at, metadata
 			)
 			VALUES (
-				$1, $2, $2, 'active', $3::suppression_reason, $4, $5,
+				$1, $2, $12, 'active', $3::suppression_reason, $4, $5,
 				$3, $6, $7, $8, $9, $10, NOW(), $11
 			)
 			ON CONFLICT (tenant_id, canonical_email) WHERE status = 'active'
@@ -136,7 +135,9 @@ async fn http_handler(
 				source_type = EXCLUDED.source_type,
 				source_ref = COALESCE(EXCLUDED.source_ref, v1_suppression_entries.source_ref),
 				created_by = COALESCE(EXCLUDED.created_by, v1_suppression_entries.created_by),
-				expires_at = COALESCE(EXCLUDED.expires_at, v1_suppression_entries.expires_at),
+				expires_at = CASE WHEN v1_suppression_entries.expires_at <= NOW()
+					THEN EXCLUDED.expires_at
+					ELSE COALESCE(EXCLUDED.expires_at, v1_suppression_entries.expires_at) END,
 				last_seen_at = NOW(),
 				metadata = v1_suppression_entries.metadata || EXCLUDED.metadata,
 				updated_at = NOW()
@@ -154,6 +155,7 @@ async fn http_handler(
 		.bind(&created_by)
 		.bind(body.expires_at)
 		.bind(&metadata)
+		.bind(canonical)
 		.fetch_one(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
@@ -244,8 +246,8 @@ fn validate_confidence(confidence: Option<&str>) -> Result<(), warp::Rejection> 
 	.into())
 }
 
-fn normalize_suppression_email(email: &str) -> String {
-	email.trim().to_lowercase()
+fn normalize_suppression_email(email: &str) -> Option<String> {
+	crate::http::v1::lists::canonicalize::canonicalize_email(email)
 }
 
 fn metadata_for_request(body: &Request) -> Result<Value, ReacherResponseError> {
@@ -333,8 +335,13 @@ mod tests {
 	fn normalizes_suppression_email() {
 		assert_eq!(
 			normalize_suppression_email(" User@Example.COM "),
-			"user@example.com"
+			Some("User@example.com".into())
 		);
+		assert_eq!(
+			normalize_suppression_email("A.B+tag@GoogleMail.com"),
+			Some("ab@gmail.com".into())
+		);
+		assert_eq!(normalize_suppression_email(""), None);
 	}
 
 	#[test]

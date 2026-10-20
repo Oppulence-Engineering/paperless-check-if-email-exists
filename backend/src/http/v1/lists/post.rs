@@ -3,27 +3,22 @@ use super::csv_parse::{parse_csv, ParsedCsv};
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
 use crate::http::v0::check_email::post::with_config;
-use crate::http::v1::bulk::post::publish_task;
 use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::scoring::response::{prepare_verification_response, PreparedVerificationResponse};
 use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::models::PlanTier;
-use crate::tenant::quota::{
-	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
-};
+use crate::tenant::quota::{reserve_quota_in_tx, QuotaCheckResult};
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use bytes::Buf;
 use check_if_email_exists::{CheckEmailOutput, Reachable, LOG_TARGET};
 use chrono::Utc;
 use futures::TryStreamExt;
-use lapin::BasicProperties;
 use serde::Serialize;
 use serde_json::Value;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::warn;
 use warp::http::StatusCode;
 use warp::multipart::FormData;
 use warp::Filter;
@@ -48,8 +43,12 @@ async fn http_handler(
 
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let upload = read_upload(form).await.map_err(warp::reject::custom)?;
-	let parsed = parse_csv(&upload.file_bytes, upload.email_column.as_deref())
-		.map_err(warp::reject::custom)?;
+	let parsed = parse_csv(
+		&upload.file_bytes,
+		upload.email_column.as_deref(),
+		Some(plan_row_limit(&tenant_ctx)),
+	)
+	.map_err(warp::reject::custom)?;
 	let source_key = normalize_source_key(upload.source_key.as_deref());
 
 	if let Some(policy_id) = upload.policy_id {
@@ -105,10 +104,21 @@ async fn http_handler(
 	let deduplicated_count =
 		(canonical_groups.values().map(|v| v.len()).sum::<usize>() - canonical_groups.len()) as i32;
 
-	// Phase 2: Charge quota for unique emails only
-	match check_and_increment_quota_for_count(Some(&pg_pool), &tenant_ctx, unique_email_count).await
+	// Reserve quota in the same transaction as every row and dispatch intent.
+	crate::smtp_egress::require_smtp_ready(&config)?;
+	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
+	match reserve_quota_in_tx(&mut tx, &tenant_ctx, unique_email_count)
+		.await
+		.map_err(ReacherResponseError::from)?
 	{
 		QuotaCheckResult::Allowed => {}
+		QuotaCheckResult::Unavailable => {
+			return Err(ReacherResponseError::new(
+				StatusCode::SERVICE_UNAVAILABLE,
+				"Quota service unavailable; no verification was dispatched.",
+			)
+			.into())
+		}
 		QuotaCheckResult::ExceededMonthlyLimit {
 			limit,
 			used,
@@ -133,7 +143,7 @@ async fn http_handler(
 	.bind(parsed.rows.len() as i32)
 	.bind(tenant_id)
 	.bind(&source_key)
-	.fetch_one(&pg_pool)
+	.fetch_one(&mut *tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
 
@@ -168,17 +178,9 @@ async fn http_handler(
 	.bind(deduplicated_count)
 	.bind(&source_key)
 	.bind(upload.policy_id)
-	.fetch_one(&pg_pool)
+	.fetch_one(&mut *tx)
 	.await
 	.map_err(ReacherResponseError::from)?;
-
-	let properties = BasicProperties::default()
-		.with_content_type("application/json".into())
-		.with_priority(1);
-
-	// Phase 4: Process rows with deduplication
-	let mut published_any = false;
-	let mut published_task_ids = Vec::new();
 
 	// Handle blank emails
 	for &index in &blank_indices {
@@ -250,7 +252,7 @@ async fn http_handler(
 			)
 			.bind(invalid_result.bounce_risk_signals)
 			.bind(&source_key)
-		.execute(&pg_pool)
+		.execute(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
 	}
@@ -263,6 +265,12 @@ async fn http_handler(
 	let mut primaries = Vec::with_capacity(canonical_groups.len());
 	for (canonical, indices) in &canonical_groups {
 		let primary_index = indices[0];
+		let routing_email = parsed.rows[primary_index]
+			.get(&parsed.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
 
 		// Create primary task (queued, published to RabbitMQ below)
 		let primary_extra = serde_json::json!({
@@ -270,7 +278,7 @@ async fn http_handler(
 			"row_index": primary_index as i32,
 			"email_column": parsed.email_column,
 		});
-		// Use the canonical email for verification (not the raw first-seen email)
+		// Identity groups equivalent addresses; SMTP receives the supplied spelling.
 		let primary_task_id: i32 = sqlx::query_scalar(
 			r#"
 			INSERT INTO v1_task_result (job_id, payload, extra, task_state, tenant_id, canonical_email, is_duplicate, source_key)
@@ -280,7 +288,7 @@ async fn http_handler(
 		)
 		.bind(job_id)
 		.bind(serde_json::json!({
-			"input": {"to_email": canonical},
+			"input": {"to_email": routing_email},
 			"job_id": {"bulk": job_id},
 			"webhook": null
 		}))
@@ -288,10 +296,10 @@ async fn http_handler(
 		.bind(tenant_id)
 		.bind(canonical)
 		.bind(&source_key)
-		.fetch_one(&pg_pool)
+		.fetch_one(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
-		primaries.push((canonical, primary_index, primary_task_id));
+		primaries.push((routing_email, primary_index, primary_task_id));
 
 		// Create duplicate rows (no RabbitMQ publish, no result yet)
 		for &dup_index in &indices[1..] {
@@ -328,22 +336,26 @@ async fn http_handler(
 			.bind(canonical)
 			.bind(primary_task_id)
 			.bind(&source_key)
-			.execute(&pg_pool)
+			.execute(&mut *tx)
 			.await
 			.map_err(ReacherResponseError::from)?;
 		}
 	}
 
-	for (canonical, primary_index, primary_task_id) in primaries {
+	for (routing_email, primary_index, primary_task_id) in primaries {
 		let task = CheckEmailTask {
+			verification_backend: config.verification_backend,
 			input: CheckEmailRequest {
-				to_email: canonical.clone(),
+				to_email: routing_email,
 				..Default::default()
 			}
 			.to_check_email_input(Arc::clone(&config)),
 			job_id: CheckEmailJobId::Bulk(job_id),
 			webhook: None,
 			metadata: Some(TaskMetadata {
+				dispatch_id: None,
+				lease_id: None,
+				decision_policy: None,
 				tenant_id: Some(tenant_id.to_string()),
 				request_id: None,
 				correlation_id: None,
@@ -353,46 +365,20 @@ async fn http_handler(
 				task_db_id: Some(primary_task_id),
 			}),
 		};
-		let channel = match config.must_worker_config() {
-			Ok(worker_config) => worker_config.channel,
-			Err(err) => {
-				cleanup_list_publish_failure(
-					&pg_pool,
-					tenant_id,
-					job_id,
-					list_id,
-					unique_email_count,
-					&published_task_ids,
-				)
-				.await;
-				return Err(ReacherResponseError::from(err).into());
-			}
-		};
-		if let Err(err) = publish_task(channel, task, properties.clone()).await {
-			cleanup_list_publish_failure(
-				&pg_pool,
-				tenant_id,
-				job_id,
-				list_id,
-				unique_email_count,
-				&published_task_ids,
-			)
-			.await;
-			return Err(err.into());
-		}
-		published_any = true;
-		published_task_ids.push(primary_task_id);
+		crate::worker::dispatch::enqueue(&mut tx, task, 1)
+			.await
+			.map_err(ReacherResponseError::from)?;
 	}
 
 	// The worker may already have finished every task and set a terminal
 	// status, or the job may have been cancelled; only move the job and list
 	// out of their initial states.
-	let job_status = if published_any {
+	let job_status = if unique_email_count > 0 {
 		"running"
 	} else {
 		"completed"
 	};
-	let list_status = if published_any {
+	let list_status = if unique_email_count > 0 {
 		"processing"
 	} else {
 		"completed"
@@ -400,15 +386,17 @@ async fn http_handler(
 	sqlx::query("UPDATE v1_bulk_job SET status = $2::job_state, updated_at = NOW(), completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END WHERE id = $1 AND status = 'pending'")
 		.bind(job_id)
 		.bind(job_status)
-		.execute(&pg_pool)
+		.execute(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
 	sqlx::query("UPDATE v1_lists SET status = $2::list_status, completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE NULL END, updated_at = NOW() WHERE id = $1 AND status = 'uploading'")
 		.bind(list_id)
 		.bind(list_status)
-		.execute(&pg_pool)
+		.execute(&mut *tx)
 		.await
 		.map_err(ReacherResponseError::from)?;
+
+	tx.commit().await.map_err(ReacherResponseError::from)?;
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {
@@ -420,64 +408,6 @@ async fn http_handler(
 		}),
 		StatusCode::ACCEPTED,
 	))
-}
-
-async fn cleanup_list_publish_failure(
-	pg_pool: &PgPool,
-	tenant_id: uuid::Uuid,
-	job_id: i32,
-	list_id: i32,
-	reserved_count: i32,
-	published_task_ids: &[i32],
-) {
-	let refund_count = reserved_count.saturating_sub(published_task_ids.len() as i32);
-	if refund_count > 0 {
-		let _ = release_reserved_usage(Some(pg_pool), Some(tenant_id), refund_count).await;
-	}
-
-	if let Err(err) = sqlx::query(
-		"UPDATE v1_bulk_job SET status = 'failed'::job_state, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-	)
-	.bind(job_id)
-	.execute(pg_pool)
-	.await
-	{
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list job failed after publish failure");
-	}
-
-	if let Err(err) = sqlx::query(
-		"UPDATE v1_lists SET status = 'failed'::list_status, error_message = COALESCE(error_message, 'publish_failed'), completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-	)
-	.bind(list_id)
-	.execute(pg_pool)
-	.await
-	{
-		warn!(target: LOG_TARGET, list_id = list_id, error = ?err, "Failed to mark list failed after publish failure");
-	}
-
-	// Duplicate rows stay queued: when their primary is retried and finishes,
-	// the worker copies its result to them, as it does for a normal run.
-	// Failing them here would make a retry verify each duplicate again.
-	if let Err(err) = sqlx::query(
-		r#"
-		UPDATE v1_task_result
-		SET task_state = 'failed'::task_state,
-		    error = COALESCE(error, 'publish_failed'),
-		    completed_at = COALESCE(completed_at, NOW()),
-		    updated_at = NOW()
-		WHERE job_id = $1
-		  AND task_state = 'queued'::task_state
-		  AND is_duplicate = false
-		  AND NOT (id = ANY($2::INTEGER[]))
-		"#,
-	)
-	.bind(job_id)
-	.bind(published_task_ids)
-	.execute(pg_pool)
-	.await
-	{
-		warn!(target: LOG_TARGET, job_id = job_id, error = ?err, "Failed to mark list tasks failed after publish failure");
-	}
 }
 
 struct UploadData {
@@ -519,8 +449,10 @@ async fn read_upload(mut form: FormData) -> Result<UploadData, ReacherResponseEr
 				filename = Some(part_filename.unwrap_or_else(|| "upload.csv".to_string()));
 			}
 			"name" => name = Some(String::from_utf8_lossy(&collected).trim().to_string()),
+			// An empty field (as HTML forms send) means "auto-detect".
 			"email_column" => {
 				email_column = Some(String::from_utf8_lossy(&collected).trim().to_string())
+					.filter(|column| !column.is_empty())
 			}
 			"source_key" | "source" => {
 				source_key = Some(String::from_utf8_lossy(&collected).trim().to_string())
@@ -583,17 +515,25 @@ async fn blank_email_result(
 	prepare_verification_response(config, &output, None, Utc::now(), false).await
 }
 
-fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
-	let limit = match tenant_ctx.plan_tier {
+fn plan_row_limit(tenant_ctx: &TenantContext) -> usize {
+	match tenant_ctx.plan_tier {
 		PlanTier::Free => 1_000usize,
 		PlanTier::Starter => 10_000usize,
 		PlanTier::Professional => 50_000usize,
 		PlanTier::Enterprise => 100_000usize,
-	};
+	}
+}
+
+fn enforce_row_limit(tenant_ctx: &TenantContext, rows: usize) -> Result<(), warp::Rejection> {
+	let limit = plan_row_limit(tenant_ctx);
 	if rows > limit {
+		// Parsing stops one row past the limit, so the real count is unknown.
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			format!("List contains {} rows but plan allows {}", rows, limit),
+			format!(
+				"List contains more than {} rows; plan allows {}",
+				limit, limit
+			),
 		)
 		.into());
 	}

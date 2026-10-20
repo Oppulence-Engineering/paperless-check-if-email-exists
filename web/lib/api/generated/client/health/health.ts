@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 
 export type healthzResponse200 = {
@@ -38,6 +38,38 @@ export const healthz = async (
 
   const data: healthzResponse["data"] = body ? JSON.parse(body) : undefined;
   return { data, status: res.status, headers: res.headers } as healthzResponse;
+};
+
+export type smtpMetricsResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type smtpMetricsResponseSuccess = smtpMetricsResponse200 & {
+  headers: Headers;
+};
+export type smtpMetricsResponse = smtpMetricsResponseSuccess;
+
+export const getSmtpMetricsUrl = () => {
+  return `/metrics`;
+};
+
+export const smtpMetrics = async (
+  options?: RequestInit,
+): Promise<smtpMetricsResponse> => {
+  const res = await fetch(getSmtpMetricsUrl(), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: smtpMetricsResponse["data"] = body !== null ? body : "";
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as smtpMetricsResponse;
 };
 
 export type readyzResponse200 = {

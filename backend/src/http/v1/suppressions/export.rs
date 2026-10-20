@@ -226,37 +226,44 @@ fn render_header() -> Vec<u8> {
 			"updated_at",
 		])
 		.expect("csv header write");
-	writer.into_inner().expect("csv header bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv header bytes"))
+		.expect("valid generated CSV")
 }
 
 fn render_row(row: &SuppressionExportRow) -> Vec<u8> {
 	let mut writer = csv::WriterBuilder::new()
 		.has_headers(false)
 		.from_writer(Vec::new());
+	let record = [
+		row.id.to_string(),
+		row.email.clone(),
+		row.canonical_email.clone(),
+		row.status.clone(),
+		row.reason.clone(),
+		row.reason_code.clone().unwrap_or_default(),
+		row.reason_detail.clone().unwrap_or_default(),
+		row.source.clone().unwrap_or_default(),
+		row.source_type.clone().unwrap_or_default(),
+		row.source_ref.clone().unwrap_or_default(),
+		row.notes.clone().unwrap_or_default(),
+		row.created_by.clone().unwrap_or_default(),
+		row.expires_at.map(|ts| ts.to_rfc3339()).unwrap_or_default(),
+		row.last_seen_at
+			.map(|ts| ts.to_rfc3339())
+			.unwrap_or_default(),
+		row.metadata.to_string(),
+		row.created_at.to_rfc3339(),
+		row.updated_at.to_rfc3339(),
+	];
 	writer
-		.write_record([
-			row.id.to_string(),
-			row.email.clone(),
-			row.canonical_email.clone(),
-			row.status.clone(),
-			row.reason.clone(),
-			row.reason_code.clone().unwrap_or_default(),
-			row.reason_detail.clone().unwrap_or_default(),
-			row.source.clone().unwrap_or_default(),
-			row.source_type.clone().unwrap_or_default(),
-			row.source_ref.clone().unwrap_or_default(),
-			row.notes.clone().unwrap_or_default(),
-			row.created_by.clone().unwrap_or_default(),
-			row.expires_at.map(|ts| ts.to_rfc3339()).unwrap_or_default(),
-			row.last_seen_at
-				.map(|ts| ts.to_rfc3339())
-				.unwrap_or_default(),
-			row.metadata.to_string(),
-			row.created_at.to_rfc3339(),
-			row.updated_at.to_rfc3339(),
-		])
+		.write_record(
+			record
+				.iter()
+				.map(|cell| crate::http::csv_shared::spreadsheet_safe(cell)),
+		)
 		.expect("csv row write");
-	writer.into_inner().expect("csv row bytes")
+	crate::http::csv_shared::spreadsheet_safe_csv(writer.into_inner().expect("csv row bytes"))
+		.expect("valid generated CSV")
 }
 
 /// GET /v1/suppressions/export

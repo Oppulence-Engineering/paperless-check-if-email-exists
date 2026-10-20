@@ -6,7 +6,7 @@ All URIs are relative to *http://localhost*
 |------------- | ------------- | -------------|
 |[**v1AddSuppressions**](#v1addsuppressions) | **POST** /v1/suppressions | POST /v1/suppressions|
 |[**v1CheckEmail**](#v1checkemail) | **POST** /v1/check_email | POST /v1/check_email|
-|[**v1CheckEmailWithOnboard**](#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Self-service signup + email verification in one call. No authentication required. Creates a tenant, generates an API key, verifies the email, and returns all three.|
+|[**v1CheckEmailWithOnboard**](#v1checkemailwithonboard) | **POST** /v1/check-email-with-onboard | POST /v1/check-email-with-onboard — Operator onboarding + email verification in one call. Requires the backend admin secret: it creates a tenant with the requested plan, generates a non-admin API key, verifies the email, and returns all three. Workspaces sign up through the web app instead.|
 |[**v1CheckReputation**](#v1checkreputation) | **POST** /v1/reputation/check | POST /v1/reputation/check|
 |[**v1CheckSuppression**](#v1checksuppression) | **GET** /v1/suppressions/check | GET /v1/suppressions/check|
 |[**v1CreateBulkJob**](#v1createbulkjob) | **POST** /v1/bulk | Create the v1 bulk endpoint.|
@@ -18,6 +18,7 @@ All URIs are relative to *http://localhost*
 |[**v1FindEmail**](#v1findemail) | **POST** /v1/find_email | POST /v1/find_email|
 |[**v1GetFindEmail**](#v1getfindemail) | **GET** /v1/find_email/{job_id} | GET /v1/find_email/{job_id}|
 |[**v1GetList**](#v1getlist) | **GET** /v1/lists/{list_id} | GET /v1/lists/{list_id}|
+|[**v1GetVerificationOperation**](#v1getverificationoperation) | **GET** /v1/operations/{operation_id} | |
 |[**v1ImportSuppressions**](#v1importsuppressions) | **POST** /v1/suppressions/import | Import suppressions|
 |[**v1ListLists**](#v1listlists) | **GET** /v1/lists | GET /v1/lists|
 |[**v1ListSuppressionEvents**](#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events|
@@ -79,7 +80,7 @@ const { status, data } = await apiInstance.v1AddSuppressions(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CheckEmail**
-> CheckEmailOutput v1CheckEmail(checkEmailRequest)
+> VerificationResponse v1CheckEmail(checkEmailRequest)
 
 Verifies an email address and returns a result.
 
@@ -114,7 +115,7 @@ const { status, data } = await apiInstance.v1CheckEmail(
 
 ### Return type
 
-**CheckEmailOutput**
+**VerificationResponse**
 
 ### Authorization
 
@@ -130,6 +131,7 @@ const { status, data } = await apiInstance.v1CheckEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Email verification result |  -  |
+|**202** | Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge. |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -170,7 +172,7 @@ void (empty response body)
 
 ### Authorization
 
-No authorization required
+[AdminSecret](../README.md#AdminSecret)
 
 ### HTTP request headers
 
@@ -789,6 +791,58 @@ const { status, data } = await apiInstance.v1GetList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | List detail |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1GetVerificationOperation**
+> VerificationResponse v1GetVerificationOperation()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let operationId: string; //Verification operation identifier (default to undefined)
+
+const { status, data } = await apiInstance.v1GetVerificationOperation(
+    operationId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **operationId** | [**string**] | Verification operation identifier | defaults to undefined|
+
+
+### Return type
+
+**VerificationResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Stored verification result |  -  |
+|**202** | Verification is pending |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

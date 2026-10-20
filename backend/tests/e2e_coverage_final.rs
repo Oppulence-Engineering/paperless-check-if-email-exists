@@ -44,6 +44,7 @@ mod coverage_final {
 		c.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq,
 				concurrency: 4,
 			}),
@@ -642,6 +643,18 @@ mod coverage_final {
 			.reply(&routes)
 			.await;
 		assert_eq!(r.status(), StatusCode::OK);
+
+		// null removes the expiry.
+		let r = request()
+			.path(&format!("/v1/me/api-keys/{}", kid))
+			.method("PATCH")
+			.header("Authorization", format!("Bearer {}", key))
+			.json(&serde_json::json!({"expires_at": null}))
+			.reply(&routes)
+			.await;
+		assert_eq!(r.status(), StatusCode::OK, "{:?}", r.body());
+		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
+		assert!(b["expires_at"].is_null(), "{}", b);
 	}
 
 	// ── Domains — create duplicate ──────────────────────

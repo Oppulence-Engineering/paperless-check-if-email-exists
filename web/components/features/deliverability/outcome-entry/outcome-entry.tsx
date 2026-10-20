@@ -77,7 +77,20 @@ export function OutcomeEntry({ className, ...props }: OutcomeEntryProps) {
 			setNotice(
 				`Recorded ${String(data.ingested)} outcome(s); ${String(data.auto_suppressed)} auto-suppressed; ${String(data.ignored)} skipped.`,
 			);
-			await client.invalidateQueries({ queryKey: workflowQueryKey("outcomes") });
+			await Promise.all(
+				[
+					"outcomes",
+					"suppressions",
+					"source-quality",
+					"list-detail",
+					"overview",
+					"v1-email-history",
+				].map((key) =>
+					client.invalidateQueries({
+						queryKey: workflowQueryKey(key),
+					}),
+				),
+			);
 		},
 	});
 

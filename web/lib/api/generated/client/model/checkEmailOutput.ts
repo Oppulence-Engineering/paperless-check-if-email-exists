@@ -5,9 +5,10 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import type { BounceRiskAssessment } from "./bounceRiskAssessment";
+import type { CheckEmailOutputExternalVerification } from "./checkEmailOutputExternalVerification";
 import type { CoreError } from "./coreError";
 import type { DebugDetails } from "./debugDetails";
 import type { EmailScore } from "./emailScore";
@@ -27,6 +28,8 @@ export interface CheckEmailOutput {
   /** Additive bounce-risk assessment. May be null when enrichment is disabled or unavailable. */
   bounce_risk?: BounceRiskAssessment | null;
   debug?: DebugDetails;
+  /** External verification evidence. When present, SMTP was not performed locally. */
+  external_verification?: CheckEmailOutputExternalVerification;
   /** The email address that was verified. */
   input: string;
   is_reachable: Reachable;

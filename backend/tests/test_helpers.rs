@@ -146,6 +146,7 @@ pub async fn ensure_test_db_url() -> String {
 			let mut last_error = None;
 			for attempt in 1..=3 {
 				match Postgres::default()
+					.with_tag("16-alpine")
 					.with_startup_timeout(Duration::from_secs(120))
 					.start()
 					.await
@@ -1217,6 +1218,7 @@ pub async fn build_test_config(
 			config.worker = WorkerConfig {
 				enable: true,
 				rabbitmq: Some(RabbitMQConfig {
+					queue: "check_email".into(),
 					url: amqp_url.expect("amqp_url required").to_string(),
 					concurrency: 4,
 				}),

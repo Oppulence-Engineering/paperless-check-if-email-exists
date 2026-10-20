@@ -89,8 +89,10 @@ pub fn catch_all_severity(signals: &ScoringSignals) -> Option<CatchAllSeverity> 
 		return None;
 	}
 
+	// Core reports every catch-all as Risky, so `Safe` can never be required
+	// here; the other causes of Risky are each excluded below.
 	let otherwise_clean = signals.valid_syntax
-		&& matches!(signals.reachable, Reachable::Safe)
+		&& !matches!(signals.reachable, Reachable::Invalid | Reachable::Unknown)
 		&& signals.has_mx_records
 		&& !signals.smtp_error
 		&& signals.smtp_can_connect
@@ -270,6 +272,37 @@ pub fn compute_freshness_at(
 
 pub fn compute_score(output: &CheckEmailOutput) -> EmailScore {
 	let signals = extract_signals(output);
+	if let Some(external) = &output.external_verification {
+		let (score, category, sub_reason, safe_to_send) = match external.result.as_str() {
+			"invalid" => (
+				0,
+				EmailCategory::Invalid,
+				SubReason::InvalidRecipient,
+				false,
+			),
+			"unknown" => (20, EmailCategory::Unknown, SubReason::Unknown, false),
+			"catch_all" => (70, EmailCategory::Risky, SubReason::CatchAll, false),
+			_ if signals.is_disposable => (50, EmailCategory::Risky, SubReason::Disposable, false),
+			_ if signals.is_spam_trap_domain => {
+				(50, EmailCategory::Risky, SubReason::SpamTrap, false)
+			}
+			_ if signals.is_role_account => {
+				(75, EmailCategory::Risky, SubReason::RoleAccount, false)
+			}
+			"ok" if output.is_reachable == Reachable::Safe => {
+				(100, EmailCategory::Valid, SubReason::Deliverable, true)
+			}
+			_ => (20, EmailCategory::Unknown, SubReason::Unknown, false),
+		};
+		return EmailScore {
+			score,
+			category,
+			sub_reason,
+			safe_to_send,
+			reason_codes: vec!["external_verification".into()],
+			signals,
+		};
+	}
 	compute_score_from_signals(output, signals)
 }
 
@@ -455,6 +488,20 @@ pub fn compute_score_with_context(
 		return ScoreComputation { score, insights };
 	}
 
+	if output.external_verification.is_some() {
+		// History cannot promote an external unknown/catch-all into a verified mailbox.
+		return ScoreComputation {
+			insights: ScoreInsights {
+				confidence: 0,
+				confidence_level: ConfidenceLevel::VeryLow,
+				confidence_factors: vec!["external_confidence_unavailable".into()],
+				catch_all: None,
+				partial_confidence: None,
+			},
+			score,
+		};
+	}
+
 	if is_hard_invalid(&score) {
 		let insights = ScoreInsights {
 			confidence: 95,
@@ -534,8 +581,12 @@ pub fn compute_score_with_context(
 			InsightCatchAllSeverity::Medium => 12,
 			InsightCatchAllSeverity::High => 25,
 		};
-		// The legacy scorer already applied a flat -15 catch-all penalty.
-		adjustment += 15 - severity_penalty;
+		// Replace the legacy scorer's catch-all penalty with this one.
+		let legacy_penalty = match catch_all_severity(&score.signals) {
+			Some(CatchAllSeverity::Low) => 10,
+			_ => 15,
+		};
+		adjustment += legacy_penalty - severity_penalty;
 		contextual_codes.push(
 			match catch_all.severity {
 				InsightCatchAllSeverity::Low => "catch_all_low_confidence",
@@ -1010,7 +1061,8 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		.map(|lookup| lookup.iter().next().is_some())
 		.unwrap_or(false);
 
-	let smtp_error = output.smtp.is_err();
+	let external = output.external_verification.as_ref();
+	let smtp_error = output.smtp.is_err() && external.is_none();
 	// Core probes SMTP only after the MX lookup finds a host. Otherwise `smtp`
 	// holds `SmtpDetails::default()`, whose false flags mean "not checked",
 	// not "rejected", so they are read like an unanswered probe.
@@ -1022,10 +1074,16 @@ fn extract_signals(output: &CheckEmailOutput) -> ScoringSignals {
 		reachable: output.is_reachable.clone(),
 		has_mx_records,
 		smtp_error,
-		smtp_can_connect: smtp_ok.map(|smtp| smtp.can_connect_smtp).unwrap_or(true),
-		smtp_is_deliverable: smtp_ok.map(|smtp| smtp.is_deliverable).unwrap_or(true),
+		smtp_can_connect: smtp_ok
+			.map(|smtp| smtp.can_connect_smtp)
+			.unwrap_or(external.is_none()),
+		smtp_is_deliverable: smtp_ok
+			.map(|smtp| smtp.is_deliverable)
+			.unwrap_or(external.is_none()),
 		smtp_is_disabled: smtp_ok.map(|smtp| smtp.is_disabled).unwrap_or(false),
-		smtp_is_catch_all: smtp_ok.map(|smtp| smtp.is_catch_all).unwrap_or(false),
+		smtp_is_catch_all: smtp_ok
+			.map(|smtp| smtp.is_catch_all)
+			.unwrap_or_else(|| external.is_some_and(|value| value.result == "catch_all")),
 		smtp_has_full_inbox: smtp_ok.map(|smtp| smtp.has_full_inbox).unwrap_or(false),
 		is_disposable: misc_ok.map(|misc| misc.is_disposable).unwrap_or(false),
 		is_role_account: misc_ok.map(|misc| misc.is_role_account).unwrap_or(false),
@@ -1051,6 +1109,7 @@ mod tests {
 
 	fn base_output() -> CheckEmailOutput {
 		CheckEmailOutput {
+			external_verification: None,
 			input: "user@example.com".into(),
 			is_reachable: Reachable::Safe,
 			misc: Ok(MiscDetails::default()),
@@ -1157,6 +1216,15 @@ mod tests {
 		assert_eq!(score.sub_reason, SubReason::SmtpError);
 		assert!(!score.reason_codes.contains(&"no_mx".to_string()));
 		assert!(!score.safe_to_send);
+
+		// What core returns when the MX lookup fails before SMTP runs: the
+		// default SMTP block, whose `is_deliverable` is false. A DNS timeout
+		// says nothing about the mailbox.
+		output.is_reachable = Reachable::Unknown;
+		output.smtp = Ok(check_if_email_exists::smtp::SmtpDetails::default());
+		let score = compute_score(&output);
+		assert_eq!(score.category, EmailCategory::Unknown);
+		assert_ne!(score.sub_reason, SubReason::SmtpUndeliverable);
 	}
 
 	#[test]
@@ -1346,7 +1414,8 @@ mod tests {
 	fn catch_all_signals(is_free_provider: bool) -> ScoringSignals {
 		ScoringSignals {
 			valid_syntax: true,
-			reachable: Reachable::Safe,
+			// What core reports for every catch-all domain.
+			reachable: Reachable::Risky,
 			has_mx_records: true,
 			smtp_error: false,
 			smtp_can_connect: true,
@@ -1389,7 +1458,7 @@ mod tests {
 		// list it in catch_all_severity, add the case here and this fails.
 		let mutators: [(&str, SignalMutator); 13] = [
 			("valid_syntax", |s| s.valid_syntax = false),
-			("reachable_risky", |s| s.reachable = Reachable::Risky),
+			("reachable_invalid", |s| s.reachable = Reachable::Invalid),
 			("reachable_unknown", |s| s.reachable = Reachable::Unknown),
 			("smtp_error", |s| s.smtp_error = true),
 			("smtp_is_deliverable", |s| s.smtp_is_deliverable = false),
@@ -1479,20 +1548,28 @@ mod tests {
 				is_b2c,
 				..Default::default()
 			});
-			compute_score(&output)
+			output
 		};
 
 		// Low tier: lighter penalty, and no longer vetoed.
-		let low = catch_all_output(true);
+		let low = compute_score(&catch_all_output(true));
 		assert_eq!(low.score, 90);
 		assert_eq!(low.category, EmailCategory::Valid);
 		assert!(low.safe_to_send);
 
 		// High tier: unchanged penalty, still vetoed.
-		let high = catch_all_output(false);
+		let high = compute_score(&catch_all_output(false));
 		assert_eq!(high.score, 85);
 		assert_eq!(high.category, EmailCategory::Valid);
 		assert!(!high.safe_to_send);
+
+		// API checks are scored with context. Rescoring must keep the tiers,
+		// or the low tier never reaches safe_to_send and the deliverability
+		// policy's low-tier send is unreachable.
+		let contextual =
+			|is_b2c| compute_score_with_context(&catch_all_output(is_b2c), &Default::default());
+		assert!(contextual(true).score.safe_to_send);
+		assert!(!contextual(false).score.safe_to_send);
 	}
 
 	#[test]

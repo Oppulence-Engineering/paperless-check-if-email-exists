@@ -208,7 +208,7 @@ Name | Type | Description  | Notes
 
 ## PostCheckEmail
 
-> CheckEmailOutput PostCheckEmail(ctx).CheckEmailRequest(checkEmailRequest).IdempotencyKey(idempotencyKey).Execute()
+> VerificationResponse PostCheckEmail(ctx).CheckEmailRequest(checkEmailRequest).IdempotencyKey(idempotencyKey).Execute()
 
 POST /v0/check_email
 
@@ -237,7 +237,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error when calling `V0API.PostCheckEmail``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `PostCheckEmail`: CheckEmailOutput
+	// response from `PostCheckEmail`: VerificationResponse
 	fmt.Fprintf(os.Stdout, "Response from `V0API.PostCheckEmail`: %v\n", resp)
 }
 ```
@@ -258,7 +258,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**CheckEmailOutput**](CheckEmailOutput.md)
+[**VerificationResponse**](VerificationResponse.md)
 
 ### Authorization
 

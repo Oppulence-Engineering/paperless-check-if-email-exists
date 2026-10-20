@@ -5,7 +5,7 @@ use crate::http::{check_scope, resolve_tenant};
 use crate::pipelines::validate_webhook_url;
 use crate::tenant::context::{scope, TenantContext};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -15,9 +15,9 @@ use warp::Filter;
 
 #[derive(Debug, Deserialize, ToSchema)]
 struct UpdateTenantSettingsRequest {
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub default_webhook_url: Option<Option<String>>,
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub webhook_signing_secret: Option<Option<String>>,
 	pub result_retention_days: Option<i32>,
 	pub default_policy_mode: Option<String>,
@@ -29,17 +29,10 @@ struct UpdateTenantSettingsRequest {
 
 #[derive(Debug, Deserialize, ToSchema)]
 struct UpdateWebhookRequest {
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub default_webhook_url: Option<Option<String>>,
-	#[serde(default, deserialize_with = "present_nullable_string")]
+	#[serde(default, deserialize_with = "crate::http::present_nullable")]
 	pub webhook_signing_secret: Option<Option<String>>,
-}
-
-fn present_nullable_string<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
-where
-	D: Deserializer<'de>,
-{
-	Option::<String>::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -189,9 +182,25 @@ async fn webhook_handler(
 	}
 }
 
-async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
-	check_scope(&tenant_ctx, scope::SETTINGS)?;
+/// The longest result retention a tenant can have, about ten years. The
+/// prune query computes `NOW() - days`, and a far larger value overflows the
+/// timestamp and fails the prune for every tenant.
+pub const MAX_RESULT_RETENTION_DAYS: i32 = 3650;
 
+pub fn validate_result_retention_days(days: i32) -> Result<(), warp::Rejection> {
+	if (1..=MAX_RESULT_RETENTION_DAYS).contains(&days) {
+		return Ok(());
+	}
+	Err(ReacherResponseError::new(
+		StatusCode::BAD_REQUEST,
+		format!("result_retention_days must be between 1 and {MAX_RESULT_RETENTION_DAYS}"),
+	)
+	.into())
+}
+
+async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
+	// Usage needs no scope, like GET /v1/me: it reports the caller's own
+	// quota, and workspace members (who lack `settings`) read it.
 	let limit = tenant_ctx.monthly_email_limit;
 	let quota_unlimited = limit.is_none() || limit.unwrap_or(0) <= 0;
 	let quota_remaining = match limit {
@@ -241,13 +250,7 @@ async fn update_settings_handler(
 	}
 
 	if let Some(days) = body.result_retention_days {
-		if days <= 0 {
-			return Err(ReacherResponseError::new(
-				StatusCode::BAD_REQUEST,
-				"result_retention_days must be positive",
-			)
-			.into());
-		}
+		validate_result_retention_days(days)?;
 	}
 	if let Some(mode) = &body.default_policy_mode {
 		validate_policy_mode(mode)?;

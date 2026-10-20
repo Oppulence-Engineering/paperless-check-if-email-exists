@@ -479,7 +479,7 @@ async fn collect_signal_bundle(
 		has_dkim: domain_signals
 			.dns_records
 			.as_ref()
-			.map(|dns_records| dns_records.has_dkim),
+			.and_then(|dns_records| dns_records.has_dkim),
 		has_dmarc: domain_signals
 			.dns_records
 			.as_ref()
@@ -638,7 +638,6 @@ async fn collect_history_rows(
 	};
 
 	let canonical_email = canonicalize_email(email);
-	let lowered_email = email.trim().to_lowercase();
 
 	// Failed, cancelled and duplicate rows hold no verdict of their own, and
 	// a task being rechecked is not completed, so it never counts itself.
@@ -653,21 +652,20 @@ async fn collect_history_rows(
 		  AND result IS NOT NULL
 		  AND is_duplicate = false
 		  AND completed_at IS NOT NULL
-		  AND completed_at < $5
+		  AND completed_at < $4
 		  AND (
 			($2::TEXT IS NOT NULL AND canonical_email = $2)
 			OR (
 				canonical_email IS NULL
-				AND lower(COALESCE(payload->'input'->>'to_email', result->>'input', '')) = $3
+				AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2
 			)
 		  )
 		ORDER BY completed_at DESC
-		LIMIT $4
+		LIMIT $3
 		"#,
 	)
 	.bind(tenant_id)
 	.bind(&canonical_email)
-	.bind(&lowered_email)
 	.bind(i64::from(history_limit))
 	.bind(baseline_completed_at)
 	.fetch_all(pool)

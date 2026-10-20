@@ -60,6 +60,9 @@ api_routes!(
 	(route_readyz, "GET", "/readyz", |config| {
 		crate::http::health::readiness::readyz(config)
 	}),
+	(route_metrics, "GET", "/metrics", |config| {
+		crate::http::health::metrics::smtp_metrics(config)
+	}),
 	(route_version, "GET", "/version", |_config| {
 		crate::http::version::get::get_version()
 	}),
@@ -93,6 +96,12 @@ api_routes!(
 	(route_v1_check_email, "POST", "/v1/check_email", |config| {
 		crate::http::v1::check_email::post::v1_check_email(config)
 	}),
+	(
+		route_v1_verification_operation,
+		"GET",
+		"/v1/operations/{operation_id}",
+		|config| crate::http::v1::check_email::operation::v1_get_verification_operation(config)
+	),
 	(
 		route_v1_find_email_create,
 		"POST",

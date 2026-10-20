@@ -156,7 +156,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **postCheckEmail**
-> CheckEmailOutput postCheckEmail(checkEmailRequest)
+> VerificationResponse postCheckEmail(checkEmailRequest)
 
 Legacy email verification endpoint (deprecated, retained for compatibility).
 
@@ -191,7 +191,7 @@ const { status, data } = await apiInstance.postCheckEmail(
 
 ### Return type
 
-**CheckEmailOutput**
+**VerificationResponse**
 
 ### Authorization
 
@@ -207,5 +207,6 @@ const { status, data } = await apiInstance.postCheckEmail(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Email verification result |  -  |
+|**202** | Accepted verification; poll status_url for the stored result. Reuse the same Idempotency-Key to retrieve this operation without a second charge. |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -1,6 +1,4 @@
-use check_if_email_exists::LOG_TARGET;
 use sqlx::PgPool;
-use tracing::debug;
 
 /// After a task completes, evaluate tenant-level auto-suppression rules
 /// and add qualifying addresses to the suppression list.
@@ -14,65 +12,27 @@ pub async fn evaluate_post_completion_actions(
 	email: &str,
 	score: Option<i16>,
 	category: Option<&str>,
-) {
-	let settings = match sqlx::query_scalar::<_, Option<serde_json::Value>>(
-		"SELECT settings FROM tenants WHERE id = $1",
-	)
-	.bind(tenant_id)
-	.fetch_optional(pg_pool)
-	.await
-	{
-		Ok(Some(Some(s))) => s,
-		Ok(_) => return, // no settings configured
-		Err(e) => {
-			debug!(
-				target: LOG_TARGET,
-				tenant_id = %tenant_id,
-				error = ?e,
-				"Failed to load tenant settings for auto-suppression"
-			);
-			return;
-		}
-	};
-
-	let suppress_reason = check_auto_suppress(&settings, score, category);
-
-	if let Some(reason) = suppress_reason {
-		let normalized_email = email.trim().to_lowercase();
-		if normalized_email.is_empty() {
-			return;
-		}
-		let result = crate::suppression::insert_active_suppression(
-			pg_pool,
-			tenant_id,
-			&normalized_email,
-			reason,
-			"auto_action",
-			"auto_action",
-			"worker",
-		)
-		.await;
-
-		let domain = normalized_email.split('@').nth(1).unwrap_or("unknown");
-		match result {
-			Ok(true) => {
-				debug!(
-					target: LOG_TARGET,
-					domain = domain,
-					"Auto-suppressed based on conditional action rules"
-				);
-			}
-			Err(e) => {
-				debug!(
-					target: LOG_TARGET,
-					domain = domain,
-					error = ?e,
-					"Failed to auto-suppress"
-				);
-			}
-			_ => {}
+) -> Result<(), sqlx::Error> {
+	let settings =
+		sqlx::query_scalar::<_, serde_json::Value>("SELECT settings FROM tenants WHERE id = $1")
+			.bind(tenant_id)
+			.fetch_one(pg_pool)
+			.await?;
+	if let Some(reason) = check_auto_suppress(&settings, score, category) {
+		if crate::http::v1::lists::canonicalize::canonicalize_email(email).is_some() {
+			crate::suppression::insert_active_suppression(
+				pg_pool,
+				tenant_id,
+				email,
+				reason,
+				"auto_action",
+				"auto_action",
+				"worker",
+			)
+			.await?;
 		}
 	}
+	Ok(())
 }
 
 fn check_auto_suppress(

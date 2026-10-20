@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import { faker } from "@faker-js/faker";
 
@@ -202,6 +202,15 @@ export const getV1GetBulkJobResultsResponseMock = (
               ]),
             },
             start_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          undefined,
+        ]),
+        external_verification: faker.helpers.arrayElement([
+          {
+            result: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            result_code: faker.number.int(),
+            service: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            subresult: faker.string.alpha({ length: { min: 10, max: 20 } }),
           },
           undefined,
         ]),
@@ -553,6 +562,15 @@ export const getV1GetJobResultsResponseMock = (
               ]),
             },
             start_time: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          },
+          undefined,
+        ]),
+        external_verification: faker.helpers.arrayElement([
+          {
+            result: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            result_code: faker.number.int(),
+            service: faker.string.alpha({ length: { min: 10, max: 20 } }),
+            subresult: faker.string.alpha({ length: { min: 10, max: 20 } }),
           },
           undefined,
         ]),

@@ -80,8 +80,9 @@ async fn http_handler(
 	ensure_owned_completed_list(&pg_pool, tenant_id, base_list_id).await?;
 	ensure_owned_completed_list(&pg_pool, tenant_id, compare_list_id).await?;
 
-	let base = load_list_snapshot(&pg_pool, base_list_id).await?;
-	let compare = load_list_snapshot(&pg_pool, compare_list_id).await?;
+	let base_snapshot = load_list_snapshot(&pg_pool, base_list_id).await?;
+	let compare_snapshot = load_list_snapshot(&pg_pool, compare_list_id).await?;
+	let (base, compare) = (&base_snapshot.verified, &compare_snapshot.verified);
 	let limit = query.limit.unwrap_or(50).min(200);
 	let offset = query.offset.unwrap_or(0);
 
@@ -106,6 +107,10 @@ async fn http_handler(
 		let base_row = base.get(&key);
 		let compare_row = compare.get(&key);
 		let (group, row) = match (base_row, compare_row) {
+			// In both lists, but the check errored in one of them: there is
+			// nothing to compare, and calling it added or removed is wrong.
+			(None, Some(_)) if base_snapshot.unverified.contains(&key) => continue,
+			(Some(_), None) if compare_snapshot.unverified.contains(&key) => continue,
 			(None, Some(compare_row)) => (
 				"added",
 				DiffRow {
@@ -227,10 +232,18 @@ async fn ensure_owned_completed_list(
 	Ok(())
 }
 
+/// A list's rows by comparison key. `unverified` holds the emails that are
+/// in the list but have no completed result (failed, dead-lettered,
+/// cancelled), so the diff can tell them apart from emails that are absent.
+struct ListSnapshot {
+	verified: BTreeMap<String, ListSnapshotRow>,
+	unverified: BTreeSet<String>,
+}
+
 async fn load_list_snapshot(
 	pg_pool: &PgPool,
 	list_id: i32,
-) -> Result<BTreeMap<String, ListSnapshotRow>, warp::Rejection> {
+) -> Result<ListSnapshot, warp::Rejection> {
 	let rows = sqlx::query(
 		r#"
 		SELECT DISTINCT ON (comparison_key)
@@ -244,18 +257,17 @@ async fn load_list_snapshot(
 			score_category,
 			safe_to_send,
 			reason_codes,
-			completed_at
+			completed_at,
+			verified
 		FROM (
 			SELECT *,
-			       COALESCE(canonical_email, LOWER(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
+			       COALESCE(canonical_email, mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key,
+			       (task_state = 'completed'::task_state AND result IS NOT NULL AND completed_at IS NOT NULL) AS verified
 			FROM v1_task_result
 			WHERE (extra->>'list_id')::INTEGER = $1
-			  AND task_state = 'completed'::task_state
-			  AND result IS NOT NULL
-			  AND completed_at IS NOT NULL
 		) rows
 		WHERE comparison_key IS NOT NULL AND comparison_key <> ''
-		ORDER BY comparison_key, is_duplicate ASC, id ASC
+		ORDER BY comparison_key, verified DESC, is_duplicate ASC, id ASC
 		"#,
 	)
 	.bind(list_id)
@@ -263,8 +275,13 @@ async fn load_list_snapshot(
 	.await
 	.map_err(ReacherResponseError::from)?;
 	let mut snapshot = BTreeMap::new();
+	let mut unverified = BTreeSet::new();
 	for row in rows {
 		let key: String = row.get("comparison_key");
+		if !row.get::<bool, _>("verified") {
+			unverified.insert(key);
+			continue;
+		}
 		snapshot.insert(
 			key.clone(),
 			ListSnapshotRow {
@@ -286,7 +303,10 @@ async fn load_list_snapshot(
 			},
 		);
 	}
-	Ok(snapshot)
+	Ok(ListSnapshot {
+		verified: snapshot,
+		unverified,
+	})
 }
 
 /// GET /v1/lists/{base_list_id}/diff/{compare_list_id}

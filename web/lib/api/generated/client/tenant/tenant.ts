@@ -5,7 +5,7 @@
  * ### What is Reacher?
  *
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
- * OpenAPI spec version: 4.3.1
+ * OpenAPI spec version: 4.4.0
  */
 import type {
   CreateOutcomePolicyRequest,
@@ -327,7 +327,7 @@ export const getV1UpdateTenantDomainUrl = (domain: string) => {
 };
 
 /**
- * Update the domain value, status, verification state, or metadata notes.
+ * Update the domain value, active status, or notes. Setting `is_verified` is refused.
  * @summary PATCH /v1/me/domains/{domain}
  */
 export const v1UpdateTenantDomain = async (

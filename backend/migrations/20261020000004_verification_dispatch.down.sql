@@ -1,0 +1,9 @@
+DROP TABLE verification_dispatch;
+DROP INDEX verification_completion_pending_idx;
+ALTER TABLE v1_task_result
+    DROP COLUMN completion_done,
+    DROP COLUMN webhook_done,
+    DROP COLUMN verification_stored,
+    DROP COLUMN lease_expires_at,
+    DROP COLUMN lease_id,
+    DROP COLUMN dispatch_id;

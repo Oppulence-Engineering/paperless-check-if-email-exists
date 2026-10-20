@@ -2,7 +2,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { saveFile } from "./downloads";
+import { reportCsv, saveFile } from "./downloads";
 
 describe("saveFile", () => {
 	afterEach(() => {
@@ -23,4 +23,15 @@ describe("saveFile", () => {
 		vi.runAllTimers();
 		expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:file");
 	});
+});
+
+it("quotes report labels and prevents spreadsheet formulas", () => {
+	expect(
+		reportCsv([
+			["source", "count"],
+			['a,"b"\nc', 2],
+			["  =SUM(1,2)", 3],
+			["\tformula", 1],
+		]),
+	).toBe('"source","count"\r\n"a,""b""\nc","2"\r\n"\'  =SUM(1,2)","3"\r\n"\'\tformula","1"');
 });

@@ -96,6 +96,10 @@ OPENAPI_GENERATOR_VERSION ?= 7.14.0
 OPENAPI_SPEC := $(CURDIR)/backend/openapi.json
 SDK_DIR := $(CURDIR)/sdks
 
+.PHONY: sdk-generate-millionverifier
+sdk-generate-millionverifier:
+	python3 scripts/generate_millionverifier_sdk.py
+
 .PHONY: sdk-install-generator
 sdk-install-generator:
 	@which openapi-generator-cli > /dev/null || npm install -g @openapitools/openapi-generator-cli

@@ -14,3 +14,19 @@ export function saveFile(data: unknown, filename: string): void {
 		URL.revokeObjectURL(url);
 	}, 1_000);
 }
+
+/** Quote CSV fields and neutralize spreadsheet formulas in customer-supplied labels. */
+export function reportCsv(rows: (string | number)[][]): string {
+	return rows
+		.map((row) =>
+			row
+				.map((value) => {
+					const text = String(value);
+					const safe =
+						/^[\s\u0000-\u001f]*[=+@-]/u.test(text) || /^[\t\r\n]/u.test(text) ? `'${text}` : text;
+					return `"${safe.replaceAll('"', '""')}"`;
+				})
+				.join(","),
+		)
+		.join("\r\n");
+}
