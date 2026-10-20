@@ -4,6 +4,10 @@ Objective: connect the Go Paperless research backend to the current signed-in
 Paperless application and MillionVerifier-backed Rust service. This checklist
 tracks the complete first connected workflow, not just a compatible API client.
 
+This implementation record captures the checks completed before production
+promotion. Final deployed revisions and live workflow evidence are recorded in
+[release PR #124](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/pull/124).
+
 ## Implementation workspaces (local only)
 
 - Verification app: `paperless-check-if-email-exists`, branch

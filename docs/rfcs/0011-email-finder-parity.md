@@ -14,8 +14,10 @@
 The [company-to-contact integration](../paperless-research-integration.md) is the
 current implementation plan. Go owns company/person research and source evidence;
 Rust owns finder orchestration, verification, tenant quotas, suppression, and
-approved export. Candidate checks use MillionVerifier through the existing Rust
-API, with stable retry keys and bounded attempts. SMTP/proxy fallback is disabled.
+approved export. In Paperless's managed staging and production deployments,
+candidate checks use MillionVerifier through the existing Rust API, with stable
+retry keys and bounded attempts. SMTP/proxy fallback is disabled in those
+deployments; the generic self-hosted Reacher defaults remain separate.
 Catch-all results remain review items and never establish mailbox ownership.
 
 The SMTP pipeline and new Rust sourcing services described below are historical
