@@ -62,7 +62,11 @@ API failures and unknown results do not automatically fall back to a second paid
    staging and production `/frontend/apps/sim` folders. Readback confirmed that the key
    is synced to Kubernetes in all three regions of both environments. No credit package
    was purchased.
-4. Deploy to staging with admission paused and old workers drained. This branch also
+4. Staging uses `check_email_staging`; production retains `check_email`. They share a
+   broker but have separate databases, so publishers, retries and consumers must all
+   use the configured queue (`RCH__WORKER__RABBITMQ__QUEUE`). Finder, pipeline and
+   scheduled tasks now enter through the same durable outbox as API submissions.
+   Deploy to staging with admission paused and old workers drained. This branch also
    includes the preceding audit branch's migrations; follow
    `docs/audits/2026-10-20-remediation.md` and
    `docs/audits/mailbox-identity-migration.md`. Apply migration

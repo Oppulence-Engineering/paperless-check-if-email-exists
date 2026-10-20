@@ -1218,6 +1218,7 @@ pub async fn build_test_config(
 			config.worker = WorkerConfig {
 				enable: true,
 				rabbitmq: Some(RabbitMQConfig {
+					queue: "check_email".into(),
 					url: amqp_url.expect("amqp_url required").to_string(),
 					concurrency: 4,
 				}),

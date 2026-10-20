@@ -56,11 +56,7 @@ describe("TechnicalDetails", () => {
 				}}
 			/>,
 		);
-		expect(
-			screen.getByText(/Checked by MillionVerifier/),
-		).toBeInTheDocument();
-		expect(
-			screen.queryByText("AnyhowError: Not performed"),
-		).not.toBeInTheDocument();
+		expect(screen.getByText(/Checked by MillionVerifier/)).toBeInTheDocument();
+		expect(screen.queryByText("AnyhowError: Not performed")).not.toBeInTheDocument();
 	});
 });

@@ -17,6 +17,7 @@ resources:
 config:
   env:
     RCH__VERIFICATION_BACKEND: millionverifier
+    RCH__WORKER__RABBITMQ__QUEUE: check_email_staging
     NODE_EXTRA_CA_CERTS: /srv/digitalocean-db-ca.pem
     # Staging and production share one Postgres cluster with about 47
     # connections. Staging pods open fewer connections than production pods.

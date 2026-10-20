@@ -30,6 +30,7 @@ mod tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url.to_string(),
 				concurrency: 4,
 			}),
@@ -575,7 +576,10 @@ mod tests {
 			.unwrap();
 		let worker = async {
 			tokio::time::timeout(std::time::Duration::from_secs(10), async {
-				while !publish_next(db.pool(), &channel).await.unwrap() {
+				while !publish_next(db.pool(), &channel, "check_email")
+					.await
+					.unwrap()
+				{
 					tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 				}
 				let delivery = consumer.next().await.unwrap().unwrap();
@@ -689,7 +693,7 @@ mod tests {
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
 		let channel = config.must_worker_config().unwrap().channel;
-		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email")
 			.await
 			.unwrap()
 		{}
@@ -774,7 +778,7 @@ mod tests {
 			.await;
 		assert_eq!(resp.status(), StatusCode::OK, "body: {:?}", resp.body());
 
-		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
+		while reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email")
 			.await
 			.unwrap()
 		{}

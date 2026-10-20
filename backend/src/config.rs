@@ -369,8 +369,15 @@ pub struct MustWorkerConfig {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RabbitMQConfig {
 	pub url: String,
+	/// Separate queues are required when environments share a broker.
+	#[serde(default = "default_worker_queue")]
+	pub queue: String,
 	/// Total number of concurrent messages that the worker can process.
 	pub concurrency: u16,
+}
+
+fn default_worker_queue() -> String {
+	crate::worker::consume::CHECK_EMAIL_QUEUE.to_string()
 }
 
 #[derive(Debug, Default, Deserialize, Clone, PartialEq, Serialize)]

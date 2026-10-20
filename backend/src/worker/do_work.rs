@@ -753,7 +753,14 @@ async fn requeue_with_attempt(
 	attempt: u32,
 ) -> Result<(), anyhow::Error> {
 	let properties = with_delivery_attempt(delivery.properties.clone(), attempt);
-	match publish_payload(channel, &delivery.data, properties).await {
+	match publish_payload(
+		channel,
+		delivery.routing_key.as_str(),
+		&delivery.data,
+		properties,
+	)
+	.await
+	{
 		Ok(()) => {
 			delivery.ack(BasicAckOptions::default()).await?;
 		}

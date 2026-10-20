@@ -894,12 +894,7 @@
 								"type": "string"
 							}
 						},
-						"required": [
-							"service",
-							"result",
-							"result_code",
-							"subresult"
-						],
+						"required": ["service", "result", "result_code", "subresult"],
 						"type": "object"
 					},
 					"input": {

@@ -218,6 +218,8 @@ enable = false
 
 # RabbitMQ configuration.
 [worker.rabbitmq]
+# Env variable: RCH__WORKER__RABBITMQ__QUEUE. Isolate environments sharing a broker.
+queue = "check_email"
 # Env variable: RCH__WORKER__RABBITMQ__URL
 url = "amqp://guest:guest@localhost:5672"
 

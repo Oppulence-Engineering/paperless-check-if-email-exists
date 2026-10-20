@@ -16,6 +16,107 @@ use test_helpers::{build_test_config, insert_tenant, test_db_url, ConfigProfile,
 
 #[tokio::test]
 #[serial]
+async fn scheduled_tasks_use_durable_dispatch_and_the_configured_queue() {
+	use lapin::{options::*, BasicProperties};
+	use reacher_backend::config::{RabbitMQConfig, WorkerConfig};
+	use reacher_backend::http::v1::bulk::post::publish_task;
+	use reacher_backend::worker::{consume::run_worker, dispatch::publish_next};
+
+	let db = TestDb::start().await;
+	let tenant = insert_tenant(db.pool(), "isolated-provider-queue", Some(10), 0).await;
+	let base = build_test_config(ConfigProfile::DbOnly, Some(&test_db_url()), None).await;
+	let mut config = Arc::try_unwrap(base).unwrap();
+	let queue = format!("provider-isolation-{}", uuid::Uuid::new_v4());
+	config.worker = WorkerConfig {
+		enable: true,
+		rabbitmq: Some(RabbitMQConfig {
+			url: test_helpers::ensure_test_amqp_url().await,
+			queue: queue.clone(),
+			concurrency: 1,
+		}),
+		webhook: None,
+	};
+	config.verification_backend = VerificationBackend::Millionverifier;
+	config.millionverifier.api_key = Some("unused-for-invalid-syntax".into());
+	config.connect().await.unwrap();
+	let config = Arc::new(config);
+	let mut ctx = TenantContext::legacy(config.throttle.clone());
+	ctx.tenant_id = Some(tenant);
+	ctx.is_legacy = false;
+	let (operation, original_dispatch) = admit_operation(
+		Arc::clone(&config),
+		db.pool(),
+		&CheckEmailRequest {
+			to_email: "invalid address".into(),
+			..Default::default()
+		},
+		&ctx,
+		None,
+		None,
+	)
+	.await
+	.unwrap();
+	let payload: serde_json::Value =
+		sqlx::query_scalar("SELECT payload FROM verification_dispatch WHERE id = $1")
+			.bind(original_dispatch)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	let mut task: CheckEmailTask = serde_json::from_value(payload).unwrap();
+	task.metadata.as_mut().unwrap().dispatch_id = None;
+	// Finder, pipeline and scheduled checks enter through this shared publisher.
+	publish_task(db.pool(), task, BasicProperties::default())
+		.await
+		.unwrap();
+	let dispatch: uuid::Uuid =
+		sqlx::query_scalar("SELECT dispatch_id FROM v1_task_result WHERE operation_id = $1")
+			.bind(operation)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	assert_ne!(dispatch, original_dispatch);
+	let channel = config.must_worker_config().unwrap().channel;
+	assert!(publish_next(db.pool(), &channel, &queue).await.unwrap());
+	let pending = channel
+		.queue_declare(
+			queue.as_str().into(),
+			QueueDeclareOptions {
+				passive: true,
+				..Default::default()
+			},
+			Default::default(),
+		)
+		.await
+		.unwrap();
+	assert_eq!(pending.message_count(), 1);
+	let worker = tokio::spawn(run_worker(Arc::clone(&config)));
+	tokio::time::timeout(std::time::Duration::from_secs(10), async {
+		loop {
+			let response = read_operation(db.pool(), operation, &ctx).await.unwrap();
+			if response.status_code == 200 {
+				let body: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
+				assert_eq!(body["score"]["safe_to_send"], false);
+				break;
+			}
+			tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+		}
+	})
+	.await
+	.unwrap();
+	worker.abort();
+	channel
+		.queue_delete(queue.as_str().into(), Default::default())
+		.await
+		.unwrap();
+	let attempts: i64 = sqlx::query_scalar("SELECT count(*) FROM verification_provider_attempts")
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+	assert_eq!(attempts, 0, "invalid syntax must not buy a provider check");
+}
+
+#[tokio::test]
+#[serial]
 #[ignore = "Uses live provider credits; requires an account key and explicitly supplied test addresses"]
 async fn live_mailboxes_complete_through_the_durable_worker() {
 	let key = std::env::var("RCH__MILLIONVERIFIER__API_KEY").expect("live key required");

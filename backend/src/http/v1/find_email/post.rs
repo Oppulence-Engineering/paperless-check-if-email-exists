@@ -287,8 +287,8 @@ async fn http_handler(
 				task_db_id: Some(task_row_id),
 			}),
 		};
-		let channel = match config.must_worker_config() {
-			Ok(worker_config) => worker_config.channel,
+		match config.must_worker_config() {
+			Ok(_) => (),
 			Err(err) => {
 				cleanup_finder_publish_failure(
 					&pg_pool,
@@ -302,7 +302,7 @@ async fn http_handler(
 				return Err(ReacherResponseError::from(err).into());
 			}
 		};
-		if let Err(err) = publish_task(channel, task, properties.clone()).await {
+		if let Err(err) = publish_task(&pg_pool, task, properties.clone()).await {
 			cleanup_finder_publish_failure(
 				&pg_pool,
 				Some(tenant_id),

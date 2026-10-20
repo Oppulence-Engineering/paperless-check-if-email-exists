@@ -27,6 +27,7 @@ mod worker_loop_tests {
 	}
 	async fn rabbitmq_config() -> RabbitMQConfig {
 		RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		}
@@ -43,6 +44,7 @@ mod worker_loop_tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -418,11 +420,13 @@ mod worker_loop_tests {
 			.await
 			.unwrap();
 		tx.commit().await.unwrap();
-		assert!(
-			reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
-				.await
-				.unwrap()
-		);
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			db.pool(),
+			&channel,
+			"check_email"
+		)
+		.await
+		.unwrap());
 		assert!(config.get_throttle_manager().try_acquire().await.is_none());
 		let started = std::time::Instant::now();
 		let worker = tokio::spawn(run_worker(Arc::clone(&config)));

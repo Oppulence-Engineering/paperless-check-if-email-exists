@@ -26,6 +26,7 @@ mod admin_jobs_tests {
 		c.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq,
 				concurrency: 4,
 			}),

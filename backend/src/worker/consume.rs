@@ -11,7 +11,7 @@ use std::sync::Arc;
 use tokio::time::{timeout, Duration};
 use tracing::{debug, error, info, trace};
 
-/// Our RabbitMQ only has one queue: "check_email".
+/// Default queue for installations with one environment per broker.
 pub const CHECK_EMAIL_QUEUE: &str = "check_email";
 pub const MAX_QUEUE_PRIORITY: u8 = 5;
 const RABBITMQ_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -39,6 +39,10 @@ pub async fn setup_rabbit_mq(
 	backend_name: &str,
 	config: &RabbitMQConfig,
 ) -> Result<Channel, anyhow::Error> {
+	anyhow::ensure!(
+		!config.queue.trim().is_empty(),
+		"Worker queue must not be empty"
+	);
 	let options = ConnectionProperties::default().with_connection_name(backend_name.into());
 
 	let conn = timeout(
@@ -63,7 +67,7 @@ pub async fn setup_rabbit_mq(
 	// Assert all queue is declared.
 	channel
 		.queue_declare(
-			CHECK_EMAIL_QUEUE.into(),
+			config.queue.as_str().into(),
 			QueueDeclareOptions {
 				durable: true,
 				..Default::default()
@@ -91,7 +95,7 @@ pub async fn setup_rabbit_mq(
 		)
 		.await?;
 
-	info!(target: LOG_TARGET, queues=?CHECK_EMAIL_QUEUE, concurrency=?config.concurrency, "Worker will start consuming messages");
+	info!(target: LOG_TARGET, queues=?config.queue, concurrency=?config.concurrency, "Worker will start consuming messages");
 
 	Ok(channel)
 }
@@ -110,8 +114,12 @@ async fn consume_check_email(config: Arc<BackendConfig>) -> Result<(), anyhow::E
 
 	let mut consumer = match channel
 		.basic_consume(
-			CHECK_EMAIL_QUEUE.into(),
-			format!("{}-{}", &config_clone.backend_name, CHECK_EMAIL_QUEUE).into(),
+			worker_config.rabbitmq.queue.as_str().into(),
+			format!(
+				"{}-{}",
+				&config_clone.backend_name, worker_config.rabbitmq.queue
+			)
+			.into(),
 			BasicConsumeOptions::default(),
 			FieldTable::default(),
 		)

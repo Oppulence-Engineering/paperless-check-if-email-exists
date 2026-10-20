@@ -11,6 +11,7 @@ async fn connect(url: &str) -> Arc<BackendConfig> {
 	config.backend_name = "recovery-test".into();
 	config.worker.enable = true;
 	config.worker.rabbitmq = Some(RabbitMQConfig {
+		queue: "check_email".into(),
 		url: url.into(),
 		concurrency: 1,
 	});

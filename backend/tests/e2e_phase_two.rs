@@ -36,6 +36,7 @@ mod tests {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: amqp_url.to_string(),
 				concurrency: 2,
 			}),

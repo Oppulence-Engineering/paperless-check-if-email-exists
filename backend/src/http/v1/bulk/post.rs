@@ -8,7 +8,7 @@ use lapin::Channel;
 use lapin::{options::*, BasicProperties};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 use warp::http::header::CONTENT_TYPE;
 use warp::http::StatusCode;
 use warp::{Filter, Reply};
@@ -25,7 +25,6 @@ use crate::http::ReacherResponseError;
 use crate::http::{check_scope, resolve_tenant};
 use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::quota::{reserve_quota_in_tx, QuotaCheckResult};
-use crate::worker::consume::CHECK_EMAIL_QUEUE;
 use crate::worker::do_work::CheckEmailJobId;
 use crate::worker::do_work::CheckEmailTask;
 use crate::worker::do_work::TaskMetadata;
@@ -253,27 +252,21 @@ fn normalize_source_key(source_key: Option<&str>) -> Option<String> {
 	}
 }
 
-/// Publish a task to the "check_email" queue.
+/// Commit task dispatch before returning; the publisher retries broker outages.
 pub async fn publish_task(
-	channel: Arc<Channel>,
+	pool: &PgPool,
 	task: CheckEmailTask,
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
-	let payload = serde_json::to_vec(&task).map_err(ReacherResponseError::from)?;
-
-	publish_payload(&channel, &payload, properties).await?;
-
-	debug!(
-		target: LOG_TARGET,
-		email = ?task.input.to_email,
-		queue = CHECK_EMAIL_QUEUE,
-		"Published task"
-	);
-
+	let mut tx = pool.begin().await.map_err(ReacherResponseError::from)?;
+	crate::worker::dispatch::enqueue(&mut tx, task, properties.priority().unwrap_or(0))
+		.await
+		.map_err(ReacherResponseError::from)?;
+	tx.commit().await.map_err(ReacherResponseError::from)?;
 	Ok(())
 }
 
-/// Publish an already serialized task to the "check_email" queue.
+/// Publish an already serialized task to the environment's queue.
 ///
 /// The message is always made persistent. On a channel in confirm mode (the
 /// channel from `setup_rabbit_mq` is), this returns only after the broker has
@@ -281,13 +274,14 @@ pub async fn publish_task(
 /// callers never treat a task the broker refused as queued.
 pub async fn publish_payload(
 	channel: &Channel,
+	queue: &str,
 	payload: &[u8],
 	properties: BasicProperties,
 ) -> Result<(), ReacherResponseError> {
 	let confirmation = channel
 		.basic_publish(
 			"".into(),
-			CHECK_EMAIL_QUEUE.into(),
+			queue.into(),
 			BasicPublishOptions::default(),
 			payload,
 			properties.with_delivery_mode(PERSISTENT_DELIVERY_MODE),

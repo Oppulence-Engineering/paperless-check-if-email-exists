@@ -93,9 +93,11 @@ export function TechnicalDetails({ className, result, ...props }: TechnicalDetai
 					<Row label="Mail server answers (SMTP)" layout="stacked">
 						{result.external_verification ? (
 							<p className="text-sm text-neutral-300">
-								Checked by {result.external_verification.service === "millionverifier"
+								Checked by{" "}
+								{result.external_verification.service === "millionverifier"
 									? "MillionVerifier"
-									: result.external_verification.service}. Direct mail-server diagnostics are unavailable.
+									: result.external_verification.service}
+								. Direct mail-server diagnostics are unavailable.
 							</p>
 						) : smtp.error ? (
 							<CheckError error={smtp.error} />
@@ -131,7 +133,12 @@ export function TechnicalDetails({ className, result, ...props }: TechnicalDetai
 						<Row label="Check run" layout="stacked">
 							<Facts
 								items={[
-									["Method", result.external_verification?.service ?? debug.smtp.verif_method?.type ?? "Not recorded"],
+									[
+										"Method",
+										result.external_verification?.service ??
+											debug.smtp.verif_method?.type ??
+											"Not recorded",
+									],
 									["Duration", seconds === null ? "Not recorded" : `${seconds.toFixed(2)} s`],
 									["Checked by", debug.backend_name],
 									["Started", new Date(debug.start_time).toLocaleString()],

@@ -40,6 +40,7 @@ async fn worker_config(enable_recheck: bool) -> Arc<BackendConfig> {
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: amqp_url,
 			concurrency: 4,
 		}),
@@ -74,6 +75,7 @@ async fn worker_config_with(
 	c.worker = WorkerConfig {
 		enable: true,
 		rabbitmq: Some(RabbitMQConfig {
+			queue: "check_email".into(),
 			url: amqp_url,
 			concurrency: 4,
 		}),
@@ -1288,7 +1290,9 @@ async fn test_failed_delayed_recheck_keeps_the_earlier_result() -> Result<()> {
 		.await?;
 	reacher_backend::worker::dispatch::enqueue(&mut tx, task, 0).await?;
 	tx.commit().await?;
-	assert!(reacher_backend::worker::dispatch::publish_next(db.pool(), &channel).await?);
+	assert!(
+		reacher_backend::worker::dispatch::publish_next(db.pool(), &channel, "check_email").await?
+	);
 	let mut deliveries = channel
 		.basic_consume(
 			CHECK_EMAIL_QUEUE.into(),

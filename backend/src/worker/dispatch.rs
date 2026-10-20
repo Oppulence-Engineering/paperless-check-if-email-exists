@@ -47,7 +47,11 @@ pub async fn enqueue(
 }
 
 /// One bounded publication per transaction; concurrent publishers claim different rows.
-pub async fn publish_next(pool: &PgPool, channel: &Channel) -> Result<bool, anyhow::Error> {
+pub async fn publish_next(
+	pool: &PgPool,
+	channel: &Channel,
+	queue: &str,
+) -> Result<bool, anyhow::Error> {
 	let mut tx = pool.begin().await?;
 	let row = sqlx::query(
 		"SELECT id, payload, priority FROM verification_dispatch
@@ -65,7 +69,7 @@ pub async fn publish_next(pool: &PgPool, channel: &Channel) -> Result<bool, anyh
 	let payload = serde_json::to_vec(&payload)?;
 	match tokio::time::timeout(
 		Duration::from_secs(5),
-		publish_payload(channel, &payload, properties),
+		publish_payload(channel, queue, &payload, properties),
 	)
 	.await
 	{
@@ -158,7 +162,9 @@ pub fn spawn_publisher(config: Arc<BackendConfig>, pool: PgPool) {
 				}.await
 			} else {
 				match config.must_worker_config() {
-					Ok(worker) => publish_next(&pool, &worker.channel).await,
+					Ok(worker) => {
+						publish_next(&pool, &worker.channel, &worker.rabbitmq.queue).await
+					}
 					Err(error) => Err(error.into()),
 				}
 			};

@@ -341,6 +341,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_connects() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -355,6 +356,7 @@ mod rabbitmq_setup_tests {
 	async fn test_setup_rabbit_mq_queue_exists() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 2,
 		};
@@ -379,6 +381,7 @@ mod rabbitmq_setup_tests {
 	#[serial]
 	async fn test_setup_rabbit_mq_bad_url_fails() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: "amqp://localhost:9999".to_string(),
 			concurrency: 1,
 		};
@@ -418,6 +421,7 @@ mod publish_consume_tests {
 	async fn test_publish_and_consume_task() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -463,6 +467,7 @@ mod publish_consume_tests {
 	async fn test_publish_multiple_tasks() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 10,
 		};
@@ -542,6 +547,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_priority() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -613,6 +619,7 @@ mod publish_consume_tests {
 	async fn test_publish_with_metadata_survives_roundtrip() {
 		let rmq = TestRabbitMq::start().await;
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};
@@ -753,6 +760,7 @@ mod full_pipeline_tests {
 		let rmq = TestRabbitMq::start().await;
 
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq.amqp_url.clone(),
 			concurrency: 4,
 		};

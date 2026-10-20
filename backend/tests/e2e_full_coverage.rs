@@ -21,6 +21,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_connects_and_declares_queue() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -46,6 +47,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_sets_qos() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 8,
 		};
@@ -57,6 +59,7 @@ mod consume_coverage {
 	#[serial]
 	async fn test_setup_bad_url() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: "amqp://bad:9999".into(),
 			concurrency: 1,
 		};
@@ -146,6 +149,7 @@ mod do_work_coverage {
 	#[serial]
 	async fn test_publish_consume_roundtrip() {
 		let config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -819,6 +823,7 @@ mod do_check_email_work_coverage {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -834,6 +839,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -949,6 +955,7 @@ mod do_check_email_work_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -1077,6 +1084,7 @@ mod do_check_email_work_retry_coverage {
 		config.worker = WorkerConfig {
 			enable: true,
 			rabbitmq: Some(RabbitMQConfig {
+				queue: "check_email".into(),
 				url: rmq_url().await,
 				concurrency: 4,
 			}),
@@ -1092,6 +1100,7 @@ mod do_check_email_work_retry_coverage {
 		let _db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};
@@ -1170,6 +1179,7 @@ mod do_check_email_work_retry_coverage {
 		let db = TestDb::start().await;
 		let config = make_config().await;
 		let rmq_config = RabbitMQConfig {
+			queue: "check_email".into(),
 			url: rmq_url().await,
 			concurrency: 4,
 		};

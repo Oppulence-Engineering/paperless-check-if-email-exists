@@ -2005,7 +2005,7 @@ async fn execute_pipeline_run_inner(
 	let properties = BasicProperties::default()
 		.with_content_type("application/json".into())
 		.with_priority(0);
-	let worker_config = config.must_worker_config()?;
+	config.must_worker_config()?;
 
 	// Every row gets its task row before anything is published. The worker
 	// settles the job and list as tasks complete, and a row added after the last
@@ -2208,9 +2208,7 @@ async fn execute_pipeline_run_inner(
 			}),
 		};
 
-		if let Err(err) =
-			publish_task(worker_config.channel.clone(), task, properties.clone()).await
-		{
+		if let Err(err) = publish_task(pg_pool, task, properties.clone()).await {
 			warn!(
 				target: LOG_TARGET,
 				pipeline_id = pipeline_id,

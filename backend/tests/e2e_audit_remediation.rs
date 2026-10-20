@@ -266,11 +266,13 @@ async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases
 	assert_eq!(response.status(), 202, "{:?}", response.body());
 	let mut dispatched = vec![];
 	for _ in 0..3 {
-		assert!(
-			reacher_backend::worker::dispatch::publish_next(db.pool(), &channel)
-				.await
-				.unwrap()
-		);
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			db.pool(),
+			&channel,
+			"check_email"
+		)
+		.await
+		.unwrap());
 		let delivery = channel
 			.basic_get(CHECK_EMAIL_QUEUE.into(), Default::default())
 			.await

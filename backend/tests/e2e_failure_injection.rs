@@ -174,6 +174,7 @@ async fn killed_worker_before_ack_does_not_duplicate_completion_side_effects() {
 	pool.close().await;
 
 	let rabbitmq_config = RabbitMQConfig {
+		queue: "check_email".into(),
 		url: env.rabbitmq.amqp_url().to_string(),
 		concurrency: 4,
 	};

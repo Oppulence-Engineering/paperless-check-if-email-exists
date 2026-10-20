@@ -226,9 +226,13 @@ async fn broker_failure_and_lost_publication_commit_retain_one_dispatch_identity
 		.unwrap();
 	sqlx::raw_sql("CREATE FUNCTION audit_publication_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'audit lost publication commit'; END $$; CREATE TRIGGER audit_fail BEFORE DELETE ON verification_dispatch FOR EACH ROW EXECUTE FUNCTION audit_publication_failure()")
         .execute(db.pool()).await.unwrap();
-	assert!(publish_next(db.pool(), &channel).await.is_err());
+	assert!(publish_next(db.pool(), &channel, "check_email")
+		.await
+		.is_err());
 	sqlx::raw_sql("DROP TRIGGER audit_fail ON verification_dispatch; DROP FUNCTION audit_publication_failure()").execute(db.pool()).await.unwrap();
-	assert!(publish_next(db.pool(), &channel).await.unwrap());
+	assert!(publish_next(db.pool(), &channel, "check_email")
+		.await
+		.unwrap());
 	for _ in 0..2 {
 		let delivery = channel
 			.basic_get(
@@ -254,7 +258,9 @@ async fn broker_failure_and_lost_publication_commit_retain_one_dispatch_identity
 		.close(200, "audit channel failure".into())
 		.await
 		.unwrap();
-	assert!(publish_next(db.pool(), &channel).await.unwrap());
+	assert!(publish_next(db.pool(), &channel, "check_email")
+		.await
+		.unwrap());
 	let retained: (i64, i32, bool) = sqlx::query_as(
 		"SELECT COUNT(*) OVER(), attempts, next_attempt_at > NOW() FROM verification_dispatch",
 	)
