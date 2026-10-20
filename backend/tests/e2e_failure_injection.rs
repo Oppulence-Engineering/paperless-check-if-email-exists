@@ -594,7 +594,7 @@ mod settlement_after_failure {
 
 	#[tokio::test]
 	#[serial]
-	async fn reverification_that_cannot_publish_refunds_quota_and_fails_its_job() {
+	async fn reverification_keeps_durable_work_reserved_during_a_broker_outage() {
 		let env = OwnedResilienceEnv::start().await;
 		let pool = env.postgres.pool().await;
 		let tenant_id = insert_tenant(&pool, "reverify-publish-failure", Some(100), 0).await;
@@ -634,7 +634,7 @@ mod settlement_after_failure {
 			.await
 			.expect("reverification cycle");
 
-		assert_eq!(used_this_period(&pool, tenant_id).await, 0);
+		assert_eq!(used_this_period(&pool, tenant_id).await, 1);
 		let job_status: String = sqlx::query_scalar(
 			"SELECT status::TEXT FROM v1_bulk_job WHERE tenant_id = $1 AND metadata->>'source' = 'reverification'",
 		)
@@ -643,9 +643,45 @@ mod settlement_after_failure {
 		.await
 		.expect("load reverification job");
 		assert_eq!(
-			job_status, "failed",
-			"a job nothing was published for must not stay running"
+			job_status, "running",
+			"durable work stays reserved until the broker recovers"
 		);
+		let worker = config.must_worker_config().unwrap();
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			&pool,
+			&worker.channel,
+			&worker.rabbitmq.queue,
+		)
+		.await
+		.unwrap());
+		let pending: i64 = sqlx::query_scalar("SELECT count(*) FROM verification_dispatch")
+			.fetch_one(&pool)
+			.await
+			.unwrap();
+		assert_eq!(pending, 1, "a lost broker must retain dispatch intent");
+		let recovered = setup_rabbit_mq("reverification-recovered", &worker.rabbitmq)
+			.await
+			.unwrap();
+		sqlx::query("UPDATE verification_dispatch SET next_attempt_at = NOW()")
+			.execute(&pool)
+			.await
+			.unwrap();
+		assert!(reacher_backend::worker::dispatch::publish_next(
+			&pool,
+			&recovered,
+			&worker.rabbitmq.queue,
+		)
+		.await
+		.unwrap());
+		let delivery = recovered
+			.basic_get(worker.rabbitmq.queue.as_str().into(), Default::default())
+			.await
+			.unwrap()
+			.expect("recovered scheduled task");
+		let task: CheckEmailTask = serde_json::from_slice(&delivery.data).unwrap();
+		assert!(task.metadata.unwrap().dispatch_id.is_some());
+		delivery.ack(Default::default()).await.unwrap();
+		assert_eq!(used_this_period(&pool, tenant_id).await, 1);
 
 		// The row keeps a full task payload, so it can be retried later.
 		let payload: serde_json::Value = sqlx::query_scalar(
