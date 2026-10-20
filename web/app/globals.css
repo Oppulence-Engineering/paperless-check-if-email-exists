@@ -1250,9 +1250,29 @@
 
 @layer base {
 	:root {
-		/* screenshot-studio renders at full size; the old 0.8 density zoom is off. */
 		--app-zoom: 1;
-		--app-vh: 100svh;
+		--app-vh: calc(100dvh / var(--app-zoom));
+	}
+
+	@supports (zoom: 1) {
+		@media screen and (min-width: 1024px) {
+			/* Scale the document so body portals share the app's coordinate space. */
+			html:has([data-slot="dashboard-shell"]) {
+				--app-zoom: 0.8;
+				zoom: var(--app-zoom);
+			}
+
+			/* shortcut: Floating UI 1.8 uses viewport pixels; remove when its CSS zoom fix ships. */
+			[data-radix-popper-content-wrapper],
+			body > div:has(> [data-slot="select-content"]) {
+				zoom: calc(1 / var(--app-zoom));
+			}
+
+			[data-radix-popper-content-wrapper] > *,
+			body > div > [data-slot="select-content"] {
+				zoom: var(--app-zoom);
+			}
+		}
 	}
 
 	* {

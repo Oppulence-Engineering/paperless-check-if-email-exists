@@ -77,7 +77,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			</head>
 			<body suppressHydrationWarning>
 				<AppProviders devToolsEnabled={devToolsEnabled}>
-					<div className="relative min-h-dvh">{children}</div>
+					<div className="relative min-h-[var(--app-vh)]">{children}</div>
 				</AppProviders>
 			</body>
 		</html>
