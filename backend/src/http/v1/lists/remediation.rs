@@ -1,3 +1,4 @@
+use super::canonicalize::canonicalize_email;
 use super::get_detail::list_summary;
 use crate::config::BackendConfig;
 use crate::finder::require_tenant_id;
@@ -20,7 +21,7 @@ use warp::http::StatusCode;
 use warp::Filter;
 use warp::Reply;
 
-const RULE_VERSION: &str = "remediation_v1";
+const RULE_VERSION: &str = "remediation_v2";
 const PREVIEW_ROW_LIMIT: i64 = 100;
 const EXPORT_BATCH_SIZE: i64 = 500;
 
@@ -435,6 +436,7 @@ async fn download_export_handler(
 	let partitions: Vec<String> = export.get("partitions");
 	let headers: Vec<String> = export.get("original_headers");
 	let plan_id: i64 = export.get("plan_id");
+	find_plan_id(&pg_pool, tenant_id, list_id, Some(plan_id)).await?;
 	let body = warp::reply::stream(SyncStream::new(stream::unfold(
 		ExportDownloadState {
 			pg_pool,
@@ -768,7 +770,7 @@ async fn find_plan_id(
 ) -> Result<i64, ReacherResponseError> {
 	let row = sqlx::query(
 		r#"
-		SELECT id
+		SELECT id, rule_version, result_state_digest
 		FROM v1_remediation_plans
 		WHERE tenant_id = $1
 		  AND list_id = $2
@@ -783,9 +785,19 @@ async fn find_plan_id(
 	.fetch_optional(pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
-	row.map(|row| row.get("id")).ok_or_else(|| {
+	let row = row.ok_or_else(|| {
 		ReacherResponseError::new(StatusCode::NOT_FOUND, "Remediation plan not found")
-	})
+	})?;
+	let current_rows = load_task_rows(pg_pool, list_id, tenant_id).await?;
+	if row.get::<String, _>("rule_version") != RULE_VERSION
+		|| row.get::<String, _>("result_state_digest") != result_state_digest(&current_rows)
+	{
+		return Err(ReacherResponseError::new(
+			StatusCode::CONFLICT,
+			"Verification results or suppressions changed. Rebuild the cleanup plan before exporting.",
+		));
+	}
+	Ok(row.get("id"))
 }
 
 async fn fetch_export_batch(
@@ -900,7 +912,7 @@ fn classify_row(
 			severity: "warning",
 		});
 		(RemediationClassification::Drop, "duplicate_email")
-	} else if row.is_suppressed && options.drop_suppressed {
+	} else if row.is_suppressed {
 		local_reasons.push(LocalReason {
 			code: "active_suppression",
 			message: row
@@ -910,7 +922,14 @@ fn classify_row(
 				.unwrap_or_else(|| "Email is actively suppressed.".to_string()),
 			severity: "blocking",
 		});
-		(RemediationClassification::Drop, "active_suppression")
+		(
+			if options.drop_suppressed {
+				RemediationClassification::Drop
+			} else {
+				RemediationClassification::Review
+			},
+			"active_suppression",
+		)
 	} else if row.result.is_none() && row.error.is_none() {
 		local_reasons.push(LocalReason {
 			code: "not_processed",
@@ -918,8 +937,27 @@ fn classify_row(
 			severity: "warning",
 		});
 		(RemediationClassification::Review, "not_processed")
+	} else if canonicalize_email(&effective_email)
+		!= row
+			.result
+			.as_ref()
+			.and_then(|value| value.get("input"))
+			.and_then(Value::as_str)
+			.or_else(|| payload_email(&row.payload))
+			.and_then(canonicalize_email)
+	{
+		local_reasons.push(LocalReason {
+			code: "correction_requires_verification",
+			message: "The corrected address is a different mailbox. Verify it before sending."
+				.to_string(),
+			severity: "blocking",
+		});
+		(
+			RemediationClassification::Review,
+			"correction_requires_verification",
+		)
 	} else {
-		classify_processed_row(row, changed, suggested_email.as_deref(), action.as_deref())
+		classify_processed_row(row, changed, action.as_deref())
 	};
 
 	PlannedRemediationRow {
@@ -946,12 +984,20 @@ fn classify_row(
 fn classify_processed_row(
 	row: &RawTaskRow,
 	changed: bool,
-	suggested_email: Option<&str>,
 	action: Option<&str>,
 ) -> (RemediationClassification, &'static str) {
+	if matches!(row.policy_decision.as_deref(), Some("suppress" | "drop")) {
+		return (RemediationClassification::Drop, "policy_blocked");
+	}
+	if row.policy_decision.as_deref() == Some("review") {
+		return (RemediationClassification::Review, "policy_review");
+	}
 	match action {
-		Some("fix_then_send") if changed || suggested_email.is_some() => {
-			return (RemediationClassification::Fixed, "recommended_fix")
+		Some("fix_then_send") => {
+			return (
+				RemediationClassification::Review,
+				"correction_requires_verification",
+			)
 		}
 		Some("send") if changed => return (RemediationClassification::Fixed, "normalized_email"),
 		Some("send") => return (RemediationClassification::Safe, "recommended_send"),
@@ -1304,7 +1350,7 @@ mod tests {
 	}
 
 	#[test]
-	fn classifies_domain_typo_as_fixed() {
+	fn holds_domain_typo_for_verification() {
 		let (mut row, before) = raw_row("user@gmial.com");
 		row.recommendation = Some(json!({
 			"action": "fix_then_send",
@@ -1316,9 +1362,9 @@ mod tests {
 
 		let plan = classify_row(&row, before, "email", &PlanOptions::default());
 
-		assert_eq!(plan.classification, RemediationClassification::Fixed);
+		assert_eq!(plan.classification, RemediationClassification::Review);
 		assert_eq!(plan.effective_email, "user@gmail.com");
-		assert_eq!(plan.rule_id, "recommended_fix");
+		assert_eq!(plan.rule_id, "correction_requires_verification");
 	}
 
 	#[test]
@@ -1358,6 +1404,42 @@ mod tests {
 	}
 
 	#[test]
+	fn keeping_suppressed_rows_never_makes_them_send_ready() {
+		let (mut row, before) = raw_row("blocked@example.com");
+		row.is_suppressed = true;
+		let options = PlanOptions {
+			drop_suppressed: false,
+			..PlanOptions::default()
+		};
+		let plan = classify_row(&row, before, "email", &options);
+		assert_eq!(plan.classification, RemediationClassification::Review);
+	}
+
+	#[test]
+	fn normalization_cannot_change_an_unverified_mailbox() {
+		let (row, before) = raw_row("sa\u{200b}les@example.com");
+		let plan = classify_row(&row, before, "email", &PlanOptions::default());
+		assert_eq!(plan.classification, RemediationClassification::Review);
+		assert_eq!(plan.rule_id, "correction_requires_verification");
+	}
+
+	#[test]
+	fn historical_checks_for_a_different_mailbox_stay_in_review() {
+		let (mut row, before) = raw_row("Sales@example.com");
+		row.result.as_mut().unwrap()["input"] = json!("sales@example.com");
+		let plan = classify_row(&row, before, "email", &PlanOptions::default());
+		assert_eq!(plan.classification, RemediationClassification::Review);
+	}
+
+	#[test]
+	fn policy_blocks_override_positive_verification() {
+		let (mut row, before) = raw_row("blocked@example.com");
+		row.policy_decision = Some("drop".into());
+		let plan = classify_row(&row, before, "email", &PlanOptions::default());
+		assert_eq!(plan.classification, RemediationClassification::Drop);
+	}
+
+	#[test]
 	fn refuses_incomplete_lists_without_partial_option() {
 		let result = ensure_plan_allowed("processing", 10, 4, false);
 
@@ -1379,8 +1461,8 @@ mod tests {
 		assert!(export_partition_includes(
 			&partitions,
 			"fixed",
-			"user@gmial.com",
-			"user@gmail.com"
+			"user@Example.COM",
+			"user@example.com"
 		));
 		assert!(export_partition_includes(
 			&partitions,

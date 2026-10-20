@@ -22,6 +22,7 @@ describe("OutcomeEntry", () => {
 		ingest.mockResolvedValue({ data: { ingested: 1, auto_suppressed: 1, ignored: 0 } } as never);
 		vi.spyOn(window, "confirm").mockReturnValue(true);
 		const client = new QueryClient();
+		const invalidate = vi.spyOn(client, "invalidateQueries");
 		render(
 			<QueryClientProvider client={client}>
 				<OutcomeEntry />
@@ -55,5 +56,8 @@ describe("OutcomeEntry", () => {
 		expect(
 			await screen.findByText("Recorded 1 outcome(s); 1 auto-suppressed; 0 skipped."),
 		).toBeInTheDocument();
+		for (const key of ["suppressions", "source-quality", "list-detail"]) {
+			expect(invalidate).toHaveBeenCalledWith({ queryKey: [key] });
+		}
 	});
 });

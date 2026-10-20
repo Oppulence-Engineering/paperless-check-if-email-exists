@@ -92,9 +92,31 @@ async fn http_handler(
 		FROM v1_task_result
 		WHERE tenant_id = $1
 		  AND source_key IS NOT NULL
+		  AND is_duplicate IS NOT TRUE
 		  AND ($2::TEXT IS NULL OR source_key = $2)
 		GROUP BY source_key
 		HAVING COUNT(*) >= $3
+		),
+		attributed_outcomes AS (
+			SELECT source_key, canonical_email, event_type, occurred_at
+			FROM v1_contact_outcomes WHERE tenant_id = $1 AND source_key IS NOT NULL
+			UNION
+			SELECT attribution.source_key, o.canonical_email,
+				CASE o.outcome_type::TEXT
+					WHEN 'hard_bounce' THEN 'bounced' WHEN 'soft_bounce' THEN 'bounced'
+					WHEN 'complaint' THEN 'complained' WHEN 'unsubscribe' THEN 'unsubscribed'
+					WHEN 'open' THEN 'opened' WHEN 'click' THEN 'clicked' ELSE 'delivered' END,
+				o.occurred_at
+			FROM verification_outcomes o
+			JOIN LATERAL (
+				SELECT t.source_key FROM v1_task_result t
+				WHERE t.tenant_id = o.tenant_id AND t.source_key IS NOT NULL
+				  AND t.is_duplicate IS NOT TRUE
+				  AND t.canonical_email = o.canonical_email
+				ORDER BY (t.id = o.task_result_id) DESC NULLS LAST, t.created_at DESC, t.id DESC
+				LIMIT 1
+			) attribution ON true
+			WHERE o.tenant_id = $1
 		),
 		outcome_stats AS (
 			SELECT
@@ -106,9 +128,8 @@ async fn http_handler(
 				COUNT(*) FILTER (WHERE event_type = 'bounced') AS bounced_count,
 				COUNT(*) FILTER (WHERE event_type = 'complained') AS complained_count,
 				COUNT(*) FILTER (WHERE event_type = 'unsubscribed') AS unsubscribed_count
-			FROM v1_contact_outcomes
-			WHERE tenant_id = $1
-			  AND source_key IS NOT NULL
+			FROM attributed_outcomes
+			WHERE source_key IS NOT NULL
 			  AND ($2::TEXT IS NULL OR source_key = $2)
 			GROUP BY source_key
 		)
@@ -151,29 +172,28 @@ async fn http_handler(
 			let bounced_count = row.get::<Option<i64>, _>("bounced_count").unwrap_or(0);
 			let complained_count = row.get::<Option<i64>, _>("complained_count").unwrap_or(0);
 			let unsubscribed_count = row.get::<Option<i64>, _>("unsubscribed_count").unwrap_or(0);
-			let risky_pct = percent(risky_count, total_records);
-			let invalid_pct = percent(invalid_count, total_records);
+			let processed_records = row.get::<Option<i64>, _>("processed_records").unwrap_or(0);
+			let risky_pct = percent(risky_count, processed_records);
+			let invalid_pct = percent(invalid_count, processed_records);
 			let unsafe_recommendation_pct =
-				percent(review_count + suppress_count + drop_count, total_records);
+				percent(review_count + suppress_count + drop_count, processed_records);
 			let negative_outcome_pct = percent(
 				bounced_count + complained_count + unsubscribed_count,
 				outcome_count,
 			);
-			let quality_grade = quality_grade(
-				risky_pct,
-				invalid_pct,
-				unsafe_recommendation_pct,
-				negative_outcome_pct,
-			);
+			let quality_grade = if processed_records == 0 {
+				"pending".to_string()
+			} else {
+				quality_grade(risky_pct, invalid_pct, unsafe_recommendation_pct, negative_outcome_pct)
+			};
 			let source_key: String = row.get("source_key");
 			SourceQualityRow {
 				summary: format!(
-					"This source produces {}% risky contacts, {}% invalid contacts, and {}% negative outcomes.",
-					risky_pct, invalid_pct, negative_outcome_pct
+					"Of {processed_records} checked records: {risky_pct}% risky and {invalid_pct}% invalid. Negative feedback is {negative_outcome_pct}% of recorded events, not a bounce rate per email sent."
 				),
 				source_key,
 				total_records,
-				processed_records: row.get::<Option<i64>, _>("processed_records").unwrap_or(0),
+				processed_records,
 				valid_count: row.get::<Option<i64>, _>("valid_count").unwrap_or(0),
 				risky_count,
 				unknown_count: row.get::<Option<i64>, _>("unknown_count").unwrap_or(0),

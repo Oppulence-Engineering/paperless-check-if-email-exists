@@ -2,7 +2,11 @@
 
 import "client-only";
 
-import type { ComponentPropsWithoutRef } from "react";
+import { useState, type ComponentPropsWithoutRef } from "react";
+import { Button } from "@oppulence/ui/components/button";
+import { Input } from "@oppulence/ui/components/input";
+import { Label } from "@oppulence/ui/components/label";
+import { reportCsv, saveFile } from "@/lib/downloads";
 import { useQuery } from "@tanstack/react-query";
 import { Configuration, V1Api } from "@oppulence/reacher-sdk";
 
@@ -69,19 +73,89 @@ const GROUPS: { title: string; items: [Counter, string][] }[] = [
 			["risky_pct", "Risky"],
 			["invalid_pct", "Invalid"],
 			["unsafe_recommendation_pct", "Review, suppress, or drop"],
-			["negative_outcome_pct", "Negative feedback"],
+			["negative_outcome_pct", "Negative share of events"],
 		],
 	},
 ];
 
 export function SourceQuality({ className, ...props }: SourceQualityProps) {
+	const [sourceKey, setSourceKey] = useState("");
+	const [minRecords, setMinRecords] = useState(1);
+	const [filter, setFilter] = useState({ sourceKey: "", minRecords: 1 });
 	const sources = useQuery({
-		queryKey: workflowQueryKey("source-quality"),
-		queryFn: async () => V1SourceQuality200Response.parse((await api.v1SourceQuality()).data),
+		queryKey: workflowQueryKey("source-quality", filter.sourceKey, filter.minRecords),
+		queryFn: async () =>
+			V1SourceQuality200Response.parse(
+				(
+					await api.v1SourceQuality({
+						sourceKey: filter.sourceKey || undefined,
+						minRecords: filter.minRecords,
+						limit: 50,
+					})
+				).data,
+			),
 	});
 
 	return (
 		<section data-slot="source-quality" className={cn("flex flex-col gap-4", className)} {...props}>
+			<form
+				className="flex flex-wrap items-end gap-3"
+				onSubmit={(event) => {
+					event.preventDefault();
+					setFilter({ sourceKey: sourceKey.trim(), minRecords });
+				}}
+			>
+				<div className="flex flex-col gap-2">
+					<Label htmlFor="quality-source">Lead source</Label>
+					<Input
+						id="quality-source"
+						value={sourceKey}
+						onChange={(event) => {
+							setSourceKey(event.target.value);
+						}}
+						placeholder="All sources"
+					/>
+				</div>
+				<div className="flex flex-col gap-2">
+					<Label htmlFor="quality-minimum">Minimum records</Label>
+					<Input
+						id="quality-minimum"
+						type="number"
+						min={1}
+						step={1}
+						required
+						value={minRecords}
+						onChange={(event) => {
+							setMinRecords(event.target.valueAsNumber);
+						}}
+					/>
+				</div>
+				<Button type="submit">Apply filters</Button>
+				<Button
+					type="button"
+					disabled={!sources.data?.sources.length || sources.isFetching}
+					onClick={() => {
+						const rows = sources.data?.sources ?? [];
+						const keys: Counter[] = [
+							"source_key",
+							"quality_grade",
+							...GROUPS.flatMap((group) => group.items.map(([key]) => key)),
+						];
+						saveFile(
+							reportCsv([keys, ...rows.map((row) => keys.map((key) => row[key]))]),
+							"lead-source-quality.csv",
+						);
+					}}
+				>
+					Download report CSV
+				</Button>
+			</form>
+			<p className="text-xs text-[#858585]">
+				Showing up to 50 matching sources, with the most invalid records first. Duplicate import
+				rows are excluded. Rates use checked records; delivery feedback counts events, not unique
+				recipients. Campaign feedback uses the linked verification or latest tagged verification for
+				that mailbox. Grades are rules-based summaries, not delivery predictions.
+			</p>
 			{sources.isError ? (
 				<p
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"

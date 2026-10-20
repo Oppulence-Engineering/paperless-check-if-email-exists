@@ -69,7 +69,7 @@ type PlanOption = keyof typeof DEFAULT_PLAN_OPTIONS;
 
 const PLAN_OPTION_LABELS: Record<PlanOption, string> = {
 	normalize_emails: "Fix the address format",
-	apply_domain_typos: "Fix domain typos",
+	apply_domain_typos: "Suggest domain typo corrections",
 	deduplicate: "Drop duplicate addresses",
 	drop_suppressed: "Drop suppressed addresses",
 	allow_partial: "Plan before all rows are checked",
@@ -94,7 +94,12 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 	const createPlan = useMutation({
 		mutationFn: async () =>
 			RemediationPlanSchema.parse(
-				(await listsApi.v1CreateRemediationPlan({ listId, requestBody: options })).data,
+				(
+					await listsApi.v1CreateRemediationPlan({
+						listId,
+						requestBody: options,
+					})
+				).data,
 			),
 		onSuccess: (data) => {
 			queryClient.setQueryData(planKey, data);
@@ -120,7 +125,11 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 				(
 					await listsApi.v1CreateRemediationExport({
 						listId,
-						requestBody: { plan_id: plan.data?.id, partitions: [partition], format: "csv" },
+						requestBody: {
+							plan_id: plan.data?.id,
+							partitions: [partition],
+							format: "csv",
+						},
 					})
 				).data,
 			);
@@ -144,8 +153,8 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 				</p>
 			) : null}
 			<Section
-				description="Download the list with its check results. Choose the rows to include."
-				title="Cleaned download"
+				description="Download verification results for analysis. Use the cleanup plan below for a send-ready file."
+				title="Results download"
 			>
 				<Group>
 					<Row label={<Label htmlFor={`clean-filter-${String(listId)}`}>Rows to include</Label>}>
@@ -203,14 +212,14 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 								}}
 								type="button"
 							>
-								Download cleaned CSV
+								Download results CSV
 							</Button>
 						</div>
 					</Row>
 				</Group>
 			</Section>
 			<Section
-				description="The plan fixes address formats and typos, and drops duplicates and suppressed addresses. Review it before you export."
+				description="Normalize formats and remove duplicates and suppressions. Suggested mailbox corrections stay in Review until verified. Rebuild the plan after results or feedback change."
 				title="Remediation plan"
 			>
 				<Group>
@@ -226,7 +235,10 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 										checked={options[key as PlanOption]}
 										id={`plan-${key}-${String(listId)}`}
 										onCheckedChange={(checked) => {
-											setOptions((current) => ({ ...current, [key]: checked === true }));
+											setOptions((current) => ({
+												...current,
+												[key]: checked === true,
+											}));
 										}}
 									/>
 									{label}

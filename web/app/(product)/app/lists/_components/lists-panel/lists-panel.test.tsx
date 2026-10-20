@@ -100,7 +100,7 @@ it("uploads a CSV with its options and opens the new list's workspace", async ()
 		target: { files: [new File(["email\na@example.com\n"], "one.csv", { type: "text/csv" })] },
 	});
 	fireEvent.change(screen.getByLabelText("Email column"), { target: { value: "Work email" } });
-	fireEvent.change(screen.getByLabelText("Source key"), { target: { value: "hubspot" } });
+	fireEvent.change(screen.getByLabelText("Lead source"), { target: { value: "hubspot" } });
 	expect(screen.getByRole("button", { name: "Upload" })).not.toBeDisabled();
 	const form = screen.getByRole("button", { name: "Upload" }).closest("form");
 	if (!form) throw new Error("Upload form missing");

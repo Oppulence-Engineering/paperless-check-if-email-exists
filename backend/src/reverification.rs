@@ -112,6 +112,13 @@ async fn process_schedule(
 			  AND t2.payload->'input'->>'to_email' = sub.email
 			  AND t2.task_state IN ('queued', 'running', 'retrying')
 		  )
+		  AND NOT EXISTS (
+			SELECT 1 FROM v1_suppression_entries se
+			WHERE se.tenant_id = $1 AND se.status = 'active'
+			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
+			  AND se.canonical_email = mailbox_identity(sub.email)
+		  )
+		ORDER BY sub.latest_completed ASC, sub.email ASC
 		LIMIT $3
 		"#,
 	)

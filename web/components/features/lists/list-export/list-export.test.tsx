@@ -114,9 +114,9 @@ describe("ListExport", () => {
 			</QueryClientProvider>,
 		);
 		await chooseOption("Rows to include", "Newly invalid since an earlier list");
-		expect(screen.getByRole("button", { name: "Download cleaned CSV" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Download results CSV" })).toBeDisabled();
 		await chooseOption("Earlier list", "Spring");
-		fireEvent.click(screen.getByRole("button", { name: "Download cleaned CSV" }));
+		fireEvent.click(screen.getByRole("button", { name: "Download results CSV" }));
 		await waitFor(() =>
 			expect(download).toHaveBeenCalledWith(
 				{ listId: 3, format: "csv", filter: "newly_invalid", changedSinceListId: 2 },

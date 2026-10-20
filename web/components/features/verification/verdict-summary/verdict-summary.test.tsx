@@ -28,7 +28,10 @@ describe("VerdictSummary", () => {
 		const typo: CheckResult = {
 			...SAMPLE_CHECK_RESULT,
 			recommendation: undefined,
-			score: { ...SAMPLE_CHECK_RESULT.score, domain_suggestion: "maya@gmail.com" },
+			score: {
+				...SAMPLE_CHECK_RESULT.score,
+				domain_suggestion: "maya@gmail.com",
+			},
 		};
 		render(<VerdictSummary result={typo} />);
 
@@ -36,6 +39,22 @@ describe("VerdictSummary", () => {
 			"href",
 			"/app/check?email=maya%40gmail.com",
 		);
+	});
+
+	it("does not call a suppressed result send-ready despite a positive quality score", () => {
+		render(
+			<VerdictSummary
+				result={{
+					...SAMPLE_CHECK_RESULT,
+					recommendation: {
+						...SAMPLE_CHECK_RESULT.recommendation,
+						action: "suppress",
+					},
+				}}
+			/>,
+		);
+		expect(screen.getByText("Send-ready").nextElementSibling).toHaveTextContent("No");
+		expect(screen.getByText(/Exclude this address from future sends/)).toBeInTheDocument();
 	});
 
 	it("falls back to reason codes without a decision", () => {
