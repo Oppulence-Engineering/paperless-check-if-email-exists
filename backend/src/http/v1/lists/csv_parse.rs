@@ -20,13 +20,29 @@ const EMAIL_HEADER_CANDIDATES: &[&str] = &[
 	"e-mail address",
 ];
 
+/// The most cells (rows times columns) an upload may build. Every row holds a
+/// value for every header, even a row shorter than the header, so a wide
+/// header multiplies memory by the row count whatever the file size. This
+/// fits the largest plan's 100,000 rows at 50 columns.
+const MAX_CSV_CELLS: usize = 5_000_000;
+
 /// Parse an uploaded CSV. With `max_rows`, parsing stops after one row more
 /// than the limit, so an oversized upload is rejected without first building
-/// every row in memory; the caller sees `rows.len() > max_rows`.
+/// every row in memory; the caller sees `rows.len() > max_rows`. A file whose
+/// rows times columns would pass [`MAX_CSV_CELLS`] is refused.
 pub fn parse_csv(
 	bytes: &[u8],
 	explicit_email_column: Option<&str>,
 	max_rows: Option<usize>,
+) -> Result<ParsedCsv, ReacherResponseError> {
+	parse_csv_capped(bytes, explicit_email_column, max_rows, MAX_CSV_CELLS)
+}
+
+fn parse_csv_capped(
+	bytes: &[u8],
+	explicit_email_column: Option<&str>,
+	max_rows: Option<usize>,
+	max_cells: usize,
 ) -> Result<ParsedCsv, ReacherResponseError> {
 	let mut reader = csv::ReaderBuilder::new().flexible(true).from_reader(bytes);
 
@@ -95,6 +111,12 @@ pub fn parse_csv(
 		if max_rows.is_some_and(|max_rows| rows.len() > max_rows) {
 			break;
 		}
+		if (rows.len() + 1).saturating_mul(headers_vec.len()) > max_cells {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				format!("CSV is too large: rows times columns may be at most {max_cells}"),
+			));
+		}
 		let record = record.map_err(invalid_csv)?;
 		let mut row = Map::new();
 		for (index, header) in headers_vec.iter().enumerate() {
@@ -142,6 +164,15 @@ mod tests {
 
 		let csv = b"email\na@x.test\nb@x.test\nc@x.test\n";
 		assert_eq!(parse_csv(csv, None, Some(1)).unwrap().rows.len(), 2);
+	}
+
+	#[test]
+	fn parse_csv_rejects_more_cells_than_the_cap() {
+		// Short rows still get a value for every header, so the cap is on
+		// rows times columns, not on the bytes of the file.
+		let csv = b"email,a,b\nx@x.test\ny@x.test\n";
+		assert!(parse_csv_capped(csv, None, None, 5).is_err());
+		assert_eq!(parse_csv_capped(csv, None, None, 6).unwrap().rows.len(), 2);
 	}
 
 	#[test]

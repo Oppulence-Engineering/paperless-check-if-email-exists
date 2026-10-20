@@ -334,6 +334,44 @@ async fn test_csv_upload_partial_rejection_keeps_valid_rows() -> Result<()> {
 	Ok(())
 }
 
+#[tokio::test]
+#[serial]
+async fn test_csv_upload_refuses_more_rows_than_a_json_request_takes() -> Result<()> {
+	let db = TestDb::start().await;
+	let tenant_id = insert_tenant(db.pool(), "outcomes-csv-cap", Some(100_000), 0).await;
+	let (api_key, _) = insert_api_key_with_scopes(db.pool(), tenant_id, &["outcomes.write"]).await;
+	let config = worker_config().await;
+
+	// One row over the 5,000 a JSON request may carry. The upload used to
+	// parse and ingest every row of a file up to the 50 MB form limit.
+	let mut csv = String::from("email,outcome_type,occurred_at,source\n");
+	for index in 0..5_001 {
+		csv.push_str(&format!(
+			"user{index}@example.com,delivered,2026-05-10T12:00:00Z,sendgrid\n"
+		));
+	}
+	let body = build_multipart_csv("file", "outcomes.csv", csv.as_bytes());
+
+	let response = request()
+		.method("POST")
+		.path("/v1/campaign-outcomes/upload")
+		.header("authorization", format!("Bearer {}", api_key))
+		.header(
+			"content-type",
+			"multipart/form-data; boundary=----TestBoundary",
+		)
+		.body(body)
+		.reply(&create_routes(Arc::clone(&config)))
+		.await;
+
+	assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+	assert_eq!(
+		count_outcomes(db.pool(), tenant_id, "user0@example.com").await,
+		0
+	);
+	Ok(())
+}
+
 // ----------------------------------------------------------------------------
 // Policy CRUD tests
 // ----------------------------------------------------------------------------
