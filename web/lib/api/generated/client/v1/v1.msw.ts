@@ -22,6 +22,10 @@ import type {
   ListUploadResponse,
   PendingVerification,
   ReputationCheckResponse,
+  ResearchCreated,
+  ResearchDetail,
+  ResearchExportResponse,
+  ResearchList,
   ReverificationStatusResponse,
   SourceQualityResponse,
   SuppressionCheckResponse,
@@ -37,16 +41,20 @@ import {
   getV1CheckSuppressionResponseMock,
   getV1CreateBulkJobResponseMock,
   getV1CreateListResponseMock,
+  getV1CreateResearchResponseMock,
   getV1DeleteListResponseMock,
   getV1DeleteSuppressionResponseMock,
   getV1DownloadListResponseMock,
+  getV1ExportResearchResponseMock,
   getV1ExportSuppressionsResponseMock,
   getV1FindEmailResponseMock,
   getV1GetFindEmailResponseMock,
   getV1GetListResponseMock,
+  getV1GetResearchResponseMock,
   getV1GetVerificationOperationResponseMock,
   getV1ImportSuppressionsResponseMock,
   getV1ListListsResponseMock,
+  getV1ListResearchResponseMock,
   getV1ListSuppressionEventsResponseMock,
   getV1ListSuppressionsResponseMock,
   getV1ReverificationStatusResponseMock,
@@ -66,6 +74,10 @@ export {
   getV1DownloadListResponseMock,
   getV1GetVerificationOperationResponseMock,
   getV1CheckReputationResponseMock,
+  getV1ListResearchResponseMock,
+  getV1CreateResearchResponseMock,
+  getV1GetResearchResponseMock,
+  getV1ExportResearchResponseMock,
   getV1UpdateReverificationResponseMock,
   getV1ReverificationStatusResponseMock,
   getV1SourceQualityResponseMock,
@@ -373,6 +385,102 @@ export const getV1CheckReputationMockHandler = (
   );
 };
 
+export const getV1ListResearchMockHandler = (
+  overrideResponse?:
+    | ResearchList
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ResearchList> | ResearchList),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/research",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListResearchResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1CreateResearchMockHandler = (
+  overrideResponse?:
+    | ResearchCreated
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ResearchCreated> | ResearchCreated),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/research",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1CreateResearchResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1GetResearchMockHandler = (
+  overrideResponse?:
+    | ResearchDetail
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<ResearchDetail> | ResearchDetail),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/research/:sessionId",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetResearchResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1ExportResearchMockHandler = (
+  overrideResponse?:
+    | ResearchExportResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ResearchExportResponse> | ResearchExportResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/research/:sessionId/export",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ExportResearchResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getV1UpdateReverificationMockHandler = (
   overrideResponse?:
     | ReverificationStatusResponse
@@ -630,6 +738,10 @@ export const getV1Mock = () => [
   getV1DownloadListMockHandler(),
   getV1GetVerificationOperationMockHandler(),
   getV1CheckReputationMockHandler(),
+  getV1ListResearchMockHandler(),
+  getV1CreateResearchMockHandler(),
+  getV1GetResearchMockHandler(),
+  getV1ExportResearchMockHandler(),
   getV1UpdateReverificationMockHandler(),
   getV1ReverificationStatusMockHandler(),
   getV1SourceQualityMockHandler(),

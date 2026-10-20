@@ -2,14 +2,27 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft; architecture revised 2026-10-20 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
 | **Depends on** | RFC 0015 (Data Platform Foundations), RFC 0011 (domain sourcing, pattern model) |
 | **Used by** | RFC 0013 (row action "Open Domain Search"), RFC 0014 (departure signal) |
 | **Release gates** | RFC 0015 Legal Review sign-off; Definition Of Done met |
 
-## Summary
+## Implementation decision — 2026-10-20
+
+Follow the [company-to-contact integration](../paperless-research-integration.md).
+Reuse Go company resolution, owned-site research, and evidence records; keep
+customer results isolated. Rust supplies the authenticated product API and
+MillionVerifier-backed mailbox checks. Published generic mailboxes must be
+distinguished from named employees. Export passes the current suppression policy.
+
+The independent Rust sourcing store and mandatory Parallel dependency described
+below are superseded. Domain coverage and freshness remain benchmark targets,
+not implemented or measured guarantees. Wider domain discovery follows the first
+company-import workflow.
+
+## Earlier proposal
 
 Add Domain Search: give a domain or a company name, and get the people and the generic addresses at that company. Each row has:
 

@@ -58,6 +58,7 @@ function familyFor(path: string): Family | undefined {
 			"/v1/operations/",
 			"/v1/emails/",
 			"/v1/find_email",
+			"/v1/research",
 			"/v1/reputation/",
 			"/v1/reverification",
 			"/v1/alerts",
@@ -108,6 +109,8 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 		case "Provider callback":
 			return { href: "/app/integrations", label: "Open setup and status journey" };
 		case "Verification and finder":
+			if (operation.path.startsWith("/v1/research"))
+				return { href: "/app/research", label: "Open company research" };
 			if (operation.path.startsWith("/v1/find_email"))
 				return { href: "/app/finder", label: "Open finder" };
 			if (operation.path.startsWith("/v1/emails/"))
@@ -175,7 +178,7 @@ function scopeFor(path: string, method: Uppercase<Method>): string | undefined {
 	const route = path.split("/")[2];
 	if (["check_email", "operations", "emails", "alerts"].includes(route)) return "verify";
 	if (["bulk", "jobs", "events", "query", "sources"].includes(route)) return "bulk";
-	if (route === "find_email") return "find";
+	if (route === "find_email" || route === "research") return "find";
 	if (["lists", "segments"].includes(route)) return "lists";
 	if (route === "campaign-outcomes") return method === "GET" ? "outcomes.read" : "outcomes.write";
 	if (["suppressions", "outcomes"].includes(route)) return "suppressions";

@@ -2,13 +2,26 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft; architecture revised 2026-10-20 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
 | **Depends on** | RFC 0015 (Data Platform Foundations), RFC 0011 (finder, list repair), RFC 0012 (Domain Search, counts) |
 | **Release gates** | RFC 0015 Legal Review sign-off; sensitive-condition guard live; Definition Of Done met |
 
-## Summary
+## Implementation decision — 2026-10-20
+
+The [company-to-contact integration](../paperless-research-integration.md) starts
+with customer-supplied target accounts and roles. Reuse Go research sessions,
+source adapters, import handling, evidence, and spending controls. The existing
+signed-in Next.js app remains the customer surface, behind Rust tenant authority.
+
+Broad company discovery, advanced business signals, and recurring saved searches
+are subsequent phases. The mandatory Parallel implementation and separate Rust
+research runner below are superseded; provider use must fit the actual data
+rights for the workflow. Do not populate a shared commercial contact database
+from customer-private results or a provider whose license prohibits that use.
+
+## Earlier proposal
 
 Add Discover: search for companies and people with a natural-language query ("AI search") or with structured filters. Discover runs on Parallel Web Systems:
 

@@ -85,6 +85,17 @@ fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<Uuid, warp::Rejection> 
 	})
 }
 
+fn validate_customer_scopes(scopes: &[String]) -> Result<(), warp::Rejection> {
+	if scopes.iter().any(|s| s == scope::INTERNAL_VERIFICATION) {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Internal service scopes cannot be assigned to customer API keys.",
+		)
+		.into());
+	}
+	Ok(())
+}
+
 #[cfg(test)]
 mod authorization_tests {
 	use super::*;
@@ -207,6 +218,7 @@ async fn create_handler(
 
 	let name = body.name.unwrap_or_else(|| "Default".to_string());
 	let scopes: Vec<String> = body.scopes.unwrap_or_default();
+	validate_customer_scopes(&scopes)?;
 	let expires_at = parse_expiry(body.expires_at)?;
 	let (full_key, key_prefix, key_hash) = generate_api_key();
 
@@ -252,6 +264,7 @@ async fn update_handler(
 	body: UpdateApiKeyRequest,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
+	validate_customer_scopes(body.scopes.as_deref().unwrap_or_default())?;
 	let key_id = key_id_str.parse::<Uuid>().map_err(|_| {
 		ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid API key ID format")
 	})?;

@@ -1,0 +1,7 @@
+account_id,segment,provider,person_company_match,role_match,current_employment,mailbox_result,provider_cost_usd,cleanup_minutes
+fixture-1,manufacturing,synthetic-a,true,true,true,ok,0.01,1
+fixture-2,manufacturing,synthetic-a,unknown,unknown,unknown,no_match,0,2
+fixture-3,professional-services,synthetic-a,true,true,unknown,catch_all,0.02,3
+fixture-1,manufacturing,synthetic-b,true,false,true,ok,0.02,2
+fixture-2,manufacturing,synthetic-b,true,true,true,ok,0.02,1
+fixture-3,professional-services,synthetic-b,true,true,true,ok,0.03,1

@@ -34,6 +34,8 @@ import type { VerificationResponse } from '../models';
 // @ts-ignore
 import type { CheckEmailRequest } from '../models';
 // @ts-ignore
+import type { CreateResearchRequest } from '../models';
+// @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
 import type { FindEmailAcceptedResponse } from '../models';
@@ -57,6 +59,16 @@ import type { PendingVerification } from '../models';
 import type { ReputationCheckRequest } from '../models';
 // @ts-ignore
 import type { ReputationCheckResponse } from '../models';
+// @ts-ignore
+import type { ResearchCreated } from '../models';
+// @ts-ignore
+import type { ResearchDetail } from '../models';
+// @ts-ignore
+import type { ResearchExportRequest } from '../models';
+// @ts-ignore
+import type { ResearchExportResponse } from '../models';
+// @ts-ignore
+import type { ResearchList } from '../models';
 // @ts-ignore
 import type { ReverificationStatusResponse } from '../models';
 // @ts-ignore
@@ -388,6 +400,44 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
+         * @param {CreateResearchRequest} createResearchRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateResearch: async (createResearchRequest: CreateResearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createResearchRequest' is not null or undefined
+            assertParamExists('v1CreateResearch', 'createResearchRequest', createResearchRequest)
+            const localVarPath = `/v1/research`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createResearchRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -511,6 +561,48 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {string} sessionId Research session ID as a positive decimal string
+         * @param {ResearchExportRequest} researchExportRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ExportResearch: async (sessionId: string, researchExportRequest: ResearchExportRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'sessionId' is not null or undefined
+            assertParamExists('v1ExportResearch', 'sessionId', sessionId)
+            // verify required parameter 'researchExportRequest' is not null or undefined
+            assertParamExists('v1ExportResearch', 'researchExportRequest', researchExportRequest)
+            const localVarPath = `/v1/research/{session_id}/export`
+                .replace(`{${"session_id"}}`, encodeURIComponent(String(sessionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(researchExportRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -695,6 +787,42 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
+         * @param {string} sessionId Research session ID as a positive decimal string
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetResearch: async (sessionId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'sessionId' is not null or undefined
+            assertParamExists('v1GetResearch', 'sessionId', sessionId)
+            const localVarPath = `/v1/research/{session_id}`
+                .replace(`{${"session_id"}}`, encodeURIComponent(String(sessionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @param {string} operationId Verification operation identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -799,6 +927,38 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
             if (offset !== undefined) {
                 localVarQueryParameter['offset'] = offset;
             }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListResearch: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/research`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
 
 
 
@@ -1155,6 +1315,18 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {CreateResearchRequest} createResearchRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1CreateResearch(createResearchRequest: CreateResearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchCreated>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateResearch(createResearchRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1CreateResearch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {number} listId List identifier
          * @param {*} [options] Override http request option.
@@ -1194,6 +1366,19 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1DownloadList(listId, filter, format, segmentId, changedSinceListId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1DownloadList']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {string} sessionId Research session ID as a positive decimal string
+         * @param {ResearchExportRequest} researchExportRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ExportResearch(sessionId: string, researchExportRequest: ResearchExportRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchExportResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ExportResearch(sessionId, researchExportRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1ExportResearch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1255,6 +1440,18 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {string} sessionId Research session ID as a positive decimal string
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1GetResearch(sessionId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetResearch(sessionId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1GetResearch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @param {string} operationId Verification operation identifier
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1290,6 +1487,17 @@ export const V1ApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListLists(limit, offset, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1ListLists']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListResearch(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResearchList>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListResearch(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1ListResearch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1448,6 +1656,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         },
         /**
          *
+         * @param {V1ApiV1CreateResearchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1CreateResearch(requestParameters: V1ApiV1CreateResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchCreated> {
+            return localVarFp.v1CreateResearch(requestParameters.createResearchRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary DELETE /v1/lists/{list_id}
          * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1475,6 +1692,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          */
         v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig): AxiosPromise<File> {
             return localVarFp.v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, requestParameters.segmentId, requestParameters.changedSinceListId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {V1ApiV1ExportResearchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ExportResearch(requestParameters: V1ApiV1ExportResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchExportResponse> {
+            return localVarFp.v1ExportResearch(requestParameters.sessionId, requestParameters.researchExportRequest, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1518,6 +1744,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         },
         /**
          *
+         * @param {V1ApiV1GetResearchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1GetResearch(requestParameters: V1ApiV1GetResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchDetail> {
+            return localVarFp.v1GetResearch(requestParameters.sessionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @param {V1ApiV1GetVerificationOperationRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1544,6 +1779,14 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          */
         v1ListLists(requestParameters: V1ApiV1ListListsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListListResponse> {
             return localVarFp.v1ListLists(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListResearch(options?: RawAxiosRequestConfig): AxiosPromise<ResearchList> {
+            return localVarFp.v1ListResearch(options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1675,6 +1918,15 @@ export interface V1ApiInterface {
 
     /**
      *
+     * @param {V1ApiV1CreateResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1CreateResearch(requestParameters: V1ApiV1CreateResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchCreated>;
+
+    /**
+     *
      * @summary DELETE /v1/lists/{list_id}
      * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1702,6 +1954,15 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig): AxiosPromise<File>;
+
+    /**
+     *
+     * @param {V1ApiV1ExportResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1ExportResearch(requestParameters: V1ApiV1ExportResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchExportResponse>;
 
     /**
      *
@@ -1745,6 +2006,15 @@ export interface V1ApiInterface {
 
     /**
      *
+     * @param {V1ApiV1GetResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1GetResearch(requestParameters: V1ApiV1GetResearchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResearchDetail>;
+
+    /**
+     *
      * @param {V1ApiV1GetVerificationOperationRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1771,6 +2041,14 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1ListLists(requestParameters?: V1ApiV1ListListsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListListResponse>;
+
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1ListResearch(options?: RawAxiosRequestConfig): AxiosPromise<ResearchList>;
 
     /**
      *
@@ -1964,6 +2242,20 @@ export interface V1ApiV1CreateListRequest {
 }
 
 /**
+ * Request parameters for v1CreateResearch operation in V1Api.
+ * @export
+ * @interface V1ApiV1CreateResearchRequest
+ */
+export interface V1ApiV1CreateResearchRequest {
+    /**
+     *
+     * @type {CreateResearchRequest}
+     * @memberof V1ApiV1CreateResearch
+     */
+    readonly createResearchRequest: CreateResearchRequest
+}
+
+/**
  * Request parameters for v1DeleteList operation in V1Api.
  * @export
  * @interface V1ApiV1DeleteListRequest
@@ -2031,6 +2323,27 @@ export interface V1ApiV1DownloadListRequest {
      * @memberof V1ApiV1DownloadList
      */
     readonly changedSinceListId?: number
+}
+
+/**
+ * Request parameters for v1ExportResearch operation in V1Api.
+ * @export
+ * @interface V1ApiV1ExportResearchRequest
+ */
+export interface V1ApiV1ExportResearchRequest {
+    /**
+     * Research session ID as a positive decimal string
+     * @type {string}
+     * @memberof V1ApiV1ExportResearch
+     */
+    readonly sessionId: string
+
+    /**
+     *
+     * @type {ResearchExportRequest}
+     * @memberof V1ApiV1ExportResearch
+     */
+    readonly researchExportRequest: ResearchExportRequest
 }
 
 /**
@@ -2122,6 +2435,20 @@ export interface V1ApiV1GetListRequest {
      * @memberof V1ApiV1GetList
      */
     readonly listId: number
+}
+
+/**
+ * Request parameters for v1GetResearch operation in V1Api.
+ * @export
+ * @interface V1ApiV1GetResearchRequest
+ */
+export interface V1ApiV1GetResearchRequest {
+    /**
+     * Research session ID as a positive decimal string
+     * @type {string}
+     * @memberof V1ApiV1GetResearch
+     */
+    readonly sessionId: string
 }
 
 /**
@@ -2392,6 +2719,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
 
     /**
      *
+     * @param {V1ApiV1CreateResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1CreateResearch(requestParameters: V1ApiV1CreateResearchRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1CreateResearch(requestParameters.createResearchRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @summary DELETE /v1/lists/{list_id}
      * @param {V1ApiV1DeleteListRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2424,6 +2762,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1DownloadList(requestParameters: V1ApiV1DownloadListRequest, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1DownloadList(requestParameters.listId, requestParameters.filter, requestParameters.format, requestParameters.segmentId, requestParameters.changedSinceListId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {V1ApiV1ExportResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1ExportResearch(requestParameters: V1ApiV1ExportResearchRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1ExportResearch(requestParameters.sessionId, requestParameters.researchExportRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2476,6 +2825,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
 
     /**
      *
+     * @param {V1ApiV1GetResearchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1GetResearch(requestParameters: V1ApiV1GetResearchRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1GetResearch(requestParameters.sessionId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
      * @param {V1ApiV1GetVerificationOperationRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2507,6 +2867,16 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1ListLists(requestParameters: V1ApiV1ListListsRequest = {}, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1ListLists(requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1ListResearch(options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1ListResearch(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

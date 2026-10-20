@@ -112,6 +112,18 @@ type V1API interface {
 	V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUploadResponse, *http.Response, error)
 
 	/*
+	V1CreateResearch Method for V1CreateResearch
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1CreateResearchRequest
+	*/
+	V1CreateResearch(ctx context.Context) V1APIV1CreateResearchRequest
+
+	// V1CreateResearchExecute executes the request
+	//  @return ResearchCreated
+	V1CreateResearchExecute(r V1APIV1CreateResearchRequest) (*ResearchCreated, *http.Response, error)
+
+	/*
 	V1DeleteList DELETE /v1/lists/{list_id}
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -149,6 +161,19 @@ type V1API interface {
 	// V1DownloadListExecute executes the request
 	//  @return *os.File
 	V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.File, *http.Response, error)
+
+	/*
+	V1ExportResearch Method for V1ExportResearch
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param sessionId Research session ID as a positive decimal string
+	@return V1APIV1ExportResearchRequest
+	*/
+	V1ExportResearch(ctx context.Context, sessionId string) V1APIV1ExportResearchRequest
+
+	// V1ExportResearchExecute executes the request
+	//  @return ResearchExportResponse
+	V1ExportResearchExecute(r V1APIV1ExportResearchRequest) (*ResearchExportResponse, *http.Response, error)
 
 	/*
 	V1ExportSuppressions Export suppressions
@@ -201,6 +226,19 @@ type V1API interface {
 	V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailResponse, *http.Response, error)
 
 	/*
+	V1GetResearch Method for V1GetResearch
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param sessionId Research session ID as a positive decimal string
+	@return V1APIV1GetResearchRequest
+	*/
+	V1GetResearch(ctx context.Context, sessionId string) V1APIV1GetResearchRequest
+
+	// V1GetResearchExecute executes the request
+	//  @return ResearchDetail
+	V1GetResearchExecute(r V1APIV1GetResearchRequest) (*ResearchDetail, *http.Response, error)
+
+	/*
 	V1GetVerificationOperation Method for V1GetVerificationOperation
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -236,6 +274,18 @@ type V1API interface {
 	// V1ListListsExecute executes the request
 	//  @return ListListResponse
 	V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListResponse, *http.Response, error)
+
+	/*
+	V1ListResearch Method for V1ListResearch
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return V1APIV1ListResearchRequest
+	*/
+	V1ListResearch(ctx context.Context) V1APIV1ListResearchRequest
+
+	// V1ListResearchExecute executes the request
+	//  @return ResearchList
+	V1ListResearchExecute(r V1APIV1ListResearchRequest) (*ResearchList, *http.Response, error)
 
 	/*
 	V1ListSuppressionEvents List suppression events
@@ -1274,6 +1324,136 @@ func (a *V1APIService) V1CreateListExecute(r V1APIV1CreateListRequest) (*ListUpl
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type V1APIV1CreateResearchRequest struct {
+	ctx context.Context
+	ApiService V1API
+	createResearchRequest *CreateResearchRequest
+}
+
+func (r V1APIV1CreateResearchRequest) CreateResearchRequest(createResearchRequest CreateResearchRequest) V1APIV1CreateResearchRequest {
+	r.createResearchRequest = &createResearchRequest
+	return r
+}
+
+func (r V1APIV1CreateResearchRequest) Execute() (*ResearchCreated, *http.Response, error) {
+	return r.ApiService.V1CreateResearchExecute(r)
+}
+
+/*
+V1CreateResearch Method for V1CreateResearch
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1CreateResearchRequest
+*/
+func (a *V1APIService) V1CreateResearch(ctx context.Context) V1APIV1CreateResearchRequest {
+	return V1APIV1CreateResearchRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ResearchCreated
+func (a *V1APIService) V1CreateResearchExecute(r V1APIV1CreateResearchRequest) (*ResearchCreated, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ResearchCreated
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1CreateResearch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/research"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createResearchRequest == nil {
+		return localVarReturnValue, nil, reportError("createResearchRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createResearchRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type V1APIV1DeleteListRequest struct {
 	ctx context.Context
 	ApiService V1API
@@ -1620,6 +1800,140 @@ func (a *V1APIService) V1DownloadListExecute(r V1APIV1DownloadListRequest) (*os.
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ExportResearchRequest struct {
+	ctx context.Context
+	ApiService V1API
+	sessionId string
+	researchExportRequest *ResearchExportRequest
+}
+
+func (r V1APIV1ExportResearchRequest) ResearchExportRequest(researchExportRequest ResearchExportRequest) V1APIV1ExportResearchRequest {
+	r.researchExportRequest = &researchExportRequest
+	return r
+}
+
+func (r V1APIV1ExportResearchRequest) Execute() (*ResearchExportResponse, *http.Response, error) {
+	return r.ApiService.V1ExportResearchExecute(r)
+}
+
+/*
+V1ExportResearch Method for V1ExportResearch
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param sessionId Research session ID as a positive decimal string
+ @return V1APIV1ExportResearchRequest
+*/
+func (a *V1APIService) V1ExportResearch(ctx context.Context, sessionId string) V1APIV1ExportResearchRequest {
+	return V1APIV1ExportResearchRequest{
+		ApiService: a,
+		ctx: ctx,
+		sessionId: sessionId,
+	}
+}
+
+// Execute executes the request
+//  @return ResearchExportResponse
+func (a *V1APIService) V1ExportResearchExecute(r V1APIV1ExportResearchRequest) (*ResearchExportResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ResearchExportResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ExportResearch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/research/{session_id}/export"
+	localVarPath = strings.Replace(localVarPath, "{"+"session_id"+"}", url.PathEscape(parameterValueToString(r.sessionId, "sessionId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.researchExportRequest == nil {
+		return localVarReturnValue, nil, reportError("researchExportRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.researchExportRequest
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
@@ -2228,6 +2542,129 @@ func (a *V1APIService) V1GetListExecute(r V1APIV1GetListRequest) (*ListDetailRes
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type V1APIV1GetResearchRequest struct {
+	ctx context.Context
+	ApiService V1API
+	sessionId string
+}
+
+func (r V1APIV1GetResearchRequest) Execute() (*ResearchDetail, *http.Response, error) {
+	return r.ApiService.V1GetResearchExecute(r)
+}
+
+/*
+V1GetResearch Method for V1GetResearch
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param sessionId Research session ID as a positive decimal string
+ @return V1APIV1GetResearchRequest
+*/
+func (a *V1APIService) V1GetResearch(ctx context.Context, sessionId string) V1APIV1GetResearchRequest {
+	return V1APIV1GetResearchRequest{
+		ApiService: a,
+		ctx: ctx,
+		sessionId: sessionId,
+	}
+}
+
+// Execute executes the request
+//  @return ResearchDetail
+func (a *V1APIService) V1GetResearchExecute(r V1APIV1GetResearchRequest) (*ResearchDetail, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ResearchDetail
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1GetResearch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/research/{session_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"session_id"+"}", url.PathEscape(parameterValueToString(r.sessionId, "sessionId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type V1APIV1GetVerificationOperationRequest struct {
 	ctx context.Context
 	ApiService V1API
@@ -2542,6 +2979,125 @@ func (a *V1APIService) V1ListListsExecute(r V1APIV1ListListsRequest) (*ListListR
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
 	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type V1APIV1ListResearchRequest struct {
+	ctx context.Context
+	ApiService V1API
+}
+
+func (r V1APIV1ListResearchRequest) Execute() (*ResearchList, *http.Response, error) {
+	return r.ApiService.V1ListResearchExecute(r)
+}
+
+/*
+V1ListResearch Method for V1ListResearch
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return V1APIV1ListResearchRequest
+*/
+func (a *V1APIService) V1ListResearch(ctx context.Context) V1APIV1ListResearchRequest {
+	return V1APIV1ListResearchRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ResearchList
+func (a *V1APIService) V1ListResearchExecute(r V1APIV1ListResearchRequest) (*ResearchList, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ResearchList
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1APIService.V1ListResearch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/research"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

@@ -1245,6 +1245,52 @@
 				"required": ["provider", "label"],
 				"type": "object"
 			},
+			"CreateResearchRequest": {
+				"additionalProperties": false,
+				"properties": {
+					"idempotency_key": {
+						"type": "string"
+					},
+					"import_content": {
+						"type": "string"
+					},
+					"import_format": {
+						"$ref": "#/components/schemas/ResearchImportFormat"
+					},
+					"max_candidates": {
+						"format": "int32",
+						"maximum": 3,
+						"minimum": 1,
+						"type": "integer"
+					},
+					"max_verifications": {
+						"format": "int32",
+						"maximum": 30,
+						"minimum": 1,
+						"type": "integer"
+					},
+					"name": {
+						"maxLength": 100,
+						"minLength": 1,
+						"type": "string"
+					},
+					"target_role": {
+						"maxLength": 120,
+						"minLength": 1,
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"target_role",
+					"import_content",
+					"import_format",
+					"max_candidates",
+					"max_verifications",
+					"idempotency_key"
+				],
+				"type": "object"
+			},
 			"CreateSavedSegmentRequest": {
 				"properties": {
 					"filter": {
@@ -3715,6 +3761,253 @@
 					"domain_info",
 					"cached"
 				],
+				"type": "object"
+			},
+			"ResearchCandidate": {
+				"properties": {
+					"email": {
+						"type": "string"
+					},
+					"email_source": {
+						"type": "string"
+					},
+					"employment_status": {
+						"type": "string"
+					},
+					"evidence_url": {
+						"nullable": true,
+						"type": "string"
+					},
+					"mailbox": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ResearchMailbox"
+							}
+						],
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"observed_at": {
+						"nullable": true,
+						"type": "string"
+					},
+					"person_status": {
+						"type": "string"
+					},
+					"role_status": {
+						"type": "string"
+					},
+					"title": {
+						"type": "string"
+					},
+					"verification_error": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"title",
+					"email",
+					"email_source",
+					"person_status",
+					"employment_status",
+					"role_status"
+				],
+				"type": "object"
+			},
+			"ResearchCreated": {
+				"properties": {
+					"id": {
+						"type": "string"
+					}
+				},
+				"required": ["id"],
+				"type": "object"
+			},
+			"ResearchDetail": {
+				"properties": {
+					"max_candidates": {
+						"format": "int32",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"max_verifications": {
+						"format": "int32",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"rows": {
+						"items": {
+							"$ref": "#/components/schemas/ResearchRow"
+						},
+						"type": "array"
+					},
+					"session": {
+						"$ref": "#/components/schemas/ResearchSummary"
+					},
+					"status": {
+						"type": "string"
+					},
+					"target_role": {
+						"type": "string"
+					},
+					"verification_requests": {
+						"format": "int32",
+						"minimum": 0,
+						"type": "integer"
+					}
+				},
+				"required": [
+					"session",
+					"status",
+					"target_role",
+					"max_candidates",
+					"max_verifications",
+					"verification_requests",
+					"rows"
+				],
+				"type": "object"
+			},
+			"ResearchExportMode": {
+				"enum": ["approved", "review"],
+				"type": "string"
+			},
+			"ResearchExportRequest": {
+				"additionalProperties": false,
+				"properties": {
+					"mode": {
+						"$ref": "#/components/schemas/ResearchExportMode"
+					},
+					"row_keys": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["row_keys", "mode"],
+				"type": "object"
+			},
+			"ResearchExportResponse": {
+				"properties": {
+					"csv": {
+						"type": "string"
+					},
+					"excluded_row_keys": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"exported_rows": {
+						"format": "int32",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"filename": {
+						"type": "string"
+					}
+				},
+				"required": ["filename", "csv", "exported_rows", "excluded_row_keys"],
+				"type": "object"
+			},
+			"ResearchImportFormat": {
+				"enum": ["csv", "json"],
+				"type": "string"
+			},
+			"ResearchList": {
+				"properties": {
+					"sessions": {
+						"items": {
+							"$ref": "#/components/schemas/ResearchSummary"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["sessions"],
+				"type": "object"
+			},
+			"ResearchMailbox": {
+				"properties": {
+					"action": {
+						"type": "string"
+					},
+					"catch_all": {
+						"type": "boolean"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"result": {
+						"type": "string"
+					}
+				},
+				"required": ["provider", "result", "action", "catch_all"],
+				"type": "object"
+			},
+			"ResearchRow": {
+				"properties": {
+					"candidates": {
+						"items": {
+							"$ref": "#/components/schemas/ResearchCandidate"
+						},
+						"type": "array"
+					},
+					"checked_pages": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"company_domain": {
+						"type": "string"
+					},
+					"company_name": {
+						"type": "string"
+					},
+					"reason": {
+						"type": "string"
+					},
+					"row_key": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"row_key",
+					"company_name",
+					"company_domain",
+					"status",
+					"reason",
+					"candidates",
+					"checked_pages"
+				],
+				"type": "object"
+			},
+			"ResearchSummary": {
+				"properties": {
+					"created_at": {
+						"nullable": true,
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"imported_rows": {
+						"format": "int32",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": ["id", "name", "imported_rows"],
 				"type": "object"
 			},
 			"RetryJobResponse": {
@@ -10830,6 +11123,158 @@
 					}
 				},
 				"summary": "POST /v1/reputation/check",
+				"tags": ["v1"]
+			}
+		},
+		"/v1/research": {
+			"get": {
+				"operationId": "v1_list_research",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResearchList"
+								}
+							}
+						},
+						"description": "Research sessions"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
+				"tags": ["v1"]
+			},
+			"post": {
+				"operationId": "v1_create_research",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateResearchRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResearchCreated"
+								}
+							}
+						},
+						"description": "Research queued"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
+				"tags": ["v1"]
+			}
+		},
+		"/v1/research/{session_id}": {
+			"get": {
+				"operationId": "v1_get_research",
+				"parameters": [
+					{
+						"description": "Research session ID as a positive decimal string",
+						"in": "path",
+						"name": "session_id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResearchDetail"
+								}
+							}
+						},
+						"description": "Research evidence and progress"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
+				"tags": ["v1"]
+			}
+		},
+		"/v1/research/{session_id}/export": {
+			"post": {
+				"operationId": "v1_export_research",
+				"parameters": [
+					{
+						"description": "Research session ID as a positive decimal string",
+						"in": "path",
+						"name": "session_id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ResearchExportRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResearchExportResponse"
+								}
+							}
+						},
+						"description": "Selected evidence or currently approved contacts as CSV"
+					},
+					"default": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Request error"
+					}
+				},
 				"tags": ["v1"]
 			}
 		},

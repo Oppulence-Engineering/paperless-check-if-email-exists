@@ -39,6 +39,10 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 #[derive(OpenApi)]
 #[openapi(
 	paths(
+		crate::http::v1::research::v1_create_research,
+		crate::http::v1::research::v1_list_research,
+		crate::http::v1::research::v1_get_research,
+		crate::http::v1::research::v1_export_research,
 		crate::http::health::liveness::healthz,
 		crate::http::health::readiness::readyz,
 		crate::http::health::metrics::smtp_metrics,

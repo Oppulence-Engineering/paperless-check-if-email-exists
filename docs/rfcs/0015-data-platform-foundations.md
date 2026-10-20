@@ -2,13 +2,39 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft; architecture revised 2026-10-20 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead, legal owner |
 | **Used by** | RFC 0011 (Finder), RFC 0012 (Domain Search), RFC 0013 (Discover), RFC 0014 (Enrichment) |
 | **Release gates** | Legal Review sign-off; spend guardrails live; Definition Of Done met |
 
-## Summary
+## Implementation decision — 2026-10-20
+
+The [company-to-contact integration](../paperless-research-integration.md)
+supersedes this RFC's proposed second data platform. Reuse the Go backend's
+research sessions, source records, evidence, provider usage, and budget policies.
+The Rust backend maps its authenticated tenant UUID to an isolated Go workspace
+through a trusted server endpoint. Workspace credentials stay on servers and are
+encrypted in storage; the reverse verification client uses the original Rust
+tenant so its quotas and suppression policy continue to apply.
+
+Paperless's managed staging and production deployments route mailbox checks to
+MillionVerifier, with persisted operations and stable retry keys. Research failure
+never triggers an SMTP/proxy fallback. The generic self-hosted Reacher defaults
+still support the legacy engine; this deployment guarantee does not change those
+defaults. Keep provider
+observations tenant-private unless the source's license independently permits
+the intended shared use; Parallel-derived global contact tables are not part of
+this release. Existing licensed or independently sourced Go company data retains
+its own provenance and access rules.
+
+The new global store, Rust paid-job runner, pricing defaults, and margin targets
+below are historical proposals. Prices in the business thesis are hypotheses;
+measure total cost and usable-contact yield before changing included usage.
+Security, spending bounds, privacy controls, and export policy remain acceptance
+requirements of the integrated workflow, not claims that this draft is deployed.
+
+## Earlier proposal
 
 This RFC defines the shared parts that the four data features need. Each part is built once here and used by all four:
 

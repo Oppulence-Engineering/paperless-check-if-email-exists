@@ -177,7 +177,7 @@ fn required_route_scope(path: &str) -> Option<&'static str> {
 	match route.split('/').next()? {
 		"check_email" | "operations" | "emails" => Some(scope::VERIFY),
 		"bulk" | "jobs" | "events" | "query" | "sources" => Some(scope::BULK),
-		"find_email" => Some(scope::FIND),
+		"find_email" | "research" => Some(scope::FIND),
 		"lists" | "segments" => Some(scope::LISTS),
 		"alerts" => Some(scope::VERIFY),
 		"suppressions" | "outcomes" => Some(scope::SUPPRESSIONS),
@@ -235,7 +235,13 @@ pub fn resolve_tenant(config: Arc<BackendConfig>) -> warp::filters::BoxedFilter<
 							if let Some(pool) = config.get_pg_pool() {
 								match resolve_from_api_key(&pool, token, &config.throttle).await {
 									Ok(ctx) => {
-										if !ctx.plan_tier.includes_api() {
+										let internal_verification = ctx.scopes.iter().any(|s| s == scope::INTERNAL_VERIFICATION)
+											&& match (method.as_str(), path.as_str()) {
+												("POST", "/v1/check_email") => true,
+												("GET", path) => path.strip_prefix("/v1/operations/").is_some_and(|id| uuid::Uuid::parse_str(id).is_ok()),
+												_ => false,
+											};
+										if !ctx.plan_tier.includes_api() && !internal_verification {
 											return Err(warp::reject::custom(ReacherResponseError::new(
 												StatusCode::FORBIDDEN,
 												crate::tenant::models::API_PLAN_REQUIRED,

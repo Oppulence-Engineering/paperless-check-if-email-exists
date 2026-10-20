@@ -51,6 +51,17 @@ for values in ("values.yaml", "values.staging.yaml", "values.production.yaml"):
         "podSelector": {"matchLabels": {"k8s-app": "kube-dns"}},
     }]
     assert {(p["protocol"], p["port"]) for p in dns["ports"]} == {("UDP", 53), ("TCP", 53)}
+    research_rules = [rule for rule in policy["spec"]["egress"]
+                      if any("podSelector" in peer and "namespaceSelector" not in peer
+                             for peer in rule["to"])]
+    assert research_rules == ([] if values == "values.yaml" else [{
+        "to": [{"podSelector": {"matchLabels": {
+            "app.kubernetes.io/name": "leads-scraper-service",
+            "app.kubernetes.io/instance": "lead-scraper-service",
+            "app.kubernetes.io/component": "http",
+        }}}],
+        "ports": [{"protocol": "TCP", "port": 8080}],
+    }])
     for address in (
         "0.1.2.3", "10.1.2.3", "100.64.1.1", "127.0.0.1", "169.254.169.254",
         "172.31.1.1", "192.168.1.1", "192.0.0.1", "192.0.2.1", "192.88.99.1",
@@ -60,6 +71,7 @@ for values in ("values.yaml", "values.staging.yaml", "values.production.yaml"):
     ):
         assert not allows(policy, address, 25), (values, address)
         assert not allows(policy, address, 443), (values, address)
+        assert not allows(policy, address, 8080), (values, address)
     for address in ("8.8.8.8", "2607:f8b0:400e:c00::1a"):
         assert allows(policy, address, 25)
         assert allows(policy, address, 443)

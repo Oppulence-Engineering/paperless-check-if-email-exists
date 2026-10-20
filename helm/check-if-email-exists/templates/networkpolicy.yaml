@@ -21,6 +21,16 @@ spec:
       ports:
         - {protocol: UDP, port: 53}
         - {protocol: TCP, port: 53}
+    {{- if .Values.config.env.RCH__RESEARCH__URL }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: leads-scraper-service
+              app.kubernetes.io/instance: lead-scraper-service
+              app.kubernetes.io/component: http
+      ports:
+        - {protocol: TCP, port: 8080}
+    {{- end }}
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0

@@ -41,6 +41,10 @@ import type {
   MxDetails,
   PendingVerification,
   ReputationCheckResponse,
+  ResearchCreated,
+  ResearchDetail,
+  ResearchExportResponse,
+  ResearchList,
   ReverificationStatusResponse,
   SmtpDetails,
   SourceQualityResponse,
@@ -1190,6 +1194,111 @@ export const getV1CheckReputationResponseMock = (
   },
   risk_level: faker.string.alpha({ length: { min: 10, max: 20 } }),
   score: faker.number.int({ min: 0, max: 100 }),
+  ...overrideResponse,
+});
+
+export const getV1ListResearchResponseMock = (
+  overrideResponse: Partial<Extract<ResearchList, object>> = {},
+): ResearchList => ({
+  sessions: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    created_at: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    imported_rows: faker.number.int({ min: 0 }),
+    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  ...overrideResponse,
+});
+
+export const getV1CreateResearchResponseMock = (
+  overrideResponse: Partial<Extract<ResearchCreated, object>> = {},
+): ResearchCreated => ({
+  id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
+
+export const getV1GetResearchResponseMock = (
+  overrideResponse: Partial<Extract<ResearchDetail, object>> = {},
+): ResearchDetail => ({
+  max_candidates: faker.number.int({ min: 0 }),
+  max_verifications: faker.number.int({ min: 0 }),
+  rows: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    candidates: Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      email_source: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      employment_status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      evidence_url: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      mailbox: faker.helpers.arrayElement([
+        {
+          action: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          catch_all: faker.datatype.boolean(),
+          provider: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          result: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        },
+        null,
+      ]),
+      name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      observed_at: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      person_status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      role_status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      verification_error: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+    })),
+    checked_pages: Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+    company_domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    company_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    row_key: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  session: {
+    created_at: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    imported_rows: faker.number.int({ min: 0 }),
+    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  target_role: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_requests: faker.number.int({ min: 0 }),
+  ...overrideResponse,
+});
+
+export const getV1ExportResearchResponseMock = (
+  overrideResponse: Partial<Extract<ResearchExportResponse, object>> = {},
+): ResearchExportResponse => ({
+  csv: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  excluded_row_keys: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
+  exported_rows: faker.number.int({ min: 0 }),
+  filename: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });
 
