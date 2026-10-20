@@ -40,9 +40,22 @@ export function SignalChecklist({ className, result, ...props }: SignalChecklist
 	return (
 		<section data-slot="signal-checklist" className={cn(className)} {...props}>
 			<Group>
+				{result.external_verification ? (
+					<Row label="External verification" layout="stacked">
+						<p className="text-sm text-neutral-300">
+							Provider result: {result.external_verification.result.replaceAll("_", " ")}.
+							Individual SMTP and MX checks were not returned.
+						</p>
+					</Row>
+				) : null}
 				<Row>
 					<ul className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
 						{SIGNALS.map((signal) => {
+							if (
+								result.external_verification &&
+								(signal.key.startsWith("smtp_") || signal.key === "has_mx_records")
+							)
+								return null;
 							const value = signals[signal.key];
 							if (typeof value !== "boolean") return null;
 							const state = signalState(value, signal.good);

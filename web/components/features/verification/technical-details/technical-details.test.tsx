@@ -58,5 +58,7 @@ describe("TechnicalDetails", () => {
 		);
 		expect(screen.getByText(/Checked by MillionVerifier/)).toBeInTheDocument();
 		expect(screen.queryByText("AnyhowError: Not performed")).not.toBeInTheDocument();
+		expect(screen.getByText(/Individual MX diagnostics were not returned/)).toBeInTheDocument();
+		expect(screen.queryByText("aspmx.l.google.com.")).not.toBeInTheDocument();
 	});
 });
