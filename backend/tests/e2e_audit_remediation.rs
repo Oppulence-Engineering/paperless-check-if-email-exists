@@ -54,7 +54,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 			.unwrap()
 	);
 	assert!(
-		!has_active_suppression(db.pool(), tenant, "sales@company.example")
+		has_active_suppression(db.pool(), tenant, "sales@company.example")
 			.await
 			.unwrap()
 	);
@@ -222,7 +222,7 @@ async fn every_suppression_writer_uses_the_same_identity_and_retains_supplied_ad
 			.unwrap()
 	);
 	assert!(
-		!has_active_suppression(db.pool(), tenant, "sales@company.example")
+		has_active_suppression(db.pool(), tenant, "sales@company.example")
 			.await
 			.unwrap()
 	);

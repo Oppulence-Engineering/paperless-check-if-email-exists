@@ -592,7 +592,7 @@ async fn load_task_rows(
 			WHERE se.tenant_id = tr.tenant_id
 			  AND se.status = 'active'
 			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
-			  AND se.canonical_email IN (tr.canonical_email, o.email)
+			  AND lower(se.canonical_email) IN (lower(tr.canonical_email), lower(o.email))
 			ORDER BY se.created_at DESC
 			LIMIT 1
 		) se ON true

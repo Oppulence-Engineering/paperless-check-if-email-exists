@@ -16,7 +16,7 @@ use lapin::Channel;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tracing::warn;
 use uuid::Uuid;
@@ -112,7 +112,7 @@ pub struct BackendConfig {
 
 	// Internal fields, not part of the configuration.
 	#[serde(skip)]
-	channel: Option<Arc<Channel>>,
+	channel: RwLock<Option<Arc<Channel>>>,
 
 	#[serde(skip)]
 	storage_adapter: Arc<StorageAdapter>,
@@ -160,7 +160,7 @@ impl BackendConfig {
 			pipelines: PipelinesConfig::default(),
 			delayed_recheck: DelayedRecheckConfig::default(),
 			bounce_risk: BounceRiskConfig::default(),
-			channel: None,
+			channel: RwLock::new(None),
 			storage_adapter: Arc::new(StorageAdapter::Noop),
 			throttle_manager: Arc::new(
 				ThrottleManager::new(ThrottleConfig::new_without_throttle()),
@@ -226,7 +226,11 @@ impl BackendConfig {
 	///
 	/// Panics if the worker configuration is missing.
 	pub fn must_worker_config(&self) -> Result<MustWorkerConfig, anyhow::Error> {
-		match (self.worker.enable, &self.worker.rabbitmq, &self.channel) {
+		let channel = self
+			.channel
+			.read()
+			.map_err(|_| anyhow::anyhow!("Worker channel lock unavailable"))?;
+		match (self.worker.enable, &self.worker.rabbitmq, channel.as_ref()) {
 			(true, Some(rabbitmq), Some(channel)) => Ok(MustWorkerConfig {
 				channel: channel.clone(),
 				rabbitmq: rabbitmq.clone(),
@@ -236,6 +240,14 @@ impl BackendConfig {
 			(true, _, _) => bail!("Worker configuration is missing"),
 			_ => bail!("Calling must_worker_config on a non-worker backend"),
 		}
+	}
+
+	pub fn set_worker_channel(&self, channel: Option<Arc<Channel>>) -> Result<(), anyhow::Error> {
+		*self
+			.channel
+			.write()
+			.map_err(|_| anyhow::anyhow!("Worker channel lock unavailable"))? = channel;
+		Ok(())
 	}
 
 	/// Attempt connection to the Postgres database and RabbitMQ. Also populates
@@ -263,12 +275,17 @@ impl BackendConfig {
 			let rabbitmq_config = self.worker.rabbitmq.as_ref().ok_or_else(|| {
 				anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
 			})?;
-			let channel = setup_rabbit_mq(&self.backend_name, rabbitmq_config).await?;
-			Some(Arc::new(channel))
+			match setup_rabbit_mq(&self.backend_name, rabbitmq_config).await {
+				Ok(channel) => Some(Arc::new(channel)),
+				Err(error) => {
+					warn!(error = %error, "Broker unavailable; worker will reconnect");
+					None
+				}
+			}
 		} else {
 			None
 		};
-		self.channel = channel;
+		self.set_worker_channel(channel)?;
 
 		// Initialize throttle manager
 		self.throttle_manager = Arc::new(ThrottleManager::new(self.throttle.clone()));

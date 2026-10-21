@@ -150,18 +150,18 @@ status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
   --data '{"to_email":"test@valid.example.com","sandbox":true}')"
 test "$status" = 401
 
-echo "Verifying the container exits when its broker is lost"
+echo "Verifying broker loss leaves the process live and readiness unavailable"
 docker stop "${RABBITMQ_NAME}" >/dev/null
 for _ in $(seq 1 30); do
-  if [ "$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}")" = false ]; then
-    break
-  fi
+  if ! curl --silent --fail "${BASE_URL}/readyz" >/dev/null; then break; fi
   sleep 1
 done
-test "$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}")" = false
-test "$(docker inspect --format '{{.State.ExitCode}}' "${CONTAINER_NAME}")" -ne 0
+test "$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}")" = true
+curl --silent --fail "${BASE_URL}/healthz" >/dev/null
+status="$(curl --silent --output /dev/null --write-out '%{http_code}' "${BASE_URL}/readyz")"
+test "$status" = 503
 
-echo "Verifying the same image recovers after a supervisor restart"
+echo "Verifying the same process recovers without a supervisor restart"
 docker start "${RABBITMQ_NAME}" >/dev/null
 for _ in $(seq 1 60); do
   if docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null 2>&1; then
@@ -170,7 +170,6 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 docker exec "${RABBITMQ_NAME}" rabbitmq-diagnostics -q check_running >/dev/null
-docker start "${CONTAINER_NAME}" >/dev/null
 for _ in $(seq 1 60); do
   if curl --silent --fail "${BASE_URL}/readyz" >/dev/null; then
     break

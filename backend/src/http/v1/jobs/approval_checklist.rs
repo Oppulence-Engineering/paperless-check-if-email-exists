@@ -140,10 +140,10 @@ async fn http_handler(
 			WHERE s.tenant_id = t.tenant_id
 			  AND s.status = 'active'
 			  AND (s.expires_at IS NULL OR s.expires_at > NOW())
-			  AND s.canonical_email IN (
-				mailbox_identity(COALESCE(t.result->>'input', t.payload->'input'->>'to_email')),
-				t.canonical_email,
-				o.email
+			  AND lower(s.canonical_email) IN (
+				lower(mailbox_identity(COALESCE(t.result->>'input', t.payload->'input'->>'to_email'))),
+				lower(t.canonical_email),
+				lower(o.email)
 			  )
 		  )
 		"#,

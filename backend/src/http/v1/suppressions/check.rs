@@ -54,7 +54,7 @@ async fn http_handler(
 			SELECT id
 			FROM v1_suppression_entries
 			WHERE tenant_id = $1
-			  AND canonical_email = $2
+			  AND lower(canonical_email) = lower($2)
 			  AND status = 'active'
 			  AND (expires_at IS NULL OR expires_at > NOW())
 			ORDER BY created_at DESC
