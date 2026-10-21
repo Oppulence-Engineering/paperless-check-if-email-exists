@@ -275,6 +275,10 @@ impl BackendConfig {
 			let rabbitmq_config = self.worker.rabbitmq.as_ref().ok_or_else(|| {
 				anyhow::anyhow!("Worker configuration is missing the rabbitmq configuration")
 			})?;
+			anyhow::ensure!(
+				!rabbitmq_config.queue.trim().is_empty(),
+				"RabbitMQ queue must not be empty"
+			);
 			match setup_rabbit_mq(&self.backend_name, rabbitmq_config).await {
 				Ok(channel) => Some(Arc::new(channel)),
 				Err(error) => {

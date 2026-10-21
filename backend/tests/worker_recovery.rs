@@ -139,3 +139,20 @@ async fn worker_survives_startup_outage_connection_loss_and_consumer_cancellatio
 	worker.abort();
 	let _ = worker.await;
 }
+
+#[tokio::test]
+async fn invalid_queue_configuration_is_not_treated_as_a_transient_outage() {
+	let mut config = BackendConfig::empty();
+	config.worker.enable = true;
+	config.worker.rabbitmq = Some(RabbitMQConfig {
+		queue: " ".into(),
+		url: "amqp://127.0.0.1:1".into(),
+		concurrency: 1,
+	});
+	assert!(config
+		.connect()
+		.await
+		.unwrap_err()
+		.to_string()
+		.contains("queue must not be empty"));
+}

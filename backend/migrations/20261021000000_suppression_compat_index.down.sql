@@ -1,0 +1,1 @@
+DROP INDEX idx_suppressions_active_casefold;
