@@ -22,11 +22,14 @@ var _ MappedNullable = &ListUploadResponse{}
 
 // ListUploadResponse struct for ListUploadResponse
 type ListUploadResponse struct {
+	Duplicates *int32 `json:"duplicates,omitempty"`
 	EmailColumn string `json:"email_column"`
 	JobId int32 `json:"job_id"`
 	ListId int32 `json:"list_id"`
+	Rejected []RejectedRow `json:"rejected,omitempty"`
 	SourceKey NullableString `json:"source_key,omitempty"`
 	TotalRows int32 `json:"total_rows"`
+	UniqueEmails *int32 `json:"unique_emails,omitempty"`
 }
 
 type _ListUploadResponse ListUploadResponse
@@ -50,6 +53,38 @@ func NewListUploadResponse(emailColumn string, jobId int32, listId int32, totalR
 func NewListUploadResponseWithDefaults() *ListUploadResponse {
 	this := ListUploadResponse{}
 	return &this
+}
+
+// GetDuplicates returns the Duplicates field value if set, zero value otherwise.
+func (o *ListUploadResponse) GetDuplicates() int32 {
+	if o == nil || IsNil(o.Duplicates) {
+		var ret int32
+		return ret
+	}
+	return *o.Duplicates
+}
+
+// GetDuplicatesOk returns a tuple with the Duplicates field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListUploadResponse) GetDuplicatesOk() (*int32, bool) {
+	if o == nil || IsNil(o.Duplicates) {
+		return nil, false
+	}
+	return o.Duplicates, true
+}
+
+// HasDuplicates returns a boolean if a field has been set.
+func (o *ListUploadResponse) HasDuplicates() bool {
+	if o != nil && !IsNil(o.Duplicates) {
+		return true
+	}
+
+	return false
+}
+
+// SetDuplicates gets a reference to the given int32 and assigns it to the Duplicates field.
+func (o *ListUploadResponse) SetDuplicates(v int32) {
+	o.Duplicates = &v
 }
 
 // GetEmailColumn returns the EmailColumn field value
@@ -124,6 +159,38 @@ func (o *ListUploadResponse) SetListId(v int32) {
 	o.ListId = v
 }
 
+// GetRejected returns the Rejected field value if set, zero value otherwise.
+func (o *ListUploadResponse) GetRejected() []RejectedRow {
+	if o == nil || IsNil(o.Rejected) {
+		var ret []RejectedRow
+		return ret
+	}
+	return o.Rejected
+}
+
+// GetRejectedOk returns a tuple with the Rejected field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListUploadResponse) GetRejectedOk() ([]RejectedRow, bool) {
+	if o == nil || IsNil(o.Rejected) {
+		return nil, false
+	}
+	return o.Rejected, true
+}
+
+// HasRejected returns a boolean if a field has been set.
+func (o *ListUploadResponse) HasRejected() bool {
+	if o != nil && !IsNil(o.Rejected) {
+		return true
+	}
+
+	return false
+}
+
+// SetRejected gets a reference to the given []RejectedRow and assigns it to the Rejected field.
+func (o *ListUploadResponse) SetRejected(v []RejectedRow) {
+	o.Rejected = v
+}
+
 // GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ListUploadResponse) GetSourceKey() string {
 	if o == nil || IsNil(o.SourceKey.Get()) {
@@ -190,6 +257,38 @@ func (o *ListUploadResponse) SetTotalRows(v int32) {
 	o.TotalRows = v
 }
 
+// GetUniqueEmails returns the UniqueEmails field value if set, zero value otherwise.
+func (o *ListUploadResponse) GetUniqueEmails() int32 {
+	if o == nil || IsNil(o.UniqueEmails) {
+		var ret int32
+		return ret
+	}
+	return *o.UniqueEmails
+}
+
+// GetUniqueEmailsOk returns a tuple with the UniqueEmails field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListUploadResponse) GetUniqueEmailsOk() (*int32, bool) {
+	if o == nil || IsNil(o.UniqueEmails) {
+		return nil, false
+	}
+	return o.UniqueEmails, true
+}
+
+// HasUniqueEmails returns a boolean if a field has been set.
+func (o *ListUploadResponse) HasUniqueEmails() bool {
+	if o != nil && !IsNil(o.UniqueEmails) {
+		return true
+	}
+
+	return false
+}
+
+// SetUniqueEmails gets a reference to the given int32 and assigns it to the UniqueEmails field.
+func (o *ListUploadResponse) SetUniqueEmails(v int32) {
+	o.UniqueEmails = &v
+}
+
 func (o ListUploadResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -200,13 +299,22 @@ func (o ListUploadResponse) MarshalJSON() ([]byte, error) {
 
 func (o ListUploadResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Duplicates) {
+		toSerialize["duplicates"] = o.Duplicates
+	}
 	toSerialize["email_column"] = o.EmailColumn
 	toSerialize["job_id"] = o.JobId
 	toSerialize["list_id"] = o.ListId
+	if !IsNil(o.Rejected) {
+		toSerialize["rejected"] = o.Rejected
+	}
 	if o.SourceKey.IsSet() {
 		toSerialize["source_key"] = o.SourceKey.Get()
 	}
 	toSerialize["total_rows"] = o.TotalRows
+	if !IsNil(o.UniqueEmails) {
+		toSerialize["unique_emails"] = o.UniqueEmails
+	}
 	return toSerialize, nil
 }
 

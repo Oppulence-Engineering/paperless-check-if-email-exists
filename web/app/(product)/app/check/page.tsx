@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { CheckPanel } from "./_components/check-panel/check-panel";
-import { checkSearchParamsCache } from "./search-params";
+
 import CheckLoading from "./loading";
 
 /**
@@ -30,7 +30,6 @@ export default function CheckPage({ searchParams }: CheckPageProps) {
 }
 
 async function CheckRouteContent({ searchParams }: CheckPageProps) {
-	const { email } = checkSearchParamsCache.parse(await searchParams);
-	// The key starts a new panel for each `?email=`, so a suggestion link checks the new address.
-	return <CheckPanel initialEmail={email ?? undefined} key={email ?? ""} />;
+	await searchParams;
+	return <CheckPanel />;
 }

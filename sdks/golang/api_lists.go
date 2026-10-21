@@ -156,6 +156,18 @@ type ListsAPI interface {
 	V1ListSavedSegmentsExecute(r ListsAPIV1ListSavedSegmentsRequest) (*SavedSegmentListResponse, *http.Response, error)
 
 	/*
+	V1PreviewList Method for V1PreviewList
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ListsAPIV1PreviewListRequest
+	*/
+	V1PreviewList(ctx context.Context) ListsAPIV1PreviewListRequest
+
+	// V1PreviewListExecute executes the request
+	//  @return V1PreviewList200Response
+	V1PreviewListExecute(r ListsAPIV1PreviewListRequest) (*V1PreviewList200Response, *http.Response, error)
+
+	/*
 	V1UpdateSavedSegment PATCH /v1/segments/{segment_id}
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -1411,6 +1423,186 @@ func (a *ListsAPIService) V1ListSavedSegmentsExecute(r ListsAPIV1ListSavedSegmen
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ListsAPIV1PreviewListRequest struct {
+	ctx context.Context
+	ApiService ListsAPI
+	file *os.File
+	emailColumn *string
+	name *string
+	policyId *int64
+	sourceKey *string
+}
+
+func (r ListsAPIV1PreviewListRequest) File(file *os.File) ListsAPIV1PreviewListRequest {
+	r.file = file
+	return r
+}
+
+func (r ListsAPIV1PreviewListRequest) EmailColumn(emailColumn string) ListsAPIV1PreviewListRequest {
+	r.emailColumn = &emailColumn
+	return r
+}
+
+func (r ListsAPIV1PreviewListRequest) Name(name string) ListsAPIV1PreviewListRequest {
+	r.name = &name
+	return r
+}
+
+func (r ListsAPIV1PreviewListRequest) PolicyId(policyId int64) ListsAPIV1PreviewListRequest {
+	r.policyId = &policyId
+	return r
+}
+
+// Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+func (r ListsAPIV1PreviewListRequest) SourceKey(sourceKey string) ListsAPIV1PreviewListRequest {
+	r.sourceKey = &sourceKey
+	return r
+}
+
+func (r ListsAPIV1PreviewListRequest) Execute() (*V1PreviewList200Response, *http.Response, error) {
+	return r.ApiService.V1PreviewListExecute(r)
+}
+
+/*
+V1PreviewList Method for V1PreviewList
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ListsAPIV1PreviewListRequest
+*/
+func (a *ListsAPIService) V1PreviewList(ctx context.Context) ListsAPIV1PreviewListRequest {
+	return ListsAPIV1PreviewListRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return V1PreviewList200Response
+func (a *ListsAPIService) V1PreviewListExecute(r ListsAPIV1PreviewListRequest) (*V1PreviewList200Response, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *V1PreviewList200Response
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ListsAPIService.V1PreviewList")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/lists/preview"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"multipart/form-data"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.emailColumn != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "email_column", r.emailColumn, "", "")
+	}
+	var fileLocalVarFormFileName string
+	var fileLocalVarFileName     string
+	var fileLocalVarFileBytes    []byte
+
+	fileLocalVarFormFileName = "file"
+	fileLocalVarFile := r.file
+
+	if fileLocalVarFile != nil {
+		fbs, _ := io.ReadAll(fileLocalVarFile)
+
+		fileLocalVarFileBytes = fbs
+		fileLocalVarFileName = fileLocalVarFile.Name()
+		fileLocalVarFile.Close()
+		formFiles = append(formFiles, formFile{fileBytes: fileLocalVarFileBytes, fileName: fileLocalVarFileName, formFileName: fileLocalVarFormFileName})
+	}
+	if r.name != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "name", r.name, "", "")
+	}
+	if r.policyId != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "policy_id", r.policyId, "", "")
+	}
+	if r.sourceKey != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "source_key", r.sourceKey, "", "")
 	}
 	if r.ctx != nil {
 		// API Key Authentication

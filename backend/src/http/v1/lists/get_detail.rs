@@ -26,6 +26,7 @@ struct Response {
 	name: String,
 	status: String,
 	total_rows: i32,
+	rejected_rows: Option<i32>,
 	email_column: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	source_key: Option<String>,
@@ -108,6 +109,9 @@ async fn http_handler(
 		name: row.get("name"),
 		status: response_status,
 		total_rows,
+		rejected_rows: row.get::<Option<i32>, _>("unique_emails").map(|unique| {
+			total_rows - unique - row.get::<Option<i32>, _>("deduplicated_count").unwrap_or(0)
+		}),
 		email_column: row.get("email_column"),
 		source_key: row.get("source_key"),
 		summary,

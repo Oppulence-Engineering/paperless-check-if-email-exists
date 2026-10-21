@@ -25,6 +25,7 @@ All URIs are relative to *http://localhost*
 |[**v1UpdateTenantDomain**](#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}|
 |[**v1UpdateTenantSettings**](#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings|
 |[**v1UpdateTenantWebhook**](#v1updatetenantwebhook) | **PATCH** /v1/me/webhook | PATCH /v1/me/webhook|
+|[**v1VerifyTenantDomain**](#v1verifytenantdomain) | **POST** /v1/me/domains/{domain}/verify | |
 
 # **v1ClearTenantWebhook**
 > v1ClearTenantWebhook()
@@ -176,7 +177,7 @@ const { status, data } = await apiInstance.v1CreateScorePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1CreateTenantDomain**
-> v1CreateTenantDomain(createTenantDomainRequest)
+> TenantDomainResponse v1CreateTenantDomain(createTenantDomainRequest)
 
 Add a domain for the authenticated tenant.
 
@@ -208,7 +209,7 @@ const { status, data } = await apiInstance.v1CreateTenantDomain(
 
 ### Return type
 
-void (empty response body)
+**TenantDomainResponse**
 
 ### Authorization
 
@@ -485,7 +486,7 @@ const { status, data } = await apiInstance.v1GetScorePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1GetTenantDomain**
-> v1GetTenantDomain()
+> TenantDomainResponse v1GetTenantDomain()
 
 Get one domain entry for the authenticated tenant.
 
@@ -516,7 +517,7 @@ const { status, data } = await apiInstance.v1GetTenantDomain(
 
 ### Return type
 
-void (empty response body)
+**TenantDomainResponse**
 
 ### Authorization
 
@@ -780,7 +781,7 @@ const { status, data } = await apiInstance.v1ListScorePolicies(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1ListTenantDomains**
-> v1ListTenantDomains()
+> TenantDomainsListResponse v1ListTenantDomains()
 
 List all active and inactive domain entries for the authenticated tenant.
 
@@ -804,7 +805,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-void (empty response body)
+**TenantDomainsListResponse**
 
 ### Authorization
 
@@ -935,7 +936,7 @@ const { status, data } = await apiInstance.v1UpdateScorePolicy(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v1UpdateTenantDomain**
-> v1UpdateTenantDomain(updateTenantDomainRequest)
+> TenantDomainResponse v1UpdateTenantDomain(updateTenantDomainRequest)
 
 Update the domain value, active status, or notes. Setting `is_verified` is refused.
 
@@ -970,7 +971,7 @@ const { status, data } = await apiInstance.v1UpdateTenantDomain(
 
 ### Return type
 
-void (empty response body)
+**TenantDomainResponse**
 
 ### Authorization
 
@@ -1092,6 +1093,57 @@ const { status, data } = await apiInstance.v1UpdateTenantWebhook(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Tenant webhook updated |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1VerifyTenantDomain**
+> TenantDomainResponse v1VerifyTenantDomain()
+
+
+### Example
+
+```typescript
+import {
+    TenantApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new TenantApi(configuration);
+
+let domain: string; // (default to undefined)
+
+const { status, data } = await apiInstance.v1VerifyTenantDomain(
+    domain
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **domain** | [**string**] |  | defaults to undefined|
+
+
+### Return type
+
+**TenantDomainResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Domain verification result |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

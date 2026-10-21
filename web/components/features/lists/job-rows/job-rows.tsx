@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -137,7 +138,7 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{pages.error.message}
+					{errorMessage(pages.error)}
 				</p>
 			) : null}
 			<Group>
@@ -173,10 +174,14 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 													type="button"
 													variant="link"
 												>
-													{row.result.input || `Row ${String(row.id)}`}
+													{row.original_email ||
+														row.result.input ||
+														`Row ${String(row.row_number ?? "unknown")} (blank)`}
 												</Button>
 											) : (
-												<span className="text-white">Row {row.id}</span>
+												<span className="text-white">
+													Row {row.row_number ?? "unknown"}: {row.original_email || "Blank address"}
+												</span>
 											)}
 										</td>
 										<td className="py-2 pr-4 text-white">{row.result?.score.score ?? "—"}</td>
@@ -192,12 +197,24 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 											)}
 										</td>
 										<td className="py-2 pr-4 text-[#858585]">
-											{row.result ? (row.result.score.safe_to_send ? "Yes" : "No") : "—"}
+											{row.result
+												? !row.is_duplicate && row.result.score.safe_to_send
+													? "Yes"
+													: "No"
+												: "—"}
 										</td>
 										<td className="py-2 pr-4">
 											{row.result ? (
-												<Pill tone={recommendation.tone(primaryAction(row.result))}>
-													{recommendation.label(primaryAction(row.result))}
+												<Pill
+													tone={
+														row.is_duplicate
+															? "gray"
+															: recommendation.tone(primaryAction(row.result))
+													}
+												>
+													{row.is_duplicate
+														? "Duplicate — excluded"
+														: recommendation.label(primaryAction(row.result))}
 												</Pill>
 											) : (
 												"—"

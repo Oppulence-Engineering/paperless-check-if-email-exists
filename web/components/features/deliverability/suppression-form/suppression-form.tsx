@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useId, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,42 +44,34 @@ const BATCH_SIZE = 10_000;
 const LABEL_CLASS = "text-xs font-medium text-neutral-400";
 const SELECT_CLASS = "h-10 w-full rounded-lg";
 
-/** Splits one CSV line into cells. Quoted cells can contain commas and "" quotes. */
-function cells(line: string): string[] {
-	const out = [""];
+/** Preserve every data row, including blank and invalid values, for server validation. */
+function emailsFromCsv(text: string): { emails: string[]; skipped: number } {
+	const rows: string[][] = [];
+	let row = [""];
 	let quoted = false;
-	for (let index = 0; index < line.length; index += 1) {
-		const char = line[index];
-		if (char === '"' && quoted && line[index + 1] === '"') {
-			out[out.length - 1] += '"';
+	for (let index = 0; index < text.length; index += 1) {
+		const char = text[index];
+		if (char === '"' && quoted && text[index + 1] === '"') {
+			row[row.length - 1] += '"';
 			index += 1;
 		} else if (char === '"') quoted = !quoted;
-		else if (char === "," && !quoted) out.push("");
-		else out[out.length - 1] += char;
+		else if (char === "," && !quoted) row.push("");
+		else if ((char === "\n" || char === "\r") && !quoted) {
+			rows.push(row);
+			row = [""];
+			if (char === "\r" && text[index + 1] === "\n") index += 1;
+		} else row[row.length - 1] += char;
 	}
-	return out;
-}
-
-/**
- * Reads the email column of a CSV file. The column is the header `email`, else
- * the first header that contains "mail". A file with no such header uses its
- * first column for all rows. Rows with no "@" in that column are skipped.
- */
-// ponytail: one record on each line; quoted cells with line breaks need a CSV parser library.
-function emailsFromCsv(text: string): { emails: string[]; skipped: number } {
-	const rows = text
-		.split(/\r?\n/)
-		.filter((line) => line.trim())
-		.map(cells);
+	if (quoted) throw new Error("The CSV contains an unclosed quoted field.");
+	if (row.length > 1 || row[0] || !/[\r\n]$/.test(text)) rows.push(row);
 	const header = rows[0]?.map((cell) => cell.trim().toLowerCase()) ?? [];
 	const named = header.includes("email")
 		? header.indexOf("email")
 		: header.findIndex((cell) => cell.includes("mail"));
-	const values = (named === -1 ? rows : rows.slice(1)).map((row) =>
-		(row[Math.max(named, 0)] ?? "").trim(),
-	);
-	const emails = values.filter((value) => value.includes("@"));
-	return { emails, skipped: values.length - emails.length };
+	return {
+		emails: (named === -1 ? rows : rows.slice(1)).map((record) => record[Math.max(named, 0)] ?? ""),
+		skipped: 0,
+	};
 }
 
 function optional(form: FormData, key: string): string | undefined {
@@ -94,7 +87,7 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 			const read = file
 				? emailsFromCsv(await file.text())
 				: {
-						emails: (optional(form, "addresses") ?? "").split(/[\s,;]+/).filter(Boolean),
+						emails: String(form.get("addresses") ?? "").split(/[\n,;]/),
 						skipped: 0,
 					};
 			if (!read.emails.length) {
@@ -103,6 +96,8 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				);
 			}
 			const expires = optional(form, "expires");
+			if (expires && new Date(`${expires}T00:00`).getTime() <= Date.now())
+				throw new Error("Expiry must be in the future.");
 			const fields = {
 				reason: form.get("reason"),
 				reason_detail: optional(form, "reason_detail"),
@@ -110,7 +105,12 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				expires_at: expires ? new Date(`${expires}T00:00`).toISOString() : undefined,
 				...(file ? { source_type: "import", source_ref: file.name } : {}),
 			};
-			const totals = { added: 0, updated: 0, duplicates: 0 };
+			const totals = {
+				added: 0,
+				updated: 0,
+				duplicates: 0,
+				rejected: [] as { email: string; reason: string }[],
+			};
 			for (let start = 0; start < read.emails.length; start += BATCH_SIZE) {
 				const body = V1AddSuppressionsBody.parse({
 					emails: read.emails.slice(start, start + BATCH_SIZE),
@@ -124,10 +124,14 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				totals.added += counts.added;
 				totals.updated += counts.updated ?? 0;
 				totals.duplicates += counts.duplicates;
+				totals.rejected.push(...(counts.rejected ?? []));
 			}
 			return { found: read.emails.length, skipped: read.skipped, ...totals };
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: workflowQueryKey("suppressions") }),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: workflowQueryKey("suppressions") });
+			await queryClient.invalidateQueries({ queryKey: workflowQueryKey("suppression-check") });
+		},
 	});
 	const counts: [string, number][] = save.data
 		? [
@@ -135,6 +139,7 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 				["Added", save.data.added],
 				["Updated", save.data.updated],
 				["Duplicates", save.data.duplicates],
+				["Rejected", save.data.rejected.length],
 				...(mode === "import" ? [["Rows skipped", save.data.skipped] as [string, number]] : []),
 			]
 		: [];
@@ -249,10 +254,15 @@ export function SuppressionForm({ className, mode, ...props }: SuppressionFormPr
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{save.error.message}
+					{errorMessage(save.error)}
 				</p>
 			) : null}
 			<div role="status">
+				{save.data?.rejected.map((item, index) => (
+					<p key={index}>
+						{item.email || "Blank entry"}: {item.reason}
+					</p>
+				))}
 				{counts.length ? (
 					<dl className="grid grid-cols-2 gap-3 rounded-lg bg-white/[0.03] p-4 text-sm ring-1 ring-white/[0.08]">
 						{counts.map(([label, value]) => (

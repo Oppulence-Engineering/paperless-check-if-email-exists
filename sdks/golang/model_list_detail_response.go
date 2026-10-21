@@ -28,6 +28,7 @@ type ListDetailResponse struct {
 	JobId int32 `json:"job_id"`
 	Name string `json:"name"`
 	PolicyId NullableInt64 `json:"policy_id,omitempty"`
+	RejectedRows NullableInt32 `json:"rejected_rows,omitempty"`
 	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
 	Summary ListSummary `json:"summary"`
@@ -241,6 +242,48 @@ func (o *ListDetailResponse) UnsetPolicyId() {
 	o.PolicyId.Unset()
 }
 
+// GetRejectedRows returns the RejectedRows field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ListDetailResponse) GetRejectedRows() int32 {
+	if o == nil || IsNil(o.RejectedRows.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.RejectedRows.Get()
+}
+
+// GetRejectedRowsOk returns a tuple with the RejectedRows field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ListDetailResponse) GetRejectedRowsOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.RejectedRows.Get(), o.RejectedRows.IsSet()
+}
+
+// HasRejectedRows returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasRejectedRows() bool {
+	if o != nil && o.RejectedRows.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetRejectedRows gets a reference to the given NullableInt32 and assigns it to the RejectedRows field.
+func (o *ListDetailResponse) SetRejectedRows(v int32) {
+	o.RejectedRows.Set(&v)
+}
+// SetRejectedRowsNil sets the value for RejectedRows to be an explicit nil
+func (o *ListDetailResponse) SetRejectedRowsNil() {
+	o.RejectedRows.Set(nil)
+}
+
+// UnsetRejectedRows ensures that no value is present for RejectedRows, not even an explicit nil
+func (o *ListDetailResponse) UnsetRejectedRows() {
+	o.RejectedRows.Unset()
+}
+
 // GetSourceKey returns the SourceKey field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ListDetailResponse) GetSourceKey() string {
 	if o == nil || IsNil(o.SourceKey.Get()) {
@@ -416,6 +459,9 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["name"] = o.Name
 	if o.PolicyId.IsSet() {
 		toSerialize["policy_id"] = o.PolicyId.Get()
+	}
+	if o.RejectedRows.IsSet() {
+		toSerialize["rejected_rows"] = o.RejectedRows.Get()
 	}
 	if o.SourceKey.IsSet() {
 		toSerialize["source_key"] = o.SourceKey.Get()

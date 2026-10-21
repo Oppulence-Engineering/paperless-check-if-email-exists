@@ -69,6 +69,48 @@ export const V1UpdateAlertDefaultResponse = zod.object({
   error: zod.string(),
 });
 
+export const V1EmailHistoryPostBody = zod.strictObject({
+  email: zod.string(),
+  limit: zod.int().nullish(),
+});
+
+export const V1EmailHistoryPost200Response = zod.object({
+  email: zod.string(),
+  history: zod.array(
+    zod.object({
+      category: zod.string().nullish(),
+      change_type: zod.string().nullish(),
+      completed_at: zod.iso.datetime({ offset: true }).nullish(),
+      is_reachable: zod.string().nullish(),
+      job_id: zod.int().nullish(),
+      list_id: zod.int().nullish(),
+      pipeline_run_id: zod.int().nullish(),
+      policy_decision: zod.string().nullish(),
+      policy_evaluation: zod.unknown().optional(),
+      policy_mode: zod.string().nullish(),
+      previous_category: zod.string().nullish(),
+      previous_list_id: zod.int().nullish(),
+      previous_pipeline_run_id: zod.int().nullish(),
+      previous_reason_codes: zod.array(zod.string()).nullish(),
+      previous_safe_to_send: zod.boolean().nullish(),
+      previous_score: zod.int().nullish(),
+      previous_task_id: zod.int().nullish(),
+      reason_codes: zod.array(zod.string()).nullish(),
+      recommendation: zod.unknown().optional(),
+      recommendation_action: zod.string().nullish(),
+      safe_to_send: zod.boolean().nullish(),
+      score: zod.int().nullish(),
+      sub_reason: zod.string().nullish(),
+      task_id: zod.int(),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1EmailHistoryPostDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 /**
  * Returns the verification history timeline for a specific email address.
  * @summary GET /v1/emails/{email}/history

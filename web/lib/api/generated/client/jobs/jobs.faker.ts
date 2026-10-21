@@ -35,6 +35,7 @@ import type {
   RetryJobResponse,
   SmtpDetails,
   V1GetJobFailureCenter200,
+  V1ListJobs200,
 } from "../model";
 
 export const getV1GetBulkJobResultsResponseMiscDetailsMock = (
@@ -351,6 +352,22 @@ export const getV1GetBulkJobResultsResponseMock = (
     new Blob([new Uint8Array(faker.number.int({ min: 1, max: 64 }))]),
   ]);
 
+export const getV1ListJobsResponseMock = (
+  overrideResponse: Partial<Extract<V1ListJobs200, object>> = {},
+): V1ListJobs200 => ({
+  jobs: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    id: faker.number.int(),
+    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    total_records: faker.number.int(),
+  })),
+  total: faker.number.int(),
+  ...overrideResponse,
+});
+
 export const getV1JobApprovalChecklistResponseMock = (
   overrideResponse: Partial<Extract<ApprovalChecklistResponse, object>> = {},
 ): ApprovalChecklistResponse => ({
@@ -463,11 +480,20 @@ export const getV1GetJobResultsResponseMock = (
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
   ).map(() => ({
+    canonical_task_id: faker.helpers.arrayElement([faker.number.int(), null]),
     error: faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
       null,
     ]),
     id: faker.number.int(),
+    is_duplicate: faker.helpers.arrayElement([
+      faker.datatype.boolean(),
+      undefined,
+    ]),
+    original_email: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
     result: faker.helpers.arrayElement([
       {
         bounce_risk: faker.helpers.arrayElement([
@@ -709,6 +735,7 @@ export const getV1GetJobResultsResponseMock = (
       null,
     ]),
     retry_count: faker.number.int(),
+    row_number: faker.helpers.arrayElement([faker.number.int(), null]),
     task_state: faker.string.alpha({ length: { min: 10, max: 20 } }),
   })),
   ...overrideResponse,

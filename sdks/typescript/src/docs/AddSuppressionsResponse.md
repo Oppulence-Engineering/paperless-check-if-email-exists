@@ -8,6 +8,8 @@ Name | Type | Description | Notes
 **added** | **number** |  | [required]
 **duplicates** | **number** |  | [required]
 **entry_ids** | **Array&lt;number&gt;** |  | [optional]
+**rejected** | [**Array&lt;AddSuppressionsResponseRejectedInner&gt;**](AddSuppressionsResponseRejectedInner.md) |  | [optional]
+**submitted** | **number** |  | [optional]
 **updated** | **number** |  | [optional]
 
 ## Example
@@ -19,6 +21,8 @@ const instance: AddSuppressionsResponse = {
     added: 0,
     duplicates: 0,
     entry_ids: [],
+    rejected: [],
+    submitted: 0,
     updated: 0,
 };
 ```

@@ -4,7 +4,10 @@ import { z } from "zod";
 import { V1CreateList202Response, V1CreateListBody } from "@/lib/api/generated/zod/v1/v1";
 
 // The SDK takes a File for the upload, so the input must be one.
-export const V1CreateListInputSchema = V1CreateListBody.extend({ file: z.instanceof(File) });
+export const V1CreateListInputSchema = V1CreateListBody.extend({
+	file: z.instanceof(File),
+	idempotencyKey: z.string().optional(),
+});
 export type V1CreateListInput = z.input<typeof V1CreateListInputSchema>;
 
 const sdk = new V1Api(new Configuration({ basePath: "/api/backend" }));
@@ -21,7 +24,10 @@ export async function fetchV1CreateList(body: V1CreateListInput, signal?: AbortS
 			sourceKey: input.source_key,
 			policyId: input.policy_id,
 		},
-		{ signal },
+		{
+			signal,
+			headers: input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : undefined,
+		},
 	);
 	return V1CreateList202Response.parse(response.data);
 }

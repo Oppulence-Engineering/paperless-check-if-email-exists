@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useEntitlements } from "@/components/auth/auth-gate";
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
@@ -67,19 +68,6 @@ const scopeOptions = [
 	["outcomes.write", "Send campaign results"],
 	// "admin" stays out of the picker: a key with it can create more keys.
 ] as const;
-
-function requestError(cause: unknown) {
-	const envelope = z
-		.object({
-			response: z.object({ data: z.object({ error: z.string() }) }),
-		})
-		.safeParse(cause);
-	return envelope.success
-		? envelope.data.response.data.error
-		: cause instanceof Error
-			? cause.message
-			: "Request failed.";
-}
 
 export function DeveloperSettings({
 	className,
@@ -199,7 +187,7 @@ export function DeveloperSettings({
 			await revoke.mutateAsync(keyId);
 			setNotice(`${keyName} revoked.`);
 		} catch (cause) {
-			setError(requestError(cause));
+			setError(errorMessage(cause));
 		}
 	}
 
@@ -316,7 +304,7 @@ export function DeveloperSettings({
 									) : null}
 									{keys.isError ? (
 										<Row
-											label={<span role="alert">{requestError(keys.error)}</span>}
+											label={<span role="alert">{errorMessage(keys.error)}</span>}
 											layout="inline"
 										>
 											<Button
@@ -400,7 +388,7 @@ export function DeveloperSettings({
 												) : null}
 												{selectedKey.isError ? (
 													<p className="mt-0.5 text-xs text-red-300" role="alert">
-														{requestError(selectedKey.error)}
+														{errorMessage(selectedKey.error)}
 													</p>
 												) : null}
 												{selectedKey.data ? (
@@ -417,7 +405,7 @@ export function DeveloperSettings({
 												onSubmit={(event) => {
 													event.preventDefault();
 													void update.mutateAsync().catch((cause: unknown) => {
-														setError(requestError(cause));
+														setError(errorMessage(cause));
 													});
 												}}
 											>
@@ -567,7 +555,7 @@ export function DeveloperSettings({
 													className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 													role="alert"
 												>
-													{requestError(create.error)}
+													{errorMessage(create.error)}
 												</p>
 											) : null}
 											<div className="flex justify-end">

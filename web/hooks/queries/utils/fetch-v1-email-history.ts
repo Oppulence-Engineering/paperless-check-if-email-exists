@@ -18,8 +18,8 @@ export async function fetchV1EmailHistory(
 ) {
 	const params = V1EmailHistoryParams.parse({ email });
 	const filters = V1EmailHistoryQueryParams.parse(query ?? {});
-	const response = await sdk.v1EmailHistory(
-		{ email: params.email, limit: filters.limit },
+	const response = await sdk.v1EmailHistoryPost(
+		{ historyRequest: { email: params.email, limit: filters.limit } },
 		{ signal },
 	);
 	return V1EmailHistory200Response.parse(response.data);

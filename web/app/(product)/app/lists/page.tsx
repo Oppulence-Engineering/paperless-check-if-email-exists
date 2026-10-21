@@ -13,7 +13,7 @@ import ListsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Email lists | Verifier",
+	title: "Email lists",
 	description: "Manage uploaded lists",
 };
 

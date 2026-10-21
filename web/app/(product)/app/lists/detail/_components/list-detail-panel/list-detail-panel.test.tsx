@@ -8,7 +8,10 @@ import { afterEach, expect, it, vi } from "vitest";
 import { ListDetailPanel } from "./list-detail-panel";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push }),
+	useSearchParams: () => new URLSearchParams(),
+}));
 
 afterEach(() => {
 	cleanup();
@@ -98,7 +101,7 @@ it("shows the list header and review, and returns to the lists after delete", as
 		</QueryClientProvider>,
 	);
 	expect(await screen.findByRole("heading", { name: "Campaign" })).toBeInTheDocument();
-	expect(screen.getByText(/List accepted/)).toBeInTheDocument();
+	expect(screen.queryByText(/List accepted/)).not.toBeInTheDocument();
 	expect(
 		await screen.findByText("campaign.csv · Email column: email · Source: hubspot"),
 	).toBeInTheDocument();

@@ -49,7 +49,7 @@ describe("SuppressionForm", () => {
 		await waitFor(() =>
 			expect(add).toHaveBeenCalledWith({
 				addSuppressionsRequest: {
-					emails: ["a@example.com", "b@example.com", "a@example.com"],
+					emails: ["a@example.com", "b@example.com", " a@example.com"],
 					reason: "bounce",
 					reason_detail: "550 unknown",
 					notes: "Spring send",
@@ -67,10 +67,17 @@ describe("SuppressionForm", () => {
 
 	it("imports the email column of a CSV file and shows the counts", async () => {
 		const add = vi.spyOn(V1Api.prototype, "v1ImportSuppressions"); // gitleaks:allow
-		add.mockResolvedValue({ data: { added: 2, updated: 0, duplicates: 0 } } as never);
+		add.mockResolvedValue({
+			data: {
+				added: 2,
+				updated: 0,
+				duplicates: 0,
+				submitted: 3,
+				rejected: [{ email: "", reason: "Invalid email syntax" }],
+			},
+		} as never);
 		renderForm("import");
-		const csv =
-			'name,Email\n"Lee, Maya",maya@example.com\nNo address,\n"Bo ""B""",bo@example.com\n';
+		const csv = 'name,Email\n"Lee,\nMaya",maya@example.com\n\n"Bo ""B""",bo@example.com\n';
 		fireEvent.change(screen.getByLabelText("CSV file"), {
 			target: { files: [new File([csv], "bounces.csv", { type: "text/csv" })] },
 		});
@@ -80,7 +87,7 @@ describe("SuppressionForm", () => {
 		await waitFor(() =>
 			expect(add).toHaveBeenCalledWith({
 				addSuppressionsRequest: {
-					emails: ["maya@example.com", "bo@example.com"],
+					emails: ["maya@example.com", "", "bo@example.com"],
 					reason: "manual",
 					source_type: "import",
 					source_ref: "bounces.csv",
@@ -89,7 +96,7 @@ describe("SuppressionForm", () => {
 		);
 		const result = within(await screen.findByRole("status"));
 		expect(await result.findByText("Rows skipped")).toBeInTheDocument();
-		expect(result.getByText("Rows skipped").nextSibling).toHaveTextContent("1");
+		expect(result.getByText("Rows skipped").nextSibling).toHaveTextContent("0");
 		expect(result.getByText("Added").nextSibling).toHaveTextContent("2");
 	});
 
@@ -114,7 +121,7 @@ describe("SuppressionForm", () => {
 		const add = vi.spyOn(V1Api.prototype, "v1ImportSuppressions"); // gitleaks:allow
 		renderForm("import");
 		fireEvent.change(screen.getByLabelText("CSV file"), {
-			target: { files: [new File(["email\nnone\n"], "empty.csv")] },
+			target: { files: [new File(["email\n"], "empty.csv")] },
 		});
 		fireEvent.submit(screen.getByRole("form", { name: "Suppression form" }));
 		expect(await screen.findByRole("alert")).toHaveTextContent("The file has no email addresses.");

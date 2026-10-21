@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { useV1ListLists } from "@/hooks/queries/use-v1-list-lists";
 
 import {
 	useState,
@@ -87,6 +88,41 @@ function whole(value: string, min: number, label: string): number {
 	return number;
 }
 
+export function validateValues(values: Values): Partial<Record<keyof Values, string>> {
+	const errors: Partial<Record<keyof Values, string>> = {};
+	if (!values.name.trim()) errors.name = "Enter a name.";
+	const numbers: (keyof Values)[] = ["window", "attempts", "backoff"];
+	if (values.source === "list_snapshot") numbers.push("list");
+	if (values.delta && values.freshness.trim()) numbers.push("freshness");
+	for (const key of numbers) {
+		const value = Number(values[key]);
+		if (!Number.isSafeInteger(value) || value < 1)
+			errors[key] = "Enter a whole number of 1 or more.";
+	}
+	if (values.source === "push" && !values.token.trim()) errors.token = "Enter a push token ID.";
+	if (values.source === "list_snapshot") {
+		if (!/^[\d*?,/\-A-Za-z]+(?:\s+[\d*?,/\-A-Za-z]+){4,6}$/.test(values.cron.trim()))
+			errors.cron = "Enter a valid cron schedule with 5 to 7 fields.";
+		try {
+			new Intl.DateTimeFormat("en", { timeZone: values.timezone });
+		} catch {
+			errors.timezone = "Choose a valid time zone, such as America/New_York.";
+		}
+		if (!values.timezone.trim()) errors.timezone = "Enter a time zone.";
+	}
+	if (values.webhook.trim()) {
+		try {
+			const url = new URL(values.webhook);
+			if (!["https:", "http:"].includes(url.protocol)) throw new Error();
+		} catch {
+			errors.webhook = "Enter a valid HTTP or HTTPS URL.";
+		}
+	}
+	const headers = WebhookHeadersSchema.safeParse(values.headers);
+	if (!headers.success) errors.headers = headers.error.issues[0]?.message;
+	return errors;
+}
+
 /** The request body for a create or an update. It throws a readable error for bad input. */
 function toInput(values: Values, pipeline?: Pipeline) {
 	if (!values.name.trim()) throw new Error("Enter a name.");
@@ -125,11 +161,13 @@ function Field({
 	id,
 	label,
 	hint,
+	error,
 	children,
 }: {
 	id: string;
 	label: string;
 	hint?: string;
+	error?: string;
 	children: ReactNode;
 }) {
 	return (
@@ -138,6 +176,11 @@ function Field({
 				{label}
 			</Label>
 			{children}
+			{error ? (
+				<p id={`${id}-error`} role="alert" className="text-sm text-red-300">
+					{error}
+				</p>
+			) : null}
 			{hint ? <p className="text-xs text-[#858585]">{hint}</p> : null}
 		</div>
 	);
@@ -154,6 +197,9 @@ function FieldGroup({ title, children }: { title: string; children: ReactNode })
 
 export function PipelineForm({ className, pipeline, onSaved, ...props }: PipelineFormProps) {
 	const client = useQueryClient();
+	const [listOffset, setListOffset] = useState(0);
+	const lists = useV1ListLists({ limit: 50, offset: listOffset });
+	const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
 	const [values, setValues] = useState(() => initialValues(pipeline));
 	const save = useMutation({
 		mutationFn: async () => {
@@ -178,6 +224,8 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 			className: "h-10 rounded-lg",
 			id: `pipeline-${key}`,
 			value: values[key],
+			"aria-invalid": !!errors[key],
+			"aria-describedby": errors[key] ? `pipeline-${key}-error` : undefined,
 			onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 				setValues({ ...values, [key]: event.target.value });
 			},
@@ -186,7 +234,12 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 	const scheduled = values.source === "list_snapshot";
 
 	return (
-		<section data-slot="pipeline-form" className={cn("flex flex-col gap-4", className)} {...props}>
+		<section
+			data-dirty={JSON.stringify(values) !== JSON.stringify(initialValues(pipeline))}
+			data-slot="pipeline-form"
+			className={cn("flex flex-col gap-4", className)}
+			{...props}
+		>
 			{save.isError ? (
 				<p
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
@@ -199,14 +252,17 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 				className="flex flex-col gap-8"
 				onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 					event.preventDefault();
+					const next = validateValues(values);
+					setErrors(next);
+					if (Object.keys(next).length) return;
 					save.mutate();
 				}}
 			>
 				<FieldGroup title="Source">
-					<Field id="pipeline-name" label="Name">
+					<Field id="pipeline-name" error={errors.name} label="Name">
 						<Input {...text("name")} required />
 					</Field>
-					<Field id="pipeline-source" label="Source">
+					<Field id="pipeline-source" error={errors.source} label="Source">
 						<Select
 							onValueChange={(value) => {
 								setValues({
@@ -228,14 +284,53 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 					{scheduled ? (
 						<Field
 							id="pipeline-list"
-							label="List ID"
+							error={errors.list}
+							label="Saved list"
 							hint="Each run checks the current rows of this list."
 						>
-							<Input {...text("list")} inputMode="numeric" />
+							<Select value={values.list} onValueChange={(list) => setValues({ ...values, list })}>
+								<SelectTrigger id="pipeline-list" aria-invalid={!!errors.list}>
+									<SelectValue placeholder="Choose a saved list" />
+								</SelectTrigger>
+								<SelectContent>
+									{lists.data?.lists.map((list) => (
+										<SelectItem key={list.id} value={String(list.id)}>
+											{list.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<div className="flex gap-2">
+								<Button
+									type="button"
+									variant="link"
+									disabled={listOffset === 0 || lists.isFetching}
+									onClick={() => setListOffset(Math.max(0, listOffset - 50))}
+								>
+									Previous lists
+								</Button>
+								<Button
+									type="button"
+									variant="link"
+									disabled={!lists.data || listOffset + 50 >= lists.data.total || lists.isFetching}
+									onClick={() => setListOffset(listOffset + 50)}
+								>
+									More lists
+								</Button>
+							</div>
+							{lists.isError ? (
+								<p role="alert">
+									Could not load saved lists.{" "}
+									<Button type="button" variant="link" onClick={() => void lists.refetch()}>
+										Retry
+									</Button>
+								</p>
+							) : null}
 						</Field>
 					) : (
 						<Field
 							id="pipeline-token"
+							error={errors.token}
 							label="Push token ID"
 							hint="Your systems push rows to this pipeline through the API."
 						>
@@ -247,6 +342,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 					<FieldGroup title="Schedule">
 						<Field
 							id="pipeline-cron"
+							error={errors.cron}
 							label="Cron schedule"
 							hint="For example, 0 9 * * 1 runs at 09:00 each Monday."
 						>
@@ -254,6 +350,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 						</Field>
 						<Field
 							id="pipeline-timezone"
+							error={errors.timezone}
 							label="Timezone"
 							hint="An IANA name, for example UTC or Europe/Berlin."
 						>
@@ -261,6 +358,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 						</Field>
 						<Field
 							id="pipeline-window"
+							error={errors.window}
 							label="Missed-run window (hours)"
 							hint="If the scheduler is late by more than this time, it skips the run."
 						>
@@ -285,6 +383,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 					{values.delta ? (
 						<Field
 							id="pipeline-freshness"
+							error={errors.freshness}
 							label="Check again after (days)"
 							hint="Optional. A run also checks an unchanged address when its last check is older than this."
 						>
@@ -295,6 +394,7 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 				<FieldGroup title="Webhook delivery">
 					<Field
 						id="pipeline-webhook"
+						error={errors.webhook}
 						label="Webhook URL"
 						hint="Optional. Use HTTPS. Each finished run sends its results to this URL."
 					>
@@ -302,15 +402,20 @@ export function PipelineForm({ className, pipeline, onSaved, ...props }: Pipelin
 					</Field>
 					<Field
 						id="pipeline-headers"
+						error={errors.headers}
 						label="Webhook headers"
 						hint='Optional. Write one header on each line, as "Name: value".'
 					>
 						<Textarea {...text("headers")} className="min-h-20 rounded-lg font-mono text-xs" />
 					</Field>
-					<Field id="pipeline-attempts" label="Delivery attempts">
+					<Field id="pipeline-attempts" error={errors.attempts} label="Delivery attempts">
 						<Input {...text("attempts")} inputMode="numeric" />
 					</Field>
-					<Field id="pipeline-backoff" label="Wait between attempts (seconds)">
+					<Field
+						id="pipeline-backoff"
+						error={errors.backoff}
+						label="Wait between attempts (seconds)"
+					>
 						<Input {...text("backoff")} inputMode="numeric" />
 					</Field>
 				</FieldGroup>

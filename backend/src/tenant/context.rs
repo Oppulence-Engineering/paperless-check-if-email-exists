@@ -10,6 +10,7 @@ use uuid::Uuid;
 pub struct TenantContext {
 	pub tenant_id: Option<Uuid>,
 	pub api_key_id: Option<Uuid>,
+	pub user_id: Option<String>,
 	pub tenant_name: String,
 	pub plan_tier: PlanTier,
 	pub status: TenantStatus,
@@ -50,6 +51,7 @@ impl TenantContext {
 		Self {
 			tenant_id: None,
 			api_key_id: None,
+			user_id: None,
 			tenant_name: "legacy".to_string(),
 			plan_tier: PlanTier::Enterprise,
 			status: TenantStatus::Active,
@@ -63,6 +65,21 @@ impl TenantContext {
 			is_legacy: true,
 			scopes: vec![],
 		}
+	}
+
+	pub fn actor_type(&self) -> &'static str {
+		if self.user_id.is_some() {
+			"user"
+		} else {
+			"api"
+		}
+	}
+
+	pub fn actor_id(&self) -> String {
+		self.user_id
+			.clone()
+			.or_else(|| self.api_key_id.map(|id| id.to_string()))
+			.unwrap_or_else(|| "legacy".into())
 	}
 
 	/// Returns true if this context has the given scope.

@@ -69,20 +69,22 @@ async fn http_handler(
 	let row = sqlx::query(
 		r#"
 		SELECT
-			COUNT(*) FILTER (WHERE result IS NOT NULL OR error IS NOT NULL) AS processed,
+			COUNT(*) AS processed,
 			COALESCE(AVG(score::FLOAT) FILTER (WHERE score IS NOT NULL), 0)::FLOAT8 AS avg_score,
 			COUNT(*) FILTER (WHERE score_category = 'valid') AS valid,
 			COUNT(*) FILTER (WHERE score_category = 'risky') AS risky,
 			COUNT(*) FILTER (WHERE score_category = 'unknown') AS unknown,
 			COUNT(*) FILTER (WHERE score_category = 'invalid') AS invalid,
-			COUNT(*) FILTER (WHERE safe_to_send = true) AS safe_to_send,
+			COUNT(*) FILTER (WHERE effective_safe_to_send = true) AS safe_to_send,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_disposable' = 'true') AS disposable,
 			COUNT(*) FILTER (WHERE COALESCE(result->'score'->'signals'->>'smtp_is_catch_all', result->'smtp'->>'is_catch_all') = 'true') AS catch_all,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_role_account' = 'true') AS role_account,
 			COUNT(*) FILTER (WHERE result->'misc'->>'is_spam_trap_domain' = 'true') AS spam_trap,
 			COUNT(*) FILTER (WHERE result->'smtp'->>'has_full_inbox' = 'true') AS full_inbox
-		FROM v1_task_result
+		FROM verification_quality_rows
 		WHERE (extra->>'list_id')::INTEGER = $1
+		  AND is_duplicate IS NOT TRUE AND canonical_email IS NOT NULL
+		  AND task_state = 'completed'
 		"#,
 	)
 	.bind(list_id)
@@ -100,18 +102,7 @@ async fn http_handler(
 
 	let total = processed.max(1) as f64;
 	let safe_pct = (safe_to_send as f64 / total * 100.0).round();
-	let quality_grade = if safe_pct >= 90.0 {
-		"A"
-	} else if safe_pct >= 75.0 {
-		"B"
-	} else if safe_pct >= 50.0 {
-		"C"
-	} else if safe_pct >= 25.0 {
-		"D"
-	} else {
-		"F"
-	}
-	.to_string();
+	let quality_grade = safety_grade(safe_to_send, processed).to_string();
 
 	Ok(warp::reply::json(&QualityReport {
 		list_id,
@@ -160,4 +151,41 @@ pub fn v1_list_quality(
 		.and(with_worker_db(config))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
+}
+
+/// Shared verification grade; delivery feedback is reported separately.
+pub(crate) fn safety_grade(safe: i64, processed: i64) -> &'static str {
+	if processed <= 0 {
+		return "pending";
+	}
+	let pct = safe as f64 * 100.0 / processed as f64;
+	if pct >= 90.0 {
+		"A"
+	} else if pct >= 75.0 {
+		"B"
+	} else if pct >= 50.0 {
+		"C"
+	} else if pct >= 25.0 {
+		"D"
+	} else {
+		"F"
+	}
+}
+
+#[cfg(test)]
+mod grade_tests {
+	#[test]
+	fn safety_thresholds_and_pending() {
+		for (safe, total, grade) in [
+			(0, 0, "pending"),
+			(9, 10, "A"),
+			(3, 4, "B"),
+			(1, 2, "C"),
+			(1, 4, "D"),
+			(0, 1, "F"),
+			(899, 1000, "B"),
+		] {
+			assert_eq!(super::safety_grade(safe, total), grade);
+		}
+	}
 }

@@ -18,6 +18,8 @@ import type {
   ScorePolicyDeleteResponse,
   ScorePolicyListResponse,
   ScorePolicyView,
+  TenantDomainResponse,
+  TenantDomainsListResponse,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
@@ -73,7 +75,7 @@ export type HTTPStatusCodes =
   | HTTPStatusCode5xx;
 
 export type v1ListTenantDomainsResponse200 = {
-  data: void;
+  data: TenantDomainsListResponse;
   status: 200;
 };
 
@@ -114,7 +116,7 @@ export const v1ListTenantDomains = async (
 
   const data: v1ListTenantDomainsResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,
@@ -123,7 +125,7 @@ export const v1ListTenantDomains = async (
 };
 
 export type v1CreateTenantDomainResponse201 = {
-  data: void;
+  data: TenantDomainResponse;
   status: 201;
 };
 
@@ -191,7 +193,7 @@ export const v1CreateTenantDomain = async (
 
   const data: v1CreateTenantDomainResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,
@@ -251,7 +253,7 @@ export const v1DeleteTenantDomain = async (
 };
 
 export type v1GetTenantDomainResponse200 = {
-  data: void;
+  data: TenantDomainResponse;
   status: 200;
 };
 
@@ -290,9 +292,7 @@ export const v1GetTenantDomain = async (
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: v1GetTenantDomainResponse["data"] = body
-    ? JSON.parse(body)
-    : undefined;
+  const data: v1GetTenantDomainResponse["data"] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
@@ -301,7 +301,7 @@ export const v1GetTenantDomain = async (
 };
 
 export type v1UpdateTenantDomainResponse200 = {
-  data: void;
+  data: TenantDomainResponse;
   status: 200;
 };
 
@@ -370,12 +370,59 @@ export const v1UpdateTenantDomain = async (
 
   const data: v1UpdateTenantDomainResponse["data"] = body
     ? JSON.parse(body)
-    : undefined;
+    : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
   } as v1UpdateTenantDomainResponse;
+};
+
+export type v1VerifyTenantDomainResponse200 = {
+  data: TenantDomainResponse;
+  status: 200;
+};
+
+export type v1VerifyTenantDomainResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1VerifyTenantDomainResponseSuccess =
+  v1VerifyTenantDomainResponse200 & {
+    headers: Headers;
+  };
+export type v1VerifyTenantDomainResponseError =
+  v1VerifyTenantDomainResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1VerifyTenantDomainResponse =
+  v1VerifyTenantDomainResponseSuccess | v1VerifyTenantDomainResponseError;
+
+export const getV1VerifyTenantDomainUrl = (domain: string) => {
+  return `/v1/me/domains/${domain}/verify`;
+};
+
+export const v1VerifyTenantDomain = async (
+  domain: string,
+  options?: RequestInit,
+): Promise<v1VerifyTenantDomainResponse> => {
+  const res = await fetch(getV1VerifyTenantDomainUrl(domain), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1VerifyTenantDomainResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1VerifyTenantDomainResponse;
 };
 
 export type v1GetTenantSettingsResponse200 = {

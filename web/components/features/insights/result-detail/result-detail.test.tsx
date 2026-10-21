@@ -44,7 +44,7 @@ function renderDetail(row: Record<string, unknown>) {
 
 describe("ResultDetail", () => {
 	beforeEach(() => {
-		vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 			data: { email: "maya@brightlane.co", total: 0, history: [] },
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({

@@ -338,6 +338,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
          *
          * @summary POST /v1/lists
          * @param {File} file
+         * @param {string} [idempotencyKey] Reuse for retries of the same upload to prevent duplicate jobs and charges
          * @param {string | null} [emailColumn]
          * @param {string | null} [name]
          * @param {number | null} [policyId]
@@ -345,7 +346,7 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateList: async (file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1CreateList: async (file: File, idempotencyKey?: string, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'file' is not null or undefined
             assertParamExists('v1CreateList', 'file', file)
             const localVarPath = `/v1/lists`;
@@ -388,6 +389,9 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
 
             localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
 
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -1088,6 +1092,42 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
+         * @param {number} id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RestoreSuppression: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1RestoreSuppression', 'id', id)
+            const localVarPath = `/v1/suppressions/{id}/restore`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary GET /v1/reverification/status
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1300,6 +1340,7 @@ export const V1ApiFp = function(configuration?: Configuration) {
          *
          * @summary POST /v1/lists
          * @param {File} file
+         * @param {string} [idempotencyKey] Reuse for retries of the same upload to prevent duplicate jobs and charges
          * @param {string | null} [emailColumn]
          * @param {string | null} [name]
          * @param {number | null} [policyId]
@@ -1307,8 +1348,8 @@ export const V1ApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1CreateList(file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListUploadResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateList(file, emailColumn, name, policyId, sourceKey, options);
+        async v1CreateList(file: File, idempotencyKey?: string, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListUploadResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateList(file, idempotencyKey, emailColumn, name, policyId, sourceKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['V1Api.v1CreateList']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1536,6 +1577,18 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {number} id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1RestoreSuppression(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RestoreSuppression(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1RestoreSuppression']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary GET /v1/reverification/status
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1652,7 +1705,7 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          * @throws {RequiredError}
          */
         v1CreateList(requestParameters: V1ApiV1CreateListRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListUploadResponse> {
-            return localVarFp.v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(axios, basePath));
+            return localVarFp.v1CreateList(requestParameters.file, requestParameters.idempotencyKey, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -1807,6 +1860,15 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
          */
         v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse> {
             return localVarFp.v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, requestParameters.status, requestParameters.sourceType, requestParameters.sourceRef, requestParameters.includeExpired, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {V1ApiV1RestoreSuppressionRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RestoreSuppression(requestParameters: V1ApiV1RestoreSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1RestoreSuppression(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -2072,6 +2134,15 @@ export interface V1ApiInterface {
 
     /**
      *
+     * @param {V1ApiV1RestoreSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1RestoreSuppression(requestParameters: V1ApiV1RestoreSuppressionRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
      * @summary GET /v1/reverification/status
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2211,6 +2282,13 @@ export interface V1ApiV1CreateListRequest {
      * @memberof V1ApiV1CreateList
      */
     readonly file: File
+
+    /**
+     * Reuse for retries of the same upload to prevent duplicate jobs and charges
+     * @type {string}
+     * @memberof V1ApiV1CreateList
+     */
+    readonly idempotencyKey?: string
 
     /**
      *
@@ -2585,6 +2663,20 @@ export interface V1ApiV1ListSuppressionsRequest {
 }
 
 /**
+ * Request parameters for v1RestoreSuppression operation in V1Api.
+ * @export
+ * @interface V1ApiV1RestoreSuppressionRequest
+ */
+export interface V1ApiV1RestoreSuppressionRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof V1ApiV1RestoreSuppression
+     */
+    readonly id: number
+}
+
+/**
  * Request parameters for v1SourceQuality operation in V1Api.
  * @export
  * @interface V1ApiV1SourceQualityRequest
@@ -2714,7 +2806,7 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      * @memberof V1Api
      */
     public v1CreateList(requestParameters: V1ApiV1CreateListRequest, options?: RawAxiosRequestConfig) {
-        return V1ApiFp(this.configuration).v1CreateList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(this.axios, this.basePath));
+        return V1ApiFp(this.configuration).v1CreateList(requestParameters.file, requestParameters.idempotencyKey, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2901,6 +2993,17 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, requestParameters.status, requestParameters.sourceType, requestParameters.sourceRef, requestParameters.includeExpired, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {V1ApiV1RestoreSuppressionRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1RestoreSuppression(requestParameters: V1ApiV1RestoreSuppressionRequest, options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1RestoreSuppression(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

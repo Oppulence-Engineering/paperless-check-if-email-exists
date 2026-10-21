@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -149,7 +150,7 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{error.message}
+					{errorMessage(error)}
 				</p>
 			) : null}
 			<Section

@@ -19,6 +19,8 @@ export interface ListDetailResponse {
   /** @nullable */
   policy_id?: number | null;
   /** @nullable */
+  rejected_rows?: number | null;
+  /** @nullable */
   source_key?: string | null;
   status: string;
   summary: ListSummary;

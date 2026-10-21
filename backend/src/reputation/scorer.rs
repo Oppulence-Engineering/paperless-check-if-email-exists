@@ -31,7 +31,7 @@ pub fn compute_score(
 		}
 	}
 
-	score = score.clamp(0, 100);
+	score = score.clamp(0, if dns_records.has_mx { 100 } else { 49 });
 	let risk_level = match score {
 		80..=100
 			if blacklist_results
@@ -84,6 +84,10 @@ mod tests {
 
 	#[test]
 	fn compute_score_penalizes_missing_dns_and_blacklists() {
+		assert_eq!(
+			compute_score(&[], &DnsRecordResults::default(), &DomainInfo::default()),
+			(49, "high".into())
+		);
 		let (score, risk) = compute_score(
 			&[
 				BlacklistResult {

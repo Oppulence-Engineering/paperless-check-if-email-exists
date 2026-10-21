@@ -9,6 +9,50 @@
  */
 import * as zod from "zod";
 
+export const V1PreviewListBody = zod.strictObject({
+  email_column: zod.string().nullish(),
+  file: zod.instanceof(Blob),
+  name: zod.string().nullish(),
+  policy_id: zod.int().nullish(),
+  source_key: zod
+    .string()
+    .nullish()
+    .describe(
+      "Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.",
+    ),
+});
+
+export const v1PreviewList200ResponseDuplicatesMin = 0;
+
+export const v1PreviewList200ResponseEstimatedCreditsMin = 0;
+
+export const v1PreviewList200ResponseRejectedItemRowNumberMin = 0;
+
+export const v1PreviewList200ResponseTotalRowsMin = 0;
+
+export const v1PreviewList200ResponseUniqueEmailsMin = 0;
+
+export const V1PreviewList200Response = zod.object({
+  duplicates: zod.int().min(v1PreviewList200ResponseDuplicatesMin),
+  email_column: zod.string(),
+  estimated_credits: zod.int().min(v1PreviewList200ResponseEstimatedCreditsMin),
+  rejected: zod.array(
+    zod.object({
+      reason: zod.string(),
+      row_number: zod
+        .int()
+        .min(v1PreviewList200ResponseRejectedItemRowNumberMin),
+      value: zod.string(),
+    }),
+  ),
+  total_rows: zod.int().min(v1PreviewList200ResponseTotalRowsMin),
+  unique_emails: zod.int().min(v1PreviewList200ResponseUniqueEmailsMin),
+});
+
+export const V1PreviewListDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 /**
  * @summary GET /v1/lists/{base_list_id}/diff/{compare_list_id}
  */

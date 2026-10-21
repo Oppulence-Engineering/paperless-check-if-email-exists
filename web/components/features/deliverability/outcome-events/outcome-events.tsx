@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -76,8 +77,7 @@ export function startOfDay(date: string): string | undefined {
 
 /** The error text from the backend, for example "allowed_ips contains an invalid IP". */
 export function apiMessage(error: Error): string {
-	const data = (error as { response?: { data?: { error?: unknown } } }).response?.data;
-	return typeof data?.error === "string" ? data.error : error.message;
+	return errorMessage(error);
 }
 
 export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {

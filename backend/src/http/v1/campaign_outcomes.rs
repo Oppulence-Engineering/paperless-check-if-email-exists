@@ -309,9 +309,9 @@ async fn list_handler(
 
 	let total: i64 = sqlx::query_scalar(
 		r#"
-		SELECT COUNT(*) FROM verification_outcomes
+		SELECT COUNT(*) FROM verification_outcome_evidence
 		WHERE tenant_id = $1
-			AND ($2::TEXT IS NULL OR canonical_email = $2)
+			AND ($2::TEXT IS NULL OR lower(canonical_email) = lower($2))
 			AND ($3::outcome_type IS NULL OR outcome_type = $3)
 			AND ($4::TEXT IS NULL OR source = $4)
 			AND ($5::TIMESTAMPTZ IS NULL OR occurred_at >= $5)
@@ -330,9 +330,9 @@ async fn list_handler(
 		r#"
 		SELECT id, canonical_email, outcome_type::TEXT as outcome_type, occurred_at,
 			NULLIF(source, '') as source, campaign_id, policy_action, created_at
-		FROM verification_outcomes
+		FROM verification_outcome_evidence
 		WHERE tenant_id = $1
-			AND ($2::TEXT IS NULL OR canonical_email = $2)
+			AND ($2::TEXT IS NULL OR lower(canonical_email) = lower($2))
 			AND ($3::outcome_type IS NULL OR outcome_type = $3)
 			AND ($4::TEXT IS NULL OR source = $4)
 			AND ($5::TIMESTAMPTZ IS NULL OR occurred_at >= $5)

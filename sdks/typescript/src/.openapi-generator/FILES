@@ -24,6 +24,7 @@ configuration.ts
 docs/AccountApi.md
 docs/AddSuppressionsRequest.md
 docs/AddSuppressionsResponse.md
+docs/AddSuppressionsResponseRejectedInner.md
 docs/AdminAllApiKeys.md
 docs/AdminApi.md
 docs/AdminApiKey.md
@@ -98,6 +99,7 @@ docs/Freshness.md
 docs/GmailVerifMethod.md
 docs/HealthApi.md
 docs/HistoryEntry.md
+docs/HistoryRequest.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
 docs/InboundOutcomeResponse.md
@@ -105,6 +107,7 @@ docs/IngestOutcome.md
 docs/IngestOutcomesRequest.md
 docs/IngestOutcomesResponse.md
 docs/IngestRowError.md
+docs/Job.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsApi.md
@@ -168,6 +171,7 @@ docs/QueryResultRow.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
+docs/RejectedRow.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/ResearchCandidate.md
@@ -217,6 +221,8 @@ docs/TenantApiKey.md
 docs/TenantApiKeyList.md
 docs/TenantApiKeyRevokeResponse.md
 docs/TenantCreatedApiKey.md
+docs/TenantDomainResponse.md
+docs/TenantDomainsListResponse.md
 docs/TenantSettingsResponse.md
 docs/TenantUsageResponse.md
 docs/TenantWebhookResponse.md
@@ -235,7 +241,9 @@ docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
 docs/V0Api.md
 docs/V1Api.md
-docs/V1EmailHistory200Response.md
+docs/V1EmailHistoryPost200Response.md
+docs/V1ListJobs200Response.md
+docs/V1PreviewList200Response.md
 docs/VerifMethod.md
 docs/VerifMethodVerifMethod.md
 docs/VerificationApi.md
@@ -245,6 +253,7 @@ docs/YahooVerifMethod.md
 git_push.sh
 index.ts
 models/add-suppressions-request.ts
+models/add-suppressions-response-rejected-inner.ts
 models/add-suppressions-response.ts
 models/admin-all-api-keys.ts
 models/admin-api-key-list.ts
@@ -315,6 +324,7 @@ models/finder-candidate-result.ts
 models/freshness.ts
 models/gmail-verif-method.ts
 models/history-entry.ts
+models/history-request.ts
 models/hotmail-b2-bverif-method.ts
 models/hotmail-b2-cverif-method.ts
 models/inbound-outcome-response.ts
@@ -325,6 +335,7 @@ models/ingest-outcomes-response.ts
 models/ingest-row-error.ts
 models/job-result-page-response.ts
 models/job-task-result.ts
+models/job.ts
 models/list-delete-response.ts
 models/list-detail-response.ts
 models/list-diff-response.ts
@@ -381,6 +392,7 @@ models/query-result-row.ts
 models/reachable.ts
 models/reason-code.ts
 models/recommended-action.ts
+models/rejected-row.ts
 models/reputation-check-request.ts
 models/reputation-check-response.ts
 models/research-candidate.ts
@@ -428,6 +440,8 @@ models/tenant-api-key-list.ts
 models/tenant-api-key-revoke-response.ts
 models/tenant-api-key.ts
 models/tenant-created-api-key.ts
+models/tenant-domain-response.ts
+models/tenant-domains-list-response.ts
 models/tenant-settings-response.ts
 models/tenant-usage-response.ts
 models/tenant-webhook-response.ts
@@ -444,7 +458,9 @@ models/update-score-policy-request.ts
 models/update-tenant-domain-request.ts
 models/update-tenant-settings-request.ts
 models/update-webhook-request.ts
-models/v1-email-history200-response.ts
+models/v1-email-history-post200-response.ts
+models/v1-list-jobs200-response.ts
+models/v1-preview-list200-response.ts
 models/verif-method-verif-method.ts
 models/verif-method.ts
 models/verification-response.ts

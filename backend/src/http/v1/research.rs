@@ -619,7 +619,7 @@ async fn current_policy_allows(
 		)
 	})?;
 	let canonical = crate::suppression::suppression_key(email);
-	let latest=sqlx::query_as::<_,(Option<Value>,Option<chrono::DateTime<chrono::Utc>>,bool)>("SELECT result, completed_at, error IS NULL FROM v1_task_result WHERE tenant_id=$1 AND canonical_email=$2 ORDER BY created_at DESC, id DESC LIMIT 1")
+	let latest=sqlx::query_as::<_,(Option<Value>,Option<chrono::DateTime<chrono::Utc>>,bool)>("SELECT result, completed_at, error IS NULL FROM v1_task_result WHERE tenant_id=$1 AND lower(canonical_email) = lower($2) ORDER BY created_at DESC, id DESC LIMIT 1")
 		.bind(tenant_id).bind(canonical).fetch_optional(&pool).await.map_err(ReacherResponseError::from)?;
 	let Some((Some(raw), Some(completed_at), true)) = latest else {
 		return Ok(false);
@@ -636,7 +636,7 @@ async fn current_policy_allows(
 		return Ok(false);
 	}
 	// New negative feedback requires another review even if the older mailbox result was safe.
-	let new_negative_feedback: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM verification_outcomes WHERE tenant_id=$1 AND canonical_email=$2 AND occurred_at > $3 AND occurred_at <= NOW() AND outcome_type IN ('hard_bounce', 'complaint', 'unsubscribe'))")
+	let new_negative_feedback: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM verification_outcome_evidence WHERE tenant_id=$1 AND lower(canonical_email) = lower($2) AND occurred_at > $3 AND occurred_at <= NOW() AND outcome_type IN ('hard_bounce', 'complaint', 'unsubscribe'))")
 		.bind(tenant_id).bind(crate::suppression::suppression_key(email)).bind(completed_at)
 		.fetch_one(&pool).await.map_err(ReacherResponseError::from)?;
 	if new_negative_feedback {

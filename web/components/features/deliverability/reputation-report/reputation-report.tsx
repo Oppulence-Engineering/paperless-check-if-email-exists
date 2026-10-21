@@ -91,6 +91,14 @@ export function ReputationReport({ action, className, report, ...props }: Reputa
 				</Pill>
 				{action}
 			</Row>
+			{unknown > 0 ? (
+				<Row>
+					<p role="status" className="text-sm text-amber-300">
+						Blocklist coverage is incomplete. This score does not confirm a clean result across all
+						providers.
+					</p>
+				</Row>
+			) : null}
 			<Row>
 				<dl className="grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
 					{checks.map((check) => (
@@ -150,13 +158,15 @@ export function ReputationReport({ action, className, report, ...props }: Reputa
 							>
 								{result.provider}
 								<Pill tone={result.listed == null ? "gray" : result.listed ? "red" : "green"}>
-									{result.status === "skipped"
-										? "Not checked"
-										: result.listed == null
-											? "Query failed"
-											: result.listed
-												? "Listed"
-												: "Not listed"}
+									{result.error === "not_configured"
+										? "Unavailable"
+										: result.status === "skipped"
+											? "Not checked"
+											: result.listed == null
+												? "Query failed"
+												: result.listed
+													? "Listed"
+													: "Not listed"}
 								</Pill>
 							</li>
 						))}

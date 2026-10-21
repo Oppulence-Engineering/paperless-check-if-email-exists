@@ -85,9 +85,10 @@ async fn http_handler(
 		SELECT COUNT(*) FROM v1_task_result
 		WHERE (tenant_id = $1 OR $1 IS NULL)
 		  AND (
-			canonical_email = $2
-			OR (canonical_email IS NULL AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2)
+			lower(canonical_email) = lower($2)
+			OR (canonical_email IS NULL AND lower(mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) = lower($2))
 		  )
+		  AND is_duplicate IS NOT TRUE
 		  AND task_state IN ('completed', 'failed', 'dead_lettered')
 		"#,
 	)
@@ -129,7 +130,7 @@ async fn http_handler(
 		LEFT JOIN LATERAL (
 			SELECT p.*
 			FROM v1_task_result p
-			WHERE p.task_state = 'completed'::task_state
+			WHERE p.is_duplicate IS NOT TRUE AND p.task_state = 'completed'::task_state
 			  AND p.result IS NOT NULL
 			  AND p.completed_at IS NOT NULL
 			  AND p.id <> r.id
@@ -138,7 +139,7 @@ async fn http_handler(
 				OR (p.tenant_id IS NULL AND r.tenant_id IS NULL)
 			  )
 			  AND p.canonical_email IS NOT NULL
-			  AND p.canonical_email = r.canonical_email
+			  AND lower(p.canonical_email) = lower(r.canonical_email)
 			  AND r.completed_at IS NOT NULL
 			  AND (p.completed_at, p.id) < (r.completed_at, r.id)
 			ORDER BY p.completed_at DESC, p.id DESC
@@ -147,9 +148,10 @@ async fn http_handler(
 		LEFT JOIN verification_change_events evt ON evt.current_task_result_id = r.id
 		WHERE (r.tenant_id = $1 OR $1 IS NULL)
 		  AND (
-			r.canonical_email = $2
-			OR (r.canonical_email IS NULL AND mailbox_identity(COALESCE(r.result->>'input', r.payload->'input'->>'to_email')) = $2)
+			lower(r.canonical_email) = lower($2)
+			OR (r.canonical_email IS NULL AND lower(mailbox_identity(COALESCE(r.result->>'input', r.payload->'input'->>'to_email'))) = lower($2))
 		  )
+		  AND r.is_duplicate IS NOT TRUE
 		  AND r.task_state IN ('completed', 'failed', 'dead_lettered')
 		ORDER BY r.completed_at DESC NULLS LAST, r.id DESC
 		LIMIT $3
@@ -264,7 +266,7 @@ pub fn v1_email_history(
 		.and(with_worker_db(config))
 		.and(warp::query::<Query>())
 		.and_then(http_handler)
-		.with(warp::log(LOG_TARGET))
+		.with(warp::log::custom(|info| { tracing::info!(target: LOG_TARGET, method = %info.method(), path = "/v1/emails/[redacted]/history", status = %info.status(), "Address history request"); }))
 }
 
 #[cfg(test)]
@@ -283,4 +285,30 @@ mod tests {
 		);
 		assert_eq!(decode_email_segment("bad%FF"), None);
 	}
+}
+
+#[derive(Deserialize, utoipa::ToSchema)]
+struct HistoryRequest {
+	email: String,
+	limit: Option<i64>,
+}
+
+#[utoipa::path(post, path="/v1/emails/history", tag="Verification", request_body=HistoryRequest, responses((status=200, description="Address history", body=inline(Response))))]
+pub fn v1_email_history_post(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "emails" / "history")
+		.and(warp::post())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_worker_db(config))
+		.and(warp::body::content_length_limit(4096))
+		.and(warp::body::json())
+		.and_then(|ctx, pool, body: HistoryRequest| {
+			let email = percent_encoding::utf8_percent_encode(
+				&body.email,
+				percent_encoding::NON_ALPHANUMERIC,
+			)
+			.to_string();
+			http_handler(email, ctx, pool, Query { limit: body.limit })
+		})
 }

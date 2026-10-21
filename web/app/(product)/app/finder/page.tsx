@@ -14,7 +14,7 @@ import FinderLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Find an email - Oppulence",
+	title: "Find an email",
 	description: "Find and verify likely work addresses for a person and domain",
 };
 

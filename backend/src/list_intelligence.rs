@@ -548,7 +548,15 @@ pub async fn record_verification_change_event(
 	}
 
 	let event_id: i64 = event_row.get("id");
-	let title = format!("{} changed to {}", current.canonical_email, change_type);
+	let title = format!(
+		"{}: {}",
+		current.canonical_email,
+		change_type
+			.replace("became_safe", "now safe to send")
+			.replace("became_invalid", "now invalid")
+			.replace("became_risky", "now needs review")
+			.replace('_', " ")
+	);
 	let body = match previous
 		.as_ref()
 		.and_then(|snapshot| snapshot.category.as_ref())
@@ -645,7 +653,7 @@ async fn load_previous_snapshot(
 			completed_at
 		FROM v1_task_result
 		WHERE tenant_id = $1
-		  AND canonical_email = $2
+		  AND lower(canonical_email) = lower($2)
 		  AND id <> $3
 		  AND task_state = 'completed'::task_state
 		  AND result IS NOT NULL

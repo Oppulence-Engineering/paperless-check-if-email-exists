@@ -144,10 +144,14 @@ pub fn route_allowed(role: &str, method: &str, path: &str) -> bool {
 		return false;
 	}
 	match (method, path) {
-		("GET", "/v1/me" | "/v1/me/usage" | "/v1/lists" | "/v1/query") => true,
-		("GET", path) if path.starts_with("/v1/lists/") => true,
+		("GET", "/v1/me" | "/v1/me/usage" | "/v1/lists" | "/v1/query" | "/v1/jobs") => true,
+		("GET", path) if path.starts_with("/v1/lists/") || path.starts_with("/v1/jobs/") => true,
 		("GET", path) if path.starts_with("/v1/emails/") && path.ends_with("/history") => true,
-		("POST", "/v1/check_email" | "/v1/find_email" | "/v1/bulk" | "/v1/lists") => true,
+		(
+			"POST",
+			"/v1/check_email" | "/v1/find_email" | "/v1/bulk" | "/v1/lists" | "/v1/lists/preview"
+			| "/v1/emails/history",
+		) => true,
 		_ => false,
 	}
 }
@@ -210,6 +214,7 @@ pub async fn resolve_from_jwt(
 	// Same limits as the tenant's API keys get. Without the server-wide
 	// fallback, console requests ran unthrottled, and the tenant's throttle
 	// manager was rebuilt each time a request switched between the two.
+	context.user_id = Some(claims.sub.clone());
 	context.throttle = with_global_throttle(context.throttle, global_throttle);
 	context.scopes = if role_is_admin(&claims.org_role) {
 		vec!["*".into()]

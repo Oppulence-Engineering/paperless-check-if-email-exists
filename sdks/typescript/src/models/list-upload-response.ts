@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { RejectedRow } from './rejected-row';
 
 /**
  *
@@ -20,6 +23,12 @@
  * @interface ListUploadResponse
  */
 export interface ListUploadResponse {
+    /**
+     *
+     * @type {number}
+     * @memberof ListUploadResponse
+     */
+    'duplicates'?: number;
     /**
      *
      * @type {string}
@@ -40,6 +49,12 @@ export interface ListUploadResponse {
     'list_id': number;
     /**
      *
+     * @type {Array<RejectedRow>}
+     * @memberof ListUploadResponse
+     */
+    'rejected'?: Array<RejectedRow>;
+    /**
+     *
      * @type {string}
      * @memberof ListUploadResponse
      */
@@ -50,4 +65,10 @@ export interface ListUploadResponse {
      * @memberof ListUploadResponse
      */
     'total_rows': number;
+    /**
+     *
+     * @type {number}
+     * @memberof ListUploadResponse
+     */
+    'unique_emails'?: number;
 }

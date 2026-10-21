@@ -66,7 +66,7 @@ function familyFor(path: string): Family | undefined {
 	)
 		return "Verification and finder";
 	if (
-		["/v1/bulk", "/v1/jobs/", "/v1/query", "/v1/events", "/v1/sources/"].some((prefix) =>
+		["/v1/bulk", "/v1/jobs", "/v1/query", "/v1/events", "/v1/sources/"].some((prefix) =>
 			path.startsWith(prefix),
 		)
 	)

@@ -765,14 +765,27 @@ export const getV1ListListsResponseMock = (
 export const getV1CreateListResponseMock = (
   overrideResponse: Partial<Extract<ListUploadResponse, object>> = {},
 ): ListUploadResponse => ({
+  duplicates: faker.helpers.arrayElement([faker.number.int(), undefined]),
   email_column: faker.string.alpha({ length: { min: 10, max: 20 } }),
   job_id: faker.number.int(),
   list_id: faker.number.int(),
+  rejected: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      row_number: faker.number.int({ min: 0 }),
+      value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    })),
+    undefined,
+  ]),
   source_key: faker.helpers.arrayElement([
     faker.string.alpha({ length: { min: 10, max: 20 } }),
     null,
   ]),
   total_rows: faker.number.int(),
+  unique_emails: faker.helpers.arrayElement([faker.number.int(), undefined]),
   ...overrideResponse,
 });
 
@@ -792,6 +805,7 @@ export const getV1GetListResponseMock = (
   job_id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
+  rejected_rows: faker.helpers.arrayElement([faker.number.int(), null]),
   source_key: faker.helpers.arrayElement([
     faker.string.alpha({ length: { min: 10, max: 20 } }),
     null,
@@ -1445,6 +1459,17 @@ export const getV1AddSuppressionsResponseMock = (
     ).map(() => faker.number.int()),
     undefined,
   ]),
+  rejected: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    })),
+    undefined,
+  ]),
+  submitted: faker.helpers.arrayElement([faker.number.int(), undefined]),
   updated: faker.helpers.arrayElement([faker.number.int(), undefined]),
   ...overrideResponse,
 });
@@ -1517,6 +1542,17 @@ export const getV1ImportSuppressionsResponseMock = (
     ).map(() => faker.number.int()),
     undefined,
   ]),
+  rejected: faker.helpers.arrayElement([
+    Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => ({
+      email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    })),
+    undefined,
+  ]),
+  submitted: faker.helpers.arrayElement([faker.number.int(), undefined]),
   updated: faker.helpers.arrayElement([faker.number.int(), undefined]),
   ...overrideResponse,
 });

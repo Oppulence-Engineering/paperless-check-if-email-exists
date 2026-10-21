@@ -1424,11 +1424,11 @@ mod tests {
 	}
 
 	#[test]
-	fn historical_checks_for_a_different_mailbox_stay_in_review() {
+	fn case_variants_share_verification_evidence() {
 		let (mut row, before) = raw_row("Sales@example.com");
 		row.result.as_mut().unwrap()["input"] = json!("sales@example.com");
 		let plan = classify_row(&row, before, "email", &PlanOptions::default());
-		assert_eq!(plan.classification, RemediationClassification::Review);
+		assert_eq!(plan.classification, RemediationClassification::Safe);
 	}
 
 	#[test]

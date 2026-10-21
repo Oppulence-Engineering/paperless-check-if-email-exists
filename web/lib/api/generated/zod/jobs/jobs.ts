@@ -579,6 +579,27 @@ export const V1GetBulkJobResultsDefaultResponse = zod.object({
   error: zod.string(),
 });
 
+export const V1ListJobsQueryParams = zod.object({
+  limit: zod.coerce.number().int().optional(),
+  offset: zod.coerce.number().int().optional(),
+});
+
+export const V1ListJobs200Response = zod.object({
+  jobs: zod.array(
+    zod.object({
+      created_at: zod.iso.datetime({ offset: true }),
+      id: zod.int(),
+      status: zod.string(),
+      total_records: zod.int(),
+    }),
+  ),
+  total: zod.int(),
+});
+
+export const V1ListJobsDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
 /**
  * Returns progress summary and state for a tenant-scoped bulk job.
  * @summary GET /v1/jobs/{job_id}
@@ -763,8 +784,11 @@ export const V1GetJobResults200Response = zod.object({
   next_cursor: zod.int().nullish(),
   results: zod.array(
     zod.object({
+      canonical_task_id: zod.int().nullish(),
       error: zod.string().nullish(),
       id: zod.int(),
+      is_duplicate: zod.boolean().optional(),
+      original_email: zod.string().nullish(),
       result: zod
         .union([
           zod
@@ -1305,6 +1329,7 @@ export const V1GetJobResults200Response = zod.object({
         ])
         .optional(),
       retry_count: zod.int(),
+      row_number: zod.int().nullish(),
       task_state: zod.string(),
     }),
   ),

@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
@@ -28,6 +29,8 @@ const domainSchema = z.object({
 	domain: z.string(),
 	is_active: z.boolean(),
 	is_verified: z.boolean(),
+	verification_record: z.string().optional(),
+	verification_value: z.string().optional(),
 	notes: z.string().nullable().optional(),
 	created_at: z.string(),
 });
@@ -43,6 +46,7 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 	const [notice, setNotice] = useState("");
 	const [lookup, setLookup] = useState("");
 	const [checked, setChecked] = useState("");
+	const [healthDomains, setHealthDomains] = useState<string[]>([]);
 	const me = useQuery({
 		queryKey: workflowQueryKey("tenant-profile"),
 		queryFn: async () => meSchema.parse((await accountApi.v1Me()).data),
@@ -57,7 +61,27 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 		queryFn: async () =>
 			domainSchema.parse((await tenantApi.v1GetTenantDomain({ domain: selected })).data),
 	});
+	const verify = useMutation({
+		onMutate: () => {
+			setNotice("");
+			create.reset();
+			update.reset();
+			remove.reset();
+		},
+		mutationFn: () => tenantApi.v1VerifyTenantDomain({ domain: selected }),
+		onSuccess: async () => {
+			setNotice("Domain ownership verified and activated.");
+			await client.invalidateQueries({ queryKey: workflowQueryKey("tenant-domain", selected) });
+			await client.invalidateQueries({ queryKey: workflowQueryKey("tenant-domains") });
+		},
+	});
 	const create = useMutation({
+		onMutate: () => {
+			setNotice("");
+			verify.reset();
+			update.reset();
+			remove.reset();
+		},
 		mutationFn: async () => {
 			await tenantApi.v1CreateTenantDomain({
 				createTenantDomainRequest: {
@@ -75,6 +99,12 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 		},
 	});
 	const update = useMutation({
+		onMutate: () => {
+			setNotice("");
+			verify.reset();
+			create.reset();
+			remove.reset();
+		},
 		mutationFn: async (input: { isActive?: boolean; notes?: string }) => {
 			await tenantApi.v1UpdateTenantDomain({
 				domain: selected,
@@ -88,6 +118,12 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 		},
 	});
 	const remove = useMutation({
+		onMutate: () => {
+			setNotice("");
+			verify.reset();
+			create.reset();
+			update.reset();
+		},
 		mutationFn: async () => {
 			await tenantApi.v1DeleteTenantDomain({ domain: selected });
 		},
@@ -97,7 +133,7 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 			await client.invalidateQueries({ queryKey: workflowQueryKey("tenant-domains") });
 		},
 	});
-	const error = [me, domains, detail, create, update, remove].find(
+	const error = [me, domains, detail, create, update, remove, verify].find(
 		(request) => request.isError,
 	)?.error;
 	const field = "h-10 rounded-lg md:w-72";
@@ -116,10 +152,24 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{error.message}
+						{errorMessage(error)}{" "}
+						<Button
+							variant="link"
+							onClick={() => {
+								create.reset();
+								update.reset();
+								remove.reset();
+								verify.reset();
+								void domains.refetch();
+								if (me.isError) void me.refetch();
+								if (selected) void detail.refetch();
+							}}
+						>
+							Retry
+						</Button>
 					</p>
 				) : null}
-				{notice ? (
+				{notice && !error ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
@@ -156,6 +206,12 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 										variant="secondary"
 										size="sm"
 										onClick={() => {
+											setNotice("");
+											create.reset();
+											update.reset();
+											remove.reset();
+											verify.reset();
+											if (selected === item.domain) void detail.refetch();
 											setSelected(item.domain);
 											setEditNotes(item.notes || "");
 										}}
@@ -163,7 +219,20 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 										Manage
 									</Button>
 								</div>
-								<DomainHealth aria-label={`Health of ${item.domain}`} domain={item.domain} />
+								{healthDomains.includes(item.domain) ? (
+									<DomainHealth aria-label={`Health of ${item.domain}`} domain={item.domain} />
+								) : (
+									<Row>
+										<Button
+											variant="outline"
+											onClick={() => {
+												setHealthDomains([...healthDomains, item.domain]);
+											}}
+										>
+											Check health of {item.domain}
+										</Button>
+									</Row>
+								)}
 							</Group>
 						))
 					) : (
@@ -207,6 +276,33 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 									</Button>
 								</div>
 							</Row>
+							{!detail.data.is_verified && detail.data.verification_record ? (
+								<Row
+									label="Verify ownership"
+									description="Add this TXT record at your DNS provider, then verify."
+								>
+									<div className="flex flex-col gap-2 break-all">
+										<code>{detail.data.verification_record}</code>
+										<code>{detail.data.verification_value}</code>
+										<Button
+											variant="outline"
+											onClick={() =>
+												void navigator.clipboard.writeText(detail.data.verification_value ?? "")
+											}
+										>
+											Copy TXT value
+										</Button>
+										<Button
+											disabled={verify.isPending}
+											onClick={() => {
+												verify.mutate();
+											}}
+										>
+											Verify domain
+										</Button>
+									</div>
+								</Row>
+							) : null}
 							<Row label={<Label htmlFor="domain-notes-edit">Notes</Label>}>
 								<form
 									className="flex w-full gap-2 md:justify-end"

@@ -4,6 +4,7 @@ import { V1CheckEmail200Response } from "@/lib/api/generated/zod/v1/v1";
 
 import {
 	mxDetails,
+	freeProviderOf,
 	primaryAction,
 	recommendationOf,
 	SAMPLE_CHECK_RESULT,
@@ -81,4 +82,21 @@ describe("check result helpers", () => {
 			}),
 		).toBe("maya@gmail.com");
 	});
+});
+
+it("keeps provider labels consistent and leaves missing or conflicting evidence unknown", () => {
+	expect(freeProviderOf(SAMPLE_CHECK_RESULT)).toBe(false);
+	const conflicting = {
+		...SAMPLE_CHECK_RESULT,
+		score: {
+			...SAMPLE_CHECK_RESULT.score,
+			signals: { ...SAMPLE_CHECK_RESULT.score.signals, is_free_provider: true },
+		},
+	};
+	expect(freeProviderOf(conflicting)).toBeUndefined();
+	const missing = V1CheckEmail200Response.parse({
+		...SAMPLE_CHECK_RESULT,
+		misc: { error: { type: "Unavailable" } },
+	});
+	expect(freeProviderOf(missing)).toBeUndefined();
 });

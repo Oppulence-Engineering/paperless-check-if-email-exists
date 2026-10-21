@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,9 +43,10 @@ const EVENT_PAGE = 50;
 /** Event data as "key: value" pairs, for example "retry_count: 1". */
 function eventData(data: Record<string, unknown> | null | undefined): string {
 	return Object.entries(data ?? {})
+		.filter(([key]) => ["retry_count", "reason", "message", "count"].includes(key))
 		.map(
 			([key, value]) =>
-				`${key}: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`,
+				`${key.replaceAll("_", " ")}: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`,
 		)
 		.join(" · ");
 }
@@ -99,7 +101,7 @@ export function JobProblems({ className, jobId, ...props }: JobProblemsProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{error.message}
+					{errorMessage(error)}
 				</p>
 			) : null}
 			{notice ? (
@@ -219,7 +221,7 @@ export function JobProblems({ className, jobId, ...props }: JobProblemsProps) {
 									) : null}
 								</p>
 								<p className="text-xs break-words text-[#858585]">
-									{new Date(event.created_at).toLocaleString()} · {event.actor ?? "System"}
+									{new Date(event.created_at).toLocaleString()} · {"System"}
 									{event.event_data ? ` · ${eventData(event.event_data)}` : ""}
 								</p>
 							</div>

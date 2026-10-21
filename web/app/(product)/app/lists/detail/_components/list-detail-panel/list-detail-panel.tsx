@@ -1,13 +1,14 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommentsApi, Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { z } from "zod";
 
@@ -67,6 +68,8 @@ const TAB_CLASS =
 export function ListDetailPanel({ listId, accepted, className, ...props }: ListDetailPanelProps) {
 	const client = useQueryClient();
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const tab = searchParams.get("tab") ?? "review";
 	const [comment, setComment] = useState("");
 	const key = ["list-detail", listId];
 	function selectedListId(): number {
@@ -92,7 +95,7 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 			ListQualitySchema.parse((await listsApi.v1ListQuality({ listId: selectedListId() })).data),
 		refetchInterval: (query) => {
 			const data = query.state.data;
-			return data && data.processed < data.total_rows ? 5_000 : false;
+			return data && ACTIVE_LIST_STATES.includes(detail.data?.status ?? "") ? 5_000 : false;
 		},
 	});
 	const comments = useQuery({
@@ -186,10 +189,10 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{error.message}
+						{errorMessage(error)}
 					</p>
 				) : null}
-				{accepted ? (
+				{accepted && ACTIVE_LIST_STATES.includes(detail.data?.status ?? "") ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
@@ -214,12 +217,31 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 									<Stat label="Rows" value={list.total_rows} />
 									<Stat label="Unique addresses" value={list.unique_emails ?? "—"} />
 									<Stat label="Duplicates removed" value={list.deduplicated_count ?? 0} />
+									<Stat
+										label="Rejected rows"
+										value={
+											list.rejected_rows ??
+											(list.unique_emails == null
+												? "—"
+												: Math.max(
+														0,
+														list.total_rows - list.unique_emails - (list.deduplicated_count ?? 0),
+													))
+										}
+									/>
 									<Stat label="Checked" value={list.summary.total_processed} />
 								</div>
 								<JobProgress jobId={list.job_id} />
 							</Row>
 						</Group>
-						<Tabs defaultValue="review">
+						<Tabs
+							value={tab}
+							onValueChange={(value) => {
+								const params = new URLSearchParams(searchParams);
+								params.set("tab", value);
+								router.replace(`?${params.toString()}`, { scroll: false });
+							}}
+						>
 							<TabsList aria-label="List views" className={TAB_LIST_CLASS}>
 								<TabsTrigger className={TAB_CLASS} value="review">
 									Review
