@@ -42,11 +42,14 @@ it("adds a domain inactive and shows its current verification state", async () =
 		</QueryClientProvider>,
 	);
 	expect(await screen.findByRole("heading", { name: "example.com" })).toBeInTheDocument();
+	expect(check).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: "Check health of example.com" }));
 	const health = screen.getByRole("region", { name: "Health of example.com" });
 	expect(await within(health).findByText("82/100")).toBeInTheDocument();
 	expect(check).toHaveBeenCalledWith({
 		reputationCheckRequest: { domain: "example.com", force_refresh: false },
 	});
+	expect(check).toHaveBeenCalledTimes(1);
 	fireEvent.change(screen.getByLabelText("Domain"), { target: { value: "new.example.com" } });
 	fireEvent.click(screen.getByRole("button", { name: "Add inactive domain" }));
 	await waitFor(() =>

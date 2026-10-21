@@ -18,6 +18,8 @@ import type {
   V1GetJobEventsParams,
   V1GetJobFailureCenter200,
   V1GetJobResultsParams,
+  V1ListJobs200,
+  V1ListJobsParams,
 } from "../model";
 
 interface TypedResponse<T> extends Response {
@@ -187,6 +189,61 @@ export const v1GetBulkJobResults = async (
     status: res.status,
     headers: res.headers,
   } as v1GetBulkJobResultsResponse;
+};
+
+export type v1ListJobsResponse200 = {
+  data: V1ListJobs200;
+  status: 200;
+};
+
+export type v1ListJobsResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1ListJobsResponseSuccess = v1ListJobsResponse200 & {
+  headers: Headers;
+};
+export type v1ListJobsResponseError = v1ListJobsResponseDefault & {
+  headers: Headers;
+};
+
+export type v1ListJobsResponse =
+  v1ListJobsResponseSuccess | v1ListJobsResponseError;
+
+export const getV1ListJobsUrl = (params?: V1ListJobsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/jobs?${stringifiedParams}`
+    : `/v1/jobs`;
+};
+
+export const v1ListJobs = async (
+  params?: V1ListJobsParams,
+  options?: RequestInit,
+): Promise<v1ListJobsResponse> => {
+  const res = await fetch(getV1ListJobsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1ListJobsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1ListJobsResponse;
 };
 
 export type v1GetJobStatusResponse200 = {

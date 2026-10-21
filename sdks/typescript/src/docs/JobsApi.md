@@ -15,6 +15,7 @@ All URIs are relative to *http://localhost*
 |[**v1GetJobStatus**](#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}|
 |[**v1JobApprovalChecklist**](#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval|
 |[**v1JobLatency**](#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency|
+|[**v1ListJobs**](#v1listjobs) | **GET** /v1/jobs | |
 |[**v1RetryJob**](#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry|
 
 # **v1CancelJob**
@@ -610,6 +611,60 @@ void (empty response body)
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Latency analytics |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1ListJobs**
+> V1ListJobs200Response v1ListJobs()
+
+
+### Example
+
+```typescript
+import {
+    JobsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new JobsApi(configuration);
+
+let limit: number; // (optional) (default to undefined)
+let offset: number; // (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1ListJobs(
+    limit,
+    offset
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] |  | (optional) defaults to undefined|
+| **offset** | [**number**] |  | (optional) defaults to undefined|
+
+
+### Return type
+
+**V1ListJobs200Response**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Recent jobs |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

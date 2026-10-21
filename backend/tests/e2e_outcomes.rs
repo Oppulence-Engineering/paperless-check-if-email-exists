@@ -122,11 +122,11 @@ async fn test_post_single_outcome_creates_row() -> Result<()> {
 
 	assert_eq!(
 		count_outcomes(db.pool(), tenant_id, "User@example.com").await,
-		1
+		0
 	);
 	assert_eq!(
 		count_outcomes(db.pool(), tenant_id, "user@example.com").await,
-		0
+		1
 	);
 	let body: serde_json::Value = serde_json::from_slice(response.body())?;
 	assert_eq!(body["accepted"], 1);

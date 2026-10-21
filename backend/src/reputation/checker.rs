@@ -12,13 +12,7 @@ pub async fn check_domain(
 	domain: &str,
 	force_refresh: bool,
 ) -> Result<ReputationCheckResponse, ReacherResponseError> {
-	let normalized = domain.trim().to_lowercase();
-	if normalized.is_empty() || !normalized.contains('.') {
-		return Err(ReacherResponseError::new(
-			StatusCode::BAD_REQUEST,
-			"Invalid domain",
-		));
-	}
+	let normalized = crate::http::v1::tenant_domains::normalize_domain(domain.to_string())?;
 
 	if !force_refresh {
 		if let Some(pool) = pg_pool {
@@ -32,6 +26,11 @@ pub async fn check_domain(
 			{
 				let value: serde_json::Value = cached.get("response");
 				if let Ok(mut response) = serde_json::from_value::<ReputationCheckResponse>(value) {
+					(response.score, response.risk_level) = compute_score(
+						&response.blacklist_results,
+						&response.dns_records,
+						&response.domain_info,
+					);
 					response.cached = true;
 					return Ok(response);
 				}
@@ -130,6 +129,7 @@ fn follow_rdap_redirect(url: &reqwest::Url, requests_so_far: usize) -> bool {
 /// `follow_rdap_redirect` allows.
 pub(crate) fn rdap_client_builder() -> reqwest::ClientBuilder {
 	reqwest::Client::builder()
+		.timeout(std::time::Duration::from_secs(5))
 		.user_agent(concat!("reacher/", env!("CARGO_PKG_VERSION")))
 		.redirect(reqwest::redirect::Policy::custom(|attempt| {
 			if follow_rdap_redirect(attempt.url(), attempt.previous().len()) {

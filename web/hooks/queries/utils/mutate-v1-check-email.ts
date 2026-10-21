@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/api/error-message";
 import { z } from "zod";
 import { Configuration, V1Api } from "@oppulence/reacher-sdk";
 
@@ -34,10 +35,6 @@ export async function fetchV1CheckEmail(body: V1CheckEmailInput, signal?: AbortS
 		}
 		return V1CheckEmail200Response.parse(response.data);
 	} catch (error) {
-		const envelope = z
-			.object({ response: z.object({ data: z.object({ error: z.string() }) }) })
-			.safeParse(error);
-		if (envelope.success) throw new Error(envelope.data.response.data.error);
-		throw error;
+		throw new Error(errorMessage(error));
 	}
 }

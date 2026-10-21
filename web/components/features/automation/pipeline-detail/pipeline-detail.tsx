@@ -329,7 +329,17 @@ export function PipelineDetail({
 					) : null}
 				</Group>
 			</Section>
-			<Sheet onOpenChange={setEditing} open={editing}>
+			<Sheet
+				onOpenChange={(open) => {
+					if (
+						open ||
+						!document.querySelector('[data-slot="pipeline-form"][data-dirty="true"]') ||
+						window.confirm("Discard your unsaved changes?")
+					)
+						setEditing(open);
+				}}
+				open={editing}
+			>
 				<SheetContent className="flex w-full flex-col gap-6 overflow-y-auto pb-8 sm:max-w-xl">
 					<SheetHeader>
 						<SheetTitle>Edit {pipeline.name}</SheetTitle>

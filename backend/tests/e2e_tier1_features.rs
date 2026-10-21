@@ -1873,7 +1873,12 @@ mod comments_tests {
 		assert_eq!(r.status(), StatusCode::CREATED);
 		let b: serde_json::Value = serde_json::from_slice(r.body()).unwrap();
 		assert_eq!(b["body"], "Looks good!");
-		assert_eq!(b["author"], "tester");
+		let key_id: uuid::Uuid = sqlx::query_scalar("SELECT id FROM api_keys WHERE tenant_id = $1")
+			.bind(tid)
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+		assert_eq!(b["author"], format!("API key: {}", key_id));
 		let comment_id = b["id"].as_i64().unwrap();
 
 		// List
@@ -2063,6 +2068,10 @@ mod list_quality_tests {
 			.bind(jid).bind(&payload).bind(&extra).bind(tid).bind(&result).bind(score).bind(category).bind(safe)
 			.execute(db.pool()).await.unwrap();
 		}
+		let other_tenant = insert_tenant(db.pool(), "other-list-qual", None, 0).await;
+		sqlx::query("INSERT INTO v1_task_result (tenant_id,payload,extra,task_state,result,score,safe_to_send) VALUES ($1,'{}',$2,'completed','{\"input\":\"other@example.com\"}',100,true)")
+			.bind(other_tenant).bind(serde_json::json!({"list_id": list_id})).execute(db.pool()).await.unwrap();
+
 		let c = worker_config().await;
 		let r = request()
 			.path(&format!("/v1/lists/{}/quality", list_id))
@@ -2079,9 +2088,8 @@ mod list_quality_tests {
 		assert_eq!(b["categories"]["risky"], 1);
 		assert_eq!(b["categories"]["invalid"], 1);
 		assert_eq!(b["safe_to_send_count"], 1);
-		// 1/3 safe = ~33%, should be grade "D" or "F"
-		let grade = b["quality_grade"].as_str().unwrap();
-		assert!(grade == "D" || grade == "F", "got grade: {}", grade);
+		// Legacy rows without stored identity still count by their original address.
+		assert_eq!(b["quality_grade"], "D");
 	}
 
 	#[tokio::test]

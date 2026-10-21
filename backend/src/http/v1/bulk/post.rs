@@ -217,9 +217,9 @@ async fn create_bulk_job(
 				task_db_id: None,
 			}),
 		};
-		let task_id = sqlx::query_scalar("INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key) VALUES ($1, $2, 'queued', $3, $4) RETURNING id")
+		let task_id = sqlx::query_scalar("INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, source_key, canonical_email) VALUES ($1, $2, 'queued', $3, $4, $5) RETURNING id")
             .bind(job_id).bind(serde_json::json!({"input":{"to_email": email}, "webhook": body.webhook}))
-            .bind(tenant_ctx.tenant_id).bind(&source_key).fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
+            .bind(tenant_ctx.tenant_id).bind(&source_key).bind(crate::http::v1::lists::canonicalize::canonicalize_email(&email)).fetch_one(&mut *tx).await.map_err(ReacherResponseError::from)?;
 		task.metadata
 			.as_mut()
 			.expect("metadata set above")

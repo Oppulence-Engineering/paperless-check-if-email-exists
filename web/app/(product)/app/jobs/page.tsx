@@ -13,7 +13,7 @@ import JobsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Jobs - Oppulence",
+	title: "Jobs",
 	description: "Create bulk jobs and inspect progress, results, approvals, and failures",
 };
 

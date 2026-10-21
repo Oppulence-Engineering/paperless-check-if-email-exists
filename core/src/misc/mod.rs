@@ -95,6 +95,14 @@ mod tests {
 	use crate::syntax::{check_syntax, SyntaxDetails};
 	use crate::EmailAddress;
 
+	#[test]
+	fn documentation_domains_are_not_free_mailbox_providers() {
+		for domain in ["example.com", "example.net", "example.org"] {
+			assert!(!FREE_EMAIL_PROVIDERS_SET.contains(domain));
+		}
+		assert!(FREE_EMAIL_PROVIDERS_SET.contains("gmail.com"));
+	}
+
 	#[tokio::test]
 	async fn test_check_misc() {
 		let syntax = SyntaxDetails {

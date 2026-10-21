@@ -153,7 +153,8 @@ describe("OverviewPanel", () => {
 		expect(await screen.findByText("Pipelines could not be loaded.")).toBeInTheDocument();
 		expect(screen.getByLabelText("Email address")).toHaveAttribute("name", "email");
 
-		// The endpoint request failed, so that setup step is hidden; the other steps show.
+		fireEvent.click(screen.getByText("Workspace setup checklist"));
+		// Optional setup requests start only when expanded.
 		expect(await screen.findByText("Set up your workspace")).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /Upload a list.*Done/ })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /Turn on re-checks.*To do/ })).toBeInTheDocument();

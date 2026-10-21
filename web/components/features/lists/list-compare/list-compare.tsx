@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -73,6 +74,13 @@ export function ListCompare({ className, listId, ...props }: ListCompareProps) {
 			),
 	});
 
+	if (lists.isSuccess && earlierLists.length === 0)
+		return (
+			<p role="status">
+				No earlier completed list is available to compare. Upload and complete another list first.
+			</p>
+		);
+
 	return (
 		<section data-slot="list-compare" className={cn("flex flex-col gap-4", className)} {...props}>
 			<Group>
@@ -107,7 +115,7 @@ export function ListCompare({ className, listId, ...props }: ListCompareProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{diff.error.message}
+					{errorMessage(diff.error)}
 				</p>
 			) : null}
 			{diff.data ? (

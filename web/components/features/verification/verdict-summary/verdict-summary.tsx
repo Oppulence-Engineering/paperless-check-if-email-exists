@@ -1,3 +1,7 @@
+"use client";
+
+import "client-only";
+import { useAddressPrefill } from "@/lib/verification/prefill";
 import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 
@@ -91,7 +95,8 @@ export function VerdictSummary({ className, result, ...props }: VerdictSummaryPr
 									Did you mean{" "}
 									<Link
 										className="font-medium text-white underline underline-offset-4"
-										href={`/app/check?email=${encodeURIComponent(suggestion)}`}
+										href="/app/check"
+										onClick={() => useAddressPrefill.getState().setEmail(suggestion)}
 									>
 										{suggestion}
 									</Link>
@@ -157,7 +162,10 @@ export function VerdictSummary({ className, result, ...props }: VerdictSummaryPr
 					</p>
 					{score.verified_at ? (
 						<p className="text-xs text-[#858585]">
-							Verified: <time dateTime={score.verified_at}>{score.verified_at}</time>
+							Verified:{" "}
+							<time dateTime={score.verified_at}>
+								{new Date(score.verified_at).toLocaleString()}
+							</time>
 						</p>
 					) : null}
 				</Row>

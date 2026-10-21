@@ -30,7 +30,7 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByLabel("Use sample result").check();
 	await page.getByRole("button", { name: "Check email" }).click();
 	await expect(page.getByText("test@valid.example.com").first()).toBeVisible();
-	await expect(page.getByText("Quality score")).toBeVisible();
+	await expect(page.getByText("Quality score", { exact: true })).toBeVisible();
 	await expect(page.getByText("Technical details")).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Bounce risk" })).toBeVisible();
 	await expect(page.getByText("Recommendation", { exact: true })).toBeVisible();
@@ -48,8 +48,9 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 		buffer: Buffer.from("email\ntest@valid.example.com\n"),
 	});
 	await page.getByLabel("Name").fill("E2E list");
-	await page.getByRole("button", { name: "Upload" }).click();
-	await expect(page.getByText(/List accepted/)).toBeVisible();
+	await page.getByRole("button", { name: "Preview upload" }).click();
+	await expect(page.getByText(/Verifying this list will use 1 credits/)).toBeVisible();
+	await page.getByRole("button", { name: "Confirm and verify" }).click();
 	await expect(page.getByRole("heading", { name: "E2E list" })).toBeVisible();
 	const ownListsResponse = await page.request.get("/api/backend/v1/lists");
 	expect(ownListsResponse.ok()).toBe(true);

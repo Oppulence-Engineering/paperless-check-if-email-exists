@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import {
 	useCallback,
@@ -707,7 +708,7 @@ export function IdentitySettings({
 							) : null}
 							{isAdministrator && seatDenial ? (
 								<p className="text-sm text-[#858585]" role="status">
-									{seatDenial.message}
+									{errorMessage(seatDenial)}
 								</p>
 							) : null}
 							{organization?.members.length ? (

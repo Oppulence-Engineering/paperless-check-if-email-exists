@@ -14,6 +14,7 @@ All URIs are relative to *http://localhost*
 |[**v1GetSavedSegment**](#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}|
 |[**v1ListQuality**](#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality|
 |[**v1ListSavedSegments**](#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments|
+|[**v1PreviewList**](#v1previewlist) | **POST** /v1/lists/preview | |
 |[**v1UpdateSavedSegment**](#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}|
 
 # **v1CreateRemediationExport**
@@ -548,6 +549,69 @@ const { status, data } = await apiInstance.v1ListSavedSegments(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Saved segments |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1PreviewList**
+> V1PreviewList200Response v1PreviewList()
+
+
+### Example
+
+```typescript
+import {
+    ListsApi,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new ListsApi(configuration);
+
+let file: File; // (default to undefined)
+let emailColumn: string; // (optional) (default to undefined)
+let name: string; // (optional) (default to undefined)
+let policyId: number; // (optional) (default to undefined)
+let sourceKey: string; //Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional) (default to undefined)
+
+const { status, data } = await apiInstance.v1PreviewList(
+    file,
+    emailColumn,
+    name,
+    policyId,
+    sourceKey
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **file** | [**File**] |  | defaults to undefined|
+| **emailColumn** | [**string**] |  | (optional) defaults to undefined|
+| **name** | [**string**] |  | (optional) defaults to undefined|
+| **policyId** | [**number**] |  | (optional) defaults to undefined|
+| **sourceKey** | [**string**] | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. | (optional) defaults to undefined|
+
+
+### Return type
+
+**V1PreviewList200Response**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: multipart/form-data
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Non-billing upload preview |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

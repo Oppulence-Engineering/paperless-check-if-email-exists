@@ -23,7 +23,8 @@ struct Request {
 	reason_detail: Option<String>,
 	source_type: Option<String>,
 	source_ref: Option<String>,
-	created_by: Option<String>,
+	#[serde(rename = "created_by")]
+	_created_by: Option<String>,
 	owner: Option<String>,
 	expires_at: Option<DateTime<Utc>>,
 	confidence: Option<String>,
@@ -36,7 +37,15 @@ fn default_reason() -> String {
 }
 
 #[derive(Debug, Serialize)]
+struct RejectedEmail {
+	email: String,
+	reason: String,
+}
+
+#[derive(Debug, Serialize)]
 struct Response {
+	submitted: usize,
+	rejected: Vec<RejectedEmail>,
 	added: i64,
 	updated: i64,
 	duplicates: i64,
@@ -67,6 +76,7 @@ async fn http_handler(
 		.into());
 	}
 
+	validate_expiry(body.expires_at)?;
 	validate_reason(&body.reason)?;
 	validate_confidence(body.confidence.as_deref())?;
 
@@ -74,9 +84,14 @@ async fn http_handler(
 	let mut updated: i64 = 0;
 	let mut duplicates: i64 = 0;
 	let mut unique_emails = Vec::new();
+	let mut rejected = Vec::new();
 	let mut seen = BTreeSet::new();
 	for email in &body.emails {
 		let Some(normalized) = normalize_suppression_email(email) else {
+			rejected.push(RejectedEmail {
+				email: email.clone(),
+				reason: "Invalid email address".into(),
+			});
 			continue;
 		};
 		if !seen.insert(normalized.clone()) {
@@ -86,30 +101,14 @@ async fn http_handler(
 		unique_emails.push((email.trim(), normalized));
 	}
 
-	if unique_emails.is_empty() {
-		return Err(ReacherResponseError::new(
-			StatusCode::BAD_REQUEST,
-			"emails array must include at least one non-empty email",
-		)
-		.into());
-	}
-
 	let metadata = metadata_for_request(&body).map_err(warp::reject::custom)?;
 	let source_type = body
 		.source_type
 		.clone()
 		.or_else(|| body.source.clone())
 		.unwrap_or_else(|| "manual".to_string());
-	let created_by = body
-		.created_by
-		.clone()
-		.or_else(|| body.owner.clone())
-		.unwrap_or_else(|| "api".to_string());
-	let actor_type = if body.auto_suppressed_by_policy == Some(true) {
-		"policy"
-	} else {
-		"api"
-	};
+	let created_by = tenant_ctx.actor_id();
+	let actor_type = tenant_ctx.actor_type();
 	let mut entry_ids = Vec::new();
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
 
@@ -134,10 +133,11 @@ async fn http_handler(
 				reason_detail = COALESCE(EXCLUDED.reason_detail, v1_suppression_entries.reason_detail),
 				source_type = EXCLUDED.source_type,
 				source_ref = COALESCE(EXCLUDED.source_ref, v1_suppression_entries.source_ref),
-				created_by = COALESCE(EXCLUDED.created_by, v1_suppression_entries.created_by),
+				created_by = COALESCE(v1_suppression_entries.created_by, EXCLUDED.created_by),
 				expires_at = CASE WHEN v1_suppression_entries.expires_at <= NOW()
 					THEN EXCLUDED.expires_at
-					ELSE COALESCE(EXCLUDED.expires_at, v1_suppression_entries.expires_at) END,
+					WHEN EXCLUDED.expires_at IS NULL OR v1_suppression_entries.expires_at IS NULL THEN NULL
+					ELSE GREATEST(EXCLUDED.expires_at, v1_suppression_entries.expires_at) END,
 				last_seen_at = NOW(),
 				metadata = v1_suppression_entries.metadata || EXCLUDED.metadata,
 				updated_at = NOW()
@@ -199,6 +199,8 @@ async fn http_handler(
 
 	Ok(warp::reply::with_status(
 		warp::reply::json(&Response {
+			submitted: body.emails.len(),
+			rejected,
 			added,
 			updated,
 			duplicates,
@@ -206,6 +208,17 @@ async fn http_handler(
 		}),
 		StatusCode::OK,
 	))
+}
+
+fn validate_expiry(expires_at: Option<DateTime<Utc>>) -> Result<(), warp::Rejection> {
+	if expires_at.is_some_and(|expiry| expiry <= Utc::now()) {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Expiry must be in the future",
+		)
+		.into());
+	}
+	Ok(())
 }
 
 fn validate_reason(reason: &str) -> Result<(), warp::Rejection> {
@@ -247,6 +260,9 @@ fn validate_confidence(confidence: Option<&str>) -> Result<(), warp::Rejection> 
 }
 
 fn normalize_suppression_email(email: &str) -> Option<String> {
+	if !check_if_email_exists::syntax::check_syntax(email.trim()).is_valid_syntax {
+		return None;
+	}
 	crate::http::v1::lists::canonicalize::canonicalize_email(email)
 }
 
@@ -322,7 +338,7 @@ mod tests {
 			reason_detail: None,
 			source_type: None,
 			source_ref: None,
-			created_by: None,
+			_created_by: None,
 			owner: Some("revops".to_string()),
 			expires_at: None,
 			confidence: Some("high".to_string()),
@@ -335,7 +351,7 @@ mod tests {
 	fn normalizes_suppression_email() {
 		assert_eq!(
 			normalize_suppression_email(" User@Example.COM "),
-			Some("User@example.com".into())
+			Some("user@example.com".into())
 		);
 		assert_eq!(
 			normalize_suppression_email("A.B+tag@GoogleMail.com"),
@@ -364,6 +380,8 @@ mod tests {
 
 	#[test]
 	fn validates_confidence_values() {
+		assert!(validate_expiry(Some(Utc::now() - chrono::Duration::seconds(1))).is_err());
+		assert!(normalize_suppression_email("qa <script>x</script>@example.com").is_none());
 		assert!(validate_confidence(Some("high")).is_ok());
 		assert!(validate_confidence(Some("certain")).is_err());
 	}

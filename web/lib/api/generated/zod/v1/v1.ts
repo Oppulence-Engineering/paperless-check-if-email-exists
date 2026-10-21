@@ -1358,6 +1358,18 @@ export const V1ListListsDefaultResponse = zod.object({
 /**
  * @summary POST /v1/lists
  */
+export const v1CreateListHeaderIdempotencyKeyMax = 200;
+
+export const V1CreateListHeader = zod.object({
+  "Idempotency-Key": zod
+    .string()
+    .max(v1CreateListHeaderIdempotencyKeyMax)
+    .optional()
+    .describe(
+      "Reuse for retries of the same upload to prevent duplicate jobs and charges",
+    ),
+});
+
 export const V1CreateListBody = zod.strictObject({
   email_column: zod.string().nullish(),
   file: zod.instanceof(Blob),
@@ -1371,12 +1383,27 @@ export const V1CreateListBody = zod.strictObject({
     ),
 });
 
+export const v1CreateList202ResponseRejectedItemRowNumberMin = 0;
+
 export const V1CreateList202Response = zod.object({
+  duplicates: zod.int().optional(),
   email_column: zod.string(),
   job_id: zod.int(),
   list_id: zod.int(),
+  rejected: zod
+    .array(
+      zod.object({
+        reason: zod.string(),
+        row_number: zod
+          .int()
+          .min(v1CreateList202ResponseRejectedItemRowNumberMin),
+        value: zod.string(),
+      }),
+    )
+    .optional(),
   source_key: zod.string().nullish(),
   total_rows: zod.int(),
+  unique_emails: zod.int().optional(),
 });
 
 export const V1CreateListDefaultResponse = zod.object({
@@ -1412,6 +1439,7 @@ export const V1GetList200Response = zod.object({
   job_id: zod.int(),
   name: zod.string(),
   policy_id: zod.int().nullish(),
+  rejected_rows: zod.int().nullish(),
   source_key: zod.string().nullish(),
   status: zod.string(),
   summary: zod.object({
@@ -2364,6 +2392,15 @@ export const V1AddSuppressions200Response = zod.object({
   added: zod.int(),
   duplicates: zod.int(),
   entry_ids: zod.array(zod.int()).optional(),
+  rejected: zod
+    .array(
+      zod.object({
+        email: zod.string(),
+        reason: zod.string(),
+      }),
+    )
+    .optional(),
+  submitted: zod.int().optional(),
   updated: zod.int().optional(),
 });
 
@@ -2469,6 +2506,15 @@ export const V1ImportSuppressions200Response = zod.object({
   added: zod.int(),
   duplicates: zod.int(),
   entry_ids: zod.array(zod.int()).optional(),
+  rejected: zod
+    .array(
+      zod.object({
+        email: zod.string(),
+        reason: zod.string(),
+      }),
+    )
+    .optional(),
+  submitted: zod.int().optional(),
   updated: zod.int().optional(),
 });
 
@@ -2533,5 +2579,15 @@ export const V1ListSuppressionEvents200Response = zod.object({
 });
 
 export const V1ListSuppressionEventsDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const V1RestoreSuppressionParams = zod.object({
+  id: zod.coerce.number().int(),
+});
+
+export const V1RestoreSuppression200Response = zod.unknown();
+
+export const V1RestoreSuppressionDefaultResponse = zod.object({
   error: zod.string(),
 });

@@ -512,9 +512,9 @@ async fn count_recent_outcomes(
 	sqlx::query_scalar::<_, i64>(
 		r#"
 		SELECT COUNT(*)
-		FROM verification_outcomes
+		FROM verification_outcome_evidence
 		WHERE tenant_id = $1
-			AND canonical_email = $2
+			AND lower(canonical_email) = lower($2)
 			AND outcome_type = $3
 			AND occurred_at >= NOW() - ($4::INT * INTERVAL '1 day')
 		"#,
@@ -641,9 +641,9 @@ pub async fn enrich_outcome_context(
 			COUNT(*) FILTER (WHERE outcome_type = 'click'::outcome_type AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS click_count,
 			COUNT(*) FILTER (WHERE outcome_type = 'soft_bounce'::outcome_type) AS soft_bounce_count,
 			MAX(occurred_at) FILTER (WHERE outcome_type IN ('open'::outcome_type, 'click'::outcome_type) AND (email IS NOT NULL OR canonical_email LIKE '%@gmail.com')) AS latest_engagement
-		FROM verification_outcomes
+		FROM verification_outcome_evidence
 		WHERE tenant_id = $1
-			AND canonical_email = $2
+			AND lower(canonical_email) = lower($2)
 			AND occurred_at >= $3 - ($4::INT * INTERVAL '1 day')
 			AND occurred_at <= $3
 		"#,
@@ -711,8 +711,8 @@ pub async fn apply_post_verification_outcome_check(
 			BOOL_OR(outcome_type = 'hard_bounce'::outcome_type) AS hard_bounce,
 			BOOL_OR(outcome_type = 'complaint'::outcome_type) AS complaint,
 			BOOL_OR(outcome_type = 'unsubscribe'::outcome_type) AS unsubscribe
-		FROM verification_outcomes
-		WHERE tenant_id = $1 AND canonical_email = $2
+		FROM verification_outcome_evidence
+		WHERE tenant_id = $1 AND lower(canonical_email) = lower($2)
 			AND occurred_at >= NOW() - ($3::INT * INTERVAL '1 day')
 		"#,
 	)

@@ -7,6 +7,8 @@ Name | Type | Description | Notes
 **Added** | **int64** |  | [required]
 **Duplicates** | **int64** |  | [required]
 **EntryIds** | Pointer to **[]int32** |  | [optional]
+**Rejected** | Pointer to [**[]AddSuppressionsResponseRejectedInner**](AddSuppressionsResponseRejectedInner.md) |  | [optional]
+**Submitted** | Pointer to **int32** |  | [optional]
 **Updated** | Pointer to **int64** |  | [optional]
 
 ## Methods
@@ -92,6 +94,56 @@ SetEntryIds sets EntryIds field to given value.
 `func (o *AddSuppressionsResponse) HasEntryIds() bool`
 
 HasEntryIds returns a boolean if a field has been set.
+
+### GetRejected
+
+`func (o *AddSuppressionsResponse) GetRejected() []AddSuppressionsResponseRejectedInner`
+
+GetRejected returns the Rejected field if non-nil, zero value otherwise.
+
+### GetRejectedOk
+
+`func (o *AddSuppressionsResponse) GetRejectedOk() ([]AddSuppressionsResponseRejectedInner, bool)`
+
+GetRejectedOk returns a tuple with the Rejected field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRejected
+
+`func (o *AddSuppressionsResponse) SetRejected(v []AddSuppressionsResponseRejectedInner)`
+
+SetRejected sets Rejected field to given value.
+
+### HasRejected
+
+`func (o *AddSuppressionsResponse) HasRejected() bool`
+
+HasRejected returns a boolean if a field has been set.
+
+### GetSubmitted
+
+`func (o *AddSuppressionsResponse) GetSubmitted() int32`
+
+GetSubmitted returns the Submitted field if non-nil, zero value otherwise.
+
+### GetSubmittedOk
+
+`func (o *AddSuppressionsResponse) GetSubmittedOk() (*int32, bool)`
+
+GetSubmittedOk returns a tuple with the Submitted field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSubmitted
+
+`func (o *AddSuppressionsResponse) SetSubmitted(v int32)`
+
+SetSubmitted sets Submitted field to given value.
+
+### HasSubmitted
+
+`func (o *AddSuppressionsResponse) HasSubmitted() bool`
+
+HasSubmitted returns a boolean if a field has been set.
 
 ### GetUpdated
 

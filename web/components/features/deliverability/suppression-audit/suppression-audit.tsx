@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import type { ComponentPropsWithoutRef } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +60,7 @@ export function SuppressionAudit({ className, entryId, ...props }: SuppressionAu
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{events.error.message}
+					{errorMessage(events.error)}
 				</p>
 			) : null}
 			{events.isPending ? (

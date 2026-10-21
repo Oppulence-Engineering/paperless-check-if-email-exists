@@ -117,6 +117,7 @@ enum PathProfile {
 enum BodyProfile {
 	None,
 	JsonV0CheckEmail,
+	JsonEmailHistory,
 	JsonV0BulkCreate,
 	JsonOnboard,
 	JsonV1CheckEmail,
@@ -1333,6 +1334,61 @@ pub async fn seed_upgrade_fixtures(pool: &PgPool) -> HarnessFixtures {
 
 pub fn canonical_cases() -> Vec<HarnessCase> {
 	vec![
+		case!(
+			"GET",
+			"/v1/jobs",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/jobs"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&["jobs", "total"])
+		),
+		case!(
+			"POST",
+			"/v1/lists/preview",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/lists/preview"),
+			BodyProfile::MultipartListUpload,
+			200,
+			Expectation::Json(&[
+				"total_rows",
+				"unique_emails",
+				"estimated_credits",
+				"rejected"
+			])
+		),
+		case!(
+			"POST",
+			"/v1/emails/history",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/emails/history"),
+			BodyProfile::JsonEmailHistory,
+			200,
+			Expectation::Json(&["total", "history"])
+		),
+		case!(
+			"POST",
+			"/v1/suppressions/{id}/restore",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/suppressions/2147483647/restore"),
+			BodyProfile::None,
+			404,
+			Expectation::Error("Removed suppression not found")
+		),
+		case!(
+			"POST",
+			"/v1/me/domains/{domain}/verify",
+			ConfigProfile::BearerTenant,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/me/domains/missing.example.com/verify"),
+			BodyProfile::None,
+			404,
+			Expectation::Error("Domain not found")
+		),
 		case!(
 			"GET",
 			"/metrics",
@@ -2949,6 +3005,7 @@ fn apply_body(
 ) -> RequestBuilder {
 	match body {
 		BodyProfile::None => builder,
+		BodyProfile::JsonEmailHistory => builder.json(&serde_json::json!({"email":"good@example.com"})),
 		BodyProfile::JsonV0CheckEmail => builder.json(&serde_json::json!({
 			"to_email": "sandbox@example.com",
 			"sandbox": true
@@ -3079,11 +3136,11 @@ fn apply_body(
 		})),
 		BodyProfile::JsonMeDomainCreate => builder.json(&serde_json::json!({
 			"domain": "created.example.com",
-			"is_active": true
+			"is_active": false
 		})),
 		BodyProfile::JsonMeDomainCreateDuplicate => builder.json(&serde_json::json!({
 			"domain": "existing.example.com",
-			"is_active": true
+			"is_active": false
 		})),
 		BodyProfile::JsonMeDomainPatch => builder.json(&serde_json::json!({
 			"notes": "patched"

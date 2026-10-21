@@ -61,17 +61,18 @@ async fn http_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let (limit, offset) = clamp_page(query.limit, query.offset);
 	let status_filter = normalize_status_filter(query.status.as_deref())?;
-	let include_expired = query.include_expired.unwrap_or(false);
+	let include_expired =
+		query.include_expired.unwrap_or(false) || status_filter.as_deref() == Some("expired");
 
 	let rows = sqlx::query(
 		r#"
 		SELECT
-			id, email, canonical_email, status, reason::TEXT AS reason,
+			id, email, canonical_email, CASE WHEN status = 'active' AND expires_at <= NOW() THEN 'expired' ELSE status END AS status, reason::TEXT AS reason,
 			reason_code, reason_detail, source, source_type, source_ref, notes,
 			created_by, expires_at, last_seen_at, metadata, created_at, updated_at
 		FROM v1_suppression_entries
 		WHERE tenant_id = $1
-		  AND ($2::TEXT IS NULL OR status = $2)
+		  AND ($2::TEXT IS NULL OR CASE WHEN status = 'active' AND expires_at <= NOW() THEN 'expired' ELSE status END = $2 OR ($2 = 'active' AND $6::BOOLEAN AND status = 'active'))
 		  AND ($3::TEXT IS NULL OR reason::TEXT = $3)
 		  AND ($4::TEXT IS NULL OR source_type = $4)
 		  AND ($5::TEXT IS NULL OR source_ref = $5)
@@ -97,7 +98,7 @@ async fn http_handler(
 		SELECT COUNT(*)
 		FROM v1_suppression_entries
 		WHERE tenant_id = $1
-		  AND ($2::TEXT IS NULL OR status = $2)
+		  AND ($2::TEXT IS NULL OR CASE WHEN status = 'active' AND expires_at <= NOW() THEN 'expired' ELSE status END = $2 OR ($2 = 'active' AND $6::BOOLEAN AND status = 'active'))
 		  AND ($3::TEXT IS NULL OR reason::TEXT = $3)
 		  AND ($4::TEXT IS NULL OR source_type = $4)
 		  AND ($5::TEXT IS NULL OR source_ref = $5)
@@ -156,12 +157,15 @@ fn normalize_status_filter(status: Option<&str>) -> Result<Option<String>, warp:
 	if status == "all" {
 		return Ok(None);
 	}
-	if matches!(status.as_str(), "active" | "inactive" | "merged") {
+	if matches!(
+		status.as_str(),
+		"active" | "inactive" | "merged" | "expired"
+	) {
 		return Ok(Some(status));
 	}
 	Err(ReacherResponseError::new(
 		StatusCode::BAD_REQUEST,
-		"Invalid status. Must be one of: active, inactive, merged, all",
+		"Invalid status. Must be one of: active, inactive, merged, expired, all",
 	)
 	.into())
 }

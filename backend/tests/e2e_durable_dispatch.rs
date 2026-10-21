@@ -111,8 +111,8 @@ async fn every_list_insertion_failure_rolls_back_quota_rows_and_dispatch() {
         .bind(tenant).fetch_one(db.pool()).await.unwrap();
 	assert_eq!(
 		counts,
-		(2, 2),
-		"broker availability is independent of committed admission"
+		(1, 1),
+		"case variants share one charge and broker availability is independent of committed admission"
 	);
 }
 

@@ -524,8 +524,8 @@ async fn enrich_tenant_scoring_context(
 		  AND completed_at >= $3 - INTERVAL '180 days'
 		  AND completed_at < $3
 		  AND (
-			($2::TEXT IS NOT NULL AND canonical_email = $2)
-			OR (canonical_email IS NULL AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2)
+			($2::TEXT IS NOT NULL AND lower(canonical_email) = lower($2))
+			OR (canonical_email IS NULL AND lower(mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) = lower($2))
 		  )
 		ORDER BY completed_at DESC
 		LIMIT 20

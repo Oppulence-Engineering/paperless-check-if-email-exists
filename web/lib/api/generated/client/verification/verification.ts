@@ -11,9 +11,11 @@ import type {
   AlertListResponse,
   AlertView,
   ErrorEnvelope,
+  HistoryRequest,
   UpdateAlertRequest,
   V1EmailHistory200,
   V1EmailHistoryParams,
+  V1EmailHistoryPost200,
   V1ListAlertsParams,
 } from "../model";
 
@@ -188,6 +190,77 @@ export const v1UpdateAlert = async (
     status: res.status,
     headers: res.headers,
   } as v1UpdateAlertResponse;
+};
+
+export type v1EmailHistoryPostResponse200 = {
+  data: V1EmailHistoryPost200;
+  status: 200;
+};
+
+export type v1EmailHistoryPostResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1EmailHistoryPostResponseSuccess =
+  v1EmailHistoryPostResponse200 & {
+    headers: Headers;
+  };
+export type v1EmailHistoryPostResponseError =
+  v1EmailHistoryPostResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1EmailHistoryPostResponse =
+  v1EmailHistoryPostResponseSuccess | v1EmailHistoryPostResponseError;
+
+export const getV1EmailHistoryPostUrl = () => {
+  return `/v1/emails/history`;
+};
+
+export const v1EmailHistoryPost = async (
+  historyRequest: HistoryRequest,
+  options?: RequestInit,
+): Promise<v1EmailHistoryPostResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getV1EmailHistoryPostUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(historyRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1EmailHistoryPostResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1EmailHistoryPostResponse;
 };
 
 export type v1EmailHistoryResponse200 = {

@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
@@ -57,19 +58,6 @@ const policyModes = [
 	["enterprise_strict", "Enterprise strict"],
 	["custom", "Custom (review only)"],
 ] as const;
-
-function requestError(cause: unknown) {
-	const envelope = z
-		.object({
-			response: z.object({ data: z.object({ error: z.string() }) }),
-		})
-		.safeParse(cause);
-	return envelope.success
-		? envelope.data.response.data.error
-		: cause instanceof Error
-			? cause.message
-			: "Request failed.";
-}
 
 function field(form: FormData, name: string) {
 	const value = form.get(name);
@@ -221,7 +209,7 @@ export function VerificationSettings({
 			await action();
 			setNotice(message);
 		} catch (cause) {
-			setError(requestError(cause));
+			setError(errorMessage(cause));
 		}
 	}
 
@@ -493,7 +481,7 @@ export function VerificationSettings({
 									{reverification.isError ? (
 										<Row>
 											<p className="text-sm text-red-300" role="alert">
-												{requestError(reverification.error)}
+												{errorMessage(reverification.error)}
 											</p>
 										</Row>
 									) : null}
@@ -607,7 +595,7 @@ export function VerificationSettings({
 									<>
 										{saveReverification.isError ? (
 											<p className="text-sm text-red-300" role="alert">
-												{requestError(saveReverification.error)}
+												{errorMessage(saveReverification.error)}
 											</p>
 										) : null}
 										<div className="flex justify-end">

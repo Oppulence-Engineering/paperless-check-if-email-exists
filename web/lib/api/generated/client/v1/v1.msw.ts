@@ -725,6 +725,27 @@ export const getV1ListSuppressionEventsMockHandler = (
     options,
   );
 };
+
+export const getV1RestoreSuppressionMockHandler = (
+  overrideResponse?:
+    | void
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<void> | void),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/suppressions/:id/restore",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      if (typeof overrideResponse === "function") {
+        await overrideResponse(info);
+      }
+
+      return new HttpResponse(null, { status: 200 });
+    },
+    options,
+  );
+};
 export const getV1Mock = () => [
   getV1CreateBulkJobMockHandler(),
   getV1CheckEmailWithOnboardMockHandler(),
@@ -752,4 +773,5 @@ export const getV1Mock = () => [
   getV1ImportSuppressionsMockHandler(),
   getV1DeleteSuppressionMockHandler(),
   getV1ListSuppressionEventsMockHandler(),
+  getV1RestoreSuppressionMockHandler(),
 ];

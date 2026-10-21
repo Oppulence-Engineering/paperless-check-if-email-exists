@@ -212,6 +212,7 @@ pub async fn resolve_from_api_key(
 	});
 
 	Ok(TenantContext {
+		user_id: None,
 		tenant_id: Some(row.get("tenant_id")),
 		api_key_id: Some(api_key_id),
 		tenant_name: row.get("tenant_name"),
@@ -300,6 +301,7 @@ pub async fn resolve_tenant_context_by_id(
 	};
 
 	Ok(TenantContext {
+		user_id: None,
 		tenant_id: Some(row.get("id")),
 		api_key_id: None,
 		tenant_name: row.get("name"),

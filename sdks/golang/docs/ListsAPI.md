@@ -14,6 +14,7 @@ Method | HTTP request | Description
 [**V1GetSavedSegment**](ListsAPI.md#V1GetSavedSegment) | **Get** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 [**V1ListQuality**](ListsAPI.md#V1ListQuality) | **Get** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
 [**V1ListSavedSegments**](ListsAPI.md#V1ListSavedSegments) | **Get** /v1/segments | GET /v1/segments
+[**V1PreviewList**](ListsAPI.md#V1PreviewList) | **Post** /v1/lists/preview |
 [**V1UpdateSavedSegment**](ListsAPI.md#V1UpdateSavedSegment) | **Patch** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}
 
 
@@ -701,6 +702,78 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1PreviewList
+
+> V1PreviewList200Response V1PreviewList(ctx).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	file := os.NewFile(1234, "some_file") // *os.File |
+	emailColumn := "emailColumn_example" // string |  (optional)
+	name := "name_example" // string |  (optional)
+	policyId := int64(789) // int64 |  (optional)
+	sourceKey := "sourceKey_example" // string | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.ListsAPI.V1PreviewList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ListsAPI.V1PreviewList``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1PreviewList`: V1PreviewList200Response
+	fmt.Fprintf(os.Stdout, "Response from `ListsAPI.V1PreviewList`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1PreviewListRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **file** | ***os.File** |  |
+ **emailColumn** | **string** |  |
+ **name** | **string** |  |
+ **policyId** | **int64** |  |
+ **sourceKey** | **string** | Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor. |
+
+### Return type
+
+[**V1PreviewList200Response**](V1PreviewList200Response.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: multipart/form-data
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

@@ -233,7 +233,7 @@ async fn list_handler(
 		       provider_message_id, event_family, correlation_status, created_at
 		FROM v1_contact_outcomes
 		WHERE tenant_id = $1
-		  AND ($2::TEXT IS NULL OR canonical_email = $2)
+		  AND ($2::TEXT IS NULL OR lower(canonical_email) = lower($2))
 		  AND ($3::TEXT IS NULL OR event_type = $3)
 		  AND ($4::TEXT IS NULL OR source_key = $4)
 		  AND ($5::TIMESTAMPTZ IS NULL OR occurred_at >= $5)

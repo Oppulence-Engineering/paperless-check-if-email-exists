@@ -27,6 +27,10 @@ struct TaskResult {
 	result: Option<serde_json::Value>,
 	error: Option<String>,
 	retry_count: i32,
+	row_number: Option<i32>,
+	original_email: Option<String>,
+	is_duplicate: bool,
+	canonical_task_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,10 +73,12 @@ async fn http_handler(
 			Option<DateTime<Utc>>,
 			Option<serde_json::Value>,
 			Option<serde_json::Value>,
+			Option<i32>, Option<String>, Option<bool>, Option<i32>,
 		),
 	>(
 		r#"
-		SELECT id, task_state::TEXT, result, error, retry_count, completed_at, recommendation, policy_evaluation
+		SELECT id, task_state::TEXT, result, error, retry_count, completed_at, recommendation, policy_evaluation,
+		 (extra->>'row_index')::integer + 1, COALESCE(extra->>'original_email', (SELECT l.original_data->(v1_task_result.extra->>'row_index')->>l.email_column FROM v1_lists l WHERE l.id=(v1_task_result.extra->>'list_id')::integer AND l.tenant_id=v1_task_result.tenant_id), payload->'input'->>'to_email'), is_duplicate, canonical_task_id
 		FROM v1_task_result
 		WHERE job_id = $1
 		  AND task_state = $4::task_state
@@ -107,6 +113,10 @@ async fn http_handler(
 				result,
 				error: r.3,
 				retry_count: r.4,
+				row_number: r.8,
+				original_email: r.9,
+				is_duplicate: r.10.unwrap_or(false),
+				canonical_task_id: r.11,
 			}
 		})
 		.collect();

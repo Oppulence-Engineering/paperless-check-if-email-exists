@@ -16,7 +16,7 @@ import { safeReturnTo } from "@/lib/auth/origin";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Accept invitation - Oppulence",
+	title: "Accept invitation",
 	description: "Review and accept an organization invitation.",
 };
 

@@ -352,7 +352,7 @@ fn validate_thresholds(
 		}
 		_ => Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
-			"Set approval_excellent_threshold and approval_good_threshold together, from 0 to 100, with excellent above good",
+			"Set both approval thresholds between 0 and 100, with Excellent above Good",
 		)
 		.into()),
 	}

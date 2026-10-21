@@ -1,4 +1,5 @@
 "use client";
+import { errorMessage } from "@/lib/api/error-message";
 
 import "client-only";
 
@@ -225,7 +226,7 @@ export function FinderPanel({ initialJobId, className, ...props }: FinderPanelPr
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{validation || create.error?.message || result.error?.message}
+						{validation || errorMessage(create.error || result.error)}
 					</p>
 				) : null}
 				{jobId ? (

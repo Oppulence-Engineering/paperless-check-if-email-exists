@@ -8,19 +8,21 @@ use std::sync::Arc;
 use warp::http::StatusCode;
 use warp::Filter;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct TenantDomainResponse {
 	pub id: uuid::Uuid,
 	pub tenant_id: uuid::Uuid,
 	pub domain: String,
 	pub is_active: bool,
 	pub is_verified: bool,
+	pub verification_record: String,
+	pub verification_value: String,
 	pub notes: Option<String>,
 	pub created_at: String,
 	pub updated_at: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 struct TenantDomainsListResponse {
 	pub domains: Vec<TenantDomainResponse>,
 }
@@ -69,8 +71,28 @@ fn ensure_tenant_id(tenant_ctx: TenantContext) -> Result<uuid::Uuid, warp::Rejec
 	})
 }
 
-fn normalize_domain(raw: String) -> Result<String, ReacherResponseError> {
-	let mut domain = raw.trim().to_ascii_lowercase();
+pub(crate) fn normalize_domain(raw: String) -> Result<String, ReacherResponseError> {
+	let raw = raw.trim();
+	let mut domain = if raw
+		.get(..8)
+		.is_some_and(|s| s.eq_ignore_ascii_case("https://"))
+		|| raw
+			.get(..7)
+			.is_some_and(|s| s.eq_ignore_ascii_case("http://"))
+	{
+		let url = reqwest::Url::parse(raw).map_err(|_| {
+			ReacherResponseError::new(StatusCode::BAD_REQUEST, "Invalid domain URL")
+		})?;
+		if !url.username().is_empty() || url.password().is_some() {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"Domain URL must not include credentials",
+			));
+		}
+		url.host_str().unwrap_or_default().to_ascii_lowercase()
+	} else {
+		raw.to_ascii_lowercase()
+	};
 	if domain.is_empty() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -95,10 +117,7 @@ fn normalize_domain(raw: String) -> Result<String, ReacherResponseError> {
 		));
 	}
 
-	domain = domain
-		.trim_end_matches('.')
-		.trim_start_matches('.')
-		.to_string();
+	domain = domain.trim_end_matches('.').to_string();
 	if domain.is_empty() || !domain.contains('.') {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -106,6 +125,15 @@ fn normalize_domain(raw: String) -> Result<String, ReacherResponseError> {
 		));
 	}
 
+	if domain.parse::<std::net::IpAddr>().is_ok()
+		|| domain.split('.').any(|label| {
+			label.is_empty() || label.len() > 63 || label.starts_with('-') || label.ends_with('-')
+		}) {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Invalid domain name",
+		));
+	}
 	Ok(domain)
 }
 
@@ -116,6 +144,8 @@ fn row_to_domain(row: &sqlx::postgres::PgRow) -> TenantDomainResponse {
 		domain: row.get("domain"),
 		is_active: row.get("is_active"),
 		is_verified: row.get("is_verified"),
+		verification_record: format!("_verifier.{}", row.get::<String, _>("domain")),
+		verification_value: format!("verifier={}", row.get::<String, _>("verification_token")),
 		notes: row.get("notes"),
 		created_at: row.get::<DateTime<Utc>, _>("created_at").to_rfc3339(),
 		updated_at: row.get::<DateTime<Utc>, _>("updated_at").to_rfc3339(),
@@ -129,7 +159,7 @@ async fn list_domains_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 
 	let rows = sqlx::query(
-		"SELECT id, tenant_id, domain, is_active, is_verified, notes, created_at, updated_at \
+		"SELECT id, tenant_id, domain, is_active, is_verified, verification_token, notes, created_at, updated_at \
 		 FROM tenant_domains WHERE tenant_id = $1 ORDER BY domain ASC",
 	)
 	.bind(tenant_id)
@@ -149,12 +179,19 @@ async fn create_domain_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 	let domain = normalize_domain(body.domain)?;
-	let is_active = body.is_active.unwrap_or(true);
+	if body.is_active == Some(true) {
+		return Err(ReacherResponseError::new(
+			StatusCode::BAD_REQUEST,
+			"Verify domain ownership before activating it",
+		)
+		.into());
+	}
+	let is_active = false;
 
 	let row = sqlx::query(
 		"INSERT INTO tenant_domains (tenant_id, domain, is_active, notes) \
 		 VALUES ($1, $2, $3, $4) \
-		 RETURNING id, tenant_id, domain, is_active, is_verified, notes, created_at, updated_at",
+		 RETURNING id, tenant_id, domain, is_active, is_verified, verification_token, notes, created_at, updated_at",
 	)
 	.bind(tenant_id)
 	.bind(&domain)
@@ -189,7 +226,7 @@ async fn get_domain_handler(
 	let domain = normalize_domain(domain)?;
 
 	let row = sqlx::query(
-		"SELECT id, tenant_id, domain, is_active, is_verified, notes, created_at, updated_at \
+		"SELECT id, tenant_id, domain, is_active, is_verified, verification_token, notes, created_at, updated_at \
 		 FROM tenant_domains WHERE tenant_id = $1 AND lower(domain) = lower($2)",
 	)
 	.bind(tenant_id)
@@ -213,9 +250,7 @@ async fn update_domain_handler(
 	let tenant_id = ensure_tenant_id(tenant_ctx)?;
 	let target_domain = normalize_domain(domain)?;
 
-	// A tenant that could set the flag would mark any domain as verified
-	// for itself. Nothing in this API verifies a domain, so only an
-	// operator (in the database) can.
+	// Ownership is established only by the DNS challenge.
 	if body.is_verified.is_some() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -230,6 +265,29 @@ async fn update_domain_handler(
 			"No domain fields provided",
 		)
 		.into());
+	}
+
+	if body.is_active == Some(true) {
+		let verified: Option<bool> = sqlx::query_scalar(
+			"SELECT is_verified FROM tenant_domains WHERE tenant_id=$1 AND lower(domain)=lower($2)",
+		)
+		.bind(tenant_id)
+		.bind(&target_domain)
+		.fetch_optional(&pg_pool)
+		.await
+		.map_err(ReacherResponseError::from)?;
+		if verified != Some(true)
+			|| body
+				.domain
+				.as_ref()
+				.is_some_and(|d| d.to_ascii_lowercase() != target_domain)
+		{
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"Verify domain ownership before activating it",
+			)
+			.into());
+		}
 	}
 
 	let mut sets = Vec::new();
@@ -255,7 +313,7 @@ async fn update_domain_handler(
 
 	let sql = format!(
 		"UPDATE tenant_domains SET {} WHERE tenant_id = $1 AND lower(domain) = lower($2) \
-		 RETURNING id, tenant_id, domain, is_active, is_verified, notes, created_at, updated_at",
+		 RETURNING id, tenant_id, domain, is_active, is_verified, verification_token, notes, created_at, updated_at",
 		sets.join(", ")
 	);
 
@@ -322,7 +380,7 @@ async fn delete_domain_handler(
 	get,
 	path = "/v1/me/domains",
 	tag = "Tenant",
-	responses((status = 200, description = "Tenant domains list")),
+	responses((status = 200, description = "Tenant domains list", body = TenantDomainsListResponse)),
 )]
 pub fn v1_list_tenant_domains(
 	config: Arc<BackendConfig>,
@@ -343,7 +401,7 @@ pub fn v1_list_tenant_domains(
 	path = "/v1/me/domains",
 	tag = "Tenant",
 	request_body = CreateTenantDomainRequest,
-	responses((status = 201, description = "Tenant domain created")),
+	responses((status = 201, description = "Tenant domain created", body = TenantDomainResponse)),
 )]
 pub fn v1_create_tenant_domain(
 	config: Arc<BackendConfig>,
@@ -365,7 +423,7 @@ pub fn v1_create_tenant_domain(
 	path = "/v1/me/domains/{domain}",
 	tag = "Tenant",
 	params(("domain" = String, Path, description = "Domain identifier")),
-	responses((status = 200, description = "Tenant domain details")),
+	responses((status = 200, description = "Tenant domain details", body = TenantDomainResponse)),
 )]
 pub fn v1_get_tenant_domain(
 	config: Arc<BackendConfig>,
@@ -387,7 +445,7 @@ pub fn v1_get_tenant_domain(
 	tag = "Tenant",
 	request_body = UpdateTenantDomainRequest,
 	params(("domain" = String, Path, description = "Domain identifier")),
-	responses((status = 200, description = "Tenant domain updated")),
+	responses((status = 200, description = "Tenant domain updated", body = TenantDomainResponse)),
 )]
 pub fn v1_update_tenant_domain(
 	config: Arc<BackendConfig>,
@@ -420,4 +478,139 @@ pub fn v1_delete_tenant_domain(
 		.and(with_pg_pool(config))
 		.and_then(delete_domain_handler)
 		.with(warp::log("reacher_backend::v1::tenant_domains::delete"))
+}
+
+async fn verify_domain_handler(
+	domain: String,
+	ctx: TenantContext,
+	pool: PgPool,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	let tenant = ensure_tenant_id(ctx)?;
+	let domain = normalize_domain(domain)?;
+	let token: Option<String> = sqlx::query_scalar(
+		"SELECT verification_token FROM tenant_domains WHERE tenant_id=$1 AND lower(domain)=lower($2)",
+	)
+	.bind(tenant)
+	.bind(&domain)
+	.fetch_optional(&pool)
+	.await
+	.map_err(ReacherResponseError::from)?;
+	let token = token
+		.ok_or_else(|| ReacherResponseError::new(StatusCode::NOT_FOUND, "Domain not found"))?;
+	let resolver = hickory_resolver::TokioResolver::builder_tokio()
+		.map_err(|_| {
+			ReacherResponseError::new(StatusCode::SERVICE_UNAVAILABLE, "DNS resolver unavailable")
+		})?
+		.build()
+		.map_err(|_| {
+			ReacherResponseError::new(StatusCode::SERVICE_UNAVAILABLE, "DNS resolver unavailable")
+		})?;
+	let matches = txt_challenge_matches(
+		resolver.txt_lookup(format!("_verifier.{domain}")),
+		&format!("verifier={token}"),
+	)
+	.await;
+	if !matches {
+		return Err(ReacherResponseError::new(StatusCode::BAD_REQUEST, "Verification TXT record not found yet. Check the record and retry after DNS propagation.").into());
+	}
+	let row = sqlx::query("UPDATE tenant_domains SET is_verified=true, is_active=true, updated_at=NOW() WHERE tenant_id=$1 AND lower(domain)=lower($2) AND verification_token=$3 RETURNING id, tenant_id, domain, is_active, is_verified, verification_token, notes, created_at, updated_at")
+        .bind(tenant).bind(domain).bind(token).fetch_optional(&pool).await.map_err(ReacherResponseError::from)?
+        .ok_or_else(|| ReacherResponseError::new(StatusCode::CONFLICT, "Domain changed during verification; retry"))?;
+	Ok(warp::reply::json(&row_to_domain(&row)))
+}
+
+async fn txt_challenge_matches(
+	lookup: impl std::future::Future<
+		Output = Result<hickory_resolver::lookup::Lookup, hickory_resolver::net::NetError>,
+	>,
+	expected: &str,
+) -> bool {
+	tokio::time::timeout(std::time::Duration::from_secs(5), lookup)
+		.await
+		.ok()
+		.and_then(Result::ok)
+		.is_some_and(|records| {
+			records.answers().iter().any(|record| match &record.data {
+				hickory_resolver::proto::rr::RData::TXT(txt) => {
+					txt.txt_data
+						.iter()
+						.flat_map(|part| part.iter().copied())
+						.collect::<Vec<_>>()
+						== expected.as_bytes()
+				}
+				_ => false,
+			})
+		})
+}
+
+#[utoipa::path(post, path="/v1/me/domains/{domain}/verify", tag="Tenant", params(("domain"=String, Path)), responses((status=200, description="Domain verification result",body=TenantDomainResponse)))]
+pub fn v1_verify_tenant_domain(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "me" / "domains" / String / "verify")
+		.and(warp::post())
+		.and(resolve_tenant(Arc::clone(&config)))
+		.and(with_pg_pool(config))
+		.and_then(verify_domain_handler)
+}
+
+#[cfg(test)]
+mod normalization_tests {
+	#[tokio::test]
+	async fn txt_challenges_require_the_exact_record_and_fail_closed() {
+		use hickory_resolver::{
+			lookup::Lookup,
+			proto::{
+				op::Query,
+				rr::{rdata::TXT, RData},
+			},
+		};
+		let lookup = |parts: Vec<String>| async move {
+			Ok(Lookup::from_rdata(
+				Query::new(),
+				RData::TXT(TXT::new(parts)),
+			))
+		};
+		assert!(
+			super::txt_challenge_matches(
+				lookup(vec!["verifier=".into(), "tenant-token".into()]),
+				"verifier=tenant-token"
+			)
+			.await
+		);
+		assert!(
+			!super::txt_challenge_matches(
+				lookup(vec!["verifier=other-tenant".into()]),
+				"verifier=tenant-token"
+			)
+			.await
+		);
+		assert!(
+			!super::txt_challenge_matches(
+				async { Err(hickory_resolver::net::NetError::from("DNS timeout")) },
+				"verifier=tenant-token"
+			)
+			.await
+		);
+		assert!(
+			!super::txt_challenge_matches(std::future::pending(), "verifier=tenant-token").await
+		);
+	}
+
+	#[test]
+	fn accepts_urls_and_rejects_invalid_domains() {
+		assert_eq!(
+			super::normalize_domain("HTTPS://Gmail.com/path?q=1".into()).unwrap(),
+			"gmail.com"
+		);
+		for bad in [
+			"not a domain!!",
+			"a..com",
+			"-a.com",
+			"127.0.0.1",
+			".example.com",
+		] {
+			assert!(super::normalize_domain(bad.into()).is_err(), "{}", bad);
+		}
+	}
 }

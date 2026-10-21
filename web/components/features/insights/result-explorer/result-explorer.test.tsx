@@ -166,7 +166,7 @@ describe("ResultExplorer", () => {
 				results: [{ id: 7, task_state: "completed", retry_count: 0, result: SAMPLE_CHECK_RESULT }],
 			},
 		} as never);
-		vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 			data: { email: "user7@example.com", total: 0, history: [] },
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({

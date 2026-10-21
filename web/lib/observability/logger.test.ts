@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildLogRecord, describeError, log, requestLogger } from "./logger";
+import { buildLogRecord, describeError, log, requestLogger, redactedRequestPath } from "./logger";
 import { LogRecordSchema } from "./logger.schema";
 
 afterEach(() => {
@@ -52,4 +52,12 @@ describe("logger", () => {
 	it("describes a thrown value that is not an Error", () => {
 		expect(describeError("nope")).toEqual({ name: "unknown", message: "nope" });
 	});
+});
+
+it("removes addresses from request paths and queries", () => {
+	expect(redactedRequestPath("/api/backend/v1/emails/Test%40example.com/history?limit=5")).toBe(
+		"/api/backend/v1/emails/[redacted]/history",
+	);
+	expect(redactedRequestPath("/app/check?email=Test@example.com")).toBe("/app/check");
+	expect(redactedRequestPath(undefined)).toBeNull();
 });

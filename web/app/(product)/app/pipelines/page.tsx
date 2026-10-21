@@ -13,7 +13,7 @@ import PipelinesLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Pipelines - Oppulence",
+	title: "Pipelines",
 	description: "Create, run, pause, resume, and inspect verification pipelines",
 };
 

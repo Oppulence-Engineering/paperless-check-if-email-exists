@@ -1710,3 +1710,50 @@ export const v1ListSuppressionEvents = async (
     headers: res.headers,
   } as v1ListSuppressionEventsResponse;
 };
+
+export type v1RestoreSuppressionResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type v1RestoreSuppressionResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1RestoreSuppressionResponseSuccess =
+  v1RestoreSuppressionResponse200 & {
+    headers: Headers;
+  };
+export type v1RestoreSuppressionResponseError =
+  v1RestoreSuppressionResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1RestoreSuppressionResponse =
+  v1RestoreSuppressionResponseSuccess | v1RestoreSuppressionResponseError;
+
+export const getV1RestoreSuppressionUrl = (id: number) => {
+  return `/v1/suppressions/${id}/restore`;
+};
+
+export const v1RestoreSuppression = async (
+  id: number,
+  options?: RequestInit,
+): Promise<v1RestoreSuppressionResponse> => {
+  const res = await fetch(getV1RestoreSuppressionUrl(id), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1RestoreSuppressionResponse["data"] = body
+    ? JSON.parse(body)
+    : undefined;
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1RestoreSuppressionResponse;
+};

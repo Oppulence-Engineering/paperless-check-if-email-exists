@@ -16,6 +16,7 @@ import type {
   JobResultPageResponse,
   RetryJobResponse,
   V1GetJobFailureCenter200,
+  V1ListJobs200,
 } from "../model";
 
 import {
@@ -25,11 +26,13 @@ import {
   getV1GetJobFailureReportResponseMock,
   getV1GetJobResultsResponseMock,
   getV1JobApprovalChecklistResponseMock,
+  getV1ListJobsResponseMock,
   getV1RetryJobResponseMock,
 } from "./jobs.faker";
 
 export {
   getV1GetBulkJobResultsResponseMock,
+  getV1ListJobsResponseMock,
   getV1JobApprovalChecklistResponseMock,
   getV1DownloadJobResultsResponseMock,
   getV1GetJobFailureCenterResponseMock,
@@ -82,6 +85,30 @@ export const getV1GetBulkJobResultsMockHandler = (
         status: 200,
         headers: { "Content-Type": "application/octet-stream" },
       });
+    },
+    options,
+  );
+};
+
+export const getV1ListJobsMockHandler = (
+  overrideResponse?:
+    | V1ListJobs200
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<V1ListJobs200> | V1ListJobs200),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/jobs",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListJobsResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -321,6 +348,7 @@ export const getV1RetryJobMockHandler = (
 export const getJobsMock = () => [
   getV1GetBulkJobProgressMockHandler(),
   getV1GetBulkJobResultsMockHandler(),
+  getV1ListJobsMockHandler(),
   getV1GetJobStatusMockHandler(),
   getV1JobApprovalChecklistMockHandler(),
   getV1CancelJobMockHandler(),

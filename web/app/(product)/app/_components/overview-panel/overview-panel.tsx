@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import Form from "next/form";
 import Link from "next/link";
@@ -112,7 +113,7 @@ export function OverviewPanel({ className, ...props }: OverviewPanelProps) {
 				<DeliverabilitySection />
 				<AutomationSection />
 				<QuickCheckSection />
-				<SetupSection />
+				<DeferredSetup />
 			</section>
 		</Page>
 	);
@@ -221,7 +222,7 @@ function AlertsSection() {
 		<Section description={`${number(alerts.data.total)} unread`} title="Alerts">
 			{update.isError ? (
 				<p className="text-sm text-red-300" role="alert">
-					{update.error.message}
+					{errorMessage(update.error)}
 				</p>
 			) : null}
 			<Group>
@@ -232,7 +233,12 @@ function AlertsSection() {
 					>
 						<div className="min-w-0">
 							<div className="flex flex-wrap items-center gap-2">
-								<h3 className="text-sm font-medium text-white">{alert.title}</h3>
+								<h3 className="text-sm font-medium text-white">
+									{alert.title
+										.replace("changed to became_safe", "is now safe to send")
+										.replace("changed to became_invalid", "is now invalid")
+										.replace("changed to became_risky", "now needs review")}
+								</h3>
 								<Pill tone={alertType.tone(alert.type)}>{alertType.label(alert.type)}</Pill>
 							</div>
 							{alert.body ? <p className="mt-1 text-sm text-[#858585]">{alert.body}</p> : null}
@@ -597,6 +603,20 @@ function QuickCheckSection() {
 	);
 }
 
+function DeferredSetup() {
+	const [open, setOpen] = useState(false);
+	return (
+		<details
+			onToggle={(event) => {
+				setOpen(event.currentTarget.open);
+			}}
+		>
+			<summary className="cursor-pointer text-sm">Workspace setup checklist</summary>
+			{open ? <SetupSection /> : null}
+		</details>
+	);
+}
+
 function SetupSection() {
 	const lists = useQuery(listsQuery);
 	const domains = useQuery(domainsQuery);
@@ -641,7 +661,7 @@ function SetupSection() {
 		},
 	].filter((step) => step.done !== undefined);
 	const open = steps.filter((step) => !step.done).length;
-	if (!open) return null;
+	if (!open) return <p className="text-sm text-[#858585]">All setup steps are done.</p>;
 	return (
 		<Section
 			description={`${String(steps.length - open)} of ${String(steps.length)} steps done.`}

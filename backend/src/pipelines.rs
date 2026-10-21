@@ -2625,7 +2625,9 @@ fn build_canonical_groups(
 			blank_indices.push(index);
 			continue;
 		}
-		match canonicalize_email(&email) {
+		match canonicalize_email(&email)
+			.filter(|_| check_if_email_exists::syntax::check_syntax(&email).is_valid_syntax)
+		{
 			Some(canonical) => canonical_groups.entry(canonical).or_default().push(index),
 			None => invalid_indices.push(index),
 		}

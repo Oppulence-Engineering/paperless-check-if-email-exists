@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { AddSuppressionsResponseRejectedInner } from './add-suppressions-response-rejected-inner';
 
 /**
  *
@@ -38,6 +41,18 @@ export interface AddSuppressionsResponse {
      * @memberof AddSuppressionsResponse
      */
     'entry_ids'?: Array<number>;
+    /**
+     *
+     * @type {Array<AddSuppressionsResponseRejectedInner>}
+     * @memberof AddSuppressionsResponse
+     */
+    'rejected'?: Array<AddSuppressionsResponseRejectedInner>;
+    /**
+     *
+     * @type {number}
+     * @memberof AddSuppressionsResponse
+     */
+    'submitted'?: number;
     /**
      *
      * @type {number}

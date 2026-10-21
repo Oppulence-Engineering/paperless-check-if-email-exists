@@ -73,3 +73,10 @@ export function describeError(error: unknown): LogFields {
 	}
 	return { name: "unknown", message: String(error) };
 }
+
+/** Address history remains a compatible route; its path and query must not enter logs. */
+export function redactedRequestPath(path: string | undefined): string | null {
+	return (
+		path?.split(/[?#]/, 1)[0]?.replace(/(\/emails\/)[^/]+(\/history)/g, "$1[redacted]$2") ?? null
+	);
+}
