@@ -297,6 +297,21 @@ async fn preview_submission_idempotency_quality_and_original_rows() {
 		.reply(&routes)
 		.await;
 	assert_eq!(suppressed.status(), 200);
+	sqlx::query("UPDATE v1_task_result SET recommendation_action='review' WHERE tenant_id=$1 AND canonical_email='one@example.com'").bind(tenant).execute(db.pool()).await.unwrap();
+	let source = request()
+		.path("/v1/sources/quality?source_key=audit")
+		.header("authorization", &auth)
+		.reply(&routes)
+		.await;
+	let source: Value = serde_json::from_slice(source.body()).unwrap();
+	assert_eq!(source["sources"][0]["review_count"], 0);
+	assert_eq!(source["sources"][0]["suppress_count"], 1);
+	assert!(
+		source["sources"][0]["unsafe_recommendation_pct"]
+			.as_f64()
+			.unwrap() <= 100.0
+	);
+
 	sqlx::query("UPDATE v1_lists SET status='completed' WHERE id=$1")
 		.bind(list as i32)
 		.execute(db.pool())
