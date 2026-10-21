@@ -26,7 +26,23 @@ describe("JobRows", () => {
 				has_more: false,
 				next_cursor: null,
 				results: [
-					{ id: 1, task_state: "completed", retry_count: 0, result: SAMPLE_CHECK_RESULT },
+					{
+						id: 1,
+						row_number: 1,
+						task_state: "completed",
+						retry_count: 0,
+						result: SAMPLE_CHECK_RESULT,
+					},
+					{
+						id: 3,
+						row_number: 3,
+						canonical_task_id: 1,
+						is_duplicate: true,
+						original_email: "MAYA@brightlane.co",
+						task_state: "completed",
+						retry_count: 0,
+						result: SAMPLE_CHECK_RESULT,
+					},
 					{
 						id: 2,
 						task_state: "completed",
@@ -34,7 +50,10 @@ describe("JobRows", () => {
 						result: {
 							...SAMPLE_CHECK_RESULT,
 							input: "gone@example.com",
-							score: { ...SAMPLE_CHECK_RESULT.score, category: "invalid" },
+							score: {
+								...SAMPLE_CHECK_RESULT.score,
+								category: "invalid",
+							},
 						},
 					},
 				],
@@ -49,13 +68,17 @@ describe("JobRows", () => {
 		vi.spyOn(V1Api.prototype, "v1CheckSuppression").mockResolvedValue({
 			data: { email: "maya@brightlane.co", suppressed: false },
 		} as never);
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+		const client = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
 		render(
 			<QueryClientProvider client={client}>
 				<JobRows jobId={9} />
 			</QueryClientProvider>,
 		);
 		expect(await screen.findByRole("button", { name: "gone@example.com" })).toBeInTheDocument();
+		expect(screen.getByText("Row 3 · Duplicate of row 1")).toBeInTheDocument();
+		expect(screen.getByText("Duplicate — excluded")).toBeInTheDocument();
 		expect(results).toHaveBeenCalledWith({
 			jobId: 9,
 			cursor: undefined,
@@ -66,7 +89,8 @@ describe("JobRows", () => {
 		await chooseOption("Category", "Valid");
 		expect(screen.queryByRole("button", { name: "gone@example.com" })).not.toBeInTheDocument();
 
-		fireEvent.click(screen.getByRole("button", { name: "maya@brightlane.co" }));
+		fireEvent.click(screen.getByRole("button", { name: "MAYA@brightlane.co" }));
+		expect(await screen.findByRole("heading", { name: "MAYA@brightlane.co" })).toBeInTheDocument();
 		expect(await screen.findByRole("dialog")).toHaveTextContent("Recommendation");
 
 		await chooseOption("Row state", "Failed");
