@@ -87,10 +87,10 @@ async fn http_handler(
 			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'unknown') AS unknown_count,
 			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'invalid') AS invalid_count,
 			COUNT(*) FILTER (WHERE task_state = 'completed' AND effective_safe_to_send = true) AS safe_to_send_count,
-			COUNT(*) FILTER (WHERE task_state = 'completed' AND recommendation_action = 'send') AS send_count,
-			COUNT(*) FILTER (WHERE task_state = 'completed' AND recommendation_action = 'send_with_caution') AS send_with_caution_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'send') AS send_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'send_with_caution') AS send_with_caution_count,
 			COUNT(*) FILTER (WHERE task_state = 'completed' AND recommendation_action = 'review') AS review_count,
-			COUNT(*) FILTER (WHERE task_state = 'completed' AND recommendation_action = 'suppress') AS suppress_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND (currently_suppressed OR recommendation_action = 'suppress')) AS suppress_count,
 			COUNT(*) FILTER (WHERE task_state = 'completed' AND recommendation_action = 'drop') AS drop_count
 		FROM source_rows
 		WHERE tenant_id = $1

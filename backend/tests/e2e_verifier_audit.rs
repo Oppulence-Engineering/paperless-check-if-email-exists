@@ -199,6 +199,18 @@ async fn preview_submission_idempotency_quality_and_original_rows() {
 	assert_eq!(used, 2);
 	let job = responses[0]["job_id"].as_i64().unwrap() as i32;
 	let list = responses[0]["list_id"].as_i64().unwrap();
+	let comment = request()
+		.method("POST")
+		.path("/v1/comments")
+		.header("authorization", &auth)
+		.json(&json!({"list_id":list,"body":"Release validation","author":"forged user"}))
+		.reply(&routes)
+		.await;
+	assert_eq!(comment.status(), 201);
+	let comment: Value = serde_json::from_slice(comment.body()).unwrap();
+	assert!(comment["author"].as_str().unwrap().starts_with("API key: "));
+	assert!(!comment["author"].as_str().unwrap().contains("forged"));
+
 	sqlx::query("UPDATE v1_task_result SET task_state='completed',completed_at=now(),safe_to_send=(canonical_email='one@example.com'),score_category=CASE WHEN canonical_email='one@example.com' THEN 'valid' ELSE 'risky' END,result=jsonb_build_object('input',payload->'input'->>'to_email','score',jsonb_build_object('signals',jsonb_build_object('smtp_is_catch_all',canonical_email='two@example.com'))) WHERE job_id=$1 AND canonical_email IS NOT NULL").bind(job).execute(db.pool()).await.unwrap();
 	let q = request()
 		.path(&format!("/v1/lists/{list}/quality"))
@@ -277,6 +289,41 @@ async fn preview_submission_idempotency_quality_and_original_rows() {
 		.as_str()
 		.unwrap()
 		.contains("could not be verified"));
+	let suppressed = request()
+		.method("POST")
+		.path("/v1/suppressions")
+		.header("authorization", &auth)
+		.json(&json!({"emails":["ONE@EXAMPLE.COM"]}))
+		.reply(&routes)
+		.await;
+	assert_eq!(suppressed.status(), 200);
+	sqlx::query("UPDATE v1_lists SET status='completed' WHERE id=$1")
+		.bind(list as i32)
+		.execute(db.pool())
+		.await
+		.unwrap();
+	sqlx::query("UPDATE v1_bulk_job SET status='completed' WHERE id=$1")
+		.bind(job)
+		.execute(db.pool())
+		.await
+		.unwrap();
+	for path in [
+		format!("/v1/jobs/{job}/download"),
+		format!("/v1/lists/{list}/download"),
+	] {
+		let export = request()
+			.path(&path)
+			.header("authorization", &auth)
+			.reply(&routes)
+			.await;
+		assert_eq!(export.status(), 200, "{:?}", export.body());
+		assert!(
+			!String::from_utf8_lossy(export.body())
+				.to_ascii_lowercase()
+				.contains("one@example.com"),
+			"new suppressions must not remain eligible for export"
+		);
+	}
 }
 
 #[tokio::test]

@@ -70,8 +70,10 @@ impl TenantContext {
 	pub fn actor_type(&self) -> &'static str {
 		if self.user_id.is_some() {
 			"user"
-		} else {
+		} else if self.api_key_id.is_some() {
 			"api"
+		} else {
+			"system"
 		}
 	}
 

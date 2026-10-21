@@ -167,6 +167,7 @@ async fn fetch_batch(
 		       policy_mode, policy_evaluation, policy_decision
 		FROM v1_task_result
 		WHERE job_id = $1 AND is_duplicate IS NOT TRUE AND id > $2
+          AND NOT EXISTS (SELECT 1 FROM verification_quality_rows q WHERE q.id=v1_task_result.id AND q.currently_suppressed)
 		ORDER BY id ASC
 		LIMIT $3
 		"#,

@@ -292,6 +292,7 @@ async fn fetch_batch(
 			policy_decision
 		FROM v1_task_result
 		WHERE (extra->>'list_id')::INTEGER = $1 AND is_duplicate IS NOT TRUE
+          AND NOT EXISTS (SELECT 1 FROM verification_quality_rows q WHERE q.id=v1_task_result.id AND q.currently_suppressed)
 		  AND (extra->>'row_index')::INTEGER > $2
 		ORDER BY (extra->>'row_index')::INTEGER ASC
 		LIMIT $3
