@@ -17,6 +17,12 @@ export const ListQualitySchema = z.looseObject({
 	quality_grade: z.string(),
 	safe_to_send_count: z.number(),
 	safe_to_send_pct: z.number(),
+	categories: z.object({
+		valid: z.number(),
+		risky: z.number(),
+		unknown: z.number(),
+		invalid: z.number(),
+	}),
 	risk_breakdown: z.record(z.string(), z.number()),
 });
 

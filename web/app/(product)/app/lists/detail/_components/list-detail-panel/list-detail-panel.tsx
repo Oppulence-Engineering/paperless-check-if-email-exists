@@ -229,7 +229,7 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 													))
 										}
 									/>
-									<Stat label="Checked" value={list.summary.total_processed} />
+									<Stat label="Rows processed" value={list.summary.total_processed} />
 								</div>
 								<JobProgress jobId={list.job_id} />
 							</Row>
@@ -265,8 +265,12 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 									<Group>
 										{quality.data ? (
 											<Row
-												description={`Average score ${String(quality.data.avg_score)} · ${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} of ${String(quality.data.total_rows)} checked`}
-												label={`Grade ${quality.data.quality_grade}`}
+												description={`Average score ${String(quality.data.avg_score)} · ${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} unique ${quality.data.processed === 1 ? "address" : "addresses"} checked`}
+												label={
+													quality.data.quality_grade === "pending"
+														? "Checks pending"
+														: `Grade ${quality.data.quality_grade}`
+												}
 											/>
 										) : null}
 										<Row>
@@ -276,7 +280,7 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 													<Stat
 														key={value}
 														label={category.label(value)}
-														value={list.summary[`total_${value}`]}
+														value={quality.data?.categories[value] ?? "—"}
 													/>
 												))}
 											</div>

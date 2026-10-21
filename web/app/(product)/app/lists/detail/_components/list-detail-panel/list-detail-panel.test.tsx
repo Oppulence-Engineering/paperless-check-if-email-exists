@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { CommentsApi, JobsApi, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 
@@ -19,24 +19,24 @@ afterEach(() => {
 	push.mockReset();
 });
 
-it("shows the list header and review, and returns to the lists after delete", async () => {
+it("uses unique completed quality counts instead of duplicate and rejected row totals", async () => {
 	vi.spyOn(V1Api.prototype, "v1GetList").mockResolvedValue({
 		data: {
 			id: 5,
 			name: "Campaign",
-			total_rows: 2,
+			total_rows: 5,
 			status: "completed",
 			email_column: "email",
 			source_key: "hubspot",
 			job_id: 9,
 			unique_emails: 2,
-			deduplicated_count: 0,
+			deduplicated_count: 1,
 			summary: {
-				total_valid: 2,
+				total_valid: 3,
 				total_risky: 0,
 				total_unknown: 0,
-				total_invalid: 0,
-				total_processed: 2,
+				total_invalid: 2,
+				total_processed: 5,
 			},
 		},
 	} as never);
@@ -49,7 +49,7 @@ it("shows the list header and review, and returns to the lists after delete", as
 					original_filename: "campaign.csv",
 					email_column: "email",
 					status: "completed",
-					total_rows: 2,
+					total_rows: 5,
 					created_at: "2026-10-01T00:00:00Z",
 					completed_at: "2026-10-01T00:01:00Z",
 				},
@@ -59,12 +59,13 @@ it("shows the list header and review, and returns to the lists after delete", as
 	} as never);
 	vi.spyOn(ListsApi.prototype, "v1ListQuality").mockResolvedValue({
 		data: {
-			total_rows: 2,
+			total_rows: 5,
 			processed: 2,
 			avg_score: 91.5,
 			quality_grade: "A",
 			safe_to_send_count: 2,
 			safe_to_send_pct: 100,
+			categories: { valid: 2, risky: 0, unknown: 0, invalid: 0 },
 			risk_breakdown: { disposable: 0, catch_all: 0, role_account: 0, spam_trap: 0, full_inbox: 0 },
 		},
 	} as never);
@@ -106,6 +107,13 @@ it("shows the list header and review, and returns to the lists after delete", as
 		await screen.findByText("campaign.csv · Email column: email · Source: hubspot"),
 	).toBeInTheDocument();
 	expect(await screen.findByText("Grade A")).toBeInTheDocument();
+	const qualitySection = screen.getByRole("heading", { name: "List quality" }).parentElement;
+	if (!qualitySection) throw new Error("List quality section is missing");
+	const quality = within(qualitySection);
+	expect(quality.getByText("Valid").parentElement).toHaveTextContent("Valid2");
+	expect(quality.getByText("Invalid").parentElement).toHaveTextContent("Invalid0");
+	expect(quality.getByText(/2 unique addresses checked/)).toBeInTheDocument();
+	expect(screen.getByText("Rows processed")).toBeInTheDocument();
 	expect(await screen.findByText("Ready to send")).toBeInTheDocument();
 	expect(screen.getByRole("link", { name: "Bulk job 9" })).toHaveAttribute(
 		"href",
