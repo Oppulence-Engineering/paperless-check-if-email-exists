@@ -39,6 +39,18 @@ pub async fn setup_rabbit_mq(
 	backend_name: &str,
 	config: &RabbitMQConfig,
 ) -> Result<Channel, anyhow::Error> {
+	timeout(
+		RABBITMQ_CONNECT_TIMEOUT,
+		setup_rabbit_mq_inner(backend_name, config),
+	)
+	.await
+	.context("RabbitMQ setup timed out")?
+}
+
+async fn setup_rabbit_mq_inner(
+	backend_name: &str,
+	config: &RabbitMQConfig,
+) -> Result<Channel, anyhow::Error> {
 	anyhow::ensure!(
 		!config.queue.trim().is_empty(),
 		"Worker queue must not be empty"
@@ -100,9 +112,43 @@ pub async fn setup_rabbit_mq(
 	Ok(channel)
 }
 
-/// Consume messages until the worker fails, allowing the process supervisor to restart it.
+/// Recover broker connections without terminating the web and API process.
 pub async fn run_worker(config: Arc<BackendConfig>) -> Result<(), anyhow::Error> {
-	consume_check_email(config).await
+	let mut failures = 0u32;
+	loop {
+		let result = async {
+			if config
+				.must_worker_config()
+				.map(|w| !w.channel.status().connected())
+				.unwrap_or(true)
+			{
+				let rabbitmq = config
+					.worker
+					.rabbitmq
+					.as_ref()
+					.context("Missing RabbitMQ configuration")?;
+				let channel = setup_rabbit_mq(&config.backend_name, rabbitmq).await?;
+				config.set_worker_channel(Some(Arc::new(channel)))?;
+			}
+			let healthy_since = std::time::Instant::now();
+			let result = consume_check_email(Arc::clone(&config)).await;
+			if healthy_since.elapsed() >= reconnect_delay(u32::MAX) {
+				failures = 0;
+			}
+			result
+		}
+		.await;
+		config.set_worker_channel(None)?;
+		if let Err(error) = result {
+			error!(error = %error, "Worker disconnected; reconnecting");
+		}
+		failures = failures.saturating_add(1);
+		tokio::time::sleep(reconnect_delay(failures)).await;
+	}
+}
+
+fn reconnect_delay(failures: u32) -> Duration {
+	Duration::from_secs(1u64 << failures.saturating_sub(1).min(4))
 }
 
 /// Consume "check_email" queue.
@@ -276,5 +322,15 @@ mod tests {
 			throttle_requeue_delay(Duration::from_millis(750)),
 			Duration::from_millis(750)
 		);
+	}
+}
+
+#[cfg(test)]
+mod reconnect_tests {
+	#[test]
+	fn reconnect_backoff_is_bounded() {
+		assert_eq!(super::reconnect_delay(1).as_secs(), 1);
+		assert_eq!(super::reconnect_delay(3).as_secs(), 4);
+		assert_eq!(super::reconnect_delay(u32::MAX).as_secs(), 16);
 	}
 }

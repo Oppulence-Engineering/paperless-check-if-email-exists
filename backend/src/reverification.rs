@@ -116,7 +116,7 @@ async fn process_schedule(
 			SELECT 1 FROM v1_suppression_entries se
 			WHERE se.tenant_id = $1 AND se.status = 'active'
 			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
-			  AND se.canonical_email = mailbox_identity(sub.email)
+			  AND lower(se.canonical_email) = lower(mailbox_identity(sub.email))
 		  )
 		ORDER BY sub.latest_completed ASC, sub.email ASC
 		LIMIT $3
