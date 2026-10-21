@@ -88,7 +88,7 @@ function whole(value: string, min: number, label: string): number {
 	return number;
 }
 
-export function validateValues(values: Values): Partial<Record<keyof Values, string>> {
+function validateValues(values: Values): Partial<Record<keyof Values, string>> {
 	const errors: Partial<Record<keyof Values, string>> = {};
 	if (!values.name.trim()) errors.name = "Enter a name.";
 	const numbers: (keyof Values)[] = ["window", "attempts", "backoff"];
