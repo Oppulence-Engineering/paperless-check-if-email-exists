@@ -83,11 +83,12 @@ async fn http_handler(
 			COUNT(*) FILTER (WHERE result->'smtp'->>'has_full_inbox' = 'true') AS full_inbox
 		FROM verification_quality_rows
 		WHERE (extra->>'list_id')::INTEGER = $1
-		  AND is_duplicate IS NOT TRUE AND canonical_email IS NOT NULL
+		  AND tenant_id = $2 AND identity_key IS NOT NULL
 		  AND task_state = 'completed'
 		"#,
 	)
 	.bind(list_id)
+	.bind(tenant_id)
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;
