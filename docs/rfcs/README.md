@@ -54,6 +54,18 @@ Each data RFC has a Definition Of Done with end-to-end tests, live staging targe
 
 ## Deliverability RFCs
 
+The build order is in [RFC 0016](0016-deliverability-intelligence-roadmap.md#build-order). It puts the Paperless launch first and parks RFCs 0020, 0025, and 0026.
+
 | RFC | Title | Status | Summary |
 |---|---|---|---|
 | [0016](0016-deliverability-intelligence-roadmap.md) | Deliverability Intelligence Roadmap | Draft | Ten roadmap features, one paragraph each: health monitor, bounce taxonomy, suppression scopes, signup protection, provider reports, bot engagement, webhooks, MCP, newsletter integrations, and Postmaster data. |
+| [0017](0017-domain-and-ip-health-monitor.md) | Scheduled Domain And IP Health Monitor | Draft | Scheduled blocklist, SPF, DKIM, DMARC, and PTR checks for sending domains and IPs, with alerts on state changes. |
+| [0018](0018-bounce-reason-taxonomy.md) | Bounce Reason Taxonomy | Draft | A class and a disposition for each bounce. Only recipient problems suppress. Sender problems raise alerts. |
+| [0019](0019-suppression-scopes.md) | Suppression Scopes | Draft | Tenant or audience scope, and all-mail or marketing-only stream, for each suppression. |
+| [0020](0020-signup-protection-v2.md) | Signup Protection V2 | Parked | A signup endpoint with local bot signals first, the paid check last, and `allow`, `confirm`, or `block`. |
+| [0021](0021-mailbox-provider-breakdown.md) | Mailbox Provider Breakdown For Each Campaign | Draft | Provider detection fix for MillionVerifier, provider columns, and delivery reports for each provider. |
+| [0022](0022-bot-engagement-flag.md) | Bot Engagement Flag | Draft | Machine opens and clicks marked at ingestion and excluded from score boosts and reports. |
+| [0023](0023-webhook-event-subscriptions.md) | Webhook Event Subscriptions And Delivery Log | Draft | Many endpoints, event types, a durable outbox, a delivery log, timestamped signatures, and a secret cipher. |
+| [0024](0024-mcp-server.md) | MCP Server | Draft | A remote MCP server over the REST API, with API-key auth first and OAuth second. |
+| [0025](0025-beehiiv-and-kit-integrations.md) | beehiiv And Kit Integrations | Parked | Check new subscribers, write back tags, import feedback, and push suppressions. |
+| [0026](0026-postmaster-tools-and-snds-ingestion.md) | Postmaster Tools And SNDS Ingestion | Parked | Daily Gmail spam rate, compliance status, and Microsoft IP data, with alerts. |

@@ -11,6 +11,152 @@
 
 <br /><br /><br />
 
+## Paperless
+**Affordable B2B Contact Discovery, Verification & Intelligence**
+
+*Business Thesis | October 2026*
+
+**Find the right companies. Reach the right people. Trust the data.**
+
+### The opportunity
+
+Paperless is an affordable, more accurate alternative to Hunter.io and Apollo that helps businesses discover companies, identify decision-makers, verify professional emails, and turn incomplete prospect lists into usable sales opportunities.
+
+**Core thesis:** Customers don't need another massive contact database. They need accurate, current, relevant contacts at a predictable price, without spending hours cleaning spreadsheets or combining multiple enrichment tools.
+
+Our opportunity is to deliver more correctly matched, usable B2B contacts per dollar, particularly in industries and business functions underserved by conventional contact databases.
+
+### The problem
+
+Research across Reddit, Hacker News, and customer reviews reveals five recurring frustrations:
+
+- **Outdated information:** People change companies and roles, while previously verified addresses remain in contact databases.
+- **Poor coverage:** Existing platforms struggle with smaller businesses, specialized industries, international markets, and unconventional job titles.
+- **Unpredictable costs:** Customers consume credits on searches that return incomplete, inaccurate, or unusable records.
+- **Fragmented workflows:** Teams combine Hunter, Apollo, Clay, spreadsheets, and independent verification services to produce one usable contact list.
+- **Wrong decision-makers:** A deliverable email does not establish that its owner is currently employed at the company or responsible for the purchasing decision.
+
+### The product
+
+Paperless is a self-service prospecting platform built around five connected capabilities.
+
+| Capability | What Paperless does |
+|---|---|
+| **1. Discover** | Find companies and decision-makers using industry, geography, company characteristics, professional roles, and business signals |
+| **2. Enrich** | Resolve company identities, identify relevant employees, research missing information, and provide source-backed company intelligence |
+| **3. Verify** | Validate professional email deliverability, classify uncertain results, and distinguish mailbox verification from person-to-company matching |
+| **4. Repair** | Clean imported lists, resolve duplicates, correct company mappings, identify stale records, and recover missing or invalid addresses |
+| **5. Monitor** | Track potential job changes, identify replacement contacts, monitor data freshness, and recommend updates to existing prospect lists |
+
+**Core workflow:**
+
+Upload target companies → Identify decision-makers → Research and verify → Review evidence → Export to CSV or CRM.
+
+Customers can also use individual Email Finder, Domain Search, company discovery, and bulk verification without completing the entire workflow.
+
+Every important result includes available source evidence, observation dates, verification status, and an explanation of unresolved uncertainty.
+
+### Competitive advantage
+
+Paperless will not compete primarily on the number of contacts stored. It will compete on the quality, relevance, freshness, and cost of the contacts customers can actually use.
+
+Our initial advantages will come from:
+
+- **Underserved market coverage:** Better discovery for small businesses, specialized industries, and difficult-to-identify decision-makers.
+- **Evidence-backed accuracy:** Clear separation between a verified mailbox, a confirmed individual, their current employer, and their professional role.
+- **Cost-efficient research:** Reuse permitted evidence, crawl relevant websites, apply domain email patterns, and invoke expensive research only when necessary.
+- **Continuous data repair:** Identify outdated relationships, missing contacts, and changed company information rather than requiring repeated manual cleanups.
+- **Workflow integration:** Keep approved prospect records synchronized with customer systems while preserving change history and source evidence.
+
+Over time, defensibility will come from proprietary matching improvements, lawful historical observations, consented delivery outcomes, and integrations into customers' recurring prospecting processes.
+
+### Technology and existing assets
+
+We will build on infrastructure already developed across the Oppulence portfolio.
+
+| Component | Responsibility |
+|---|---|
+| **Oppulence Paperless backend** | Go-based scraping, company resolution, enrichment, research orchestration, evidence, and contact discovery |
+| **Parallel Web Systems** | Search, extraction, structured company and people research, and evidence collection |
+| **MillionVerifier** | Low-cost, commercially resellable email verification |
+| **Check-if-email-exists / Reacher** | Rust verification engine, email finder, bulk processing, suppression, re-verification, and API infrastructure |
+| **Product and data layer** | Next.js application, prospect records, research jobs, billing, exports, CRM connections, and monitoring |
+
+**Data rights constraint:** Parallel's commercial-use restrictions must be respected, including restrictions on database creation and data resale. Any shared commercial contact database must use independently sourced or appropriately licensed information. Customer-private data must remain isolated, and personal-data handling requires appropriate privacy safeguards.
+
+We will reuse existing systems rather than build another crawler, verification engine, or expensive proprietary database from scratch.
+
+### Pricing strategy
+
+Paperless will offer affordable entry-level access while charging transparently for expensive research.
+
+| Plan | Monthly price | Primary use |
+|---|---:|---|
+| Free | $0 | Limited searches and email verification |
+| Starter | $19 | Individual email finding and domain lookup |
+| Growth | $39 | Bulk finding, list cleaning, and completion |
+| Pro | $79 | Advanced research, monitoring, and CRM workflows |
+
+Offer pay-as-you-go credit packs for occasional customers. Advanced Parallel research and expensive third-party enrichment will consume separately priced credits.
+
+Included usage will be finalized after measuring total cost per correctly matched, usable contact. The objective is sustainable unit economics without hidden charges or unpredictable provider spending.
+
+### Go-to-market and first 30 days
+
+**Initial customer:** Small B2B prospecting agencies, founders, and sales teams that already have target-account lists but struggle to identify the correct people and obtain reliable contact information.
+
+**First 30 days:**
+
+1. Benchmark approximately 1,200 target accounts across three underserved customer segments against Hunter, Icypeas, and a waterfall enrichment provider.
+2. Measure contact coverage, decision-maker relevance, role accuracy, employment freshness, verification outcomes, provider costs, and manual cleanup time.
+3. Interview prospective customers to determine which failures are frequent, expensive, and poorly addressed by existing tools.
+4. Recruit 5–10 paid pilot customers and observe their complete workflows, from importing accounts to exporting usable contacts.
+5. Use benchmark and pilot results to select the strongest initial segment, validate pricing, and prioritize the first production release.
+
+The initial release will focus on Email Finder, Domain Search, bulk-list repair, verification, source-backed results, and transparent usage.
+
+Company discovery, advanced signals, job-change monitoring, and CRM automation will expand only after the core workflows demonstrate measurable customer value.
+
+### Success criteria
+
+**North-star metric: Cost per correctly matched, usable B2B contact.**
+
+Supporting metrics include:
+
+- Correct decision-maker coverage per 100 target accounts.
+- False person/company matches and outdated professional roles.
+- Verified contact yield and total provider cost per successful result.
+- Time saved on list research, cleanup, and enrichment.
+- Gross margin, paid conversion, and recurring customer usage.
+
+We succeed when customers consistently obtain more accurate and relevant decision-maker contacts for less money, or materially reduce research time at comparable accuracy.
+
+### Long-term vision
+
+Paperless becomes the affordable, continuously updated contact intelligence layer for B2B businesses.
+
+It discovers relevant companies, identifies the people responsible for purchasing decisions, confirms professional contact paths, maintains accurate records, and provides evidence for each recommendation.
+
+The same infrastructure can support prospecting, customer intelligence, contact recovery, and data enrichment across Oppulence's products and, where appropriate, the wider Solomon AI portfolio.
+
+**Our promise: Better business contacts. Less manual research. Predictable costs.**
+
+### Order At A Glance
+
+| Phase | Work | Reason for this place |
+|---|---|---|
+| 0 | Ship Paperless: deploy Go, Rust, and web; run the controlled production workflow; run the benchmark; recruit pilots | This is the real release blocker. RFC work must not delay it. |
+| 1 | Add a scope check to `GET /v1/sources/quality` | It closes a small security gap. It is not one of the ten items. |
+| 1 | RFC 0021, provider detection only | Paperless verifies company addresses. On the MillionVerifier path, these results have no mailbox provider today. |
+| 1 | RFC 0018, without sender alerts | A wrong suppression removes a usable contact from the export. This hurts the north-star metric. |
+| 2 | RFC 0023, with Paperless events such as a completed research run | The secret cipher is also the base for CRM credentials later. |
+| 2 | RFC 0019 | Build it when agencies ask for a separate do-not-contact list for each client. |
+| 2 | RFC 0024, phase 1, with the research, find, and export tools first | The web lead can build it in parallel with RFC 0023 and RFC 0019. |
+| 3 | RFC 0017, the RFC 0018 sender alerts, the RFC 0021 report, then RFC 0022 | These serve verification and list-hygiene customers, which stay a supported workflow. |
+| Parked | RFC 0020, RFC 0025, RFC 0026 | Their buyers are signup-form owners, newsletter platforms, and senders who need provider analytics. The Paperless focus does not include them. Review them again after the pilots. |
+
+[RFC 0016](docs/rfcs/0016-deliverability-intelligence-roadmap.md#build-order) gives the details for each phase.
+
 ## Repository Scope
 
 This repository contains the email verification backend, workers, SDKs, CLI, and the Next.js web application in [`web/`](./web). The supported core is:
