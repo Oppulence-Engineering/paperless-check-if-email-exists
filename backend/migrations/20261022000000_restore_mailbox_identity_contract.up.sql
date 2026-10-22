@@ -60,28 +60,27 @@ WHERE mailbox_identity(email) IS NOT NULL
 
 -- Stop instead of changing the identity of work still in flight.
 LOCK TABLE v1_task_result IN SHARE ROW EXCLUSIVE MODE;
+CREATE TEMP TABLE identity_v4_tasks ON COMMIT DROP AS
+SELECT id, CASE WHEN is_duplicate
+    THEN mailbox_identity(COALESCE(payload->'input'->>'to_email', result->>'input'))
+    ELSE mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) END AS identity
+FROM v1_task_result WHERE canonical_email IS NOT NULL;
 DO $$ BEGIN
  IF EXISTS (
-  SELECT 1 FROM v1_task_result
-  WHERE canonical_email IS NOT NULL
-    AND canonical_email IS DISTINCT FROM CASE WHEN is_duplicate
-      THEN mailbox_identity(COALESCE(payload->'input'->>'to_email', result->>'input'))
-      ELSE mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) END
-    AND (task_state NOT IN ('completed', 'failed', 'dead_lettered', 'cancelled')
-         OR (dispatch_id IS NOT NULL AND NOT COALESCE(completion_done, false)))
+  SELECT 1 FROM v1_task_result t JOIN identity_v4_tasks r ON r.id = t.id
+  WHERE r.identity IS NOT NULL AND t.canonical_email IS DISTINCT FROM r.identity
+    AND (t.task_state NOT IN ('completed', 'failed', 'dead_lettered', 'cancelled')
+         OR (t.dispatch_id IS NOT NULL AND NOT COALESCE(t.completion_done, false)))
  ) THEN RAISE EXCEPTION 'Identity recovery requires affected jobs to finish; retry after workers drain';
  END IF;
 END $$;
 
--- Keep completed results and duplicate provenance; never retarget a live job.
-UPDATE v1_task_result
-SET extra = COALESCE(extra, '{}'::jsonb) || jsonb_build_object('identity_v3_canonical', canonical_email),
-    canonical_email = CASE WHEN is_duplicate
-        THEN mailbox_identity(COALESCE(payload->'input'->>'to_email', result->>'input'))
-        ELSE mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) END
-WHERE task_state IN ('completed', 'failed', 'dead_lettered', 'cancelled')
-  AND (dispatch_id IS NULL OR completion_done)
-  AND canonical_email IS NOT NULL;
+-- Keep completed results, duplicate provenance, and keys whose original address is unknown.
+UPDATE v1_task_result t
+SET extra = COALESCE(t.extra, '{}'::jsonb) || jsonb_build_object('identity_v3_canonical', t.canonical_email),
+    canonical_email = r.identity
+FROM identity_v4_tasks r
+WHERE r.id = t.id AND r.identity IS NOT NULL AND t.canonical_email IS DISTINCT FROM r.identity;
 
 -- Original-less campaign outcomes remain marked ambiguous; do not invent their case.
 WITH restored AS (

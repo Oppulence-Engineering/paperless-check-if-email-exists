@@ -4,3 +4,6 @@ INSERT INTO v1_suppression_entries (tenant_id, email, canonical_email, reason)
 VALUES
 ('33333333-3333-4333-8333-333333333333', 'Sales@COMPANY.EXAMPLE', 'Sales@company.example', 'manual'),
 ('33333333-3333-4333-8333-333333333333', 'sales@company.example', 'sales@company.example', 'manual');
+
+INSERT INTO v1_task_result (tenant_id, payload, canonical_email, task_state)
+VALUES ('33333333-3333-4333-8333-333333333333', '{}', 'legacy@company.example', 'completed');
