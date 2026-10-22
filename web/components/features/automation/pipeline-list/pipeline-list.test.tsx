@@ -82,7 +82,10 @@ describe("PipelineList", () => {
 		expect(await screen.findByText("Completed")).toBeInTheDocument();
 		expect(screen.getByText(/2 checked · 1 valid · 1 invalid/)).toBeInTheDocument();
 		expect(screen.getByText("No runs yet")).toBeInTheDocument();
-		expect(run).toHaveBeenCalledWith({ pipelineId: 1, runId: 3 });
+		expect(run).toHaveBeenCalledWith(
+			{ pipelineId: 1, runId: 3 },
+			{ signal: expect.any(AbortSignal) },
+		);
 
 		fireEvent.click(screen.getByRole("button", { name: "Open CRM push" }));
 		expect(onOpen).toHaveBeenCalledWith(2);
@@ -95,7 +98,10 @@ describe("PipelineList", () => {
 
 		await chooseOption("Pipeline status", "Paused");
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith({ status: "paused", limit: 20, offset: 0 }),
+			expect(list).toHaveBeenLastCalledWith(
+				{ status: "paused", limit: 20, offset: 0 },
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 	});
 

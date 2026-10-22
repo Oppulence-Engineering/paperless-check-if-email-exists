@@ -89,17 +89,17 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 			filters.includeExpired,
 		),
 		placeholderData: keepPreviousData,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListSuppressions200Response.parse(
-				(await api.v1ListSuppressions({ limit: PAGE_SIZE, offset, ...query })).data,
+				(await api.v1ListSuppressions({ limit: PAGE_SIZE, offset, ...query }, { signal })).data,
 			),
 	});
 	const check = useQuery({
 		queryKey: workflowQueryKey("suppression-check", checkEmail),
 		enabled: !!checkEmail,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1CheckSuppression200Response.parse(
-				(await api.v1CheckSuppression({ email: checkEmail })).data,
+				(await api.v1CheckSuppression({ email: checkEmail }, { signal })).data,
 			),
 	});
 	const restore = useMutation({

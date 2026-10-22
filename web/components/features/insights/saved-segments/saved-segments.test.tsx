@@ -85,7 +85,10 @@ describe("SavedSegments", () => {
 		expect(
 			screen.getByText(/Category: Risky · Score 20 to 100 · Policy decision: Review/),
 		).toBeInTheDocument();
-		expect(list).toHaveBeenCalledWith({ scope: "tenant", limit: 20, offset: 0 });
+		expect(list).toHaveBeenCalledWith(
+			{ scope: "tenant", limit: 20, offset: 0 },
+			{ signal: expect.any(AbortSignal) },
+		);
 		expect(screen.getByText(/The segment keeps: Category: Valid/)).toBeInTheDocument();
 		expect(screen.getByText(/cannot keep these filters: Job 18/)).toBeInTheDocument();
 

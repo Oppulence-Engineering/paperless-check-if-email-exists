@@ -123,7 +123,9 @@ describe("DeveloperSettings", () => {
 		} as never);
 		renderSettings();
 		fireEvent.click(await screen.findByRole("button", { name: "Manage" }));
-		await waitFor(() => expect(get).toHaveBeenCalledWith({ keyId }));
+		await waitFor(() =>
+			expect(get).toHaveBeenCalledWith({ keyId }, { signal: expect.any(AbortSignal) }),
+		);
 		fireEvent.change(screen.getByLabelText("Name", { selector: "#edit-api-key-name" }), {
 			target: { value: "Staging" },
 		});

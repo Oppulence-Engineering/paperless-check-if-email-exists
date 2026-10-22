@@ -3206,6 +3206,25 @@ paths:
       summary: POST /v1/outcomes
       tags:
       - Outcomes
+  /v1/overview:
+    get:
+      operationId: v1_overview
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverviewResponse"
+          description: Tenant dashboard snapshot; unavailable and forbidden sections
+            contain no data
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+          description: Request error
+      tags:
+      - v1
   /v1/pipelines:
     get:
       operationId: v1_list_pipelines
@@ -7712,7 +7731,6 @@ components:
       type: object
     ListDetailResponse:
       example:
-        email_column: email_column
         summary:
           total_unknown: 3
           total_processed: 7
@@ -7720,10 +7738,12 @@ components:
           total_valid: 2
           total_risky: 9
         policy_id: 5
-        deduplicated_count: 0
-        job_id: 1
         unique_emails: 7
         total_rows: 4
+        email_column: email_column
+        original_filename: original_filename
+        deduplicated_count: 0
+        job_id: 1
         name: name
         id: 6
         rejected_rows: 5
@@ -7743,6 +7763,8 @@ components:
           format: int32
           type: integer
         name:
+          type: string
+        original_filename:
           type: string
         policy_id:
           format: int64
@@ -8002,7 +8024,9 @@ components:
         email_column: email_column
         completed_at: 2000-01-23T04:56:07.000+00:00
         original_filename: original_filename
-        total_rows: 6
+        total_processed: 1
+        job_id: 6
+        total_rows: 5
         name: name
         created_at: 2000-01-23T04:56:07.000+00:00
         id: 0
@@ -8021,6 +8045,9 @@ components:
         id:
           format: int32
           type: integer
+        job_id:
+          format: int32
+          type: integer
         name:
           type: string
         original_filename:
@@ -8030,6 +8057,9 @@ components:
           type: string
         status:
           type: string
+        total_processed:
+          format: int64
+          type: integer
         total_rows:
           format: int32
           type: integer
@@ -8045,12 +8075,14 @@ components:
       type: object
     ListListResponse:
       example:
-        total: 1
+        total: 5
         lists:
         - email_column: email_column
           completed_at: 2000-01-23T04:56:07.000+00:00
           original_filename: original_filename
-          total_rows: 6
+          total_processed: 1
+          job_id: 6
+          total_rows: 5
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
           id: 0
@@ -8059,7 +8091,9 @@ components:
         - email_column: email_column
           completed_at: 2000-01-23T04:56:07.000+00:00
           original_filename: original_filename
-          total_rows: 6
+          total_processed: 1
+          job_id: 6
+          total_rows: 5
           name: name
           created_at: 2000-01-23T04:56:07.000+00:00
           id: 0
@@ -8938,6 +8972,272 @@ components:
       - metadata
       - occurred_at
       - provider
+      type: object
+    OverviewResponse:
+      example:
+        alerts:
+          data:
+            alerts:
+            - canonical_email: canonical_email
+              metadata: ""
+              updated_at: 2000-01-23T04:56:07.000+00:00
+              created_at: 2000-01-23T04:56:07.000+00:00
+              change_event_id: 0
+              id: 6
+              body: body
+              title: title
+              type: type
+              status: status
+            - canonical_email: canonical_email
+              metadata: ""
+              updated_at: 2000-01-23T04:56:07.000+00:00
+              created_at: 2000-01-23T04:56:07.000+00:00
+              change_event_id: 0
+              id: 6
+              body: body
+              title: title
+              type: type
+              status: status
+            total: 0
+          status: ready
+        pipelines:
+          data:
+          - last_run_status: last_run_status
+            next_run_at: 2000-01-23T04:56:07.000+00:00
+            name: name
+            last_run_id: 1
+            id: 7
+            status: status
+          - last_run_status: last_run_status
+            next_run_at: 2000-01-23T04:56:07.000+00:00
+            name: name
+            last_run_id: 1
+            id: 7
+            status: status
+          status: null
+        suppressions:
+          data: 1
+          status: null
+        outcomes:
+          data:
+            complained: 4
+            bounced: 2
+          status: null
+        reverification:
+          data:
+            next_run_at: 2000-01-23T04:56:07.000+00:00
+            enabled: true
+          status: null
+        lists:
+          data:
+          - safe_to_send_count: 7
+            total_processed: 9
+            quality_grade: quality_grade
+            job_id: 2
+            total_rows: 3
+            name: name
+            id: 5
+            ready_to_send: true
+            status: status
+          - safe_to_send_count: 7
+            total_processed: 9
+            quality_grade: quality_grade
+            job_id: 2
+            total_rows: 3
+            name: name
+            id: 5
+            ready_to_send: true
+            status: status
+          status: null
+        usage:
+          period_reset_at: period_reset_at
+          tenant_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          tenant_name: tenant_name
+          quota_remaining: 6
+          used_this_period: 1
+          plan_tier: plan_tier
+          monthly_email_limit: 0
+          quota_unlimited: true
+        domains:
+          data:
+            total: 1
+            verified: 5
+            active: 6
+          status: null
+      properties:
+        alerts:
+          $ref: "#/components/schemas/OverviewSection_AlertListResponse"
+        domains:
+          $ref: "#/components/schemas/OverviewSection_OverviewDomains"
+        lists:
+          $ref: "#/components/schemas/OverviewSection_Vec_OverviewList"
+        outcomes:
+          $ref: "#/components/schemas/OverviewSection_OverviewOutcomes"
+        pipelines:
+          $ref: "#/components/schemas/OverviewSection_Vec_OverviewPipeline"
+        reverification:
+          $ref: "#/components/schemas/OverviewSection_OverviewReverification"
+        suppressions:
+          $ref: "#/components/schemas/OverviewSection_i64"
+        usage:
+          $ref: "#/components/schemas/TenantUsageResponse"
+      required:
+      - alerts
+      - domains
+      - lists
+      - outcomes
+      - pipelines
+      - reverification
+      - suppressions
+      - usage
+      type: object
+    OverviewSection_AlertListResponse:
+      example:
+        data:
+          alerts:
+          - canonical_email: canonical_email
+            metadata: ""
+            updated_at: 2000-01-23T04:56:07.000+00:00
+            created_at: 2000-01-23T04:56:07.000+00:00
+            change_event_id: 0
+            id: 6
+            body: body
+            title: title
+            type: type
+            status: status
+          - canonical_email: canonical_email
+            metadata: ""
+            updated_at: 2000-01-23T04:56:07.000+00:00
+            created_at: 2000-01-23T04:56:07.000+00:00
+            change_event_id: 0
+            id: 6
+            body: body
+            title: title
+            type: type
+            status: status
+          total: 0
+        status: ready
+      properties:
+        data:
+          $ref: "#/components/schemas/OverviewSection_AlertListResponse_data"
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_OverviewDomains:
+      example:
+        data:
+          total: 1
+          verified: 5
+          active: 6
+        status: null
+      properties:
+        data:
+          $ref: "#/components/schemas/OverviewSection_OverviewDomains_data"
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_OverviewOutcomes:
+      example:
+        data:
+          complained: 4
+          bounced: 2
+        status: null
+      properties:
+        data:
+          $ref: "#/components/schemas/OverviewSection_OverviewOutcomes_data"
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_OverviewReverification:
+      example:
+        data:
+          next_run_at: 2000-01-23T04:56:07.000+00:00
+          enabled: true
+        status: null
+      properties:
+        data:
+          $ref: "#/components/schemas/OverviewSection_OverviewReverification_data"
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_Vec_OverviewList:
+      example:
+        data:
+        - safe_to_send_count: 7
+          total_processed: 9
+          quality_grade: quality_grade
+          job_id: 2
+          total_rows: 3
+          name: name
+          id: 5
+          ready_to_send: true
+          status: status
+        - safe_to_send_count: 7
+          total_processed: 9
+          quality_grade: quality_grade
+          job_id: 2
+          total_rows: 3
+          name: name
+          id: 5
+          ready_to_send: true
+          status: status
+        status: null
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/OverviewSection_Vec_OverviewList_data_inner"
+          type: array
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_Vec_OverviewPipeline:
+      example:
+        data:
+        - last_run_status: last_run_status
+          next_run_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          last_run_id: 1
+          id: 7
+          status: status
+        - last_run_status: last_run_status
+          next_run_at: 2000-01-23T04:56:07.000+00:00
+          name: name
+          last_run_id: 1
+          id: 7
+          status: status
+        status: null
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/OverviewSection_Vec_OverviewPipeline_data_inner"
+          type: array
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
+      type: object
+    OverviewSection_i64:
+      example:
+        data: 1
+        status: null
+      properties:
+        data:
+          format: int64
+          type: integer
+        status:
+          $ref: "#/components/schemas/SectionStatus"
+      required:
+      - status
       type: object
     PartialConfidence:
       example:
@@ -10639,6 +10939,12 @@ components:
       - smtp_is_disabled
       - valid_syntax
       type: object
+    SectionStatus:
+      enum:
+      - ready
+      - forbidden
+      - unavailable
+      type: string
     SegmentFilter:
       additionalProperties: false
       example:
@@ -12300,6 +12606,169 @@ components:
       required:
       - error
       - selector
+      - status
+      type: object
+    OverviewSection_AlertListResponse_data:
+      example:
+        alerts:
+        - canonical_email: canonical_email
+          metadata: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          change_event_id: 0
+          id: 6
+          body: body
+          title: title
+          type: type
+          status: status
+        - canonical_email: canonical_email
+          metadata: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          created_at: 2000-01-23T04:56:07.000+00:00
+          change_event_id: 0
+          id: 6
+          body: body
+          title: title
+          type: type
+          status: status
+        total: 0
+      properties:
+        alerts:
+          items:
+            $ref: "#/components/schemas/AlertView"
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - alerts
+      - total
+      type: object
+    OverviewSection_OverviewDomains_data:
+      example:
+        total: 1
+        verified: 5
+        active: 6
+      properties:
+        active:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+        verified:
+          format: int64
+          type: integer
+      required:
+      - active
+      - total
+      - verified
+      type: object
+    OverviewSection_OverviewOutcomes_data:
+      example:
+        complained: 4
+        bounced: 2
+      properties:
+        bounced:
+          format: int64
+          type: integer
+        complained:
+          format: int64
+          type: integer
+      required:
+      - bounced
+      - complained
+      type: object
+    OverviewSection_OverviewReverification_data:
+      example:
+        next_run_at: 2000-01-23T04:56:07.000+00:00
+        enabled: true
+      properties:
+        enabled:
+          type: boolean
+        next_run_at:
+          format: date-time
+          nullable: true
+          type: string
+      required:
+      - enabled
+      type: object
+    OverviewSection_Vec_OverviewList_data_inner:
+      example:
+        safe_to_send_count: 7
+        total_processed: 9
+        quality_grade: quality_grade
+        job_id: 2
+        total_rows: 3
+        name: name
+        id: 5
+        ready_to_send: true
+        status: status
+      properties:
+        id:
+          format: int32
+          type: integer
+        job_id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        quality_grade:
+          nullable: true
+          type: string
+        ready_to_send:
+          nullable: true
+          type: boolean
+        safe_to_send_count:
+          format: int64
+          nullable: true
+          type: integer
+        status:
+          type: string
+        total_processed:
+          format: int64
+          type: integer
+        total_rows:
+          format: int32
+          type: integer
+      required:
+      - id
+      - job_id
+      - name
+      - status
+      - total_processed
+      - total_rows
+      type: object
+    OverviewSection_Vec_OverviewPipeline_data_inner:
+      example:
+        last_run_status: last_run_status
+        next_run_at: 2000-01-23T04:56:07.000+00:00
+        name: name
+        last_run_id: 1
+        id: 7
+        status: status
+      properties:
+        id:
+          format: int32
+          type: integer
+        last_run_id:
+          format: int32
+          nullable: true
+          type: integer
+        last_run_status:
+          nullable: true
+          type: string
+        name:
+          type: string
+        next_run_at:
+          format: date-time
+          nullable: true
+          type: string
+        status:
+          type: string
+      required:
+      - id
+      - name
       - status
       type: object
     SegmentFilter_category:

@@ -62,18 +62,23 @@ it("shows every entry field, filters, and pages through the list", async () => {
 	expect(table.getByText("Expired")).toBeInTheDocument();
 	expect(table.getByText("Active")).toBeInTheDocument();
 	expect(screen.getByText("Showing 1–1 of 45")).toBeInTheDocument();
-	expect(list).toHaveBeenLastCalledWith({
-		limit: 20,
-		offset: 0,
-		status: "active",
-		reason: undefined,
-		sourceType: undefined,
-		includeExpired: false,
-	});
+	expect(list).toHaveBeenLastCalledWith(
+		{
+			limit: 20,
+			offset: 0,
+			status: "active",
+			reason: undefined,
+			sourceType: undefined,
+			includeExpired: false,
+		},
+		{ signal: expect.any(AbortSignal) },
+	);
 
 	fireEvent.click(screen.getByRole("button", { name: "Next" }));
 	await waitFor(() =>
-		expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 })),
+		expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 }), {
+			signal: expect.any(AbortSignal),
+		}),
 	);
 
 	await chooseOption("Reason", "Bounce");
@@ -81,14 +86,17 @@ it("shows every entry field, filters, and pages through the list", async () => {
 	await chooseOption("Source", "Delivery feedback");
 	fireEvent.click(screen.getByLabelText("Include expired entries"));
 	await waitFor(() =>
-		expect(list).toHaveBeenLastCalledWith({
-			limit: 20,
-			offset: 0,
-			status: "all",
-			reason: "bounce",
-			sourceType: "outcome",
-			includeExpired: true,
-		}),
+		expect(list).toHaveBeenLastCalledWith(
+			{
+				limit: 20,
+				offset: 0,
+				status: "all",
+				reason: "bounce",
+				sourceType: "outcome",
+				includeExpired: true,
+			},
+			{ signal: expect.any(AbortSignal) },
+		),
 	);
 });
 
@@ -137,7 +145,7 @@ it("opens the audit timeline and exports with the current filters", async () => 
 	fireEvent.click(screen.getByRole("button", { name: "Audit" }));
 	const sheet = within(await screen.findByRole("dialog"));
 	expect(await sheet.findByText("Set to Active")).toBeInTheDocument();
-	expect(events).toHaveBeenCalledWith({ id: 3 });
+	expect(events).toHaveBeenCalledWith({ id: 3 }, { signal: expect.any(AbortSignal) });
 	fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
 	await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 

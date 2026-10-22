@@ -101,7 +101,7 @@ export function VerificationSettings({
 	}[scope];
 	const settingsKey = ["tenant-settings", organizationId];
 	const usageKey = ["tenant-usage", organizationId];
-	const webhookKey = ["tenant-webhook", organizationId];
+	const webhookKey = workflowQueryKey("tenant-webhook");
 	const [notice, setNotice] = useState<string>();
 	const [error, setError] = useState<string>();
 	const settings = useQuery({
@@ -125,8 +125,10 @@ export function VerificationSettings({
 	const reverification = useQuery({
 		queryKey: workflowQueryKey("reverification-status", organizationId),
 		enabled: showDefaults,
-		queryFn: async () =>
-			V1ReverificationStatus200Response.parse((await v1Api.v1ReverificationStatus()).data),
+		queryFn: async ({ signal }) =>
+			V1ReverificationStatus200Response.parse(
+				(await v1Api.v1ReverificationStatus({ signal })).data,
+			),
 	});
 	const lastJobId = reverification.data?.last_job_id;
 	const lastJob = useQuery({

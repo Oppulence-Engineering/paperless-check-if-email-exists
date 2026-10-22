@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import dynamic from "next/dynamic";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 
@@ -16,7 +17,13 @@ import { cn } from "@oppulence/ui/lib/utils";
 import { ActivityFeed } from "@/components/features/insights/activity-feed/activity-feed";
 import { ResultExplorer } from "@/components/features/insights/result-explorer/result-explorer";
 import { type ExplorerFilters } from "@/components/features/insights/result-explorer/result-explorer.schema";
-import { SavedSegments } from "@/components/features/insights/saved-segments/saved-segments";
+const SavedSegments = dynamic(
+	() =>
+		import("@/components/features/insights/saved-segments/saved-segments").then(
+			(module) => module.SavedSegments,
+		),
+	{ loading: () => <p role="status">Loading segments…</p> },
+);
 import { SourceQuality } from "@/components/features/insights/source-quality/source-quality";
 import { Page, Section } from "@/components/platform/page-kit";
 
@@ -78,14 +85,16 @@ export function AnalyticsPanel({ className, ...props }: AnalyticsPanelProps) {
 							Save the explorer filters with a name. Open a segment to use its filters again.
 						</SheetDescription>
 					</SheetHeader>
-					<SavedSegments
-						className="px-4"
-						filters={filters}
-						onOpen={(next) => {
-							setFilters(next);
-							setSegmentsOpen(false);
-						}}
-					/>
+					{segmentsOpen ? (
+						<SavedSegments
+							className="px-4"
+							filters={filters}
+							onOpen={(next) => {
+								setFilters(next);
+								setSegmentsOpen(false);
+							}}
+						/>
+					) : null}
 				</SheetContent>
 			</Sheet>
 		</Page>

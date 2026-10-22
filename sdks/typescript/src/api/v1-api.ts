@@ -54,6 +54,8 @@ import type { ListUploadResponse } from '../models';
 // @ts-ignore
 import type { OnboardRequest } from '../models';
 // @ts-ignore
+import type { OverviewResponse } from '../models';
+// @ts-ignore
 import type { PendingVerification } from '../models';
 // @ts-ignore
 import type { ReputationCheckRequest } from '../models';
@@ -1092,6 +1094,38 @@ export const V1ApiAxiosParamCreator = function (configuration?: Configuration) {
         },
         /**
          *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1Overview: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/overview`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @param {number} id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1577,6 +1611,17 @@ export const V1ApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1Overview(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OverviewResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1Overview(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['V1Api.v1Overview']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @param {number} id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1863,6 +1908,14 @@ export const V1ApiFactory = function (configuration?: Configuration, basePath?: 
         },
         /**
          *
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1Overview(options?: RawAxiosRequestConfig): AxiosPromise<OverviewResponse> {
+            return localVarFp.v1Overview(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @param {V1ApiV1RestoreSuppressionRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2131,6 +2184,14 @@ export interface V1ApiInterface {
      * @memberof V1ApiInterface
      */
     v1ListSuppressions(requestParameters?: V1ApiV1ListSuppressionsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SuppressionListResponse>;
+
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1ApiInterface
+     */
+    v1Overview(options?: RawAxiosRequestConfig): AxiosPromise<OverviewResponse>;
 
     /**
      *
@@ -2993,6 +3054,16 @@ export class V1Api extends BaseAPI implements V1ApiInterface {
      */
     public v1ListSuppressions(requestParameters: V1ApiV1ListSuppressionsRequest = {}, options?: RawAxiosRequestConfig) {
         return V1ApiFp(this.configuration).v1ListSuppressions(requestParameters.limit, requestParameters.offset, requestParameters.reason, requestParameters.status, requestParameters.sourceType, requestParameters.sourceRef, requestParameters.includeExpired, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof V1Api
+     */
+    public v1Overview(options?: RawAxiosRequestConfig) {
+        return V1ApiFp(this.configuration).v1Overview(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

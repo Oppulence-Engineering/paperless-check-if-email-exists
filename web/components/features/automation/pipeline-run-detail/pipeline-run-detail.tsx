@@ -47,10 +47,12 @@ export function isRunActive(status: string): boolean {
 export function pipelineRunQuery(pipelineId: number, runId: number) {
 	return {
 		queryKey: workflowQueryKey("pipelines", pipelineId, "runs", "run", runId),
-		queryFn: async () =>
-			V1GetPipelineRun200Response.parse((await api.v1GetPipelineRun({ pipelineId, runId })).data),
+		queryFn: async ({ signal }: { signal: AbortSignal }) =>
+			V1GetPipelineRun200Response.parse(
+				(await api.v1GetPipelineRun({ pipelineId, runId }, { signal })).data,
+			),
 		refetchInterval: (query: { state: { data?: PipelineRun } }) =>
-			query.state.data && isRunActive(query.state.data.status) ? 3_000 : false,
+			query.state.data && isRunActive(query.state.data.status) ? 5_000 : false,
 	};
 }
 

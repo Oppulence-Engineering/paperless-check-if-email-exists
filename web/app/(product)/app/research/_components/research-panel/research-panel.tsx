@@ -162,7 +162,8 @@ export function ResearchPanel({ initialSessionId, className, ...props }: Researc
 	const submitted = useRef<{ fingerprint: string; key: string } | null>(null);
 	const sessions = useQuery({
 		queryKey: workflowQueryKey("research", "sessions"),
-		queryFn: async () => V1ListResearch200Response.parse((await api.v1ListResearch()).data),
+		queryFn: async ({ signal }) =>
+			V1ListResearch200Response.parse((await api.v1ListResearch({ signal })).data),
 	});
 	const create = useMutation({
 		mutationFn: async (request: CreateResearchRequest) =>
@@ -181,10 +182,12 @@ export function ResearchPanel({ initialSessionId, className, ...props }: Researc
 	const result = useQuery({
 		queryKey: workflowQueryKey("research", sessionId),
 		enabled: !!sessionId,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (!sessionId || !/^[1-9]\d*$/.test(sessionId))
 				throw new Error("Select a valid research run.");
-			return V1GetResearch200Response.parse((await api.v1GetResearch({ sessionId })).data);
+			return V1GetResearch200Response.parse(
+				(await api.v1GetResearch({ sessionId }, { signal })).data,
+			);
 		},
 		refetchInterval: (query) => researchRefetchInterval(query.state.data?.status),
 	});

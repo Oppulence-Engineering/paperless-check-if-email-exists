@@ -136,7 +136,52 @@ async fn http_handler(
 	let job_status: String = job.get("status");
 	let is_terminal = matches!(job_status.as_str(), "completed" | "failed" | "cancelled");
 
-	let (recommendation, ready) = if completed == 0 {
+	let (recommendation, ready) = readiness(
+		completed,
+		unprocessed,
+		unsuccessful,
+		suppressed,
+		safe_ratio,
+		is_terminal,
+		(excellent_threshold, good_threshold),
+	);
+
+	Ok(warp::reply::json(&Response {
+		job_id,
+		total_records,
+		categories: CategoryBreakdown {
+			valid,
+			risky,
+			unknown,
+			invalid,
+			unprocessed,
+		},
+		risk_flags: RiskFlags {
+			disposable_count: risk_row.get("disposable"),
+			catch_all_count: risk_row.get("catch_all"),
+			role_account_count: risk_row.get("role_account"),
+			spam_trap_count: risk_row.get("spam_trap"),
+			suppressed_count: suppressed,
+		},
+		safe_to_send_count,
+		safe_to_send_pct: safe_pct,
+		recommendation,
+		ready_to_send: ready,
+	}))
+}
+
+/// One readiness decision for job review and dashboard summaries.
+pub(crate) fn readiness(
+	completed: i64,
+	unprocessed: i64,
+	unsuccessful: i64,
+	suppressed: i64,
+	safe_ratio: f64,
+	is_terminal: bool,
+	thresholds: (f64, f64),
+) -> (String, bool) {
+	let (excellent_threshold, good_threshold) = thresholds;
+	if completed == 0 {
 		(
 			"No completed addresses yet. Wait for results before sending.".to_string(),
 			false,
@@ -189,30 +234,7 @@ async fn http_handler(
 			"List quality is poor. Clean the list thoroughly before sending.".to_string(),
 			false,
 		)
-	};
-
-	Ok(warp::reply::json(&Response {
-		job_id,
-		total_records,
-		categories: CategoryBreakdown {
-			valid,
-			risky,
-			unknown,
-			invalid,
-			unprocessed,
-		},
-		risk_flags: RiskFlags {
-			disposable_count: risk_row.get("disposable"),
-			catch_all_count: risk_row.get("catch_all"),
-			role_account_count: risk_row.get("role_account"),
-			spam_trap_count: risk_row.get("spam_trap"),
-			suppressed_count: suppressed,
-		},
-		safe_to_send_count,
-		safe_to_send_pct: safe_pct,
-		recommendation,
-		ready_to_send: ready,
-	}))
+	}
 }
 
 /// GET /v1/jobs/{job_id}/approval

@@ -471,7 +471,7 @@ mod tests {
 				|| path.starts_with("/v1/campaign-outcomes")
 				|| matches!(
 					path.as_str(),
-					"/v1/check-email-with-onboard" | "/v1/me" | "/v1/me/usage"
+					"/v1/check-email-with-onboard" | "/v1/me" | "/v1/me/usage" | "/v1/overview"
 				) {
 				continue;
 			}

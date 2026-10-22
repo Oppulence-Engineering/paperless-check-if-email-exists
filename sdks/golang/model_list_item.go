@@ -27,10 +27,12 @@ type ListItem struct {
 	CreatedAt time.Time `json:"created_at"`
 	EmailColumn string `json:"email_column"`
 	Id int32 `json:"id"`
+	JobId *int32 `json:"job_id,omitempty"`
 	Name string `json:"name"`
 	OriginalFilename string `json:"original_filename"`
 	SourceKey NullableString `json:"source_key,omitempty"`
 	Status string `json:"status"`
+	TotalProcessed *int64 `json:"total_processed,omitempty"`
 	TotalRows int32 `json:"total_rows"`
 }
 
@@ -159,6 +161,38 @@ func (o *ListItem) SetId(v int32) {
 	o.Id = v
 }
 
+// GetJobId returns the JobId field value if set, zero value otherwise.
+func (o *ListItem) GetJobId() int32 {
+	if o == nil || IsNil(o.JobId) {
+		var ret int32
+		return ret
+	}
+	return *o.JobId
+}
+
+// GetJobIdOk returns a tuple with the JobId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListItem) GetJobIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.JobId) {
+		return nil, false
+	}
+	return o.JobId, true
+}
+
+// HasJobId returns a boolean if a field has been set.
+func (o *ListItem) HasJobId() bool {
+	if o != nil && !IsNil(o.JobId) {
+		return true
+	}
+
+	return false
+}
+
+// SetJobId gets a reference to the given int32 and assigns it to the JobId field.
+func (o *ListItem) SetJobId(v int32) {
+	o.JobId = &v
+}
+
 // GetName returns the Name field value
 func (o *ListItem) GetName() string {
 	if o == nil {
@@ -273,6 +307,38 @@ func (o *ListItem) SetStatus(v string) {
 	o.Status = v
 }
 
+// GetTotalProcessed returns the TotalProcessed field value if set, zero value otherwise.
+func (o *ListItem) GetTotalProcessed() int64 {
+	if o == nil || IsNil(o.TotalProcessed) {
+		var ret int64
+		return ret
+	}
+	return *o.TotalProcessed
+}
+
+// GetTotalProcessedOk returns a tuple with the TotalProcessed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListItem) GetTotalProcessedOk() (*int64, bool) {
+	if o == nil || IsNil(o.TotalProcessed) {
+		return nil, false
+	}
+	return o.TotalProcessed, true
+}
+
+// HasTotalProcessed returns a boolean if a field has been set.
+func (o *ListItem) HasTotalProcessed() bool {
+	if o != nil && !IsNil(o.TotalProcessed) {
+		return true
+	}
+
+	return false
+}
+
+// SetTotalProcessed gets a reference to the given int64 and assigns it to the TotalProcessed field.
+func (o *ListItem) SetTotalProcessed(v int64) {
+	o.TotalProcessed = &v
+}
+
 // GetTotalRows returns the TotalRows field value
 func (o *ListItem) GetTotalRows() int32 {
 	if o == nil {
@@ -311,12 +377,18 @@ func (o ListItem) ToMap() (map[string]interface{}, error) {
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["email_column"] = o.EmailColumn
 	toSerialize["id"] = o.Id
+	if !IsNil(o.JobId) {
+		toSerialize["job_id"] = o.JobId
+	}
 	toSerialize["name"] = o.Name
 	toSerialize["original_filename"] = o.OriginalFilename
 	if o.SourceKey.IsSet() {
 		toSerialize["source_key"] = o.SourceKey.Get()
 	}
 	toSerialize["status"] = o.Status
+	if !IsNil(o.TotalProcessed) {
+		toSerialize["total_processed"] = o.TotalProcessed
+	}
 	toSerialize["total_rows"] = o.TotalRows
 	return toSerialize, nil
 }

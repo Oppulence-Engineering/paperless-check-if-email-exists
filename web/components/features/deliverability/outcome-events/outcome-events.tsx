@@ -85,16 +85,19 @@ export function OutcomeEvents({ className, ...props }: OutcomeEventsProps) {
 	const [filters, setFilters] = useState<Filters>({ email: "", eventType: "", since: "" });
 	const outcomes = useQuery({
 		queryKey: workflowQueryKey("outcomes", offset, filters.email, filters.eventType, filters.since),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListOutcomes200Response.parse(
 				(
-					await api.v1ListOutcomes({
-						limit: PAGE,
-						offset,
-						email: filters.email || undefined,
-						eventType: filters.eventType || undefined,
-						since: startOfDay(filters.since),
-					})
+					await api.v1ListOutcomes(
+						{
+							limit: PAGE,
+							offset,
+							email: filters.email || undefined,
+							eventType: filters.eventType || undefined,
+							since: startOfDay(filters.since),
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

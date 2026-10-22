@@ -27,7 +27,16 @@ test("audit recovery, explicit checks, private navigation and mobile drawers @a1
 	await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
 	await page.waitForLoadState("networkidle");
 	await writeFile("../.context/overview-after.json", JSON.stringify(requests, null, 2));
-	expect(requests.filter((r) => r.path.includes("provider-endpoints"))).toHaveLength(0);
+	expect(requests.map((r) => r.path)).toEqual(["/api/backend/v1/overview"]);
+	const beforeReturn = requests.length;
+	await page.getByRole("link", { name: "Lists", exact: true }).first().click();
+	await expect(page.getByRole("heading", { name: "Email lists", exact: true })).toBeVisible();
+	await page.getByRole("link", { name: "Overview", exact: true }).first().click();
+	await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
+	await page.waitForLoadState("networkidle");
+	expect(
+		requests.slice(beforeReturn).filter((r) => r.path === "/api/backend/v1/overview"),
+	).toHaveLength(0);
 
 	await page.goto("/app/check?email=Legacy%2Btag%40example.com");
 	await expect(page.getByLabel("Email address")).toHaveValue("Legacy+tag@example.com");

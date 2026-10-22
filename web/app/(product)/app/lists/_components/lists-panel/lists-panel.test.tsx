@@ -38,6 +38,7 @@ it("shows tenant lists returned by the SDK", async () => {
 					source_key: null,
 					status: "processing",
 					total_rows: 10,
+					total_processed: 4,
 					created_at: "2026-09-23T00:00:00Z",
 					completed_at: null,
 				},
@@ -52,6 +53,7 @@ it("shows tenant lists returned by the SDK", async () => {
 			name: "Signup",
 			status: "processing",
 			total_rows: 10,
+			total_processed: 4,
 			email_column: "email",
 			summary: {
 				total_valid: 3,

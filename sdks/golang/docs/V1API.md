@@ -27,6 +27,7 @@ Method | HTTP request | Description
 [**V1ListResearch**](V1API.md#V1ListResearch) | **Get** /v1/research |
 [**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
+[**V1Overview**](V1API.md#V1Overview) | **Get** /v1/overview |
 [**V1RestoreSuppression**](V1API.md#V1RestoreSuppression) | **Post** /v1/suppressions/{id}/restore |
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
 [**V1SourceQuality**](V1API.md#V1SourceQuality) | **Get** /v1/sources/quality | List source quality
@@ -1576,6 +1577,65 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**SuppressionListResponse**](SuppressionListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1Overview
+
+> OverviewResponse V1Overview(ctx).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1Overview(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1Overview``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1Overview`: OverviewResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1Overview`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1OverviewRequest struct via the builder pattern
+
+
+### Return type
+
+[**OverviewResponse**](OverviewResponse.md)
 
 ### Authorization
 

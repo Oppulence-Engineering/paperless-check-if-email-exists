@@ -28,7 +28,7 @@ it("classifies every API method once for the developer portal", () => {
 		operations
 			.filter((operation) => operation.audience === "tenant" && !operation.scope)
 			.map((operation) => operation.path),
-	).toEqual(["/v1/me", "/v1/me/usage"]);
+	).toEqual(["/v1/me", "/v1/me/usage", "/v1/overview"]);
 	expect(operations.find((operation) => operation.id === "v1_trigger_pipeline")?.scope).toBe(
 		"pipelines.trigger",
 	);

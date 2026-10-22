@@ -22,6 +22,7 @@ import {
   ReasonCode,
   RecommendedAction,
   RiskDirection,
+  SectionStatus,
   SmtpUncertaintyClass,
   SubReason,
   SuppressionReason,
@@ -39,6 +40,7 @@ import type {
   ListUploadResponse,
   MiscDetails,
   MxDetails,
+  OverviewResponse,
   PendingVerification,
   ReputationCheckResponse,
   ResearchCreated,
@@ -749,6 +751,7 @@ export const getV1ListListsResponseMock = (
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     email_column: faker.string.alpha({ length: { min: 10, max: 20 } }),
     id: faker.number.int(),
+    job_id: faker.helpers.arrayElement([faker.number.int(), undefined]),
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     original_filename: faker.string.alpha({ length: { min: 10, max: 20 } }),
     source_key: faker.helpers.arrayElement([
@@ -756,6 +759,10 @@ export const getV1ListListsResponseMock = (
       null,
     ]),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    total_processed: faker.helpers.arrayElement([
+      faker.number.int(),
+      undefined,
+    ]),
     total_rows: faker.number.int(),
   })),
   total: faker.number.int(),
@@ -804,6 +811,10 @@ export const getV1GetListResponseMock = (
   id: faker.number.int(),
   job_id: faker.number.int(),
   name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  original_filename: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    undefined,
+  ]),
   policy_id: faker.helpers.arrayElement([faker.number.int(), null]),
   rejected_rows: faker.helpers.arrayElement([faker.number.int(), null]),
   source_key: faker.helpers.arrayElement([
@@ -1135,6 +1146,139 @@ export const getV1GetVerificationOperationResponseMock = (
       ...overrideResponse,
     },
   ]);
+
+export const getV1OverviewResponseMock = (
+  overrideResponse: Partial<Extract<OverviewResponse, object>> = {},
+): OverviewResponse => ({
+  alerts: {
+    data: faker.helpers.arrayElement([
+      {
+        alerts: Array.from(
+          { length: faker.number.int({ min: 1, max: 10 }) },
+          (_, i) => i + 1,
+        ).map(() => ({
+          body: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          canonical_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          change_event_id: faker.helpers.arrayElement([
+            faker.number.int(),
+            null,
+          ]),
+          created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+          id: faker.number.int(),
+          metadata: {},
+          status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          title: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          type: faker.string.alpha({ length: { min: 10, max: 20 } }),
+          updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+        })),
+        total: faker.number.int(),
+      },
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  domains: {
+    data: faker.helpers.arrayElement([
+      {
+        active: faker.number.int(),
+        total: faker.number.int(),
+        verified: faker.number.int(),
+      },
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  lists: {
+    data: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => ({
+        id: faker.number.int(),
+        job_id: faker.number.int(),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        quality_grade: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        ready_to_send: faker.helpers.arrayElement([
+          faker.datatype.boolean(),
+          null,
+        ]),
+        safe_to_send_count: faker.helpers.arrayElement([
+          faker.number.int(),
+          null,
+        ]),
+        status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        total_processed: faker.number.int(),
+        total_rows: faker.number.int(),
+      })),
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  outcomes: {
+    data: faker.helpers.arrayElement([
+      { bounced: faker.number.int(), complained: faker.number.int() },
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  pipelines: {
+    data: faker.helpers.arrayElement([
+      Array.from(
+        { length: faker.number.int({ min: 1, max: 10 }) },
+        (_, i) => i + 1,
+      ).map(() => ({
+        id: faker.number.int(),
+        last_run_id: faker.helpers.arrayElement([faker.number.int(), null]),
+        last_run_status: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        next_run_at: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+        status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      })),
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  reverification: {
+    data: faker.helpers.arrayElement([
+      {
+        enabled: faker.datatype.boolean(),
+        next_run_at: faker.helpers.arrayElement([
+          faker.date.past().toISOString().slice(0, 19) + "Z",
+          null,
+        ]),
+      },
+      undefined,
+    ]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  suppressions: {
+    data: faker.helpers.arrayElement([faker.number.int(), undefined]),
+    status: faker.helpers.arrayElement(Object.values(SectionStatus)),
+  },
+  usage: {
+    monthly_email_limit: faker.helpers.arrayElement([faker.number.int(), null]),
+    period_reset_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    plan_tier: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    quota_remaining: faker.helpers.arrayElement([faker.number.int(), null]),
+    quota_unlimited: faker.datatype.boolean(),
+    tenant_id: faker.string.uuid(),
+    tenant_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    used_this_period: faker.number.int(),
+  },
+  ...overrideResponse,
+});
 
 export const getV1CheckReputationResponseMock = (
   overrideResponse: Partial<Extract<ReputationCheckResponse, object>> = {},

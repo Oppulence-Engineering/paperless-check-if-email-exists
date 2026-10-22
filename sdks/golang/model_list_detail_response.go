@@ -27,6 +27,7 @@ type ListDetailResponse struct {
 	Id int32 `json:"id"`
 	JobId int32 `json:"job_id"`
 	Name string `json:"name"`
+	OriginalFilename *string `json:"original_filename,omitempty"`
 	PolicyId NullableInt64 `json:"policy_id,omitempty"`
 	RejectedRows NullableInt32 `json:"rejected_rows,omitempty"`
 	SourceKey NullableString `json:"source_key,omitempty"`
@@ -198,6 +199,38 @@ func (o *ListDetailResponse) GetNameOk() (*string, bool) {
 // SetName sets field value
 func (o *ListDetailResponse) SetName(v string) {
 	o.Name = v
+}
+
+// GetOriginalFilename returns the OriginalFilename field value if set, zero value otherwise.
+func (o *ListDetailResponse) GetOriginalFilename() string {
+	if o == nil || IsNil(o.OriginalFilename) {
+		var ret string
+		return ret
+	}
+	return *o.OriginalFilename
+}
+
+// GetOriginalFilenameOk returns a tuple with the OriginalFilename field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ListDetailResponse) GetOriginalFilenameOk() (*string, bool) {
+	if o == nil || IsNil(o.OriginalFilename) {
+		return nil, false
+	}
+	return o.OriginalFilename, true
+}
+
+// HasOriginalFilename returns a boolean if a field has been set.
+func (o *ListDetailResponse) HasOriginalFilename() bool {
+	if o != nil && !IsNil(o.OriginalFilename) {
+		return true
+	}
+
+	return false
+}
+
+// SetOriginalFilename gets a reference to the given string and assigns it to the OriginalFilename field.
+func (o *ListDetailResponse) SetOriginalFilename(v string) {
+	o.OriginalFilename = &v
 }
 
 // GetPolicyId returns the PolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -457,6 +490,9 @@ func (o ListDetailResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["job_id"] = o.JobId
 	toSerialize["name"] = o.Name
+	if !IsNil(o.OriginalFilename) {
+		toSerialize["original_filename"] = o.OriginalFilename
+	}
 	if o.PolicyId.IsSet() {
 		toSerialize["policy_id"] = o.PolicyId.Get()
 	}

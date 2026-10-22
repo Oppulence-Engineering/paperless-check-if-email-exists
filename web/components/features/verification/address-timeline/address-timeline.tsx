@@ -54,16 +54,18 @@ export function AddressTimeline({ className, email, ...props }: AddressTimelineP
 	const events = useQuery({
 		queryKey: workflowQueryKey("address-timeline-outcomes", email),
 		enabled: Boolean(email),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListOutcomes200Response.parse(
-				(await outcomesApi.v1ListOutcomes({ email, limit: 50 })).data,
+				(await outcomesApi.v1ListOutcomes({ email, limit: 50 }, { signal })).data,
 			),
 	});
 	const suppression = useQuery({
 		queryKey: suppressionKey,
 		enabled: Boolean(email),
-		queryFn: async () =>
-			V1CheckSuppression200Response.parse((await v1Api.v1CheckSuppression({ email })).data),
+		queryFn: async ({ signal }) =>
+			V1CheckSuppression200Response.parse(
+				(await v1Api.v1CheckSuppression({ email }, { signal })).data,
+			),
 	});
 	const suppress = useMutation({
 		mutationFn: async () =>

@@ -57,21 +57,20 @@ export function JobProblems({ className, jobId, ...props }: JobProblemsProps) {
 	const [notice, setNotice] = useState("");
 	const failures = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "failures"),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			FailureCenterSchema.parse((await jobsApi.v1GetJobFailureCenter({ jobId })).data),
-		refetchInterval: (query) =>
-			ACTIVE_JOB_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
 	});
 	const events = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "events", eventOffset),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			JobEventsSchema.parse(
 				(await jobsApi.v1GetJobEvents({ jobId, limit: EVENT_PAGE, offset: eventOffset })).data,
 			),
 	});
 	const latency = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "latency"),
-		queryFn: async () => JobLatencySchema.parse((await jobsApi.v1JobLatency({ jobId })).data),
+		queryFn: async ({ signal }) =>
+			JobLatencySchema.parse((await jobsApi.v1JobLatency({ jobId }, { signal })).data),
 	});
 	const retry = useMutation({
 		mutationFn: async () => (await jobsApi.v1RetryJob({ jobId })).data,

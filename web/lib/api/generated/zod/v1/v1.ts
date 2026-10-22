@@ -1341,10 +1341,12 @@ export const V1ListLists200Response = zod.object({
       created_at: zod.iso.datetime({ offset: true }),
       email_column: zod.string(),
       id: zod.int(),
+      job_id: zod.int().optional(),
       name: zod.string(),
       original_filename: zod.string(),
       source_key: zod.string().nullish(),
       status: zod.string(),
+      total_processed: zod.int().optional(),
       total_rows: zod.int(),
     }),
   ),
@@ -1438,6 +1440,7 @@ export const V1GetList200Response = zod.object({
   id: zod.int(),
   job_id: zod.int(),
   name: zod.string(),
+  original_filename: zod.string().optional(),
   policy_id: zod.int().nullish(),
   rejected_rows: zod.int().nullish(),
   source_key: zod.string().nullish(),
@@ -1990,6 +1993,110 @@ export const V1GetVerificationOperation202Response = zod.object({
 });
 
 export const V1GetVerificationOperationDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const V1Overview200Response = zod.object({
+  alerts: zod.object({
+    data: zod
+      .object({
+        alerts: zod.array(
+          zod.object({
+            body: zod.string().nullish(),
+            canonical_email: zod.string(),
+            change_event_id: zod.int().nullish(),
+            created_at: zod.iso.datetime({ offset: true }),
+            id: zod.int(),
+            metadata: zod.unknown(),
+            status: zod.string(),
+            title: zod.string(),
+            type: zod.string(),
+            updated_at: zod.iso.datetime({ offset: true }),
+          }),
+        ),
+        total: zod.int(),
+      })
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  domains: zod.object({
+    data: zod
+      .object({
+        active: zod.int(),
+        total: zod.int(),
+        verified: zod.int(),
+      })
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  lists: zod.object({
+    data: zod
+      .array(
+        zod.object({
+          id: zod.int(),
+          job_id: zod.int(),
+          name: zod.string(),
+          quality_grade: zod.string().nullish(),
+          ready_to_send: zod.boolean().nullish(),
+          safe_to_send_count: zod.int().nullish(),
+          status: zod.string(),
+          total_processed: zod.int(),
+          total_rows: zod.int(),
+        }),
+      )
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  outcomes: zod.object({
+    data: zod
+      .object({
+        bounced: zod.int(),
+        complained: zod.int(),
+      })
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  pipelines: zod.object({
+    data: zod
+      .array(
+        zod.object({
+          id: zod.int(),
+          last_run_id: zod.int().nullish(),
+          last_run_status: zod.string().nullish(),
+          name: zod.string(),
+          next_run_at: zod.iso.datetime({ offset: true }).nullish(),
+          status: zod.string(),
+        }),
+      )
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  reverification: zod.object({
+    data: zod
+      .object({
+        enabled: zod.boolean(),
+        next_run_at: zod.iso.datetime({ offset: true }).nullish(),
+      })
+      .optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  suppressions: zod.object({
+    data: zod.int().optional(),
+    status: zod.enum(["ready", "forbidden", "unavailable"]),
+  }),
+  usage: zod.object({
+    monthly_email_limit: zod.int().nullish(),
+    period_reset_at: zod.string(),
+    plan_tier: zod.string(),
+    quota_remaining: zod.int().nullish(),
+    quota_unlimited: zod.boolean(),
+    tenant_id: zod.uuid(),
+    tenant_name: zod.string(),
+    used_this_period: zod.int(),
+  }),
+});
+
+export const V1OverviewDefaultResponse = zod.object({
   error: zod.string(),
 });
 

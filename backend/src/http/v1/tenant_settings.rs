@@ -59,7 +59,7 @@ struct TenantWebhookResponse {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-struct TenantUsageResponse {
+pub(crate) struct TenantUsageResponse {
 	pub tenant_id: Uuid,
 	pub tenant_name: String,
 	pub plan_tier: String,
@@ -199,6 +199,12 @@ pub fn validate_result_retention_days(days: i32) -> Result<(), warp::Rejection> 
 }
 
 async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, warp::Rejection> {
+	Ok(warp::reply::json(&usage_summary(&tenant_ctx)?))
+}
+
+pub(crate) fn usage_summary(
+	tenant_ctx: &TenantContext,
+) -> Result<TenantUsageResponse, warp::Rejection> {
 	// Usage needs no scope, like GET /v1/me: it reports the caller's own
 	// quota, and workspace members (who lack `settings`) read it.
 	let limit = tenant_ctx.monthly_email_limit;
@@ -216,7 +222,7 @@ async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, wa
 	})?;
 	let response = TenantUsageResponse {
 		tenant_id,
-		tenant_name: tenant_ctx.tenant_name,
+		tenant_name: tenant_ctx.tenant_name.clone(),
 		plan_tier: format!("{:?}", tenant_ctx.plan_tier).to_lowercase(),
 		monthly_email_limit: limit,
 		used_this_period: tenant_ctx.used_this_period,
@@ -225,7 +231,7 @@ async fn usage_handler(tenant_ctx: TenantContext) -> Result<impl warp::Reply, wa
 		quota_remaining,
 	};
 
-	Ok(warp::reply::json(&response))
+	Ok(response)
 }
 
 async fn update_settings_handler(

@@ -6,9 +6,14 @@
  */
 export const v1ListListsKeys = {
 	all: ["v1-list-lists"] as const,
-	list: (query?: Record<string, unknown>) => [...v1ListListsKeys.all, "list", query ?? {}] as const,
+	list: (query?: Record<string, unknown>) =>
+		[
+			...v1ListListsKeys.all,
+			"list",
+			{ ...query, limit: query?.limit ?? 50, offset: query?.offset ?? 0 },
+		] as const,
 	detail: (id?: string, query?: Record<string, unknown>) =>
 		[...v1ListListsKeys.all, "detail", id ?? "", query ?? {}] as const,
 };
 
-export const V1_LIST_LISTS_STALE_TIME = 15_000;
+export const V1_LIST_LISTS_STALE_TIME = 30_000;

@@ -1,4 +1,5 @@
 "use client";
+import { useJobStatus } from "@/hooks/queries/use-job-status";
 
 import "client-only";
 import { errorMessage } from "@/lib/api/error-message";
@@ -26,7 +27,7 @@ import { fetchV1EmailHistory } from "@/hooks/queries/utils/fetch-v1-email-histor
 import { saveFile } from "@/lib/downloads";
 import { V1ListJobs200Response } from "@/lib/api/generated/zod/jobs/jobs";
 import { V1GetJobResults200Response } from "@/lib/api/generated/zod/jobs/jobs";
-import { ACTIVE_JOB_STATES, JobStatusSchema } from "@/lib/api/schemas/jobs";
+import { ACTIVE_JOB_STATES } from "@/lib/api/schemas/jobs";
 import { jobStatus, taskState } from "@/lib/verification/labels";
 
 import { type JobsPanelPropsFields } from "./jobs-panel.schema";
@@ -56,8 +57,10 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 	const [offset, setOffset] = useState(0);
 	const recent = useQuery({
 		queryKey: workflowQueryKey("recent-jobs", offset),
-		queryFn: async () =>
-			V1ListJobs200Response.parse((await jobsApi.v1ListJobs({ limit: 20, offset })).data),
+		queryFn: async ({ signal }) =>
+			V1ListJobs200Response.parse(
+				(await jobsApi.v1ListJobs({ limit: 20, offset }, { signal })).data,
+			),
 	});
 	const [input, setInput] = useState("");
 	const [source, setSource] = useState("");
@@ -100,22 +103,15 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 			void queryClient.invalidateQueries({ queryKey: workflowQueryKey("recent-jobs") });
 		},
 	});
-	const status = useQuery({
-		queryKey: workflowQueryKey(...key, "status"),
-		enabled: !!jobId,
-		queryFn: async () =>
-			JobStatusSchema.parse((await jobsApi.v1GetJobStatus({ jobId: selectedJobId() })).data),
-		refetchInterval: (query) =>
-			ACTIVE_JOB_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
-	});
+	const status = useJobStatus(jobId ?? undefined);
 	// ponytail: the job API has no list ID. The history of one checked row has it.
 	// Use a list_id field on the job status when the backend adds one.
 	const listId = useQuery({
 		queryKey: workflowQueryKey(...key, "list"),
 		enabled: !!jobId,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const page = V1GetJobResults200Response.parse(
-				(await jobsApi.v1GetJobResults({ jobId: selectedJobId(), limit: 10 })).data,
+				(await jobsApi.v1GetJobResults({ jobId: selectedJobId(), limit: 10 }, { signal })).data,
 			);
 			const row = page.results.find((item) => item.result?.input);
 			if (!row?.result) return null;

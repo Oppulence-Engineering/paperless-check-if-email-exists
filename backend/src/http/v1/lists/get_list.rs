@@ -21,6 +21,8 @@ struct Query {
 #[derive(Debug, Serialize)]
 struct ListItem {
 	id: i32,
+	job_id: i32,
+	total_processed: i64,
 	name: String,
 	original_filename: String,
 	status: String,
@@ -51,6 +53,8 @@ async fn http_handler(
 		r#"
 		SELECT
 			id,
+            job_id,
+            (SELECT COUNT(*) FROM v1_task_result t WHERE t.job_id=l.job_id AND t.tenant_id=l.tenant_id AND t.extra->>'list_id'=l.id::text AND t.task_state IN ('completed','failed','dead_lettered','cancelled') AND (t.dispatch_id IS NULL OR t.completion_done) AND (t.result IS NOT NULL OR t.error IS NOT NULL OR t.task_state='cancelled')) AS total_processed,
 			name,
 			original_filename,
 			status::TEXT AS status,
@@ -59,7 +63,7 @@ async fn http_handler(
 			source_key,
 			created_at,
 			completed_at
-		FROM v1_lists
+		FROM v1_lists l
 		WHERE tenant_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
@@ -82,6 +86,8 @@ async fn http_handler(
 			.into_iter()
 			.map(|row| ListItem {
 				id: sqlx::Row::get(&row, "id"),
+				job_id: sqlx::Row::get(&row, "job_id"),
+				total_processed: sqlx::Row::get(&row, "total_processed"),
 				name: sqlx::Row::get(&row, "name"),
 				original_filename: sqlx::Row::get(&row, "original_filename"),
 				status: sqlx::Row::get(&row, "status"),
