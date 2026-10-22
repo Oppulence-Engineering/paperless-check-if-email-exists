@@ -59,6 +59,16 @@ pub struct OutcomeListResponse {
 // POST /v1/outcomes
 // ----------------------------------------------------------------------------
 
+/// The most outcomes one request may ingest, as JSON or as a CSV upload.
+const MAX_OUTCOMES_PER_REQUEST: usize = 5_000;
+
+fn too_many_outcomes() -> ReacherResponseError {
+	ReacherResponseError::new(
+		StatusCode::BAD_REQUEST,
+		format!("max {MAX_OUTCOMES_PER_REQUEST} outcomes per request"),
+	)
+}
+
 async fn ingest_handler(
 	tenant_ctx: TenantContext,
 	pg_pool: PgPool,
@@ -74,12 +84,8 @@ async fn ingest_handler(
 		)
 		.into());
 	}
-	if body.outcomes.len() > 5_000 {
-		return Err(ReacherResponseError::new(
-			StatusCode::BAD_REQUEST,
-			"max 5000 outcomes per request",
-		)
-		.into());
+	if body.outcomes.len() > MAX_OUTCOMES_PER_REQUEST {
+		return Err(too_many_outcomes().into());
 	}
 
 	let (policy_id, policy) = fetch_or_create_default_policy(&pg_pool, tenant_id)
@@ -134,7 +140,16 @@ async fn upload_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 
 	let upload = read_csv_upload(form).await?;
-	let parsed = parse_csv(&upload.file_bytes, Some("email"), None)?;
+	// Parsing stops one row past the cap, so an oversized file is refused
+	// without building every row, and a CSV takes no more than JSON does.
+	let parsed = parse_csv(
+		&upload.file_bytes,
+		Some("email"),
+		Some(MAX_OUTCOMES_PER_REQUEST),
+	)?;
+	if parsed.rows.len() > MAX_OUTCOMES_PER_REQUEST {
+		return Err(too_many_outcomes().into());
+	}
 
 	let mut outcomes = Vec::with_capacity(parsed.rows.len());
 	let mut errors: Vec<IngestRowError> = Vec::new();
