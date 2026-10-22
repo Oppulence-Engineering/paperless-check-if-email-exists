@@ -9,7 +9,7 @@ use crate::http::v1::bulk::with_worker_db;
 use crate::http::{check_scope, resolve_tenant, CheckEmailRequest, ReacherResponseError};
 use crate::tenant::context::{scope, TenantContext};
 use crate::tenant::quota::{
-	check_and_increment_quota_for_count, release_reserved_usage, QuotaCheckResult,
+	check_and_increment_quota_for_count, check_quota, release_reserved_usage, QuotaCheckResult,
 };
 use crate::worker::do_work::{CheckEmailJobId, CheckEmailTask, TaskMetadata};
 use check_if_email_exists::LOG_TARGET;
@@ -108,6 +108,19 @@ async fn http_handler(
 		.into());
 	}
 
+	// A tenant with no quota left is refused before the probe too: the
+	// precheck reaches out from our servers whatever the domain turns out to
+	// be, so it would otherwise run once per request until the rate limit
+	// stopped it.
+	if let QuotaCheckResult::ExceededMonthlyLimit {
+		limit,
+		used,
+		resets_at,
+	} = check_quota(Some(&pg_pool), &tenant_ctx).await
+	{
+		return Err(monthly_limit_reached(limit, used, resets_at).into());
+	}
+
 	let precheck = precheck_domain(Arc::clone(&config), &normalized_domain)
 		.await
 		.map_err(warp::reject::custom)?;
@@ -132,18 +145,7 @@ async fn http_handler(
 				limit,
 				used,
 				resets_at,
-			} => {
-				return Err(ReacherResponseError::new(
-					StatusCode::TOO_MANY_REQUESTS,
-					format!(
-						"Monthly email limit of {} reached ({} used). Resets at {}",
-						limit,
-						used,
-						resets_at.format("%Y-%m-%d %H:%M:%S UTC")
-					),
-				)
-				.into())
-			}
+			} => return Err(monthly_limit_reached(limit, used, resets_at).into()),
 		}
 	}
 
@@ -330,6 +332,23 @@ async fn http_handler(
 		}),
 		StatusCode::ACCEPTED,
 	))
+}
+
+/// The 429 a tenant gets once its monthly quota is used up.
+fn monthly_limit_reached(
+	limit: i32,
+	used: i32,
+	resets_at: chrono::DateTime<chrono::Utc>,
+) -> ReacherResponseError {
+	ReacherResponseError::new(
+		StatusCode::TOO_MANY_REQUESTS,
+		format!(
+			"Monthly email limit of {} reached ({} used). Resets at {}",
+			limit,
+			used,
+			resets_at.format("%Y-%m-%d %H:%M:%S UTC")
+		),
+	)
 }
 
 async fn cleanup_finder_publish_failure(
