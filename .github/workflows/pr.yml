@@ -67,8 +67,10 @@ jobs:
       - name: Run web tests
         run: pnpm test
         working-directory: web
-      - name: Build web runtime
-        run: pnpm build
+      - name: Build web runtime and enforce route budgets
+        run: |
+          pnpm build
+          pnpm bundle:check
         working-directory: web
 
   web-security:

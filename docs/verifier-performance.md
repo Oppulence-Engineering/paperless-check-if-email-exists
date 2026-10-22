@@ -61,10 +61,11 @@ fell from 768 KiB to 256 KiB. Development tools are deferred, inactive list tabs
 and the saved-segments drawer load on demand, and marketing CSS is scoped to
 marketing routes. These are uncompressed file sizes, not transferred bytes.
 `pnpm bundle:check` enforces measured budgets plus 5% for Overview, lists, list
-detail, analytics, research and settings. Use `pnpm analyze` for module attribution.
+detail, analytics, research and settings, and runs after the production build in
+the PR workflow. Use `pnpm analyze` for module attribution.
 
 A local `EXPLAIN (ANALYZE, BUFFERS)` over five lists with 2,000 rows each completed
-the list summary query in 24.1 ms and used existing tenant/list, job/task and
+the final list summary query in 115.6 ms and used existing tenant/list, job/task and
 active-suppression indexes. This does not establish production query latency.
 No migration, new index, Redis, replica or connection-budget increase is needed.
 
@@ -79,5 +80,6 @@ read, useful outage recovery, private navigation and the 390px suppression flow.
 
 Staging must pass the existing full-stack image smoke test and sequential
 regional workflow, followed by authenticated regional navigation measurements.
+The PR records the deployed revision and resulting regional measurements.
 Production rollout is a separate future step; no production latency improvement
 is claimed from local build or unit-test results.
