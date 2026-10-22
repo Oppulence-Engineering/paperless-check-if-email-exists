@@ -12710,6 +12710,7 @@ components:
           type: integer
         job_id:
           format: int32
+          nullable: true
           type: integer
         name:
           type: string
@@ -12733,7 +12734,6 @@ components:
           type: integer
       required:
       - id
-      - job_id
       - name
       - status
       - total_processed
@@ -12749,10 +12749,10 @@ components:
         status: status
       properties:
         id:
-          format: int32
+          format: int64
           type: integer
         last_run_id:
-          format: int32
+          format: int64
           nullable: true
           type: integer
         last_run_status:

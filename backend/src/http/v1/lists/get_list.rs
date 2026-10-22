@@ -21,7 +21,8 @@ struct Query {
 #[derive(Debug, Serialize)]
 struct ListItem {
 	id: i32,
-	job_id: i32,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	job_id: Option<i32>,
 	total_processed: i64,
 	name: String,
 	original_filename: String,

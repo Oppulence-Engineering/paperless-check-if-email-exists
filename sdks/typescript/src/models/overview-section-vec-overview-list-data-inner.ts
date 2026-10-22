@@ -31,7 +31,7 @@ export interface OverviewSectionVecOverviewListDataInner {
      * @type {number}
      * @memberof OverviewSectionVecOverviewListDataInner
      */
-    'job_id': number;
+    'job_id'?: number | null;
     /**
      *
      * @type {string}

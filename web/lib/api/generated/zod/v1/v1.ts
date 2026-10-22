@@ -2034,7 +2034,7 @@ export const V1Overview200Response = zod.object({
       .array(
         zod.object({
           id: zod.int(),
-          job_id: zod.int(),
+          job_id: zod.int().nullish(),
           name: zod.string(),
           quality_grade: zod.string().nullish(),
           ready_to_send: zod.boolean().nullish(),

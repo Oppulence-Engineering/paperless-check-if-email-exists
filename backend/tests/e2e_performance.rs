@@ -64,6 +64,29 @@ async fn overview_is_scoped_exact_and_matches_live_readiness() {
 	)
 	.await;
 	sqlx::query("INSERT INTO v1_contact_outcomes (tenant_id,email,canonical_email,provider,event_type,occurred_at) SELECT $1,'safe@example.com','safe@example.com','test','bounced',NOW() FROM generate_series(1,501)").bind(tenant).execute(db.pool()).await.unwrap();
+	let pipeline = insert_pipeline(
+		db.pool(),
+		tenant,
+		"Performance pipeline",
+		json!({"type":"list_snapshot","list_id":list}),
+	)
+	.await;
+	let run = insert_pipeline_run(
+		db.pool(),
+		pipeline,
+		tenant,
+		"completed",
+		Some(job),
+		Some(list),
+	)
+	.await;
+	sqlx::query("UPDATE v1_pipelines SET last_run_id=$1 WHERE id=$2")
+		.bind(run)
+		.bind(pipeline)
+		.execute(db.pool())
+		.await
+		.unwrap();
+	let legacy_list: i32 = sqlx::query_scalar("INSERT INTO v1_lists (tenant_id,name,original_filename,file_size_bytes,total_rows,email_column,status) VALUES ($1,'Imported snapshot','snapshot.csv',1,0,'email','completed') RETURNING id").bind(tenant).fetch_one(db.pool()).await.unwrap();
 	let auth = format!("Bearer {key}");
 	let r = request()
 		.path("/v1/overview")
@@ -72,9 +95,32 @@ async fn overview_is_scoped_exact_and_matches_live_readiness() {
 		.await;
 	assert_eq!(r.status(), 200, "{:?}", r.body());
 	let body: Value = serde_json::from_slice(r.body()).unwrap();
+	assert_eq!(body["pipelines"]["status"], "ready");
+	assert_eq!(body["pipelines"]["data"][0]["id"], pipeline);
+	assert_eq!(body["pipelines"]["data"][0]["last_run_id"], run);
+	assert_eq!(body["pipelines"]["data"][0]["last_run_status"], "completed");
 	assert_eq!(body["lists"]["status"], "ready");
-	assert_eq!(body["lists"]["data"].as_array().unwrap().len(), 1);
-	let summary = &body["lists"]["data"][0];
+	assert_eq!(body["lists"]["data"].as_array().unwrap().len(), 2);
+	let summary = body["lists"]["data"]
+		.as_array()
+		.unwrap()
+		.iter()
+		.find(|row| row["id"] == list)
+		.unwrap();
+	let legacy = body["lists"]["data"]
+		.as_array()
+		.unwrap()
+		.iter()
+		.find(|row| row["id"] == legacy_list)
+		.unwrap();
+	assert!(legacy["job_id"].is_null());
+	assert!(legacy["ready_to_send"].is_null());
+	let index = request()
+		.path("/v1/lists")
+		.header("authorization", &auth)
+		.reply(&routes)
+		.await;
+	assert_eq!(index.status(), 200);
 	assert_eq!(summary["status"], "completed");
 	assert_eq!(summary["total_processed"], 2);
 	assert_eq!(summary["quality_grade"], "C");

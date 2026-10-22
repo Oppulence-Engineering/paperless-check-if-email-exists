@@ -3356,6 +3356,7 @@
                 },
                 "job_id": {
                   "format": "int32",
+                  "nullable": true,
                   "type": "integer"
                 },
                 "name": {
@@ -3388,7 +3389,6 @@
               },
               "required": [
                 "id",
-                "job_id",
                 "name",
                 "status",
                 "total_rows",
@@ -3413,11 +3413,11 @@
             "items": {
               "properties": {
                 "id": {
-                  "format": "int32",
+                  "format": "int64",
                   "type": "integer"
                 },
                 "last_run_id": {
-                  "format": "int32",
+                  "format": "int64",
                   "nullable": true,
                   "type": "integer"
                 },

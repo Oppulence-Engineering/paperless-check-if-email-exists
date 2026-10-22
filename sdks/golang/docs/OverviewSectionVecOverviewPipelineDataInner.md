@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | **int32** |  | [required]
-**LastRunId** | Pointer to **NullableInt32** |  | [optional]
+**Id** | **int64** |  | [required]
+**LastRunId** | Pointer to **NullableInt64** |  | [optional]
 **LastRunStatus** | Pointer to **NullableString** |  | [optional]
 **Name** | **string** |  | [required]
 **NextRunAt** | Pointer to **NullableTime** |  | [optional]
@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 
 ### NewOverviewSectionVecOverviewPipelineDataInner
 
-`func NewOverviewSectionVecOverviewPipelineDataInner(id int32, name string, status string) *OverviewSectionVecOverviewPipelineDataInner`
+`func NewOverviewSectionVecOverviewPipelineDataInner(id int64, name string, status string) *OverviewSectionVecOverviewPipelineDataInner`
 
 NewOverviewSectionVecOverviewPipelineDataInner instantiates a new OverviewSectionVecOverviewPipelineDataInner object
 This constructor will assign default values to properties that have it defined,
@@ -32,40 +32,40 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetId
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) GetId() int32`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) GetId() int64`
 
 GetId returns the Id field if non-nil, zero value otherwise.
 
 ### GetIdOk
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) GetIdOk() (*int32, bool)`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) GetIdOk() (*int64, bool)`
 
 GetIdOk returns a tuple with the Id field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetId
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) SetId(v int32)`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) SetId(v int64)`
 
 SetId sets Id field to given value.
 
 
 ### GetLastRunId
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunId() int32`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunId() int64`
 
 GetLastRunId returns the LastRunId field if non-nil, zero value otherwise.
 
 ### GetLastRunIdOk
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunIdOk() (*int32, bool)`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunIdOk() (*int64, bool)`
 
 GetLastRunIdOk returns a tuple with the LastRunId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLastRunId
 
-`func (o *OverviewSectionVecOverviewPipelineDataInner) SetLastRunId(v int32)`
+`func (o *OverviewSectionVecOverviewPipelineDataInner) SetLastRunId(v int64)`
 
 SetLastRunId sets LastRunId field to given value.
 

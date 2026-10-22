@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **number** |  | [required]
-**job_id** | **number** |  | [required]
+**job_id** | **number** |  | [optional]
 **name** | **string** |  | [required]
 **quality_grade** | **string** |  | [optional]
 **ready_to_send** | **boolean** |  | [optional]

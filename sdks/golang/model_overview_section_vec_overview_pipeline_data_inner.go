@@ -23,8 +23,8 @@ var _ MappedNullable = &OverviewSectionVecOverviewPipelineDataInner{}
 
 // OverviewSectionVecOverviewPipelineDataInner struct for OverviewSectionVecOverviewPipelineDataInner
 type OverviewSectionVecOverviewPipelineDataInner struct {
-	Id int32 `json:"id"`
-	LastRunId NullableInt32 `json:"last_run_id,omitempty"`
+	Id int64 `json:"id"`
+	LastRunId NullableInt64 `json:"last_run_id,omitempty"`
 	LastRunStatus NullableString `json:"last_run_status,omitempty"`
 	Name string `json:"name"`
 	NextRunAt NullableTime `json:"next_run_at,omitempty"`
@@ -37,7 +37,7 @@ type _OverviewSectionVecOverviewPipelineDataInner OverviewSectionVecOverviewPipe
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOverviewSectionVecOverviewPipelineDataInner(id int32, name string, status string) *OverviewSectionVecOverviewPipelineDataInner {
+func NewOverviewSectionVecOverviewPipelineDataInner(id int64, name string, status string) *OverviewSectionVecOverviewPipelineDataInner {
 	this := OverviewSectionVecOverviewPipelineDataInner{}
 	this.Id = id
 	this.Name = name
@@ -54,9 +54,9 @@ func NewOverviewSectionVecOverviewPipelineDataInnerWithDefaults() *OverviewSecti
 }
 
 // GetId returns the Id field value
-func (o *OverviewSectionVecOverviewPipelineDataInner) GetId() int32 {
+func (o *OverviewSectionVecOverviewPipelineDataInner) GetId() int64 {
 	if o == nil {
-		var ret int32
+		var ret int64
 		return ret
 	}
 
@@ -65,7 +65,7 @@ func (o *OverviewSectionVecOverviewPipelineDataInner) GetId() int32 {
 
 // GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
-func (o *OverviewSectionVecOverviewPipelineDataInner) GetIdOk() (*int32, bool) {
+func (o *OverviewSectionVecOverviewPipelineDataInner) GetIdOk() (*int64, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -73,14 +73,14 @@ func (o *OverviewSectionVecOverviewPipelineDataInner) GetIdOk() (*int32, bool) {
 }
 
 // SetId sets field value
-func (o *OverviewSectionVecOverviewPipelineDataInner) SetId(v int32) {
+func (o *OverviewSectionVecOverviewPipelineDataInner) SetId(v int64) {
 	o.Id = v
 }
 
 // GetLastRunId returns the LastRunId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunId() int32 {
+func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunId() int64 {
 	if o == nil || IsNil(o.LastRunId.Get()) {
-		var ret int32
+		var ret int64
 		return ret
 	}
 	return *o.LastRunId.Get()
@@ -89,7 +89,7 @@ func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunId() int32 {
 // GetLastRunIdOk returns a tuple with the LastRunId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunIdOk() (*int32, bool) {
+func (o *OverviewSectionVecOverviewPipelineDataInner) GetLastRunIdOk() (*int64, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -105,8 +105,8 @@ func (o *OverviewSectionVecOverviewPipelineDataInner) HasLastRunId() bool {
 	return false
 }
 
-// SetLastRunId gets a reference to the given NullableInt32 and assigns it to the LastRunId field.
-func (o *OverviewSectionVecOverviewPipelineDataInner) SetLastRunId(v int32) {
+// SetLastRunId gets a reference to the given NullableInt64 and assigns it to the LastRunId field.
+func (o *OverviewSectionVecOverviewPipelineDataInner) SetLastRunId(v int64) {
 	o.LastRunId.Set(&v)
 }
 // SetLastRunIdNil sets the value for LastRunId to be an explicit nil

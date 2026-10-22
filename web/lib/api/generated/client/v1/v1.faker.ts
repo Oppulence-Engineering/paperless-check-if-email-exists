@@ -1198,7 +1198,7 @@ export const getV1OverviewResponseMock = (
         (_, i) => i + 1,
       ).map(() => ({
         id: faker.number.int(),
-        job_id: faker.number.int(),
+        job_id: faker.helpers.arrayElement([faker.number.int(), null]),
         name: faker.string.alpha({ length: { min: 10, max: 20 } }),
         quality_grade: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),

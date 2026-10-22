@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Id** | **int32** |  | [required]
-**JobId** | **int32** |  | [required]
+**JobId** | Pointer to **NullableInt32** |  | [optional]
 **Name** | **string** |  | [required]
 **QualityGrade** | Pointer to **NullableString** |  | [optional]
 **ReadyToSend** | Pointer to **NullableBool** |  | [optional]
@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewOverviewSectionVecOverviewListDataInner
 
-`func NewOverviewSectionVecOverviewListDataInner(id int32, jobId int32, name string, status string, totalProcessed int64, totalRows int32) *OverviewSectionVecOverviewListDataInner`
+`func NewOverviewSectionVecOverviewListDataInner(id int32, name string, status string, totalProcessed int64, totalRows int32) *OverviewSectionVecOverviewListDataInner`
 
 NewOverviewSectionVecOverviewListDataInner instantiates a new OverviewSectionVecOverviewListDataInner object
 This constructor will assign default values to properties that have it defined,
@@ -72,6 +72,22 @@ and a boolean to check if the value has been set.
 
 SetJobId sets JobId field to given value.
 
+### HasJobId
+
+`func (o *OverviewSectionVecOverviewListDataInner) HasJobId() bool`
+
+HasJobId returns a boolean if a field has been set.
+
+### SetJobIdNil
+
+`func (o *OverviewSectionVecOverviewListDataInner) SetJobIdNil()`
+
+ SetJobIdNil sets the value for JobId to be an explicit nil
+
+### UnsetJobId
+`func (o *OverviewSectionVecOverviewListDataInner) UnsetJobId()`
+
+UnsetJobId ensures that no value is present for JobId, not even an explicit nil
 
 ### GetName
 

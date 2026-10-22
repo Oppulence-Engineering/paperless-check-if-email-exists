@@ -23,7 +23,7 @@ var _ MappedNullable = &OverviewSectionVecOverviewListDataInner{}
 // OverviewSectionVecOverviewListDataInner struct for OverviewSectionVecOverviewListDataInner
 type OverviewSectionVecOverviewListDataInner struct {
 	Id int32 `json:"id"`
-	JobId int32 `json:"job_id"`
+	JobId NullableInt32 `json:"job_id,omitempty"`
 	Name string `json:"name"`
 	QualityGrade NullableString `json:"quality_grade,omitempty"`
 	ReadyToSend NullableBool `json:"ready_to_send,omitempty"`
@@ -39,10 +39,9 @@ type _OverviewSectionVecOverviewListDataInner OverviewSectionVecOverviewListData
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOverviewSectionVecOverviewListDataInner(id int32, jobId int32, name string, status string, totalProcessed int64, totalRows int32) *OverviewSectionVecOverviewListDataInner {
+func NewOverviewSectionVecOverviewListDataInner(id int32, name string, status string, totalProcessed int64, totalRows int32) *OverviewSectionVecOverviewListDataInner {
 	this := OverviewSectionVecOverviewListDataInner{}
 	this.Id = id
-	this.JobId = jobId
 	this.Name = name
 	this.Status = status
 	this.TotalProcessed = totalProcessed
@@ -82,28 +81,46 @@ func (o *OverviewSectionVecOverviewListDataInner) SetId(v int32) {
 	o.Id = v
 }
 
-// GetJobId returns the JobId field value
+// GetJobId returns the JobId field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *OverviewSectionVecOverviewListDataInner) GetJobId() int32 {
-	if o == nil {
+	if o == nil || IsNil(o.JobId.Get()) {
 		var ret int32
 		return ret
 	}
-
-	return o.JobId
+	return *o.JobId.Get()
 }
 
-// GetJobIdOk returns a tuple with the JobId field value
+// GetJobIdOk returns a tuple with the JobId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *OverviewSectionVecOverviewListDataInner) GetJobIdOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.JobId, true
+	return o.JobId.Get(), o.JobId.IsSet()
 }
 
-// SetJobId sets field value
+// HasJobId returns a boolean if a field has been set.
+func (o *OverviewSectionVecOverviewListDataInner) HasJobId() bool {
+	if o != nil && o.JobId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetJobId gets a reference to the given NullableInt32 and assigns it to the JobId field.
 func (o *OverviewSectionVecOverviewListDataInner) SetJobId(v int32) {
-	o.JobId = v
+	o.JobId.Set(&v)
+}
+// SetJobIdNil sets the value for JobId to be an explicit nil
+func (o *OverviewSectionVecOverviewListDataInner) SetJobIdNil() {
+	o.JobId.Set(nil)
+}
+
+// UnsetJobId ensures that no value is present for JobId, not even an explicit nil
+func (o *OverviewSectionVecOverviewListDataInner) UnsetJobId() {
+	o.JobId.Unset()
 }
 
 // GetName returns the Name field value
@@ -339,7 +356,9 @@ func (o OverviewSectionVecOverviewListDataInner) MarshalJSON() ([]byte, error) {
 func (o OverviewSectionVecOverviewListDataInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["job_id"] = o.JobId
+	if o.JobId.IsSet() {
+		toSerialize["job_id"] = o.JobId.Get()
+	}
 	toSerialize["name"] = o.Name
 	if o.QualityGrade.IsSet() {
 		toSerialize["quality_grade"] = o.QualityGrade.Get()
@@ -362,7 +381,6 @@ func (o *OverviewSectionVecOverviewListDataInner) UnmarshalJSON(data []byte) (er
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"job_id",
 		"name",
 		"status",
 		"total_processed",

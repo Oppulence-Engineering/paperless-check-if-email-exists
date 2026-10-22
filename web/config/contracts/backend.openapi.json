@@ -3030,6 +3030,7 @@
 								},
 								"job_id": {
 									"format": "int32",
+									"nullable": true,
 									"type": "integer"
 								},
 								"name": {
@@ -3060,7 +3061,7 @@
 									"type": "integer"
 								}
 							},
-							"required": ["id", "job_id", "name", "status", "total_rows", "total_processed"],
+							"required": ["id", "name", "status", "total_rows", "total_processed"],
 							"type": "object"
 						},
 						"type": "array"
@@ -3078,11 +3079,11 @@
 						"items": {
 							"properties": {
 								"id": {
-									"format": "int32",
+									"format": "int64",
 									"type": "integer"
 								},
 								"last_run_id": {
-									"format": "int32",
+									"format": "int64",
 									"nullable": true,
 									"type": "integer"
 								},

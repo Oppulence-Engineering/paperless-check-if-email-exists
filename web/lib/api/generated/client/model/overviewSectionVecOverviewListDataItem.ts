@@ -10,7 +10,8 @@
 
 export type OverviewSectionVecOverviewListDataItem = {
   id: number;
-  job_id: number;
+  /** @nullable */
+  job_id?: number | null;
   name: string;
   /** @nullable */
   quality_grade?: string | null;

@@ -48,7 +48,8 @@ pub struct OverviewResponse {
 #[derive(Serialize, ToSchema)]
 pub struct OverviewList {
 	id: i32,
-	job_id: i32,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	job_id: Option<i32>,
 	name: String,
 	status: String,
 	total_rows: i32,
@@ -75,11 +76,11 @@ pub struct OverviewReverification {
 }
 #[derive(Serialize, ToSchema)]
 pub struct OverviewPipeline {
-	id: i32,
+	id: i64,
 	name: String,
 	status: String,
 	next_run_at: Option<DateTime<Utc>>,
-	last_run_id: Option<i32>,
+	last_run_id: Option<i64>,
 	last_run_status: Option<String>,
 }
 
@@ -128,7 +129,7 @@ async fn lists(
           q.completed, q.unsuccessful, q.suppressed, q.unprocessed, q.safe
         FROM (SELECT * FROM v1_lists WHERE tenant_id=$1 AND status <> 'deleted' ORDER BY created_at DESC, id DESC LIMIT 5) l
         JOIN tenants t ON t.id=l.tenant_id
-        JOIN v1_bulk_job j ON j.id=l.job_id AND j.tenant_id=l.tenant_id
+        LEFT JOIN v1_bulk_job j ON j.id=l.job_id AND j.tenant_id=l.tenant_id
         CROSS JOIN LATERAL (
           SELECT COUNT(*) FILTER (WHERE task_state IN ('completed','failed','dead_lettered','cancelled')
             AND (dispatch_id IS NULL OR completion_done) AND (result IS NOT NULL OR error IS NOT NULL OR task_state='cancelled')) AS processed
@@ -146,6 +147,8 @@ async fn lists(
 	Ok(rows
 		.into_iter()
 		.map(|r| {
+			let job_id: Option<i32> = r.get("job_id");
+			let can_review = can_review && job_id.is_some();
 			let completed: i64 = r.get("completed");
 			let safe: i64 = r.get("safe");
 			let thresholds = r
@@ -159,14 +162,16 @@ async fn lists(
 				r.get("suppressed"),
 				safe as f64 * 100.0 / completed.max(1) as f64,
 				matches!(
-					r.get::<String, _>("job_status").as_str(),
+					r.get::<Option<String>, _>("job_status")
+						.as_deref()
+						.unwrap_or_default(),
 					"completed" | "failed" | "cancelled"
 				),
 				thresholds,
 			);
 			OverviewList {
 				id: r.get("id"),
-				job_id: r.get("job_id"),
+				job_id,
 				name: r.get("name"),
 				status: r.get("status"),
 				total_rows: r.get("total_rows"),
