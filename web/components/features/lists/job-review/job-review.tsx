@@ -50,11 +50,11 @@ export function Stat({ label, value }: { label: string; value: ReactNode }) {
 export function JobReview({ className, jobId, ...props }: JobReviewProps) {
 	const approval = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "approval"),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1JobApprovalChecklist200Response.parse(
-				(await jobsApi.v1JobApprovalChecklist({ jobId })).data,
+				(await jobsApi.v1JobApprovalChecklist({ jobId }, { signal })).data,
 			),
-		refetchInterval: (query) => (query.state.data?.categories.unprocessed ? 5_000 : false),
+		staleTime: 60_000,
 	});
 	const data = approval.data;
 

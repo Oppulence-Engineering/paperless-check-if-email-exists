@@ -591,6 +591,7 @@ mod tests {
 			r#"
 			UPDATE v1_task_result
 			SET task_state = 'completed'::task_state,
+                completion_done = true,
 			    result = $2,
 			    score = 95,
 			    score_category = 'valid',
@@ -620,6 +621,10 @@ mod tests {
 		.await
 		.unwrap();
 
+		reacher_backend::worker::job_lifecycle::finalize_list_if_done(db.pool(), list_id)
+			.await
+			.unwrap();
+
 		let detail = client
 			.get(format!("{}/v1/lists/{}", server_url, list_id))
 			.bearer_auth(&api_key)
@@ -628,6 +633,7 @@ mod tests {
 			.unwrap();
 		assert_eq!(detail.status(), reqwest::StatusCode::OK);
 		let detail_body: serde_json::Value = detail.json().await.unwrap();
+		assert_eq!(detail_body["status"], "completed");
 		assert_eq!(detail_body["summary"]["total_valid"], 1);
 		assert_eq!(detail_body["summary"]["total_invalid"], 1);
 		assert_eq!(detail_body["summary"]["total_processed"], 2);

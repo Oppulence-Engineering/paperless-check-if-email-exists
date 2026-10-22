@@ -55,6 +55,12 @@ export interface ListDetailResponse {
     'name': string;
     /**
      *
+     * @type {string}
+     * @memberof ListDetailResponse
+     */
+    'original_filename'?: string;
+    /**
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */

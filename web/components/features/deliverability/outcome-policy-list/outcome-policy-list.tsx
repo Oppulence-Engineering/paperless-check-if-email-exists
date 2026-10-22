@@ -53,8 +53,10 @@ export function OutcomePolicyList({ className, ...props }: OutcomePolicyListProp
 	const [editing, setEditing] = useState<z.infer<typeof V1GetOutcomePolicy200Response>>();
 	const policies = useQuery({
 		queryKey: workflowQueryKey("outcome-policies"),
-		queryFn: async () =>
-			V1ListOutcomePolicies200Response.parse((await api.v1ListOutcomePolicies({ limit: 50 })).data),
+		queryFn: async ({ signal }) =>
+			V1ListOutcomePolicies200Response.parse(
+				(await api.v1ListOutcomePolicies({ limit: 50 }, { signal })).data,
+			),
 	});
 	const makeDefault = useMutation({
 		mutationFn: async (policyId: number) =>

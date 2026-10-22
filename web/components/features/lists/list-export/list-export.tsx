@@ -89,8 +89,10 @@ export function ListExport({ className, listId, ...props }: ListExportProps) {
 	const plan = useQuery({
 		queryKey: planKey,
 		retry: false,
-		queryFn: async () =>
-			RemediationPlanSchema.parse((await listsApi.v1GetRemediationPlan({ listId })).data),
+		queryFn: async ({ signal }) =>
+			RemediationPlanSchema.parse(
+				(await listsApi.v1GetRemediationPlan({ listId }, { signal })).data,
+			),
 	});
 	const createPlan = useMutation({
 		mutationFn: async () =>

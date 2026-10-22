@@ -10,12 +10,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { etaSeconds, JobProgress, timeLeft } from "./job-progress";
 
 function renderProgress(processed: number) {
-	vi.spyOn(JobsApi.prototype, "v1GetBulkJobProgress").mockResolvedValue({
+	vi.spyOn(JobsApi.prototype, "v1GetJobStatus").mockResolvedValue({
 		data: {
 			created_at: "2026-10-18T04:00:00Z",
-			finished_at: null,
+			job_id: 9,
+			status: processed === 10 ? "failed" : "running",
 			total_records: 10,
-			total_processed: processed,
+			task_summary: { completed: processed },
 		},
 	} as never);
 	// gitleaks reads the method name as a key.
@@ -38,16 +39,15 @@ describe("JobProgress", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("shows progress, time left, and the median check time while rows remain", async () => {
+	it("shows progress and time left from one status request", async () => {
 		renderProgress(4);
 		expect(await screen.findByText(/4 of 10 rows checked/)).toBeInTheDocument();
-		expect(await screen.findByText(/Median check time 200 ms/)).toBeInTheDocument();
 		expect(screen.getByRole("progressbar", { name: "Verification progress" })).toBeInTheDocument();
 	});
 
 	it("shows nothing and does not read latency when every row is done", async () => {
 		const { latency } = renderProgress(10);
-		await waitFor(() => expect(JobsApi.prototype.v1GetBulkJobProgress).toHaveBeenCalled());
+		await waitFor(() => expect(JobsApi.prototype.v1GetJobStatus).toHaveBeenCalled());
 		expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 		expect(latency).not.toHaveBeenCalled();
 	});

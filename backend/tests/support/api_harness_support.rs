@@ -1336,6 +1336,25 @@ pub fn canonical_cases() -> Vec<HarnessCase> {
 	vec![
 		case!(
 			"GET",
+			"/v1/overview",
+			ConfigProfile::PseudoWorker,
+			AuthProfile::BearerFull,
+			PathProfile::Literal("/v1/overview"),
+			BodyProfile::None,
+			200,
+			Expectation::Json(&[
+				"usage",
+				"alerts",
+				"lists",
+				"suppressions",
+				"outcomes",
+				"domains",
+				"reverification",
+				"pipelines"
+			])
+		),
+		case!(
+			"GET",
 			"/v1/jobs",
 			ConfigProfile::PseudoWorker,
 			AuthProfile::BearerFull,

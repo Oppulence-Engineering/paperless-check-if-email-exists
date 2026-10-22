@@ -95,19 +95,23 @@ describe("ResultExplorer", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Next" }));
 		await waitFor(() =>
-			expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 })),
+			expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 }), {
+				signal: expect.any(AbortSignal),
+			}),
 		);
 
 		await chooseOption("Category", "Valid");
 		await waitFor(() =>
 			expect(query).toHaveBeenLastCalledWith(
 				expect.objectContaining({ offset: 0, category: "valid" }),
+				{ signal: expect.any(AbortSignal) },
 			),
 		);
 		await chooseOption("Safe to send", "No");
 		await waitFor(() =>
 			expect(query).toHaveBeenLastCalledWith(
 				expect.objectContaining({ category: "valid", safeToSend: false }),
+				{ signal: expect.any(AbortSignal) },
 			),
 		);
 		expect(screen.getByRole("list", { name: "Active filters" })).toHaveTextContent(
@@ -132,25 +136,30 @@ describe("ResultExplorer", () => {
 		});
 
 		expect(await screen.findByText("No results match these filters.")).toBeInTheDocument();
-		expect(query).toHaveBeenCalledWith({
-			limit: 20,
-			offset: 0,
-			minScore: 10,
-			maxScore: 90,
-			jobId: 18,
-			since: new Date("2026-10-01T00:00").toISOString(),
-			until: new Date("2026-10-18T23:59:59.999").toISOString(),
-			recommendationAction: "review",
-			policyMode: "growth",
-			policyDecision: "suppress",
-		});
+		expect(query).toHaveBeenCalledWith(
+			{
+				limit: 20,
+				offset: 0,
+				minScore: 10,
+				maxScore: 90,
+				jobId: 18,
+				since: new Date("2026-10-01T00:00").toISOString(),
+				until: new Date("2026-10-18T23:59:59.999").toISOString(),
+				recommendationAction: "review",
+				policyMode: "growth",
+				policyDecision: "suppress",
+			},
+			{ signal: expect.any(AbortSignal) },
+		);
 
 		fireEvent.click(screen.getByRole("button", { name: "More filters (8)" }));
 		const sheet = await screen.findByRole("dialog");
 		fireEvent.change(within(sheet).getByLabelText("Highest score"), { target: { value: "70" } });
 		fireEvent.click(within(sheet).getByRole("button", { name: "Apply filters" }));
 		await waitFor(() =>
-			expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ maxScore: 70 })),
+			expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ maxScore: 70 }), {
+				signal: expect.any(AbortSignal),
+			}),
 		);
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 	});
@@ -181,7 +190,10 @@ describe("ResultExplorer", () => {
 		const sheet = await screen.findByRole("dialog");
 		expect(within(sheet).getByText("Job 18 · Checked", { exact: false })).toBeInTheDocument();
 		expect(await within(sheet).findByText("Quality score")).toBeInTheDocument();
-		expect(results).toHaveBeenCalledWith({ jobId: 18, cursor: 6, limit: 1, state: "completed" });
+		expect(results).toHaveBeenCalledWith(
+			{ jobId: 18, cursor: 6, limit: 1, state: "completed" },
+			{ signal: expect.any(AbortSignal) },
+		);
 	});
 
 	it("describes the active filters in words", () => {

@@ -211,7 +211,7 @@ async fn preview_submission_idempotency_quality_and_original_rows() {
 	assert!(comment["author"].as_str().unwrap().starts_with("API key: "));
 	assert!(!comment["author"].as_str().unwrap().contains("forged"));
 
-	sqlx::query("UPDATE v1_task_result SET task_state='completed',completed_at=now(),safe_to_send=(canonical_email='one@example.com'),score_category=CASE WHEN canonical_email='one@example.com' THEN 'valid' ELSE 'risky' END,result=jsonb_build_object('input',payload->'input'->>'to_email','score',jsonb_build_object('signals',jsonb_build_object('smtp_is_catch_all',canonical_email='two@example.com'))) WHERE job_id=$1 AND canonical_email IS NOT NULL").bind(job).execute(db.pool()).await.unwrap();
+	sqlx::query("UPDATE v1_task_result SET task_state='completed',completion_done=true,completed_at=now(),safe_to_send=(canonical_email='one@example.com'),score_category=CASE WHEN canonical_email='one@example.com' THEN 'valid' ELSE 'risky' END,result=jsonb_build_object('input',payload->'input'->>'to_email','score',jsonb_build_object('signals',jsonb_build_object('smtp_is_catch_all',canonical_email='two@example.com'))) WHERE job_id=$1 AND canonical_email IS NOT NULL").bind(job).execute(db.pool()).await.unwrap();
 	let q = request()
 		.path(&format!("/v1/lists/{list}/quality"))
 		.header("authorization", &auth)

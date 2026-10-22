@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **Id** | **int32** |  | [required]
 **JobId** | **int32** |  | [required]
 **Name** | **string** |  | [required]
+**OriginalFilename** | Pointer to **string** |  | [optional]
 **PolicyId** | Pointer to **NullableInt64** |  | [optional]
 **RejectedRows** | Pointer to **NullableInt32** |  | [optional]
 **SourceKey** | Pointer to **NullableString** |  | [optional]
@@ -151,6 +152,31 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
+
+### GetOriginalFilename
+
+`func (o *ListDetailResponse) GetOriginalFilename() string`
+
+GetOriginalFilename returns the OriginalFilename field if non-nil, zero value otherwise.
+
+### GetOriginalFilenameOk
+
+`func (o *ListDetailResponse) GetOriginalFilenameOk() (*string, bool)`
+
+GetOriginalFilenameOk returns a tuple with the OriginalFilename field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOriginalFilename
+
+`func (o *ListDetailResponse) SetOriginalFilename(v string)`
+
+SetOriginalFilename sets OriginalFilename field to given value.
+
+### HasOriginalFilename
+
+`func (o *ListDetailResponse) HasOriginalFilename() bool`
+
+HasOriginalFilename returns a boolean if a field has been set.
 
 ### GetPolicyId
 

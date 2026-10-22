@@ -70,7 +70,9 @@ describe("ActivityFeed", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Next" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 })),
+			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 }), {
+				signal: expect.any(AbortSignal),
+			}),
 		);
 
 		await chooseOption("Event type", "Row checked");
@@ -80,15 +82,18 @@ describe("ActivityFeed", () => {
 		await chooseDate("To", "2026-10-18");
 		fireEvent.click(screen.getByRole("button", { name: "Filter" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith({
-				limit: 20,
-				offset: 0,
-				eventType: "task.completed",
-				actor: "api",
-				jobId: 18,
-				since: new Date("2026-10-01T00:00").toISOString(),
-				until: new Date("2026-10-18T23:59:59.999").toISOString(),
-			}),
+			expect(list).toHaveBeenLastCalledWith(
+				{
+					limit: 20,
+					offset: 0,
+					eventType: "task.completed",
+					actor: "api",
+					jobId: 18,
+					since: new Date("2026-10-01T00:00").toISOString(),
+					until: new Date("2026-10-18T23:59:59.999").toISOString(),
+				},
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 	});
 

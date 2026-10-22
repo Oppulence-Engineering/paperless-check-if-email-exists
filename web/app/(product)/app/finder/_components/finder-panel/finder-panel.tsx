@@ -96,9 +96,9 @@ export function FinderPanel({ initialJobId, className, ...props }: FinderPanelPr
 	const result = useQuery({
 		queryKey: workflowQueryKey("finder", jobId),
 		enabled: !!jobId,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (!jobId) throw new Error("Select a finder job.");
-			return resultSchema.parse((await api.v1GetFindEmail({ jobId })).data);
+			return resultSchema.parse((await api.v1GetFindEmail({ jobId }, { signal })).data);
 		},
 		refetchInterval: (query) => finderRefetchInterval(query.state.data?.status),
 	});

@@ -70,8 +70,8 @@ export function PipelineDetail({
 	const [rows, setRows] = useState("");
 	const detail = useQuery({
 		queryKey: workflowQueryKey("pipelines", pipelineId),
-		queryFn: async () =>
-			V1GetPipeline200Response.parse((await api.v1GetPipeline({ pipelineId })).data),
+		queryFn: async ({ signal }) =>
+			V1GetPipeline200Response.parse((await api.v1GetPipeline({ pipelineId }, { signal })).data),
 	});
 	const action = useMutation({
 		mutationFn: async (kind: Action) => {

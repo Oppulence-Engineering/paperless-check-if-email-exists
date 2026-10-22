@@ -27,6 +27,7 @@ All URIs are relative to *http://localhost*
 |[**v1ListResearch**](#v1listresearch) | **GET** /v1/research | |
 |[**v1ListSuppressionEvents**](#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events|
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
+|[**v1Overview**](#v1overview) | **GET** /v1/overview | |
 |[**v1RestoreSuppression**](#v1restoresuppression) | **POST** /v1/suppressions/{id}/restore | |
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
 |[**v1SourceQuality**](#v1sourcequality) | **GET** /v1/sources/quality | List source quality|
@@ -1285,6 +1286,50 @@ const { status, data } = await apiInstance.v1ListSuppressions(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression list |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1Overview**
+> OverviewResponse v1Overview()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+const { status, data } = await apiInstance.v1Overview();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**OverviewResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Tenant dashboard snapshot; unavailable and forbidden sections contain no data |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -20,6 +20,7 @@ import type {
   ListDetailResponse,
   ListListResponse,
   ListUploadResponse,
+  OverviewResponse,
   PendingVerification,
   ReputationCheckResponse,
   ResearchCreated,
@@ -57,6 +58,7 @@ import {
   getV1ListResearchResponseMock,
   getV1ListSuppressionEventsResponseMock,
   getV1ListSuppressionsResponseMock,
+  getV1OverviewResponseMock,
   getV1ReverificationStatusResponseMock,
   getV1SourceQualityResponseMock,
   getV1UpdateReverificationResponseMock,
@@ -73,6 +75,7 @@ export {
   getV1GetListResponseMock,
   getV1DownloadListResponseMock,
   getV1GetVerificationOperationResponseMock,
+  getV1OverviewResponseMock,
   getV1CheckReputationResponseMock,
   getV1ListResearchResponseMock,
   getV1CreateResearchResponseMock,
@@ -354,6 +357,30 @@ export const getV1GetVerificationOperationMockHandler = (
             ? await overrideResponse(info)
             : overrideResponse
           : getV1GetVerificationOperationResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getV1OverviewMockHandler = (
+  overrideResponse?:
+    | OverviewResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<OverviewResponse> | OverviewResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/v1/overview",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1OverviewResponseMock(),
         { status: 200 },
       );
     },
@@ -758,6 +785,7 @@ export const getV1Mock = () => [
   getV1GetListMockHandler(),
   getV1DownloadListMockHandler(),
   getV1GetVerificationOperationMockHandler(),
+  getV1OverviewMockHandler(),
   getV1CheckReputationMockHandler(),
   getV1ListResearchMockHandler(),
   getV1CreateResearchMockHandler(),

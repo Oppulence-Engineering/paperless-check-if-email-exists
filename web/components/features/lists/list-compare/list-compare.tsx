@@ -62,14 +62,17 @@ export function ListCompare({ className, listId, ...props }: ListCompareProps) {
 	const diff = useQuery({
 		queryKey: workflowQueryKey("list-detail", listId, "diff", baseListId),
 		enabled: !!baseListId,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1DiffLists200Response.parse(
 				(
-					await listsApi.v1DiffLists({
-						baseListId: Number(baseListId),
-						compareListId: listId,
-						limit: 50,
-					})
+					await listsApi.v1DiffLists(
+						{
+							baseListId: Number(baseListId),
+							compareListId: listId,
+							limit: 50,
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

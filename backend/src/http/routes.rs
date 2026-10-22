@@ -498,6 +498,9 @@ api_routes!(
 		"/v1/me/webhook",
 		|config| crate::http::v1::tenant_settings::v1_clear_tenant_webhook(config)
 	),
+	(route_v1_overview, "GET", "/v1/overview", |config| {
+		crate::http::v1::overview::v1_overview(config)
+	}),
 	(route_v1_me_usage, "GET", "/v1/me/usage", |config| {
 		crate::http::v1::tenant_settings::v1_get_tenant_usage(config)
 	}),

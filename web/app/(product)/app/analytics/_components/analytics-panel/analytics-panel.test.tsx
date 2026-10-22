@@ -55,12 +55,15 @@ it("filters results", async () => {
 	expect(await screen.findByText("a@example.com")).toBeInTheDocument();
 	await chooseOption("Category", "Valid");
 	await waitFor(() =>
-		expect(query).toHaveBeenCalledWith({
-			limit: 20,
-			offset: 0,
-			category: "valid",
-			safeToSend: undefined,
-		}),
+		expect(query).toHaveBeenCalledWith(
+			{
+				limit: 20,
+				offset: 0,
+				category: "valid",
+				safeToSend: undefined,
+			},
+			{ signal: expect.any(AbortSignal) },
+		),
 	);
 });
 
@@ -85,6 +88,7 @@ it("opens a saved segment in a sheet and applies its filters", async () => {
 	await waitFor(() =>
 		expect(query).toHaveBeenLastCalledWith(
 			expect.objectContaining({ offset: 0, safeToSend: false, maxScore: 40 }),
+			{ signal: expect.any(AbortSignal) },
 		),
 	);
 	await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());

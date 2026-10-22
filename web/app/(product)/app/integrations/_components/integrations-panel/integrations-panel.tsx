@@ -29,18 +29,18 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 	const client = useQueryClient();
 	const health = useQuery({
 		queryKey: workflowQueryKey("integration-status", "health"),
-		queryFn: async () => (await healthApi.healthz()).status,
+		queryFn: async ({ signal }) => (await healthApi.healthz({ signal })).status,
 		refetchInterval: 30_000,
 	});
 	const readiness = useQuery({
 		queryKey: workflowQueryKey("integration-status", "readiness"),
-		queryFn: async () => (await healthApi.readyz()).status,
+		queryFn: async ({ signal }) => (await healthApi.readyz({ signal })).status,
 		refetchInterval: 30_000,
 	});
 	const version = useQuery({
 		queryKey: workflowQueryKey("integration-status", "version"),
-		queryFn: async () =>
-			z.object({ version: z.string() }).parse((await systemApi.getVersion()).data),
+		queryFn: async ({ signal }) =>
+			z.object({ version: z.string() }).parse((await systemApi.getVersion({ signal })).data),
 	});
 	const link = "text-sm text-neutral-300 underline hover:text-white";
 	return (

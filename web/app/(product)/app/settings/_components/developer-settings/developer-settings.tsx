@@ -36,7 +36,6 @@ import {
 } from "@/lib/api/generated/zod/account/account";
 
 import {
-	ApiKeyListSchema,
 	ApiKeySchema,
 	ApiKeyScopeSchema,
 	CreateApiKeySchema,
@@ -79,7 +78,7 @@ export function DeveloperSettings({
 	const canManage = organizationRole
 		.split(",")
 		.some((role) => ["owner", "admin"].includes(role.trim()));
-	const queryKey = ["tenant-api-keys", organizationId];
+	const queryKey = workflowQueryKey("tenant-api-keys");
 	const [name, setName] = useState("");
 	const [scopes, setScopes] = useState<z.infer<typeof ApiKeyScopeSchema>[]>(["verify"]);
 	const [lifetimeDays, setLifetimeDays] = useState(30);
@@ -93,11 +92,9 @@ export function DeveloperSettings({
 
 	const keys = useQuery({
 		queryKey,
-		enabled: canManage,
+		enabled: canManage && Boolean(organizationId),
 		queryFn: async ({ signal }) =>
-			ApiKeyListSchema.parse(
-				ListTenantApiKeys200Response.parse((await sdk.listTenantApiKeys({ signal })).data),
-			),
+			ListTenantApiKeys200Response.parse((await sdk.listTenantApiKeys({ signal })).data),
 	});
 	// The published plans include the API on Professional and Enterprise only.
 	const apiDenial = denial(useEntitlements(), "api_access");
@@ -115,11 +112,11 @@ export function DeveloperSettings({
 	const selectedKey = useQuery({
 		queryKey: workflowQueryKey(...queryKey, selectedKeyId),
 		enabled: canManage && Boolean(selectedKeyId),
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (!selectedKeyId) throw new Error("Select a key first.");
 			return ApiKeySchema.parse(
 				GetTenantApiKey200Response.parse(
-					(await sdk.getTenantApiKey({ keyId: selectedKeyId })).data,
+					(await sdk.getTenantApiKey({ keyId: selectedKeyId }, { signal })).data,
 				),
 			);
 		},

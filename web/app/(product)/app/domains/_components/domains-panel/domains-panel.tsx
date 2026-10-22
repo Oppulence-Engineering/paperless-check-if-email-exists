@@ -49,17 +49,20 @@ export function DomainsPanel({ className, ...props }: DomainsPanelProps) {
 	const [healthDomains, setHealthDomains] = useState<string[]>([]);
 	const me = useQuery({
 		queryKey: workflowQueryKey("tenant-profile"),
-		queryFn: async () => meSchema.parse((await accountApi.v1Me()).data),
+		queryFn: async ({ signal }) => meSchema.parse((await accountApi.v1Me({ signal })).data),
 	});
 	const domains = useQuery({
 		queryKey: workflowQueryKey("tenant-domains"),
-		queryFn: async () => listSchema.parse((await tenantApi.v1ListTenantDomains()).data),
+		queryFn: async ({ signal }) =>
+			listSchema.parse((await tenantApi.v1ListTenantDomains({ signal })).data),
 	});
 	const detail = useQuery({
 		queryKey: workflowQueryKey("tenant-domain", selected),
 		enabled: !!selected,
-		queryFn: async () =>
-			domainSchema.parse((await tenantApi.v1GetTenantDomain({ domain: selected })).data),
+		queryFn: async ({ signal }) =>
+			domainSchema.parse(
+				(await tenantApi.v1GetTenantDomain({ domain: selected }, { signal })).data,
+			),
 	});
 	const verify = useMutation({
 		onMutate: () => {

@@ -70,7 +70,7 @@ describe("SuppressionAudit", () => {
 			"data-slot",
 			"suppression-audit",
 		);
-		expect(list).toHaveBeenCalledWith({ id: 1 });
+		expect(list).toHaveBeenCalledWith({ id: 1 }, { signal: expect.any(AbortSignal) });
 		expect(screen.getByText("Set to Active")).toBeInTheDocument();
 		expect(screen.getAllByText("Bounce · 550 mailbox unknown")).toHaveLength(2);
 		expect(screen.getByText("Delivery feedback · campaign-7")).toBeInTheDocument();

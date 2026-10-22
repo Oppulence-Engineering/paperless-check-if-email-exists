@@ -84,11 +84,14 @@ describe("SourceQuality", () => {
 		fireEvent.change(screen.getByLabelText("Minimum records"), { target: { value: "100" } });
 		fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
 		await waitFor(() =>
-			expect(quality).toHaveBeenLastCalledWith({
-				sourceKey: "webinar",
-				minRecords: 100,
-				limit: 50,
-			}),
+			expect(quality).toHaveBeenLastCalledWith(
+				{
+					sourceKey: "webinar",
+					minRecords: 100,
+					limit: 50,
+				},
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 	});
 

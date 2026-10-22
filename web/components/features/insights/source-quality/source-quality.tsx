@@ -84,14 +84,17 @@ export function SourceQuality({ className, ...props }: SourceQualityProps) {
 	const [filter, setFilter] = useState({ sourceKey: "", minRecords: 1 });
 	const sources = useQuery({
 		queryKey: workflowQueryKey("source-quality", filter.sourceKey, filter.minRecords),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1SourceQuality200Response.parse(
 				(
-					await api.v1SourceQuality({
-						sourceKey: filter.sourceKey || undefined,
-						minRecords: filter.minRecords,
-						limit: 50,
-					})
+					await api.v1SourceQuality(
+						{
+							sourceKey: filter.sourceKey || undefined,
+							minRecords: filter.minRecords,
+							limit: 50,
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

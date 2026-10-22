@@ -43,9 +43,9 @@ function joined(...parts: (string | null | undefined)[]): string {
 export function SuppressionAudit({ className, entryId, ...props }: SuppressionAuditProps) {
 	const events = useQuery({
 		queryKey: workflowQueryKey("suppression-events", entryId),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListSuppressionEvents200Response.parse(
-				(await api.v1ListSuppressionEvents({ id: entryId })).data,
+				(await api.v1ListSuppressionEvents({ id: entryId }, { signal })).data,
 			),
 	});
 

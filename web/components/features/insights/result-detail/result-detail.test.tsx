@@ -73,7 +73,10 @@ describe("ResultDetail", () => {
 
 		expect(await screen.findByText("Quality score")).toBeInTheDocument();
 		expect(screen.getByText("Technical details")).toBeInTheDocument();
-		expect(results).toHaveBeenCalledWith({ jobId: 18, cursor: 6, limit: 1, state: "completed" });
+		expect(results).toHaveBeenCalledWith(
+			{ jobId: 18, cursor: 6, limit: 1, state: "completed" },
+			{ signal: expect.any(AbortSignal) },
+		);
 	});
 
 	it("shows the decision of a single check from the query row", async () => {

@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { CommentsApi, JobsApi, ListsApi, V1Api } from "@oppulence/reacher-sdk";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { ListDetailPanel } from "./list-detail-panel";
 
@@ -13,7 +13,18 @@ vi.mock("next/navigation", () => ({
 	useSearchParams: () => new URLSearchParams(),
 }));
 
+beforeEach(() => {
+	vi.stubGlobal(
+		"IntersectionObserver",
+		class {
+			observe() {}
+			disconnect() {}
+		},
+	);
+});
+
 afterEach(() => {
+	vi.unstubAllGlobals();
 	cleanup();
 	vi.restoreAllMocks();
 	push.mockReset();
@@ -24,6 +35,7 @@ it("uses unique completed quality counts instead of duplicate and rejected row t
 		data: {
 			id: 5,
 			name: "Campaign",
+			original_filename: "campaign.csv",
 			total_rows: 5,
 			status: "completed",
 			email_column: "email",
@@ -69,8 +81,14 @@ it("uses unique completed quality counts instead of duplicate and rejected row t
 			risk_breakdown: { disposable: 0, catch_all: 0, role_account: 0, spam_trap: 0, full_inbox: 0 },
 		},
 	} as never);
-	vi.spyOn(JobsApi.prototype, "v1GetBulkJobProgress").mockResolvedValue({
-		data: { created_at: "2026-10-01T00:00:00Z", total_records: 2, total_processed: 2 },
+	vi.spyOn(JobsApi.prototype, "v1GetJobStatus").mockResolvedValue({
+		data: {
+			job_id: 9,
+			status: "completed",
+			created_at: "2026-10-01T00:00:00Z",
+			total_records: 2,
+			task_summary: { completed: 2 },
+		},
 	} as never);
 	vi.spyOn(JobsApi.prototype, "v1JobApprovalChecklist").mockResolvedValue({
 		data: {

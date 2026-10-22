@@ -168,4 +168,29 @@ describe("backend proxy", () => {
 		expect(response.status).toBe(500);
 		expect(await response.json()).toMatchObject({ code: "upstream_error" });
 	});
+	it("times safe phases without logging identities and forbids shared caching", async () => {
+		vi.stubEnv("PERFORMANCE_TIMING_LOGS", "1");
+		const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(() =>
+				Promise.resolve(
+					Response.json({ history: [] }, { headers: { "cache-control": "public, max-age=3600" } }),
+				),
+			),
+		);
+		const response = await proxyBackendAPI(
+			new NextRequest(
+				"https://app.example.test/api/backend/v1/emails/person%40example.com/history?email=private@example.com",
+			),
+			["v1", "emails", "person@example.com", "history"],
+		);
+		expect(response.headers.get("cache-control")).toBe("private, no-store");
+		expect(response.headers.get("server-timing")).toMatch(
+			/auth;dur=.*token;dur=.*upstream;dur=.*total;dur=/,
+		);
+		expect(JSON.stringify(log.mock.calls)).not.toContain("example.com");
+		expect(JSON.stringify(log.mock.calls)).toContain("/v1/emails");
+		log.mockRestore();
+	});
 });

@@ -72,17 +72,17 @@ export function IntegrationStack({ className, ...props }: IntegrationStackProps)
 			),
 	});
 	const webhook = useQuery({
-		queryKey: workflowQueryKey("integrations", "webhook"),
+		queryKey: workflowQueryKey("tenant-webhook"),
 		queryFn: async ({ signal }) =>
 			V1GetTenantWebhook200Response.parse((await tenantApi.v1GetTenantWebhook({ signal })).data),
 	});
 	const keys = useQuery({
-		queryKey: workflowQueryKey("integrations", "api-keys"),
+		queryKey: workflowQueryKey("tenant-api-keys"),
 		queryFn: async ({ signal }) =>
 			ListTenantApiKeys200Response.parse((await accountApi.listTenantApiKeys({ signal })).data),
 	});
 	const pipelines = useQuery({
-		queryKey: workflowQueryKey("integrations", "pipelines"),
+		queryKey: workflowQueryKey("pipelines", "list", "all", 0, 200),
 		// ponytail: the first 200 pipelines only; add paging if a workspace has more.
 		queryFn: async ({ signal }) =>
 			V1ListPipelines200Response.parse(

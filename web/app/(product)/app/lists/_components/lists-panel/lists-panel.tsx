@@ -6,8 +6,8 @@ import { errorMessage } from "@/lib/api/error-message";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Configuration, V1Api, ListsApi } from "@oppulence/reacher-sdk";
+import { useMutation } from "@tanstack/react-query";
+import { Configuration, ListsApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
@@ -19,9 +19,9 @@ import { EmptyState, Group, Page, Pill, Row, Section } from "@/components/platfo
 import { ListBullets } from "@/lib/icons";
 import { useV1CreateList } from "@/hooks/queries/use-v1-create-list";
 import { useV1ListLists } from "@/hooks/queries/use-v1-list-lists";
-import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 import { V1PreviewList200Response } from "@/lib/api/generated/zod/lists/lists";
-import { V1GetList200Response } from "@/lib/api/generated/zod/v1/v1";
+import type { V1ListLists200Response } from "@/lib/api/generated/zod/v1/v1";
+import type { z } from "zod";
 import { ACTIVE_LIST_STATES } from "@/lib/api/schemas/lists";
 import { listStatus } from "@/lib/verification/labels";
 
@@ -29,29 +29,22 @@ import { type ListsPanelPropsFields } from "./lists-panel.schema";
 
 export type ListsPanelProps = ListsPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
-const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
 const listsApi = new ListsApi(new Configuration({ basePath: "/api/backend" }));
 const fieldLabel = "text-xs font-medium text-neutral-400";
 
 /** The checked rows of one list that is still processing. It polls every 5 seconds. */
-function ListProgress({ listId }: { listId: number }) {
-	const detail = useQuery({
-		queryKey: workflowQueryKey("list-detail", listId, "detail"),
-		queryFn: async () => V1GetList200Response.parse((await v1Api.v1GetList({ listId })).data),
-		refetchInterval: 5_000,
-	});
-	if (!detail.data) return null;
-	const { total_processed: processed } = detail.data.summary;
-	const total = Math.max(1, detail.data.total_rows);
+function ListProgress({ list }: { list: z.infer<typeof V1ListLists200Response>["lists"][number] }) {
+	const processed = list.total_processed ?? 0;
+	const total = Math.max(1, list.total_rows);
 	return (
 		<div className="flex w-full items-center gap-3">
 			<Progress
-				aria-label={`${detail.data.name} progress`}
+				aria-label={`${list.name} progress`}
 				className="bg-white/[0.06]"
 				value={(processed / total) * 100}
 			/>
 			<span className="shrink-0 text-xs text-[#858585]">
-				{processed} of {detail.data.total_rows}
+				{processed} of {list.total_rows}
 			</span>
 		</div>
 	);
@@ -297,7 +290,7 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 												{listStatus.label(list.status)}
 											</Pill>
 											{ACTIVE_LIST_STATES.includes(list.status) ? (
-												<ListProgress listId={list.id} />
+												<ListProgress list={list} />
 											) : null}
 										</div>
 									))}
