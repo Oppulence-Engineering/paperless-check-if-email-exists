@@ -4,17 +4,29 @@ import { MutationCache, QueryClient } from "@tanstack/react-query";
 const APP_QUERY_STALE_TIME = 30_000;
 
 export function createAppQueryClient(): QueryClient {
+	const affected = (query: { queryKey: readonly unknown[] }) =>
+		[
+			"overview",
+			"source-quality",
+			"query-results",
+			"tenant-usage",
+			"v1-email-history",
+			"suppressions",
+			"suppression-check",
+			"outcomes",
+		].includes(String(query.queryKey[0])) ||
+		(query.queryKey[0] === "list-detail" &&
+			["quality", "plan"].includes(String(query.queryKey[2]))) ||
+		(query.queryKey[0] === "jobs" &&
+			["approval", "results", "result"].includes(String(query.queryKey[2])));
 	const client: QueryClient = new QueryClient({
 		mutationCache: new MutationCache({
-			onSuccess: () =>
-				client.invalidateQueries({
-					predicate: (query) =>
-						query.queryKey[0] === "overview" ||
-						(query.queryKey[0] === "list-detail" &&
-							["quality", "plan"].includes(String(query.queryKey[2]))) ||
-						(query.queryKey[0] === "jobs" && query.queryKey[2] === "approval") ||
-						["source-quality", "query-results", "tenant-usage"].includes(String(query.queryKey[0])),
-				}),
+			// Page callbacks refresh their resource first; then refresh remaining stale dependents once.
+			onSuccess: () => client.invalidateQueries({ predicate: affected, refetchType: "none" }),
+			onSettled: (_data, error) =>
+				error
+					? undefined
+					: client.refetchQueries({ predicate: affected, type: "active", stale: true }),
 		}),
 		defaultOptions: {
 			mutations: { retry: false },

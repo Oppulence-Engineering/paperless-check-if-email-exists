@@ -49,10 +49,10 @@ function when(value: string | null | undefined): string {
 
 export function AddressTimeline({ className, email, ...props }: AddressTimelineProps) {
 	const queryClient = useQueryClient();
-	const suppressionKey = workflowQueryKey("address-timeline-suppression", email);
+	const suppressionKey = workflowQueryKey("suppression-check", email);
 	const history = useV1EmailHistory(email, { limit: 50 });
 	const events = useQuery({
-		queryKey: workflowQueryKey("address-timeline-outcomes", email),
+		queryKey: workflowQueryKey("outcomes", "address", email, 50),
 		enabled: Boolean(email),
 		queryFn: async ({ signal }) =>
 			V1ListOutcomes200Response.parse(

@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { QueryClientProvider, focusManager } from "@tanstack/react-query";
+import { QueryClientProvider, QueryObserver, focusManager } from "@tanstack/react-query";
 import { act, cleanup, render } from "@testing-library/react";
 import { JobsApi } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 import { createAppQueryClient } from "@/lib/query/get-query-client";
+import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
+import { v1ListListsKeys } from "@/hooks/queries/utils/v1-list-lists-keys";
 import { useJobStatus } from "@/hooks/queries/use-job-status";
 
 const clients: ReturnType<typeof createAppQueryClient>[] = [];
@@ -37,6 +39,11 @@ it("reuses reads for 30 seconds and invalidates derived safety after a mutation"
 		["jobs", 2, "approval"],
 		["source-quality"],
 		["query-results"],
+		["suppressions"],
+		["suppression-check", "person@example.com"],
+		["outcomes"],
+		["v1-email-history"],
+		["jobs", 2, "results"],
 	])
 		cache.setQueryData(key, {});
 	await cache
@@ -133,4 +140,45 @@ it("aborts the SDK request when the final status observer unmounts", () => {
 	expect(signal?.aborted).toBe(false);
 	view.unmount();
 	expect(signal?.aborted).toBe(true);
+});
+
+it("refreshes an active resource only once when the page also invalidates it", async () => {
+	const cache = client();
+	const options = {
+		queryKey: ["suppression-check", "person@example.com"],
+		queryFn: vi.fn(() => Promise.resolve({ suppressed: true })),
+	};
+	const observer = new QueryObserver(cache, options);
+	const unsubscribe = observer.subscribe(() => {});
+	try {
+		await cache.query(options);
+		expect(options.queryFn).toHaveBeenCalledTimes(1);
+		await cache
+			.getMutationCache()
+			.build(cache, {
+				mutationFn: () => Promise.resolve(),
+				onSuccess: () => cache.invalidateQueries({ queryKey: options.queryKey }),
+			})
+			.execute(undefined);
+		expect(options.queryFn).toHaveBeenCalledTimes(2);
+	} finally {
+		unsubscribe();
+	}
+});
+
+it("reuses equivalent filters and default pagination", async () => {
+	const cache = client(),
+		read = vi.fn(() => Promise.resolve([]));
+	await cache.query({
+		queryKey: workflowQueryKey("query-results", 0, { category: "valid", safeToSend: true }),
+		queryFn: read,
+	});
+	await cache.query({
+		queryKey: workflowQueryKey("query-results", 0, { safeToSend: true, category: "valid" }),
+		queryFn: read,
+	});
+	expect(read).toHaveBeenCalledTimes(1);
+	await cache.query({ queryKey: v1ListListsKeys.list(), queryFn: read });
+	await cache.query({ queryKey: v1ListListsKeys.list({ offset: 0, limit: 50 }), queryFn: read });
+	expect(read).toHaveBeenCalledTimes(2);
 });

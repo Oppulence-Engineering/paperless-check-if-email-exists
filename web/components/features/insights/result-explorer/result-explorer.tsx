@@ -119,7 +119,7 @@ export function ResultExplorer({
 		setOffset(0);
 	}
 	const results = useQuery({
-		queryKey: workflowQueryKey("query-results", offset, JSON.stringify(filters)),
+		queryKey: workflowQueryKey("query-results", offset, filters),
 		placeholderData: keepPreviousData,
 		queryFn: async ({ signal }) =>
 			V1QueryResults200Response.parse(

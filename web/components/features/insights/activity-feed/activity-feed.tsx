@@ -70,7 +70,7 @@ export function ActivityFeed({ className, ...props }: ActivityFeedProps) {
 	const [filters, setFilters] = useState<Filters>({});
 	const [error, setError] = useState("");
 	const events = useQuery({
-		queryKey: workflowQueryKey("activity-events", offset, JSON.stringify(filters)),
+		queryKey: workflowQueryKey("activity-events", offset, filters),
 		placeholderData: keepPreviousData,
 		queryFn: async ({ signal }) =>
 			V1ListEvents200Response.parse(
