@@ -82,7 +82,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 	.unwrap();
 	assert_eq!(original_events, 4);
 	let migration_events: i64 = sqlx::query_scalar(
-		"SELECT count(*) FROM v1_suppression_events WHERE event_type = 'identity_migrated'",
+		"SELECT count(*) FROM v1_suppression_events WHERE event_type = 'identity_migrated' AND actor_id = 'mailbox_identity_v2'",
 	)
 	.fetch_one(db.pool())
 	.await
@@ -108,6 +108,33 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 	.await
 	.unwrap();
 	assert_eq!(outcomes, vec!["Sales@company.example", "ab@gmail.com"]);
+}
+
+#[tokio::test]
+#[serial]
+async fn deployed_casefold_history_recovers_distinct_suppressions() {
+	let db = test_helpers::migrate_scratch_db_to_head(
+		|version| version < "20261021000000",
+		Some(
+			std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+				.join("tests/fixtures/mailbox_identity_case_distinct.sql"),
+		),
+	)
+	.await;
+	let rows: Vec<(String, String)> = sqlx::query_as(
+        "SELECT canonical_email, status FROM v1_suppression_entries ORDER BY canonical_email COLLATE \"C\"",
+    ).fetch_all(db.pool()).await.unwrap();
+	assert_eq!(
+		rows,
+		vec![
+			("Sales@company.example".into(), "active".into()),
+			("sales@company.example".into(), "active".into()),
+		]
+	);
+	let backups: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM mailbox_identity_v3_backup WHERE table_name = 'v1_suppression_entries'",
+    ).fetch_one(db.pool()).await.unwrap();
+	assert_eq!(backups, 2);
 }
 
 #[tokio::test]
