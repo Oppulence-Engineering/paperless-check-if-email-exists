@@ -135,6 +135,28 @@ async fn deployed_casefold_history_recovers_distinct_suppressions() {
         "SELECT count(*) FROM mailbox_identity_v3_backup WHERE table_name = 'v1_suppression_entries'",
     ).fetch_one(db.pool()).await.unwrap();
 	assert_eq!(backups, 2);
+
+	sqlx::query(r#"INSERT INTO v1_task_result (tenant_id, payload, canonical_email, task_state) VALUES ('33333333-3333-4333-8333-333333333333', '{"input":{"to_email":"Support@company.example"}}', 'support@company.example', 'queued')"#)
+        .execute(db.pool()).await.unwrap();
+	let mut tx = db.pool().begin().await.unwrap();
+	let error = sqlx::raw_sql(include_str!(
+		"../migrations/20261022000000_restore_mailbox_identity_contract.up.sql"
+	))
+	.execute(&mut *tx)
+	.await
+	.unwrap_err();
+	assert!(error
+		.to_string()
+		.contains("requires affected jobs to finish"));
+	tx.rollback().await.unwrap();
+	let identity: String = sqlx::query_scalar("SELECT canonical_email FROM v1_task_result")
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+	assert_eq!(
+		identity, "support@company.example",
+		"live work must not be retargeted"
+	);
 }
 
 #[tokio::test]
