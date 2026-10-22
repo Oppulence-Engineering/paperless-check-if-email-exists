@@ -25,7 +25,11 @@ CREATE TEMP TABLE identity_v4_suppressions ON COMMIT DROP AS
 SELECT s.id, s.tenant_id, s.canonical_email AS previous_identity, s.status AS previous_status,
        COALESCE(mailbox_identity(s.email), s.canonical_email) AS identity,
        CASE WHEN s.status = 'merged' AND s.metadata ? 'identity_v3_survivor'
-                 AND b.previous->>'status' = 'active' THEN 'active'
+                 AND b.previous->>'status' = 'active'
+                 AND EXISTS (SELECT 1 FROM v1_suppression_entries survivor
+                   WHERE survivor.id = (s.metadata->>'identity_v3_survivor')::bigint
+                     AND survivor.status = 'active'
+                     AND mailbox_identity(s.email) IS DISTINCT FROM mailbox_identity(survivor.email)) THEN 'active'
             ELSE s.status END AS status,
        s.expires_at, s.created_at
 FROM v1_suppression_entries s
@@ -42,8 +46,11 @@ WITH ranked AS (
 UPDATE identity_v4_suppressions s SET status = 'merged'
 FROM ranked WHERE s.id = ranked.id AND ranked.rank > 1;
 UPDATE v1_suppression_entries s SET status = 'merged'
-FROM identity_v4_suppressions r WHERE s.id = r.id AND r.status = 'merged';
-UPDATE v1_suppression_entries s SET canonical_email = r.identity, status = r.status
+FROM identity_v4_suppressions r WHERE s.id = r.id AND s.status = 'active'
+  AND (s.canonical_email IS DISTINCT FROM r.identity OR r.status <> 'active');
+UPDATE v1_suppression_entries s SET canonical_email = r.identity
+FROM identity_v4_suppressions r WHERE s.id = r.id;
+UPDATE v1_suppression_entries s SET status = r.status
 FROM identity_v4_suppressions r WHERE s.id = r.id;
 INSERT INTO v1_suppression_events (tenant_id, entry_id, canonical_email, event_type,
     from_status, to_status, actor_type, actor_id, metadata)
@@ -82,6 +89,27 @@ SET extra = COALESCE(t.extra, '{}'::jsonb) || jsonb_build_object('identity_v3_ca
 FROM identity_v4_tasks r
 WHERE r.id = t.id AND r.identity IS NOT NULL AND t.canonical_email IS DISTINCT FROM r.identity;
 
+-- Undo only v3-created duplicate links between identities that are distinct again.
+UPDATE v1_task_result t
+SET extra = COALESCE(t.extra, '{}'::jsonb) || jsonb_build_object(
+        'identity_v3_duplicate', jsonb_build_object('is_duplicate', t.is_duplicate, 'canonical_task_id', t.canonical_task_id)),
+    is_duplicate = COALESCE((b.previous->>'is_duplicate')::boolean, false),
+    canonical_task_id = (b.previous->>'canonical_task_id')::bigint
+FROM mailbox_identity_v3_backup b, v1_task_result original
+WHERE b.table_name = 'v1_task_result' AND b.row_id = t.id
+  AND (b.previous->>'is_duplicate')::boolean IS NOT TRUE
+  AND t.is_duplicate IS TRUE AND original.id = t.canonical_task_id
+  AND t.canonical_email = b.previous->>'canonical_email'
+  AND t.canonical_email IS DISTINCT FROM original.canonical_email
+  AND t.task_state IN ('completed', 'failed', 'dead_lettered', 'cancelled')
+  AND (t.dispatch_id IS NULL OR t.completion_done);
+UPDATE v1_lists l SET unique_emails = x.unique_emails, deduplicated_count = x.duplicates
+FROM (SELECT job_id,
+      count(*) FILTER (WHERE canonical_email IS NOT NULL AND is_duplicate IS NOT TRUE)::int AS unique_emails,
+      count(*) FILTER (WHERE is_duplicate)::int AS duplicates
+      FROM v1_task_result GROUP BY job_id) x
+WHERE l.job_id = x.job_id;
+
 -- Original-less campaign outcomes remain marked ambiguous; do not invent their case.
 WITH restored AS (
  SELECT o.id, COALESCE(mailbox_identity(o.email), b.previous->>'canonical_email', o.canonical_email) AS identity
@@ -92,6 +120,15 @@ UPDATE verification_outcomes o
 SET canonical_email = r.identity,
     metadata = COALESCE(o.metadata, '{}'::jsonb) || jsonb_build_object('identity_v3_canonical', o.canonical_email)
 FROM restored r WHERE r.id = o.id AND o.canonical_email IS DISTINCT FROM r.identity;
+
+UPDATE verification_outcomes o
+SET identity_duplicate_of = NULL,
+    metadata = COALESCE(o.metadata, '{}'::jsonb) || jsonb_build_object('identity_v3_duplicate_of', o.identity_duplicate_of)
+FROM mailbox_identity_v3_backup b, verification_outcomes original
+WHERE b.table_name = 'verification_outcomes' AND b.row_id = o.id
+  AND original.id = o.identity_duplicate_of
+  AND o.canonical_email = b.previous->>'canonical_email'
+  AND o.canonical_email IS DISTINCT FROM original.canonical_email;
 
 -- Cached snapshots must be verified again under the restored identity contract.
 UPDATE v1_pipeline_contact_state SET source_hash = 'identity-v3:' || source_hash;

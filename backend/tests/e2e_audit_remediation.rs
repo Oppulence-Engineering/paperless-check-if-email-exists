@@ -135,14 +135,34 @@ async fn deployed_casefold_history_recovers_distinct_suppressions() {
         "SELECT count(*) FROM mailbox_identity_v3_backup WHERE table_name = 'v1_suppression_entries'",
     ).fetch_one(db.pool()).await.unwrap();
 	assert_eq!(backups, 2);
-	let legacy: String = sqlx::query_scalar("SELECT canonical_email FROM v1_task_result")
-		.fetch_one(db.pool())
-		.await
-		.unwrap();
+	let legacy: String =
+		sqlx::query_scalar("SELECT canonical_email FROM v1_task_result WHERE job_id IS NULL")
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
 	assert_eq!(
 		legacy, "legacy@company.example",
 		"retain keys without a supplied address"
 	);
+
+	let independent: i64 = sqlx::query_scalar("SELECT count(*) FROM v1_task_result WHERE job_id = 9901 AND is_duplicate IS FALSE AND canonical_task_id IS NULL")
+        .fetch_one(db.pool()).await.unwrap();
+	assert_eq!(
+		independent, 2,
+		"restore independently verified case-distinct mailboxes"
+	);
+	let counts: (i32, i32) = sqlx::query_as(
+		"SELECT unique_emails, deduplicated_count FROM v1_lists WHERE job_id = 9901",
+	)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	assert_eq!(counts, (2, 0));
+	let outcomes: i64 = sqlx::query_scalar("SELECT count(*) FROM verification_outcome_evidence")
+		.fetch_one(db.pool())
+		.await
+		.unwrap();
+	assert_eq!(outcomes, 2, "retain evidence for both distinct mailboxes");
 
 	sqlx::query(r#"INSERT INTO v1_task_result (tenant_id, payload, canonical_email, task_state) VALUES ('33333333-3333-4333-8333-333333333333', '{"input":{"to_email":"Support@company.example"}}', 'support@company.example', 'queued')"#)
         .execute(db.pool()).await.unwrap();
@@ -166,6 +186,28 @@ async fn deployed_casefold_history_recovers_distinct_suppressions() {
 	assert_eq!(
 		identity, "support@company.example",
 		"live work must not be retargeted"
+	);
+}
+
+#[tokio::test]
+#[serial]
+async fn identity_recovery_preserves_a_later_suppression_deactivation() {
+	let db = test_helpers::migrate_scratch_db_to_head(
+		|version| version < "20261022000000",
+		Some(
+			std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+				.join("tests/fixtures/mailbox_identity_deactivated_v3.sql"),
+		),
+	)
+	.await;
+	let active: i64 =
+		sqlx::query_scalar("SELECT count(*) FROM v1_suppression_entries WHERE status = 'active'")
+			.fetch_one(db.pool())
+			.await
+			.unwrap();
+	assert_eq!(
+		active, 0,
+		"do not revive aliases after their survivor was deactivated"
 	);
 }
 
