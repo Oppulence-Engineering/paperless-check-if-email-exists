@@ -1,8 +1,14 @@
 # RFC 0022: Bot Engagement Flag
 
+## Verify disposition — 2026-10-23
+
+**Deferred; sender-demand and fixture gate.** Machine engagement classification needs RFC 0021 gateway attribution and representative provider fixtures. It does not establish identity or role correctness and is outside the initial audit path. Revisit if engagement-driven policies or sender reporting create a measured customer problem.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Deferred; sender-demand and fixture gate; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead |
 | **Parent** | RFC 0016, item 6 |

@@ -1,8 +1,14 @@
 # RFC 0023: Webhook Event Subscriptions And Delivery Log
 
+## Verify disposition — 2026-10-23
+
+**Conditional; credential slice at stage 3.** RFC 0032 may reuse the tenant secret cipher without waiting for the entire event subscription/outbox product. Full audit/research events and delivery logs follow integration demand. Add audit.completed, repair.completed, and export.ready only with the corresponding durable resources and authorization; do not imply those events already exist.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Conditional; credential slice at stage 3; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 7 (backlog items 65, 68, and 87) |

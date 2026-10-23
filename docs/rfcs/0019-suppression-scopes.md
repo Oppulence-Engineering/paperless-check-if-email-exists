@@ -1,12 +1,18 @@
 # RFC 0019: Suppression Scopes
 
+## Verify disposition — 2026-10-23
+
+**Conditional stage 2 agency extension.** Build on RFC 0029 client/campaign context and RFC 0030 export policy if customers need separate client do-not-contact scopes inside one workspace. Labels alone do not provide this behavior or ACL isolation; separate existing workspaces are the initial isolation option. Preserve tenant-wide complaint/hard-bounce protections.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Conditional stage 2 agency extension; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 3 |
-| **Builds on** | RFC 0004 (Suppression Intelligence) |
+| **Builds on** | Existing RFC 0004 suppression; RFC 0029 client context; RFC 0030 delivery |
 | **Used by** | RFC 0020 (signup checks for one audience), RFC 0025 (one audience for each platform publication) |
 | **Release gates** | Migration tested on a production-size copy; Definition Of Done met |
 

@@ -1,8 +1,14 @@
 # RFC 0021: Mailbox Provider Breakdown For Each Campaign
 
+## Verify disposition — 2026-10-23
+
+**Optional attribution fix; campaign reporting deferred.** The [MillionVerifier adapter](../../backend/src/verification.rs) detects provider before MX lookup without a subsequent MX-based detection pass. That narrow evidence correction can be promoted independently. Full campaign reports require customer demand and outcome data; neither reports nor attribution are a prerequisite for the core paid-audit experiment.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Optional attribution fix; campaign reporting deferred; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 5 (backlog item 81) |

@@ -1,12 +1,18 @@
 # RFC 0013: Discover — Company And People Search
 
+## Verify disposition — 2026-10-23
+
+**Parked; broad discovery outside initial audit scope.** Verify begins with customer-owned target accounts and contacts. Broad company/people acquisition, lookalikes, and saved searches require repeat audit demand plus independent rights/economic evidence. Do not implement this full proposal ahead of RFCs 0027–0031.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; architecture revised 2026-10-20 |
+| **Status** | Parked; broad discovery outside initial audit scope; audited 2026-10-23 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
-| **Depends on** | RFC 0015 (Data Platform Foundations), RFC 0011 (finder, list repair), RFC 0012 (Domain Search, counts) |
-| **Release gates** | RFC 0015 Legal Review sign-off; sensitive-condition guard live; Definition Of Done met |
+| **Depends on** | Repeat-audit demand and separate scope decision; RFCs 0027/0031 |
+| **Release gates** | Current scoped RFC acceptance; RFC 0027 rights; RFC 0028 measured value. Earlier gates below are historical. |
 
 ## Implementation decision — 2026-10-20
 
@@ -81,7 +87,9 @@ We do not add sequences or sending.
 - Address reveal inside Discover. Addresses come from RFC 0011 and RFC 0012, with their own credits.
 - Sending, sequences, or CRM sync.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - No company or people search exists.
 - RFC 0015 adds the Parallel client, the job runner, credits, the AI search counter, and the store.

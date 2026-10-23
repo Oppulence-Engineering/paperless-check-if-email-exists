@@ -1,13 +1,19 @@
-# RFC 0011: Email Finder Parity And List Repair
+# RFC 0011: Email Finder and Selective List Repair
+
+## Verify disposition — 2026-10-23
+
+**Partial; selective repair in stage 2.** Existing pattern finder and the connected published-source research pilot are foundations, not proof of Hunter parity or calibrated identity confidence. Build only the narrow repair improvements justified by RFC 0028, under RFC 0027 source rights and RFC 0031 spend/execution controls. Preserve the current finder API and conservative catch-all handling.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
 
 | | |
 |---|---|
-| **Status** | Draft; architecture revised 2026-10-20 |
+| **Status** | Partial; selective repair in stage 2; audited 2026-10-23 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
-| **Depends on** | RFC 0015 (Data Platform Foundations) |
+| **Depends on** | RFC 0027 (rights), RFC 0031 (repair budgets/execution) |
 | **Used by** | RFC 0012 (domain sourcing), RFC 0013 ("Find email" on people rows) |
-| **Release gates** | RFC 0015 Legal Review sign-off; shadow mode exit criteria; Definition Of Done met |
+| **Release gates** | Current scoped RFC acceptance; RFC 0027 rights; RFC 0028 measured value. Earlier gates below are historical. |
 
 ## Implementation decision — 2026-10-20
 
@@ -88,7 +94,9 @@ Single lookups stay available on the finder page and in the API.
 - A browser extension.
 - Nickname matching (for example, "Bob" for "Robert"). We can add it when the evaluation set shows a need.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - `POST /v1/find_email` takes `first_name`, `last_name`, `domain`, and `strategy`. It creates a `v1_finder_job`, a `v1_bulk_job`, and one task for each candidate in the `check_email` queue. In `waterfall` mode the task priority comes from `pattern_priority`.
 - `GET /v1/find_email/{job_id}` calls `sync_finder_results` and returns the candidates, a best match, and a `ConfidenceExplanation`.

@@ -1,8 +1,14 @@
 # RFC 0008: Bulk Remediation Workflows
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline.** Persistent [remediation plans and exports](../../backend/src/http/v1/lists/remediation.rs) already preserve originals and support fixed/safe/review/drop outputs. Reuse those primitives. Contact lineage, human decisions, and Ready/Needs Review/Excluded delivery are the additional work in RFCs 0029/0030.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add backend remediation plans for uploaded lists so Reacher can partition rows i
 - Applying transformations directly to the stored source file.
 - Full support for non-list bulk jobs that do not preserve original row context.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - `POST /v1/lists` already preserves original row data and emits cleaned output downloads.
 - Domain typo suggestions, alias normalization, and canonicalization already exist as verification-related primitives.

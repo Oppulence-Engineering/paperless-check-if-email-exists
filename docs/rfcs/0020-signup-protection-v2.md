@@ -1,8 +1,14 @@
 # RFC 0020: Signup Protection V2
 
+## Verify disposition — 2026-10-23
+
+**Parked; outside the initial agency buyer.** Signup-form abuse protection serves a different initial buyer. Existing policy modes remain supported; this expansion does not precede contact-audit validation. Revisit with specific paying demand and the original privacy/latency requirements.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; parked 2026-10-21 (customer signup forms are not in the Paperless focus; see the RFC 0016 build order) |
+| **Status** | Parked; outside the initial agency buyer; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 4 |

@@ -1,8 +1,14 @@
 # RFC 0007: Verification Policy Modes
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline; original enum superseded.** Current [policy types](../../backend/src/decision/types.rs) use growth, deliverability, signup_protection, enterprise_strict, and custom. Preserve these public values rather than implementing the old strict/balanced/aggressive proposal. RFC 0030 uses current policy and suppression at audit delivery.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; original enum superseded; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add explicit verification policy modes that sit above the current scoring model.
 - Introducing arbitrary user-defined policy expressions in v1.
 - Enforcing send actions outside Reacher.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Reacher already computes `score`, `category`, `sub_reason`, `safe_to_send`, and bounce-risk assessments.
 - Approval checklist thresholds exist at the job level.

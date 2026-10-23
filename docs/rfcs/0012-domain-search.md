@@ -1,13 +1,19 @@
 # RFC 0012: Domain Search
 
+## Verify disposition — 2026-10-23
+
+**Deferred; promote for measured audit coverage gaps.** Domain Search is not a prerequisite for paid list audits or claim-level role evidence. Reuse Go sourcing and the RFC 0031 execution path only if RFC 0028 identifies a recurring coverage gap. The older independent Rust store/Parallel architecture remains historical.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; architecture revised 2026-10-20 |
+| **Status** | Deferred; promote for measured audit coverage gaps; audited 2026-10-23 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
-| **Depends on** | RFC 0015 (Data Platform Foundations), RFC 0011 (domain sourcing, pattern model) |
+| **Depends on** | Promotion based on RFC 0028 evidence; RFCs 0027/0031 for sourcing |
 | **Used by** | RFC 0013 (row action "Open Domain Search"), RFC 0014 (departure signal) |
-| **Release gates** | RFC 0015 Legal Review sign-off; Definition Of Done met |
+| **Release gates** | Current scoped RFC acceptance; RFC 0027 rights; RFC 0028 measured value. Earlier gates below are historical. |
 
 ## Implementation decision — 2026-10-20
 
@@ -76,7 +82,9 @@ The main entry point is "Find more contacts at this account" from a list. A stan
 - Person enrichment beyond name and position. RFC 0014 covers it.
 - Phone numbers and social profiles.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - RFC 0011 adds domain sourcing (Stage A known pages, Stage B roster task), the pattern model, and calibrated confidence.
 - RFC 0015 adds the store (`v1_web_domain`, `v1_web_email`, `v1_web_source`), the job runner, credits, and single-flight.

@@ -1,8 +1,14 @@
 # RFC 0025: beehiiv And Kit Integrations
 
+## Verify disposition — 2026-10-23
+
+**Parked; newsletter buyer outside initial scope.** Newsletter synchronization is not the agency audit handoff. Requested CRM correction is specified in RFC 0032. Revisit this proposal only with newsletter demand and its original RFC 0019/0023, platform-license, and authentication prerequisites.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; parked 2026-10-21 (newsletter platforms are not in the Paperless focus; see the RFC 0016 build order) |
+| **Status** | Parked; newsletter buyer outside initial scope; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 9 |

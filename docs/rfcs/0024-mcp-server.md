@@ -1,8 +1,14 @@
 # RFC 0024: MCP Server
 
+## Verify disposition — 2026-10-23
+
+**Deferred; distribution-demand gate.** MCP is a delivery channel after stable, useful audit APIs and demonstrated demand. Phase-one tools should serve actual research, review, and export workflows, with scopes and explicit authorization for paid actions. A verification call can spend money and must not be classified as read-only merely because it returns data.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Deferred; distribution-demand gate; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: web lead, backend lead |
 | **Parent** | RFC 0016, item 8 |
