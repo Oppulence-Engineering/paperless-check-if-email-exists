@@ -1,13 +1,19 @@
 # RFC 0014: Person And Company Enrichment, And Job-Change Monitoring
 
+## Verify disposition — 2026-10-23
+
+**Split across stages 1b, 2, and 4.** Claim-level company/person/employment/role evidence and contradictions are specified in RFC 0030; selective enrichment uses RFC 0031; recurring role-change maintenance uses RFC 0033. Extract reusable taxonomy/observations without requiring the standalone RFC 0012 search product. The Go backend remains the evidence owner.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; architecture revised 2026-10-20 |
+| **Status** | Split across stages 1b, 2, and 4; audited 2026-10-23 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead |
-| **Depends on** | RFC 0015 (Data Platform Foundations); RFC 0012 (title taxonomy, departure signal) |
+| **Depends on** | RFC 0030 (claim review), RFC 0031 (selective repair), RFC 0033 (maintenance) |
 | **Connects to** | RFC 0003 (reverification), RFC 0004 (suppressions), RFC 0005 (list quality), RFC 0008 (remediation) |
-| **Release gates** | RFC 0015 Legal Review sign-off, including the DPIA (item 2), before any person enrichment; Definition Of Done met |
+| **Release gates** | Current scoped RFC acceptance; RFC 0027 rights; RFC 0028 measured value. Earlier gates below are historical. |
 
 ## Implementation decision — 2026-10-20
 
@@ -74,7 +80,9 @@ Enrichment has the **strongest fit** with our buyer of the data RFCs:
 - Technology stack, funding rounds, and web traffic in v1.
 - Automatic suppression by default. The tenant must turn it on.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - `/v1/reputation/check` gives domain reputation (blacklists, DNS records). It gives no company data.
 - `misc.is_b2c` and `is_role_account` are the only person or company signals in a check result.

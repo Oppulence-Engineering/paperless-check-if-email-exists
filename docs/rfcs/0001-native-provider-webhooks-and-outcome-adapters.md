@@ -1,8 +1,14 @@
 # RFC 0001: Native Provider Webhooks and Outcome Adapters
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline.** Inbound provider adapters and receipts exist in [provider_outcomes.rs](../../backend/src/http/v1/provider_outcomes.rs). Preserve these contracts. Reconcile any remaining original criteria against code when needed; this is not a new prerequisite for the paid audit.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; audited 2026-10-23
 
 ## Summary
 
@@ -28,7 +34,9 @@ Add tenant-scoped inbound webhook adapters for SendGrid, Amazon SES, Mailgun, an
 - A no-code setup UI; configuration is API-first.
 - Real-time campaign analytics dashboards in the same feature.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Tenant settings already expose outbound webhook configuration through `/v1/me/webhook`.
 - Verification, bulk jobs, lists, suppressions, email history, and pipelines already exist.

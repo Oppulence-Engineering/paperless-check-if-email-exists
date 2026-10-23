@@ -1,5 +1,7 @@
 # Customer Feature Backlog
 
+> Historical feature inventory. As of 2026-10-23, the [Verify RFC sequence](../rfcs/README.md) controls priority. Rankings and completion labels below reflect earlier work; consult the [current audit](../audits/2026-10-23-verify-north-star.md) before treating them as current scope.
+
 This sheet captures high-value features that would be useful to customers after the current capability set. It is intentionally product-oriented: each item focuses on customer outcomes, not only internal implementation work.
 
 Priority guide:
@@ -8,7 +10,7 @@ Priority guide:
 - `High`: strongly useful and likely to reduce churn or expand usage
 - `Medium`: helpful and strategic, but less urgent than core workflow improvements
 
-The table below is sorted by overall priority rank, with `#1` as the highest-priority item.
+The tables retain their original ranks for reference; they are not the Verify build order.
 
 ## Completed (33 features)
 
@@ -128,6 +130,8 @@ These features depend on external OAuth flows, third-party APIs, or partner infr
 | 99 | Finder / Enrichment | Enrichment source attribution | Depends on enrichment integrations above | Medium |
 
 ## Suggested Build Order
+
+Historical ordering only. Use the [Verify delivery sequence](../rfcs/README.md#build-order) for current work.
 
 If the goal is maximum customer value, the strongest next sequence would be:
 

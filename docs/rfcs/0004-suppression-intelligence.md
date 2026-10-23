@@ -1,8 +1,14 @@
 # RFC 0004: Suppression Intelligence
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline.** Active status, reason/provenance, expiry, and audit events exist in [suppression.rs](../../backend/src/suppression.rs) and the suppression APIs. Reuse them in RFC 0030. Client-specific scope is separate work in RFC 0019; no reviewer action may bypass an active block.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Expand suppression handling from simple add/check/list/delete behavior into a ri
 - Cross-tenant suppression sharing.
 - A UI moderation queue.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Reacher already supports tenant-scoped suppressions through add, check, list, and delete routes.
 - Worker automation can auto-suppress based on score or category settings.

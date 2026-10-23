@@ -1,8 +1,14 @@
 # RFC 0002: Deliverability Feedback and Recommendations
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline.** The [decision engine](../../backend/src/decision/engine.rs) and [public types](../../backend/src/decision/types.rs) already expose deterministic recommendations. Reuse them in RFC 0030; a sending recommendation does not establish person, employment, or role identity.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add a deterministic `recommendation` object to result-bearing APIs so callers ge
 - Replacing the existing `score`, `safe_to_send`, or `bounce_risk` fields.
 - Adding a UI workflow or human-approval system.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - The current response model already includes `score`, `category`, `sub_reason`, `safe_to_send`, `reason_codes`, and `signals`.
 - Bounce-risk assessment already exists as a separate heuristic layer.

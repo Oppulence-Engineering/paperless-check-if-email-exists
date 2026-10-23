@@ -1,8 +1,14 @@
 # RFC 0018: Bounce Reason Taxonomy
 
+## Verify disposition — 2026-10-23
+
+**Conditional correctness extension.** Promote the recipient-classification slice only when actual feedback causes incorrect exclusions in customer audits. Existing complaint/suppression safeguards remain mandatory. Sender alerts depend on RFC 0017 and stay deferred; taxonomy is not a blocker for starting rights-cleared paid audits.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Conditional correctness extension; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead |
 | **Parent** | RFC 0016, item 2 |

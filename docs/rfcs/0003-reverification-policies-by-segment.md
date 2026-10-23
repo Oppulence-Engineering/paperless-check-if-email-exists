@@ -1,8 +1,14 @@
 # RFC 0003: Reverification Policies by Segment
 
+## Verify disposition — 2026-10-23
+
+**Partial; segment extension deferred to stage 4.** Workspace schedules already exist in [reverification settings](../../backend/src/http/v1/reverification/update.rs), with pipelines and saved segments as reusable foundations. The combined segment-policy proposal is not complete. Finish the required slice through RFC 0033 after repeat-audit demand.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Partial; segment extension deferred to stage 4; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add tenant-scoped reverification policies that target explicit contact segments 
 - Mutating historical task results in place.
 - A drag-and-drop UI for segment construction.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Reacher already supports scheduled re-verification and pipelines.
 - Bulk jobs, lists, email history, and `/v1/query` already expose the contact/result corpus that reverification policies need.

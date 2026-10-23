@@ -1,8 +1,14 @@
 # RFC 0016: Deliverability Intelligence Roadmap
 
+## Verify disposition — 2026-10-23
+
+**Superseded as product build order; historical feature inventory.** The Verify audit roadmap is now authoritative. The feature descriptions below remain an inventory for verification/sender customers, not an alternative launch sequence. The old source-quality scope task is already enforced in shared auth; deployment and commercial validation are different evidence gates.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Superseded as product build order; historical feature inventory; audited 2026-10-23 |
 | **Created** | 2026-10-19 |
 | **Owners** | To assign: backend lead, web lead |
 | **Builds on** | RFC 0001 (Provider Webhooks), RFC 0004 (Suppression Intelligence), RFC 0007 (Policy Modes) |
@@ -75,55 +81,16 @@ Mailbox providers publish sender data. Google Postmaster Tools reports spam rate
 
 ## Build Order
 
-Updated 2026-10-21. On 2026-10-20, `docs/strategy/company-focus.md` changed from the sender-only focus to the Paperless prospecting focus. The first Paperless release ships company-list research, person matching, email finding, list repair, verification, evidence review, and CSV export.
+Superseded on 2026-10-23 by the [Verify RFC delivery sequence](README.md#build-order).
 
-None of the ten items blocks that release. So the Paperless launch comes first. After it, the items that raise the count of usable contacts or lower cost come first. The north-star metric is the total cost for each correctly matched, usable B2B contact.
+Start with rights and paid validation (0027/0028), then import lineage and durable
+review/delivery (0029/0030), then budgeted selective repair and measured capacity
+(0031). Requested CRM updates (0032) and recurring maintenance (0033) follow
+repeat-customer and economic evidence. The source-quality scope requirement is
+already enforced by shared auth middleware; it is not an open launch task.
 
-### Order At A Glance
-
-| Phase | Work | Reason for this place |
-|---|---|---|
-| 0 | Ship Paperless: deploy Go, Rust, and web; run the controlled production workflow; run the benchmark; recruit pilots | This is the real release blocker. RFC work must not delay it. |
-| 1 | Add a scope check to `GET /v1/sources/quality` | It closes a small security gap. It is not one of the ten items. |
-| 1 | RFC 0021, provider detection only | Paperless verifies company addresses. On the MillionVerifier path, these results have no mailbox provider today. |
-| 1 | RFC 0018, without sender alerts | A wrong suppression removes a usable contact from the export. This hurts the north-star metric. |
-| 2 | RFC 0023, with Paperless events such as a completed research run | The secret cipher is also the base for CRM credentials later. |
-| 2 | RFC 0019 | Build it when agencies ask for a separate do-not-contact list for each client. |
-| 2 | RFC 0024, phase 1, with the research, find, and export tools first | The web lead can build it in parallel with RFC 0023 and RFC 0019. |
-| 3 | RFC 0017, the RFC 0018 sender alerts, the RFC 0021 report, then RFC 0022 | These serve verification and list-hygiene customers, which stay a supported workflow. |
-| Parked | RFC 0020, RFC 0025, RFC 0026 | Their buyers are signup-form owners, newsletter platforms, and senders who need provider analytics. The Paperless focus does not include them. Review them again after the pilots. |
-
-The sections below give the details for each phase.
-
-### Phase 0: Ship Paperless
-
-Finish the open release item in `docs/paperless-research-integration.md`. Deploy compatible Go, Rust, and web revisions, and run a controlled production workflow. Then run the benchmark and recruit the pilot customers. Work on these RFCs must not delay these steps.
-
-### Phase 1: Small fixes that help Paperless now
-
-1. Add an `outcomes.read` scope check to `GET /v1/sources/quality`. Today any API key of the tenant can read it. This fix is not one of the ten items.
-2. RFC 0021, provider detection only. Detect the mailbox provider from the MX host on the MillionVerifier path, and store `mailbox_provider` and `mail_gateway`. Paperless verifies company addresses, and today these results have no provider.
-3. RFC 0018, without sender alerts. Classify bounces, stop suppressing for sender-side bounces, and accept `smtp_status` in outcome imports. A wrong suppression removes a usable contact from the export.
-
-### Phase 2: After the first paid pilots
-
-4. RFC 0023. Add Paperless event types, for example a research run that completes. The secret cipher is also the base for CRM credentials, which the thesis plans after pilot value.
-5. RFC 0019, when agencies ask for a separate do-not-contact list for each client. The audience key can name the client.
-6. RFC 0024, phase 1. Put the Paperless research, find, and verify tools first. The web lead can build it in parallel with items 4 and 5.
-
-### Phase 3: Verification and list-hygiene customers
-
-Verification and list hygiene stay supported workflows.
-
-7. The alert changes in RFC 0017, then the monitor. Confirm the blocklist terms first.
-8. The sender alerts in RFC 0018.
-9. The provider report in RFC 0021.
-10. RFC 0022. It needs item 2 and real engagement data to tune its rules.
-
-### Parked
-
-These items serve newsletter senders and signup forms. The Paperless focus does not include these buyers. Review them again after the pilots.
-
-- RFC 0020: signup protection for customer forms.
-- RFC 0025: beehiiv and Kit integrations.
-- RFC 0026: Postmaster Tools and SNDS. If it comes back, apply for Google OAuth approval early, because the review takes weeks.
+The inventory above remains useful for supported verification/list-hygiene
+customers. Narrow 0018 correctness, 0019 client suppression, and 0021 attribution
+work can be promoted for measured audit needs. Extract 0023 credential storage
+when needed for CRM. Broad sender reports, health monitoring, MCP, signup tools,
+newsletter connectors, and Postmaster data do not precede the audit workflow.

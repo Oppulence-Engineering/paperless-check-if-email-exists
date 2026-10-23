@@ -1,8 +1,14 @@
 # RFC 0009: Tenant-Facing Job Observability
 
+## Verify disposition — 2026-10-23
+
+**Implemented baseline.** [Job events](../../backend/src/http/v1/jobs/get_events.rs), retry, latency, failure-center, and failure-report routes already exist. Reuse the operational foundation; extend research progress and recovery only for the batch lifecycle in RFC 0031. This does not certify every original observability criterion.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Implemented baseline; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add a unified observability layer for bulk jobs so tenants can inspect lifecycle
 - Per-worker host diagnostics.
 - Replacing the existing progress endpoint contract.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Reacher already exposes job progress, approval, and latency endpoints.
 - Worker processing persists task results and task state.

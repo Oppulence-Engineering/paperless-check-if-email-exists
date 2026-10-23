@@ -1,12 +1,18 @@
 # RFC 0015: Data Platform Foundations
 
+## Verify disposition — 2026-10-23
+
+**Superseded architecture; integrated bridge exists.** The [server-side bridge](../../backend/src/research.rs) already connects Rust tenant authority to Go research. Remaining source rights, ownership, retention, and deletion move to RFC 0027; monetary budgets and scaled execution move to RFC 0031. Do not build the historical global contact store, second Rust runner, or mandatory Parallel integration below.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; architecture revised 2026-10-20 |
+| **Status** | Superseded architecture; integrated bridge exists; audited 2026-10-23 |
 | **Created** | 2026-10-16 |
 | **Owners** | To assign: backend lead, web lead, legal owner |
 | **Used by** | RFC 0011 (Finder), RFC 0012 (Domain Search), RFC 0013 (Discover), RFC 0014 (Enrichment) |
-| **Release gates** | Legal Review sign-off; spend guardrails live; Definition Of Done met |
+| **Release gates** | See RFCs 0027 and 0031; no new standalone platform release. |
 
 ## Implementation decision — 2026-10-20
 
@@ -80,7 +86,9 @@ Our buyer already has a list and sends email to it (see `docs/strategy/company-f
 | Evaluation set | A fixed set of inputs with known answers, used by the live tests. |
 | Degraded mode | The feature works without Parallel and says so in the response. |
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - **HTTP and OpenAPI:** handlers are `warp` filters, registered in `http/routes.rs`. `utoipa` builds the spec in `http/openapi.rs` from `backend/openapi.json` plus annotated paths. A test checks operation IDs.
 - **Errors:** `ReacherResponseError` serializes as `{"error": "..."}`. The status code is not in the body.

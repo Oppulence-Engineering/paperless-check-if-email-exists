@@ -1,8 +1,14 @@
 # RFC 0026: Postmaster Tools And SNDS Ingestion
 
+## Verify disposition — 2026-10-23
+
+**Parked; sender analytics outside initial scope.** Postmaster/SNDS data does not establish company/person/role identity. Revisit after sender demand, RFCs 0017/0021/0023, and confirmation of current provider API access. Do not assume historical API descriptions are still valid at implementation time.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft; parked 2026-10-21 (sender analytics are not in the Paperless focus; see the RFC 0016 build order) |
+| **Status** | Parked; sender analytics outside initial scope; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 10 |

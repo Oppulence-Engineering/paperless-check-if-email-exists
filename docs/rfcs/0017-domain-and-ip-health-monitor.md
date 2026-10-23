@@ -1,8 +1,14 @@
 # RFC 0017: Scheduled Domain And IP Health Monitor
 
+## Verify disposition — 2026-10-23
+
+**Deferred; sender-demand gate.** Preserve existing reputation checks. Scheduled domain/IP monitoring is not required to deliver the agency contact audit. Revisit with sender demand, confirmed blocklist terms, and the non-email alert model; it remains the dependency for the sender-alert slice of RFC 0018.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Deferred; sender-demand gate; audited 2026-10-23 |
 | **Created** | 2026-10-21 |
 | **Owners** | To assign: backend lead, web lead |
 | **Parent** | RFC 0016, item 1 |

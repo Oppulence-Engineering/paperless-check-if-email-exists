@@ -1,8 +1,14 @@
 # RFC 0006: Source-Level Quality Comparison
 
+## Verify disposition — 2026-10-23
+
+**Partial; existing attribution and reports.** The [source-quality endpoint](../../backend/src/http/v1/source_quality.rs) already reports source attribution and outcomes. Its bulk scope is enforced by [shared auth middleware](../../backend/src/http/mod.rs). A new source dimension or historical rollup needs demonstrated demand; audit economics belongs to RFC 0028.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Partial; existing attribution and reports; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Add first-class source attribution for list uploads, bulk jobs, and later delive
 - Building warehouse connectors or BI exports in the same feature.
 - Making delivery outcomes a hard prerequisite for source analytics.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - Bulk jobs and list uploads already persist tenant-owned work and quality data.
 - The current APIs do not expose a formal `source_key` or `source_type`.

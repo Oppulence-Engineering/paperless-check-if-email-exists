@@ -1,8 +1,14 @@
 # RFC 0005: List Quality Scoring
 
+## Verify disposition — 2026-10-23
+
+**Partial; existing quality aggregates.** The [list-quality endpoint](../../backend/src/http/v1/lists/quality.rs) and verification quality view already aggregate email quality. Do not rebuild those as a new launch feature. Cached scorecard details are not certified complete, and contact accuracy/full-cost evaluation belongs to RFC 0028.
+
+[Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
+
 ## Status
 
-Draft
+Partial; existing quality aggregates; audited 2026-10-23
 
 ## Summary
 
@@ -27,7 +33,9 @@ Formalize list-level quality scorecards on top of the existing `/v1/lists/{list_
 - Adding custom tenant-configurable quality formulas in v1.
 - Requiring a new dashboard surface to use the scorecard.
 
-## Current State In Reacher
+<a id="current-state-in-reacher"></a>
+
+## Original baseline (historical)
 
 - `/v1/lists/{list_id}/quality` already returns aggregate score, category distribution, safe-to-send ratio, and a grade.
 - The response is computed live from `v1_task_result`.
