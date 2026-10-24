@@ -249,7 +249,14 @@ Return 202 operation; build immutable preview rows in chunks of 200. Capture aud
 generation and policy epoch, evaluate every committed input exactly once, then
 recheck both counters before publishing. Any drift yields
 `preview_invalidated`; never publish mixed generations. Preview lifetime is at most
-15 minutes and never past the earliest included claim/verification expiry.
+15 minutes, bounded by retention/access deadlines for all disclosed data and by
+claim/verification freshness deadlines **only for evidence supporting Ready rows**.
+Already-stale claims and expired verification may still be disclosed as Needs Review
+when their retention/source rights permit it; they do not instantly expire the
+whole preview. Excluded rows retain reconciliation IDs/reasons and redact evidence
+that cannot be disclosed. An all-Needs-Review preview uses the 15-minute/access bound
+without a Ready freshness bound. Apply the same distinction to artifact expiry and
+download checks; a Ready claim expiring still invalidates its prior Ready snapshot.
 
 `GET /v1/audits/{id}/export-previews/{preview_id}` returns counts, reasons, manifest
 hash and paginated preview rows. `POST /v1/audits/{id}/exports` accepts
@@ -305,7 +312,8 @@ continue invalidation and purge workers.
 | Two reviewers use version 3 simultaneously | One decision commits; the other receives 409. |
 | Selected second candidate is eligible | CSV contains that candidate, never first-list fallback. |
 | Complaint/source revocation between preview and build/download | Invalidate; no stale Ready payload starts streaming. |
-| Evidence expires without a new event | Clock-based gate invalidates even if epoch is unchanged. |
+| Ready evidence expires without a new event | Clock-based gate invalidates even if epoch is unchanged. |
+| Stale Needs Review evidence alongside fresh Ready rows, or all rows stale | Preview/export remains deliverable with complete partitions while disclosure rights permit; stale evidence never becomes Ready. |
 | Older snapshot arrives after a newer version | Preserve newer projection; no approval resurrection. |
 | Duplicate/no-match/failed input rows | Exactly one reconciliation row per original UUID. |
 | Cross-audit candidate or artifact ID | 404; database FK also rejects invalid references. |
