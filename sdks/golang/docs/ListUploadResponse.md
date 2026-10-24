@@ -4,11 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Duplicates** | Pointer to **int32** |  | [optional]
 **EmailColumn** | **string** |  | [required]
 **JobId** | **int32** |  | [required]
 **ListId** | **int32** |  | [required]
+**Rejected** | Pointer to [**[]RejectedRow**](RejectedRow.md) |  | [optional]
 **SourceKey** | Pointer to **NullableString** |  | [optional]
 **TotalRows** | **int32** |  | [required]
+**UniqueEmails** | Pointer to **int32** |  | [optional]
 
 ## Methods
 
@@ -28,6 +31,31 @@ will change when the set of required properties is changed
 NewListUploadResponseWithDefaults instantiates a new ListUploadResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetDuplicates
+
+`func (o *ListUploadResponse) GetDuplicates() int32`
+
+GetDuplicates returns the Duplicates field if non-nil, zero value otherwise.
+
+### GetDuplicatesOk
+
+`func (o *ListUploadResponse) GetDuplicatesOk() (*int32, bool)`
+
+GetDuplicatesOk returns a tuple with the Duplicates field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDuplicates
+
+`func (o *ListUploadResponse) SetDuplicates(v int32)`
+
+SetDuplicates sets Duplicates field to given value.
+
+### HasDuplicates
+
+`func (o *ListUploadResponse) HasDuplicates() bool`
+
+HasDuplicates returns a boolean if a field has been set.
 
 ### GetEmailColumn
 
@@ -89,6 +117,31 @@ and a boolean to check if the value has been set.
 SetListId sets ListId field to given value.
 
 
+### GetRejected
+
+`func (o *ListUploadResponse) GetRejected() []RejectedRow`
+
+GetRejected returns the Rejected field if non-nil, zero value otherwise.
+
+### GetRejectedOk
+
+`func (o *ListUploadResponse) GetRejectedOk() ([]RejectedRow, bool)`
+
+GetRejectedOk returns a tuple with the Rejected field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRejected
+
+`func (o *ListUploadResponse) SetRejected(v []RejectedRow)`
+
+SetRejected sets Rejected field to given value.
+
+### HasRejected
+
+`func (o *ListUploadResponse) HasRejected() bool`
+
+HasRejected returns a boolean if a field has been set.
+
 ### GetSourceKey
 
 `func (o *ListUploadResponse) GetSourceKey() string`
@@ -144,6 +197,31 @@ and a boolean to check if the value has been set.
 
 SetTotalRows sets TotalRows field to given value.
 
+
+### GetUniqueEmails
+
+`func (o *ListUploadResponse) GetUniqueEmails() int32`
+
+GetUniqueEmails returns the UniqueEmails field if non-nil, zero value otherwise.
+
+### GetUniqueEmailsOk
+
+`func (o *ListUploadResponse) GetUniqueEmailsOk() (*int32, bool)`
+
+GetUniqueEmailsOk returns a tuple with the UniqueEmails field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUniqueEmails
+
+`func (o *ListUploadResponse) SetUniqueEmails(v int32)`
+
+SetUniqueEmails sets UniqueEmails field to given value.
+
+### HasUniqueEmails
+
+`func (o *ListUploadResponse) HasUniqueEmails() bool`
+
+HasUniqueEmails returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -22,6 +22,7 @@ configuration.go
 docs/AccountAPI.md
 docs/AddSuppressionsRequest.md
 docs/AddSuppressionsResponse.md
+docs/AddSuppressionsResponseRejectedInner.md
 docs/AdminAPI.md
 docs/AdminAllApiKeys.md
 docs/AdminApiKey.md
@@ -96,6 +97,7 @@ docs/Freshness.md
 docs/GmailVerifMethod.md
 docs/HealthAPI.md
 docs/HistoryEntry.md
+docs/HistoryRequest.md
 docs/HotmailB2BVerifMethod.md
 docs/HotmailB2CVerifMethod.md
 docs/InboundOutcomeResponse.md
@@ -103,6 +105,7 @@ docs/IngestOutcome.md
 docs/IngestOutcomesRequest.md
 docs/IngestOutcomesResponse.md
 docs/IngestRowError.md
+docs/Job.md
 docs/JobResultPageResponse.md
 docs/JobTaskResult.md
 docs/JobsAPI.md
@@ -132,6 +135,20 @@ docs/OutcomeRuleAction.md
 docs/OutcomeType.md
 docs/OutcomeView.md
 docs/OutcomesAPI.md
+docs/OverviewResponse.md
+docs/OverviewSectionAlertListResponse.md
+docs/OverviewSectionAlertListResponseData.md
+docs/OverviewSectionI64.md
+docs/OverviewSectionOverviewDomains.md
+docs/OverviewSectionOverviewDomainsData.md
+docs/OverviewSectionOverviewOutcomes.md
+docs/OverviewSectionOverviewOutcomesData.md
+docs/OverviewSectionOverviewReverification.md
+docs/OverviewSectionOverviewReverificationData.md
+docs/OverviewSectionVecOverviewList.md
+docs/OverviewSectionVecOverviewListDataInner.md
+docs/OverviewSectionVecOverviewPipeline.md
+docs/OverviewSectionVecOverviewPipelineDataInner.md
 docs/PartialConfidence.md
 docs/PendingVerification.md
 docs/PipelineDeliveryConfig.md
@@ -167,6 +184,7 @@ docs/QueryResultRow.md
 docs/Reachable.md
 docs/ReasonCode.md
 docs/RecommendedAction.md
+docs/RejectedRow.md
 docs/ReputationCheckRequest.md
 docs/ReputationCheckResponse.md
 docs/ResearchCandidate.md
@@ -193,6 +211,7 @@ docs/ScorePolicyListResponse.md
 docs/ScorePolicyRules.md
 docs/ScorePolicyView.md
 docs/ScoringSignals.md
+docs/SectionStatus.md
 docs/SegmentFilter.md
 docs/SegmentFilterCategory.md
 docs/SegmentScope.md
@@ -216,6 +235,8 @@ docs/TenantApiKey.md
 docs/TenantApiKeyList.md
 docs/TenantApiKeyRevokeResponse.md
 docs/TenantCreatedApiKey.md
+docs/TenantDomainResponse.md
+docs/TenantDomainsListResponse.md
 docs/TenantSettingsResponse.md
 docs/TenantUsageResponse.md
 docs/TenantWebhookResponse.md
@@ -234,7 +255,9 @@ docs/UpdateTenantSettingsRequest.md
 docs/UpdateWebhookRequest.md
 docs/V0API.md
 docs/V1API.md
-docs/V1EmailHistory200Response.md
+docs/V1EmailHistoryPost200Response.md
+docs/V1ListJobs200Response.md
+docs/V1PreviewList200Response.md
 docs/V1UploadCampaignOutcomesRequest.md
 docs/VerifMethod.md
 docs/VerifMethodVerifMethod.md
@@ -245,6 +268,7 @@ docs/YahooVerifMethod.md
 git_push.sh
 model_add_suppressions_request.go
 model_add_suppressions_response.go
+model_add_suppressions_response_rejected_inner.go
 model_admin_all_api_keys.go
 model_admin_api_key.go
 model_admin_api_key_list.go
@@ -314,6 +338,7 @@ model_finder_candidate_result.go
 model_freshness.go
 model_gmail_verif_method.go
 model_history_entry.go
+model_history_request.go
 model_hotmail_b2_b_verif_method.go
 model_hotmail_b2_c_verif_method.go
 model_inbound_outcome_response.go
@@ -321,6 +346,7 @@ model_ingest_outcome.go
 model_ingest_outcomes_request.go
 model_ingest_outcomes_response.go
 model_ingest_row_error.go
+model_job.go
 model_job_result_page_response.go
 model_job_task_result.go
 model_list_delete_response.go
@@ -347,6 +373,20 @@ model_outcome_policy_view.go
 model_outcome_rule_action.go
 model_outcome_type.go
 model_outcome_view.go
+model_overview_response.go
+model_overview_section_alert_list_response.go
+model_overview_section_alert_list_response_data.go
+model_overview_section_i64.go
+model_overview_section_overview_domains.go
+model_overview_section_overview_domains_data.go
+model_overview_section_overview_outcomes.go
+model_overview_section_overview_outcomes_data.go
+model_overview_section_overview_reverification.go
+model_overview_section_overview_reverification_data.go
+model_overview_section_vec_overview_list.go
+model_overview_section_vec_overview_list_data_inner.go
+model_overview_section_vec_overview_pipeline.go
+model_overview_section_vec_overview_pipeline_data_inner.go
 model_partial_confidence.go
 model_pending_verification.go
 model_pipeline_delivery_config.go
@@ -380,6 +420,7 @@ model_query_result_row.go
 model_reachable.go
 model_reason_code.go
 model_recommended_action.go
+model_rejected_row.go
 model_reputation_check_request.go
 model_reputation_check_response.go
 model_research_candidate.go
@@ -406,6 +447,7 @@ model_score_policy_list_response.go
 model_score_policy_rules.go
 model_score_policy_view.go
 model_scoring_signals.go
+model_section_status.go
 model_segment_filter.go
 model_segment_filter_category.go
 model_segment_scope.go
@@ -427,6 +469,8 @@ model_tenant_api_key.go
 model_tenant_api_key_list.go
 model_tenant_api_key_revoke_response.go
 model_tenant_created_api_key.go
+model_tenant_domain_response.go
+model_tenant_domains_list_response.go
 model_tenant_settings_response.go
 model_tenant_usage_response.go
 model_tenant_webhook_response.go
@@ -443,7 +487,9 @@ model_update_score_policy_request.go
 model_update_tenant_domain_request.go
 model_update_tenant_settings_request.go
 model_update_webhook_request.go
-model_v1_email_history_200_response.go
+model_v1_email_history_post_200_response.go
+model_v1_list_jobs_200_response.go
+model_v1_preview_list_200_response.go
 model_v1_upload_campaign_outcomes_request.go
 model_verif_method.go
 model_verif_method_verif_method.go

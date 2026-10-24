@@ -2,8 +2,10 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { PipelinesApi } from "@oppulence/reacher-sdk";
+import { PipelinesApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
+
+import { chooseOption } from "@/quality/test-support/select";
 
 import { PipelinesPanel } from "./pipelines-panel";
 
@@ -27,6 +29,24 @@ const created = {
 };
 
 it("creates a paused list pipeline for review", async () => {
+	vi.spyOn(V1Api.prototype, "v1ListLists").mockResolvedValue({
+		data: {
+			lists: [
+				{
+					id: 4,
+					name: "Launch",
+					original_filename: "launch.csv",
+					email_column: "email",
+					status: "completed",
+					total_rows: 2,
+					source_key: null,
+					completed_at: null,
+					created_at: "2026-10-01T00:00:00Z",
+				},
+			],
+			total: 1,
+		},
+	} as never);
 	const list = vi.spyOn(PipelinesApi.prototype, "v1ListPipelines"); // gitleaks:allow
 	list.mockResolvedValue({ data: { pipelines: [], total: 0 } } as never);
 	const create = vi.spyOn(PipelinesApi.prototype, "v1CreatePipeline"); // gitleaks:allow
@@ -44,7 +64,7 @@ it("creates a paused list pipeline for review", async () => {
 	expect(await screen.findByText("No pipelines yet.")).toBeInTheDocument();
 	fireEvent.click(screen.getByRole("button", { name: "New pipeline" }));
 	fireEvent.change(await screen.findByLabelText("Name"), { target: { value: "Weekly" } });
-	fireEvent.change(screen.getByLabelText("List ID"), { target: { value: "4" } });
+	await chooseOption("Saved list", "Launch");
 	fireEvent.click(screen.getByRole("button", { name: "Create paused pipeline" }));
 	await waitFor(() =>
 		expect(create).toHaveBeenCalledWith({

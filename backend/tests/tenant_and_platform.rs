@@ -367,6 +367,7 @@ mod quota_tests {
 			Utc::now() + Duration::hours(24)
 		};
 		TenantContext {
+			user_id: None,
 			tenant_id: Some(Uuid::new_v4()),
 			api_key_id: Some(Uuid::new_v4()),
 			tenant_name: "test".into(),

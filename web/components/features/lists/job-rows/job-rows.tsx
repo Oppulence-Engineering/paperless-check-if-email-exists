@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useState, type ComponentPropsWithoutRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -69,13 +70,20 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 		initialPageParam: undefined as number | undefined,
 		queryFn: async ({ pageParam }) =>
 			V1GetJobResults200Response.parse(
-				(await jobsApi.v1GetJobResults({ jobId, cursor: pageParam, limit: 50, state })).data,
+				(
+					await jobsApi.v1GetJobResults({
+						jobId,
+						cursor: pageParam,
+						limit: 50,
+						state,
+					})
+				).data,
 			),
 		getNextPageParam: (last) => (last.has_more ? (last.next_cursor ?? undefined) : undefined),
 	});
-	const rows = (pages.data?.pages.flatMap((page) => page.results) ?? []).filter(
-		(row) => !filter || row.result?.score.category === filter,
-	);
+	const allRows = pages.data?.pages.flatMap((page) => page.results) ?? [];
+	const rowNumbers = new Map(allRows.map((row) => [row.id, row.row_number]));
+	const rows = allRows.filter((row) => !filter || row.result?.score.category === filter);
 
 	return (
 		<section data-slot="job-rows" className={cn("flex flex-col gap-4", className)} {...props}>
@@ -137,7 +145,7 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{pages.error.message}
+					{errorMessage(pages.error)}
 				</p>
 			) : null}
 			<Group>
@@ -173,11 +181,25 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 													type="button"
 													variant="link"
 												>
-													{row.result.input || `Row ${String(row.id)}`}
+													{row.original_email ||
+														row.result.input ||
+														`Row ${String(row.row_number ?? "unknown")} (blank)`}
 												</Button>
 											) : (
-												<span className="text-white">Row {row.id}</span>
+												<span className="text-white">
+													Row {row.row_number ?? "unknown"}: {row.original_email || "Blank address"}
+												</span>
 											)}
+											{row.row_number != null ? (
+												<p className="mt-1 text-xs text-[#858585]">
+													Row {row.row_number}
+													{row.is_duplicate &&
+													row.canonical_task_id != null &&
+													rowNumbers.get(row.canonical_task_id) != null
+														? ` · Duplicate of row ${String(rowNumbers.get(row.canonical_task_id))}`
+														: ""}
+												</p>
+											) : null}
 										</td>
 										<td className="py-2 pr-4 text-white">{row.result?.score.score ?? "—"}</td>
 										<td className="py-2 pr-4">
@@ -192,12 +214,24 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 											)}
 										</td>
 										<td className="py-2 pr-4 text-[#858585]">
-											{row.result ? (row.result.score.safe_to_send ? "Yes" : "No") : "—"}
+											{row.result
+												? !row.is_duplicate && row.result.score.safe_to_send
+													? "Yes"
+													: "No"
+												: "—"}
 										</td>
 										<td className="py-2 pr-4">
 											{row.result ? (
-												<Pill tone={recommendation.tone(primaryAction(row.result))}>
-													{recommendation.label(primaryAction(row.result))}
+												<Pill
+													tone={
+														row.is_duplicate
+															? "gray"
+															: recommendation.tone(primaryAction(row.result))
+													}
+												>
+													{row.is_duplicate
+														? "Duplicate — excluded"
+														: recommendation.label(primaryAction(row.result))}
 												</Pill>
 											) : (
 												"—"
@@ -248,7 +282,9 @@ export function JobRows({ className, jobId, ...props }: JobRowsProps) {
 						<>
 							<SheetHeader>
 								<SheetTitle className="break-all">
-									{open.result.input || `Row ${String(open.id)}`}
+									{open.original_email ||
+										open.result.input ||
+										`Row ${String(open.row_number ?? open.id)}`}
 								</SheetTitle>
 								<SheetDescription>
 									{taskState.label(open.task_state)} · Checked {open.retry_count + 1}{" "}

@@ -25,6 +25,7 @@ Method | HTTP request | Description
 [**V1UpdateTenantDomain**](TenantAPI.md#V1UpdateTenantDomain) | **Patch** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}
 [**V1UpdateTenantSettings**](TenantAPI.md#V1UpdateTenantSettings) | **Patch** /v1/me/settings | PATCH /v1/me/settings
 [**V1UpdateTenantWebhook**](TenantAPI.md#V1UpdateTenantWebhook) | **Patch** /v1/me/webhook | PATCH /v1/me/webhook
+[**V1VerifyTenantDomain**](TenantAPI.md#V1VerifyTenantDomain) | **Post** /v1/me/domains/{domain}/verify |
 
 
 
@@ -217,7 +218,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateTenantDomain
 
-> V1CreateTenantDomain(ctx).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
+> TenantDomainResponse V1CreateTenantDomain(ctx).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 
 POST /v1/me/domains
 
@@ -240,11 +241,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
+	resp, r, err := apiClient.TenantAPI.V1CreateTenantDomain(context.Background()).CreateTenantDomainRequest(createTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1CreateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1CreateTenantDomain`: TenantDomainResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1CreateTenantDomain`: %v\n", resp)
 }
 ```
 
@@ -263,7 +266,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**TenantDomainResponse**](TenantDomainResponse.md)
 
 ### Authorization
 
@@ -621,7 +624,7 @@ Name | Type | Description  | Notes
 
 ## V1GetTenantDomain
 
-> V1GetTenantDomain(ctx, domain).Execute()
+> TenantDomainResponse V1GetTenantDomain(ctx, domain).Execute()
 
 GET /v1/me/domains/{domain}
 
@@ -644,11 +647,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1GetTenantDomain(context.Background(), domain).Execute()
+	resp, r, err := apiClient.TenantAPI.V1GetTenantDomain(context.Background(), domain).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1GetTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1GetTenantDomain`: TenantDomainResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1GetTenantDomain`: %v\n", resp)
 }
 ```
 
@@ -671,7 +676,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**TenantDomainResponse**](TenantDomainResponse.md)
 
 ### Authorization
 
@@ -1004,7 +1009,7 @@ Name | Type | Description  | Notes
 
 ## V1ListTenantDomains
 
-> V1ListTenantDomains(ctx).Execute()
+> TenantDomainsListResponse V1ListTenantDomains(ctx).Execute()
 
 GET /v1/me/domains
 
@@ -1026,11 +1031,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1ListTenantDomains(context.Background()).Execute()
+	resp, r, err := apiClient.TenantAPI.V1ListTenantDomains(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1ListTenantDomains``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1ListTenantDomains`: TenantDomainsListResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1ListTenantDomains`: %v\n", resp)
 }
 ```
 
@@ -1045,7 +1052,7 @@ Other parameters are passed through a pointer to a apiV1ListTenantDomainsRequest
 
 ### Return type
 
- (empty response body)
+[**TenantDomainsListResponse**](TenantDomainsListResponse.md)
 
 ### Authorization
 
@@ -1203,7 +1210,7 @@ Name | Type | Description  | Notes
 
 ## V1UpdateTenantDomain
 
-> V1UpdateTenantDomain(ctx, domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
+> TenantDomainResponse V1UpdateTenantDomain(ctx, domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 
 PATCH /v1/me/domains/{domain}
 
@@ -1227,11 +1234,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
+	resp, r, err := apiClient.TenantAPI.V1UpdateTenantDomain(context.Background(), domain).UpdateTenantDomainRequest(updateTenantDomainRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1UpdateTenantDomain``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `V1UpdateTenantDomain`: TenantDomainResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1UpdateTenantDomain`: %v\n", resp)
 }
 ```
 
@@ -1255,7 +1264,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**TenantDomainResponse**](TenantDomainResponse.md)
 
 ### Authorization
 
@@ -1396,6 +1405,74 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1VerifyTenantDomain
+
+> TenantDomainResponse V1VerifyTenantDomain(ctx, domain).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	domain := "domain_example" // string |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TenantAPI.V1VerifyTenantDomain(context.Background(), domain).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TenantAPI.V1VerifyTenantDomain``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1VerifyTenantDomain`: TenantDomainResponse
+	fmt.Fprintf(os.Stdout, "Response from `TenantAPI.V1VerifyTenantDomain`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**domain** | **string** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1VerifyTenantDomainRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**TenantDomainResponse**](TenantDomainResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

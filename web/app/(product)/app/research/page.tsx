@@ -13,7 +13,7 @@ import ResearchLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Company research - Oppulence",
+	title: "Company research",
 	description: "Find relevant contacts from company lists and review evidence before export",
 };
 

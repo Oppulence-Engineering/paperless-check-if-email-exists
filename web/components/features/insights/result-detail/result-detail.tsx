@@ -49,15 +49,18 @@ export function ResultDetail({ className, row, ...props }: ResultDetailProps) {
 	const full = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "result", row.id),
 		enabled: jobId !== undefined,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const page = V1GetJobResults200Response.parse(
 				(
-					await jobsApi.v1GetJobResults({
-						jobId: jobId ?? 0,
-						cursor: row.id - 1,
-						limit: 1,
-						state: row.task_state,
-					})
+					await jobsApi.v1GetJobResults(
+						{
+							jobId: jobId ?? 0,
+							cursor: row.id - 1,
+							limit: 1,
+							state: row.task_state,
+						},
+						{ signal },
+					)
 				).data,
 			);
 			return page.results.find((item) => item.id === row.id) ?? null;

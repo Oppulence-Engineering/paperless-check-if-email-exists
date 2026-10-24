@@ -1,5 +1,7 @@
 import "server-only";
 
+import { measurePhase, requestTimings, recordTiming } from "./request-timing";
+
 import { randomUUID } from "node:crypto";
 
 import type { NextRequest } from "next/server";
@@ -78,7 +80,7 @@ export async function getAuthorizedSession(
 	path: string[] = [],
 ): Promise<AuthorizedSessionResult> {
 	try {
-		const session = await resolveAuthorizedSession(request.headers);
+		const session = await measurePhase("auth", () => resolveAuthorizedSession(request.headers));
 		if (!session) {
 			return {
 				ok: false,
@@ -110,7 +112,9 @@ export async function getAuthorizedSession(
 		return {
 			ok: true,
 			session,
-			token: await mintBackendToken(request.headers, session.membership.organizationId),
+			token: await measurePhase("token", () =>
+				mintBackendToken(request.headers, session.membership.organizationId),
+			),
 		};
 	} catch {
 		return {
@@ -130,6 +134,57 @@ export function backendProxyPath(path: string[]): string | null {
 }
 
 export async function proxyBackendAPI(request: NextRequest, path: string[]): Promise<NextResponse> {
+	return requestTimings.run({}, async () => {
+		const started = performance.now();
+		const response = await proxyRequest(request, path);
+		recordTiming("total", started);
+		const timings = requestTimings.getStore() ?? {};
+		response.headers.set("cache-control", "private, no-store");
+		response.headers.set(
+			"server-timing",
+			Object.entries(timings)
+				.map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
+				.join(", "),
+		);
+		const resources = new Set([
+			"overview",
+			"me",
+			"lists",
+			"jobs",
+			"bulk",
+			"alerts",
+			"outcomes",
+			"suppressions",
+			"pipelines",
+			"reverification",
+			"research",
+			"reputation",
+			"emails",
+			"query",
+			"sources",
+			"segments",
+			"comments",
+			"provider-endpoints",
+			"score-policies",
+			"outcome-policies",
+			"check_email",
+			"find_email",
+		]);
+		if (process.env.PERFORMANCE_TIMING_LOGS === "1")
+			console.info(
+				JSON.stringify({
+					metric: "backend_request_timing",
+					route: resources.has(path[1] ?? "") ? `/v1/${path[1]}` : "other",
+					method: request.method,
+					status: response.status,
+					milliseconds: timings,
+				}),
+			);
+		return response;
+	});
+}
+
+async function proxyRequest(request: NextRequest, path: string[]): Promise<NextResponse> {
 	const method = request.method.toUpperCase();
 	const requestId = acceptedRequestId(request.headers.get("x-request-id"), randomUUID());
 	const errorResponse = (status: number, error: string, code: string): NextResponse =>
@@ -214,19 +269,21 @@ export async function proxyBackendAPI(request: NextRequest, path: string[]): Pro
 
 	let upstream: Response;
 	try {
-		upstream = await fetch(backendApiURL(upstreamPath, request.nextUrl.searchParams), {
-			method,
-			headers,
-			body,
-			cache: "no-store",
-			redirect: "manual",
-			signal: requestSignal(
-				request.signal,
-				largeUpload
-					? Math.max(capabilities.http.requestTimeoutMs, 120_000)
-					: capabilities.http.requestTimeoutMs,
-			),
-		});
+		upstream = await measurePhase("upstream", () =>
+			fetch(backendApiURL(upstreamPath, request.nextUrl.searchParams), {
+				method,
+				headers,
+				body,
+				cache: "no-store",
+				redirect: "manual",
+				signal: requestSignal(
+					request.signal,
+					largeUpload
+						? Math.max(capabilities.http.requestTimeoutMs, 120_000)
+						: capabilities.http.requestTimeoutMs,
+				),
+			}),
+		);
 	} catch {
 		return errorResponse(503, "backend is unreachable", "upstream_unavailable");
 	}

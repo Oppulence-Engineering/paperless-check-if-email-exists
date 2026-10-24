@@ -51,8 +51,10 @@ export function ProviderEndpointList({ className, ...props }: ProviderEndpointLi
 	const [editing, setEditing] = useState<ProviderEndpoint>();
 	const endpoints = useQuery({
 		queryKey: workflowQueryKey("provider-endpoints"),
-		queryFn: async () =>
-			V1ListProviderEndpoints200Response.parse((await api.v1ListProviderEndpoints()).data),
+		queryFn: async ({ signal }) =>
+			V1ListProviderEndpoints200Response.parse(
+				(await api.v1ListProviderEndpoints({ signal })).data,
+			),
 	});
 	const update = useMutation({
 		mutationFn: async (input: { endpointId: string; status?: string; rotate?: boolean }) =>

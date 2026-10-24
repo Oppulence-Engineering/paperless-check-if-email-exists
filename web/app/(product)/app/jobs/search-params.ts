@@ -8,7 +8,7 @@ import { z } from "zod";
  * Add --fields or --operation query params to generate parsers.
  */
 export const JobsSearchParamsSchema = z.object({
-	job: z.coerce.number().int().positive().optional(),
+	job: z.coerce.number().int().positive().max(2147483647).optional(),
 });
 
 export type JobsSearchParams = z.infer<typeof JobsSearchParamsSchema>;

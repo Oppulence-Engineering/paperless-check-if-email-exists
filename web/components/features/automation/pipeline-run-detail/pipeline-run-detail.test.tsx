@@ -76,13 +76,16 @@ describe("PipelineRunDetail", () => {
 			"href",
 			"/app/jobs?job=16",
 		);
-		expect(get).toHaveBeenCalledWith({ pipelineId: 1, runId: 1 });
+		expect(get).toHaveBeenCalledWith(
+			{ pipelineId: 1, runId: 1 },
+			{ signal: expect.any(AbortSignal) },
+		);
 	});
 
 	it("polls only while the run is active", () => {
 		const { refetchInterval } = pipelineRunQuery(1, 1);
 		const parsed = V1GetPipelineRun200Response.parse(run);
-		expect(refetchInterval({ state: { data: { ...parsed, status: "running" } } })).toBe(3_000);
+		expect(refetchInterval({ state: { data: { ...parsed, status: "running" } } })).toBe(5_000);
 		expect(refetchInterval({ state: { data: { ...parsed, status: "completed" } } })).toBe(false);
 		expect(refetchInterval({ state: { data: { ...parsed, status: "failed" } } })).toBe(false);
 	});

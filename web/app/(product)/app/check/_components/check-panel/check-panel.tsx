@@ -1,14 +1,9 @@
 "use client";
 
 import "client-only";
+import { useAddressPrefill } from "@/lib/verification/prefill";
 
-import {
-	useEffect,
-	useRef,
-	useState,
-	type ComponentPropsWithoutRef,
-	type SyntheticEvent,
-} from "react";
+import { useEffect, useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
@@ -41,16 +36,18 @@ export function CheckPanel({ className, initialEmail, ...props }: CheckPanelProp
 	const [inputError, setInputError] = useState<string | null>(null);
 	const [sample, setSample] = useState(false);
 	const check = useV1CheckEmail();
-	const { mutate } = check;
-	const checkedInitial = useRef(false);
-
-	// Check the `?email=` address one time. The ref stops a second run in Strict Mode.
+	const prefill = useAddressPrefill((state) => state.email);
 	useEffect(() => {
-		if (checkedInitial.current || !initialEmail) return;
-		checkedInitial.current = true;
-		const address = initialEmail.trim();
-		if (z.email().safeParse(address).success) mutate({ to_email: address, sandbox: false });
-	}, [initialEmail, mutate]);
+		const url = new URL(window.location.href);
+		const legacy = url.searchParams.get("email");
+		if (legacy) {
+			url.searchParams.delete("email");
+			window.history.replaceState(null, "", url);
+		}
+		const value = prefill || legacy;
+		if (value) setEmail(value);
+		if (prefill) useAddressPrefill.getState().setEmail("");
+	}, [prefill]);
 
 	function submit(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();

@@ -21,7 +21,7 @@ import AdminLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Platform admin - Oppulence",
+	title: "Platform admin",
 	description: "Cross-tenant view for support, restricted to the platform admin allowlist.",
 };
 

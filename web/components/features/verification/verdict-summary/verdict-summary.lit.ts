@@ -12,7 +12,7 @@ export const VerdictSummaryLitSchema = z.object({
 	name: z.literal("verdict-summary"),
 	domain: z.literal("verification"),
 	owner: z.literal("feature"),
-	client: z.literal(false),
+	client: z.literal(true),
 	summary: z.string().min(1),
 	schemas: z.array(z.string()),
 	files: z.array(z.string()),
@@ -23,7 +23,7 @@ export const VerdictSummaryLit = VerdictSummaryLitSchema.parse({
 	name: "verdict-summary",
 	domain: "verification",
 	owner: "feature",
-	client: false,
+	client: true,
 	summary: "Shows the verdict for one checked address.",
 	schemas: ["components/features/verification/verdict-summary/verdict-summary.schema.ts"],
 	files: [

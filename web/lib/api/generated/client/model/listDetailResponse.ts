@@ -16,8 +16,11 @@ export interface ListDetailResponse {
   id: number;
   job_id: number;
   name: string;
+  original_filename?: string;
   /** @nullable */
   policy_id?: number | null;
+  /** @nullable */
+  rejected_rows?: number | null;
   /** @nullable */
   source_key?: string | null;
   status: string;

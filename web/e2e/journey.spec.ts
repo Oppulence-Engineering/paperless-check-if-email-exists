@@ -30,7 +30,7 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByLabel("Use sample result").check();
 	await page.getByRole("button", { name: "Check email" }).click();
 	await expect(page.getByText("test@valid.example.com").first()).toBeVisible();
-	await expect(page.getByText("Quality score")).toBeVisible();
+	await expect(page.getByText("Quality score", { exact: true })).toBeVisible();
 	await expect(page.getByText("Technical details")).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Bounce risk" })).toBeVisible();
 	await expect(page.getByText("Recommendation", { exact: true })).toBeVisible();
@@ -45,12 +45,26 @@ test("workspace verification journey", async ({ browser, page, request }) => {
 	await page.getByLabel("CSV file").setInputFiles({
 		name: "test.csv",
 		mimeType: "text/csv",
-		buffer: Buffer.from("email\ntest@valid.example.com\n"),
+		buffer: Buffer.from(
+			"email,name\ntest@valid.example.com,Original\nTEST@VALID.EXAMPLE.COM,Duplicate\nnot-an-email,Rejected\n,Blank\n",
+		),
 	});
 	await page.getByLabel("Name").fill("E2E list");
-	await page.getByRole("button", { name: "Upload" }).click();
-	await expect(page.getByText(/List accepted/)).toBeVisible();
+	await page.getByRole("button", { name: "Preview upload" }).click();
+	await expect(page.getByText(/Verifying this list will use 1 credits/)).toBeVisible();
+	await page.getByRole("button", { name: "Confirm and verify" }).click();
 	await expect(page.getByRole("heading", { name: "E2E list" })).toBeVisible();
+	await expect(page.getByText(/1 unique address checked/)).toBeVisible({ timeout: 15_000 });
+	const qualitySection = page
+		.getByRole("heading", { name: "List quality", exact: true })
+		.locator("..");
+	await expect(qualitySection.getByText("Invalid", { exact: true }).locator("..")).toHaveText(
+		"Invalid1",
+	);
+	await expect(page.getByText(/List accepted/)).toHaveCount(0);
+	await page.getByRole("tab", { name: "Rows", exact: true }).click();
+	await expect(page.getByText("Row 2 · Duplicate of row 1")).toBeVisible();
+	await expect(page.getByText("Row 3", { exact: true })).toBeVisible();
 	const ownListsResponse = await page.request.get("/api/backend/v1/lists");
 	expect(ownListsResponse.ok()).toBe(true);
 	const ownLists = V1ListLists200Response.parse(await ownListsResponse.json());

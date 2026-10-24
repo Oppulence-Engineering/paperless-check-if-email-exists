@@ -11,9 +11,16 @@ import type { CheckEmailOutput } from "./checkEmailOutput";
 
 export interface JobTaskResult {
   /** @nullable */
+  canonical_task_id?: number | null;
+  /** @nullable */
   error?: string | null;
   id: number;
+  is_duplicate?: boolean;
+  /** @nullable */
+  original_email?: string | null;
   result?: CheckEmailOutput | null;
   retry_count: number;
+  /** @nullable */
+  row_number?: number | null;
   task_state: string;
 }

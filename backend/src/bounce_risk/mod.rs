@@ -654,10 +654,10 @@ async fn collect_history_rows(
 		  AND completed_at IS NOT NULL
 		  AND completed_at < $4
 		  AND (
-			($2::TEXT IS NOT NULL AND canonical_email = $2)
+			($2::TEXT IS NOT NULL AND lower(canonical_email) = lower($2))
 			OR (
 				canonical_email IS NULL
-				AND mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email')) = $2
+				AND lower(mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) = lower($2)
 			)
 		  )
 		ORDER BY completed_at DESC

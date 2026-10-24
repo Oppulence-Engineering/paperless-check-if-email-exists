@@ -1,14 +1,22 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommentsApi, Configuration, ListsApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+	useEffect,
+	useRef,
+	useState,
+	type ComponentPropsWithoutRef,
+	type SyntheticEvent,
+} from "react";
 import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
@@ -17,13 +25,33 @@ import { Label } from "@oppulence/ui/components/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@oppulence/ui/components/tabs";
 import { cn } from "@oppulence/ui/lib/utils";
 import { Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
-import { JobProblems } from "@/components/features/lists/job-problems/job-problems";
+const JobProblems = dynamic(
+	() =>
+		import("@/components/features/lists/job-problems/job-problems").then(
+			(module) => module.JobProblems,
+		),
+	{ loading: () => <p role="status">Loading…</p> },
+);
 import { JobProgress } from "@/components/features/lists/job-progress/job-progress";
 import { JobReview, Stat } from "@/components/features/lists/job-review/job-review";
-import { JobRows } from "@/components/features/lists/job-rows/job-rows";
-import { ListCompare } from "@/components/features/lists/list-compare/list-compare";
-import { ListExport } from "@/components/features/lists/list-export/list-export";
-import { useV1ListLists } from "@/hooks/queries/use-v1-list-lists";
+const JobRows = dynamic(
+	() => import("@/components/features/lists/job-rows/job-rows").then((module) => module.JobRows),
+	{ loading: () => <p role="status">Loading…</p> },
+);
+const ListCompare = dynamic(
+	() =>
+		import("@/components/features/lists/list-compare/list-compare").then(
+			(module) => module.ListCompare,
+		),
+	{ loading: () => <p role="status">Loading…</p> },
+);
+const ListExport = dynamic(
+	() =>
+		import("@/components/features/lists/list-export/list-export").then(
+			(module) => module.ListExport,
+		),
+	{ loading: () => <p role="status">Loading…</p> },
+);
 import { v1ListListsKeys } from "@/hooks/queries/utils/v1-list-lists-keys";
 import { V1GetList200Response } from "@/lib/api/generated/zod/v1/v1";
 import { ACTIVE_LIST_STATES, ListQualitySchema } from "@/lib/api/schemas/lists";
@@ -67,7 +95,12 @@ const TAB_CLASS =
 export function ListDetailPanel({ listId, accepted, className, ...props }: ListDetailPanelProps) {
 	const client = useQueryClient();
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const tab = searchParams.get("tab") ?? "review";
 	const [comment, setComment] = useState("");
+	const commentsRef = useRef<HTMLDivElement>(null);
+	const [commentsVisible, setCommentsVisible] = useState(false);
+
 	const key = ["list-detail", listId];
 	function selectedListId(): number {
 		if (!listId) throw new Error("Select a list first.");
@@ -76,35 +109,33 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 	const detail = useQuery({
 		queryKey: workflowQueryKey(...key, "detail"),
 		enabled: !!listId,
-		queryFn: async () =>
-			V1GetList200Response.parse((await v1Api.v1GetList({ listId: selectedListId() })).data),
-		refetchInterval: (query) =>
-			ACTIVE_LIST_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
+		queryFn: async ({ signal }) =>
+			V1GetList200Response.parse(
+				(await v1Api.v1GetList({ listId: selectedListId() }, { signal })).data,
+			),
 	});
-	// ponytail: the list detail has no file name, so the page finds it in the first 100 lists.
-	const file = useV1ListLists({ limit: 100 }).data?.lists.find(
-		(list) => list.id === listId,
-	)?.original_filename;
+	const file = detail.data?.original_filename;
 	const quality = useQuery({
 		queryKey: workflowQueryKey(...key, "quality"),
-		enabled: !!listId,
-		queryFn: async () =>
-			ListQualitySchema.parse((await listsApi.v1ListQuality({ listId: selectedListId() })).data),
-		refetchInterval: (query) => {
-			const data = query.state.data;
-			return data && data.processed < data.total_rows ? 5_000 : false;
-		},
+		enabled: !!listId && tab === "review",
+		queryFn: async ({ signal }) =>
+			ListQualitySchema.parse(
+				(await listsApi.v1ListQuality({ listId: selectedListId() }, { signal })).data,
+			),
 	});
 	const comments = useQuery({
 		queryKey: workflowQueryKey(...key, "comments"),
-		enabled: !!listId,
-		queryFn: async () =>
+		enabled: !!listId && commentsVisible,
+		queryFn: async ({ signal }) =>
 			commentsSchema.parse(
 				(
-					await commentsApi.v1ListComments({
-						listId: selectedListId(),
-						limit: 50,
-					})
+					await commentsApi.v1ListComments(
+						{
+							listId: selectedListId(),
+							limit: 50,
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});
@@ -147,6 +178,23 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 		(request) => request.isError,
 	)?.error;
 	const list = detail.data;
+	useEffect(() => {
+		const node = commentsRef.current;
+		if (!node) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) {
+					setCommentsVisible(true);
+					observer.disconnect();
+				}
+			},
+			{ rootMargin: "200px" },
+		);
+		observer.observe(node);
+		return () => {
+			observer.disconnect();
+		};
+	}, [list?.id]);
 
 	return (
 		<Page
@@ -186,10 +234,10 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{error.message}
+						{errorMessage(error)}
 					</p>
 				) : null}
-				{accepted ? (
+				{accepted && ACTIVE_LIST_STATES.includes(detail.data?.status ?? "") ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
@@ -214,12 +262,31 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 									<Stat label="Rows" value={list.total_rows} />
 									<Stat label="Unique addresses" value={list.unique_emails ?? "—"} />
 									<Stat label="Duplicates removed" value={list.deduplicated_count ?? 0} />
-									<Stat label="Checked" value={list.summary.total_processed} />
+									<Stat
+										label="Rejected rows"
+										value={
+											list.rejected_rows ??
+											(list.unique_emails == null
+												? "—"
+												: Math.max(
+														0,
+														list.total_rows - list.unique_emails - (list.deduplicated_count ?? 0),
+													))
+										}
+									/>
+									<Stat label="Rows processed" value={list.summary.total_processed} />
 								</div>
 								<JobProgress jobId={list.job_id} />
 							</Row>
 						</Group>
-						<Tabs defaultValue="review">
+						<Tabs
+							value={tab}
+							onValueChange={(value) => {
+								const params = new URLSearchParams(searchParams);
+								params.set("tab", value);
+								router.replace(`?${params.toString()}`, { scroll: false });
+							}}
+						>
 							<TabsList aria-label="List views" className={TAB_LIST_CLASS}>
 								<TabsTrigger className={TAB_CLASS} value="review">
 									Review
@@ -243,8 +310,12 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 									<Group>
 										{quality.data ? (
 											<Row
-												description={`Average score ${String(quality.data.avg_score)} · ${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} of ${String(quality.data.total_rows)} checked`}
-												label={`Grade ${quality.data.quality_grade}`}
+												description={`Average score ${String(quality.data.avg_score)} · ${String(quality.data.safe_to_send_count)} safe to send (${String(quality.data.safe_to_send_pct)}%) · ${String(quality.data.processed)} unique ${quality.data.processed === 1 ? "address" : "addresses"} checked`}
+												label={
+													quality.data.quality_grade === "pending"
+														? "Checks pending"
+														: `Grade ${quality.data.quality_grade}`
+												}
 											/>
 										) : null}
 										<Row>
@@ -254,7 +325,7 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 													<Stat
 														key={value}
 														label={category.label(value)}
-														value={list.summary[`total_${value}`]}
+														value={quality.data?.categories[value] ?? "—"}
 													/>
 												))}
 											</div>
@@ -315,69 +386,74 @@ export function ListDetailPanel({ listId, accepted, className, ...props }: ListD
 								</Link>
 							</div>
 						</Section>
-						<Section title="Team comments">
-							<form
-								className="flex gap-2"
-								onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
-									event.preventDefault();
-									if (comment.trim()) addComment.mutate();
-								}}
-							>
-								<Label className="sr-only" htmlFor="list-comment">
-									Comment
-								</Label>
-								<Input
-									className="h-10 rounded-lg"
-									id="list-comment"
-									value={comment}
-									onChange={(event) => {
-										setComment(event.target.value);
+						<div ref={commentsRef}>
+							<Section title="Team comments">
+								<form
+									className="flex gap-2"
+									onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
+										event.preventDefault();
+										if (comment.trim()) addComment.mutate();
 									}}
-									placeholder="Add a note about this list"
-								/>
-								<Button
-									className="h-10 rounded-lg"
-									type="submit"
-									disabled={addComment.isPending || !comment.trim()}
 								>
-									Post
-								</Button>
-							</form>
-							<Group>
-								{comments.data?.comments.length ? (
-									comments.data.comments.map((item) => (
-										<div
-											className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
-											key={item.id}
-										>
-											<div className="min-w-0 flex-1">
-												<p className="text-sm text-white">{item.body}</p>
-												<p className="text-xs text-[#858585]">
-													{item.author || "Team member"} ·{" "}
-													{new Date(item.created_at).toLocaleString()}
-												</p>
-											</div>
-											<Button
-												className="text-red-400 hover:text-red-300"
-												type="button"
-												size="sm"
-												variant="ghost"
-												disabled={removeComment.isPending}
-												onClick={() => {
-													if (window.confirm("Delete this comment?")) removeComment.mutate(item.id);
-												}}
+									<Label className="sr-only" htmlFor="list-comment">
+										Comment
+									</Label>
+									<Input
+										className="h-10 rounded-lg"
+										id="list-comment"
+										value={comment}
+										onChange={(event) => {
+											setComment(event.target.value);
+										}}
+										placeholder="Add a note about this list"
+									/>
+									<Button
+										className="h-10 rounded-lg"
+										type="submit"
+										disabled={addComment.isPending || !comment.trim()}
+									>
+										Post
+									</Button>
+								</form>
+								<Group>
+									{comments.data?.comments.length ? (
+										comments.data.comments.map((item) => (
+											<div
+												className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4"
+												key={item.id}
 											>
-												Delete
-											</Button>
-										</div>
-									))
-								) : (
-									<Row>
-										<p className="text-sm text-[#858585]">No comments yet.</p>
-									</Row>
-								)}
-							</Group>
-						</Section>
+												<div className="min-w-0 flex-1">
+													<p className="text-sm text-white">{item.body}</p>
+													<p className="text-xs text-[#858585]">
+														{item.author || "Team member"} ·{" "}
+														{new Date(item.created_at).toLocaleString()}
+													</p>
+												</div>
+												<Button
+													className="text-red-400 hover:text-red-300"
+													type="button"
+													size="sm"
+													variant="ghost"
+													disabled={removeComment.isPending}
+													onClick={() => {
+														if (window.confirm("Delete this comment?"))
+															removeComment.mutate(item.id);
+													}}
+												>
+													Delete
+												</Button>
+											</div>
+										))
+									) : (
+										<Row>
+											<p className="text-sm text-[#858585]">
+												{comments.isPending ? "Loading comments…" : "No comments yet."}
+											</p>
+										</Row>
+									)}
+								</Group>
+							</Section>
+						</div>
 						<div className="flex justify-end">
 							<Button
 								className="rounded-lg"

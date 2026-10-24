@@ -592,7 +592,7 @@ async fn load_task_rows(
 			WHERE se.tenant_id = tr.tenant_id
 			  AND se.status = 'active'
 			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
-			  AND se.canonical_email IN (tr.canonical_email, o.email)
+			  AND lower(se.canonical_email) IN (lower(tr.canonical_email), lower(o.email))
 			ORDER BY se.created_at DESC
 			LIMIT 1
 		) se ON true
@@ -1424,11 +1424,11 @@ mod tests {
 	}
 
 	#[test]
-	fn historical_checks_for_a_different_mailbox_stay_in_review() {
+	fn case_variants_share_verification_evidence() {
 		let (mut row, before) = raw_row("Sales@example.com");
 		row.result.as_mut().unwrap()["input"] = json!("sales@example.com");
 		let plan = classify_row(&row, before, "email", &PlanOptions::default());
-		assert_eq!(plan.classification, RemediationClassification::Review);
+		assert_eq!(plan.classification, RemediationClassification::Safe);
 	}
 
 	#[test]

@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import type { ComponentPropsWithoutRef } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -42,9 +43,9 @@ function joined(...parts: (string | null | undefined)[]): string {
 export function SuppressionAudit({ className, entryId, ...props }: SuppressionAuditProps) {
 	const events = useQuery({
 		queryKey: workflowQueryKey("suppression-events", entryId),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListSuppressionEvents200Response.parse(
-				(await api.v1ListSuppressionEvents({ id: entryId })).data,
+				(await api.v1ListSuppressionEvents({ id: entryId }, { signal })).data,
 			),
 	});
 
@@ -59,7 +60,7 @@ export function SuppressionAudit({ className, entryId, ...props }: SuppressionAu
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{events.error.message}
+					{errorMessage(events.error)}
 				</p>
 			) : null}
 			{events.isPending ? (

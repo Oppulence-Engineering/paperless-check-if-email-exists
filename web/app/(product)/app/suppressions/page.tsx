@@ -13,7 +13,7 @@ import SuppressionsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Suppressions - Oppulence",
+	title: "Suppressions",
 	description: "Search, check, add, import, export, and audit suppressed addresses",
 };
 

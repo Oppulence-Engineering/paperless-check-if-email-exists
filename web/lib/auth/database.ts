@@ -4,7 +4,8 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { boolean, integer, pgSchema, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
+import { recordTiming, requestTimings } from "./request-timing";
 
 import { getAuthRuntimeConfig } from "@/lib/auth/config";
 import { DatabaseInputSchema, type DatabaseInput } from "./database.schema";
@@ -116,9 +117,26 @@ export const scimGroupRoleMappings = schema.table(
 	(table) => [primaryKey({ columns: [table.connectionId, table.groupExternalId] })],
 );
 
+type ConnectCallback = Parameters<Pool["connect"]>[0];
+class TimedAuthPool extends Pool {
+	override connect(): Promise<PoolClient>;
+	override connect(callback: ConnectCallback): void;
+	override connect(callback?: ConnectCallback): Promise<PoolClient> | void {
+		const started = performance.now();
+		const timings = requestTimings.getStore();
+		if (callback) {
+			return super.connect((error, client, release) => {
+				recordTiming("pool_wait", started, timings);
+				callback(error, client, release);
+			});
+		}
+		return super.connect().finally(() => recordTiming("pool_wait", started, timings));
+	}
+}
+
 const authPool =
 	globalDatabase.betterAuthPool ??
-	new Pool({
+	new TimedAuthPool({
 		connectionString: getAuthRuntimeConfig().databaseUrl,
 		options:
 			"-c search_path=auth,pg_catalog -c statement_timeout=15000 -c idle_in_transaction_session_timeout=15000",

@@ -119,20 +119,23 @@ export function ResultExplorer({
 		setOffset(0);
 	}
 	const results = useQuery({
-		queryKey: workflowQueryKey("query-results", offset, JSON.stringify(filters)),
+		queryKey: workflowQueryKey("query-results", offset, filters),
 		placeholderData: keepPreviousData,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1QueryResults200Response.parse(
 				(
-					await queryApi.v1QueryResults({
-						limit: PAGE,
-						offset,
-						...filters,
-						since: startOfDay(filters.since ?? ""),
-						until: filters.until
-							? new Date(`${filters.until}T23:59:59.999`).toISOString()
-							: undefined,
-					})
+					await queryApi.v1QueryResults(
+						{
+							limit: PAGE,
+							offset,
+							...filters,
+							since: startOfDay(filters.since ?? ""),
+							until: filters.until
+								? new Date(`${filters.until}T23:59:59.999`).toISOString()
+								: undefined,
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

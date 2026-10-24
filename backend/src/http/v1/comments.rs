@@ -15,7 +15,8 @@ struct CreateCommentRequest {
 	job_id: Option<i32>,
 	list_id: Option<i32>,
 	body: String,
-	author: Option<String>,
+	#[serde(rename = "author")]
+	_author: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -140,7 +141,17 @@ async fn create_handler(
 	.bind(body.job_id)
 	.bind(body.list_id)
 	.bind(body.body.trim())
-	.bind(&body.author)
+	.bind(format!(
+		"{}: {}",
+		if tenant_ctx.user_id.is_some() {
+			"User"
+		} else if tenant_ctx.api_key_id.is_some() {
+			"API key"
+		} else {
+			"System"
+		},
+		tenant_ctx.actor_id()
+	))
 	.fetch_one(&pg_pool)
 	.await
 	.map_err(ReacherResponseError::from)?;

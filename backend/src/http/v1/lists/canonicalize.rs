@@ -1,9 +1,9 @@
 /// Canonicalize an email address for deduplication.
 ///
 /// Rules:
-/// 1. Trim whitespace, lowercase the domain
+/// 1. Trim whitespace, lowercase the mailbox
 /// 2. Gmail/Googlemail: remove dots, strip +subaddress, normalize domain to gmail.com
-/// 3. All other providers: preserve the local part (no +subaddress stripping, since
+/// 3. All other providers: preserve dots and +subaddresses (no stripping, since
 ///    '+' is not a universal subaddress convention and some providers treat
 ///    it as significant)
 ///
@@ -22,10 +22,11 @@ pub fn canonicalize_email(email: &str) -> Option<String> {
 		return None;
 	}
 
+	let local = local.to_ascii_lowercase();
 	let domain = domain.to_ascii_lowercase();
 	let result = match domain.as_str() {
 		"gmail.com" | "googlemail.com" => {
-			let local = strip_subaddress(local);
+			let local = strip_subaddress(&local);
 			let local: String = local
 				.chars()
 				.filter(|c| *c != '.')
@@ -58,19 +59,19 @@ mod tests {
 	fn test_basic_canonicalize() {
 		assert_eq!(
 			canonicalize_email("User@Example.COM"),
-			Some("User@example.com".to_string())
+			Some("user@example.com".to_string())
 		);
 	}
 
 	#[test]
-	fn case_sensitive_local_parts_stay_distinct() {
-		assert_ne!(
+	fn case_variants_share_one_identity() {
+		assert_eq!(
 			canonicalize_email("Sales@company.example"),
 			canonicalize_email("sales@company.example")
 		);
 		assert_eq!(
 			canonicalize_email("First.Last+Tag@COMPANY.EXAMPLE"),
-			Some("First.Last+Tag@company.example".into())
+			Some("first.last+tag@company.example".into())
 		);
 	}
 

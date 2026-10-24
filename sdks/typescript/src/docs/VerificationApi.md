@@ -5,11 +5,12 @@ All URIs are relative to *http://localhost*
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**v1EmailHistory**](#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history|
+|[**v1EmailHistoryPost**](#v1emailhistorypost) | **POST** /v1/emails/history | |
 |[**v1ListAlerts**](#v1listalerts) | **GET** /v1/alerts | GET /v1/alerts|
 |[**v1UpdateAlert**](#v1updatealert) | **PATCH** /v1/alerts/{alert_id} | PATCH /v1/alerts/{alert_id}|
 
 # **v1EmailHistory**
-> V1EmailHistory200Response v1EmailHistory()
+> V1EmailHistoryPost200Response v1EmailHistory()
 
 Returns the verification history timeline for a specific email address.
 
@@ -43,7 +44,7 @@ const { status, data } = await apiInstance.v1EmailHistory(
 
 ### Return type
 
-**V1EmailHistory200Response**
+**V1EmailHistoryPost200Response**
 
 ### Authorization
 
@@ -59,6 +60,58 @@ const { status, data } = await apiInstance.v1EmailHistory(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Verification history for the email |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1EmailHistoryPost**
+> V1EmailHistoryPost200Response v1EmailHistoryPost(historyRequest)
+
+
+### Example
+
+```typescript
+import {
+    VerificationApi,
+    Configuration,
+    HistoryRequest
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new VerificationApi(configuration);
+
+let historyRequest: HistoryRequest; //
+
+const { status, data } = await apiInstance.v1EmailHistoryPost(
+    historyRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **historyRequest** | **HistoryRequest**|  | |
+
+
+### Return type
+
+**V1EmailHistoryPost200Response**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Address history |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

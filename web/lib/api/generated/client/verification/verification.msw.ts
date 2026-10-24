@@ -10,9 +10,15 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { AlertListResponse, AlertView, V1EmailHistory200 } from "../model";
+import type {
+  AlertListResponse,
+  AlertView,
+  V1EmailHistory200,
+  V1EmailHistoryPost200,
+} from "../model";
 
 import {
+  getV1EmailHistoryPostResponseMock,
   getV1EmailHistoryResponseMock,
   getV1ListAlertsResponseMock,
   getV1UpdateAlertResponseMock,
@@ -21,6 +27,7 @@ import {
 export {
   getV1ListAlertsResponseMock,
   getV1UpdateAlertResponseMock,
+  getV1EmailHistoryPostResponseMock,
   getV1EmailHistoryResponseMock,
 } from "./verification.faker";
 
@@ -72,6 +79,30 @@ export const getV1UpdateAlertMockHandler = (
   );
 };
 
+export const getV1EmailHistoryPostMockHandler = (
+  overrideResponse?:
+    | V1EmailHistoryPost200
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<V1EmailHistoryPost200> | V1EmailHistoryPost200),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/emails/history",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1EmailHistoryPostResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getV1EmailHistoryMockHandler = (
   overrideResponse?:
     | V1EmailHistory200
@@ -98,5 +129,6 @@ export const getV1EmailHistoryMockHandler = (
 export const getVerificationMock = () => [
   getV1ListAlertsMockHandler(),
   getV1UpdateAlertMockHandler(),
+  getV1EmailHistoryPostMockHandler(),
   getV1EmailHistoryMockHandler(),
 ];

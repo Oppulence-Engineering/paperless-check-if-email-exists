@@ -35,6 +35,8 @@ import type { SavedSegmentListResponse } from '../models';
 import type { SavedSegmentView } from '../models';
 // @ts-ignore
 import type { UpdateSavedSegmentRequest } from '../models';
+// @ts-ignore
+import type { V1PreviewList200Response } from '../models';
 /**
  * ListsApi - axios parameter creator
  * @export
@@ -456,6 +458,69 @@ export const ListsApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          *
+         * @param {File} file
+         * @param {string | null} [emailColumn]
+         * @param {string | null} [name]
+         * @param {number | null} [policyId]
+         * @param {string | null} [sourceKey] Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1PreviewList: async (file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('v1PreviewList', 'file', file)
+            const localVarPath = `/v1/lists/preview`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+            if (emailColumn !== undefined) {
+                localVarFormParams.append('email_column', emailColumn as any);
+            }
+
+            if (file !== undefined) {
+                localVarFormParams.append('file', file as any);
+            }
+
+            if (name !== undefined) {
+                localVarFormParams.append('name', name as any);
+            }
+
+            if (policyId !== undefined) {
+                localVarFormParams.append('policy_id', policyId as any);
+            }
+
+            if (sourceKey !== undefined) {
+                localVarFormParams.append('source_key', sourceKey as any);
+            }
+
+
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary PATCH /v1/segments/{segment_id}
          * @param {number} segmentId Saved segment identifier
          * @param {UpdateSavedSegmentRequest} updateSavedSegmentRequest
@@ -647,6 +712,22 @@ export const ListsApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @param {File} file
+         * @param {string | null} [emailColumn]
+         * @param {string | null} [name]
+         * @param {number | null} [policyId]
+         * @param {string | null} [sourceKey] Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1PreviewList(file: File, emailColumn?: string | null, name?: string | null, policyId?: number | null, sourceKey?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1PreviewList200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1PreviewList(file, emailColumn, name, policyId, sourceKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ListsApi.v1PreviewList']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary PATCH /v1/segments/{segment_id}
          * @param {number} segmentId Saved segment identifier
          * @param {UpdateSavedSegmentRequest} updateSavedSegmentRequest
@@ -771,6 +852,15 @@ export const ListsApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          *
+         * @param {ListsApiV1PreviewListRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1PreviewList(requestParameters: ListsApiV1PreviewListRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1PreviewList200Response> {
+            return localVarFp.v1PreviewList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary PATCH /v1/segments/{segment_id}
          * @param {ListsApiV1UpdateSavedSegmentRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -887,6 +977,15 @@ export interface ListsApiInterface {
      * @memberof ListsApiInterface
      */
     v1ListSavedSegments(requestParameters?: ListsApiV1ListSavedSegmentsRequest, options?: RawAxiosRequestConfig): AxiosPromise<SavedSegmentListResponse>;
+
+    /**
+     *
+     * @param {ListsApiV1PreviewListRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApiInterface
+     */
+    v1PreviewList(requestParameters: ListsApiV1PreviewListRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1PreviewList200Response>;
 
     /**
      *
@@ -1097,6 +1196,48 @@ export interface ListsApiV1ListSavedSegmentsRequest {
 }
 
 /**
+ * Request parameters for v1PreviewList operation in ListsApi.
+ * @export
+ * @interface ListsApiV1PreviewListRequest
+ */
+export interface ListsApiV1PreviewListRequest {
+    /**
+     *
+     * @type {File}
+     * @memberof ListsApiV1PreviewList
+     */
+    readonly file: File
+
+    /**
+     *
+     * @type {string}
+     * @memberof ListsApiV1PreviewList
+     */
+    readonly emailColumn?: string | null
+
+    /**
+     *
+     * @type {string}
+     * @memberof ListsApiV1PreviewList
+     */
+    readonly name?: string | null
+
+    /**
+     *
+     * @type {number}
+     * @memberof ListsApiV1PreviewList
+     */
+    readonly policyId?: number | null
+
+    /**
+     * Optional source key used for source quality analytics, for example apollo, hubspot, salesforce, signup_form, csv_vendor.
+     * @type {string}
+     * @memberof ListsApiV1PreviewList
+     */
+    readonly sourceKey?: string | null
+}
+
+/**
  * Request parameters for v1UpdateSavedSegment operation in ListsApi.
  * @export
  * @interface ListsApiV1UpdateSavedSegmentRequest
@@ -1242,6 +1383,17 @@ export class ListsApi extends BaseAPI implements ListsApiInterface {
      */
     public v1ListSavedSegments(requestParameters: ListsApiV1ListSavedSegmentsRequest = {}, options?: RawAxiosRequestConfig) {
         return ListsApiFp(this.configuration).v1ListSavedSegments(requestParameters.scope, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {ListsApiV1PreviewListRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ListsApi
+     */
+    public v1PreviewList(requestParameters: ListsApiV1PreviewListRequest, options?: RawAxiosRequestConfig) {
+        return ListsApiFp(this.configuration).v1PreviewList(requestParameters.file, requestParameters.emailColumn, requestParameters.name, requestParameters.policyId, requestParameters.sourceKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

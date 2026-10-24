@@ -13,7 +13,7 @@ import AnalyticsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Analytics - Oppulence",
+	title: "Analytics",
 	description: "Explore verification results, saved segments, job activity, and source quality",
 };
 

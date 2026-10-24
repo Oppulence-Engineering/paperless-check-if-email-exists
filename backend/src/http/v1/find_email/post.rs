@@ -1,7 +1,5 @@
 use crate::config::BackendConfig;
-use crate::finder::patterns::{
-	generate_candidates, normalize_domain, normalize_name, pattern_priority,
-};
+use crate::finder::patterns::{generate_candidates, normalize_name, pattern_priority};
 use crate::finder::{precheck_domain, require_tenant_id};
 use crate::http::v0::check_email::post::with_config;
 use crate::http::v1::bulk::post::publish_task;
@@ -52,7 +50,7 @@ async fn http_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let normalized_first = normalize_name(&body.first_name);
 	let normalized_last = normalize_name(&body.last_name);
-	let normalized_domain = normalize_domain(&body.domain);
+	let normalized_domain = super::super::tenant_domains::normalize_domain(body.domain.clone())?;
 	if normalized_first.is_empty() || normalized_last.is_empty() || normalized_domain.is_empty() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -77,7 +75,7 @@ async fn http_handler(
 		}
 	};
 
-	let candidates = generate_candidates(&body.first_name, &body.last_name, &body.domain);
+	let candidates = generate_candidates(&body.first_name, &body.last_name, &normalized_domain);
 	if candidates.is_empty() {
 		return Err(ReacherResponseError::new(
 			StatusCode::BAD_REQUEST,
@@ -237,8 +235,8 @@ async fn http_handler(
 		.to_check_email_input(Arc::clone(&config));
 		let task_row_id: i32 = sqlx::query_scalar(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id)
-			VALUES ($1, $2, 'queued', $3)
+			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, canonical_email)
+			VALUES ($1, $2, 'queued', $3, $4)
 			RETURNING id
 			"#,
 		)
@@ -249,6 +247,9 @@ async fn http_handler(
 			"webhook": null
 		}))
 		.bind(tenant_id)
+		.bind(crate::http::v1::lists::canonicalize::canonicalize_email(
+			&candidate.email,
+		))
 		.fetch_one(&pg_pool)
 		.await
 		.map_err(ReacherResponseError::from)?;

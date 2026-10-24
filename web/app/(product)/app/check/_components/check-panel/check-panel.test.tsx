@@ -19,11 +19,11 @@ it("accepts the raw submitted address in an API result", () => {
 	);
 });
 
-it("checks the ?email= address once and shows the verdict layout", async () => {
+it("prefills an address and checks only after confirmation", async () => {
 	const check = vi
 		.spyOn(V1Api.prototype, "v1CheckEmail")
 		.mockResolvedValue({ data: SAMPLE_CHECK_RESULT } as never);
-	vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+	vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 		data: { email: SAMPLE_CHECK_RESULT.input, total: 0, history: [] },
 	} as never);
 	vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
@@ -39,6 +39,8 @@ it("checks the ?email= address once and shows the verdict layout", async () => {
 		</QueryClientProvider>,
 	);
 	expect(screen.getByLabelText("Email address")).toHaveValue("maya@brightlane.co");
+	expect(check).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: "Check email" }));
 	expect(await screen.findByText("Quality score")).toBeVisible();
 	expect(check).toHaveBeenCalledTimes(1);
 	expect(check).toHaveBeenCalledWith(

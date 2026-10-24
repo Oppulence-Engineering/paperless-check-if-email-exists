@@ -43,7 +43,17 @@ export function PipelinesPanel({ className, ...props }: PipelinesPanelProps) {
 	return (
 		<Page
 			actions={
-				<Sheet onOpenChange={setCreating} open={creating}>
+				<Sheet
+					onOpenChange={(open) => {
+						if (
+							open ||
+							!document.querySelector('[data-slot="pipeline-form"][data-dirty="true"]') ||
+							window.confirm("Discard your unsaved changes?")
+						)
+							setCreating(open);
+					}}
+					open={creating}
+				>
 					<SheetTrigger asChild>
 						<Button className="rounded-lg" size="sm" type="button">
 							New pipeline

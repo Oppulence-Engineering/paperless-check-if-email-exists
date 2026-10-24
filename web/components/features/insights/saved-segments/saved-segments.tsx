@@ -91,9 +91,9 @@ export function SavedSegments({ className, filters, onOpen, ...props }: SavedSeg
 	const segments = useQuery({
 		queryKey: workflowQueryKey("segments", SCOPE, offset),
 		placeholderData: keepPreviousData,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListSavedSegments200Response.parse(
-				(await api.v1ListSavedSegments({ scope: SCOPE, limit: PAGE, offset })).data,
+				(await api.v1ListSavedSegments({ scope: SCOPE, limit: PAGE, offset }, { signal })).data,
 			),
 	});
 	const handlers = (text: string) => ({

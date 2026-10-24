@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
@@ -62,6 +63,7 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 		sourceType: "",
 		includeExpired: false,
 	});
+	const [dirty, setDirty] = useState(false);
 	const [sheet, setSheet] = useState<"add" | "import">();
 	const [audit, setAudit] = useState<{ id: number; email: string }>();
 	const [checkInput, setCheckInput] = useState("");
@@ -87,25 +89,43 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 			filters.includeExpired,
 		),
 		placeholderData: keepPreviousData,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListSuppressions200Response.parse(
-				(await api.v1ListSuppressions({ limit: PAGE_SIZE, offset, ...query })).data,
+				(await api.v1ListSuppressions({ limit: PAGE_SIZE, offset, ...query }, { signal })).data,
 			),
 	});
 	const check = useQuery({
 		queryKey: workflowQueryKey("suppression-check", checkEmail),
 		enabled: !!checkEmail,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1CheckSuppression200Response.parse(
-				(await api.v1CheckSuppression({ email: checkEmail })).data,
+				(await api.v1CheckSuppression({ email: checkEmail }, { signal })).data,
 			),
 	});
+	const restore = useMutation({
+		mutationFn: (id: number) => api.v1RestoreSuppression({ id }),
+		onMutate: () => {
+			setNotice("");
+		},
+		onSuccess: async () => {
+			await client.invalidateQueries({ queryKey: workflowQueryKey("suppressions") });
+			await client.invalidateQueries({ queryKey: workflowQueryKey("suppression-check") });
+			await client.invalidateQueries({ queryKey: workflowQueryKey("suppression-events") });
+			setNotice("Suppression restored.");
+		},
+	});
 	const remove = useMutation({
+		onMutate: () => {
+			setNotice("");
+			restore.reset();
+			exportCsv.reset();
+		},
 		mutationFn: async (id: number) => {
 			await api.v1DeleteSuppression({ id });
 		},
 		onSuccess: async () => {
 			setNotice("Suppression removed.");
+			await client.invalidateQueries({ queryKey: workflowQueryKey("suppression-check") });
 			await client.invalidateQueries({ queryKey: workflowQueryKey("suppressions") });
 			await client.invalidateQueries({ queryKey: workflowQueryKey("suppression-events") });
 		},
@@ -125,7 +145,9 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 			saveFile(response.data, "suppressions.csv");
 		},
 	});
-	const error = [entries, check, remove, exportCsv].find((request) => request.isError)?.error;
+	const error = [entries, check, remove, restore, exportCsv].find(
+		(request) => request.isError,
+	)?.error;
 	const rows = entries.data?.entries ?? [];
 	const total = entries.data?.total ?? 0;
 	return (
@@ -177,10 +199,22 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{error.message}
+						{errorMessage(error)}{" "}
+						<Button
+							variant="link"
+							onClick={() => {
+								remove.reset();
+								restore.reset();
+								exportCsv.reset();
+								void entries.refetch();
+								if (checkEmail) void check.refetch();
+							}}
+						>
+							Retry
+						</Button>
 					</p>
 				) : null}
-				{notice ? (
+				{notice && !error ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
@@ -283,7 +317,7 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 								// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable requires focus on scrolling regions.
 								tabIndex={0}
 							>
-								<table className="w-full min-w-[1100px] text-left text-sm">
+								<table className="w-full text-left text-sm [&_thead]:hidden sm:[&_thead]:table-header-group [&_tr]:flex [&_tr]:flex-col sm:[&_tr]:table-row [&_td]:block sm:[&_td]:table-cell">
 									<thead>
 										<tr className="border-b border-border">
 											<th className="py-2 pr-4 font-medium text-foreground">Address</th>
@@ -332,7 +366,9 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 														<Pill tone={suppressionStatus.tone(entry.status)}>
 															{suppressionStatus.label(entry.status)}
 														</Pill>
-														{entry.expires_at && new Date(entry.expires_at) <= new Date() ? (
+														{entry.status !== "expired" &&
+														entry.expires_at &&
+														new Date(entry.expires_at) <= new Date() ? (
 															<Pill>Expired</Pill>
 														) : null}
 													</div>
@@ -348,6 +384,18 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 														>
 															Audit
 														</Button>
+														{entry.status === "inactive" ? (
+															<Button
+																size="sm"
+																variant="outline"
+																disabled={restore.isPending}
+																onClick={() => {
+																	restore.mutate(entry.id);
+																}}
+															>
+																Restore
+															</Button>
+														) : null}
 														{entry.status === "active" ? (
 															<Button
 																className="text-red-400 hover:text-red-300"
@@ -461,7 +509,10 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 			<Sheet
 				open={!!sheet}
 				onOpenChange={(open) => {
-					if (!open) setSheet(undefined);
+					if (!open && (!dirty || window.confirm("Discard your unsaved changes?"))) {
+						setSheet(undefined);
+						setDirty(false);
+					}
 				}}
 			>
 				<SheetContent className="flex w-full flex-col gap-6 overflow-y-auto pb-8 sm:max-w-lg">
@@ -473,7 +524,19 @@ export function SuppressionsPanel({ className, ...props }: SuppressionsPanelProp
 								: "Suppressed addresses stay out of sends until you remove them or they expire."}
 						</SheetDescription>
 					</SheetHeader>
-					{sheet ? <SuppressionForm className="px-4" key={sheet} mode={sheet} /> : null}
+					{sheet ? (
+						<SuppressionForm
+							className="px-4"
+							key={sheet}
+							mode={sheet}
+							onChange={() => {
+								setDirty(true);
+							}}
+							onReset={() => {
+								setDirty(false);
+							}}
+						/>
+					) : null}
 				</SheetContent>
 			</Sheet>
 			<Sheet

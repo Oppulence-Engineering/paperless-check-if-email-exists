@@ -170,7 +170,10 @@ it("stops polling completed runs", () => {
 it("preserves session IDs beyond JavaScript integer precision", async () => {
 	setup("9007199254740993");
 	await screen.findByText("jane@acme.com");
-	expect(V1Api.prototype.v1GetResearch).toHaveBeenCalledWith({
-		sessionId: "9007199254740993",
-	});
+	expect(V1Api.prototype.v1GetResearch).toHaveBeenCalledWith(
+		{
+			sessionId: "9007199254740993",
+		},
+		{ signal: expect.any(AbortSignal) },
+	);
 });

@@ -70,7 +70,10 @@ describe("ListCompare", () => {
 		);
 		await chooseOption("Compare with", "Spring");
 		await waitFor(() =>
-			expect(diff).toHaveBeenCalledWith({ baseListId: 2, compareListId: 3, limit: 50 }),
+			expect(diff).toHaveBeenCalledWith(
+				{ baseListId: 2, compareListId: 3, limit: 50 },
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 		expect(await screen.findByText("maya@gmail.com")).toBeInTheDocument();
 		expect(screen.getByText("Valid · 90")).toBeInTheDocument();

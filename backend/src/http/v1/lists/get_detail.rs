@@ -24,8 +24,10 @@ struct Response {
 	id: i32,
 	job_id: i32,
 	name: String,
+	original_filename: String,
 	status: String,
 	total_rows: i32,
+	rejected_rows: Option<i32>,
 	email_column: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	source_key: Option<String>,
@@ -48,7 +50,7 @@ async fn http_handler(
 	let tenant_id = require_tenant_id(tenant_ctx.tenant_id)?;
 	let row = sqlx::query(
 		r#"
-		SELECT id, job_id, name, status::TEXT AS status, total_rows, email_column, source_key,
+		SELECT id, job_id, name, original_filename, status::TEXT AS status, total_rows, email_column, source_key,
 			   unique_emails, deduplicated_count, policy_id
 		FROM v1_lists
 		WHERE id = $1 AND tenant_id = $2
@@ -71,43 +73,17 @@ async fn http_handler(
 		.map_err(warp::reject::custom)?;
 
 	let total_rows = row.get::<i32, _>("total_rows");
-	let current_status = row.get::<String, _>("status");
-	let fully_processed = summary.total_processed >= i64::from(total_rows);
-	let failed_count = if fully_processed {
-		list_failed_count(&pg_pool, list_id)
-			.await
-			.map_err(warp::reject::custom)?
-	} else {
-		0
-	};
-	let response_status = if current_status == "deleted" {
-		current_status.clone()
-	} else if fully_processed && failed_count > 0 {
-		"failed".to_string()
-	} else if fully_processed {
-		"completed".to_string()
-	} else {
-		current_status.clone()
-	};
-
-	if fully_processed && current_status != response_status && current_status != "deleted" {
-		sqlx::query(
-			"UPDATE v1_lists SET status = $2::list_status, error_message = CASE WHEN $2 = 'failed' THEN COALESCE(error_message, 'task_failed') ELSE error_message END, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = $1",
-		)
-		.bind(list_id)
-		.bind(&response_status)
-		.execute(&pg_pool)
-		.await
-		.map_err(ReacherResponseError::from)
-		.map_err(warp::reject::custom)?;
-	}
 
 	Ok(warp::reply::json(&Response {
 		id: row.get("id"),
 		job_id: row.get("job_id"),
 		name: row.get("name"),
-		status: response_status,
+		original_filename: row.get("original_filename"),
+		status: row.get("status"),
 		total_rows,
+		rejected_rows: row.get::<Option<i32>, _>("unique_emails").map(|unique| {
+			total_rows - unique - row.get::<Option<i32>, _>("deduplicated_count").unwrap_or(0)
+		}),
 		email_column: row.get("email_column"),
 		source_key: row.get("source_key"),
 		summary,
@@ -115,16 +91,6 @@ async fn http_handler(
 		unique_emails: row.get("unique_emails"),
 		deduplicated_count: row.get::<Option<i32>, _>("deduplicated_count"),
 	}))
-}
-
-async fn list_failed_count(pg_pool: &PgPool, list_id: i32) -> Result<i64, ReacherResponseError> {
-	sqlx::query_scalar(
-		"SELECT COUNT(*) FROM v1_task_result WHERE (extra->>'list_id')::INTEGER = $1 AND task_state IN ('failed', 'dead_lettered')",
-	)
-	.bind(list_id)
-	.fetch_one(pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)
 }
 
 pub async fn list_summary(pg_pool: &PgPool, list_id: i32) -> Result<Summary, ReacherResponseError> {
@@ -135,9 +101,10 @@ pub async fn list_summary(pg_pool: &PgPool, list_id: i32) -> Result<Summary, Rea
 			COUNT(*) FILTER (WHERE score_category = 'risky') AS total_risky,
 			COUNT(*) FILTER (WHERE score_category = 'unknown') AS total_unknown,
 			COUNT(*) FILTER (WHERE score_category = 'invalid') AS total_invalid,
-			COUNT(*) FILTER (WHERE result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled') AS total_processed
-		FROM v1_task_result
-		WHERE (extra->>'list_id')::INTEGER = $1
+			COUNT(*) FILTER (WHERE task_state IN ('completed','failed','dead_lettered','cancelled') AND (dispatch_id IS NULL OR completion_done) AND (result IS NOT NULL OR error IS NOT NULL OR task_state = 'cancelled')) AS total_processed
+		FROM v1_task_result t
+        JOIN v1_lists l ON l.job_id=t.job_id AND l.tenant_id=t.tenant_id
+        WHERE l.id=$1 AND t.extra->>'list_id'=l.id::text
 		"#,
 	)
 	.bind(list_id)

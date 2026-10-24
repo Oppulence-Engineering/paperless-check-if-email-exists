@@ -95,6 +95,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**v1GetJobStatus**](docs/JobsApi.md#v1getjobstatus) | **GET** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 *JobsApi* | [**v1JobApprovalChecklist**](docs/JobsApi.md#v1jobapprovalchecklist) | **GET** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 *JobsApi* | [**v1JobLatency**](docs/JobsApi.md#v1joblatency) | **GET** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
+*JobsApi* | [**v1ListJobs**](docs/JobsApi.md#v1listjobs) | **GET** /v1/jobs |
 *JobsApi* | [**v1RetryJob**](docs/JobsApi.md#v1retryjob) | **POST** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 *ListsApi* | [**v1CreateRemediationExport**](docs/ListsApi.md#v1createremediationexport) | **POST** /v1/lists/{list_id}/remediation-exports | Create remediation export
 *ListsApi* | [**v1CreateRemediationPlan**](docs/ListsApi.md#v1createremediationplan) | **POST** /v1/lists/{list_id}/remediation-plan | Create remediation plan
@@ -106,6 +107,7 @@ Class | Method | HTTP request | Description
 *ListsApi* | [**v1GetSavedSegment**](docs/ListsApi.md#v1getsavedsegment) | **GET** /v1/segments/{segment_id} | GET /v1/segments/{segment_id}
 *ListsApi* | [**v1ListQuality**](docs/ListsApi.md#v1listquality) | **GET** /v1/lists/{list_id}/quality | GET /v1/lists/{list_id}/quality
 *ListsApi* | [**v1ListSavedSegments**](docs/ListsApi.md#v1listsavedsegments) | **GET** /v1/segments | GET /v1/segments
+*ListsApi* | [**v1PreviewList**](docs/ListsApi.md#v1previewlist) | **POST** /v1/lists/preview |
 *ListsApi* | [**v1UpdateSavedSegment**](docs/ListsApi.md#v1updatesavedsegment) | **PATCH** /v1/segments/{segment_id} | PATCH /v1/segments/{segment_id}
 *OutcomesApi* | [**v1CreateProviderEndpoint**](docs/OutcomesApi.md#v1createproviderendpoint) | **POST** /v1/provider-endpoints |
 *OutcomesApi* | [**v1DeleteProviderEndpoint**](docs/OutcomesApi.md#v1deleteproviderendpoint) | **DELETE** /v1/provider-endpoints/{endpoint_id} |
@@ -152,6 +154,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *TenantApi* | [**v1UpdateTenantDomain**](docs/TenantApi.md#v1updatetenantdomain) | **PATCH** /v1/me/domains/{domain} | PATCH /v1/me/domains/{domain}
 *TenantApi* | [**v1UpdateTenantSettings**](docs/TenantApi.md#v1updatetenantsettings) | **PATCH** /v1/me/settings | PATCH /v1/me/settings
 *TenantApi* | [**v1UpdateTenantWebhook**](docs/TenantApi.md#v1updatetenantwebhook) | **PATCH** /v1/me/webhook | PATCH /v1/me/webhook
+*TenantApi* | [**v1VerifyTenantDomain**](docs/TenantApi.md#v1verifytenantdomain) | **POST** /v1/me/domains/{domain}/verify |
 *V0Api* | [**createBulkJob**](docs/V0Api.md#createbulkjob) | **POST** /v0/bulk | POST /v0/bulk
 *V0Api* | [**getBulkJobResult**](docs/V0Api.md#getbulkjobresult) | **GET** /v0/bulk/{job_id}/results | GET /v0/bulk/{job_id}/results
 *V0Api* | [**getBulkJobStatus**](docs/V0Api.md#getbulkjobstatus) | **GET** /v0/bulk/{job_id} | GET /v0/bulk/{job_id}
@@ -179,10 +182,13 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 *V1Api* | [**v1ListResearch**](docs/V1Api.md#v1listresearch) | **GET** /v1/research |
 *V1Api* | [**v1ListSuppressionEvents**](docs/V1Api.md#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events
 *V1Api* | [**v1ListSuppressions**](docs/V1Api.md#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions
+*V1Api* | [**v1Overview**](docs/V1Api.md#v1overview) | **GET** /v1/overview |
+*V1Api* | [**v1RestoreSuppression**](docs/V1Api.md#v1restoresuppression) | **POST** /v1/suppressions/{id}/restore |
 *V1Api* | [**v1ReverificationStatus**](docs/V1Api.md#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status
 *V1Api* | [**v1SourceQuality**](docs/V1Api.md#v1sourcequality) | **GET** /v1/sources/quality | List source quality
 *V1Api* | [**v1UpdateReverification**](docs/V1Api.md#v1updatereverification) | **PUT** /v1/reverification | PUT /v1/reverification
 *VerificationApi* | [**v1EmailHistory**](docs/VerificationApi.md#v1emailhistory) | **GET** /v1/emails/{email}/history | GET /v1/emails/{email}/history
+*VerificationApi* | [**v1EmailHistoryPost**](docs/VerificationApi.md#v1emailhistorypost) | **POST** /v1/emails/history |
 *VerificationApi* | [**v1ListAlerts**](docs/VerificationApi.md#v1listalerts) | **GET** /v1/alerts | GET /v1/alerts
 *VerificationApi* | [**v1UpdateAlert**](docs/VerificationApi.md#v1updatealert) | **PATCH** /v1/alerts/{alert_id} | PATCH /v1/alerts/{alert_id}
 
@@ -191,6 +197,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
 
  - [AddSuppressionsRequest](docs/AddSuppressionsRequest.md)
  - [AddSuppressionsResponse](docs/AddSuppressionsResponse.md)
+ - [AddSuppressionsResponseRejectedInner](docs/AddSuppressionsResponseRejectedInner.md)
  - [AdminAllApiKeys](docs/AdminAllApiKeys.md)
  - [AdminApiKey](docs/AdminApiKey.md)
  - [AdminApiKeyList](docs/AdminApiKeyList.md)
@@ -260,6 +267,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [Freshness](docs/Freshness.md)
  - [GmailVerifMethod](docs/GmailVerifMethod.md)
  - [HistoryEntry](docs/HistoryEntry.md)
+ - [HistoryRequest](docs/HistoryRequest.md)
  - [HotmailB2BVerifMethod](docs/HotmailB2BVerifMethod.md)
  - [HotmailB2CVerifMethod](docs/HotmailB2CVerifMethod.md)
  - [InboundOutcomeResponse](docs/InboundOutcomeResponse.md)
@@ -267,6 +275,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [IngestOutcomesRequest](docs/IngestOutcomesRequest.md)
  - [IngestOutcomesResponse](docs/IngestOutcomesResponse.md)
  - [IngestRowError](docs/IngestRowError.md)
+ - [Job](docs/Job.md)
  - [JobResultPageResponse](docs/JobResultPageResponse.md)
  - [JobTaskResult](docs/JobTaskResult.md)
  - [ListDeleteResponse](docs/ListDeleteResponse.md)
@@ -292,6 +301,20 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [OutcomeRuleAction](docs/OutcomeRuleAction.md)
  - [OutcomeType](docs/OutcomeType.md)
  - [OutcomeView](docs/OutcomeView.md)
+ - [OverviewResponse](docs/OverviewResponse.md)
+ - [OverviewSectionAlertListResponse](docs/OverviewSectionAlertListResponse.md)
+ - [OverviewSectionAlertListResponseData](docs/OverviewSectionAlertListResponseData.md)
+ - [OverviewSectionI64](docs/OverviewSectionI64.md)
+ - [OverviewSectionOverviewDomains](docs/OverviewSectionOverviewDomains.md)
+ - [OverviewSectionOverviewDomainsData](docs/OverviewSectionOverviewDomainsData.md)
+ - [OverviewSectionOverviewOutcomes](docs/OverviewSectionOverviewOutcomes.md)
+ - [OverviewSectionOverviewOutcomesData](docs/OverviewSectionOverviewOutcomesData.md)
+ - [OverviewSectionOverviewReverification](docs/OverviewSectionOverviewReverification.md)
+ - [OverviewSectionOverviewReverificationData](docs/OverviewSectionOverviewReverificationData.md)
+ - [OverviewSectionVecOverviewList](docs/OverviewSectionVecOverviewList.md)
+ - [OverviewSectionVecOverviewListDataInner](docs/OverviewSectionVecOverviewListDataInner.md)
+ - [OverviewSectionVecOverviewPipeline](docs/OverviewSectionVecOverviewPipeline.md)
+ - [OverviewSectionVecOverviewPipelineDataInner](docs/OverviewSectionVecOverviewPipelineDataInner.md)
  - [PartialConfidence](docs/PartialConfidence.md)
  - [PendingVerification](docs/PendingVerification.md)
  - [PipelineDeliveryConfig](docs/PipelineDeliveryConfig.md)
@@ -325,6 +348,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [Reachable](docs/Reachable.md)
  - [ReasonCode](docs/ReasonCode.md)
  - [RecommendedAction](docs/RecommendedAction.md)
+ - [RejectedRow](docs/RejectedRow.md)
  - [ReputationCheckRequest](docs/ReputationCheckRequest.md)
  - [ReputationCheckResponse](docs/ReputationCheckResponse.md)
  - [ResearchCandidate](docs/ResearchCandidate.md)
@@ -351,6 +375,7 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [ScorePolicyRules](docs/ScorePolicyRules.md)
  - [ScorePolicyView](docs/ScorePolicyView.md)
  - [ScoringSignals](docs/ScoringSignals.md)
+ - [SectionStatus](docs/SectionStatus.md)
  - [SegmentFilter](docs/SegmentFilter.md)
  - [SegmentFilterCategory](docs/SegmentFilterCategory.md)
  - [SegmentScope](docs/SegmentScope.md)
@@ -372,6 +397,8 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [TenantApiKeyList](docs/TenantApiKeyList.md)
  - [TenantApiKeyRevokeResponse](docs/TenantApiKeyRevokeResponse.md)
  - [TenantCreatedApiKey](docs/TenantCreatedApiKey.md)
+ - [TenantDomainResponse](docs/TenantDomainResponse.md)
+ - [TenantDomainsListResponse](docs/TenantDomainsListResponse.md)
  - [TenantSettingsResponse](docs/TenantSettingsResponse.md)
  - [TenantUsageResponse](docs/TenantUsageResponse.md)
  - [TenantWebhookResponse](docs/TenantWebhookResponse.md)
@@ -388,7 +415,9 @@ _PipelinesApi_ | [__v1UpdatePipeline__](docs/PipelinesApi.md#v1updatepipeline) |
  - [UpdateTenantDomainRequest](docs/UpdateTenantDomainRequest.md)
  - [UpdateTenantSettingsRequest](docs/UpdateTenantSettingsRequest.md)
  - [UpdateWebhookRequest](docs/UpdateWebhookRequest.md)
- - [V1EmailHistory200Response](docs/V1EmailHistory200Response.md)
+ - [V1EmailHistoryPost200Response](docs/V1EmailHistoryPost200Response.md)
+ - [V1ListJobs200Response](docs/V1ListJobs200Response.md)
+ - [V1PreviewList200Response](docs/V1PreviewList200Response.md)
  - [VerifMethod](docs/VerifMethod.md)
  - [VerifMethodVerifMethod](docs/VerifMethodVerifMethod.md)
  - [VerificationResponse](docs/VerificationResponse.md)

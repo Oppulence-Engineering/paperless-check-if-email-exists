@@ -291,7 +291,8 @@ async fn fetch_batch(
 			policy_evaluation,
 			policy_decision
 		FROM v1_task_result
-		WHERE (extra->>'list_id')::INTEGER = $1
+		WHERE (extra->>'list_id')::INTEGER = $1 AND is_duplicate IS NOT TRUE
+          AND NOT EXISTS (SELECT 1 FROM verification_quality_rows q WHERE q.id=v1_task_result.id AND q.currently_suppressed)
 		  AND (extra->>'row_index')::INTEGER > $2
 		ORDER BY (extra->>'row_index')::INTEGER ASC
 		LIMIT $3
@@ -487,7 +488,7 @@ async fn load_comparison_baseline(
 			SELECT *,
 			       COALESCE(canonical_email, mailbox_identity(COALESCE(result->>'input', payload->'input'->>'to_email'))) AS comparison_key
 			FROM v1_task_result
-			WHERE (extra->>'list_id')::INTEGER = $1
+			WHERE (extra->>'list_id')::INTEGER = $1 AND is_duplicate IS NOT TRUE
 			  AND task_state = 'completed'::task_state
 			  AND result IS NOT NULL
 			  AND completed_at IS NOT NULL

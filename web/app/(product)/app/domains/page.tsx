@@ -13,7 +13,7 @@ import DomainsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Domains - Oppulence",
+	title: "Domains",
 	description: "Review and manage verified sending domains for this workspace",
 };
 

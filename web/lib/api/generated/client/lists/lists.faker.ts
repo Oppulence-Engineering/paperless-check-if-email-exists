@@ -18,7 +18,27 @@ import type {
   V1CreateRemediationExport200,
   V1CreateRemediationPlan200,
   V1GetRemediationPlan200,
+  V1PreviewList200,
 } from "../model";
+
+export const getV1PreviewListResponseMock = (
+  overrideResponse: Partial<Extract<V1PreviewList200, object>> = {},
+): V1PreviewList200 => ({
+  duplicates: faker.number.int({ min: 0 }),
+  email_column: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  estimated_credits: faker.number.int({ min: 0 }),
+  rejected: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    reason: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    row_number: faker.number.int({ min: 0 }),
+    value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  total_rows: faker.number.int({ min: 0 }),
+  unique_emails: faker.number.int({ min: 0 }),
+  ...overrideResponse,
+});
 
 export const getV1DiffListsResponseMock = (
   overrideResponse: Partial<Extract<ListDiffResponse, object>> = {},

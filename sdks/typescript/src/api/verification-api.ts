@@ -28,9 +28,11 @@ import type { AlertView } from '../models';
 // @ts-ignore
 import type { ErrorEnvelope } from '../models';
 // @ts-ignore
+import type { HistoryRequest } from '../models';
+// @ts-ignore
 import type { UpdateAlertRequest } from '../models';
 // @ts-ignore
-import type { V1EmailHistory200Response } from '../models';
+import type { V1EmailHistoryPost200Response } from '../models';
 /**
  * VerificationApi - axios parameter creator
  * @export
@@ -73,6 +75,44 @@ export const VerificationApiAxiosParamCreator = function (configuration?: Config
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @param {HistoryRequest} historyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1EmailHistoryPost: async (historyRequest: HistoryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'historyRequest' is not null or undefined
+            assertParamExists('v1EmailHistoryPost', 'historyRequest', historyRequest)
+            const localVarPath = `/v1/emails/history`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(historyRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -193,10 +233,22 @@ export const VerificationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1EmailHistory(email: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1EmailHistory200Response>> {
+        async v1EmailHistory(email: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1EmailHistoryPost200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1EmailHistory(email, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1EmailHistory']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {HistoryRequest} historyRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1EmailHistoryPost(historyRequest: HistoryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1EmailHistoryPost200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1EmailHistoryPost(historyRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VerificationApi.v1EmailHistoryPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -246,8 +298,17 @@ export const VerificationApiFactory = function (configuration?: Configuration, b
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response> {
+        v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistoryPost200Response> {
             return localVarFp.v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {VerificationApiV1EmailHistoryPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1EmailHistoryPost(requestParameters: VerificationApiV1EmailHistoryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistoryPost200Response> {
+            return localVarFp.v1EmailHistoryPost(requestParameters.historyRequest, options).then((request) => request(axios, basePath));
         },
         /**
          *
@@ -286,7 +347,16 @@ export interface VerificationApiInterface {
      * @throws {RequiredError}
      * @memberof VerificationApiInterface
      */
-    v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistory200Response>;
+    v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistoryPost200Response>;
+
+    /**
+     *
+     * @param {VerificationApiV1EmailHistoryPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApiInterface
+     */
+    v1EmailHistoryPost(requestParameters: VerificationApiV1EmailHistoryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1EmailHistoryPost200Response>;
 
     /**
      *
@@ -329,6 +399,20 @@ export interface VerificationApiV1EmailHistoryRequest {
      * @memberof VerificationApiV1EmailHistory
      */
     readonly limit?: number
+}
+
+/**
+ * Request parameters for v1EmailHistoryPost operation in VerificationApi.
+ * @export
+ * @interface VerificationApiV1EmailHistoryPostRequest
+ */
+export interface VerificationApiV1EmailHistoryPostRequest {
+    /**
+     *
+     * @type {HistoryRequest}
+     * @memberof VerificationApiV1EmailHistoryPost
+     */
+    readonly historyRequest: HistoryRequest
 }
 
 /**
@@ -404,6 +488,17 @@ export class VerificationApi extends BaseAPI implements VerificationApiInterface
      */
     public v1EmailHistory(requestParameters: VerificationApiV1EmailHistoryRequest, options?: RawAxiosRequestConfig) {
         return VerificationApiFp(this.configuration).v1EmailHistory(requestParameters.email, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {VerificationApiV1EmailHistoryPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApi
+     */
+    public v1EmailHistoryPost(requestParameters: VerificationApiV1EmailHistoryPostRequest, options?: RawAxiosRequestConfig) {
+        return VerificationApiFp(this.configuration).v1EmailHistoryPost(requestParameters.historyRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

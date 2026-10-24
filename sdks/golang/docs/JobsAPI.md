@@ -15,6 +15,7 @@ Method | HTTP request | Description
 [**V1GetJobStatus**](JobsAPI.md#V1GetJobStatus) | **Get** /v1/jobs/{job_id} | GET /v1/jobs/{job_id}
 [**V1JobApprovalChecklist**](JobsAPI.md#V1JobApprovalChecklist) | **Get** /v1/jobs/{job_id}/approval | GET /v1/jobs/{job_id}/approval
 [**V1JobLatency**](JobsAPI.md#V1JobLatency) | **Get** /v1/jobs/{job_id}/latency | GET /v1/jobs/{job_id}/latency
+[**V1ListJobs**](JobsAPI.md#V1ListJobs) | **Get** /v1/jobs |
 [**V1RetryJob**](JobsAPI.md#V1RetryJob) | **Post** /v1/jobs/{job_id}/retry | POST /v1/jobs/{job_id}/retry
 
 
@@ -778,6 +779,72 @@ Name | Type | Description  | Notes
 ### Return type
 
  (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1ListJobs
+
+> V1ListJobs200Response V1ListJobs(ctx).Limit(limit).Offset(offset).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	limit := int64(789) // int64 |  (optional)
+	offset := int64(789) // int64 |  (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.JobsAPI.V1ListJobs(context.Background()).Limit(limit).Offset(offset).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `JobsAPI.V1ListJobs``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1ListJobs`: V1ListJobs200Response
+	fmt.Fprintf(os.Stdout, "Response from `JobsAPI.V1ListJobs`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1ListJobsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int64** |  |
+ **offset** | **int64** |  |
+
+### Return type
+
+[**V1ListJobs200Response**](V1ListJobs200Response.md)
 
 ### Authorization
 

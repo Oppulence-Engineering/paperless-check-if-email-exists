@@ -66,17 +66,20 @@ export function CampaignOutcomeList({ className, ...props }: CampaignOutcomeList
 			filters.source,
 			filters.since,
 		),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListCampaignOutcomes200Response.parse(
 				(
-					await api.v1ListCampaignOutcomes({
-						limit: PAGE,
-						offset,
-						email: filters.email || undefined,
-						type: filters.type || undefined,
-						source: filters.source || undefined,
-						since: startOfDay(filters.since),
-					})
+					await api.v1ListCampaignOutcomes(
+						{
+							limit: PAGE,
+							offset,
+							email: filters.email || undefined,
+							type: filters.type || undefined,
+							source: filters.source || undefined,
+							since: startOfDay(filters.since),
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

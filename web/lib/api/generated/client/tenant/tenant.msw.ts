@@ -17,6 +17,8 @@ import type {
   ScorePolicyDeleteResponse,
   ScorePolicyListResponse,
   ScorePolicyView,
+  TenantDomainResponse,
+  TenantDomainsListResponse,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
@@ -25,22 +27,32 @@ import type {
 import {
   getV1CreateOutcomePolicyResponseMock,
   getV1CreateScorePolicyResponseMock,
+  getV1CreateTenantDomainResponseMock,
   getV1DeleteOutcomePolicyResponseMock,
   getV1DeleteScorePolicyResponseMock,
   getV1GetOutcomePolicyResponseMock,
   getV1GetScorePolicyResponseMock,
+  getV1GetTenantDomainResponseMock,
   getV1GetTenantSettingsResponseMock,
   getV1GetTenantUsageResponseMock,
   getV1GetTenantWebhookResponseMock,
   getV1ListOutcomePoliciesResponseMock,
   getV1ListScorePoliciesResponseMock,
+  getV1ListTenantDomainsResponseMock,
   getV1UpdateOutcomePolicyResponseMock,
   getV1UpdateScorePolicyResponseMock,
+  getV1UpdateTenantDomainResponseMock,
   getV1UpdateTenantSettingsResponseMock,
   getV1UpdateTenantWebhookResponseMock,
+  getV1VerifyTenantDomainResponseMock,
 } from "./tenant.faker";
 
 export {
+  getV1ListTenantDomainsResponseMock,
+  getV1CreateTenantDomainResponseMock,
+  getV1GetTenantDomainResponseMock,
+  getV1UpdateTenantDomainResponseMock,
+  getV1VerifyTenantDomainResponseMock,
   getV1GetTenantSettingsResponseMock,
   getV1UpdateTenantSettingsResponseMock,
   getV1GetTenantUsageResponseMock,
@@ -60,20 +72,23 @@ export {
 
 export const getV1ListTenantDomainsMockHandler = (
   overrideResponse?:
-    | void
+    | TenantDomainsListResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantDomainsListResponse> | TenantDomainsListResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/me/domains",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1ListTenantDomainsResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -81,20 +96,23 @@ export const getV1ListTenantDomainsMockHandler = (
 
 export const getV1CreateTenantDomainMockHandler = (
   overrideResponse?:
-    | void
+    | TenantDomainResponse
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantDomainResponse> | TenantDomainResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
     "*/v1/me/domains",
     async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 201 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1CreateTenantDomainResponseMock(),
+        { status: 201 },
+      );
     },
     options,
   );
@@ -123,20 +141,23 @@ export const getV1DeleteTenantDomainMockHandler = (
 
 export const getV1GetTenantDomainMockHandler = (
   overrideResponse?:
-    | void
+    | TenantDomainResponse
     | ((
         info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantDomainResponse> | TenantDomainResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/v1/me/domains/:domain",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 200 });
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1GetTenantDomainResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -144,20 +165,47 @@ export const getV1GetTenantDomainMockHandler = (
 
 export const getV1UpdateTenantDomainMockHandler = (
   overrideResponse?:
-    | void
+    | TenantDomainResponse
     | ((
         info: Parameters<Parameters<typeof http.patch>[1]>[0],
-      ) => Promise<void> | void),
+      ) => Promise<TenantDomainResponse> | TenantDomainResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
     "*/v1/me/domains/:domain",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1UpdateTenantDomainResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
-      return new HttpResponse(null, { status: 200 });
+export const getV1VerifyTenantDomainMockHandler = (
+  overrideResponse?:
+    | TenantDomainResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<TenantDomainResponse> | TenantDomainResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/me/domains/:domain/verify",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1VerifyTenantDomainResponseMock(),
+        { status: 200 },
+      );
     },
     options,
   );
@@ -549,6 +597,7 @@ export const getTenantMock = () => [
   getV1DeleteTenantDomainMockHandler(),
   getV1GetTenantDomainMockHandler(),
   getV1UpdateTenantDomainMockHandler(),
+  getV1VerifyTenantDomainMockHandler(),
   getV1GetTenantSettingsMockHandler(),
   getV1UpdateTenantSettingsMockHandler(),
   getV1GetTenantUsageMockHandler(),

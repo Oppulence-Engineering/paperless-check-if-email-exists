@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useEntitlements } from "@/components/auth/auth-gate";
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
@@ -35,7 +36,6 @@ import {
 } from "@/lib/api/generated/zod/account/account";
 
 import {
-	ApiKeyListSchema,
 	ApiKeySchema,
 	ApiKeyScopeSchema,
 	CreateApiKeySchema,
@@ -68,19 +68,6 @@ const scopeOptions = [
 	// "admin" stays out of the picker: a key with it can create more keys.
 ] as const;
 
-function requestError(cause: unknown) {
-	const envelope = z
-		.object({
-			response: z.object({ data: z.object({ error: z.string() }) }),
-		})
-		.safeParse(cause);
-	return envelope.success
-		? envelope.data.response.data.error
-		: cause instanceof Error
-			? cause.message
-			: "Request failed.";
-}
-
 export function DeveloperSettings({
 	className,
 	organizationId,
@@ -91,7 +78,7 @@ export function DeveloperSettings({
 	const canManage = organizationRole
 		.split(",")
 		.some((role) => ["owner", "admin"].includes(role.trim()));
-	const queryKey = ["tenant-api-keys", organizationId];
+	const queryKey = workflowQueryKey("tenant-api-keys");
 	const [name, setName] = useState("");
 	const [scopes, setScopes] = useState<z.infer<typeof ApiKeyScopeSchema>[]>(["verify"]);
 	const [lifetimeDays, setLifetimeDays] = useState(30);
@@ -105,11 +92,9 @@ export function DeveloperSettings({
 
 	const keys = useQuery({
 		queryKey,
-		enabled: canManage,
+		enabled: canManage && Boolean(organizationId),
 		queryFn: async ({ signal }) =>
-			ApiKeyListSchema.parse(
-				ListTenantApiKeys200Response.parse((await sdk.listTenantApiKeys({ signal })).data),
-			),
+			ListTenantApiKeys200Response.parse((await sdk.listTenantApiKeys({ signal })).data),
 	});
 	// The published plans include the API on Professional and Enterprise only.
 	const apiDenial = denial(useEntitlements(), "api_access");
@@ -127,11 +112,11 @@ export function DeveloperSettings({
 	const selectedKey = useQuery({
 		queryKey: workflowQueryKey(...queryKey, selectedKeyId),
 		enabled: canManage && Boolean(selectedKeyId),
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (!selectedKeyId) throw new Error("Select a key first.");
 			return ApiKeySchema.parse(
 				GetTenantApiKey200Response.parse(
-					(await sdk.getTenantApiKey({ keyId: selectedKeyId })).data,
+					(await sdk.getTenantApiKey({ keyId: selectedKeyId }, { signal })).data,
 				),
 			);
 		},
@@ -199,7 +184,7 @@ export function DeveloperSettings({
 			await revoke.mutateAsync(keyId);
 			setNotice(`${keyName} revoked.`);
 		} catch (cause) {
-			setError(requestError(cause));
+			setError(errorMessage(cause));
 		}
 	}
 
@@ -316,7 +301,7 @@ export function DeveloperSettings({
 									) : null}
 									{keys.isError ? (
 										<Row
-											label={<span role="alert">{requestError(keys.error)}</span>}
+											label={<span role="alert">{errorMessage(keys.error)}</span>}
 											layout="inline"
 										>
 											<Button
@@ -400,7 +385,7 @@ export function DeveloperSettings({
 												) : null}
 												{selectedKey.isError ? (
 													<p className="mt-0.5 text-xs text-red-300" role="alert">
-														{requestError(selectedKey.error)}
+														{errorMessage(selectedKey.error)}
 													</p>
 												) : null}
 												{selectedKey.data ? (
@@ -417,7 +402,7 @@ export function DeveloperSettings({
 												onSubmit={(event) => {
 													event.preventDefault();
 													void update.mutateAsync().catch((cause: unknown) => {
-														setError(requestError(cause));
+														setError(errorMessage(cause));
 													});
 												}}
 											>
@@ -567,7 +552,7 @@ export function DeveloperSettings({
 													className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 													role="alert"
 												>
-													{requestError(create.error)}
+													{errorMessage(create.error)}
 												</p>
 											) : null}
 											<div className="flex justify-end">

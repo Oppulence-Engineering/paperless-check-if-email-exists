@@ -1,7 +1,7 @@
 import { OverviewPanel } from "./_components/overview-panel/overview-panel";
 
 export const metadata = {
-	title: "Overview | Verifier",
+	title: "Overview",
 	description: "Usage, lists, deliverability, and automation for this workspace",
 };
 

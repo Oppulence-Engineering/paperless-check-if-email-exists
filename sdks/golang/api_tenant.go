@@ -71,7 +71,8 @@ type TenantAPI interface {
 	V1CreateTenantDomain(ctx context.Context) TenantAPIV1CreateTenantDomainRequest
 
 	// V1CreateTenantDomainExecute executes the request
-	V1CreateTenantDomainExecute(r TenantAPIV1CreateTenantDomainRequest) (*http.Response, error)
+	//  @return TenantDomainResponse
+	V1CreateTenantDomainExecute(r TenantAPIV1CreateTenantDomainRequest) (*TenantDomainResponse, *http.Response, error)
 
 	/*
 	V1DeleteOutcomePolicy Method for V1DeleteOutcomePolicy
@@ -151,7 +152,8 @@ type TenantAPI interface {
 	V1GetTenantDomain(ctx context.Context, domain string) TenantAPIV1GetTenantDomainRequest
 
 	// V1GetTenantDomainExecute executes the request
-	V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomainRequest) (*http.Response, error)
+	//  @return TenantDomainResponse
+	V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomainRequest) (*TenantDomainResponse, *http.Response, error)
 
 	/*
 	V1GetTenantSettings GET /v1/me/settings
@@ -230,7 +232,8 @@ type TenantAPI interface {
 	V1ListTenantDomains(ctx context.Context) TenantAPIV1ListTenantDomainsRequest
 
 	// V1ListTenantDomainsExecute executes the request
-	V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDomainsRequest) (*http.Response, error)
+	//  @return TenantDomainsListResponse
+	V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDomainsRequest) (*TenantDomainsListResponse, *http.Response, error)
 
 	/*
 	V1UpdateOutcomePolicy Method for V1UpdateOutcomePolicy
@@ -270,7 +273,8 @@ type TenantAPI interface {
 	V1UpdateTenantDomain(ctx context.Context, domain string) TenantAPIV1UpdateTenantDomainRequest
 
 	// V1UpdateTenantDomainExecute executes the request
-	V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenantDomainRequest) (*http.Response, error)
+	//  @return TenantDomainResponse
+	V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenantDomainRequest) (*TenantDomainResponse, *http.Response, error)
 
 	/*
 	V1UpdateTenantSettings PATCH /v1/me/settings
@@ -299,6 +303,19 @@ type TenantAPI interface {
 	// V1UpdateTenantWebhookExecute executes the request
 	//  @return TenantWebhookResponse
 	V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenantWebhookRequest) (*TenantWebhookResponse, *http.Response, error)
+
+	/*
+	V1VerifyTenantDomain Method for V1VerifyTenantDomain
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param domain
+	@return TenantAPIV1VerifyTenantDomainRequest
+	*/
+	V1VerifyTenantDomain(ctx context.Context, domain string) TenantAPIV1VerifyTenantDomainRequest
+
+	// V1VerifyTenantDomainExecute executes the request
+	//  @return TenantDomainResponse
+	V1VerifyTenantDomainExecute(r TenantAPIV1VerifyTenantDomainRequest) (*TenantDomainResponse, *http.Response, error)
 }
 
 // TenantAPIService TenantAPI service
@@ -685,7 +702,7 @@ func (r TenantAPIV1CreateTenantDomainRequest) CreateTenantDomainRequest(createTe
 	return r
 }
 
-func (r TenantAPIV1CreateTenantDomainRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1CreateTenantDomainRequest) Execute() (*TenantDomainResponse, *http.Response, error) {
 	return r.ApiService.V1CreateTenantDomainExecute(r)
 }
 
@@ -705,16 +722,18 @@ func (a *TenantAPIService) V1CreateTenantDomain(ctx context.Context) TenantAPIV1
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenantDomainRequest) (*http.Response, error) {
+//  @return TenantDomainResponse
+func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenantDomainRequest) (*TenantDomainResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantDomainResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1CreateTenantDomain")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/domains"
@@ -723,7 +742,7 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 	if r.createTenantDomainRequest == nil {
-		return nil, reportError("createTenantDomainRequest is required and must be specified")
+		return localVarReturnValue, nil, reportError("createTenantDomainRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -761,19 +780,19 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -785,14 +804,23 @@ func (a *TenantAPIService) V1CreateTenantDomainExecute(r TenantAPIV1CreateTenant
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1DeleteOutcomePolicyRequest struct {
@@ -1407,7 +1435,7 @@ type TenantAPIV1GetTenantDomainRequest struct {
 	domain string
 }
 
-func (r TenantAPIV1GetTenantDomainRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1GetTenantDomainRequest) Execute() (*TenantDomainResponse, *http.Response, error) {
 	return r.ApiService.V1GetTenantDomainExecute(r)
 }
 
@@ -1429,16 +1457,18 @@ func (a *TenantAPIService) V1GetTenantDomain(ctx context.Context, domain string)
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomainRequest) (*http.Response, error) {
+//  @return TenantDomainResponse
+func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomainRequest) (*TenantDomainResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantDomainResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1GetTenantDomain")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/domains/{domain}"
@@ -1481,19 +1511,19 @@ func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomain
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -1505,14 +1535,23 @@ func (a *TenantAPIService) V1GetTenantDomainExecute(r TenantAPIV1GetTenantDomain
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1GetTenantSettingsRequest struct {
@@ -2157,7 +2196,7 @@ type TenantAPIV1ListTenantDomainsRequest struct {
 	ApiService TenantAPI
 }
 
-func (r TenantAPIV1ListTenantDomainsRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1ListTenantDomainsRequest) Execute() (*TenantDomainsListResponse, *http.Response, error) {
 	return r.ApiService.V1ListTenantDomainsExecute(r)
 }
 
@@ -2177,16 +2216,18 @@ func (a *TenantAPIService) V1ListTenantDomains(ctx context.Context) TenantAPIV1L
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDomainsRequest) (*http.Response, error) {
+//  @return TenantDomainsListResponse
+func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDomainsRequest) (*TenantDomainsListResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantDomainsListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1ListTenantDomains")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/domains"
@@ -2228,19 +2269,19 @@ func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDom
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -2252,14 +2293,23 @@ func (a *TenantAPIService) V1ListTenantDomainsExecute(r TenantAPIV1ListTenantDom
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1UpdateOutcomePolicyRequest struct {
@@ -2542,7 +2592,7 @@ func (r TenantAPIV1UpdateTenantDomainRequest) UpdateTenantDomainRequest(updateTe
 	return r
 }
 
-func (r TenantAPIV1UpdateTenantDomainRequest) Execute() (*http.Response, error) {
+func (r TenantAPIV1UpdateTenantDomainRequest) Execute() (*TenantDomainResponse, *http.Response, error) {
 	return r.ApiService.V1UpdateTenantDomainExecute(r)
 }
 
@@ -2564,16 +2614,18 @@ func (a *TenantAPIService) V1UpdateTenantDomain(ctx context.Context, domain stri
 }
 
 // Execute executes the request
-func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenantDomainRequest) (*http.Response, error) {
+//  @return TenantDomainResponse
+func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenantDomainRequest) (*TenantDomainResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
+		localVarReturnValue  *TenantDomainResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1UpdateTenantDomain")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/v1/me/domains/{domain}"
@@ -2583,7 +2635,7 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 	if r.updateTenantDomainRequest == nil {
-		return nil, reportError("updateTenantDomainRequest is required and must be specified")
+		return localVarReturnValue, nil, reportError("updateTenantDomainRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -2621,19 +2673,19 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -2645,14 +2697,23 @@ func (a *TenantAPIService) V1UpdateTenantDomainExecute(r TenantAPIV1UpdateTenant
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
 type TenantAPIV1UpdateTenantSettingsRequest struct {
@@ -2860,6 +2921,129 @@ func (a *TenantAPIService) V1UpdateTenantWebhookExecute(r TenantAPIV1UpdateTenan
 	}
 	// body params
 	localVarPostBody = r.updateWebhookRequest
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["Authorization"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+			var v ErrorEnvelope
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type TenantAPIV1VerifyTenantDomainRequest struct {
+	ctx context.Context
+	ApiService TenantAPI
+	domain string
+}
+
+func (r TenantAPIV1VerifyTenantDomainRequest) Execute() (*TenantDomainResponse, *http.Response, error) {
+	return r.ApiService.V1VerifyTenantDomainExecute(r)
+}
+
+/*
+V1VerifyTenantDomain Method for V1VerifyTenantDomain
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param domain
+ @return TenantAPIV1VerifyTenantDomainRequest
+*/
+func (a *TenantAPIService) V1VerifyTenantDomain(ctx context.Context, domain string) TenantAPIV1VerifyTenantDomainRequest {
+	return TenantAPIV1VerifyTenantDomainRequest{
+		ApiService: a,
+		ctx: ctx,
+		domain: domain,
+	}
+}
+
+// Execute executes the request
+//  @return TenantDomainResponse
+func (a *TenantAPIService) V1VerifyTenantDomainExecute(r TenantAPIV1VerifyTenantDomainRequest) (*TenantDomainResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *TenantDomainResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TenantAPIService.V1VerifyTenantDomain")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/me/domains/{domain}/verify"
+	localVarPath = strings.Replace(localVarPath, "{"+"domain"+"}", url.PathEscape(parameterValueToString(r.domain, "domain")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
 	if r.ctx != nil {
 		// API Key Authentication
 		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {

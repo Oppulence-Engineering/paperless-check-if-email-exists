@@ -4,8 +4,10 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { PipelinesApi } from "@oppulence/reacher-sdk";
+import { PipelinesApi, V1Api } from "@oppulence/reacher-sdk";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { chooseOption } from "@/quality/test-support/select";
 
 import { PipelineForm } from "./pipeline-form";
 
@@ -29,6 +31,24 @@ const pipeline = {
 };
 
 function renderForm(props: Parameters<typeof PipelineForm>[0] = {}) {
+	vi.spyOn(V1Api.prototype, "v1ListLists").mockResolvedValue({
+		data: {
+			lists: [
+				{
+					id: 4,
+					name: "Launch",
+					original_filename: "launch.csv",
+					email_column: "email",
+					status: "completed",
+					total_rows: 2,
+					source_key: null,
+					completed_at: null,
+					created_at: "2026-10-01T00:00:00Z",
+				},
+			],
+			total: 1,
+		},
+	} as never);
 	render(
 		<QueryClientProvider client={new QueryClient()}>
 			<PipelineForm {...props} />
@@ -53,7 +73,8 @@ describe("PipelineForm", () => {
 		renderForm({ onSaved });
 
 		type("Name", " Weekly ");
-		type("List ID", "4");
+		await waitFor(() => expect(screen.getByLabelText("Saved list")).not.toBeDisabled());
+		await chooseOption("Saved list", "Launch");
 		type("Missed-run window (hours)", "12");
 		fireEvent.click(screen.getByLabelText("Check only new or changed addresses"));
 		type("Check again after (days)", "30");
@@ -100,7 +121,8 @@ describe("PipelineForm", () => {
 		const create = vi.spyOn(PipelinesApi.prototype, "v1CreatePipeline"); // gitleaks:allow
 		renderForm();
 		type("Name", "Weekly");
-		type("List ID", "4");
+		await waitFor(() => expect(screen.getByLabelText("Saved list")).not.toBeDisabled());
+		await chooseOption("Saved list", "Launch");
 		type("Webhook headers", "no colon");
 		fireEvent.click(screen.getByRole("button", { name: "Create paused pipeline" }));
 		expect(await screen.findByRole("alert")).toHaveTextContent(

@@ -13,7 +13,7 @@ import IntegrationsLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Connect your stack - Oppulence",
+	title: "Connect your stack",
 	description:
 		"See which parts of your stack are connected and open the page that sets up each one",
 };

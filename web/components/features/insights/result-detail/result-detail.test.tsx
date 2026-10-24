@@ -44,7 +44,7 @@ function renderDetail(row: Record<string, unknown>) {
 
 describe("ResultDetail", () => {
 	beforeEach(() => {
-		vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 			data: { email: "maya@brightlane.co", total: 0, history: [] },
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
@@ -73,7 +73,10 @@ describe("ResultDetail", () => {
 
 		expect(await screen.findByText("Quality score")).toBeInTheDocument();
 		expect(screen.getByText("Technical details")).toBeInTheDocument();
-		expect(results).toHaveBeenCalledWith({ jobId: 18, cursor: 6, limit: 1, state: "completed" });
+		expect(results).toHaveBeenCalledWith(
+			{ jobId: 18, cursor: 6, limit: 1, state: "completed" },
+			{ signal: expect.any(AbortSignal) },
+		);
 	});
 
 	it("shows the decision of a single check from the query row", async () => {

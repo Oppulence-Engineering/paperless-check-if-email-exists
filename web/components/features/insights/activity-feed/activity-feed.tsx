@@ -70,20 +70,23 @@ export function ActivityFeed({ className, ...props }: ActivityFeedProps) {
 	const [filters, setFilters] = useState<Filters>({});
 	const [error, setError] = useState("");
 	const events = useQuery({
-		queryKey: workflowQueryKey("activity-events", offset, JSON.stringify(filters)),
+		queryKey: workflowQueryKey("activity-events", offset, filters),
 		placeholderData: keepPreviousData,
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListEvents200Response.parse(
 				(
-					await api.v1ListEvents({
-						limit: PAGE,
-						offset,
-						...filters,
-						since: startOfDay(filters.since ?? ""),
-						until: filters.until
-							? new Date(`${filters.until}T23:59:59.999`).toISOString()
-							: undefined,
-					})
+					await api.v1ListEvents(
+						{
+							limit: PAGE,
+							offset,
+							...filters,
+							since: startOfDay(filters.since ?? ""),
+							until: filters.until
+								? new Date(`${filters.until}T23:59:59.999`).toISOString()
+								: undefined,
+						},
+						{ signal },
+					)
 				).data,
 			),
 	});

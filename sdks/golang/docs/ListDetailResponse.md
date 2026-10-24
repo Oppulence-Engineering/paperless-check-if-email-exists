@@ -9,7 +9,9 @@ Name | Type | Description | Notes
 **Id** | **int32** |  | [required]
 **JobId** | **int32** |  | [required]
 **Name** | **string** |  | [required]
+**OriginalFilename** | Pointer to **string** |  | [optional]
 **PolicyId** | Pointer to **NullableInt64** |  | [optional]
+**RejectedRows** | Pointer to **NullableInt32** |  | [optional]
 **SourceKey** | Pointer to **NullableString** |  | [optional]
 **Status** | **string** |  | [required]
 **Summary** | [**ListSummary**](ListSummary.md) |  | [required]
@@ -151,6 +153,31 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
+### GetOriginalFilename
+
+`func (o *ListDetailResponse) GetOriginalFilename() string`
+
+GetOriginalFilename returns the OriginalFilename field if non-nil, zero value otherwise.
+
+### GetOriginalFilenameOk
+
+`func (o *ListDetailResponse) GetOriginalFilenameOk() (*string, bool)`
+
+GetOriginalFilenameOk returns a tuple with the OriginalFilename field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOriginalFilename
+
+`func (o *ListDetailResponse) SetOriginalFilename(v string)`
+
+SetOriginalFilename sets OriginalFilename field to given value.
+
+### HasOriginalFilename
+
+`func (o *ListDetailResponse) HasOriginalFilename() bool`
+
+HasOriginalFilename returns a boolean if a field has been set.
+
 ### GetPolicyId
 
 `func (o *ListDetailResponse) GetPolicyId() int64`
@@ -186,6 +213,42 @@ HasPolicyId returns a boolean if a field has been set.
 `func (o *ListDetailResponse) UnsetPolicyId()`
 
 UnsetPolicyId ensures that no value is present for PolicyId, not even an explicit nil
+
+### GetRejectedRows
+
+`func (o *ListDetailResponse) GetRejectedRows() int32`
+
+GetRejectedRows returns the RejectedRows field if non-nil, zero value otherwise.
+
+### GetRejectedRowsOk
+
+`func (o *ListDetailResponse) GetRejectedRowsOk() (*int32, bool)`
+
+GetRejectedRowsOk returns a tuple with the RejectedRows field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRejectedRows
+
+`func (o *ListDetailResponse) SetRejectedRows(v int32)`
+
+SetRejectedRows sets RejectedRows field to given value.
+
+### HasRejectedRows
+
+`func (o *ListDetailResponse) HasRejectedRows() bool`
+
+HasRejectedRows returns a boolean if a field has been set.
+
+### SetRejectedRowsNil
+
+`func (o *ListDetailResponse) SetRejectedRowsNil()`
+
+ SetRejectedRowsNil sets the value for RejectedRows to be an explicit nil
+
+### UnsetRejectedRows
+`func (o *ListDetailResponse) UnsetRejectedRows()`
+
+UnsetRejectedRows ensures that no value is present for RejectedRows, not even an explicit nil
 
 ### GetSourceKey
 

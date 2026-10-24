@@ -323,6 +323,7 @@ export const dmarcPolicy = entry({
 
 /** Suppression entry states (backend/src/http/v1/suppressions/list.rs). */
 export const suppressionStatus = entry({
+	expired: { label: "Expired", tone: "gray" },
 	active: { label: "Active", tone: "red" },
 	inactive: { label: "Removed", tone: "gray" },
 	merged: { label: "Merged", tone: "gray" },

@@ -1,5 +1,5 @@
 import { assertServerConfig } from "@/lib/config/server-config";
-import { describeError, log, requestLogger } from "@/lib/observability/logger";
+import { describeError, log, requestLogger, redactedRequestPath } from "@/lib/observability/logger";
 
 /**
  * Server boot hook. Next calls `register` once per server process, before it
@@ -30,7 +30,7 @@ export function onRequestError(
 	requestLogger(requestId).error("unhandled server error", {
 		...describeError(error),
 		method: request.method ?? null,
-		path: request.path ?? null,
+		path: redactedRequestPath(request.path),
 		routerKind: context.routerKind ?? null,
 		routePath: context.routePath ?? null,
 		renderSource: context.renderSource ?? null,

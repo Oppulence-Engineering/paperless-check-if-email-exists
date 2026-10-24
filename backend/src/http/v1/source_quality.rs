@@ -70,29 +70,33 @@ async fn http_handler(
 
 	let rows = sqlx::query(
 		r#"
-		WITH task_stats AS (
+		WITH source_rows AS (
+            SELECT DISTINCT ON (source_key, identity_key) *
+            FROM verification_quality_rows
+            WHERE tenant_id=$1 AND source_key IS NOT NULL AND ($2::TEXT IS NULL OR source_key=$2)
+            ORDER BY source_key, identity_key, (task_state='completed') DESC, completed_at DESC NULLS LAST, id DESC
+        ), task_stats AS (
 		SELECT
 			source_key,
 			COUNT(*) AS total_records,
 			COUNT(*) FILTER (
-				WHERE result IS NOT NULL
-				   OR error IS NOT NULL
-				   OR task_state IN ('completed', 'failed', 'dead_lettered', 'cancelled')
+				WHERE task_state = 'completed'
 			) AS processed_records,
-			COUNT(*) FILTER (WHERE score_category = 'valid') AS valid_count,
-			COUNT(*) FILTER (WHERE score_category = 'risky') AS risky_count,
-			COUNT(*) FILTER (WHERE score_category = 'unknown') AS unknown_count,
-			COUNT(*) FILTER (WHERE score_category = 'invalid') AS invalid_count,
-			COUNT(*) FILTER (WHERE safe_to_send = true) AS safe_to_send_count,
-			COUNT(*) FILTER (WHERE recommendation_action = 'send') AS send_count,
-			COUNT(*) FILTER (WHERE recommendation_action = 'send_with_caution') AS send_with_caution_count,
-			COUNT(*) FILTER (WHERE recommendation_action = 'review') AS review_count,
-			COUNT(*) FILTER (WHERE recommendation_action = 'suppress') AS suppress_count,
-			COUNT(*) FILTER (WHERE recommendation_action = 'drop') AS drop_count
-		FROM v1_task_result
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'valid') AS valid_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'risky') AS risky_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'unknown') AS unknown_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND score_category = 'invalid') AS invalid_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND effective_safe_to_send = true) AS safe_to_send_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'send') AS send_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'send_with_caution') AS send_with_caution_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'review') AS review_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND (currently_suppressed OR recommendation_action = 'suppress')) AS suppress_count,
+			COUNT(*) FILTER (WHERE task_state = 'completed' AND NOT currently_suppressed AND recommendation_action = 'drop') AS drop_count
+		FROM source_rows
 		WHERE tenant_id = $1
 		  AND source_key IS NOT NULL
 		  AND is_duplicate IS NOT TRUE
+		  AND identity_key IS NOT NULL
 		  AND ($2::TEXT IS NULL OR source_key = $2)
 		GROUP BY source_key
 		HAVING COUNT(*) >= $3
@@ -107,9 +111,9 @@ async fn http_handler(
 					WHEN 'complaint' THEN 'complained' WHEN 'unsubscribe' THEN 'unsubscribed'
 					WHEN 'open' THEN 'opened' WHEN 'click' THEN 'clicked' ELSE 'delivered' END,
 				o.occurred_at
-			FROM verification_outcomes o
+			FROM verification_outcome_evidence o
 			JOIN LATERAL (
-				SELECT t.source_key FROM v1_task_result t
+				SELECT t.source_key FROM verification_quality_rows t
 				WHERE t.tenant_id = o.tenant_id AND t.source_key IS NOT NULL
 				  AND t.is_duplicate IS NOT TRUE
 				  AND t.canonical_email = o.canonical_email
@@ -181,15 +185,12 @@ async fn http_handler(
 				bounced_count + complained_count + unsubscribed_count,
 				outcome_count,
 			);
-			let quality_grade = if processed_records == 0 {
-				"pending".to_string()
-			} else {
-				quality_grade(risky_pct, invalid_pct, unsafe_recommendation_pct, negative_outcome_pct)
-			};
+			let quality_grade = super::lists::quality::safety_grade(
+                row.get::<Option<i64>, _>("safe_to_send_count").unwrap_or(0), processed_records).to_string();
 			let source_key: String = row.get("source_key");
 			SourceQualityRow {
 				summary: format!(
-					"Of {processed_records} checked records: {risky_pct}% risky and {invalid_pct}% invalid. Negative feedback is {negative_outcome_pct}% of recorded events, not a bounce rate per email sent."
+					"Across lists for this source, of {processed_records} unique checked addresses (latest completed check per address): {risky_pct}% risky and {invalid_pct}% invalid. Negative feedback is {negative_outcome_pct}% of recorded events, not a bounce rate per email sent."
 				),
 				source_key,
 				total_records,
@@ -232,38 +233,6 @@ fn percent(count: i64, total: i64) -> f64 {
 	((count as f64 / total as f64) * 1000.0).round() / 10.0
 }
 
-fn quality_grade(
-	risky_pct: f64,
-	invalid_pct: f64,
-	unsafe_recommendation_pct: f64,
-	negative_outcome_pct: f64,
-) -> String {
-	if invalid_pct >= 20.0 || unsafe_recommendation_pct >= 45.0 || negative_outcome_pct >= 25.0 {
-		"F"
-	} else if invalid_pct >= 10.0
-		|| risky_pct >= 35.0
-		|| unsafe_recommendation_pct >= 30.0
-		|| negative_outcome_pct >= 15.0
-	{
-		"D"
-	} else if invalid_pct >= 5.0
-		|| risky_pct >= 20.0
-		|| unsafe_recommendation_pct >= 20.0
-		|| negative_outcome_pct >= 8.0
-	{
-		"C"
-	} else if invalid_pct >= 2.0
-		|| risky_pct >= 10.0
-		|| unsafe_recommendation_pct >= 10.0
-		|| negative_outcome_pct >= 3.0
-	{
-		"B"
-	} else {
-		"A"
-	}
-	.to_string()
-}
-
 /// GET /v1/sources/quality
 pub fn v1_source_quality(
 	config: Arc<BackendConfig>,
@@ -286,14 +255,5 @@ mod tests {
 		assert_eq!(percent(18, 100), 18.0);
 		assert_eq!(percent(1, 6), 16.7);
 		assert_eq!(percent(1, 0), 0.0);
-	}
-
-	#[test]
-	fn quality_grade_penalizes_bad_sources() {
-		assert_eq!(quality_grade(4.0, 1.0, 3.0, 1.0), "A");
-		assert_eq!(quality_grade(18.0, 3.0, 12.0, 4.0), "B");
-		assert_eq!(quality_grade(25.0, 6.0, 21.0, 9.0), "C");
-		assert_eq!(quality_grade(40.0, 12.0, 31.0, 16.0), "D");
-		assert_eq!(quality_grade(10.0, 22.0, 50.0, 26.0), "F");
 	}
 }

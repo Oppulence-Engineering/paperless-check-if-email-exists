@@ -54,6 +54,27 @@ macro_rules! api_routes {
 }
 
 api_routes!(
+	(
+		route_suppression_restore,
+		"POST",
+		"/v1/suppressions/{id}/restore",
+		|config| crate::http::v1::suppressions::delete::v1_restore_suppression(config)
+	),
+	(route_lists_preview, "POST", "/v1/lists/preview", |config| {
+		crate::http::v1::lists::post::v1_preview_list(config)
+	}),
+	(route_jobs_list, "GET", "/v1/jobs", |config| {
+		crate::http::v1::jobs::list::v1_list_jobs(config)
+	}),
+	(route_history_post, "POST", "/v1/emails/history", |config| {
+		crate::http::v1::email_history::v1_email_history_post(config)
+	}),
+	(
+		route_domain_verify,
+		"POST",
+		"/v1/me/domains/{domain}/verify",
+		|config| crate::http::v1::tenant_domains::v1_verify_tenant_domain(config)
+	),
 	(route_v1_research_create, "POST", "/v1/research", |config| {
 		crate::http::v1::research::v1_create_research(config)
 	}),
@@ -477,6 +498,9 @@ api_routes!(
 		"/v1/me/webhook",
 		|config| crate::http::v1::tenant_settings::v1_clear_tenant_webhook(config)
 	),
+	(route_v1_overview, "GET", "/v1/overview", |config| {
+		crate::http::v1::overview::v1_overview(config)
+	}),
 	(route_v1_me_usage, "GET", "/v1/me/usage", |config| {
 		crate::http::v1::tenant_settings::v1_get_tenant_usage(config)
 	}),

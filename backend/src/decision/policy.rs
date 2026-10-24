@@ -159,7 +159,7 @@ fn evaluate_deliverability(
 		reasons.push(reason(
 			"safe_to_send_false",
 			DecisionSeverity::Warning,
-			"Deliverability mode requires safe_to_send=true.",
+			"Deliverability mode requires an address verified as safe to send.",
 		));
 		return PolicyDecision::Review;
 	}

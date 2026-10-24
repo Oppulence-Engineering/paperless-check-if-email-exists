@@ -43,7 +43,10 @@ describe("PipelineRuns", () => {
 		expect(await screen.findByText("Run 5 · Manual run")).toBeInTheDocument();
 		expect(screen.getByText("Failed")).toBeInTheDocument();
 		expect(screen.getByText(/Webhook delivered · 4 checked · 2 risky/)).toBeInTheDocument();
-		expect(list).toHaveBeenCalledWith({ pipelineId: 1, limit: 20, offset: 0 });
+		expect(list).toHaveBeenCalledWith(
+			{ pipelineId: 1, limit: 20, offset: 0 },
+			{ signal: expect.any(AbortSignal) },
+		);
 
 		fireEvent.click(screen.getByRole("button", { name: "Inspect" }));
 		expect(onInspect).toHaveBeenCalledWith(5);

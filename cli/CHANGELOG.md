@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.4.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.1...v4.4.0) (2026-10-22)
+
+
+### Features
+
+* add email intelligence pipelines and outcomes ([b1cc368](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/b1cc3684ca799904a5079451ebe349a916efcb48))
+* add email intelligence pipelines and provider outcomes ([760f654](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/760f6546336b77f510d0a2d8215b21d3dc87e993))
+* Add reacher_version to JSON output, bump to v0.11.10 ([#1667](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/1667)) ([0b11b6f](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/0b11b6f39271c2e4afa8f216be7f359485c297f3))
+
 ## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-20)
 
 ## [4.3.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.2.0...v4.3.0) (2026-10-16)

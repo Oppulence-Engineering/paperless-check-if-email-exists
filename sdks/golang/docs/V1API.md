@@ -27,6 +27,8 @@ Method | HTTP request | Description
 [**V1ListResearch**](V1API.md#V1ListResearch) | **Get** /v1/research |
 [**V1ListSuppressionEvents**](V1API.md#V1ListSuppressionEvents) | **Get** /v1/suppressions/{id}/events | List suppression events
 [**V1ListSuppressions**](V1API.md#V1ListSuppressions) | **Get** /v1/suppressions | GET /v1/suppressions
+[**V1Overview**](V1API.md#V1Overview) | **Get** /v1/overview |
+[**V1RestoreSuppression**](V1API.md#V1RestoreSuppression) | **Post** /v1/suppressions/{id}/restore |
 [**V1ReverificationStatus**](V1API.md#V1ReverificationStatus) | **Get** /v1/reverification/status | GET /v1/reverification/status
 [**V1SourceQuality**](V1API.md#V1SourceQuality) | **Get** /v1/sources/quality | List source quality
 [**V1UpdateReverification**](V1API.md#V1UpdateReverification) | **Put** /v1/reverification | PUT /v1/reverification
@@ -425,7 +427,7 @@ Name | Type | Description  | Notes
 
 ## V1CreateList
 
-> ListUploadResponse V1CreateList(ctx).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
+> ListUploadResponse V1CreateList(ctx).File(file).IdempotencyKey(idempotencyKey).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 
 POST /v1/lists
 
@@ -443,6 +445,7 @@ import (
 
 func main() {
 	file := os.NewFile(1234, "some_file") // *os.File |
+	idempotencyKey := "idempotencyKey_example" // string | Reuse for retries of the same upload to prevent duplicate jobs and charges (optional)
 	emailColumn := "emailColumn_example" // string |  (optional)
 	name := "name_example" // string |  (optional)
 	policyId := int64(789) // int64 |  (optional)
@@ -450,7 +453,7 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
+	resp, r, err := apiClient.V1API.V1CreateList(context.Background()).File(file).IdempotencyKey(idempotencyKey).EmailColumn(emailColumn).Name(name).PolicyId(policyId).SourceKey(sourceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1CreateList``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -472,6 +475,7 @@ Other parameters are passed through a pointer to a apiV1CreateListRequest struct
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **file** | ***os.File** |  |
+ **idempotencyKey** | **string** | Reuse for retries of the same upload to prevent duplicate jobs and charges |
  **emailColumn** | **string** |  |
  **name** | **string** |  |
  **policyId** | **int64** |  |
@@ -1573,6 +1577,131 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**SuppressionListResponse**](SuppressionListResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1Overview
+
+> OverviewResponse V1Overview(ctx).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.V1API.V1Overview(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1Overview``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1Overview`: OverviewResponse
+	fmt.Fprintf(os.Stdout, "Response from `V1API.V1Overview`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1OverviewRequest struct via the builder pattern
+
+
+### Return type
+
+[**OverviewResponse**](OverviewResponse.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1RestoreSuppression
+
+> V1RestoreSuppression(ctx, id).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	id := int32(56) // int32 |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.V1API.V1RestoreSuppression(context.Background(), id).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `V1API.V1RestoreSuppression``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **int32** |  |
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1RestoreSuppressionRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+ (empty response body)
 
 ### Authorization
 

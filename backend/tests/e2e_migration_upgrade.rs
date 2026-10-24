@@ -132,3 +132,74 @@ async fn gmail_suppression_aliases_keep_their_coverage_when_merged() {
 	.unwrap();
 	assert_eq!(inactive, 1, "a removed entry is not revived");
 }
+
+#[tokio::test]
+#[serial]
+async fn casefold_collisions_keep_protection_history_and_historical_charges() {
+	let seed = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+		.join("tests/fixtures/migration_upgrade/casefold_seed.sql");
+	let db =
+		test_helpers::migrate_scratch_db_to_head(|prefix| prefix < "20261021000001", Some(seed))
+			.await;
+	let pool = db.pool();
+	let tenant: uuid::Uuid = "33333333-3333-4333-8333-333333333333".parse().unwrap();
+	let rows: (i64,i64,i64) = sqlx::query_as("SELECT count(*),count(*) FILTER (WHERE status='active'),count(*) FILTER (WHERE status='active' AND expires_at IS NULL) FROM v1_suppression_entries WHERE tenant_id=$1").bind(tenant).fetch_one(pool).await.unwrap();
+	assert_eq!(rows, (2, 1, 1));
+	assert!(reacher_backend::suppression::has_active_suppression(
+		pool,
+		tenant,
+		"SALES+TAG@EXAMPLE.COM"
+	)
+	.await
+	.unwrap());
+	let events: i64 = sqlx::query_scalar(
+		"SELECT count(*) FROM v1_suppression_events WHERE tenant_id=$1 AND event_type='created'",
+	)
+	.bind(tenant)
+	.fetch_one(pool)
+	.await
+	.unwrap();
+	assert_eq!(events, 2);
+	let outcomes: (i64,i64) = sqlx::query_as("SELECT count(*),count(*) FILTER (WHERE identity_duplicate_of IS NULL) FROM verification_outcomes WHERE tenant_id=$1").bind(tenant).fetch_one(pool).await.unwrap();
+	assert_eq!(outcomes, (2, 1));
+	let tasks: (i64,i64) = sqlx::query_as("SELECT count(*),count(*) FILTER (WHERE NOT is_duplicate) FROM v1_task_result WHERE tenant_id=$1").bind(tenant).fetch_one(pool).await.unwrap();
+	assert_eq!(tasks, (2, 1));
+	let charges: i32 = sqlx::query_scalar("SELECT used_this_period FROM tenants WHERE id=$1")
+		.bind(tenant)
+		.fetch_one(pool)
+		.await
+		.unwrap();
+	assert_eq!(charges, 7);
+	// A compatibility binary can still write a mixed-case key after migration.
+	sqlx::query("INSERT INTO v1_suppression_entries (tenant_id,email,canonical_email,reason) VALUES ($1,'Other@Example.com','Other@example.com','manual')").bind(tenant).execute(pool).await.unwrap();
+	let stored: String = sqlx::query_scalar("SELECT canonical_email FROM v1_suppression_entries WHERE tenant_id=$1 AND email='Other@Example.com'").bind(tenant).fetch_one(pool).await.unwrap();
+	assert_eq!(stored, "other@example.com");
+}
+
+#[tokio::test]
+#[serial]
+async fn casefold_migration_refuses_inflight_identity_collisions() {
+	let db = test_helpers::TestDb::start().await;
+	let tenant = test_helpers::insert_tenant(db.pool(), "inflight-casefold", Some(100), 2).await;
+	let job: i32=sqlx::query_scalar("INSERT INTO v1_bulk_job (tenant_id,total_records,status) VALUES ($1,2,'running') RETURNING id").bind(tenant).fetch_one(db.pool()).await.unwrap();
+	sqlx::query("INSERT INTO v1_task_result (tenant_id,job_id,payload,canonical_email,task_state) VALUES ($1,$2,'{}','case@example.com','queued'),($1,$2,'{}','case@example.com','running')").bind(tenant).bind(job).execute(db.pool()).await.unwrap();
+	let migration = include_str!("../migrations/20261021000001_mailbox_identity_casefold.up.sql");
+	let guard = migration
+		.split("CREATE OR REPLACE FUNCTION")
+		.next()
+		.unwrap();
+	let mut tx = db.pool().begin().await.unwrap();
+	let error = sqlx::raw_sql(guard).execute(&mut *tx).await.unwrap_err();
+	assert!(error
+		.to_string()
+		.contains("requires colliding jobs to finish"));
+	tx.rollback().await.unwrap();
+	let retained: i64 = sqlx::query_scalar(
+		"SELECT count(*) FROM v1_task_result WHERE job_id=$1 AND NOT is_duplicate",
+	)
+	.bind(job)
+	.fetch_one(db.pool())
+	.await
+	.unwrap();
+	assert_eq!(retained, 2);
+}

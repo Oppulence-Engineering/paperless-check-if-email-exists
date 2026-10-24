@@ -25,6 +25,7 @@ import type {
   ListUploadRequest,
   ListUploadResponse,
   OnboardRequest,
+  OverviewResponse,
   PendingVerification,
   ReputationCheckRequest,
   ReputationCheckResponse,
@@ -776,6 +777,48 @@ export const v1GetVerificationOperation = async (
     status: res.status,
     headers: res.headers,
   } as v1GetVerificationOperationResponse;
+};
+
+export type v1OverviewResponse200 = {
+  data: OverviewResponse;
+  status: 200;
+};
+
+export type v1OverviewResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1OverviewResponseSuccess = v1OverviewResponse200 & {
+  headers: Headers;
+};
+export type v1OverviewResponseError = v1OverviewResponseDefault & {
+  headers: Headers;
+};
+
+export type v1OverviewResponse =
+  v1OverviewResponseSuccess | v1OverviewResponseError;
+
+export const getV1OverviewUrl = () => {
+  return `/v1/overview`;
+};
+
+export const v1Overview = async (
+  options?: RequestInit,
+): Promise<v1OverviewResponse> => {
+  const res = await fetch(getV1OverviewUrl(), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1OverviewResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1OverviewResponse;
 };
 
 export type v1CheckReputationResponse200 = {
@@ -1709,4 +1752,51 @@ export const v1ListSuppressionEvents = async (
     status: res.status,
     headers: res.headers,
   } as v1ListSuppressionEventsResponse;
+};
+
+export type v1RestoreSuppressionResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type v1RestoreSuppressionResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1RestoreSuppressionResponseSuccess =
+  v1RestoreSuppressionResponse200 & {
+    headers: Headers;
+  };
+export type v1RestoreSuppressionResponseError =
+  v1RestoreSuppressionResponseDefault & {
+    headers: Headers;
+  };
+
+export type v1RestoreSuppressionResponse =
+  v1RestoreSuppressionResponseSuccess | v1RestoreSuppressionResponseError;
+
+export const getV1RestoreSuppressionUrl = (id: number) => {
+  return `/v1/suppressions/${id}/restore`;
+};
+
+export const v1RestoreSuppression = async (
+  id: number,
+  options?: RequestInit,
+): Promise<v1RestoreSuppressionResponse> => {
+  const res = await fetch(getV1RestoreSuppressionUrl(id), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1RestoreSuppressionResponse["data"] = body
+    ? JSON.parse(body)
+    : undefined;
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1RestoreSuppressionResponse;
 };

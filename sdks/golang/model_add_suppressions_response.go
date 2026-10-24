@@ -25,6 +25,8 @@ type AddSuppressionsResponse struct {
 	Added int64 `json:"added"`
 	Duplicates int64 `json:"duplicates"`
 	EntryIds []int32 `json:"entry_ids,omitempty"`
+	Rejected []AddSuppressionsResponseRejectedInner `json:"rejected,omitempty"`
+	Submitted *int32 `json:"submitted,omitempty"`
 	Updated *int64 `json:"updated,omitempty"`
 }
 
@@ -129,6 +131,70 @@ func (o *AddSuppressionsResponse) SetEntryIds(v []int32) {
 	o.EntryIds = v
 }
 
+// GetRejected returns the Rejected field value if set, zero value otherwise.
+func (o *AddSuppressionsResponse) GetRejected() []AddSuppressionsResponseRejectedInner {
+	if o == nil || IsNil(o.Rejected) {
+		var ret []AddSuppressionsResponseRejectedInner
+		return ret
+	}
+	return o.Rejected
+}
+
+// GetRejectedOk returns a tuple with the Rejected field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AddSuppressionsResponse) GetRejectedOk() ([]AddSuppressionsResponseRejectedInner, bool) {
+	if o == nil || IsNil(o.Rejected) {
+		return nil, false
+	}
+	return o.Rejected, true
+}
+
+// HasRejected returns a boolean if a field has been set.
+func (o *AddSuppressionsResponse) HasRejected() bool {
+	if o != nil && !IsNil(o.Rejected) {
+		return true
+	}
+
+	return false
+}
+
+// SetRejected gets a reference to the given []AddSuppressionsResponseRejectedInner and assigns it to the Rejected field.
+func (o *AddSuppressionsResponse) SetRejected(v []AddSuppressionsResponseRejectedInner) {
+	o.Rejected = v
+}
+
+// GetSubmitted returns the Submitted field value if set, zero value otherwise.
+func (o *AddSuppressionsResponse) GetSubmitted() int32 {
+	if o == nil || IsNil(o.Submitted) {
+		var ret int32
+		return ret
+	}
+	return *o.Submitted
+}
+
+// GetSubmittedOk returns a tuple with the Submitted field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AddSuppressionsResponse) GetSubmittedOk() (*int32, bool) {
+	if o == nil || IsNil(o.Submitted) {
+		return nil, false
+	}
+	return o.Submitted, true
+}
+
+// HasSubmitted returns a boolean if a field has been set.
+func (o *AddSuppressionsResponse) HasSubmitted() bool {
+	if o != nil && !IsNil(o.Submitted) {
+		return true
+	}
+
+	return false
+}
+
+// SetSubmitted gets a reference to the given int32 and assigns it to the Submitted field.
+func (o *AddSuppressionsResponse) SetSubmitted(v int32) {
+	o.Submitted = &v
+}
+
 // GetUpdated returns the Updated field value if set, zero value otherwise.
 func (o *AddSuppressionsResponse) GetUpdated() int64 {
 	if o == nil || IsNil(o.Updated) {
@@ -175,6 +241,12 @@ func (o AddSuppressionsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["duplicates"] = o.Duplicates
 	if !IsNil(o.EntryIds) {
 		toSerialize["entry_ids"] = o.EntryIds
+	}
+	if !IsNil(o.Rejected) {
+		toSerialize["rejected"] = o.Rejected
+	}
+	if !IsNil(o.Submitted) {
+		toSerialize["submitted"] = o.Submitted
 	}
 	if !IsNil(o.Updated) {
 		toSerialize["updated"] = o.Updated

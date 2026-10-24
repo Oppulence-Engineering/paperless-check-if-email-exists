@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.4.0](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.1...v4.4.0) (2026-10-22)
+
+
+### Features
+
+* add bounded company research with evidence and approved exports ([f9f2132](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/f9f2132b1e0a04ab387ad5c1c54fc536a53c4330))
+* integrate MillionVerifier with durable verification and honest evidence ([8e9b90a](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/8e9b90a277ececfa9245a31e43e2c068bdbfea6f))
+
+
+### Bug Fixes
+
+* cover populated overview and legacy list snapshots ([7ba7a0f](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/7ba7a0f65b6ddf849566722f30d30d6108adc901))
+* **research:** align contracts and complete unresolved rows ([#125](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/issues/125)) ([cebc65c](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/cebc65c5585183995be03b1a13165b5a1e13dd0d))
+
+
+### Performance Improvements
+
+* consolidate overview reads and cache public signing keys ([d3dede3](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/commit/d3dede30e48331cbd74f4c8d61fc44ee294caf14))
+
 ## [4.3.1](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/compare/v4.3.0...v4.3.1) (2026-10-18)
 
 

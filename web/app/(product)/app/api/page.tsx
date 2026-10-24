@@ -13,7 +13,7 @@ import ApiExplorerLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "API explorer - Oppulence",
+	title: "API explorer",
 	description: "Run workspace API operations from the signed-in app.",
 };
 

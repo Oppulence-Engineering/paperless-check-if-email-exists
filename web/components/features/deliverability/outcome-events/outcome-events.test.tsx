@@ -69,20 +69,25 @@ describe("OutcomeEvents", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Next" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 })),
+			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20, offset: 20 }), {
+				signal: expect.any(AbortSignal),
+			}),
 		);
 
 		await chooseOption("Event type", "Complaint");
 		await chooseDate("Since", "2026-10-01");
 		fireEvent.click(screen.getByRole("button", { name: "Search" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith({
-				limit: 20,
-				offset: 0,
-				email: undefined,
-				eventType: "complained",
-				since: new Date("2026-10-01T00:00").toISOString(),
-			}),
+			expect(list).toHaveBeenLastCalledWith(
+				{
+					limit: 20,
+					offset: 0,
+					email: undefined,
+					eventType: "complained",
+					since: new Date("2026-10-01T00:00").toISOString(),
+				},
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 	});
 });

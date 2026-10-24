@@ -1,0 +1,30 @@
+name: branch-policy
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-policy:
+    runs-on: ubuntu-latest
+    steps:
+      # Read event metadata only. Never check out or execute PR code with this event.
+      - name: Validate integration and release branches
+        shell: python
+        run: |
+          import json, os, sys
+          with open(os.environ['GITHUB_EVENT_PATH']) as source:
+              event = json.load(source)
+          pr = event['pull_request']
+          base = pr['base']['ref']
+          head = pr['head']['ref']
+          same_repository = (pr['head'].get('repo') or {}).get('full_name') == event['repository']['full_name']
+          if base == 'develop':
+              print('Integration PR: target develop.')
+          elif base == 'main' and head == 'develop' and same_repository:
+              print('Release promotion: develop -> main. Use a merge commit.')
+          else:
+              sys.exit('Feature, fix, dependency and version-preparation PRs must target develop. Only this repository\'s develop branch may target main.')

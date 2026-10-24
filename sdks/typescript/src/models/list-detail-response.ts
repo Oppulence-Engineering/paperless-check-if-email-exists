@@ -55,10 +55,22 @@ export interface ListDetailResponse {
     'name': string;
     /**
      *
+     * @type {string}
+     * @memberof ListDetailResponse
+     */
+    'original_filename'?: string;
+    /**
+     *
      * @type {number}
      * @memberof ListDetailResponse
      */
     'policy_id'?: number | null;
+    /**
+     *
+     * @type {number}
+     * @memberof ListDetailResponse
+     */
+    'rejected_rows'?: number | null;
     /**
      *
      * @type {string}

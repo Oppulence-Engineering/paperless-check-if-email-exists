@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
@@ -58,19 +59,6 @@ const policyModes = [
 	["custom", "Custom (review only)"],
 ] as const;
 
-function requestError(cause: unknown) {
-	const envelope = z
-		.object({
-			response: z.object({ data: z.object({ error: z.string() }) }),
-		})
-		.safeParse(cause);
-	return envelope.success
-		? envelope.data.response.data.error
-		: cause instanceof Error
-			? cause.message
-			: "Request failed.";
-}
-
 function field(form: FormData, name: string) {
 	const value = form.get(name);
 	return typeof value === "string" ? value : "";
@@ -113,7 +101,7 @@ export function VerificationSettings({
 	}[scope];
 	const settingsKey = ["tenant-settings", organizationId];
 	const usageKey = ["tenant-usage", organizationId];
-	const webhookKey = ["tenant-webhook", organizationId];
+	const webhookKey = workflowQueryKey("tenant-webhook");
 	const [notice, setNotice] = useState<string>();
 	const [error, setError] = useState<string>();
 	const settings = useQuery({
@@ -137,8 +125,10 @@ export function VerificationSettings({
 	const reverification = useQuery({
 		queryKey: workflowQueryKey("reverification-status", organizationId),
 		enabled: showDefaults,
-		queryFn: async () =>
-			V1ReverificationStatus200Response.parse((await v1Api.v1ReverificationStatus()).data),
+		queryFn: async ({ signal }) =>
+			V1ReverificationStatus200Response.parse(
+				(await v1Api.v1ReverificationStatus({ signal })).data,
+			),
 	});
 	const lastJobId = reverification.data?.last_job_id;
 	const lastJob = useQuery({
@@ -221,7 +211,7 @@ export function VerificationSettings({
 			await action();
 			setNotice(message);
 		} catch (cause) {
-			setError(requestError(cause));
+			setError(errorMessage(cause));
 		}
 	}
 
@@ -493,7 +483,7 @@ export function VerificationSettings({
 									{reverification.isError ? (
 										<Row>
 											<p className="text-sm text-red-300" role="alert">
-												{requestError(reverification.error)}
+												{errorMessage(reverification.error)}
 											</p>
 										</Row>
 									) : null}
@@ -607,7 +597,7 @@ export function VerificationSettings({
 									<>
 										{saveReverification.isError ? (
 											<p className="text-sm text-red-300" role="alert">
-												{requestError(saveReverification.error)}
+												{errorMessage(saveReverification.error)}
 											</p>
 										) : null}
 										<div className="flex justify-end">

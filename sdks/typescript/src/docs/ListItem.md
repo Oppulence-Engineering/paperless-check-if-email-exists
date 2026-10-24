@@ -9,10 +9,12 @@ Name | Type | Description | Notes
 **created_at** | **string** |  | [required]
 **email_column** | **string** |  | [required]
 **id** | **number** |  | [required]
+**job_id** | **number** |  | [optional]
 **name** | **string** |  | [required]
 **original_filename** | **string** |  | [required]
 **source_key** | **string** |  | [optional]
 **status** | **string** |  | [required]
+**total_processed** | **number** |  | [optional]
 **total_rows** | **number** |  | [required]
 
 ## Example
@@ -25,10 +27,12 @@ const instance: ListItem = {
     created_at: 'example',
     email_column: 'example',
     id: 0,
+    job_id: 0,
     name: 'Weekly Cleanup',
     original_filename: 'example',
     source_key: 'example',
     status: 'example',
+    total_processed: 0,
     total_rows: 0,
 };
 ```
