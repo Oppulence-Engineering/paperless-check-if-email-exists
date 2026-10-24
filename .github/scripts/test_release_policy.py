@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -99,6 +100,58 @@ class VersionPolicyTests(unittest.TestCase):
                          ('4.5.0', '04.6.0'), ('4.5.0', '4.6.0-01'), ('4.5.0', '4.6.0;echo nope'), ('4.5.0', None)]:
             with self.subTest(old=old, new=new), self.assertRaises(ValueError):
                 policy.release_version({'backend': old}, {'backend': new})
+
+
+class ReleaseRefTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.repo = Path(self.directory.name)
+        self.git('init', '-q')
+        self.git('config', 'user.name', 'Release policy test')
+        self.git('config', 'user.email', 'test@example.invalid')
+        self.git('commit', '-q', '--allow-empty', '-m', 'Released baseline')
+        self.main_sha = self.git('rev-parse', 'HEAD')
+        self.git('update-ref', 'refs/remotes/origin/main', self.main_sha)
+        self.git('tag', 'v4.6.0')
+        self.git('commit', '-q', '--allow-empty', '-m', 'Unreleased development change')
+        self.develop_sha = self.git('rev-parse', 'HEAD')
+        self.git('tag', 'v4.7.0')
+
+    def git(self, *args):
+        return subprocess.check_output(['git', *args], cwd=self.repo, text=True).strip()
+
+    def validate(self, tag, sha):
+        workflow = yaml.safe_load((ROOT / '.github/workflows/validate-release-ref.yml').read_text())
+        code = workflow['jobs']['validate']['steps'][-1]['run']
+        output = self.repo / 'output'
+        result = subprocess.run(['bash', '-c', code], cwd=self.repo, capture_output=True, text=True,
+                                env={**os.environ, 'RELEASE_TAG': tag, 'EXPECTED_SHA': sha, 'GITHUB_OUTPUT': str(output)})
+        return result, output.read_text() if output.exists() else ''
+
+    def test_release_tag_returns_exact_main_commit(self):
+        result, output = self.validate('v4.6.0', self.main_sha)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f'sha={self.main_sha}', output)
+        self.assertIn('version=4.6.0', output)
+
+    def test_tag_on_unreleased_development_commit_is_rejected(self):
+        result, output = self.validate('v4.7.0', self.develop_sha)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(output, '')
+
+    def test_moved_tag_cannot_change_triggering_release_source(self):
+        result, output = self.validate('v4.6.0', self.develop_sha)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(output, '')
+
+    def test_branch_or_shell_text_is_not_a_release_tag(self):
+        for tag in ('main', 'v4.6.0;touch injected', '$(touch injected)'):
+            with self.subTest(tag=tag):
+                result, output = self.validate(tag, self.main_sha)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(output, '')
+                self.assertFalse((self.repo / 'injected').exists())
 
 
 class PublicationTests(unittest.TestCase):
