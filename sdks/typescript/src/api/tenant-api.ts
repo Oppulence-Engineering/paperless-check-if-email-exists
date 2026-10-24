@@ -42,6 +42,10 @@ import type { ScorePolicyListResponse } from '../models';
 // @ts-ignore
 import type { ScorePolicyView } from '../models';
 // @ts-ignore
+import type { TenantDomainResponse } from '../models';
+// @ts-ignore
+import type { TenantDomainsListResponse } from '../models';
+// @ts-ignore
 import type { TenantSettingsResponse } from '../models';
 // @ts-ignore
 import type { TenantUsageResponse } from '../models';
@@ -855,6 +859,42 @@ export const TenantApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         *
+         * @param {string} domain
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1VerifyTenantDomain: async (domain: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'domain' is not null or undefined
+            assertParamExists('v1VerifyTenantDomain', 'domain', domain)
+            const localVarPath = `/v1/me/domains/{domain}/verify`
+                .replace(`{${"domain"}}`, encodeURIComponent(String(domain)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -909,7 +949,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1CreateTenantDomain(createTenantDomainRequest: CreateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1CreateTenantDomain(createTenantDomainRequest: CreateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantDomainResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1CreateTenantDomain(createTenantDomainRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1CreateTenantDomain']?.[localVarOperationServerIndex]?.url;
@@ -985,7 +1025,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1GetTenantDomain(domain: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1GetTenantDomain(domain: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantDomainResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1GetTenantDomain(domain, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1GetTenantDomain']?.[localVarOperationServerIndex]?.url;
@@ -1060,7 +1100,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ListTenantDomains(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1ListTenantDomains(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantDomainsListResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListTenantDomains(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1ListTenantDomains']?.[localVarOperationServerIndex]?.url;
@@ -1101,7 +1141,7 @@ export const TenantApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1UpdateTenantDomain(domain: string, updateTenantDomainRequest: UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async v1UpdateTenantDomain(domain: string, updateTenantDomainRequest: UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantDomainResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantDomain(domain, updateTenantDomainRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateTenantDomain']?.[localVarOperationServerIndex]?.url;
@@ -1131,6 +1171,18 @@ export const TenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1UpdateTenantWebhook(updateWebhookRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TenantApi.v1UpdateTenantWebhook']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @param {string} domain
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1VerifyTenantDomain(domain: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TenantDomainResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1VerifyTenantDomain(domain, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TenantApi.v1VerifyTenantDomain']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -1178,7 +1230,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse> {
             return localVarFp.v1CreateTenantDomain(requestParameters.createTenantDomainRequest, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1236,7 +1288,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1GetTenantDomain(requestParameters: TenantApiV1GetTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1GetTenantDomain(requestParameters: TenantApiV1GetTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse> {
             return localVarFp.v1GetTenantDomain(requestParameters.domain, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1291,7 +1343,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainsListResponse> {
             return localVarFp.v1ListTenantDomains(options).then((request) => request(axios, basePath));
         },
         /**
@@ -1320,7 +1372,7 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse> {
             return localVarFp.v1UpdateTenantDomain(requestParameters.domain, requestParameters.updateTenantDomainRequest, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1342,6 +1394,15 @@ export const TenantApiFactory = function (configuration?: Configuration, basePat
          */
         v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse> {
             return localVarFp.v1UpdateTenantWebhook(requestParameters.updateWebhookRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @param {TenantApiV1VerifyTenantDomainRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1VerifyTenantDomain(requestParameters: TenantApiV1VerifyTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse> {
+            return localVarFp.v1VerifyTenantDomain(requestParameters.domain, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1388,7 +1449,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1CreateTenantDomain(requestParameters: TenantApiV1CreateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse>;
 
     /**
      *
@@ -1446,7 +1507,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1GetTenantDomain(requestParameters: TenantApiV1GetTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1GetTenantDomain(requestParameters: TenantApiV1GetTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse>;
 
     /**
      * Get tenant runtime settings and default operational behavior.
@@ -1501,7 +1562,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1ListTenantDomains(options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainsListResponse>;
 
     /**
      *
@@ -1530,7 +1591,7 @@ export interface TenantApiInterface {
      * @throws {RequiredError}
      * @memberof TenantApiInterface
      */
-    v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    v1UpdateTenantDomain(requestParameters: TenantApiV1UpdateTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse>;
 
     /**
      * Update tenant settings such as retention, default webhook URL, or secret.
@@ -1551,6 +1612,15 @@ export interface TenantApiInterface {
      * @memberof TenantApiInterface
      */
     v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantWebhookResponse>;
+
+    /**
+     *
+     * @param {TenantApiV1VerifyTenantDomainRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApiInterface
+     */
+    v1VerifyTenantDomain(requestParameters: TenantApiV1VerifyTenantDomainRequest, options?: RawAxiosRequestConfig): AxiosPromise<TenantDomainResponse>;
 
 }
 
@@ -1814,6 +1884,20 @@ export interface TenantApiV1UpdateTenantWebhookRequest {
 }
 
 /**
+ * Request parameters for v1VerifyTenantDomain operation in TenantApi.
+ * @export
+ * @interface TenantApiV1VerifyTenantDomainRequest
+ */
+export interface TenantApiV1VerifyTenantDomainRequest {
+    /**
+     *
+     * @type {string}
+     * @memberof TenantApiV1VerifyTenantDomain
+     */
+    readonly domain: string
+}
+
+/**
  * TenantApi - object-oriented interface
  * @export
  * @class TenantApi
@@ -2060,5 +2144,16 @@ export class TenantApi extends BaseAPI implements TenantApiInterface {
      */
     public v1UpdateTenantWebhook(requestParameters: TenantApiV1UpdateTenantWebhookRequest, options?: RawAxiosRequestConfig) {
         return TenantApiFp(this.configuration).v1UpdateTenantWebhook(requestParameters.updateWebhookRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {TenantApiV1VerifyTenantDomainRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TenantApi
+     */
+    public v1VerifyTenantDomain(requestParameters: TenantApiV1VerifyTenantDomainRequest, options?: RawAxiosRequestConfig) {
+        return TenantApiFp(this.configuration).v1VerifyTenantDomain(requestParameters.domain, options).then((request) => request(this.axios, this.basePath));
     }
 }

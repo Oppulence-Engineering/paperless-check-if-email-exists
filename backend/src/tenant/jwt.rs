@@ -6,7 +6,9 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use ring::signature::{UnparsedPublicKey, ED25519};
 use serde::Deserialize;
 use sqlx::PgPool;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::{Arc, LazyLock};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -15,12 +17,12 @@ struct Header {
 	kid: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct Jwks {
 	keys: Vec<Jwk>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct Jwk {
 	kid: String,
 	kty: String,
@@ -144,10 +146,17 @@ pub fn route_allowed(role: &str, method: &str, path: &str) -> bool {
 		return false;
 	}
 	match (method, path) {
-		("GET", "/v1/me" | "/v1/me/usage" | "/v1/lists" | "/v1/query") => true,
-		("GET", path) if path.starts_with("/v1/lists/") => true,
+		(
+			"GET",
+			"/v1/overview" | "/v1/me" | "/v1/me/usage" | "/v1/lists" | "/v1/query" | "/v1/jobs",
+		) => true,
+		("GET", path) if path.starts_with("/v1/lists/") || path.starts_with("/v1/jobs/") => true,
 		("GET", path) if path.starts_with("/v1/emails/") && path.ends_with("/history") => true,
-		("POST", "/v1/check_email" | "/v1/find_email" | "/v1/bulk" | "/v1/lists") => true,
+		(
+			"POST",
+			"/v1/check_email" | "/v1/find_email" | "/v1/bulk" | "/v1/lists" | "/v1/lists/preview"
+			| "/v1/emails/history",
+		) => true,
 		_ => false,
 	}
 }
@@ -176,8 +185,9 @@ pub async fn resolve_from_jwt(
 	method: &str,
 	path: &str,
 ) -> std::result::Result<TenantContext, JwtAuthError> {
-	// ponytail: Fetch keys per request; cache them if this becomes a measured latency cost.
-	let jwks = fetch_jwks(config)
+	let header = token_header(token).map_err(JwtAuthError::Invalid)?;
+	let jwks = JWKS_CACHE
+		.get(config, &header.kid)
 		.await
 		.map_err(JwtAuthError::Unavailable)?;
 	let claims = verify(token, &jwks, config).map_err(JwtAuthError::Invalid)?;
@@ -210,6 +220,7 @@ pub async fn resolve_from_jwt(
 	// Same limits as the tenant's API keys get. Without the server-wide
 	// fallback, console requests ran unthrottled, and the tenant's throttle
 	// manager was rebuilt each time a request switched between the two.
+	context.user_id = Some(claims.sub.clone());
 	context.throttle = with_global_throttle(context.throttle, global_throttle);
 	context.scopes = if role_is_admin(&claims.org_role) {
 		vec!["*".into()]
@@ -224,17 +235,106 @@ pub async fn resolve_from_jwt(
 	Ok(context)
 }
 
-async fn fetch_jwks(config: &JwtAuthConfig) -> Result<Jwks> {
-	Ok(reqwest::Client::builder()
-		.timeout(std::time::Duration::from_secs(5))
-		.redirect(reqwest::redirect::Policy::none())
-		.build()?
-		.get(&config.jwks_url)
-		.send()
-		.await?
-		.error_for_status()?
-		.json::<Jwks>()
-		.await?)
+const JWKS_TTL: Duration = Duration::from_secs(300);
+const JWKS_REFRESH_COOLDOWN: Duration = Duration::from_secs(10);
+static JWKS_CACHE: LazyLock<JwksCache> = LazyLock::new(JwksCache::new);
+
+struct JwksCache {
+	client: reqwest::Client,
+	state: Mutex<JwksCacheState>,
+	refresh: Mutex<()>,
+}
+
+#[derive(Default)]
+struct JwksCacheState {
+	origin: Option<(String, String)>,
+	keys: Option<(Instant, Arc<Jwks>)>,
+	last_attempt: Option<Instant>,
+}
+
+impl JwksCache {
+	fn new() -> Self {
+		Self {
+			client: reqwest::Client::builder()
+				.timeout(Duration::from_secs(5))
+				.redirect(reqwest::redirect::Policy::none())
+				.build()
+				.expect("JWKS HTTP client"),
+			state: Mutex::new(JwksCacheState::default()),
+			refresh: Mutex::new(()),
+		}
+	}
+
+	async fn get(&self, config: &JwtAuthConfig, kid: &str) -> Result<Arc<Jwks>> {
+		// Fresh known keys do not wait behind an unknown-key refresh.
+		let origin = (config.issuer.clone(), config.jwks_url.clone());
+		{
+			let state = self.state.lock().await;
+			if state.origin.as_ref() == Some(&origin) {
+				if let Some((at, keys)) = &state.keys {
+					if at.elapsed() < JWKS_TTL && keys.keys.iter().any(|key| key.kid == kid) {
+						return Ok(Arc::clone(keys));
+					}
+				}
+			}
+		}
+		let _refresh = self.refresh.lock().await;
+		// Only the configured issuer can select the source of cached keys.
+		let mut state = self.state.lock().await;
+		if state.origin.as_ref() != Some(&origin) {
+			*state = JwksCacheState {
+				origin: Some(origin),
+				..Default::default()
+			};
+		}
+		let fresh = state
+			.keys
+			.as_ref()
+			.filter(|(at, _)| at.elapsed() < JWKS_TTL);
+		if let Some((_, keys)) = fresh {
+			if keys.keys.iter().any(|key| key.kid == kid) {
+				return Ok(Arc::clone(keys));
+			}
+		}
+		if state
+			.last_attempt
+			.is_some_and(|at| at.elapsed() < JWKS_REFRESH_COOLDOWN)
+		{
+			return fresh
+				.map(|(_, keys)| Arc::clone(keys))
+				.context("Backend signing keys are temporarily unavailable");
+		}
+		// The refresh lock coalesces misses while cached reads continue.
+		state.last_attempt = Some(Instant::now());
+		drop(state);
+		let keys = self
+			.client
+			.get(&config.jwks_url)
+			.send()
+			.await?
+			.error_for_status()?
+			.json::<Jwks>()
+			.await?;
+		if keys.keys.is_empty() {
+			bail!("Backend signing keys are empty");
+		}
+		let keys = Arc::new(keys);
+		self.state.lock().await.keys = Some((Instant::now(), Arc::clone(&keys)));
+		Ok(keys)
+	}
+}
+
+fn token_header(token: &str) -> Result<Header> {
+	if token.len() > 16_384 || token.split('.').count() != 3 {
+		bail!("Malformed backend token");
+	}
+	let header: Header = serde_json::from_slice(
+		&URL_SAFE_NO_PAD.decode(token.split('.').next().unwrap_or_default())?,
+	)?;
+	if header.alg != "EdDSA" || header.kid.is_empty() {
+		bail!("Unsupported backend token header");
+	}
+	Ok(header)
 }
 
 /// Creates or updates the tenant for a workspace from the session token.
@@ -264,7 +364,12 @@ pub async fn sync_tenant_from_claims(
 		   WHEN $5 IS NULL OR $5 = 'enterprise' OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
 		   THEN tenants.monthly_email_limit ELSE EXCLUDED.monthly_email_limit END, \
 		 plan_from_billing = CASE WHEN $5 IS NULL OR (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) \
-		   THEN tenants.plan_from_billing ELSE EXCLUDED.plan_from_billing END",
+		   THEN tenants.plan_from_billing ELSE EXCLUDED.plan_from_billing END \
+		 WHERE tenants.name IS DISTINCT FROM EXCLUDED.name \
+		 OR ($5 IS NOT NULL AND NOT (EXCLUDED.plan_tier = 'free' AND NOT tenants.plan_from_billing) AND ( \
+		 tenants.plan_tier IS DISTINCT FROM EXCLUDED.plan_tier OR tenants.plan_name IS DISTINCT FROM EXCLUDED.plan_name \
+		 OR tenants.plan_from_billing IS DISTINCT FROM EXCLUDED.plan_from_billing \
+		 OR ($5 <> 'enterprise' AND tenants.monthly_email_limit IS DISTINCT FROM EXCLUDED.monthly_email_limit)))",
 	)
 	.bind(tenant_id)
 	.bind(org_name)
@@ -286,6 +391,72 @@ mod tests {
 	use ring::signature::{Ed25519KeyPair, KeyPair};
 	use serde_json::json;
 	use std::time::{SystemTime, UNIX_EPOCH};
+
+	#[tokio::test]
+	async fn jwks_cache_coalesces_rotation_and_fails_closed_after_expiry() {
+		use std::sync::{
+			atomic::{AtomicUsize, Ordering},
+			Arc,
+		};
+		use std::time::Instant;
+		use warp::Filter;
+		let hits = Arc::new(AtomicUsize::new(0));
+		let version = Arc::new(AtomicUsize::new(1));
+		let route = warp::any().map({ let hits=hits.clone(); let version=version.clone(); move || {
+            hits.fetch_add(1,Ordering::SeqCst);
+            warp::reply::with_status(warp::reply::json(&json!({"keys":[{"kid":version.load(Ordering::SeqCst).to_string(),"kty":"OKP","crv":"Ed25519","x":"key"}]})), if version.load(Ordering::SeqCst)==0 {warp::http::StatusCode::SERVICE_UNAVAILABLE} else {warp::http::StatusCode::OK})
+        }});
+		let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let address = listener.local_addr().unwrap();
+		let server = tokio::spawn(warp::serve(route).incoming(listener).run());
+		let config = JwtAuthConfig {
+			jwks_url: format!("http://{address}"),
+			issuer: "test".into(),
+			audience: "test".into(),
+		};
+		let cache = super::JwksCache::new();
+		let (a, b) = tokio::join!(cache.get(&config, "1"), cache.get(&config, "1"));
+		assert!(a.is_ok() && b.is_ok());
+		assert_eq!(hits.load(Ordering::SeqCst), 1);
+		cache.get(&config, "unknown").await.unwrap();
+		assert_eq!(
+			hits.load(Ordering::SeqCst),
+			1,
+			"unknown key attempts are bounded"
+		);
+		let refreshing = cache.refresh.lock().await;
+		assert!(
+			tokio::time::timeout(
+				std::time::Duration::from_millis(20),
+				cache.get(&config, "1")
+			)
+			.await
+			.unwrap()
+			.is_ok(),
+			"fresh keys must not wait for refresh"
+		);
+		drop(refreshing);
+		version.store(2, Ordering::SeqCst);
+		cache.state.lock().await.last_attempt = Some(Instant::now() - super::JWKS_REFRESH_COOLDOWN);
+		assert_eq!(cache.get(&config, "2").await.unwrap().keys[0].kid, "2");
+		assert_eq!(hits.load(Ordering::SeqCst), 2);
+		version.store(0, Ordering::SeqCst);
+		{
+			let mut state = cache.state.lock().await;
+			state.keys.as_mut().unwrap().0 = Instant::now() - super::JWKS_TTL;
+			state.last_attempt = None;
+		}
+		assert!(
+			cache.get(&config, "2").await.is_err(),
+			"expired keys cannot authenticate during an outage"
+		);
+		assert!(
+			cache.get(&config, "2").await.is_err(),
+			"failed refreshes stay bounded"
+		);
+		assert!(super::token_header("invalid").is_err());
+		server.abort();
+	}
 
 	#[test]
 	fn plan_claim_sets_the_published_allowance() {

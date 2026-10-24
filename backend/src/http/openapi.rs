@@ -39,6 +39,11 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 #[derive(OpenApi)]
 #[openapi(
 	paths(
+		crate::http::v1::suppressions::delete::v1_restore_suppression,
+		crate::http::v1::lists::post::v1_preview_list,
+		crate::http::v1::jobs::list::v1_list_jobs,
+		crate::http::v1::email_history::v1_email_history_post,
+		crate::http::v1::tenant_domains::v1_verify_tenant_domain,
 		crate::http::v1::research::v1_create_research,
 		crate::http::v1::research::v1_list_research,
 		crate::http::v1::research::v1_get_research,
@@ -143,6 +148,7 @@ const SCALAR_DOCS_HTML: &str = r#"<!doctype html>
 		tenant_settings::v1_update_tenant_webhook,
 		tenant_settings::v1_clear_tenant_webhook,
 		tenant_settings::v1_get_tenant_usage,
+        crate::http::v1::overview::v1_overview,
 		crate::http::v1::score_policies::v1_create_score_policy,
 		crate::http::v1::score_policies::v1_list_score_policies,
 		crate::http::v1::score_policies::v1_get_score_policy,
@@ -1628,6 +1634,9 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"list_id": { "type": "integer", "format": "int32" },
 				"job_id": { "type": "integer", "format": "int32" },
 				"total_rows": { "type": "integer", "format": "int32" },
+				"unique_emails": { "type": "integer", "format": "int32" },
+				"duplicates": { "type": "integer", "format": "int32" },
+				"rejected": { "type": "array", "items": { "$ref": "#/components/schemas/RejectedRow" } },
 				"email_column": { "type": "string" }
 			},
 			"required": ["list_id", "job_id", "total_rows", "email_column"]
@@ -1641,6 +1650,8 @@ fn add_phase_two_schemas(spec: &mut Value) {
 			"properties": {
 				"id": { "type": "integer", "format": "int32" },
 				"name": { "type": "string" },
+				"job_id": { "type": "integer", "format": "int32" },
+				"total_processed": { "type": "integer", "format": "int64" },
 				"original_filename": { "type": "string" },
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
@@ -1687,6 +1698,7 @@ fn add_phase_two_schemas(spec: &mut Value) {
 				"id": { "type": "integer", "format": "int32" },
 				"job_id": { "type": "integer", "format": "int32" },
 				"name": { "type": "string" },
+				"original_filename": { "type": "string" },
 				"status": { "type": "string" },
 				"total_rows": { "type": "integer", "format": "int32" },
 				"email_column": { "type": "string" },
@@ -2370,6 +2382,44 @@ fn add_phase_two_schemas(spec: &mut Value) {
 }
 
 fn patch_phase_two_paths(spec: &mut Value) {
+	set_request_body(
+		spec,
+		"/v1/lists/preview",
+		"post",
+		"multipart/form-data",
+		"ListUploadRequest",
+		true,
+	);
+	for (field, schema) in [
+		("row_number", json!({"type":"integer","nullable":true})),
+		("original_email", json!({"type":"string","nullable":true})),
+		("is_duplicate", json!({"type":"boolean"})),
+		(
+			"canonical_task_id",
+			json!({"type":"integer","nullable":true}),
+		),
+	] {
+		set_schema_property(spec, "JobTaskResult", field, schema);
+	}
+	set_schema_property(
+		spec,
+		"ListDetailResponse",
+		"rejected_rows",
+		json!({"type":"integer", "nullable":true}),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"submitted",
+		json!({"type":"integer"}),
+	);
+	set_schema_property(
+		spec,
+		"AddSuppressionsResponse",
+		"rejected",
+		json!({"type":"array","items":{"type":"object","properties":{"email":{"type":"string"},"reason":{"type":"string"}},"required":["email","reason"]}}),
+	);
+
 	insert_schema(
 		spec,
 		"BulkCreateRequest",
@@ -2540,6 +2590,11 @@ fn patch_phase_two_paths(spec: &mut Value) {
 		json_response("FindEmailStatusResponse", "Finder job result"),
 	);
 
+	spec["paths"]["/v1/lists"]["post"]["parameters"] = json!([{
+		"name": "Idempotency-Key", "in": "header", "required": false,
+		"schema": { "type": "string", "maxLength": 200 },
+		"description": "Reuse for retries of the same upload to prevent duplicate jobs and charges"
+	}]);
 	set_request_body(
 		spec,
 		"/v1/lists",

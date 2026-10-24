@@ -34,6 +34,14 @@ export function miscDetails(result: CheckResult) {
 	return isCoreError(result.misc) ? { error: errorOf(result.misc) } : { details: result.misc };
 }
 
+/** Conflicting provider evidence must not produce opposite labels on the same result. */
+export function freeProviderOf(result: CheckResult): boolean | undefined {
+	const score = result.score.signals.is_free_provider;
+	const misc = miscDetails(result).details?.is_b2c;
+	if (typeof score === "boolean" && typeof misc === "boolean" && score !== misc) return undefined;
+	return typeof misc === "boolean" ? misc : undefined;
+}
+
 /** The decision engine output for this result, when the backend sent one. */
 export function recommendationOf(result: CheckResult) {
 	return parseRecommendation(result.recommendation);

@@ -1,6 +1,7 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -49,11 +50,11 @@ export function Stat({ label, value }: { label: string; value: ReactNode }) {
 export function JobReview({ className, jobId, ...props }: JobReviewProps) {
 	const approval = useQuery({
 		queryKey: workflowQueryKey("jobs", jobId, "approval"),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1JobApprovalChecklist200Response.parse(
-				(await jobsApi.v1JobApprovalChecklist({ jobId })).data,
+				(await jobsApi.v1JobApprovalChecklist({ jobId }, { signal })).data,
 			),
-		refetchInterval: (query) => (query.state.data?.categories.unprocessed ? 5_000 : false),
+		staleTime: 60_000,
 	});
 	const data = approval.data;
 
@@ -65,7 +66,7 @@ export function JobReview({ className, jobId, ...props }: JobReviewProps) {
 					className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					role="alert"
 				>
-					{approval.error.message}
+					{errorMessage(approval.error)}
 				</p>
 			) : null}
 			{data ? (

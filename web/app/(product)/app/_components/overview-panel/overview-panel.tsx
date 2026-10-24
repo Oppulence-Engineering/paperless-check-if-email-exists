@@ -1,24 +1,22 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import Form from "next/form";
 import Link from "next/link";
-import { useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import {
-	queryOptions,
-	useMutation,
-	useQuery,
-	useQueryClient,
-	type UseQueryResult,
-} from "@tanstack/react-query";
+	createContext,
+	useContext,
+	useState,
+	type ComponentPropsWithoutRef,
+	type ReactNode,
+} from "react";
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import {
 	AccountApi,
 	Configuration,
-	JobsApi,
 	OutcomesApi,
-	PipelinesApi,
-	TenantApi,
 	V1Api,
 	VerificationApi,
 } from "@oppulence/reacher-sdk";
@@ -31,90 +29,93 @@ import { Progress } from "@oppulence/ui/components/progress";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { EmptyState, Group, Page, Pill, Row, Section } from "@/components/platform/page-kit";
-import { fetchV1ListLists } from "@/hooks/queries/utils/fetch-v1-list-lists";
-import { v1ListListsKeys } from "@/hooks/queries/utils/v1-list-lists-keys";
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
-import { V1JobApprovalChecklist200Response } from "@/lib/api/generated/zod/jobs/jobs";
 import { V1ListProviderEndpoints200Response } from "@/lib/api/generated/zod/outcomes/outcomes";
-import { V1ListPipelines200Response } from "@/lib/api/generated/zod/pipelines/pipelines";
-import { V1GetTenantUsage200Response } from "@/lib/api/generated/zod/tenant/tenant";
-import {
-	V1GetList200Response,
-	V1ListLists200Response,
-	V1ListSuppressions200Response,
-	V1ReverificationStatus200Response,
-} from "@/lib/api/generated/zod/v1/v1";
-import { V1ListAlerts200Response } from "@/lib/api/generated/zod/verification/verification";
+import { ListTenantApiKeys200Response } from "@/lib/api/generated/zod/account/account";
+import { V1Overview200Response } from "@/lib/api/generated/zod/v1/v1";
 import { ArrowRight, ListBullets } from "@/lib/icons";
 import { alertType, humanize, listStatus, pipelineRunStatus } from "@/lib/verification/labels";
 
-import {
-	ApiKeysSchema,
-	BulkProgressSchema,
-	OutcomePageSchema,
-	RunStatusSchema,
-	TenantDomainsSchema,
-	type OverviewPanelPropsFields,
-} from "./overview-panel.schema";
+import { type OverviewPanelPropsFields } from "./overview-panel.schema";
 
 /** @oppulence-gen kind=component Owned by `overview-panel.lit.ts`. */
 export type OverviewPanelProps = OverviewPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
 const config = new Configuration({ basePath: "/api/backend" });
 const accountApi = new AccountApi(config);
-const jobsApi = new JobsApi(config);
 const outcomesApi = new OutcomesApi(config);
-const pipelinesApi = new PipelinesApi(config);
-const tenantApi = new TenantApi(config);
 const v1Api = new V1Api(config);
 const verificationApi = new VerificationApi(config);
 
 const POLL_MS = 5_000;
-const OUTCOME_PAGE = 500;
-const WEEK_MS = 7 * 24 * 60 * 60 * 1_000;
 
 /** Poll a list every 5 s while the backend checks its rows. Stop when the list is finished. */
 export function listPollInterval(status: string | undefined): number | false {
 	return status === "uploading" || status === "processing" ? POLL_MS : false;
 }
 
-// Queries that more than one section reads. TanStack Query sends one request for each key.
-const listsQuery = queryOptions({
-	queryKey: v1ListListsKeys.list({ limit: 5 }),
-	queryFn: ({ signal }) => fetchV1ListLists({ limit: 5 }, signal),
-});
-const domainsQuery = queryOptions({
-	queryKey: workflowQueryKey("overview", "domains"),
-	queryFn: async ({ signal }) =>
-		TenantDomainsSchema.parse((await tenantApi.v1ListTenantDomains({ signal })).data),
-});
-const reverificationQuery = queryOptions({
-	queryKey: workflowQueryKey("overview", "reverification"),
-	queryFn: async ({ signal }) =>
-		V1ReverificationStatus200Response.parse((await v1Api.v1ReverificationStatus({ signal })).data),
-});
+type Overview = z.infer<typeof V1Overview200Response>;
+type SectionQuery<T> = Pick<UseQueryResult<T>, "data" | "isPending" | "isError" | "refetch">;
+const OverviewContext = createContext<UseQueryResult<Overview> | null>(null);
+function useOverview() {
+	const query = useContext(OverviewContext);
+	if (!query) throw new Error("Overview provider is required");
+	return query;
+}
+function useSection<K extends Exclude<keyof Overview, "usage">>(
+	key: K,
+): SectionQuery<NonNullable<Overview[K]["data"]>> {
+	const query = useOverview();
+	const section = query.data?.[key];
+	return {
+		data: section?.data ?? undefined,
+		isPending: query.isPending,
+		isError: query.isError || (!!section && section.status !== "ready"),
+		refetch: query.refetch,
+	} as SectionQuery<NonNullable<Overview[K]["data"]>>;
+}
 
 const number = (value: number) => value.toLocaleString();
 const dateTime = (value: string) => new Date(value).toLocaleString();
 const linkRow = "flex items-center gap-4 p-5 transition-colors hover:bg-white/[0.02]";
 
 export function OverviewPanel({ className, ...props }: OverviewPanelProps) {
+	const overview = useQuery({
+		queryKey: workflowQueryKey("overview"),
+		queryFn: async ({ signal }) =>
+			V1Overview200Response.parse((await v1Api.v1Overview({ signal })).data),
+		staleTime: 30_000,
+		refetchInterval: (query) =>
+			query.state.status === "error"
+				? false
+				: query.state.data?.lists.data?.some((list) => listPollInterval(list.status)) ||
+					  query.state.data?.pipelines.data?.some((pipeline) =>
+							["queued", "running", "verifying", "delivering", "pending"].includes(
+								pipeline.last_run_status ?? "",
+							),
+					  )
+					? POLL_MS
+					: false,
+		refetchOnWindowFocus: true,
+	});
 	return (
-		<Page description="What needs your attention in this workspace." title="Overview">
-			<section
-				className={cn("flex flex-col gap-10", className)}
-				data-slot="overview-panel"
-				{...props}
-			>
-				<AlertsSection />
-				<UsageSection />
-				<ListsSection />
-				<DeliverabilitySection />
-				<AutomationSection />
-				<QuickCheckSection />
-				<SetupSection />
-			</section>
-		</Page>
+		<OverviewContext.Provider value={overview}>
+			<Page description="What needs your attention in this workspace." title="Overview">
+				<section
+					className={cn("flex flex-col gap-10", className)}
+					data-slot="overview-panel"
+					{...props}
+				>
+					<AlertsSection />
+					<UsageSection />
+					<ListsSection />
+					<DeliverabilitySection />
+					<AutomationSection />
+					<QuickCheckSection />
+					<DeferredSetup />
+				</section>
+			</Page>
+		</OverviewContext.Provider>
 	);
 }
 
@@ -181,23 +182,21 @@ function Figure<T>({
 	query,
 }: {
 	children: (data: T) => ReactNode;
-	query: UseQueryResult<T>;
+	query: SectionQuery<T>;
 }) {
 	if (query.isPending) return <span className="text-sm text-[#858585]">Loading…</span>;
 	if (query.isError) return <span className="text-sm text-red-300">Not available</span>;
-	return <span className="text-sm text-neutral-300 tabular-nums">{children(query.data)}</span>;
+	return (
+		<span className="text-sm text-neutral-300 tabular-nums">
+			{query.data === undefined ? "Not available" : children(query.data)}
+		</span>
+	);
 }
 
 function AlertsSection() {
 	const client = useQueryClient();
-	const alertsKey = workflowQueryKey("overview", "alerts");
-	const alerts = useQuery({
-		queryKey: alertsKey,
-		queryFn: async ({ signal }) =>
-			V1ListAlerts200Response.parse(
-				(await verificationApi.v1ListAlerts({ status: "unread", limit: 10 }, { signal })).data,
-			),
-	});
+	const alertsKey = workflowQueryKey("overview");
+	const alerts = useSection("alerts");
 	// The API accepts "read" and "dismissed" (backend/src/http/v1/alerts.rs). Both close the alert.
 	const update = useMutation({
 		mutationFn: (input: { id: number; status: "read" | "dismissed" }) =>
@@ -221,7 +220,7 @@ function AlertsSection() {
 		<Section description={`${number(alerts.data.total)} unread`} title="Alerts">
 			{update.isError ? (
 				<p className="text-sm text-red-300" role="alert">
-					{update.error.message}
+					{errorMessage(update.error)}
 				</p>
 			) : null}
 			<Group>
@@ -232,7 +231,12 @@ function AlertsSection() {
 					>
 						<div className="min-w-0">
 							<div className="flex flex-wrap items-center gap-2">
-								<h3 className="text-sm font-medium text-white">{alert.title}</h3>
+								<h3 className="text-sm font-medium text-white">
+									{alert.title
+										.replace("changed to became_safe", "is now safe to send")
+										.replace("changed to became_invalid", "is now invalid")
+										.replace("changed to became_risky", "now needs review")}
+								</h3>
 								<Pill tone={alertType.tone(alert.type)}>{alertType.label(alert.type)}</Pill>
 							</div>
 							{alert.body ? <p className="mt-1 text-sm text-[#858585]">{alert.body}</p> : null}
@@ -271,11 +275,8 @@ function AlertsSection() {
 }
 
 function UsageSection() {
-	const usage = useQuery({
-		queryKey: workflowQueryKey("overview", "usage"),
-		queryFn: async ({ signal }) =>
-			V1GetTenantUsage200Response.parse((await tenantApi.v1GetTenantUsage({ signal })).data),
-	});
+	const overview = useOverview();
+	const usage = { ...overview, data: overview.data?.usage };
 	const value = "text-sm text-neutral-300 tabular-nums";
 	const limit = usage.data?.quota_unlimited ? null : usage.data?.monthly_email_limit;
 	const remaining = usage.data?.quota_unlimited ? null : usage.data?.quota_remaining;
@@ -287,7 +288,7 @@ function UsageSection() {
 			<Group>
 				{usage.isPending ? (
 					<Loading>Loading usage…</Loading>
-				) : usage.isError ? (
+				) : usage.isError || !usage.data ? (
 					<Failed retry={usage.refetch}>Usage could not be loaded.</Failed>
 				) : (
 					<>
@@ -315,10 +316,10 @@ function UsageSection() {
 	);
 }
 
-type ListItem = z.infer<typeof V1ListLists200Response>["lists"][number];
+type ListItem = NonNullable<Overview["lists"]["data"]>[number];
 
 function ListsSection() {
-	const lists = useQuery(listsQuery);
+	const lists = useSection("lists");
 	return (
 		<Section
 			actions={<ActionLink href="/app/lists">All lists</ActionLink>}
@@ -333,9 +334,9 @@ function ListsSection() {
 				<Group>
 					<Failed retry={lists.refetch}>Lists could not be loaded.</Failed>
 				</Group>
-			) : lists.data.lists.length ? (
+			) : lists.data?.length ? (
 				<Group>
-					{lists.data.lists.map((list) => (
+					{lists.data.map((list) => (
 						<ListRow key={list.id} list={list} />
 					))}
 				</Group>
@@ -356,43 +357,24 @@ function ListsSection() {
 }
 
 function ListRow({ list }: { list: ListItem }) {
-	// The list detail gives the job ID and the current status. The backend
-	// marks a list finished only when this detail request runs.
-	const detail = useQuery({
-		queryKey: workflowQueryKey("overview", "list", list.id),
-		queryFn: async ({ signal }) =>
-			V1GetList200Response.parse((await v1Api.v1GetList({ listId: list.id }, { signal })).data),
-		refetchInterval: (query) => listPollInterval(query.state.data?.status ?? list.status),
-	});
-	const status = detail.data?.status ?? list.status;
+	const status = list.status;
 	return (
 		<LinkRow
 			description={`${number(list.total_rows)} rows`}
 			href={`/app/lists/detail?list=${String(list.id)}`}
 			label={list.name}
 		>
-			{detail.data && listPollInterval(status) ? (
-				<ListProgress jobId={detail.data.job_id} name={list.name} />
-			) : null}
-			{detail.data && (status === "completed" || status === "failed") ? (
-				<ListVerdict jobId={detail.data.job_id} />
+			{listPollInterval(status) ? <ListProgress list={list} /> : null}
+			{list.ready_to_send != null && (status === "completed" || status === "failed") ? (
+				<ListVerdict list={list} />
 			) : null}
 			<Pill tone={listStatus.tone(status)}>{listStatus.label(status)}</Pill>
 		</LinkRow>
 	);
 }
 
-function ListProgress({ jobId, name }: { jobId: number; name: string }) {
-	// The parent unmounts this part when the list is finished, so the polling stops.
-	const progress = useQuery({
-		queryKey: workflowQueryKey("overview", "progress", jobId),
-		queryFn: async ({ signal }) =>
-			BulkProgressSchema.parse((await jobsApi.v1GetBulkJobProgress({ jobId }, { signal })).data),
-		refetchInterval: POLL_MS,
-	});
-	if (progress.isPending) return null;
-	if (progress.isError) return <span className="text-xs text-red-300">Progress not available</span>;
-	const { total_processed: done, total_records: total } = progress.data;
+function ListProgress({ list }: { list: ListItem }) {
+	const { total_processed: done, total_rows: total, name } = list;
 	return (
 		<span className="flex w-40 flex-col gap-1">
 			<Progress
@@ -407,71 +389,39 @@ function ListProgress({ jobId, name }: { jobId: number; name: string }) {
 	);
 }
 
-function ListVerdict({ jobId }: { jobId: number }) {
-	const approval = useQuery({
-		queryKey: workflowQueryKey("overview", "approval", jobId),
-		queryFn: async ({ signal }) =>
-			V1JobApprovalChecklist200Response.parse(
-				(await jobsApi.v1JobApprovalChecklist({ jobId }, { signal })).data,
-			),
-	});
-	if (approval.isPending) return null;
-	if (approval.isError) return <span className="text-xs text-red-300">Verdict not available</span>;
+function ListVerdict({ list }: { list: ListItem }) {
 	return (
 		<span className="flex items-center gap-2">
 			<span className="text-xs text-[#858585] tabular-nums">
-				{number(approval.data.safe_to_send_count)} safe to send
+				{number(list.safe_to_send_count ?? 0)} safe to send
 			</span>
-			<Pill tone={approval.data.ready_to_send ? "green" : "yellow"}>
-				{approval.data.ready_to_send ? "Ready to send" : "Not ready to send"}
+			<Pill tone={list.ready_to_send ? "green" : "yellow"}>
+				{list.ready_to_send ? "Ready to send" : "Not ready to send"}
 			</Pill>
 		</span>
 	);
 }
 
 function DeliverabilitySection() {
-	// Keep one start time for each visit, so the query key stays the same between renders.
-	const [since] = useState(() => new Date(Date.now() - WEEK_MS).toISOString());
-	// A limit of 0 returns only the total.
-	const suppressions = useQuery({
-		queryKey: workflowQueryKey("overview", "suppressions"),
-		queryFn: async ({ signal }) =>
-			V1ListSuppressions200Response.parse(
-				(await v1Api.v1ListSuppressions({ limit: 0 }, { signal })).data,
-			),
-	});
-	// ponytail: /v1/outcomes returns no total, so this counts one page of 500 rows and shows "500+" above it.
-	const outcomeCount = (eventType: string) => ({
-		queryKey: workflowQueryKey("overview", "outcomes", eventType, since),
-		queryFn: async ({ signal }: { signal: AbortSignal }) =>
-			OutcomePageSchema.parse(
-				(await outcomesApi.v1ListOutcomes({ eventType, since, limit: OUTCOME_PAGE }, { signal }))
-					.data,
-			).outcomes.length,
-	});
-	const bounces = useQuery(outcomeCount("bounced"));
-	const complaints = useQuery(outcomeCount("complained"));
-	const domains = useQuery(domainsQuery);
-	const count = (value: number) =>
-		value >= OUTCOME_PAGE ? `${number(OUTCOME_PAGE)}+` : number(value);
+	const suppressions = useSection("suppressions");
+	const outcomes = useSection("outcomes");
+	const domains = useSection("domains");
 	return (
 		<Section title="Deliverability">
 			<Group>
 				<LinkRow href="/app/suppressions" label="Suppressed addresses">
-					<Figure query={suppressions}>{(data) => number(data.total)}</Figure>
+					<Figure query={suppressions}>{number}</Figure>
 				</LinkRow>
 				<LinkRow href="/app/outcomes" label="Bounces in the last 7 days">
-					<Figure query={bounces}>{count}</Figure>
+					<Figure query={outcomes}>{(data) => number(data.bounced)}</Figure>
 				</LinkRow>
 				<LinkRow href="/app/outcomes" label="Complaints in the last 7 days">
-					<Figure query={complaints}>{count}</Figure>
+					<Figure query={outcomes}>{(data) => number(data.complained)}</Figure>
 				</LinkRow>
 				<LinkRow href="/app/domains" label="Sender domains">
 					<Figure query={domains}>
 						{(data) =>
-							`${number(data.domains.filter((domain) => domain.is_verified).length)} verified · ${number(
-								data.domains.filter((domain) => domain.is_active).length,
-							)} active of ${number(data.domains.length)}`
+							`${number(data.verified)} verified · ${number(data.active)} active of ${number(data.total)}`
 						}
 					</Figure>
 				</LinkRow>
@@ -480,17 +430,11 @@ function DeliverabilitySection() {
 	);
 }
 
-type Pipeline = z.infer<typeof V1ListPipelines200Response>["pipelines"][number];
+type Pipeline = NonNullable<Overview["pipelines"]["data"]>[number];
 
 function AutomationSection() {
-	const pipelines = useQuery({
-		queryKey: workflowQueryKey("overview", "pipelines"),
-		queryFn: async ({ signal }) =>
-			V1ListPipelines200Response.parse(
-				(await pipelinesApi.v1ListPipelines({ limit: 5 }, { signal })).data,
-			),
-	});
-	const reverification = useQuery(reverificationQuery);
+	const pipelines = useSection("pipelines");
+	const reverification = useSection("reverification");
 	return (
 		<Section
 			actions={<ActionLink href="/app/pipelines">All pipelines</ActionLink>}
@@ -501,10 +445,8 @@ function AutomationSection() {
 					<Loading>Loading pipelines…</Loading>
 				) : pipelines.isError ? (
 					<Failed retry={pipelines.refetch}>Pipelines could not be loaded.</Failed>
-				) : pipelines.data.pipelines.length ? (
-					pipelines.data.pipelines.map((pipeline) => (
-						<PipelineRow key={pipeline.id} pipeline={pipeline} />
-					))
+				) : pipelines.data?.length ? (
+					pipelines.data.map((pipeline) => <PipelineRow key={pipeline.id} pipeline={pipeline} />)
 				) : (
 					<LinkRow
 						description="Check a list again on a schedule."
@@ -544,31 +486,14 @@ function PipelineRow({ pipeline }: { pipeline: Pipeline }) {
 			{pipeline.last_run_id == null ? (
 				<span className="text-xs text-[#858585]">No runs yet</span>
 			) : (
-				<LastRun pipelineId={pipeline.id} runId={pipeline.last_run_id} />
-			)}
-		</LinkRow>
-	);
-}
-
-function LastRun({ pipelineId, runId }: { pipelineId: number; runId: number }) {
-	const run = useQuery({
-		queryKey: workflowQueryKey("overview", "pipeline-run", pipelineId, runId),
-		queryFn: async ({ signal }) =>
-			RunStatusSchema.parse(
-				(await pipelinesApi.v1GetPipelineRun({ pipelineId, runId }, { signal })).data,
-			),
-	});
-	return (
-		<Figure query={run}>
-			{(data) => (
 				<span className="flex items-center gap-2 text-xs text-[#858585]">
-					Last run
-					<Pill tone={pipelineRunStatus.tone(data.status)}>
-						{pipelineRunStatus.label(data.status)}
+					Last run{" "}
+					<Pill tone={pipelineRunStatus.tone(pipeline.last_run_status ?? "unknown")}>
+						{pipelineRunStatus.label(pipeline.last_run_status ?? "unknown")}
 					</Pill>
 				</span>
 			)}
-		</Figure>
+		</LinkRow>
 	);
 }
 
@@ -597,32 +522,46 @@ function QuickCheckSection() {
 	);
 }
 
+function DeferredSetup() {
+	const [open, setOpen] = useState(false);
+	return (
+		<details
+			onToggle={(event) => {
+				setOpen(event.currentTarget.open);
+			}}
+		>
+			<summary className="cursor-pointer text-sm">Workspace setup checklist</summary>
+			{open ? <SetupSection /> : null}
+		</details>
+	);
+}
+
 function SetupSection() {
-	const lists = useQuery(listsQuery);
-	const domains = useQuery(domainsQuery);
-	const reverification = useQuery(reverificationQuery);
+	const lists = useSection("lists");
+	const domains = useSection("domains");
+	const reverification = useSection("reverification");
 	const endpoints = useQuery({
-		queryKey: workflowQueryKey("overview", "provider-endpoints"),
+		queryKey: workflowQueryKey("provider-endpoints"),
 		queryFn: async ({ signal }) =>
 			V1ListProviderEndpoints200Response.parse(
 				(await outcomesApi.v1ListProviderEndpoints({ signal })).data,
 			),
 	});
 	const keys = useQuery({
-		queryKey: workflowQueryKey("overview", "api-keys"),
+		queryKey: workflowQueryKey("tenant-api-keys"),
 		queryFn: async ({ signal }) =>
-			ApiKeysSchema.parse((await accountApi.listTenantApiKeys({ signal })).data),
+			ListTenantApiKeys200Response.parse((await accountApi.listTenantApiKeys({ signal })).data),
 	});
 	if ([lists, domains, reverification, endpoints, keys].some((query) => query.isPending)) {
 		return null;
 	}
 	// A step shows only when its request succeeds. Members who cannot read API keys do not see that step.
 	const steps = [
-		{ href: "/app/lists", label: "Upload a list", done: lists.data && lists.data.total > 0 },
+		{ href: "/app/lists", label: "Upload a list", done: lists.data && lists.data.length > 0 },
 		{
 			href: "/app/domains",
 			label: "Add a sender domain",
-			done: domains.data && domains.data.domains.length > 0,
+			done: domains.data && domains.data.total > 0,
 		},
 		{
 			href: "/app/outcomes",
@@ -641,7 +580,7 @@ function SetupSection() {
 		},
 	].filter((step) => step.done !== undefined);
 	const open = steps.filter((step) => !step.done).length;
-	if (!open) return null;
+	if (!open) return <p className="text-sm text-[#858585]">All setup steps are done.</p>;
 	return (
 		<Section
 			description={`${String(steps.length - open)} of ${String(steps.length)} steps done.`}

@@ -17,7 +17,9 @@ layout:
     visible: true
 ---
 
-# Welcome to Reacher
+# Verify and Reacher documentation
+
+For Verify, start with the [company thesis](../company.md), [vision](../vision.md), [codebase audit](audits/2026-10-23-verify-north-star.md), and [RFC delivery sequence](rfcs/README.md). The guides below document the underlying Reacher verification engine; standalone SMTP behavior differs from managed MillionVerifier verification.
 
 Reacher is an open-source email verification API.
 

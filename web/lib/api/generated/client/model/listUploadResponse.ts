@@ -7,12 +7,16 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.4.0
  */
+import type { RejectedRow } from "./rejectedRow";
 
 export interface ListUploadResponse {
+  duplicates?: number;
   email_column: string;
   job_id: number;
   list_id: number;
+  rejected?: RejectedRow[];
   /** @nullable */
   source_key?: string | null;
   total_rows: number;
+  unique_emails?: number;
 }

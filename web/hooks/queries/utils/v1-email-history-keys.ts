@@ -12,4 +12,4 @@ export const v1EmailHistoryKeys = {
 		[...v1EmailHistoryKeys.all, "detail", id ?? "", query ?? {}] as const,
 };
 
-export const V1_EMAIL_HISTORY_STALE_TIME = 15_000;
+export const V1_EMAIL_HISTORY_STALE_TIME = 60_000;

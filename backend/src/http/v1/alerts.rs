@@ -161,7 +161,7 @@ async fn patch_handler(
 	Ok(warp::reply::json(&row_to_alert(&row)))
 }
 
-fn row_to_alert(row: &sqlx::postgres::PgRow) -> AlertView {
+pub(crate) fn row_to_alert(row: &sqlx::postgres::PgRow) -> AlertView {
 	AlertView {
 		id: row.get("id"),
 		alert_type: row.get("type"),

@@ -17,7 +17,7 @@ import ApiLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Platform API - Oppulence",
+	title: "Platform API",
 	description: "Restricted Rust platform control plane.",
 };
 

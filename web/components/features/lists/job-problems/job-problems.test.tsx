@@ -76,7 +76,7 @@ describe("JobProblems", () => {
 		);
 		expect(await screen.findByText("slow@example.com")).toBeInTheDocument();
 		expect(screen.getByText("Task delayed recheck scheduled")).toBeInTheDocument();
-		expect(screen.getByText(/backend-dev · delay_seconds: 300/)).toBeInTheDocument();
+		expect(screen.queryByText(/backend-dev|delay_seconds/)).not.toBeInTheDocument();
 		expect(await screen.findByText(/Median check time 200 ms/)).toBeInTheDocument();
 
 		fireEvent.click(screen.getByRole("button", { name: "Retry failed" }));

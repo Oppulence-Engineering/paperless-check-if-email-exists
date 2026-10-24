@@ -49,21 +49,23 @@ function when(value: string | null | undefined): string {
 
 export function AddressTimeline({ className, email, ...props }: AddressTimelineProps) {
 	const queryClient = useQueryClient();
-	const suppressionKey = workflowQueryKey("address-timeline-suppression", email);
+	const suppressionKey = workflowQueryKey("suppression-check", email);
 	const history = useV1EmailHistory(email, { limit: 50 });
 	const events = useQuery({
-		queryKey: workflowQueryKey("address-timeline-outcomes", email),
+		queryKey: workflowQueryKey("outcomes", "address", email, 50),
 		enabled: Boolean(email),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListOutcomes200Response.parse(
-				(await outcomesApi.v1ListOutcomes({ email, limit: 50 })).data,
+				(await outcomesApi.v1ListOutcomes({ email, limit: 50 }, { signal })).data,
 			),
 	});
 	const suppression = useQuery({
 		queryKey: suppressionKey,
 		enabled: Boolean(email),
-		queryFn: async () =>
-			V1CheckSuppression200Response.parse((await v1Api.v1CheckSuppression({ email })).data),
+		queryFn: async ({ signal }) =>
+			V1CheckSuppression200Response.parse(
+				(await v1Api.v1CheckSuppression({ email }, { signal })).data,
+			),
 	});
 	const suppress = useMutation({
 		mutationFn: async () =>

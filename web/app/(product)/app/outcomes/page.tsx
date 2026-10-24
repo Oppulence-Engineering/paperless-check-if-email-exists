@@ -13,7 +13,7 @@ import OutcomesLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "Outcomes - Oppulence",
+	title: "Outcomes",
 	description: "Review delivery outcomes and configure provider callbacks",
 };
 

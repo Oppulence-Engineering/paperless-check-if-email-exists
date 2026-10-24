@@ -11,6 +11,7 @@ import type {
   CreateSavedSegmentRequest,
   ErrorEnvelope,
   ListDiffResponse,
+  ListUploadRequest,
   SavedSegmentDeleteResponse,
   SavedSegmentListResponse,
   SavedSegmentView,
@@ -22,6 +23,7 @@ import type {
   V1DiffListsParams,
   V1GetRemediationPlan200,
   V1ListSavedSegmentsParams,
+  V1PreviewList200,
 } from "../model";
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -65,6 +67,74 @@ export type HTTPStatusCodes =
   | HTTPStatusCode3xx
   | HTTPStatusCode4xx
   | HTTPStatusCode5xx;
+
+export type v1PreviewListResponse200 = {
+  data: V1PreviewList200;
+  status: 200;
+};
+
+export type v1PreviewListResponseDefault = {
+  data: ErrorEnvelope;
+  status: Exclude<HTTPStatusCodes, 200>;
+};
+
+export type v1PreviewListResponseSuccess = v1PreviewListResponse200 & {
+  headers: Headers;
+};
+export type v1PreviewListResponseError = v1PreviewListResponseDefault & {
+  headers: Headers;
+};
+
+export type v1PreviewListResponse =
+  v1PreviewListResponseSuccess | v1PreviewListResponseError;
+
+export const getV1PreviewListUrl = () => {
+  return `/v1/lists/preview`;
+};
+
+export const v1PreviewList = async (
+  listUploadRequest: ListUploadRequest,
+  options?: RequestInit,
+): Promise<v1PreviewListResponse> => {
+  const formData = new FormData();
+  if (
+    listUploadRequest.email_column !== undefined &&
+    listUploadRequest.email_column !== null
+  ) {
+    formData.append(`email_column`, listUploadRequest.email_column);
+  }
+  formData.append(`file`, listUploadRequest.file);
+  if (listUploadRequest.name !== undefined && listUploadRequest.name !== null) {
+    formData.append(`name`, listUploadRequest.name);
+  }
+  if (
+    listUploadRequest.policy_id !== undefined &&
+    listUploadRequest.policy_id !== null
+  ) {
+    formData.append(`policy_id`, listUploadRequest.policy_id.toString());
+  }
+  if (
+    listUploadRequest.source_key !== undefined &&
+    listUploadRequest.source_key !== null
+  ) {
+    formData.append(`source_key`, listUploadRequest.source_key);
+  }
+
+  const res = await fetch(getV1PreviewListUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: v1PreviewListResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as v1PreviewListResponse;
+};
 
 export type v1DiffListsResponse200 = {
   data: ListDiffResponse;

@@ -48,21 +48,13 @@ async fn http_handler(
 
 	let row = sqlx::query(
 		r#"
-		UPDATE v1_suppression_entries
-		SET last_seen_at = NOW(), updated_at = NOW()
-		WHERE id = (
-			SELECT id
-			FROM v1_suppression_entries
-			WHERE tenant_id = $1
-			  AND canonical_email = $2
-			  AND status = 'active'
-			  AND (expires_at IS NULL OR expires_at > NOW())
-			ORDER BY created_at DESC
-			LIMIT 1
-		)
-		RETURNING id, canonical_email, status, reason::TEXT AS reason, reason_code,
-		          reason_detail, source, source_type, source_ref, created_by, expires_at,
-		          metadata, created_at
+		SELECT id, canonical_email, CASE WHEN expires_at <= NOW() THEN 'expired' ELSE status END AS status, reason::TEXT AS reason, reason_code,
+		       reason_detail, source, source_type, source_ref, created_by, expires_at,
+		       metadata, created_at
+		FROM v1_suppression_entries
+		WHERE tenant_id = $1 AND lower(canonical_email) = lower($2)
+		  AND status = 'active'
+		ORDER BY (expires_at IS NULL OR expires_at > NOW()) DESC, created_at DESC LIMIT 1
 		"#,
 	)
 	.bind(tenant_id)
@@ -73,7 +65,7 @@ async fn http_handler(
 
 	let response = match row {
 		Some(row) => Response {
-			suppressed: true,
+			suppressed: row.get::<String, _>("status") == "active",
 			id: Some(row.get("id")),
 			canonical_email: Some(row.get("canonical_email")),
 			status: Some(row.get("status")),

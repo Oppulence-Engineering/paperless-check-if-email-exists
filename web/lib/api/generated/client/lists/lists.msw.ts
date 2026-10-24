@@ -18,6 +18,7 @@ import type {
   V1CreateRemediationExport200,
   V1CreateRemediationPlan200,
   V1GetRemediationPlan200,
+  V1PreviewList200,
 } from "../model";
 
 import {
@@ -30,10 +31,12 @@ import {
   getV1GetRemediationPlanResponseMock,
   getV1GetSavedSegmentResponseMock,
   getV1ListSavedSegmentsResponseMock,
+  getV1PreviewListResponseMock,
   getV1UpdateSavedSegmentResponseMock,
 } from "./lists.faker";
 
 export {
+  getV1PreviewListResponseMock,
   getV1DiffListsResponseMock,
   getV1CreateRemediationExportResponseMock,
   getV1DownloadRemediationExportResponseMock,
@@ -45,6 +48,30 @@ export {
   getV1GetSavedSegmentResponseMock,
   getV1UpdateSavedSegmentResponseMock,
 } from "./lists.faker";
+
+export const getV1PreviewListMockHandler = (
+  overrideResponse?:
+    | V1PreviewList200
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<V1PreviewList200> | V1PreviewList200),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/v1/lists/preview",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getV1PreviewListResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
 export const getV1DiffListsMockHandler = (
   overrideResponse?:
@@ -310,6 +337,7 @@ export const getV1UpdateSavedSegmentMockHandler = (
   );
 };
 export const getListsMock = () => [
+  getV1PreviewListMockHandler(),
   getV1DiffListsMockHandler(),
   getV1ListQualityMockHandler(),
   getV1CreateRemediationExportMockHandler(),

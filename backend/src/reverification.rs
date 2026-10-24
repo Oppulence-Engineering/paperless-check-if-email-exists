@@ -116,7 +116,7 @@ async fn process_schedule(
 			SELECT 1 FROM v1_suppression_entries se
 			WHERE se.tenant_id = $1 AND se.status = 'active'
 			  AND (se.expires_at IS NULL OR se.expires_at > NOW())
-			  AND se.canonical_email = mailbox_identity(sub.email)
+			  AND lower(se.canonical_email) = lower(mailbox_identity(sub.email))
 		  )
 		ORDER BY sub.latest_completed ASC, sub.email ASC
 		LIMIT $3
@@ -290,14 +290,17 @@ async fn publish_stale_emails(
 		};
 		let task_row_id: i32 = match sqlx::query_scalar(
 			r#"
-			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id)
-			VALUES ($1, $2, 'queued', $3)
+			INSERT INTO v1_task_result (job_id, payload, task_state, tenant_id, canonical_email)
+			VALUES ($1, $2, 'queued', $3, $4)
 			RETURNING id
 			"#,
 		)
 		.bind(job_id)
 		.bind(payload)
 		.bind(tenant_id)
+		.bind(crate::http::v1::lists::canonicalize::canonicalize_email(
+			&stale.email,
+		))
 		.fetch_one(pg_pool)
 		.await
 		{

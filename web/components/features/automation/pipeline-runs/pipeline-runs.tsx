@@ -50,12 +50,12 @@ export function PipelineRuns({
 	const [offset, setOffset] = useState(0);
 	const runs = useQuery({
 		queryKey: workflowQueryKey("pipelines", pipelineId, "runs", "page", offset),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListPipelineRuns200Response.parse(
-				(await api.v1ListPipelineRuns({ pipelineId, limit: PAGE, offset })).data,
+				(await api.v1ListPipelineRuns({ pipelineId, limit: PAGE, offset }, { signal })).data,
 			),
 		refetchInterval: (query) =>
-			query.state.data?.runs.some((run) => isRunActive(run.status)) ? 3_000 : false,
+			query.state.data?.runs.some((run) => isRunActive(run.status)) ? 5_000 : false,
 	});
 	const total = runs.data?.total ?? 0;
 

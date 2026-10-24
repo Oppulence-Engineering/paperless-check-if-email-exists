@@ -28,6 +28,9 @@ struct Response {
 	list_id: i32,
 	job_id: i32,
 	total_rows: i32,
+	unique_emails: i32,
+	duplicates: i32,
+	rejected: Vec<RejectedRow>,
 	email_column: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	source_key: Option<String>,
@@ -38,6 +41,7 @@ async fn http_handler(
 	config: Arc<BackendConfig>,
 	pg_pool: PgPool,
 	form: FormData,
+	idempotency_key: Option<String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
 	check_scope(&tenant_ctx, scope::LISTS)?;
 
@@ -71,35 +75,20 @@ async fn http_handler(
 
 	enforce_row_limit(&tenant_ctx, parsed.rows.len())?;
 
-	// Phase 1: Build canonical groupings for deduplication
-	// Maps canonical_email -> vec of row indices that share that canonical form
-	let mut canonical_groups: HashMap<String, Vec<usize>> = HashMap::new();
-	let mut blank_indices: Vec<usize> = Vec::new();
+	let (canonical_groups, blank_indices) = group_rows(&parsed);
 
-	for (index, row) in parsed.rows.iter().enumerate() {
-		let email = row
-			.get(&parsed.email_column)
-			.and_then(Value::as_str)
-			.unwrap_or_default()
-			.trim()
-			.to_string();
-
-		if email.is_empty() {
-			blank_indices.push(index);
-			continue;
-		}
-
-		match canonicalize_email(&email) {
-			Some(canonical) => {
-				canonical_groups.entry(canonical).or_default().push(index);
-			}
-			None => {
-				// Malformed email (multiple @, empty local after strip, etc.)
-				blank_indices.push(index);
-			}
-		}
-	}
-
+	let rejected = blank_indices
+		.iter()
+		.map(|&index| RejectedRow {
+			row_number: index + 1,
+			value: parsed.rows[index]
+				.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.to_string(),
+			reason: "Invalid email address".into(),
+		})
+		.collect();
 	let unique_email_count = canonical_groups.len() as i32;
 	let deduplicated_count =
 		(canonical_groups.values().map(|v| v.len()).sum::<usize>() - canonical_groups.len()) as i32;
@@ -107,6 +96,46 @@ async fn http_handler(
 	// Reserve quota in the same transaction as every row and dispatch intent.
 	crate::smtp_egress::require_smtp_ready(&config)?;
 	let mut tx = pg_pool.begin().await.map_err(ReacherResponseError::from)?;
+	let request_hash = if idempotency_key.is_some() {
+		crate::http::idempotency::hash_request_body(
+		&serde_json::to_vec(&serde_json::json!({
+			"file_sha256": crate::http::idempotency::hash_request_body(&upload.file_bytes), "filename": upload.filename, "name": upload.name,
+			"email_column": upload.email_column, "source_key": source_key, "policy_id": upload.policy_id
+		}))
+		.map_err(ReacherResponseError::from)?,
+	)
+	} else {
+		Vec::new()
+	};
+	if let Some(key) = &idempotency_key {
+		if key.is_empty() || key.len() > 200 {
+			return Err(ReacherResponseError::new(
+				StatusCode::BAD_REQUEST,
+				"Invalid idempotency key",
+			)
+			.into());
+		}
+		sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+			.bind(format!("list-upload:{tenant_id}:{key}"))
+			.execute(&mut *tx)
+			.await
+			.map_err(ReacherResponseError::from)?;
+		let cached: Option<(Vec<u8>, serde_json::Value)> = sqlx::query_as("SELECT request_hash, response FROM v1_list_upload_requests WHERE tenant_id=$1 AND request_key=$2")
+            .bind(tenant_id).bind(key).fetch_optional(&mut *tx).await.map_err(ReacherResponseError::from)?;
+		if let Some((hash, response)) = cached {
+			if hash != request_hash {
+				return Err(ReacherResponseError::new(
+					StatusCode::CONFLICT,
+					"Upload changed; use a new idempotency key",
+				)
+				.into());
+			}
+			return Ok(warp::reply::with_status(
+				warp::reply::json(&response),
+				StatusCode::ACCEPTED,
+			));
+		}
+	}
 	match reserve_quota_in_tx(&mut tx, &tenant_ctx, unique_email_count)
 		.await
 		.map_err(ReacherResponseError::from)?
@@ -187,6 +216,7 @@ async fn http_handler(
 		let extra = serde_json::json!({
 			"list_id": list_id,
 			"row_index": index as i32,
+			"original_email": parsed.rows[index].get(&parsed.email_column).and_then(Value::as_str).unwrap_or_default(),
 			"email_column": parsed.email_column,
 		});
 		let invalid_result = blank_email_result(config.as_ref())
@@ -206,7 +236,7 @@ async fn http_handler(
 			)
 		.bind(job_id)
 		.bind(serde_json::json!({
-			"input": {"to_email": ""},
+			"input": {"to_email": parsed.rows[index].get(&parsed.email_column).and_then(Value::as_str).unwrap_or_default()},
 			"job_id": {"bulk": job_id},
 			"webhook": null
 		}))
@@ -276,6 +306,7 @@ async fn http_handler(
 		let primary_extra = serde_json::json!({
 			"list_id": list_id,
 			"row_index": primary_index as i32,
+			"original_email": parsed.rows[primary_index].get(&parsed.email_column).and_then(Value::as_str).unwrap_or_default(),
 			"email_column": parsed.email_column,
 		});
 		// Identity groups equivalent addresses; SMTP receives the supplied spelling.
@@ -312,6 +343,7 @@ async fn http_handler(
 			let dup_extra = serde_json::json!({
 				"list_id": list_id,
 				"row_index": dup_index as i32,
+			"original_email": parsed.rows[dup_index].get(&parsed.email_column).and_then(Value::as_str).unwrap_or_default(),
 				"email_column": parsed.email_column,
 			});
 			// Mark as 'queued' (not 'completed') so polling consumers don't see
@@ -396,16 +428,24 @@ async fn http_handler(
 		.await
 		.map_err(ReacherResponseError::from)?;
 
+	let response = Response {
+		list_id,
+		job_id,
+		total_rows: parsed.rows.len() as i32,
+		unique_emails: unique_email_count,
+		duplicates: deduplicated_count,
+		rejected,
+		email_column: parsed.email_column,
+		source_key,
+	};
+	if let Some(key) = idempotency_key {
+		sqlx::query("INSERT INTO v1_list_upload_requests (tenant_id,request_key,request_hash,response) VALUES ($1,$2,$3,$4)")
+            .bind(tenant_id).bind(key).bind(request_hash).bind(serde_json::to_value(&response).map_err(ReacherResponseError::from)?)
+            .execute(&mut *tx).await.map_err(ReacherResponseError::from)?;
+	}
 	tx.commit().await.map_err(ReacherResponseError::from)?;
-
 	Ok(warp::reply::with_status(
-		warp::reply::json(&Response {
-			list_id,
-			job_id,
-			total_rows: parsed.rows.len() as i32,
-			email_column: parsed.email_column,
-			source_key,
-		}),
+		warp::reply::json(&response),
 		StatusCode::ACCEPTED,
 	))
 }
@@ -556,6 +596,7 @@ pub fn v1_create_list(
 		.and(with_config(Arc::clone(&config)))
 		.and(with_worker_db(config))
 		.and(warp::multipart::form().max_length(50_000_000))
+		.and(warp::header::optional::<String>("Idempotency-Key"))
 		.and_then(http_handler)
 		.with(warp::log(LOG_TARGET))
 }
@@ -585,4 +626,84 @@ mod tests {
 		assert!(enforce_row_limit(&context, 50_000).is_ok());
 		assert!(enforce_row_limit(&context, 50_001).is_err());
 	}
+}
+
+fn group_rows(parsed: &ParsedCsv) -> (HashMap<String, Vec<usize>>, Vec<usize>) {
+	let mut groups = HashMap::<String, Vec<usize>>::new();
+	let mut rejected = Vec::new();
+	for (index, row) in parsed.rows.iter().enumerate() {
+		let email = row
+			.get(&parsed.email_column)
+			.and_then(Value::as_str)
+			.unwrap_or_default()
+			.trim();
+		if check_if_email_exists::syntax::check_syntax(email).is_valid_syntax {
+			if let Some(key) = canonicalize_email(email) {
+				groups.entry(key).or_default().push(index);
+				continue;
+			}
+		}
+		rejected.push(index);
+	}
+	(groups, rejected)
+}
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+struct RejectedRow {
+	row_number: usize,
+	value: String,
+	reason: String,
+}
+#[derive(Serialize, utoipa::ToSchema)]
+struct UploadPreview {
+	total_rows: usize,
+	unique_emails: usize,
+	duplicates: usize,
+	estimated_credits: usize,
+	rejected: Vec<RejectedRow>,
+	email_column: String,
+}
+async fn preview_handler(
+	ctx: TenantContext,
+	form: FormData,
+) -> Result<impl warp::Reply, warp::Rejection> {
+	check_scope(&ctx, scope::LISTS)?;
+	crate::finder::require_tenant_id(ctx.tenant_id)?;
+	let upload = read_upload(form).await?;
+	let parsed = parse_csv(
+		&upload.file_bytes,
+		upload.email_column.as_deref(),
+		Some(plan_row_limit(&ctx)),
+	)?;
+	enforce_row_limit(&ctx, parsed.rows.len())?;
+	let (groups, rejected) = group_rows(&parsed);
+	let rejected = rejected
+		.into_iter()
+		.map(|index| RejectedRow {
+			row_number: index + 1,
+			value: parsed.rows[index]
+				.get(&parsed.email_column)
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.to_string(),
+			reason: "Invalid or blank email address".into(),
+		})
+		.collect();
+	Ok(warp::reply::json(&UploadPreview {
+		total_rows: parsed.rows.len(),
+		unique_emails: groups.len(),
+		estimated_credits: groups.len(),
+		duplicates: groups.values().map(|v| v.len() - 1).sum(),
+		rejected,
+		email_column: parsed.email_column,
+	}))
+}
+#[utoipa::path(post,path="/v1/lists/preview",tag="Lists",responses((status=200,description="Non-billing upload preview",body=inline(UploadPreview))))]
+pub fn v1_preview_list(
+	config: Arc<BackendConfig>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+	warp::path!("v1" / "lists" / "preview")
+		.and(warp::post())
+		.and(resolve_tenant(config))
+		.and(warp::multipart::form().max_length(50_000_000))
+		.and_then(preview_handler)
 }

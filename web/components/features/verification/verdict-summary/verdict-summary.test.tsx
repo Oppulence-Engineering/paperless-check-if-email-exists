@@ -37,7 +37,7 @@ describe("VerdictSummary", () => {
 
 		expect(screen.getByRole("link", { name: "maya@gmail.com" })).toHaveAttribute(
 			"href",
-			"/app/check?email=maya%40gmail.com",
+			"/app/check",
 		);
 	});
 

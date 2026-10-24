@@ -62,30 +62,57 @@ pub async fn lookup_dnsbl(domain: &str) -> Result<Vec<BlacklistResult>, anyhow::
 		None
 	};
 
-	let mut results = Vec::new();
-	for (provider, zone) in PROVIDERS {
-		let started = Instant::now();
-		let result = if let Some(ip) = ip {
-			let octets = ip.octets();
-			let query = format!(
-				"{}.{}.{}.{}.{}",
-				octets[3], octets[2], octets[1], octets[0], zone
-			);
-			Some(
-				found_or_absent(resolver.ipv4_lookup(query).await)
-					.map(|lookup| lookup.map(|lookup| ipv4_answers(&lookup).collect::<Vec<_>>()))
-					.map_err(|error| error.to_string()),
-			)
-		} else {
-			None
-		};
-		results.push(classify_query(
-			provider,
-			result,
-			started.elapsed().as_millis() as u64,
-		));
-	}
-
+	let dqs_key = std::env::var("RCH__REPUTATION__SPAMHAUS_DQS_KEY")
+		.ok()
+		.filter(|key| !key.is_empty() && key.chars().all(|c| c.is_ascii_alphanumeric()));
+	let results = futures::future::join_all(PROVIDERS.iter().map(|(provider, zone)| {
+		let resolver = &resolver;
+		let dqs_key = dqs_key.as_deref();
+		async move {
+			let started = Instant::now();
+			if *provider == "Spamhaus ZEN" && dqs_key.is_none() {
+				return BlacklistResult {
+					provider: (*provider).into(),
+					listed: None,
+					status: BlacklistStatus::Skipped,
+					answers: vec![],
+					error: Some("not_configured".into()),
+					lookup_time_ms: 0,
+				};
+			}
+			let zone = if *provider == "Spamhaus ZEN" {
+				format!("{}.zen.dq.spamhaus.net", dqs_key.unwrap())
+			} else {
+				zone.to_string()
+			};
+			let result = if let Some(ip) = ip {
+				let octets = ip.octets();
+				let query = format!(
+					"{}.{}.{}.{}.{}",
+					octets[3], octets[2], octets[1], octets[0], zone
+				);
+				Some(
+					match tokio::time::timeout(
+						std::time::Duration::from_secs(3),
+						resolver.ipv4_lookup(query),
+					)
+					.await
+					{
+						Ok(answer) => found_or_absent(answer)
+							.map(|lookup| {
+								lookup.map(|lookup| ipv4_answers(&lookup).collect::<Vec<_>>())
+							})
+							.map_err(|_| "DNS lookup failed".to_string()),
+						Err(_) => Err("DNS lookup timed out".into()),
+					},
+				)
+			} else {
+				None
+			};
+			classify_query(provider, result, started.elapsed().as_millis() as u64)
+		}
+	}))
+	.await;
 	Ok(results)
 }
 

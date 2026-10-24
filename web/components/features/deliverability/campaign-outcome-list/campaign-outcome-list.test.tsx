@@ -49,21 +49,26 @@ describe("CampaignOutcomeList", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Next results" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 })),
+			expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 }), {
+				signal: expect.any(AbortSignal),
+			}),
 		);
 
 		await chooseOption("Result type", "Complaint");
 		fireEvent.change(screen.getByLabelText("Result source"), { target: { value: "mailchimp" } });
 		fireEvent.click(screen.getByRole("button", { name: "Search results" }));
 		await waitFor(() =>
-			expect(list).toHaveBeenLastCalledWith({
-				limit: 20,
-				offset: 0,
-				email: undefined,
-				type: "complaint",
-				source: "mailchimp",
-				since: undefined,
-			}),
+			expect(list).toHaveBeenLastCalledWith(
+				{
+					limit: 20,
+					offset: 0,
+					email: undefined,
+					type: "complaint",
+					source: "mailchimp",
+					since: undefined,
+				},
+				{ signal: expect.any(AbortSignal) },
+			),
 		);
 	});
 });

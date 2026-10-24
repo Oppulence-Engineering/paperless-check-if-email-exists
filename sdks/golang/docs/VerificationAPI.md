@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**V1EmailHistory**](VerificationAPI.md#V1EmailHistory) | **Get** /v1/emails/{email}/history | GET /v1/emails/{email}/history
+[**V1EmailHistoryPost**](VerificationAPI.md#V1EmailHistoryPost) | **Post** /v1/emails/history |
 [**V1ListAlerts**](VerificationAPI.md#V1ListAlerts) | **Get** /v1/alerts | GET /v1/alerts
 [**V1UpdateAlert**](VerificationAPI.md#V1UpdateAlert) | **Patch** /v1/alerts/{alert_id} | PATCH /v1/alerts/{alert_id}
 
@@ -12,7 +13,7 @@ Method | HTTP request | Description
 
 ## V1EmailHistory
 
-> V1EmailHistory200Response V1EmailHistory(ctx, email).Limit(limit).Execute()
+> V1EmailHistoryPost200Response V1EmailHistory(ctx, email).Limit(limit).Execute()
 
 GET /v1/emails/{email}/history
 
@@ -41,7 +42,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error when calling `VerificationAPI.V1EmailHistory``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `V1EmailHistory`: V1EmailHistory200Response
+	// response from `V1EmailHistory`: V1EmailHistoryPost200Response
 	fmt.Fprintf(os.Stdout, "Response from `VerificationAPI.V1EmailHistory`: %v\n", resp)
 }
 ```
@@ -66,7 +67,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**V1EmailHistory200Response**](V1EmailHistory200Response.md)
+[**V1EmailHistoryPost200Response**](V1EmailHistoryPost200Response.md)
 
 ### Authorization
 
@@ -75,6 +76,70 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## V1EmailHistoryPost
+
+> V1EmailHistoryPost200Response V1EmailHistoryPost(ctx).HistoryRequest(historyRequest).Execute()
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/reacher"
+)
+
+func main() {
+	historyRequest := *openapiclient.NewHistoryRequest("Email_example") // HistoryRequest |
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.VerificationAPI.V1EmailHistoryPost(context.Background()).HistoryRequest(historyRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `VerificationAPI.V1EmailHistoryPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `V1EmailHistoryPost`: V1EmailHistoryPost200Response
+	fmt.Fprintf(os.Stdout, "Response from `VerificationAPI.V1EmailHistoryPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiV1EmailHistoryPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **historyRequest** | [**HistoryRequest**](HistoryRequest.md) |  |
+
+### Return type
+
+[**V1EmailHistoryPost200Response**](V1EmailHistoryPost200Response.md)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

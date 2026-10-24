@@ -83,9 +83,14 @@ export function PipelineList({ className, selectedId, onOpen, ...props }: Pipeli
 	const [offset, setOffset] = useState(0);
 	const list = useQuery({
 		queryKey: workflowQueryKey("pipelines", "list", status, offset),
-		queryFn: async () =>
+		queryFn: async ({ signal }) =>
 			V1ListPipelines200Response.parse(
-				(await api.v1ListPipelines({ status: status || undefined, limit: PAGE, offset })).data,
+				(
+					await api.v1ListPipelines(
+						{ status: status || undefined, limit: PAGE, offset },
+						{ signal },
+					)
+				).data,
 			),
 	});
 	const total = list.data?.total ?? 0;

@@ -40,7 +40,7 @@ struct Response {
 }
 
 /// Safe-to-send percentages for the excellent and good grades when the workspace sets none.
-pub(crate) const DEFAULT_THRESHOLDS: (f64, f64) = (90.0, 70.0);
+pub(crate) const DEFAULT_THRESHOLDS: (f64, f64) = (90.0, 75.0);
 async fn http_handler(
 	job_id: i32,
 	tenant_ctx: TenantContext,
@@ -79,18 +79,20 @@ async fn http_handler(
 		}
 	};
 
-	let total_records: i32 = job.get("total_records");
-
 	let row = sqlx::query(
 		r#"
 		SELECT
+			COUNT(*)::integer AS total_records,
+            COUNT(*) FILTER (WHERE task_state = 'completed') AS completed,
+            COUNT(*) FILTER (WHERE task_state IN ('failed','dead_lettered','cancelled')) AS unsuccessful,
+            COUNT(*) FILTER (WHERE currently_suppressed) AS suppressed,
 			COUNT(CASE WHEN score_category = 'valid' THEN 1 END) AS valid,
 			COUNT(CASE WHEN score_category = 'risky' THEN 1 END) AS risky,
 			COUNT(CASE WHEN score_category = 'unknown' THEN 1 END) AS unknown,
 			COUNT(CASE WHEN score_category = 'invalid' THEN 1 END) AS invalid,
 			COUNT(CASE WHEN task_state NOT IN ('completed', 'failed', 'dead_lettered') THEN 1 END) AS unprocessed,
-			COUNT(CASE WHEN safe_to_send = true THEN 1 END) AS safe_to_send_count
-		FROM v1_task_result WHERE job_id = $1
+			COUNT(CASE WHEN effective_safe_to_send = true THEN 1 END) AS safe_to_send_count
+		FROM verification_quality_rows WHERE job_id = $1
 		"#,
 	)
 	.bind(job_id)
@@ -98,6 +100,7 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
+	let total_records: i32 = row.get("total_records");
 	let valid: i64 = row.get("valid");
 	let risky: i64 = row.get("risky");
 	let unknown: i64 = row.get("unknown");
@@ -109,10 +112,10 @@ async fn http_handler(
 		r#"
 		SELECT
 			COUNT(CASE WHEN result->'misc'->>'is_disposable' = 'true' THEN 1 END) AS disposable,
-			COUNT(CASE WHEN result->'smtp'->>'is_catch_all' = 'true' THEN 1 END) AS catch_all,
+			COUNT(CASE WHEN COALESCE(result->'score'->'signals'->>'smtp_is_catch_all', result->'smtp'->>'is_catch_all') = 'true' THEN 1 END) AS catch_all,
 			COUNT(CASE WHEN result->'misc'->>'is_role_account' = 'true' THEN 1 END) AS role_account,
 			COUNT(CASE WHEN result->'misc'->>'is_spam_trap_domain' = 'true' THEN 1 END) AS spam_trap
-		FROM v1_task_result WHERE job_id = $1 AND result IS NOT NULL
+		FROM verification_quality_rows WHERE job_id = $1 AND result IS NOT NULL
 		"#,
 	)
 	.bind(job_id)
@@ -120,42 +123,12 @@ async fn http_handler(
 	.await
 	.map_err(ReacherResponseError::from)?;
 
-	// EXISTS counts each covered row once, including supplied list aliases.
-	let suppressed: i64 = sqlx::query_scalar(
-		r#"
-		WITH list_originals AS MATERIALIZED (
-			SELECT l.id AS list_id,
-			       entry.key::INTEGER AS row_index,
-			       mailbox_identity(entry.value ->> l.email_column) AS email
-			FROM v1_lists l, jsonb_each(l.original_data) AS entry
-			WHERE l.job_id = $1
-		)
-		SELECT COUNT(*) FROM v1_task_result t
-		LEFT JOIN list_originals o
-		  ON o.list_id = (t.extra->>'list_id')::INTEGER
-		 AND o.row_index = (t.extra->>'row_index')::INTEGER
-		WHERE t.job_id = $1 AND t.safe_to_send = true
-		  AND EXISTS (
-			SELECT 1 FROM v1_suppression_entries s
-			WHERE s.tenant_id = t.tenant_id
-			  AND s.status = 'active'
-			  AND (s.expires_at IS NULL OR s.expires_at > NOW())
-			  AND s.canonical_email IN (
-				mailbox_identity(COALESCE(t.result->>'input', t.payload->'input'->>'to_email')),
-				t.canonical_email,
-				o.email
-			  )
-		  )
-		"#,
-	)
-	.bind(job_id)
-	.fetch_one(&pg_pool)
-	.await
-	.map_err(ReacherResponseError::from)?;
+	let suppressed: i64 = row.get("suppressed");
+	let completed: i64 = row.get("completed");
+	let unsuccessful: i64 = row.get("unsuccessful");
 
-	let total = total_records.max(1) as f64;
-	// Subtract suppressed from safe count for accurate readiness assessment
-	let effective_safe = (safe_to_send_count - suppressed).max(0);
+	let total = completed.max(1) as f64;
+	let effective_safe = safe_to_send_count;
 	let safe_ratio = effective_safe as f64 / total * 100.0;
 	let safe_pct = safe_ratio.round();
 
@@ -163,7 +136,57 @@ async fn http_handler(
 	let job_status: String = job.get("status");
 	let is_terminal = matches!(job_status.as_str(), "completed" | "failed" | "cancelled");
 
-	let (recommendation, ready) = if unprocessed > 0 && !is_terminal {
+	let (recommendation, ready) = readiness(
+		completed,
+		unprocessed,
+		unsuccessful,
+		suppressed,
+		safe_ratio,
+		is_terminal,
+		(excellent_threshold, good_threshold),
+	);
+
+	Ok(warp::reply::json(&Response {
+		job_id,
+		total_records,
+		categories: CategoryBreakdown {
+			valid,
+			risky,
+			unknown,
+			invalid,
+			unprocessed,
+		},
+		risk_flags: RiskFlags {
+			disposable_count: risk_row.get("disposable"),
+			catch_all_count: risk_row.get("catch_all"),
+			role_account_count: risk_row.get("role_account"),
+			spam_trap_count: risk_row.get("spam_trap"),
+			suppressed_count: suppressed,
+		},
+		safe_to_send_count,
+		safe_to_send_pct: safe_pct,
+		recommendation,
+		ready_to_send: ready,
+	}))
+}
+
+/// One readiness decision for job review and dashboard summaries.
+pub(crate) fn readiness(
+	completed: i64,
+	unprocessed: i64,
+	unsuccessful: i64,
+	suppressed: i64,
+	safe_ratio: f64,
+	is_terminal: bool,
+	thresholds: (f64, f64),
+) -> (String, bool) {
+	let (excellent_threshold, good_threshold) = thresholds;
+	if completed == 0 {
+		(
+			"No completed addresses yet. Wait for results before sending.".to_string(),
+			false,
+		)
+	} else if unprocessed > 0 && !is_terminal {
 		(
 			"Job is still processing. Wait for completion before sending.".to_string(),
 			false,
@@ -173,6 +196,14 @@ async fn http_handler(
 			format!(
 				"Job has {} unprocessed rows (cancelled/pending). Review before sending.",
 				unprocessed
+			),
+			false,
+		)
+	} else if unsuccessful > 0 {
+		(
+			format!(
+				"{} addresses could not be verified. Review or retry them before sending.",
+				unsuccessful
 			),
 			false,
 		)
@@ -203,30 +234,7 @@ async fn http_handler(
 			"List quality is poor. Clean the list thoroughly before sending.".to_string(),
 			false,
 		)
-	};
-
-	Ok(warp::reply::json(&Response {
-		job_id,
-		total_records,
-		categories: CategoryBreakdown {
-			valid,
-			risky,
-			unknown,
-			invalid,
-			unprocessed,
-		},
-		risk_flags: RiskFlags {
-			disposable_count: risk_row.get("disposable"),
-			catch_all_count: risk_row.get("catch_all"),
-			role_account_count: risk_row.get("role_account"),
-			spam_trap_count: risk_row.get("spam_trap"),
-			suppressed_count: suppressed,
-		},
-		safe_to_send_count,
-		safe_to_send_pct: safe_pct,
-		recommendation,
-		ready_to_send: ready,
-	}))
+	}
 }
 
 /// GET /v1/jobs/{job_id}/approval

@@ -14,10 +14,12 @@ export interface ListItem {
   created_at: string;
   email_column: string;
   id: number;
+  job_id?: number;
   name: string;
   original_filename: string;
   /** @nullable */
   source_key?: string | null;
   status: string;
+  total_processed?: number;
   total_rows: number;
 }

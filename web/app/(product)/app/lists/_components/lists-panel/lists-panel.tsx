@@ -1,12 +1,13 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Configuration, V1Api } from "@oppulence/reacher-sdk";
+import { useState, useRef, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Configuration, ListsApi } from "@oppulence/reacher-sdk";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
@@ -18,8 +19,9 @@ import { EmptyState, Group, Page, Pill, Row, Section } from "@/components/platfo
 import { ListBullets } from "@/lib/icons";
 import { useV1CreateList } from "@/hooks/queries/use-v1-create-list";
 import { useV1ListLists } from "@/hooks/queries/use-v1-list-lists";
-import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
-import { V1GetList200Response } from "@/lib/api/generated/zod/v1/v1";
+import { V1PreviewList200Response } from "@/lib/api/generated/zod/lists/lists";
+import type { V1ListLists200Response } from "@/lib/api/generated/zod/v1/v1";
+import type { z } from "zod";
 import { ACTIVE_LIST_STATES } from "@/lib/api/schemas/lists";
 import { listStatus } from "@/lib/verification/labels";
 
@@ -27,28 +29,22 @@ import { type ListsPanelPropsFields } from "./lists-panel.schema";
 
 export type ListsPanelProps = ListsPanelPropsFields & ComponentPropsWithoutRef<"section">;
 
-const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
+const listsApi = new ListsApi(new Configuration({ basePath: "/api/backend" }));
 const fieldLabel = "text-xs font-medium text-neutral-400";
 
 /** The checked rows of one list that is still processing. It polls every 5 seconds. */
-function ListProgress({ listId }: { listId: number }) {
-	const detail = useQuery({
-		queryKey: workflowQueryKey("list-detail", listId, "detail"),
-		queryFn: async () => V1GetList200Response.parse((await v1Api.v1GetList({ listId })).data),
-		refetchInterval: 5_000,
-	});
-	if (!detail.data) return null;
-	const { total_processed: processed } = detail.data.summary;
-	const total = Math.max(1, detail.data.total_rows);
+function ListProgress({ list }: { list: z.infer<typeof V1ListLists200Response>["lists"][number] }) {
+	const processed = list.total_processed ?? 0;
+	const total = Math.max(1, list.total_rows);
 	return (
 		<div className="flex w-full items-center gap-3">
 			<Progress
-				aria-label={`${detail.data.name} progress`}
+				aria-label={`${list.name} progress`}
 				className="bg-white/[0.06]"
 				value={(processed / total) * 100}
 			/>
 			<span className="shrink-0 text-xs text-[#858585]">
-				{processed} of {detail.data.total_rows}
+				{processed} of {list.total_rows}
 			</span>
 		</div>
 	);
@@ -66,12 +62,34 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 		data.lists.some((list) => ACTIVE_LIST_STATES.includes(list.status)),
 	);
 	const upload = useV1CreateList();
+	const formRef = useRef<HTMLFormElement>(null);
+	const requestKey = useRef(crypto.randomUUID());
+	const preview = useMutation({
+		mutationFn: async () => {
+			if (!file) throw new Error("Choose a CSV file.");
+			return V1PreviewList200Response.parse(
+				(
+					await listsApi.v1PreviewList({
+						file,
+						name: name.trim() || undefined,
+						emailColumn: emailColumn.trim() || undefined,
+						sourceKey: sourceKey.trim() || undefined,
+					})
+				).data,
+			);
+		},
+	});
 
 	function submit(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (!file) return;
+		if (!preview.data) {
+			preview.mutate();
+			return;
+		}
 		upload.mutate(
 			{
+				idempotencyKey: requestKey.current,
 				file,
 				name: name.trim() || undefined,
 				email_column: emailColumn.trim() || undefined,
@@ -79,6 +97,13 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 			},
 			{
 				onSuccess: (data) => {
+					setFile(undefined);
+					setName("");
+					setEmailColumn("");
+					setSourceKey("");
+					preview.reset();
+					formRef.current?.reset();
+					requestKey.current = crypto.randomUUID();
 					router.push(`/app/lists/detail?list=${String(data.list_id)}&accepted=1`);
 				},
 			},
@@ -88,96 +113,127 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 	return (
 		<Page description="Upload a CSV, then review, clean, and export it." title="Email lists">
 			<section className={cn("flex flex-col gap-10", className)} data-slot="lists-panel" {...props}>
-				<form onSubmit={submit}>
-					<Group>
-						<Row>
-							<h3 className="text-sm font-medium text-white">Upload a list</h3>
-							<div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-								<div className="flex flex-col gap-1.5">
-									<Label className={fieldLabel} htmlFor="list-file">
-										CSV file
-									</Label>
-									<Input
-										accept=".csv,text/csv"
-										className="h-10 rounded-lg"
-										id="list-file"
-										onChange={(event) => {
-											setFile(event.target.files?.[0]);
-										}}
-										required
-										type="file"
-									/>
-								</div>
-								<div className="flex flex-col gap-1.5">
-									<Label className={fieldLabel} htmlFor="list-name">
-										Name
-									</Label>
-									<Input
-										className="h-10 rounded-lg"
-										id="list-name"
-										onChange={(event) => {
-											setName(event.target.value);
-										}}
-										placeholder="Campaign list"
-										value={name}
-									/>
-								</div>
-								<Button
-									className="h-10 rounded-lg"
-									disabled={upload.isPending || !file}
-									type="submit"
-								>
-									{upload.isPending ? "Uploading…" : "Upload"}
-								</Button>
-							</div>
-							<div className="flex flex-col gap-1.5">
-								<Label className={fieldLabel} htmlFor="list-source-key">
-									Lead source
-								</Label>
-								<Input
-									aria-describedby="list-source-key-help"
-									className="h-10 rounded-lg"
-									id="list-source-key"
-									onChange={(event) => {
-										setSourceKey(event.target.value);
-									}}
-									placeholder="hubspot"
-									value={sourceKey}
-								/>
-								<p className="text-xs text-[#858585]" id="list-source-key-help">
-									Where the list came from. Insights compare quality by source.
-								</p>
-							</div>
-							<details>
-								<summary className="cursor-pointer text-sm text-[#858585] hover:text-neutral-200">
-									More options
-								</summary>
-								<div className="mt-3 grid gap-3 sm:grid-cols-2">
+				<form
+					ref={formRef}
+					onSubmit={submit}
+					onChange={() => {
+						preview.reset();
+						upload.reset();
+						requestKey.current = crypto.randomUUID();
+					}}
+				>
+					<fieldset className="min-w-0" disabled={preview.isPending || upload.isPending}>
+						<Group>
+							<Row>
+								<h3 className="text-sm font-medium text-white">Upload a list</h3>
+								<div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
 									<div className="flex flex-col gap-1.5">
-										<Label className={fieldLabel} htmlFor="list-email-column">
-											Email column
+										<Label className={fieldLabel} htmlFor="list-file">
+											CSV file
+										</Label>
+										<Input
+											accept=".csv,text/csv"
+											className="h-10 rounded-lg"
+											id="list-file"
+											onChange={(event) => {
+												setFile(event.target.files?.[0]);
+											}}
+											required
+											type="file"
+										/>
+									</div>
+									<div className="flex flex-col gap-1.5">
+										<Label className={fieldLabel} htmlFor="list-name">
+											Name
 										</Label>
 										<Input
 											className="h-10 rounded-lg"
-											id="list-email-column"
+											id="list-name"
 											onChange={(event) => {
-												setEmailColumn(event.target.value);
+												setName(event.target.value);
 											}}
-											placeholder="Found from the header"
-											value={emailColumn}
+											placeholder="Campaign list"
+											value={name}
 										/>
 									</div>
+									<Button
+										className="h-10 rounded-lg"
+										disabled={upload.isPending || preview.isPending || !file}
+										type="submit"
+									>
+										{upload.isPending
+											? "Uploading…"
+											: preview.isPending
+												? "Preparing preview…"
+												: preview.data
+													? "Confirm and verify"
+													: "Preview upload"}
+									</Button>
 								</div>
-							</details>
-						</Row>
-					</Group>
+								<div className="flex flex-col gap-1.5">
+									<Label className={fieldLabel} htmlFor="list-source-key">
+										Lead source
+									</Label>
+									<Input
+										aria-describedby="list-source-key-help"
+										className="h-10 rounded-lg"
+										id="list-source-key"
+										onChange={(event) => {
+											setSourceKey(event.target.value);
+										}}
+										placeholder="hubspot"
+										value={sourceKey}
+									/>
+									<p className="text-xs text-[#858585]" id="list-source-key-help">
+										Where the list came from. Insights compare quality by source.
+									</p>
+								</div>
+								<details>
+									<summary className="cursor-pointer text-sm text-[#858585] hover:text-neutral-200">
+										More options
+									</summary>
+									<div className="mt-3 grid gap-3 sm:grid-cols-2">
+										<div className="flex flex-col gap-1.5">
+											<Label className={fieldLabel} htmlFor="list-email-column">
+												Email column
+											</Label>
+											<Input
+												className="h-10 rounded-lg"
+												id="list-email-column"
+												onChange={(event) => {
+													setEmailColumn(event.target.value);
+												}}
+												placeholder="Found from the header"
+												value={emailColumn}
+											/>
+										</div>
+									</div>
+								</details>
+							</Row>
+						</Group>
+					</fieldset>
 				</form>
+				{preview.data ? (
+					<div role="status">
+						<p>
+							{preview.data.total_rows} rows · {preview.data.unique_emails} unique addresses ·{" "}
+							{preview.data.duplicates} duplicates · {preview.data.rejected.length} rejected
+						</p>
+						<p>Verifying this list will use {preview.data.estimated_credits} credits.</p>
+						{preview.data.rejected.map((row) => (
+							<p key={row.row_number}>
+								Row {row.row_number}: {row.value || "Blank address"} — {row.reason}
+							</p>
+						))}
+					</div>
+				) : null}
+				{preview.isError ? <p role="alert">{errorMessage(preview.error)}</p> : null}
 				{upload.isError ? (
 					<p
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 						role="alert"
 					>
-						{upload.error.message}
+						{errorMessage(upload.error)}
 					</p>
 				) : null}
 				<Section title="Lists">
@@ -199,7 +255,7 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 							{lists.isError ? (
 								<Row>
 									<p className="text-sm text-red-300" role="alert">
-										{lists.error.message}
+										{errorMessage(lists.error)}
 									</p>
 								</Row>
 							) : null}
@@ -234,7 +290,7 @@ export function ListsPanel({ className, ...props }: ListsPanelProps) {
 												{listStatus.label(list.status)}
 											</Pill>
 											{ACTIVE_LIST_STATES.includes(list.status) ? (
-												<ListProgress listId={list.id} />
+												<ListProgress list={list} />
 											) : null}
 										</div>
 									))}

@@ -3,14 +3,12 @@
 import "client-only";
 
 import type { ComponentPropsWithoutRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Configuration, JobsApi } from "@oppulence/reacher-sdk";
+import { useJobStatus } from "@/hooks/queries/use-job-status";
 
 import { Progress } from "@oppulence/ui/components/progress";
 import { cn } from "@oppulence/ui/lib/utils";
 
-import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
-import { BulkProgressSchema, JobLatencySchema } from "@/lib/api/schemas/jobs";
+import { ACTIVE_JOB_STATES } from "@/lib/api/schemas/jobs";
 
 import { type JobProgressPropsFields } from "./job-progress.schema";
 
@@ -19,13 +17,11 @@ import { type JobProgressPropsFields } from "./job-progress.schema";
  * JobProgress is a client data component.
  * Shows the progress bar and time left for one running bulk job.
  *
- * It reads progress and latency through the generated SDK and TanStack Query.
- * It polls every 5 seconds until all rows are processed, then it shows nothing.
+ * It reads job status through the generated SDK and TanStack Query.
+ * It polls every 5 seconds until the job is terminal, then it shows nothing.
  * Owned by `job-progress.lit.ts`.
  */
 export type JobProgressProps = JobProgressPropsFields & ComponentPropsWithoutRef<"section">;
-
-const jobsApi = new JobsApi(new Configuration({ basePath: "/api/backend" }));
 
 /**
  * The seconds until the job is done at the rate since it started. This is the
@@ -47,24 +43,14 @@ export function timeLeft(seconds: number | null | undefined): string {
 }
 
 export function JobProgress({ className, jobId, ...props }: JobProgressProps) {
-	const progress = useQuery({
-		queryKey: workflowQueryKey("jobs", jobId, "bulk-progress"),
-		queryFn: async () =>
-			BulkProgressSchema.parse((await jobsApi.v1GetBulkJobProgress({ jobId })).data),
-		refetchInterval: (query) => {
-			const data = query.state.data;
-			return !data || data.total_processed < data.total_records ? 5_000 : false;
-		},
-	});
-	const running = !!progress.data && progress.data.total_processed < progress.data.total_records;
-	const latency = useQuery({
-		queryKey: workflowQueryKey("jobs", jobId, "latency"),
-		enabled: running,
-		queryFn: async () => JobLatencySchema.parse((await jobsApi.v1JobLatency({ jobId })).data),
-		refetchInterval: running ? 5_000 : false,
-	});
+	const progress = useJobStatus(jobId, true);
+	const running = ACTIVE_JOB_STATES.includes(progress.data?.status ?? "");
 	if (!progress.data || !running) return null;
-	const { total_processed: processed, total_records: total, created_at } = progress.data;
+	const { total_records: total, created_at, task_summary } = progress.data;
+	const processed = ["completed", "failed", "dead_lettered", "cancelled"].reduce(
+		(sum, state) => sum + (task_summary[state] ?? 0),
+		0,
+	);
 
 	return (
 		<section data-slot="job-progress" className={cn("flex flex-col gap-2", className)} {...props}>
@@ -76,9 +62,6 @@ export function JobProgress({ className, jobId, ...props }: JobProgressProps) {
 			<p className="text-xs text-[#858585]" role="status">
 				{processed} of {total} rows checked ·{" "}
 				{timeLeft(etaSeconds(total, processed, created_at, progress.dataUpdatedAt))}
-				{latency.data?.total_completed
-					? ` · Median check time ${String(latency.data.p50_duration_ms)} ms`
-					: ""}
 			</p>
 		</section>
 	);

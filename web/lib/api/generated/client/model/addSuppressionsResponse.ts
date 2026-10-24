@@ -7,10 +7,13 @@
  * Reacher provides email verification, list hygiene, suppressions, scheduled re-verification, and pipelines. The app and API use the same host.
  * OpenAPI spec version: 4.4.0
  */
+import type { AddSuppressionsResponseRejectedItem } from "./addSuppressionsResponseRejectedItem";
 
 export interface AddSuppressionsResponse {
   added: number;
   duplicates: number;
   entry_ids?: number[];
+  rejected?: AddSuppressionsResponseRejectedItem[];
+  submitted?: number;
   updated?: number;
 }

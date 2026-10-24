@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { V1Api } from "@oppulence/reacher-sdk";
+import { V1Api, ListsApi } from "@oppulence/reacher-sdk";
 import { afterEach, expect, it, vi } from "vitest";
 import { ListsPanel } from "./lists-panel";
 
@@ -38,6 +38,7 @@ it("shows tenant lists returned by the SDK", async () => {
 					source_key: null,
 					status: "processing",
 					total_rows: 10,
+					total_processed: 4,
 					created_at: "2026-09-23T00:00:00Z",
 					completed_at: null,
 				},
@@ -52,6 +53,7 @@ it("shows tenant lists returned by the SDK", async () => {
 			name: "Signup",
 			status: "processing",
 			total_rows: 10,
+			total_processed: 4,
 			email_column: "email",
 			summary: {
 				total_valid: 3,
@@ -81,6 +83,16 @@ it("uploads a CSV with its options and opens the new list's workspace", async ()
 	vi.spyOn(V1Api.prototype, "v1ListLists").mockResolvedValue({
 		data: { lists: [], total: 0 },
 	} as never);
+	const preview = vi.spyOn(ListsApi.prototype, "v1PreviewList").mockResolvedValue({
+		data: {
+			total_rows: 1,
+			unique_emails: 1,
+			duplicates: 0,
+			estimated_credits: 1,
+			rejected: [],
+			email_column: "Work email",
+		},
+	} as never);
 	const upload = vi.spyOn(V1Api.prototype, "v1CreateList").mockResolvedValue({
 		data: {
 			email_column: "Work email",
@@ -101,9 +113,13 @@ it("uploads a CSV with its options and opens the new list's workspace", async ()
 	});
 	fireEvent.change(screen.getByLabelText("Email column"), { target: { value: "Work email" } });
 	fireEvent.change(screen.getByLabelText("Lead source"), { target: { value: "hubspot" } });
-	expect(screen.getByRole("button", { name: "Upload" })).not.toBeDisabled();
-	const form = screen.getByRole("button", { name: "Upload" }).closest("form");
+	expect(screen.getByRole("button", { name: "Preview upload" })).not.toBeDisabled();
+	const form = screen.getByRole("button", { name: "Preview upload" }).closest("form");
 	if (!form) throw new Error("Upload form missing");
+	fireEvent.submit(form);
+	await screen.findByRole("button", { name: "Confirm and verify" });
+	expect(preview).toHaveBeenCalledTimes(1);
+	expect(upload).not.toHaveBeenCalled();
 	fireEvent.submit(form);
 	await waitFor(() => expect(push).toHaveBeenCalledWith("/app/lists/detail?list=3&accepted=1"));
 	expect(upload).toHaveBeenCalledWith(

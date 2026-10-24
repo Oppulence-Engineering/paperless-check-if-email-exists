@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 function search(history: unknown[]) {
-	const lookup = vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+	const lookup = vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 		data: { email: "user@example.com", total: history.length, history },
 	} as never);
 	vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({
@@ -57,7 +57,10 @@ it("looks up an address with the SDK and renders its history", async () => {
 		"href",
 		"/app/jobs?job=4",
 	);
-	expect(lookup).toHaveBeenCalledWith({ email: "user@example.com", limit: 50 }, expect.any(Object));
+	expect(lookup).toHaveBeenCalledWith(
+		{ historyRequest: { email: "user@example.com", limit: 50 } },
+		expect.any(Object),
+	);
 });
 
 it("says when the address has no earlier results", async () => {

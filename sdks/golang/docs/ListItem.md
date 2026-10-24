@@ -8,10 +8,12 @@ Name | Type | Description | Notes
 **CreatedAt** | **time.Time** |  | [required]
 **EmailColumn** | **string** |  | [required]
 **Id** | **int32** |  | [required]
+**JobId** | Pointer to **int32** |  | [optional]
 **Name** | **string** |  | [required]
 **OriginalFilename** | **string** |  | [required]
 **SourceKey** | Pointer to **NullableString** |  | [optional]
 **Status** | **string** |  | [required]
+**TotalProcessed** | Pointer to **int64** |  | [optional]
 **TotalRows** | **int32** |  | [required]
 
 ## Methods
@@ -113,6 +115,31 @@ and a boolean to check if the value has been set.
 SetId sets Id field to given value.
 
 
+### GetJobId
+
+`func (o *ListItem) GetJobId() int32`
+
+GetJobId returns the JobId field if non-nil, zero value otherwise.
+
+### GetJobIdOk
+
+`func (o *ListItem) GetJobIdOk() (*int32, bool)`
+
+GetJobIdOk returns a tuple with the JobId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetJobId
+
+`func (o *ListItem) SetJobId(v int32)`
+
+SetJobId sets JobId field to given value.
+
+### HasJobId
+
+`func (o *ListItem) HasJobId() bool`
+
+HasJobId returns a boolean if a field has been set.
+
 ### GetName
 
 `func (o *ListItem) GetName() string`
@@ -208,6 +235,31 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
+
+### GetTotalProcessed
+
+`func (o *ListItem) GetTotalProcessed() int64`
+
+GetTotalProcessed returns the TotalProcessed field if non-nil, zero value otherwise.
+
+### GetTotalProcessedOk
+
+`func (o *ListItem) GetTotalProcessedOk() (*int64, bool)`
+
+GetTotalProcessedOk returns a tuple with the TotalProcessed field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTotalProcessed
+
+`func (o *ListItem) SetTotalProcessed(v int64)`
+
+SetTotalProcessed sets TotalProcessed field to given value.
+
+### HasTotalProcessed
+
+`func (o *ListItem) HasTotalProcessed() bool`
+
+HasTotalProcessed returns a boolean if a field has been set.
 
 ### GetTotalRows
 

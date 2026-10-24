@@ -13,7 +13,22 @@ import * as zod from "zod";
  * List all active and inactive domain entries for the authenticated tenant.
  * @summary GET /v1/me/domains
  */
-export const V1ListTenantDomains200Response = zod.unknown();
+export const V1ListTenantDomains200Response = zod.object({
+  domains: zod.array(
+    zod.object({
+      created_at: zod.string(),
+      domain: zod.string(),
+      id: zod.uuid(),
+      is_active: zod.boolean(),
+      is_verified: zod.boolean(),
+      notes: zod.string().nullish(),
+      tenant_id: zod.uuid(),
+      updated_at: zod.string(),
+      verification_record: zod.string(),
+      verification_value: zod.string(),
+    }),
+  ),
+});
 
 export const V1ListTenantDomainsDefaultResponse = zod.object({
   error: zod.string(),
@@ -29,7 +44,18 @@ export const V1CreateTenantDomainBody = zod.strictObject({
   notes: zod.string().nullish(),
 });
 
-export const V1CreateTenantDomain201Response = zod.unknown();
+export const V1CreateTenantDomain201Response = zod.object({
+  created_at: zod.string(),
+  domain: zod.string(),
+  id: zod.uuid(),
+  is_active: zod.boolean(),
+  is_verified: zod.boolean(),
+  notes: zod.string().nullish(),
+  tenant_id: zod.uuid(),
+  updated_at: zod.string(),
+  verification_record: zod.string(),
+  verification_value: zod.string(),
+});
 
 export const V1CreateTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
@@ -57,7 +83,18 @@ export const V1GetTenantDomainParams = zod.object({
   domain: zod.string().describe("Domain identifier"),
 });
 
-export const V1GetTenantDomain200Response = zod.unknown();
+export const V1GetTenantDomain200Response = zod.object({
+  created_at: zod.string(),
+  domain: zod.string(),
+  id: zod.uuid(),
+  is_active: zod.boolean(),
+  is_verified: zod.boolean(),
+  notes: zod.string().nullish(),
+  tenant_id: zod.uuid(),
+  updated_at: zod.string(),
+  verification_record: zod.string(),
+  verification_value: zod.string(),
+});
 
 export const V1GetTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
@@ -83,9 +120,41 @@ export const V1UpdateTenantDomainBody = zod.strictObject({
   notes: zod.string().nullish(),
 });
 
-export const V1UpdateTenantDomain200Response = zod.unknown();
+export const V1UpdateTenantDomain200Response = zod.object({
+  created_at: zod.string(),
+  domain: zod.string(),
+  id: zod.uuid(),
+  is_active: zod.boolean(),
+  is_verified: zod.boolean(),
+  notes: zod.string().nullish(),
+  tenant_id: zod.uuid(),
+  updated_at: zod.string(),
+  verification_record: zod.string(),
+  verification_value: zod.string(),
+});
 
 export const V1UpdateTenantDomainDefaultResponse = zod.object({
+  error: zod.string(),
+});
+
+export const V1VerifyTenantDomainParams = zod.object({
+  domain: zod.string(),
+});
+
+export const V1VerifyTenantDomain200Response = zod.object({
+  created_at: zod.string(),
+  domain: zod.string(),
+  id: zod.uuid(),
+  is_active: zod.boolean(),
+  is_verified: zod.boolean(),
+  notes: zod.string().nullish(),
+  tenant_id: zod.uuid(),
+  updated_at: zod.string(),
+  verification_record: zod.string(),
+  verification_value: zod.string(),
+});
+
+export const V1VerifyTenantDomainDefaultResponse = zod.object({
   error: zod.string(),
 });
 

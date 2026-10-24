@@ -1,13 +1,16 @@
 "use client";
+import { useJobStatus } from "@/hooks/queries/use-job-status";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { workflowQueryKey } from "@/hooks/queries/utils/workflow-query-key";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Configuration, JobsApi, V1Api } from "@oppulence/reacher-sdk";
 import Link from "next/link";
-import { useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type ComponentPropsWithoutRef, type SyntheticEvent } from "react";
 
 import { Button } from "@oppulence/ui/components/button";
 import { Input } from "@oppulence/ui/components/input";
@@ -22,8 +25,9 @@ import { JobReview, Stat } from "@/components/features/lists/job-review/job-revi
 import { JobRows } from "@/components/features/lists/job-rows/job-rows";
 import { fetchV1EmailHistory } from "@/hooks/queries/utils/fetch-v1-email-history";
 import { saveFile } from "@/lib/downloads";
+import { V1ListJobs200Response } from "@/lib/api/generated/zod/jobs/jobs";
 import { V1GetJobResults200Response } from "@/lib/api/generated/zod/jobs/jobs";
-import { ACTIVE_JOB_STATES, JobStatusSchema } from "@/lib/api/schemas/jobs";
+import { ACTIVE_JOB_STATES } from "@/lib/api/schemas/jobs";
 import { jobStatus, taskState } from "@/lib/verification/labels";
 
 import { type JobsPanelPropsFields } from "./jobs-panel.schema";
@@ -49,10 +53,23 @@ export function parseEmailBatch(value: string): string[] {
 
 export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps) {
 	const queryClient = useQueryClient();
+	const router = useRouter();
+	const [offset, setOffset] = useState(0);
+	const recent = useQuery({
+		queryKey: workflowQueryKey("recent-jobs", offset),
+		queryFn: async ({ signal }) =>
+			V1ListJobs200Response.parse(
+				(await jobsApi.v1ListJobs({ limit: 20, offset }, { signal })).data,
+			),
+	});
 	const [input, setInput] = useState("");
 	const [source, setSource] = useState("");
 	const [lookup, setLookup] = useState(initialJobId ? String(initialJobId) : "");
 	const [jobId, setJobId] = useState(initialJobId);
+	useEffect(() => {
+		setJobId(initialJobId);
+		setLookup(initialJobId ? String(initialJobId) : "");
+	}, [initialJobId]);
 	const [notice, setNotice] = useState("");
 	const [validation, setValidation] = useState("");
 	const key = ["jobs", jobId];
@@ -62,6 +79,9 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 	}
 
 	const create = useMutation({
+		onMutate: () => {
+			setNotice("");
+		},
 		mutationFn: async () => {
 			const emails = parseEmailBatch(input);
 			if (!emails.length) throw new Error("Enter at least one email address.");
@@ -75,28 +95,23 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 			).data;
 		},
 		onSuccess: (data) => {
+			router.replace(`/app/jobs?job=${String(data.job_id)}`);
 			setJobId(data.job_id);
 			setLookup(String(data.job_id));
 			setInput("");
 			setNotice(`Job ${String(data.job_id)} created.`);
+			void queryClient.invalidateQueries({ queryKey: workflowQueryKey("recent-jobs") });
 		},
 	});
-	const status = useQuery({
-		queryKey: workflowQueryKey(...key, "status"),
-		enabled: !!jobId,
-		queryFn: async () =>
-			JobStatusSchema.parse((await jobsApi.v1GetJobStatus({ jobId: selectedJobId() })).data),
-		refetchInterval: (query) =>
-			ACTIVE_JOB_STATES.includes(query.state.data?.status ?? "") ? 5_000 : false,
-	});
+	const status = useJobStatus(jobId ?? undefined);
 	// ponytail: the job API has no list ID. The history of one checked row has it.
 	// Use a list_id field on the job status when the backend adds one.
 	const listId = useQuery({
 		queryKey: workflowQueryKey(...key, "list"),
 		enabled: !!jobId,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const page = V1GetJobResults200Response.parse(
-				(await jobsApi.v1GetJobResults({ jobId: selectedJobId(), limit: 10 })).data,
+				(await jobsApi.v1GetJobResults({ jobId: selectedJobId(), limit: 10 }, { signal })).data,
 			);
 			const row = page.results.find((item) => item.result?.input);
 			if (!row?.result) return null;
@@ -105,6 +120,9 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 		},
 	});
 	const action = useMutation({
+		onMutate: () => {
+			setNotice("");
+		},
 		mutationFn: async () => {
 			await jobsApi.v1CancelJob({ jobId: selectedJobId() });
 		},
@@ -114,6 +132,9 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 		},
 	});
 	const download = useMutation({
+		onMutate: () => {
+			setNotice("");
+		},
 		mutationFn: async () => {
 			const response = await jobsApi.v1DownloadJobResults(
 				{ jobId: selectedJobId(), format: "csv" },
@@ -126,12 +147,19 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 	function openJob(event: SyntheticEvent<HTMLFormElement>) {
 		event.preventDefault();
 		const id = Number(lookup);
-		if (!Number.isSafeInteger(id) || id < 1) {
+		setNotice("");
+		create.reset();
+		action.reset();
+		download.reset();
+		if (!/^\d+$/.test(lookup) || !Number.isSafeInteger(id) || id < 1 || id > 2147483647) {
+			setJobId(undefined);
 			setValidation("Enter a valid job ID.");
+			router.replace("/app/jobs");
 			return;
 		}
 		setValidation("");
 		setJobId(id);
+		router.replace(`/app/jobs?job=${String(id)}`);
 	}
 	const requestError = [create, status, action, download].find((request) => request.isError)?.error;
 
@@ -141,6 +169,54 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 			title="Bulk jobs"
 		>
 			<section data-slot="jobs-panel" className={cn("flex flex-col gap-10", className)} {...props}>
+				<Section title="Recent jobs">
+					<Group>
+						{recent.data?.jobs.map((job) => (
+							<Row
+								key={job.id}
+								label={
+									<Link
+										href={`/app/jobs?job=${String(job.id)}`}
+										onClick={() => {
+											setJobId(job.id);
+											setLookup(String(job.id));
+										}}
+									>
+										Job {job.id}
+									</Link>
+								}
+								description={`${String(job.total_records)} rows · ${new Date(job.created_at).toLocaleString()}`}
+							>
+								<Pill>{jobStatus.label(job.status)}</Pill>
+							</Row>
+						))}
+					</Group>
+					{recent.isError && !requestError ? (
+						<p role="alert">
+							{errorMessage(recent.error)}{" "}
+							<Button onClick={() => void recent.refetch()}>Retry</Button>
+						</p>
+					) : null}
+					{recent.data?.total === 0 ? <p>No jobs yet.</p> : null}
+					<div className="flex gap-2">
+						<Button
+							disabled={offset === 0}
+							onClick={() => {
+								setOffset(Math.max(0, offset - 20));
+							}}
+						>
+							Previous
+						</Button>
+						<Button
+							disabled={offset + 20 >= (recent.data?.total ?? 0)}
+							onClick={() => {
+								setOffset(offset + 20);
+							}}
+						>
+							Next
+						</Button>
+					</div>
+				</Section>
 				<form
 					onSubmit={(event) => {
 						event.preventDefault();
@@ -221,10 +297,20 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 						role="alert"
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 					>
-						{validation || requestError?.message}
+						{validation || errorMessage(requestError)}
+						{status.isError && jobId ? (
+							<Button
+								variant="outline"
+								onClick={() => {
+									void status.refetch();
+								}}
+							>
+								Retry
+							</Button>
+						) : null}
 					</p>
 				) : null}
-				{notice ? (
+				{notice && !requestError ? (
 					<p
 						role="status"
 						className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 ring-1 ring-emerald-500/20"
@@ -235,7 +321,7 @@ export function JobsPanel({ initialJobId, className, ...props }: JobsPanelProps)
 						</Link>
 					</p>
 				) : null}
-				{jobId ? (
+				{jobId && !status.isError ? (
 					<Section
 						actions={
 							<Button

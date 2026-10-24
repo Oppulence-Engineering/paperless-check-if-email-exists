@@ -22,10 +22,14 @@ var _ MappedNullable = &JobTaskResult{}
 
 // JobTaskResult struct for JobTaskResult
 type JobTaskResult struct {
+	CanonicalTaskId NullableInt32 `json:"canonical_task_id,omitempty"`
 	Error NullableString `json:"error,omitempty"`
 	Id int64 `json:"id"`
+	IsDuplicate *bool `json:"is_duplicate,omitempty"`
+	OriginalEmail NullableString `json:"original_email,omitempty"`
 	Result NullableCheckEmailOutput `json:"result,omitempty"`
 	RetryCount int32 `json:"retry_count"`
+	RowNumber NullableInt32 `json:"row_number,omitempty"`
 	TaskState string `json:"task_state"`
 }
 
@@ -49,6 +53,48 @@ func NewJobTaskResult(id int64, retryCount int32, taskState string) *JobTaskResu
 func NewJobTaskResultWithDefaults() *JobTaskResult {
 	this := JobTaskResult{}
 	return &this
+}
+
+// GetCanonicalTaskId returns the CanonicalTaskId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *JobTaskResult) GetCanonicalTaskId() int32 {
+	if o == nil || IsNil(o.CanonicalTaskId.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.CanonicalTaskId.Get()
+}
+
+// GetCanonicalTaskIdOk returns a tuple with the CanonicalTaskId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *JobTaskResult) GetCanonicalTaskIdOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.CanonicalTaskId.Get(), o.CanonicalTaskId.IsSet()
+}
+
+// HasCanonicalTaskId returns a boolean if a field has been set.
+func (o *JobTaskResult) HasCanonicalTaskId() bool {
+	if o != nil && o.CanonicalTaskId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetCanonicalTaskId gets a reference to the given NullableInt32 and assigns it to the CanonicalTaskId field.
+func (o *JobTaskResult) SetCanonicalTaskId(v int32) {
+	o.CanonicalTaskId.Set(&v)
+}
+// SetCanonicalTaskIdNil sets the value for CanonicalTaskId to be an explicit nil
+func (o *JobTaskResult) SetCanonicalTaskIdNil() {
+	o.CanonicalTaskId.Set(nil)
+}
+
+// UnsetCanonicalTaskId ensures that no value is present for CanonicalTaskId, not even an explicit nil
+func (o *JobTaskResult) UnsetCanonicalTaskId() {
+	o.CanonicalTaskId.Unset()
 }
 
 // GetError returns the Error field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -117,6 +163,80 @@ func (o *JobTaskResult) SetId(v int64) {
 	o.Id = v
 }
 
+// GetIsDuplicate returns the IsDuplicate field value if set, zero value otherwise.
+func (o *JobTaskResult) GetIsDuplicate() bool {
+	if o == nil || IsNil(o.IsDuplicate) {
+		var ret bool
+		return ret
+	}
+	return *o.IsDuplicate
+}
+
+// GetIsDuplicateOk returns a tuple with the IsDuplicate field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *JobTaskResult) GetIsDuplicateOk() (*bool, bool) {
+	if o == nil || IsNil(o.IsDuplicate) {
+		return nil, false
+	}
+	return o.IsDuplicate, true
+}
+
+// HasIsDuplicate returns a boolean if a field has been set.
+func (o *JobTaskResult) HasIsDuplicate() bool {
+	if o != nil && !IsNil(o.IsDuplicate) {
+		return true
+	}
+
+	return false
+}
+
+// SetIsDuplicate gets a reference to the given bool and assigns it to the IsDuplicate field.
+func (o *JobTaskResult) SetIsDuplicate(v bool) {
+	o.IsDuplicate = &v
+}
+
+// GetOriginalEmail returns the OriginalEmail field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *JobTaskResult) GetOriginalEmail() string {
+	if o == nil || IsNil(o.OriginalEmail.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.OriginalEmail.Get()
+}
+
+// GetOriginalEmailOk returns a tuple with the OriginalEmail field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *JobTaskResult) GetOriginalEmailOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.OriginalEmail.Get(), o.OriginalEmail.IsSet()
+}
+
+// HasOriginalEmail returns a boolean if a field has been set.
+func (o *JobTaskResult) HasOriginalEmail() bool {
+	if o != nil && o.OriginalEmail.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOriginalEmail gets a reference to the given NullableString and assigns it to the OriginalEmail field.
+func (o *JobTaskResult) SetOriginalEmail(v string) {
+	o.OriginalEmail.Set(&v)
+}
+// SetOriginalEmailNil sets the value for OriginalEmail to be an explicit nil
+func (o *JobTaskResult) SetOriginalEmailNil() {
+	o.OriginalEmail.Set(nil)
+}
+
+// UnsetOriginalEmail ensures that no value is present for OriginalEmail, not even an explicit nil
+func (o *JobTaskResult) UnsetOriginalEmail() {
+	o.OriginalEmail.Unset()
+}
+
 // GetResult returns the Result field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *JobTaskResult) GetResult() CheckEmailOutput {
 	if o == nil || IsNil(o.Result.Get()) {
@@ -183,6 +303,48 @@ func (o *JobTaskResult) SetRetryCount(v int32) {
 	o.RetryCount = v
 }
 
+// GetRowNumber returns the RowNumber field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *JobTaskResult) GetRowNumber() int32 {
+	if o == nil || IsNil(o.RowNumber.Get()) {
+		var ret int32
+		return ret
+	}
+	return *o.RowNumber.Get()
+}
+
+// GetRowNumberOk returns a tuple with the RowNumber field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *JobTaskResult) GetRowNumberOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.RowNumber.Get(), o.RowNumber.IsSet()
+}
+
+// HasRowNumber returns a boolean if a field has been set.
+func (o *JobTaskResult) HasRowNumber() bool {
+	if o != nil && o.RowNumber.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetRowNumber gets a reference to the given NullableInt32 and assigns it to the RowNumber field.
+func (o *JobTaskResult) SetRowNumber(v int32) {
+	o.RowNumber.Set(&v)
+}
+// SetRowNumberNil sets the value for RowNumber to be an explicit nil
+func (o *JobTaskResult) SetRowNumberNil() {
+	o.RowNumber.Set(nil)
+}
+
+// UnsetRowNumber ensures that no value is present for RowNumber, not even an explicit nil
+func (o *JobTaskResult) UnsetRowNumber() {
+	o.RowNumber.Unset()
+}
+
 // GetTaskState returns the TaskState field value
 func (o *JobTaskResult) GetTaskState() string {
 	if o == nil {
@@ -217,14 +379,26 @@ func (o JobTaskResult) MarshalJSON() ([]byte, error) {
 
 func (o JobTaskResult) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if o.CanonicalTaskId.IsSet() {
+		toSerialize["canonical_task_id"] = o.CanonicalTaskId.Get()
+	}
 	if o.Error.IsSet() {
 		toSerialize["error"] = o.Error.Get()
 	}
 	toSerialize["id"] = o.Id
+	if !IsNil(o.IsDuplicate) {
+		toSerialize["is_duplicate"] = o.IsDuplicate
+	}
+	if o.OriginalEmail.IsSet() {
+		toSerialize["original_email"] = o.OriginalEmail.Get()
+	}
 	if o.Result.IsSet() {
 		toSerialize["result"] = o.Result.Get()
 	}
 	toSerialize["retry_count"] = o.RetryCount
+	if o.RowNumber.IsSet() {
+		toSerialize["row_number"] = o.RowNumber.Get()
+	}
 	toSerialize["task_state"] = o.TaskState
 	return toSerialize, nil
 }

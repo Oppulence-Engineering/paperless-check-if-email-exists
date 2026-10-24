@@ -13,7 +13,7 @@ import ListDetailLoading from "./loading";
  * of instant-nav validation because auth must finish before headers.
  */
 export const metadata = {
-	title: "List detail - Oppulence",
+	title: "List detail",
 	description: "Review quality, remediation, exports, and team comments for one list",
 };
 

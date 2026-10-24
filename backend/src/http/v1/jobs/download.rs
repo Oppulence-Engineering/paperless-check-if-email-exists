@@ -62,7 +62,7 @@ async fn http_handler(
 	}
 
 	let active_tasks: i64 = sqlx::query_scalar::<_, i64>(
-		"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND task_state IN ('queued', 'running', 'retrying')",
+		"SELECT COUNT(*) FROM v1_task_result WHERE job_id = $1 AND is_duplicate IS NOT TRUE AND task_state IN ('queued', 'running', 'retrying')",
 	)
 	.bind(job_id)
 	.fetch_one(&pg_pool)
@@ -166,7 +166,8 @@ async fn fetch_batch(
 		       recommendation, recommendation_action, recommendation_confidence, recommendation_priority,
 		       policy_mode, policy_evaluation, policy_decision
 		FROM v1_task_result
-		WHERE job_id = $1 AND id > $2
+		WHERE job_id = $1 AND is_duplicate IS NOT TRUE AND id > $2
+          AND NOT EXISTS (SELECT 1 FROM verification_quality_rows q WHERE q.id=v1_task_result.id AND q.currently_suppressed)
 		ORDER BY id ASC
 		LIMIT $3
 		"#,

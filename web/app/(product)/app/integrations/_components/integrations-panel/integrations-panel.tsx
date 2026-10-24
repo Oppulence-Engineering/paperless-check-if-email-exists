@@ -29,18 +29,18 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 	const client = useQueryClient();
 	const health = useQuery({
 		queryKey: workflowQueryKey("integration-status", "health"),
-		queryFn: async () => (await healthApi.healthz()).status,
+		queryFn: async ({ signal }) => (await healthApi.healthz({ signal })).status,
 		refetchInterval: 30_000,
 	});
 	const readiness = useQuery({
 		queryKey: workflowQueryKey("integration-status", "readiness"),
-		queryFn: async () => (await healthApi.readyz()).status,
+		queryFn: async ({ signal }) => (await healthApi.readyz({ signal })).status,
 		refetchInterval: 30_000,
 	});
 	const version = useQuery({
 		queryKey: workflowQueryKey("integration-status", "version"),
-		queryFn: async () =>
-			z.object({ version: z.string() }).parse((await systemApi.getVersion()).data),
+		queryFn: async ({ signal }) =>
+			z.object({ version: z.string() }).parse((await systemApi.getVersion({ signal })).data),
 	});
 	const link = "text-sm text-neutral-300 underline hover:text-white";
 	return (
@@ -102,7 +102,7 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 					) : null}
 				</Section>
 				<Section
-					description="The onboarding check creates a tenant and API key. It takes the operator secret and the hosted app blocks it, so use the app sign-up flow for new workspaces."
+					description="Create a workspace by signing up, then create an API key in Settings."
 					title="Onboarding checks"
 				>
 					<Group>
@@ -170,7 +170,7 @@ export function IntegrationsPanel({ className, ...props }: IntegrationsPanelProp
 								</li>
 								<li>Change status and result polling to the matching v1 job routes.</li>
 								<li>
-									Verify parity in staging, switch callers, then retire the old global secret.
+									Test your integration with a workspace API key before switching your workflows.
 								</li>
 							</ol>
 						</Row>

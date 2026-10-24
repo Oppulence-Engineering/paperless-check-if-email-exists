@@ -1,3 +1,4 @@
+import { freeProviderOf } from "@/lib/verification/check-result";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { cn } from "@oppulence/ui/lib/utils";
@@ -126,7 +127,7 @@ export function TechnicalDetails({ className, result, ...props }: TechnicalDetai
 									["Disposable", yesNo(misc.details?.is_disposable)],
 									["Role address", yesNo(misc.details?.is_role_account)],
 									["Spam trap domain", yesNo(misc.details?.is_spam_trap_domain)],
-									["Consumer address", yesNo(misc.details?.is_b2c)],
+									["Consumer address", yesNo(freeProviderOf(result))],
 									["Found in a data breach", yesNo(misc.details?.haveibeenpwned)],
 									["Gravatar", misc.details?.gravatar_url ? "Yes" : "No"],
 								]}
@@ -144,7 +145,7 @@ export function TechnicalDetails({ className, result, ...props }: TechnicalDetai
 											"Not recorded",
 									],
 									["Duration", seconds === null ? "Not recorded" : `${seconds.toFixed(2)} s`],
-									["Checked by", debug.backend_name],
+
 									["Started", new Date(debug.start_time).toLocaleString()],
 								]}
 							/>

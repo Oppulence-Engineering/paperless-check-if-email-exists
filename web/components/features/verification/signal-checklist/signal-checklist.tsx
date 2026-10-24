@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@oppulence/ui/lib/utils";
 
 import { Group, Pill, Row } from "@/components/platform/page-kit";
+import { freeProviderOf } from "@/lib/verification/check-result";
 import { Check, Minus, X } from "@/lib/icons";
 import { catchAllSeverity, confidenceFactor, SIGNALS } from "@/lib/verification/labels";
 
@@ -56,7 +57,8 @@ export function SignalChecklist({ className, result, ...props }: SignalChecklist
 								(signal.key.startsWith("smtp_") || signal.key === "has_mx_records")
 							)
 								return null;
-							const value = signals[signal.key];
+							const value =
+								signal.key === "is_free_provider" ? freeProviderOf(result) : signals[signal.key];
 							if (typeof value !== "boolean") return null;
 							const state = signalState(value, signal.good);
 							const { icon: Icon, className: tone, label } = STATE_STYLE[state];

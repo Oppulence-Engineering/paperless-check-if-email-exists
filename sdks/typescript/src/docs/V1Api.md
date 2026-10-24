@@ -27,6 +27,8 @@ All URIs are relative to *http://localhost*
 |[**v1ListResearch**](#v1listresearch) | **GET** /v1/research | |
 |[**v1ListSuppressionEvents**](#v1listsuppressionevents) | **GET** /v1/suppressions/{id}/events | List suppression events|
 |[**v1ListSuppressions**](#v1listsuppressions) | **GET** /v1/suppressions | GET /v1/suppressions|
+|[**v1Overview**](#v1overview) | **GET** /v1/overview | |
+|[**v1RestoreSuppression**](#v1restoresuppression) | **POST** /v1/suppressions/{id}/restore | |
 |[**v1ReverificationStatus**](#v1reverificationstatus) | **GET** /v1/reverification/status | GET /v1/reverification/status|
 |[**v1SourceQuality**](#v1sourcequality) | **GET** /v1/sources/quality | List source quality|
 |[**v1UpdateReverification**](#v1updatereverification) | **PUT** /v1/reverification | PUT /v1/reverification|
@@ -367,6 +369,7 @@ const configuration = new Configuration();
 const apiInstance = new V1Api(configuration);
 
 let file: File; // (default to undefined)
+let idempotencyKey: string; //Reuse for retries of the same upload to prevent duplicate jobs and charges (optional) (default to undefined)
 let emailColumn: string; // (optional) (default to undefined)
 let name: string; // (optional) (default to undefined)
 let policyId: number; // (optional) (default to undefined)
@@ -374,6 +377,7 @@ let sourceKey: string; //Optional source key used for source quality analytics, 
 
 const { status, data } = await apiInstance.v1CreateList(
     file,
+    idempotencyKey,
     emailColumn,
     name,
     policyId,
@@ -386,6 +390,7 @@ const { status, data } = await apiInstance.v1CreateList(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **file** | [**File**] |  | defaults to undefined|
+| **idempotencyKey** | [**string**] | Reuse for retries of the same upload to prevent duplicate jobs and charges | (optional) defaults to undefined|
 | **emailColumn** | [**string**] |  | (optional) defaults to undefined|
 | **name** | [**string**] |  | (optional) defaults to undefined|
 | **policyId** | [**number**] |  | (optional) defaults to undefined|
@@ -1281,6 +1286,101 @@ const { status, data } = await apiInstance.v1ListSuppressions(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Suppression list |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1Overview**
+> OverviewResponse v1Overview()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+const { status, data } = await apiInstance.v1Overview();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**OverviewResponse**
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Tenant dashboard snapshot; unavailable and forbidden sections contain no data |  -  |
+|**0** | Request error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v1RestoreSuppression**
+> v1RestoreSuppression()
+
+
+### Example
+
+```typescript
+import {
+    V1Api,
+    Configuration
+} from '@oppulence/reacher-sdk';
+
+const configuration = new Configuration();
+const apiInstance = new V1Api(configuration);
+
+let id: number; // (default to undefined)
+
+const { status, data } = await apiInstance.v1RestoreSuppression(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[Authorization](../README.md#Authorization)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Suppression restored |  -  |
 |**0** | Request error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

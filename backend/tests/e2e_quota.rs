@@ -27,6 +27,7 @@ mod tests {
 		.unwrap();
 
 		TenantContext {
+			user_id: None,
 			tenant_id: Some(tenant_id),
 			api_key_id: None,
 			tenant_name: "test".into(),

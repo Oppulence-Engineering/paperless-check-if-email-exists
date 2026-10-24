@@ -12,7 +12,7 @@ use test_helpers::{insert_tenant, test_db_url, TestDb};
 
 #[tokio::test]
 #[serial]
-async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
+async fn mailbox_identity_migration_preserves_alias_history_and_folds_local_case() {
 	use reacher_backend::http::v1::lists::canonicalize::canonicalize_email;
 	use reacher_backend::suppression::has_active_suppression;
 	let db = test_helpers::migrate_scratch_db_to_head(
@@ -54,7 +54,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 			.unwrap()
 	);
 	assert!(
-		!has_active_suppression(db.pool(), tenant, "sales@company.example")
+		has_active_suppression(db.pool(), tenant, "sales@company.example")
 			.await
 			.unwrap()
 	);
@@ -87,7 +87,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 	.fetch_one(db.pool())
 	.await
 	.unwrap();
-	assert_eq!(migration_events, 4);
+	assert_eq!(migration_events, 5);
 	let history: (String, String) = sqlx::query_as(
 		"SELECT canonical_email, extra->>'identity_v1_canonical' FROM v1_task_result",
 	)
@@ -97,7 +97,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 	assert_eq!(
 		history,
 		(
-			"Sales@company.example".into(),
+			"sales@company.example".into(),
 			"sales@company.example".into()
 		)
 	);
@@ -107,7 +107,7 @@ async fn mailbox_identity_migration_preserves_alias_history_and_local_case() {
 	.fetch_all(db.pool())
 	.await
 	.unwrap();
-	assert_eq!(outcomes, vec!["Sales@company.example", "ab@gmail.com"]);
+	assert_eq!(outcomes, vec!["ab@gmail.com", "sales@company.example"]);
 }
 
 #[tokio::test]
@@ -323,7 +323,7 @@ async fn every_suppression_writer_uses_the_same_identity_and_retains_supplied_ad
 			.unwrap()
 	);
 	assert!(
-		!has_active_suppression(db.pool(), tenant, "sales@company.example")
+		has_active_suppression(db.pool(), tenant, "sales@company.example")
 			.await
 			.unwrap()
 	);
@@ -331,7 +331,7 @@ async fn every_suppression_writer_uses_the_same_identity_and_retains_supplied_ad
 
 #[tokio::test]
 #[serial]
-async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases() {
+async fn list_dispatch_preserves_routing_addresses_and_groups_case_and_gmail_aliases() {
 	use reacher_backend::worker::consume::CHECK_EMAIL_QUEUE;
 	use reacher_backend::worker::do_work::CheckEmailTask;
 	let db = TestDb::start().await;
@@ -366,7 +366,7 @@ async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases
 		.await;
 	assert_eq!(response.status(), 202, "{:?}", response.body());
 	let mut dispatched = vec![];
-	for _ in 0..3 {
+	for _ in 0..2 {
 		assert!(reacher_backend::worker::dispatch::publish_next(
 			db.pool(),
 			&channel,
@@ -386,11 +386,7 @@ async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases
 	dispatched.sort();
 	assert_eq!(
 		dispatched,
-		vec![
-			"A.B+tag@GoogleMail.com",
-			"Sales@COMPANY.EXAMPLE",
-			"sales@company.example"
-		]
+		vec!["A.B+tag@GoogleMail.com", "Sales@COMPANY.EXAMPLE"]
 	);
 	assert!(channel
 		.basic_get(CHECK_EMAIL_QUEUE.into(), Default::default())
@@ -405,13 +401,13 @@ async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases
 		vec![
 			(
 				"Sales@COMPANY.EXAMPLE".into(),
-				"Sales@company.example".into(),
+				"sales@company.example".into(),
 				false
 			),
 			(
 				"sales@company.example".into(),
 				"sales@company.example".into(),
-				false
+				true
 			),
 			(
 				"A.B+tag@GoogleMail.com".into(),
@@ -425,7 +421,7 @@ async fn list_dispatch_preserves_routing_addresses_and_only_groups_gmail_aliases
 
 #[tokio::test]
 #[serial]
-async fn mailbox_history_does_not_fold_local_case_or_boost_ambiguous_legacy_outcomes() {
+async fn mailbox_history_folds_local_case_without_boosting_ambiguous_legacy_outcomes() {
 	use serde_json::json;
 	let db = TestDb::start().await;
 	let tenant = insert_tenant(db.pool(), "identity-history", None, 0).await;
@@ -450,8 +446,8 @@ async fn mailbox_history_does_not_fold_local_case_or_boost_ambiguous_legacy_outc
 			.execute(db.pool()).await.unwrap();
 	}
 	for (email, expected) in [
-		("Sales@company.example", 2),
-		("sales@company.example", 1),
+		("Sales@company.example", 3),
+		("sales@company.example", 3),
 		("ab@gmail.com", 1),
 	] {
 		let response = warp::test::request()
@@ -506,7 +502,7 @@ async fn mailbox_history_does_not_fold_local_case_or_boost_ambiguous_legacy_outc
 		chrono::Utc::now(),
 	)
 	.await;
-	assert_eq!(lower.delivered_count, 0);
+	assert_eq!(lower.delivered_count, 1);
 }
 
 #[tokio::test]
@@ -704,7 +700,7 @@ async fn bulk_publication_does_not_overwrite_a_completion_that_wins_the_race() {
 
 #[tokio::test]
 #[serial]
-async fn duplicate_completion_cannot_copy_across_case_distinct_mailboxes() {
+async fn duplicate_completion_cannot_copy_across_distinct_mailboxes() {
 	use reacher_backend::worker::do_work::sync_task_entities;
 	let db = TestDb::start().await;
 	let tenant = insert_tenant(db.pool(), "duplicate-identity", None, 0).await;
@@ -731,7 +727,7 @@ async fn duplicate_completion_cannot_copy_across_case_distinct_mailboxes() {
 	.execute(db.pool())
 	.await
 	.unwrap();
-	for email in ["Sales@company.example", "sales@company.example"] {
+	for email in ["Sales@company.example", "support@company.example"] {
 		sqlx::query("INSERT INTO v1_task_result (job_id,tenant_id,payload,canonical_email,is_duplicate,canonical_task_id,task_state) VALUES ($1,$2,'{}',$3,true,$4,'queued')")
 			.bind(job).bind(tenant).bind(email).bind(primary).execute(db.pool()).await.unwrap();
 	}
@@ -743,8 +739,8 @@ async fn duplicate_completion_cannot_copy_across_case_distinct_mailboxes() {
 	assert_eq!(
 		rows,
 		vec![
-			("Sales@company.example".into(), "completed".into(), true),
-			("sales@company.example".into(), "queued".into(), false)
+			("sales@company.example".into(), "completed".into(), true),
+			("support@company.example".into(), "queued".into(), false)
 		]
 	);
 	let status: String = sqlx::query_scalar("SELECT status::TEXT FROM v1_bulk_job WHERE id = $1")

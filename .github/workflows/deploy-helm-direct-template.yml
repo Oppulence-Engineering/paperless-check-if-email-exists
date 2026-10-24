@@ -49,59 +49,6 @@ on:
         required: false
         type: string
         default: ''
-  workflow_dispatch:
-    inputs:
-      cluster:
-        description: 'Target cluster (us-east, eu-central, us-west)'
-        required: true
-        type: choice
-        options:
-          - us-east
-          - eu-central
-          - us-west
-      service_name:
-        description: 'Name of the service to deploy (e.g., oppulence-unified-api)'
-        required: true
-        type: string
-      service_path:
-        description: 'Path to the service directory'
-        required: true
-        type: string
-      chart_repository:
-        description: 'Helm chart OCI repository URL (e.g., oci://ghcr.io/oppulence-engineering/oppulence-charts/charts/oppulence-production) or local path (e.g., ./charts/canvas)'
-        required: true
-        type: string
-      namespace:
-        description: 'Kubernetes namespace to deploy to'
-        required: true
-        type: string
-        default: 'oppulence'
-      create_namespace:
-        description: 'Whether to create the namespace if it does not exist'
-        required: false
-        type: boolean
-        default: true
-      version:
-        description: 'Version of the service to deploy'
-        required: false
-        type: string
-      values_file:
-        description: 'Path to values file overlay (e.g., charts/canvas/values-api.yaml)'
-        required: false
-        type: string
-      image_repository:
-        description: 'Override image repository (e.g., ghcr.io/oppulence-engineering/oppulence-canvas-api)'
-        required: false
-        type: string
-      image_tag:
-        description: 'Override image tag (e.g., sha-abc123)'
-        required: false
-        type: string
-      secret_env_overrides:
-        description: 'Optional newline-delimited KEY=VALUE pairs for config.secretEnv overrides'
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: write # needed to write releases
@@ -112,24 +59,34 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Enforce deployment branch
+        env:
+          DEPLOY_NAMESPACE: ${{ inputs.namespace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$DEPLOY_NAMESPACE:$GITHUB_REF" in
+            paperless-production:refs/heads/main|paperless-staging:refs/heads/develop) ;;
+            *) echo 'Deployments require main/production or develop/staging'; exit 1 ;;
+          esac
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Connect to Tailscale
-        uses: tailscale/github-action@v4
+        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4
         with:
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
         with:
           version: v4.1.1
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -16,10 +16,112 @@ import type {
   ScorePolicyDeleteResponse,
   ScorePolicyListResponse,
   ScorePolicyView,
+  TenantDomainResponse,
+  TenantDomainsListResponse,
   TenantSettingsResponse,
   TenantUsageResponse,
   TenantWebhookResponse,
 } from "../model";
+
+export const getV1ListTenantDomainsResponseMock = (
+  overrideResponse: Partial<Extract<TenantDomainsListResponse, object>> = {},
+): TenantDomainsListResponse => ({
+  domains: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    created_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    id: faker.string.uuid(),
+    is_active: faker.datatype.boolean(),
+    is_verified: faker.datatype.boolean(),
+    notes: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    tenant_id: faker.string.uuid(),
+    updated_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    verification_record: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    verification_value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  })),
+  ...overrideResponse,
+});
+
+export const getV1CreateTenantDomainResponseMock = (
+  overrideResponse: Partial<Extract<TenantDomainResponse, object>> = {},
+): TenantDomainResponse => ({
+  created_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  id: faker.string.uuid(),
+  is_active: faker.datatype.boolean(),
+  is_verified: faker.datatype.boolean(),
+  notes: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  tenant_id: faker.string.uuid(),
+  updated_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_record: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
+
+export const getV1GetTenantDomainResponseMock = (
+  overrideResponse: Partial<Extract<TenantDomainResponse, object>> = {},
+): TenantDomainResponse => ({
+  created_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  id: faker.string.uuid(),
+  is_active: faker.datatype.boolean(),
+  is_verified: faker.datatype.boolean(),
+  notes: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  tenant_id: faker.string.uuid(),
+  updated_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_record: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
+
+export const getV1UpdateTenantDomainResponseMock = (
+  overrideResponse: Partial<Extract<TenantDomainResponse, object>> = {},
+): TenantDomainResponse => ({
+  created_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  id: faker.string.uuid(),
+  is_active: faker.datatype.boolean(),
+  is_verified: faker.datatype.boolean(),
+  notes: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  tenant_id: faker.string.uuid(),
+  updated_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_record: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
+
+export const getV1VerifyTenantDomainResponseMock = (
+  overrideResponse: Partial<Extract<TenantDomainResponse, object>> = {},
+): TenantDomainResponse => ({
+  created_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  domain: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  id: faker.string.uuid(),
+  is_active: faker.datatype.boolean(),
+  is_verified: faker.datatype.boolean(),
+  notes: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  tenant_id: faker.string.uuid(),
+  updated_at: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_record: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  verification_value: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
 
 export const getV1GetTenantSettingsResponseMock = (
   overrideResponse: Partial<Extract<TenantSettingsResponse, object>> = {},

@@ -25,7 +25,7 @@ describe("AddressTimeline", () => {
 	});
 
 	it("merges checks and delivery events and suppresses the address", async () => {
-		vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 			data: {
 				email: "maya@brightlane.co",
 				total: 1,
@@ -98,7 +98,7 @@ describe("AddressTimeline", () => {
 	});
 
 	it("shows the current suppression", async () => {
-		vi.spyOn(VerificationApi.prototype, "v1EmailHistory").mockResolvedValue({
+		vi.spyOn(VerificationApi.prototype, "v1EmailHistoryPost").mockResolvedValue({
 			data: { email: "maya@brightlane.co", total: 0, history: [] },
 		} as never);
 		vi.spyOn(OutcomesApi.prototype, "v1ListOutcomes").mockResolvedValue({

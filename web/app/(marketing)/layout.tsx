@@ -1,5 +1,6 @@
 import { MarketingLayoutClient } from "./marketing-layout-client";
 
+import "./marketing.css";
 import "./editorial/editorial.css";
 
 export const viewport = {

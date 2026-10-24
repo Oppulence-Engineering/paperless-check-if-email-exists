@@ -25,6 +25,12 @@ import type { CheckEmailOutput } from './check-email-output';
 export interface JobTaskResult {
     /**
      *
+     * @type {number}
+     * @memberof JobTaskResult
+     */
+    'canonical_task_id'?: number | null;
+    /**
+     *
      * @type {string}
      * @memberof JobTaskResult
      */
@@ -37,6 +43,18 @@ export interface JobTaskResult {
     'id': number;
     /**
      *
+     * @type {boolean}
+     * @memberof JobTaskResult
+     */
+    'is_duplicate'?: boolean;
+    /**
+     *
+     * @type {string}
+     * @memberof JobTaskResult
+     */
+    'original_email'?: string | null;
+    /**
+     *
      * @type {CheckEmailOutput}
      * @memberof JobTaskResult
      */
@@ -47,6 +65,12 @@ export interface JobTaskResult {
      * @memberof JobTaskResult
      */
     'retry_count': number;
+    /**
+     *
+     * @type {number}
+     * @memberof JobTaskResult
+     */
+    'row_number'?: number | null;
     /**
      *
      * @type {string}

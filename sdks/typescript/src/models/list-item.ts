@@ -46,6 +46,12 @@ export interface ListItem {
     'id': number;
     /**
      *
+     * @type {number}
+     * @memberof ListItem
+     */
+    'job_id'?: number;
+    /**
+     *
      * @type {string}
      * @memberof ListItem
      */
@@ -68,6 +74,12 @@ export interface ListItem {
      * @memberof ListItem
      */
     'status': string;
+    /**
+     *
+     * @type {number}
+     * @memberof ListItem
+     */
+    'total_processed'?: number;
     /**
      *
      * @type {number}

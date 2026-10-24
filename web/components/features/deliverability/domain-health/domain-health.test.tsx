@@ -58,7 +58,7 @@ describe("DomainHealth", () => {
 
 		expect(await screen.findByRole("alert")).toHaveTextContent("Invalid domain");
 		await waitFor(() => {
-			expect(screen.getByRole("button", { name: "Check again" })).toBeEnabled();
+			expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
 		});
 	});
 });

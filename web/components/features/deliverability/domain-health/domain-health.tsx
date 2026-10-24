@@ -1,11 +1,11 @@
 "use client";
 
 import "client-only";
+import { errorMessage } from "@/lib/api/error-message";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Configuration, V1Api } from "@oppulence/reacher-sdk";
 import type { ComponentPropsWithoutRef } from "react";
-import { z } from "zod";
 
 import { Button } from "@oppulence/ui/components/button";
 import { cn } from "@oppulence/ui/lib/utils";
@@ -30,25 +30,25 @@ import { type DomainHealthPropsFields } from "./domain-health.schema";
 export type DomainHealthProps = DomainHealthPropsFields & ComponentPropsWithoutRef<"section">;
 
 const v1Api = new V1Api(new Configuration({ basePath: "/api/backend" }));
-const errorEnvelope = z.object({ response: z.object({ data: z.object({ error: z.string() }) }) });
-
 async function checkReputation(domain: string, forceRefresh = false) {
-	try {
-		const response = await v1Api.v1CheckReputation({
-			reputationCheckRequest: { domain, force_refresh: forceRefresh },
-		});
-		return V1CheckReputation200Response.parse(response.data);
-	} catch (error) {
-		// Show the backend message, for example "Invalid domain", not the HTTP status.
-		const envelope = errorEnvelope.safeParse(error);
-		throw envelope.success ? new Error(envelope.data.response.data.error) : error;
-	}
+	const response = await v1Api.v1CheckReputation({
+		reputationCheckRequest: { domain, force_refresh: forceRefresh },
+	});
+	return V1CheckReputation200Response.parse(response.data);
 }
 
 export function DomainHealth({ className, domain, ...props }: DomainHealthProps) {
 	const client = useQueryClient();
 	const queryKey = workflowQueryKey("domain-reputation", domain);
-	const report = useQuery({ queryKey, queryFn: () => checkReputation(domain) });
+	const report = useQuery({
+		queryKey,
+		queryFn: () => checkReputation(domain),
+		retry: false,
+		staleTime: Infinity,
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+		refetchOnReconnect: false,
+	});
 	const refresh = useMutation({
 		mutationFn: () => checkReputation(domain, true),
 		onSuccess: (data) => {
@@ -56,7 +56,7 @@ export function DomainHealth({ className, domain, ...props }: DomainHealthProps)
 		},
 	});
 	const busy = report.isPending || refresh.isPending;
-	const error = refresh.error ?? report.error;
+	const error = refresh.isPending ? null : (refresh.error ?? report.error);
 	const checkAgain = (
 		<Button
 			className="rounded-lg"
@@ -67,7 +67,7 @@ export function DomainHealth({ className, domain, ...props }: DomainHealthProps)
 			size="sm"
 			variant="outline"
 		>
-			Check again
+			{error ? "Retry" : "Check again"}
 		</Button>
 	);
 
@@ -94,7 +94,7 @@ export function DomainHealth({ className, domain, ...props }: DomainHealthProps)
 						className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300 ring-1 ring-red-500/20"
 						role="alert"
 					>
-						{error.message}
+						{errorMessage(error)}
 					</p>
 				</Row>
 			) : null}

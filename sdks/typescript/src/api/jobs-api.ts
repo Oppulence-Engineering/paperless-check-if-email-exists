@@ -31,6 +31,8 @@ import type { ErrorEnvelope } from '../models';
 import type { JobResultPageResponse } from '../models';
 // @ts-ignore
 import type { RetryJobResponse } from '../models';
+// @ts-ignore
+import type { V1ListJobs200Response } from '../models';
 /**
  * JobsApi - axios parameter creator
  * @export
@@ -490,6 +492,48 @@ export const JobsApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
+         *
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListJobs: async (limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/jobs`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Authorization required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {number} jobId Bulk job identifier
@@ -689,6 +733,19 @@ export const JobsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         *
+         * @param {number} [limit]
+         * @param {number} [offset]
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ListJobs(limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<V1ListJobs200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ListJobs(limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobsApi.v1ListJobs']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {number} jobId Bulk job identifier
@@ -822,6 +879,15 @@ export const JobsApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.v1JobLatency(requestParameters.jobId, options).then((request) => request(axios, basePath));
         },
         /**
+         *
+         * @param {JobsApiV1ListJobsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ListJobs(requestParameters: JobsApiV1ListJobsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<V1ListJobs200Response> {
+            return localVarFp.v1ListJobs(requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
          * @summary POST /v1/jobs/{job_id}/retry
          * @param {JobsApiV1RetryJobRequest} requestParameters Request parameters.
@@ -949,6 +1015,15 @@ export interface JobsApiInterface {
      * @memberof JobsApiInterface
      */
     v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     *
+     * @param {JobsApiV1ListJobsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApiInterface
+     */
+    v1ListJobs(requestParameters?: JobsApiV1ListJobsRequest, options?: RawAxiosRequestConfig): AxiosPromise<V1ListJobs200Response>;
 
     /**
      * Retries all failed or dead-lettered tasks in a tenant-scoped bulk job.
@@ -1180,6 +1255,27 @@ export interface JobsApiV1JobLatencyRequest {
 }
 
 /**
+ * Request parameters for v1ListJobs operation in JobsApi.
+ * @export
+ * @interface JobsApiV1ListJobsRequest
+ */
+export interface JobsApiV1ListJobsRequest {
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1ListJobs
+     */
+    readonly limit?: number
+
+    /**
+     *
+     * @type {number}
+     * @memberof JobsApiV1ListJobs
+     */
+    readonly offset?: number
+}
+
+/**
  * Request parameters for v1RetryJob operation in JobsApi.
  * @export
  * @interface JobsApiV1RetryJobRequest
@@ -1330,6 +1426,17 @@ export class JobsApi extends BaseAPI implements JobsApiInterface {
      */
     public v1JobLatency(requestParameters: JobsApiV1JobLatencyRequest, options?: RawAxiosRequestConfig) {
         return JobsApiFp(this.configuration).v1JobLatency(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @param {JobsApiV1ListJobsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobsApi
+     */
+    public v1ListJobs(requestParameters: JobsApiV1ListJobsRequest = {}, options?: RawAxiosRequestConfig) {
+        return JobsApiFp(this.configuration).v1ListJobs(requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

@@ -6,6 +6,8 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
+    # Legacy API URLs can contain addresses; retain metrics and redacted application logs.
+    nginx.ingress.kubernetes.io/enable-access-log: "false"
     # Better Auth session cookies are large; the default buffer returns 502.
     nginx.ingress.kubernetes.io/proxy-buffer-size: 64k
     nginx.ingress.kubernetes.io/proxy-buffers-number: "8"

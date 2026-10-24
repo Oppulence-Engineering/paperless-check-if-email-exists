@@ -50,7 +50,7 @@ function familyFor(path: string): Family | undefined {
 	if (path.startsWith("/v1/admin/")) return "Platform admin";
 	if (path === "/v1/check-email-with-onboard") return "Onboarding";
 	if (path.startsWith("/v1/inbound/providers/")) return "Provider callback";
-	if (["/v1/me", "/v1/score-policies"].some((prefix) => path.startsWith(prefix)))
+	if (["/v1/me", "/v1/overview", "/v1/score-policies"].some((prefix) => path.startsWith(prefix)))
 		return "Workspace account";
 	if (
 		[
@@ -66,7 +66,7 @@ function familyFor(path: string): Family | undefined {
 	)
 		return "Verification and finder";
 	if (
-		["/v1/bulk", "/v1/jobs/", "/v1/query", "/v1/events", "/v1/sources/"].some((prefix) =>
+		["/v1/bulk", "/v1/jobs", "/v1/query", "/v1/events", "/v1/sources/"].some((prefix) =>
 			path.startsWith(prefix),
 		)
 	)
@@ -138,6 +138,7 @@ export function workflowDestination(operation: PortalOperation): { href: string;
 		case "Pipelines":
 			return { href: "/app/pipelines", label: "Open pipelines" };
 		case "Workspace account":
+			if (operation.path === "/v1/overview") return { href: "/app", label: "Open overview" };
 			if (operation.path.startsWith("/v1/me/api-keys"))
 				return { href: "/app/settings?settings=developer", label: "Manage workspace API keys" };
 			if (operation.path.startsWith("/v1/me/domains"))
