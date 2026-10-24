@@ -43,6 +43,7 @@
 * [Source Quality](advanced/source-quality.md)
 * [Job Observability](advanced/job-observability.md)
 * [RFC delivery sequence](rfcs/README.md)
+  * [Verify technical contracts](rfcs/verify-technical-contracts.md)
   * [RFC 0027: Data Rights and Product Boundaries](rfcs/0027-data-rights-and-product-boundaries.md)
   * [RFC 0028: Paid Audit Validation and Unit Economics](rfcs/0028-paid-audit-validation-and-unit-economics.md)
   * [RFC 0029: Agency Audits and Import Lineage](rfcs/0029-agency-audits-and-import-lineage.md)

@@ -6,6 +6,12 @@ Updated 2026-10-23 from the [company thesis](../../company.md), [vision](../../v
 
 The destination is a repeatable paid audit of customer-owned prospect data: import → assess identity → selectively repair → verify → review → deliver Ready, Needs Review, and Excluded records → maintain approved data after repeat demand. Optimize total cost per correctly matched, usable, role-relevant contact, including failed research and human review.
 
+Read the [shared technical contracts](verify-technical-contracts.md) before
+implementing RFCs 0027–0033. Their technical sections define proposed storage
+constraints, typed APIs, state machines, transaction boundaries, failure recovery,
+migrations and test gates. They are implementation specifications, not claims that
+the new APIs or cross-service contracts already exist.
+
 ## Build order
 
 | Order | RFC / increment | Depends on | Customer result and exit gate |

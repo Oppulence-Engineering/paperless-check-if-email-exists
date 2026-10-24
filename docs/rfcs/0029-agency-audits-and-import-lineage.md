@@ -48,13 +48,13 @@ hash and mapping version. Preview maps company, domain, person, role, email, and
 original-ID columns; returns row counts, missing fields, malformed values, duplicate
 groups, and company-domain conflicts. Preview/commit do not purchase research.
 
-After commit, an explicit bounded run action links accepted rows to existing
-`/v1/research` sessions. Keep the ten-row pilot cap until RFC 0031 passes its
+After commit, explicit attachment links accepted rows to existing pilot research
+sessions; automatic paid runs use RFC 0031's approval/reservation slice. Keep the ten-row pilot cap until RFC 0031 passes its
 capacity gate. Missing-domain and ambiguous rows remain visible for review; do not
 claim name-only company resolution merely because import succeeds.
 
-Introduce `audits.read`, `audits.write`, `audits.review`, and `audits.export` scopes
-in Rust, API-key validation, and shared route authorization. Map member/admin roles
+Introduce the six audit scopes in the shared technical contract across Rust,
+API-key validation, and shared route authorization. Map member/admin roles
 explicitly; existing `find` keys do not silently acquire new audit authority.
 Reads, exports, related IDs, and joins all validate tenant ownership. Existing
 research API and keys retain their current behavior.
@@ -89,3 +89,189 @@ and spreadsheet-safe exports; reject overflow visibly rather than truncating it.
   and API-key entry points.
 - Regenerate OpenAPI and SDKs together, test additive compatibility, and validate
   a browser import-to-linked-run journey using a stub provider before pilot rollout.
+
+## Technical specification
+
+Use [Verify technical contracts v1](verify-technical-contracts.md) for IDs,
+scopes, errors, idempotency, pagination, operations, and rollout. All routes below
+are proposed additions. Extend `backend/src/research.rs`; do not expose the Go
+workspace key or let a request choose its Go tenant/workspace.
+
+### Relational model and constraints
+
+The core migration must enforce these relationships, not just check them in UI:
+
+```sql
+CREATE TABLE audit_clients (
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    id UUID NOT NULL,
+    name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 200),
+    version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0),
+    archived_at TIMESTAMPTZ,
+    PRIMARY KEY (tenant_id, id)
+);
+CREATE TABLE audit_campaigns (
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    id UUID NOT NULL,
+    client_id UUID NOT NULL,
+    name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 200),
+    version BIGINT NOT NULL DEFAULT 1 CHECK (version > 0),
+    PRIMARY KEY (tenant_id, id),
+    UNIQUE (tenant_id, client_id, id),
+    FOREIGN KEY (tenant_id, client_id) REFERENCES audit_clients(tenant_id, id)
+);
+CREATE TABLE contact_audits (
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    id UUID NOT NULL,
+    client_id UUID NOT NULL,
+    campaign_id UUID,
+    name TEXT NOT NULL,
+    target_criteria JSONB NOT NULL,
+    criteria_version BIGINT NOT NULL DEFAULT 1,
+    generation BIGINT NOT NULL DEFAULT 1,
+    version BIGINT NOT NULL DEFAULT 1,
+    state TEXT NOT NULL CHECK (state IN ('draft','active','closed','deleting')),
+    PRIMARY KEY (tenant_id, id),
+    FOREIGN KEY (tenant_id, client_id) REFERENCES audit_clients(tenant_id, id),
+    FOREIGN KEY (tenant_id, client_id, campaign_id)
+        REFERENCES audit_campaigns(tenant_id, client_id, id)
+);
+```
+
+Add positive checks to all revision counters, actor/creation/update timestamps,
+`(tenant_id,created_at,id)` list indexes, and an index on each referencing FK.
+Archived clients remain readable but cannot receive new audits. Deletion uses
+RFC 0027's tombstone workflow; do not cascade-delete active external operations.
+Campaign/client labels are mutable; moving an audit between clients is not supported
+in v1 because retained CRM/source authorizations can be client-specific.
+
+| Table | Required fields and constraints |
+|---|---|
+| `audit_imports` | Tenant/audit/import IDs, request key/hash, raw SHA-256, mapping JSON/version, normalized SHA-256, parser version, state, counts, expiry. Composite audit FK; unique `(tenant_id,request_key)`; unique `(tenant_id,audit_id,id)`. |
+| `audit_import_payloads` | Tenant/import FK, raw bytes, content type, byte count, deletion deadline. Database-only access, excluded from list APIs/logging. Pilot cap 1 MiB per file; enforce database/storage encryption in deployment. |
+| `audit_input_rows` | Tenant/audit/import/row UUIDs, 1-based source record number, nullable original customer ID, original JSON, normalized JSON, warnings JSON, eligibility state, duplicate-group ID, version. Composite import FK includes audit ID; unique `(tenant_id,import_id,source_row_number)` and `(tenant_id,audit_id,id)`. |
+| `audit_row_revisions` | Tenant/input row/revision, proposed normalized values, reason, actor/time; append-only. Composite FK to input row. Import originals are immutable. |
+| `audit_research_links` | Tenant/audit/input row, Rust operation UUID, Go session/row IDs, state, last reconciled time. Composite FKs to audit/input row and operation; unique `(tenant_id,operation_id,input_row_id)` and `(tenant_id,go_session_id,go_row_id)`. |
+
+`target_criteria` is a versioned typed object with `role_terms`, optional geography,
+`named_person_required`, and `responsibility_requirement` (nullable string).
+Reject unknown fields, empty role terms, and unsupported operators. It is not an
+arbitrary SQL/expression language. Changing criteria increments both version and
+generation and invalidates affected review/repair previews.
+
+### Parser, normalization, and preview protocol
+
+Initially accept UTF-8 CSV (optional BOM, quoted multiline cells) or a JSON array
+of objects. Reject other encodings, duplicate/empty CSV headers, duplicate JSON
+keys, nesting deeper than 4, more than 128 columns, fields over 4 KiB, or records
+over 16 KiB. Check byte limits while reading, before buffering/parsing. Initial
+limits are 1 MiB and ten records per import; neither parsing nor preview silently
+truncates. Stage 2 may raise the tenant cap after load tests, not by default.
+
+Keep Unicode names verbatim. For domains, trim, parse an optional HTTP(S) URL,
+extract the host, IDNA-normalize and lowercase, remove its trailing dot, and reject
+credentials/IP literals/invalid labels. Preserve the submitted value separately.
+For emails, trim and lowercase the domain only; preserve the local part. Do not
+infer a person's identity from an equal normalized email or infer a company from
+an email provider domain. Network resolution/fetching is absent from preview.
+
+```http
+POST /v1/audits/{audit_id}/imports/preview
+Content-Type: application/json
+Idempotency-Key: <UUID>
+```
+
+```json
+{
+  "expected_version": "1",
+  "format": "csv",
+  "content": "crm_id,company,domain,person\n42,Example,example.com,Ada\n",
+  "mapping": {
+    "original_id": "crm_id", "company": "company",
+    "domain": "domain", "person": "person"
+  },
+  "source_label": "customer-export-2026-10"
+}
+```
+
+Return 201 with `import_id`, `version`, `preview_hash`, `expires_at`, total/valid/
+review-required counts, a sample of at most 20 records, and coded warnings such as
+`missing_domain`, `invalid_email`, `duplicate_original_id`, and
+`company_domain_conflict`. Hash binds raw file hash, mapping, parser version,
+criteria version, and normalized output. Warning text is explanatory, not a client
+state enum. Potentially untrusted cells render as text in the browser.
+
+`POST /v1/audits/{audit_id}/imports/{import_id}/commit` takes
+`{"expected_version":"1","preview_hash":"<sha256>"}`. Under the tenant/audit/import
+locks, verify expiry (24 hours), deletion fence, criteria version and preview hash;
+insert all original rows, increment audit generation, mark committed, and save the
+idempotent response in one transaction. Return 201 with row counts and rows URL.
+Concurrent commits with different keys find the same committed import; they cannot
+insert duplicate rows. A changed mapping requires a new preview. Retry after
+expiry returns the saved successful commit if already committed, otherwise 410.
+
+Invalid/ambiguous records commit as `needs_review` with their reasons. Structural
+parse failure rejects the entire preview with record/column coordinates and no
+partial commit. Duplicate work keys use tenant-scoped HMACs over normalized target
+inputs plus criteria version; every occurrence retains its own UUID. Store the
+algorithm/key version. These keys are reuse hints, never identity proof or public
+identifiers. A reuse decision must still validate rights and evidence freshness.
+
+### Bridge admission and row lineage
+
+Add a negotiated Go `audit_lineage_v1` contract alongside the existing import API:
+
+1. Rust writes an `audit_operations` row and dispatch intent with accepted input
+   UUIDs. The worker resolves the existing trusted tenant-to-workspace binding.
+2. Go accepts `POST .../internal/verifier-audit-imports` with operation ID, audit
+   ID, criteria version and rows containing `external_row_id` (the input UUID).
+   Import creates **no executing column**. Go atomically persists the operation,
+   its payload hash, imported rows and explicit UUID-to-Go-row mapping.
+3. `GET .../internal/verifier-operations/{operation_id}` returns that mapping and
+   admission state. Replaying identical admission returns the same session/rows;
+   changed body returns 409. Rust persists mappings before any run is authorized.
+4. Bounded execution starts through a separate authorized operation. Never join
+   by CSV position, company name, or response ordering. Every candidate/result
+   carries the source input UUID and Go row ID; mismatches fail reconciliation.
+   Each original input gets a distinct Go row even when execution reuses evidence;
+   reuse shares an evidence/attempt reference below this mapping, not a row identity.
+
+The current `create_in_go` imports and starts `runImmediately:true` in one user
+flow. Do not call it from audit preview/commit. The Go side of this new contract
+requires an implementation and integration tests in its own repository. Missing
+capability keeps execution disabled while local imports remain useful.
+
+Stage 1 can link an explicitly selected existing pilot session after checking its
+workspace and manually confirming each input mapping. Imported evidence with
+unknown lineage is marked legacy/unknown. Automatic paid execution of newly linked
+audits waits for RFC 0031's approval/reservation slice; rights-cleared concierge
+work can proceed under the separately agreed paid-audit scope. This avoids an
+unpriced run action being introduced as a temporary API bypass.
+
+### Endpoint and implementation checklist
+
+| Route | Semantics |
+|---|---|
+| `GET/POST /v1/audit-clients` | Cursor list / create with read+write. |
+| `PATCH /v1/audit-clients/{id}` | Versioned rename/archive; existing audits preserved. |
+| `GET/POST /v1/audit-clients/{id}/campaigns` | Tenant/client-bound list/create. |
+| `PATCH /v1/audit-clients/{id}/campaigns/{campaign_id}` | Versioned rename; reject wrong client. |
+| `GET/POST /v1/audits` | Filtered list / typed criteria and client/campaign creation. |
+| `GET/PATCH /v1/audits/{id}` | Detail / versioned name, criteria or lifecycle update. |
+| `GET /v1/audits/{id}/imports/{import_id}` | Preview/commit state, counts and warnings, no raw blob. |
+| `GET /v1/audits/{id}/rows` | Stable input UUIDs, original/normalized values, latest revisions. |
+
+Implement parser/repository/bridge boundaries in `backend/src/audits/imports.rs`
+and routes under `backend/src/http/v1/audits/`. Add an explicit session-attachment
+endpoint only with the same operation/tenant/mapping checks; never accept arbitrary
+Go session ownership from the browser. Extend web runtime schemas and invalidate
+query keys by tenant/audit/generation after mutations. Preview refresh never commits
+or purchases work. Existing sessions are not bulk-backfilled into paid audits.
+
+Required fixtures include quoted newlines, BOM, IDNA hosts, `=HYPERLINK(...)`,
+duplicate IDs, duplicate headers, 64-bit Go IDs above JavaScript's safe-integer
+range, and file/record limits at boundary ±1. Inject failures before/after Go
+admission and Rust mapping commit; the same operation must recover identical row
+UUIDs with zero research calls. Database tests must attempt cross-tenant/cross-audit
+FK inserts directly. Metrics: parsed/rejected/committed records, preview expiry,
+lineage mismatch count, and oldest unreconciled bridge operation.
