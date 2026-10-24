@@ -17,6 +17,7 @@ jobs:
     uses: ./.github/workflows/validate-release-ref.yml
     with:
       tag: ${{ github.ref_name }}
+      expected-sha: ${{ github.sha }}
 
   # This job downloads and stores `cross` as an artifact, so that it can be
   # redownloaded across all of the jobs. Currently this copied pasted between

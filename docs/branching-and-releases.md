@@ -50,7 +50,9 @@ without creating a semantic-version release. An increased version creates `vX.Y.
 at that exact merge commit; a retry can reuse a release only at the same commit.
 Version rollback fails publication. CLI and SDK jobs require an existing version
 tag reachable from `main`; SDK checkouts use the validated tag's immutable commit,
-never the default branch. The existing `RELEASE_PLEASE_TOKEN` must permit PR and
+never the default branch. For an SDK-only retry use
+`gh workflow run sdk-generate.yml --ref vX.Y.Z`; dispatching it on a branch fails
+tag validation. The existing `RELEASE_PLEASE_TOKEN` must permit PR and
 release creation, so release/tag events can start the publishing workflows.
 
 For a failed deployment, rerun the failed workflow. The backend workflow also
