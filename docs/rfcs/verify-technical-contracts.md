@@ -215,6 +215,30 @@ tenant grant/projection, while direct current-policy reads prevent a delayed fan
 from authorizing forbidden use. Elapsed time/expiry remains a direct gate even when
 no event has incremented an epoch.
 
+## Global PostgreSQL lock order
+
+Every manual/recurring admission, cancellation, policy mutation and settlement path
+acquires the subset it needs in this order:
+
+1. `audit_tenant_state` (tenant admission/policy fence).
+2. `contact_audits`.
+3. `audit_maintenance_policies` when the operation belongs to a policy.
+4. `audit_repair_plans`.
+5. `audit_budget_accounts` (tenant UTC-month account).
+6. `audit_maintenance_budget_periods` when a policy sublimit applies.
+7. `audit_budget_reservations`.
+8. Referenced `audit_charge_events`, then feature-specific child rows/events.
+
+Never acquire an earlier lock while holding a later one. Sort multiple resources
+within a level by tenant/UUID (budget periods by UTC start), or process them in
+separate transactions. Refund validation locks the referenced settlement after its
+budget/reservation parents, so concurrent refunds cannot exceed that charge.
+Leased operation claims commit before admission/external I/O and do not retain an
+operation lock while acquiring these parents. The scheduler also follows this
+order; selecting candidate due IDs without locks does not admit an occurrence.
+A deadlock/serialization failure rolls back completely and retries the same
+idempotency key; it never creates a fresh paid operation.
+
 ## Compatibility, rollout, and required checks
 
 Proposed config under `RCH__AUDITS__*`: `ENABLE=false`, `IMPORTS_ENABLE=false`,

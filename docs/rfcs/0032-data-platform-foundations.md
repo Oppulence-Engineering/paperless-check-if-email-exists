@@ -655,7 +655,10 @@ CREATE TABLE v1_privacy_domain_opt_out (
 
 ## Legal Review (Release Gate)
 
-Our team does this review. We get outside counsel for each item where the answer is not clear. It covers RFC 0009 to RFC 0032. No data feature goes to beta tenants before all items have a sign-off.
+Our team does this review. We get outside counsel for each item where the answer is not clear. It covers the historical research set now numbered RFCs 0008 (Enrichment),
+0009 (Finder), 0018 (Domain Search), 0022 (Discover), and 0032 (these foundations).
+This explicit set preserves the [former research RFC scope](renumbering.md); the intervening new
+priority numbers are not additional members. No data feature goes to beta tenants before all items have a sign-off.
 
 | # | Item | Question to answer | Output | Owner | Status | Signed off |
 |---|---|---|---|---|---|---|

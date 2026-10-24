@@ -148,8 +148,12 @@ provider-cost ceiling alongside delegated customer-charge caps; it is bound to t
 plan hash and cannot be increased by the executor or an automatic policy run.
 
 Recurring authorization reserves nothing until a run is due. Each run then uses
-RFC 0005's tenant UTC-month account **and** a policy UTC-month sublimit, locked in
-that order, and reserves the same maximum charge against both in one transaction.
+RFC 0005's tenant UTC-month account **and** a policy UTC-month sublimit. Recurring
+admission also locks the audit, maintenance policy and repair plan. Follow the
+shared global order: tenant fence → audit → policy → plan → tenant budget account
+→ policy budget period → reservation. Thus the tenant account precedes the policy
+sublimit, and manual admission uses the same ordering with policy rows omitted.
+Reserve the same maximum charge against both balances in one transaction.
 Add `audit_maintenance_budget_periods` keyed by tenant/policy/UTC month with
 limit/reserved/settled counters and an FK from its reservation. This is a sublimit,
 not extra purchasing power. Settlement/refund/release updates both counters in the
@@ -177,14 +181,16 @@ The existing scheduler advances `next_run_at` when claiming schedules. For audit
 maintenance, do not advance a due time without persisting its occurrence and dispatch:
 
 ```text
-BEGIN
-  lock up to 25 due policy rows FOR UPDATE SKIP LOCKED;
-  for each policy:
-    verify current policy version, pause/deletion and authorization;
+select up to 25 candidate due policy IDs without locks;
+for each candidate, in a separate transaction:
+  BEGIN
+    acquire tenant fence, audit and policy in the shared global order;
+    use FOR UPDATE SKIP LOCKED; roll back/skip if any lock is unavailable;
+    recheck due time, policy version, pause/deletion and authorization;
     insert unique occurrence(policy, scheduled UTC instant, local period key);
     insert audit operation and dispatch intent, or a durable skipped reason;
     compute and store next_run_at strictly after now;
-COMMIT
+  COMMIT
 ```
 
 After downtime, coalesce missed intervals into at most one current assessment and

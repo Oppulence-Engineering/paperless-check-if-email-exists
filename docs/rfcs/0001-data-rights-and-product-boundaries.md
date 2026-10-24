@@ -162,6 +162,11 @@ ownership even if the source itself is shared.
 
 Add `audit_deletion_items` keyed by `(tenant_id,request_id,service,resource_kind,
 resource_id)` with state, attempt count, next-attempt time, receipt hash, and deadline.
+`resource_id` is `TEXT`, validated by service/resource kind: UUID-addressed resources
+use canonical lowercase UUID strings; numeric Go row/session IDs use canonical
+positive decimal strings per the shared contract. Never convert them through a
+JavaScript number. Go claim/candidate resources with UUID contracts keep UUIDs;
+service ownership alone does not determine the ID encoding.
 FK `(tenant_id,request_id)` references `audit_deletion_requests(tenant_id,id)`.
 Items must enumerate uploads,
 rows, observations, caches, exports, CRM previews, evaluation identifiers, and
@@ -242,6 +247,7 @@ its permitted retention by more than one sweep interval.
 | Go down after Rust deletion commit | Request remains pending/blocked; retries reuse deletion ID. |
 | Restore backup containing deleted evidence | Tombstone replay removes visibility before app/worker readiness. |
 | Source retention shorter than tenant default | Earlier deadline wins in both stores and exports. |
+| Delete numeric Go row `9007199254740993` and a UUID-addressed evaluation record | Persist and round-trip both text IDs exactly; Go receipt names the original row, without JavaScript-number rounding. |
 
 Implement a Go/Rust contract fixture for each case and a staging deletion drill
 covering one complete imported audit before enabling self-service retention claims.

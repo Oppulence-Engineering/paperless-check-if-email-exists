@@ -117,7 +117,8 @@ immutable quote, not an estimate that a worker may increase after approval.
 | `audit_charge_events` | Tenant/event UUID PK, reservation FK, source service/operation/sequence, kind (`settlement`,`refund`,`release`), amount, provider reference, occurred/received times. Unique source event identity and `(tenant_id,reservation_id,id)`; positive entries. Nullable `refund_of_event_id` with composite FK `(tenant_id,reservation_id,refund_of_event_id)` to the settlement event's `(tenant_id,reservation_id,id)`; present exactly when kind is `refund`. |
 | `audit_repair_steps` | Tenant/step UUID, operation/input/claim IDs, action/source policy/version, state, estimated ceiling, Go step ID or Rust verification operation ID, stop reason. Composite audit/input FKs; unique `(tenant_id,operation_id,input_row_id,claim_kind,step_ordinal)`. |
 
-For refund insertion, lock the referenced charge event, require kind `settlement`,
+For refund insertion, take the budget/reservation parents in the shared global
+lock order, then lock the referenced charge event and require kind `settlement`,
 and enforce cumulative refunds no greater than that settlement's amount in the
 same transaction (or a database constraint trigger). The composite FK prevents
 cross-tenant/reservation links; a CHECK enforces `(kind = 'refund') =
@@ -130,8 +131,10 @@ month at admission; crossing midnight/month-end never moves a reservation to a n
 period. Unknown costs remain reserved in the original account. RFC 0007 uses these
 same rows and locks, not an independent maintenance balance.
 
-Approval transaction locks audit, plan and budget account in a consistent order,
-validates all bound versions and expiry, then performs the equivalent of:
+Approval uses the shared global lock order: tenant fence → audit → optional
+maintenance policy → plan → tenant budget account → optional policy budget period
+→ reservation. Manual runs omit the policy locks; recurring runs include them.
+Validate all bound versions and expiry, then perform the equivalent of:
 
 ```sql
 UPDATE audit_budget_accounts

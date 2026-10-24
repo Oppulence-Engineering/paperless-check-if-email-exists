@@ -115,11 +115,17 @@ bundle below and includes the established provider-only
 |---|---|---|
 | `manifest.json` | `schema_version=2`, cohort UUID, tenant UUID, report ID/version/supersedes reference, frozen UTC window, audit generation and settlement watermarks, segment keys, provider/config versions, contact-key and contact-normalization versions, file SHA-256 hashes, registered success thresholds, labor rates, random seed | Report ID/version |
 | `accounts.csv` | account ID, segment, baseline eligibility, exclusion reason registered before execution | account ID |
-| `results.csv` | provider, account ID, source-row ID, candidate ID or empty for no-match, tenant contact key, mailbox result, policy state, decision/export version, observed time | provider/account/candidate (one no-match row per account without candidates) |
-| `judgments.csv` | provider, candidate ID, blinded reviewer ID, company match, person match, employment, role relevance, evidence snapshot hash, judged time | provider/candidate/reviewer |
+| `results.csv` | provider, account ID, source-row ID, candidate ID or empty for no-match, tenant contact key, mailbox result, policy state, decision/export version, observed time | provider/account/source-row/candidate (one no-match row per source row without candidates) |
+| `judgments.csv` | provider, account ID, source-row ID, candidate ID, blinded reviewer ID, company match, person match, employment, role relevance, evidence snapshot hash, judged time | provider/account/source-row/candidate/reviewer |
 | `costs.csv` | event ID, provider, account or run allocation group, category, kind (`charge`/`refund`), amount micros or blank, currency, occurred/recorded times, measurement basis, external receipt ID, reversal-of ID | event ID |
 | `labor.csv` | event ID/version, replaces-version, provider, audit/account allocation group, role, active seconds, hourly rate micros, currency, occurred/recorded times, measured/estimated/unknown | event ID/version |
 | `payments.csv` | event ID, audit UUID, pseudonymous customer ID, external cash transaction ID, kind (`charge`/`refund`), amount micros, currency, occurred/recorded times, reversal-of event ID, first/repeat purchase relation | event ID; unique external cash transaction ID |
+
+A judgment references exactly one results row by provider/account/source-row/
+candidate. Repeated candidate IDs in different rows remain distinct judgments;
+contact-level deduplication uses the separate tenant contact key. Reject orphan
+judgments and judgments for an empty no-match candidate. Every source-row ID is
+bound to one registered account; duplicate original customer IDs do not change it.
 
 Allowed judgment values are `true`, `false`, `unknown`. Policy states are `eligible`,
 `blocked`, `unknown`; mailbox outcomes are `ok`, `catch_all`, `invalid`, `unknown`,
@@ -134,8 +140,10 @@ references one charge in the same audit/currency. Multiple partial refunds are
 allowed only while their cumulative amount does not exceed that charge. Cost
 refunds obey the same linkage rule. Non-refund events have no reversal link.
 
-Manifest `report_id` identifies a report series, `report_version` is a positive
-monotonic integer, and `supersedes` is null or the prior report ID/version/hash.
+Manifest `report_id` identifies a report series. `report_version` represents a
+positive monotonic integer and is serialized as a decimal string, like other
+revisions in the shared contract; the JSON type is string. `supersedes` is null or
+the prior report ID/version/hash.
 `frozen_audit_generations` maps audit UUIDs to generations; manual stage-0 bundles
 use an empty map and a frozen source-bundle hash instead. `settlement_watermarks`
 maps each source ledger to its last included sequence and `recorded_at`; a manual
@@ -210,7 +218,7 @@ customer-side remaining labor are separate views.
   "unique_usable_contacts": 2,
   "accounts_with_usable_contact": 2,
   "provider_cost_micros": "500000",
-  "cost_per_usable_contact_usd": 0.25,
+  "cost_per_usable_contact_usd": "0.25",
   "delivery_cost_micros": "7500000",
   "full_cost_per_usable_contact_micros": "3750000",
   "full_cost_per_usable_contact_reason": null,
@@ -224,7 +232,7 @@ The fixture above is a **proposed synthetic** acceptance example: provider cost
 $0.50 + 600 seconds review at $36/hour ($6.00) + $1.00 allocated infrastructure,
 with two usable contacts and two failures. Expected full cost is $7.50 and $3.75
 per usable contact; provider-only cost is $0.50 / 2 = $0.25. The compatibility
-USD metric is a derived display number; exact accounting remains integer micros.
+USD metric preserves v1's decimal-string type; exact accounting remains integer micros.
 Failures remain in coverage and costs. Blank one cost cell:
 full-cost ratio becomes null with `incomplete_cost`. Change both usable contacts
 to the same identity: denominator becomes one, cost stays $7.50. Change the role
