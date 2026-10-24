@@ -164,7 +164,7 @@ Three things stayed off the table for this PR despite being tempting:
 
 [Backlog #19 — Deliverability trends dashboard](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/docs/advanced/customer-feature-backlog.md) is the obvious follow-up. Now that outcome data exists per tenant, we can start showing customers what their list quality looks like over time, where bounce rates spike, which acquisition sources contribute the worst data. The data substrate makes the dashboard meaningful instead of decorative.
 
-Beyond that, [RFC 0001](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/docs/rfcs/0001-native-provider-webhooks-and-outcome-adapters.md) covers the ESP-specific webhook receiver path that's already drafted. The data model we landed in this PR is exactly the normalization target that RFC anticipated.
+Beyond that, [RFC 0031](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/docs/rfcs/0031-native-provider-webhooks-and-outcome-adapters.md) covers the ESP-specific webhook receiver path that's already drafted. The data model we landed in this PR is exactly the normalization target that RFC anticipated.
 
 ---
 

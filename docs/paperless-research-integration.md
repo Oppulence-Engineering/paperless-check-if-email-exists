@@ -20,7 +20,7 @@ promotion. Final deployed revisions and live workflow evidence are recorded in
 ## Acceptance checklist
 
 - [x] Align the product focus with the supplied prospecting thesis.
-- [x] Reconcile RFCs 0011–0015 with API verification, evidence ownership, and the
+- [x] Reconcile RFCs 0008–0009, 0018, 0022, 0032 with API verification, evidence ownership, and the
   existing Go implementation rather than implement duplicate research services.
 - [x] Establish authenticated server-side tenant/workspace mapping; reject guessed
   workspace, account, session, and export identifiers before provider work.
