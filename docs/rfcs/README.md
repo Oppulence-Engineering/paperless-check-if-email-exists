@@ -1,86 +1,104 @@
-# Verify RFCs and delivery sequence
+# Verify RFCs in priority order
 
-Updated 2026-10-23 from the [company thesis](../../company.md), [vision](../../vision.md), and [codebase audit](../audits/2026-10-23-verify-north-star.md).
+Updated 2026-10-24 from the [company thesis](../../company.md), [vision](../../vision.md), and [codebase audit](../audits/2026-10-23-verify-north-star.md).
 
-**This is the authoritative build order. RFC numbers are stable identifiers, not priority ranks.** Preserve filenames and links. Dated disposition sections take precedence over historical baselines and proposals. RFC 0016 and the old feature backlog no longer define the product sequence.
+**RFC 0001 is highest priority; priority decreases through RFC 0033.** Filenames,
+headings, references and navigation use this order. The [renumbering record](renumbering.md)
+maps former identifiers from older issues and PRs to the current documents.
+Dated Verify dispositions take precedence over historical baselines and proposals.
 
-The destination is a repeatable paid audit of customer-owned prospect data: import → assess identity → selectively repair → verify → review → deliver Ready, Needs Review, and Excluded records → maintain approved data after repeat demand. Optimize total cost per correctly matched, usable, role-relevant contact, including failed research and human review.
+The destination is a repeatable paid audit of customer-owned prospect data: import
+→ assess identity → selectively repair → verify → review → deliver Ready, Needs
+Review and Excluded records → maintain approved data after repeat demand. Optimize
+total cost per correctly matched, usable, role-relevant contact, including failures
+and human review.
 
 Read the [shared technical contracts](verify-technical-contracts.md) before
-implementing RFCs 0027–0033. Their technical sections define proposed storage
-constraints, typed APIs, state machines, transaction boundaries, failure recovery,
-migrations and test gates. They are implementation specifications, not claims that
-the new APIs or cross-service contracts already exist.
+implementing RFCs 0001–0007. Their schemas, APIs, state machines, recovery rules,
+migrations and acceptance gates are proposed designs, not claims of shipped behavior.
 
 ## Build order
 
-| Order | RFC / increment | Depends on | Customer result and exit gate |
+The first seven RFCs define the core product sequence. RFCs 0008–0017 supply narrower
+supporting or conditional work; extract their required slices within the core RFC
+that needs them. RFCs 0018–0025 wait for separate demand. RFCs 0026–0031 document
+existing foundations to reuse, and RFCs 0032–0033 are superseded references. Lower
+priority for an implemented foundation means no new rebuild; its current behavior
+remains a prerequisite where referenced. A demand gate still applies even when an
+RFC appears earlier in the list.
+
+| Priority | RFC | Status / scope | Next action and dependency |
 |---|---|---|---|
-| 0a | [0027 Data Rights and Product Boundaries](0027-data-rights-and-product-boundaries.md), pilot slice | Existing tenant bridge | Rights-cleared sources, explicit Verify/finance separation, retention and tested deletion procedure. No expanded provider/shared use before this gate. |
-| 0b | [0028 Paid Audit Validation and Unit Economics](0028-paid-audit-validation-and-unit-economics.md), protocol and concierge pilot | 0027 pilot gate for real data | Scoped paid audit, baseline, independent adjudication, full-cost log. Interviews and synthetic tooling can start immediately. |
-| 1a | [0029 Agency Audits and Import Lineage](0029-agency-audits-and-import-lineage.md) | 0027; 0028 identifiers | Client/campaign context, original IDs and fields, visible duplicates/errors, linked research. Import preview makes no paid calls. |
-| 1b | [0030 Evidence Review and Audit Delivery](0030-evidence-review-and-audit-delivery.md) | 0029; permitted evidence | Durable decisions, chosen candidates, claim history, three reconciled export groups. Current policy checked at delivery. |
-| 2 | [0031 Budgeted Selective Repair and Batch Execution](0031-budgeted-selective-repair-and-batch-execution.md) | 0027 automated enforcement; 0029/0030; 0028 costs | Approved priced plans, no duplicate purchases, tested batch expansion, and a representative benchmark without weakening quality gates. |
-| 3 | [0032 Preview-First HubSpot Writeback](0032-preview-first-hubspot-writeback.md), only when requested | 0027/0029/0030; repeat-audit evidence; 0023 cipher slice or equivalent | Previewed, explicitly applied corrections to matched CRM records. CSV remains available. |
-| 4 | [0033 Recurring Contact Quality](0033-recurring-contact-quality.md) | 0027–0031; repeat-payment/economic gates | Targeted refresh, reviewed role changes, bounded recurring spend, and change exports. CRM delivery optionally uses 0032. |
+| 1 | [0001 Data Rights and Product Boundaries](0001-data-rights-and-product-boundaries.md) | Stage 0a · proposed | Clear source rights, retention, deletion and product boundaries before expanded source use; existing tenant bridge is the starting point. |
+| 2 | [0002 Paid Audit Validation and Unit Economics](0002-paid-audit-validation-and-unit-economics.md) | Stage 0b · proposed | Run scoped paid audits with full-cost and independent quality measurement; RFC 0001 gates real data. Continue measurement at every stage. |
+| 3 | [0003 Agency Audits and Import Lineage](0003-agency-audits-and-import-lineage.md) | Stage 1a · proposed | Preserve client/campaign context, original IDs, field mappings and row lineage; depends on 0001 and 0002 identifiers. Preview makes no paid calls. |
+| 4 | [0004 Evidence Review and Audit Delivery](0004-evidence-review-and-audit-delivery.md) | Stage 1b · proposed | Persist claim evidence and review decisions; deliver reconciled Ready, Needs Review and Excluded records. Depends on 0001/0003 and existing policy foundations. |
+| 5 | [0005 Budgeted Selective Repair and Batch Execution](0005-budgeted-selective-repair-and-batch-execution.md) | Stage 2 · proposed | Approve priced repair plans, reserve budgets, reconcile provider outcomes and prove batch capacity; depends on 0001–0004. Extract admission controls before any automatic paid audit execution. |
+| 6 | [0006 Preview-First HubSpot Writeback](0006-preview-first-hubspot-writeback.md) | Stage 3 · demand-gated | Preview and explicitly apply Verify-owned HubSpot properties for repeat buyers; depends on 0001/0003/0004 plus the 0013 cipher slice or equivalent. |
+| 7 | [0007 Recurring Contact Quality](0007-recurring-contact-quality.md) | Stage 4 · demand-gated | Maintain approved cohorts with reviewed changes and bounded recurring spend; depends on 0001–0005 and repeat-payment economics. CRM delivery optionally uses 0006. |
+| 8 | [0008 Person And Company Enrichment, And Job-Change Monitoring](0008-person-and-company-enrichment.md) | Supporting · split scope | Extract claim evidence for 0004, selective enrichment for 0005, and employment refresh for 0007; no standalone enrichment platform first. |
+| 9 | [0009 Email Finder and Selective List Repair](0009-email-finder-parity.md) | Supporting · partial | Reuse existing Finder and bounded research for 0005. Add only repair adapters that improve the 0002 benchmark under 0001 rights. |
+| 10 | [0010 Idempotent Integration UX](0010-idempotent-integration-ux.md) | Supporting · partial | Reuse durable verification operations/replay now; close cross-service idempotency gaps inside 0005 before broad integration UX work. |
+| 11 | [0011 Suppression Scopes](0011-suppression-scopes.md) | Conditional · client isolation | Build client-specific suppression only when agencies need it; depends on 0003/0004. Use separate workspaces until isolation is implemented. |
+| 12 | [0012 Bounce Reason Taxonomy](0012-bounce-reason-taxonomy.md) | Conditional · correctness | Promote recipient bounce classification for demonstrated wrong exclusions; preserve complaint/suppression gates. Sender alerts wait for 0019 demand. |
+| 13 | [0013 Webhook Event Subscriptions And Delivery Log](0013-webhook-event-subscriptions.md) | Supporting · scoped prerequisite | Extract tenant credential storage before 0006; full webhook subscriptions and delivery logs require integration demand. |
+| 14 | [0014 Reverification Policies by Segment](0014-reverification-policies-by-segment.md) | Supporting · partial | Reuse workspace reverification now; finish segment policies through 0007 after repeat demand. |
+| 15 | [0015 Source-Level Quality Comparison](0015-source-level-quality-comparison.md) | Supporting · partial | Reuse source attribution/reporting for 0002 measurement. Existing shared sources-to-bulk authorization already works; no duplicate scope-fix task. |
+| 16 | [0016 List Quality Scoring](0016-list-quality-scoring.md) | Supporting · partial | Reuse list aggregates/quality views; cached scorecards follow complete 0002 cost and contact-quality evaluation. |
+| 17 | [0017 Mailbox Provider Breakdown For Each Campaign](0017-mailbox-provider-breakdown.md) | Conditional · attribution | Fix managed-provider MX attribution when it improves audit evidence; provider reports require suitable outcome data and customer demand. |
+| 18 | [0018 Domain Search](0018-domain-search.md) | Deferred · narrow discovery | Promote bounded domain-source adapters only for measured 0002 coverage gaps, under 0005 rights/spend controls; a full Domain Search UI waits. |
+| 19 | [0019 Scheduled Domain And IP Health Monitor](0019-domain-and-ip-health-monitor.md) | Deferred · sender workflow | Domain/IP monitoring needs sender demand, source terms and non-email alerts; it is not an audit dependency. |
+| 20 | [0020 Bot Engagement Flag](0020-bot-engagement-flag.md) | Deferred · sender workflow | Engagement flags require 0017 attribution and real fixtures; engagement does not prove contact identity. |
+| 21 | [0021 MCP Server](0021-mcp-server.md) | Deferred · agent channel | MCP requires channel demand, stable audit APIs, scoped auth and explicit paid-action approval. |
+| 22 | [0022 Discover — Company And People Search](0022-discover-company-and-people-search.md) | Parked · broad acquisition | Company/people discovery needs repeat audit demand plus independent rights and economics evidence. |
+| 23 | [0023 Signup Protection V2](0023-signup-protection-v2.md) | Parked · different buyer | Signup protection waits for demonstrated demand beyond the agency-audit buyer. |
+| 24 | [0024 beehiiv And Kit Integrations](0024-beehiiv-and-kit-integrations.md) | Parked · newsletter workflow | beehiiv/Kit needs newsletter demand and 0011/0013 prerequisites; not a substitute for requested CRM handoff. |
+| 25 | [0025 Postmaster Tools And SNDS Ingestion](0025-postmaster-tools-and-snds-ingestion.md) | Parked · sender data | Postmaster/SNDS needs sender demand, 0019/0017/0013, and confirmed provider/API access. |
+| 26 | [0026 Verification Policy Modes](0026-verification-policy-modes.md) | Implemented baseline · maintain | Reuse current growth/deliverability/signup_protection/enterprise_strict/custom policy behavior in 0004; historical enum names are superseded. |
+| 27 | [0027 Suppression Intelligence](0027-suppression-intelligence.md) | Implemented baseline · maintain | Reuse suppression reasons, provenance, expiry and events in 0004; never allow reviewer override of an active block. |
+| 28 | [0028 Bulk Remediation Workflows](0028-bulk-remediation-workflows.md) | Implemented baseline · maintain | Reuse original-row and partition-export primitives in 0003/0004; preserve legacy export compatibility. |
+| 29 | [0029 Tenant-Facing Job Observability](0029-tenant-facing-job-observability.md) | Implemented baseline · maintain | Reuse job events, retries and failure/latency views; extend research progress only as needed by 0005. |
+| 30 | [0030 Deliverability Feedback and Recommendations](0030-deliverability-feedback-and-recommendations.md) | Implemented baseline · maintain | Reuse recommendations and feedback policy in 0004; sending advice is not person-identity evidence. |
+| 31 | [0031 Native Provider Webhooks and Outcome Adapters](0031-native-provider-webhooks-and-outcome-adapters.md) | Implemented baseline · maintain | Preserve ESP outcome adapters and receipts; reconcile demonstrated gaps when the audit needs them. |
+| 32 | [0032 Data Platform Foundations](0032-data-platform-foundations.md) | Superseded architecture · reference | The Go bridge exists. Remaining rights/budgets/scale belong to 0001/0005; do not build a second Rust crawler or global contact store. |
+| 33 | [0033 Deliverability Intelligence Roadmap](0033-deliverability-intelligence-roadmap.md) | Superseded roadmap · reference | Historical deliverability inventory only. This numbered index controls current priority. |
 
-RFC 0028 continues across every stage. Before broader investment require **five paid audits, three repeat-paying customers, positive contribution margin**, and a pre-registered improvement in correctly matched approved contacts or manual cleanup time without sacrificing quality. The approximately 1,200-account, three-segment benchmark is a future target. The $249 audit and $149–$299 recurring offer are experiments, not deployed entitlements.
+## Core delivery gates
 
-Each increment must deliver usable value before expansion. No new data platform, broad discovery UI, sender analytics, MCP service, or CRM connector blocks a rights-cleared manual audit using the existing bounded pilot. Current source limits remain ten companies, three candidates per company, and thirty verifications per run.
+RFC 0002 continues across every stage. Before broader investment require **five
+paid audits, three repeat-paying customers, positive contribution margin**, and a
+pre-registered improvement in correctly matched approved contacts or manual cleanup
+time without sacrificing quality. The approximately 1,200-account, three-segment
+benchmark is a future target. The $249 audit and $149–$299 recurring offer are
+experiments, not deployed entitlements.
+
+Each increment must deliver usable value before expansion. A rights-cleared manual
+audit can use the existing pilot and controlled approval/cost ledger while automation
+is built. No broad discovery UI, sender dashboard, MCP service or CRM connector
+blocks that pilot. Current automated limits remain ten companies, three candidates
+per company and thirty verifications per run until RFC 0005's gates pass.
 
 ```mermaid
 flowchart LR
-  R27[0027 Rights and boundaries] --> R28[0028 Paid audit measurement]
-  R28 --> R29[0029 Imports and lineage]
-  R29 --> R30[0030 Review and delivery]
-  R30 --> R31[0031 Budgeted repair and scale]
-  R31 --> G[Paid and repeat-customer gates]
-  G --> R32[0032 Requested CRM writeback]
-  G --> R33[0033 Recurring quality]
+  R1[0001 Rights and boundaries] --> R2[0002 Paid audit measurement]
+  R2 --> R3[0003 Imports and lineage]
+  R3 --> R4[0004 Review and delivery]
+  R4 --> R5[0005 Budgeted repair and scale]
+  R5 --> G[Paid and repeat-customer gates]
+  G --> R6[0006 Requested CRM writeback]
+  G --> R7[0007 Recurring quality]
 ```
 
-The map shows the default product sequence. Requested CRM work can use reviewed CSV-era audits without full automated repair if repeat demand and its own prerequisites are proven. Rights checks and measurement continue throughout.
-
-## Existing foundations: reuse before rebuilding
-
-“Implemented baseline” means inspected code provides the central primitive, not that every original acceptance criterion or live deployment is certified. “Partial” leaves named gaps. The audit links source and validation evidence.
-
-| RFC | Disposition | Next action |
-|---|---|---|
-| [0001 Native Provider Webhooks](0001-native-provider-webhooks-and-outcome-adapters.md) | Implemented baseline | Preserve SendGrid/SES/Mailgun/Postmark adapters and receipts; reconcile remaining gaps when needed. |
-| [0002 Recommendations](0002-deliverability-feedback-and-recommendations.md) | Implemented baseline | Reuse current decisions in 0030; sending advice does not establish person identity. |
-| [0003 Segment Reverification](0003-reverification-policies-by-segment.md) | Partial | Workspace scheduling exists; finish segment policies with 0033 after repeat demand. |
-| [0004 Suppression Intelligence](0004-suppression-intelligence.md) | Implemented baseline | Reuse reasons, provenance, expiry, and events through review/export. |
-| [0005 List Quality](0005-list-quality-scoring.md) | Partial | Existing aggregates/quality view are reusable; cached scorecards do not precede full-cost evaluation. |
-| [0006 Source Quality](0006-source-level-quality-comparison.md) | Partial | Existing attribution/reporting is reusable; contact-audit comparisons belong to 0028. |
-| [0007 Verification Policies](0007-verification-policy-modes.md) | Implemented baseline; enum changed | Preserve growth/deliverability/signup_protection/enterprise_strict/custom; old mode names are historical. |
-| [0008 Bulk Remediation](0008-bulk-remediation-workflows.md) | Implemented baseline | Reuse original rows and partition exports; extend contact review through 0029/0030. |
-| [0009 Job Observability](0009-tenant-facing-job-observability.md) | Implemented baseline | Reuse events, retries, latency/failure views; extend research progress for 0031. |
-| [0010 Idempotent Integration UX](0010-idempotent-integration-ux.md) | Partial | Reuse keys/replay/conflicts and durable operations; validate new cross-service behavior in 0031. |
-
-The old source-quality scope-check task is already covered by shared auth middleware (`sources → bulk`). It is not outstanding work.
-
-## Research and adjacent RFC dispositions
-
-| RFC | Disposition and sequence | Dependency / promotion gate |
-|---|---|---|
-| [0011 Email Finder and Selective List Repair](0011-email-finder-parity.md) | Partial; narrow repair slices in stage 2 | 0027 rights + 0031 budgets. Existing finder/pilot are foundations; calibrated identity confidence is unproven. |
-| [0014 Person and Company Enrichment](0014-person-and-company-enrichment.md) | Split: evidence in stage 1b, repair in 2, monitoring in 4 | 0030/0031/0033. A standalone Domain Search UI is not required for role evidence. |
-| [0015 Data Platform Foundations](0015-data-platform-foundations.md) | Superseded architecture; bridge exists | Go owns research. Remaining rights/privacy and spend/scale work moves to 0027/0031. |
-| [0019 Suppression Scopes](0019-suppression-scopes.md) | Conditional stage 2 extension | 0029 client context + 0030 delivery. Build before promising client-specific DNC in one workspace; use separate workspaces where isolation is needed. |
-| [0018 Bounce Taxonomy](0018-bounce-reason-taxonomy.md) | Conditional correctness work | Promote recipient classification for demonstrated wrong exclusions; sender alerts wait for 0017. Do not weaken complaints/suppressions to raise yield. |
-| [0021 Mailbox Provider Breakdown](0021-mailbox-provider-breakdown.md) | Optional attribution fix; reports deferred | MX detection can improve evidence; reports require customer demand and suitable outcome data. |
-| [0023 Webhook Subscriptions](0023-webhook-event-subscriptions.md) | Cipher slice at stage 3; delivery log conditional | Extract credential storage for 0032 if needed; full audit/research event delivery follows integration demand. |
-| [0012 Domain Search](0012-domain-search.md) | Deferred | Promote narrow coverage after 0028 finds an audit gap; reuse 0031 rights/spend controls. |
-| [0013 Discover](0013-discover-company-and-people-search.md) | Parked | Broad acquisition requires repeat audit demand and independent economics/rights evidence. |
-| [0016 Deliverability Roadmap](0016-deliverability-intelligence-roadmap.md) | Superseded as build order | Retained feature inventory; this index controls delivery. |
-| [0017 Domain/IP Health Monitor](0017-domain-and-ip-health-monitor.md) | Deferred | Sender demand, blocklist terms, non-email alerts. No audit dependency. |
-| [0022 Bot Engagement Flag](0022-bot-engagement-flag.md) | Deferred | 0021 gateway attribution, real engagement fixtures, sender demand. Engagement does not establish identity. |
-| [0024 MCP Server](0024-mcp-server.md) | Deferred | Agent-channel demand, stable audit APIs, scoped auth, explicit paid-action authorization. |
-| [0020 Signup Protection V2](0020-signup-protection-v2.md) | Parked | Different buyer; revisit with evidence beyond the agency audit. |
-| [0025 beehiiv and Kit](0025-beehiiv-and-kit-integrations.md) | Parked | Newsletter demand, 0019/0023, platform rights/auth. Not a substitute for requested CRM handoff. |
-| [0026 Postmaster/SNDS](0026-postmaster-tools-and-snds-ingestion.md) | Parked | Sender demand, 0017/0021/0023, confirmed provider access. |
+Requested CRM work can use reviewed CSV-era audits without full automated repair
+if repeat demand and its own prerequisites are proven. Rights checks and measurement
+continue throughout. “Implemented baseline” means inspected code provides a central
+primitive; it does not certify every historical criterion or live deployment.
 
 ## Completion rules
 
-For each promoted RFC, name an owner and exact incremental scope. Record API/SDK compatibility, tenant/role authorization, retry and budget failure behavior, representative workflow tests, and customer/metric outcomes. Use additive migrations and feature flags where appropriate. Distinguish source inspection, mock tests, deployed checks, and customer evidence. Update this index and the RFC disposition together; a related primitive does not mean the complete proposal shipped.
+For each promoted RFC, name an owner and exact incremental scope. Record API/SDK
+compatibility, tenant/role authorization, retry and budget failure behavior,
+representative workflow tests, and customer/metric outcomes. Use additive migrations
+and feature flags where appropriate. Distinguish source inspection, mock tests,
+deployed checks, and customer evidence. Update this index and the RFC disposition
+together; a related primitive does not mean the complete proposal shipped.

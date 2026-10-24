@@ -1,8 +1,8 @@
 # Verify audit technical contracts
 
-**Design revision 1 · 2026-10-23 · Proposed, not implemented.**
+**Design revision 2 · 2026-10-24 · Proposed, not implemented.**
 
-This companion specifies common contracts for RFCs 0027–0033. Their technical
+This companion specifies common contracts for RFCs 0001–0007. Their technical
 sections are normative design decisions; examples are proposed interfaces, not
 currently callable routes. The separate Go repository still requires a matching
 implementation and contract review. Do not represent proposed Go table names as

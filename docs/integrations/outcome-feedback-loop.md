@@ -499,7 +499,7 @@ Step 3 is the proof that the loop closed: the verifier respects the outcome rega
 
 Today, Reacher's `/v1/outcomes` is authenticated via your tenant API key (Bearer token). The translation layer in your stack (the handler that receives the ESP webhook and posts to us) is responsible for verifying the ESP's own signature *before* forwarding. The recipes above show this for Mailgun explicitly; SendGrid and Postmark each have analogous schemes you should implement in your webhook handler.
 
-We're tracking native ESP webhook receivers — endpoints like `https://api.reacher.email/v1/webhooks/sendgrid/{tenant_token}` that handle signature verification on our side so you don't need a translation layer at all — in [RFC 0001](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/docs/rfcs/0001-native-provider-webhooks-and-outcome-adapters.md). It's a planned follow-up, not shipped yet.
+We're tracking native ESP webhook receivers — endpoints like `https://api.reacher.email/v1/webhooks/sendgrid/{tenant_token}` that handle signature verification on our side so you don't need a translation layer at all — in [RFC 0031](https://github.com/Oppulence-Engineering/paperless-check-if-email-exists/blob/master/docs/rfcs/0031-native-provider-webhooks-and-outcome-adapters.md). It's a planned follow-up, not shipped yet.
 
 ---
 
@@ -507,7 +507,7 @@ We're tracking native ESP webhook receivers — endpoints like `https://api.reac
 
 - **Inspect outcomes:** `GET /v1/outcomes` filters on `email`, `source`, `type`, `since`, `limit`, `offset`. Use this for audits and dashboards.
 - **Suppression audits:** outcomes that triggered suppression appear in `v1_suppression_entries` with `source = 'outcome_feedback'` and `reason ∈ {bounce, complaint, unsubscribe}`. The existing suppression endpoints work over them.
-- **Re-verification:** if you have the [delayed recheck](../README.md#delayed-recheck-for-unknown-results) feature on, addresses you've sent campaigns to will still get periodic reverification on the schedule you configure — but with much higher confidence, since the outcome data backstops the SMTP probe.
+- **Re-verification:** if you have the [delayed recheck](../../README.md#delayed-recheck-for-unknown-results) feature on, addresses you've sent campaigns to will still get periodic reverification on the schedule you configure — but with much higher confidence, since the outcome data backstops the SMTP probe.
 - **Dashboards:** a deliverability-trends UI built on this data is on the roadmap as backlog item #19. Until that ships, query `GET /v1/outcomes` directly and chart it in your own tooling.
 
 If you hit anything that doesn't fit the patterns above, open an issue with your ESP name and a sample webhook payload — we'll add a recipe.

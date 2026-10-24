@@ -2,7 +2,7 @@
 
 ## Verify disposition — 2026-10-23
 
-**Partial; existing replay and conflict semantics.** [Idempotency](../../backend/src/http/idempotency.rs), verification operations, upload request storage, and research retry keys already exist. The current store still keys conflicts by tenant/key and checks the path; do not claim the entire original standardization proposal complete. New cross-service budget/repair replay guarantees belong to RFC 0031.
+**Partial; existing replay and conflict semantics.** [Idempotency](../../backend/src/http/idempotency.rs), verification operations, upload request storage, and research retry keys already exist. The current store still keys conflicts by tenant/key and checks the path; do not claim the entire original standardization proposal complete. New cross-service budget/repair replay guarantees belong to RFC 0005.
 
 [Current build order](README.md) · [Codebase audit](../audits/2026-10-23-verify-north-star.md). This disposition supersedes conflicting historical scope, priority, or baseline statements below; it does not certify every original acceptance criterion.
 

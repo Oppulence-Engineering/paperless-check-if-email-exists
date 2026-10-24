@@ -84,17 +84,18 @@ Reuse Go research rather than creating a second crawler or global contact store.
 
 ## Incremental roadmap
 
-1. **Rights and paid validation:** RFCs 0027/0028; define scope, baseline, costs, and
+1. **Rights and paid validation:** RFCs 0001/0002; define scope, baseline, costs, and
    independent quality measurement using the bounded pilot.
-2. **Complete audit delivery:** RFCs 0029/0030; trace imports, persist review, and
+2. **Complete audit delivery:** RFCs 0003/0004; trace imports, persist review, and
    reconcile Ready/Needs Review/Excluded exports.
-3. **Selective repair and scale:** RFC 0031; approve priced plans, reconcile spend,
+3. **Selective repair and scale:** RFC 0005; approve priced plans, reconcile spend,
    and expand batch capacity before representative agency evaluation.
-4. **Repeat workflows:** requested HubSpot writeback (0032), then bounded recurring
-   quality maintenance (0033), after commercial/economic gates.
+4. **Repeat workflows:** requested HubSpot writeback (0006), then bounded recurring
+   quality maintenance (0007), after commercial/economic gates.
 
 The [RFC index](docs/rfcs/README.md) reconciles all earlier proposals with existing
-code and preserves their IDs. Verification, list hygiene, and existing API clients
+code and numbers all 33 RFCs by decreasing priority. The index links the former-ID
+mapping for older references. Verification, list hygiene, and existing API clients
 remain supported.
 
 ## Repository Scope
