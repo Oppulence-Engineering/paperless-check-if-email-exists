@@ -1,8 +1,8 @@
 {
-  "core": "4.5.0",
-  "cli": "4.4.0",
-  "backend": "4.5.0",
-  "sqs": "4.4.0",
+  "core": "4.6.0",
+  "cli": "4.4.1",
+  "backend": "4.6.0",
+  "sqs": "4.4.1",
   "sdks/typescript": "4.4.0",
   "sdks/golang": "4.4.0"
 }
