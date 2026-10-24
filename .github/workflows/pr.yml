@@ -4,12 +4,16 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - develop
+      - main
 
 # For backend, run builds and tests without sqlx's compile time query checks
 # https://github.com/launchbadge/sqlx/blob/master/sqlx-cli/README.md#force-building-in-offline-mode
 env:
   SQLX_OFFLINE: true
+
+permissions:
+  contents: read
 
 jobs:
   deployment-config:
@@ -34,6 +38,8 @@ jobs:
         run: |
           python3 -m pip install PyYAML==6.0.3
           python3 scripts/check_egress_policy.py
+      - name: Check branch and release policy
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
   web:
     runs-on: ubuntu-latest
