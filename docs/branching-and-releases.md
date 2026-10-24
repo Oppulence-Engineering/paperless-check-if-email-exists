@@ -78,6 +78,28 @@ administration access in addition to permission to push code:
 - Retarget existing ordinary PRs to `develop`. Retire `master` after the migration;
   it must no longer receive changes or run production deployment automation.
 
+The initial setup created `main` and synchronized `develop`, but the connected
+GitHub integration returned HTTP 403 for the default-branch change, branch rename,
+and ruleset creation. Until an administrator completes these steps, `master`
+remains the default and the policy check is advisory. Its deployment and release
+triggers have been removed. Do not open new PRs against it.
+
+An administrator can apply the prepared, additive ruleset and default change:
+
+```sh
+gh api --method PATCH repos/Oppulence-Engineering/paperless-check-if-email-exists \
+  -f default_branch=develop
+gh api --method POST repos/Oppulence-Engineering/paperless-check-if-email-exists/rulesets \
+  --input .github/branch-ruleset.json
+```
+
+The ruleset requires PRs, resolved conversations, and the trusted `branch-policy`
+check on both branches, blocks deletion/force pushes, and has no bypass actors.
+It adds to existing rules instead of replacing them. Do not rerun the POST if that
+named ruleset already exists; edit the existing ruleset instead. After changing the
+default and confirming all open PR bases, archive the historical `master` branch
+according to repository policy.
+
 A workflow failure alone does not prevent a merge: `branch-policy` must be a
 required check in branch protection. Check the repository settings if a PR can be
 merged despite a failing policy check.
