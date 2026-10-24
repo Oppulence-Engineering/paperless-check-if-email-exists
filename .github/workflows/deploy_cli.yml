@@ -9,12 +9,21 @@ env:
   # TODO: Rename to your binary
   BIN: check_if_email_exists
 
+permissions:
+  contents: write
+
 jobs:
+  validate-release:
+    uses: ./.github/workflows/validate-release-ref.yml
+    with:
+      tag: ${{ github.ref_name }}
+
   # This job downloads and stores `cross` as an artifact, so that it can be
   # redownloaded across all of the jobs. Currently this copied pasted between
   # `mean_bean_ci.yml` and `mean_bean_deploy.yml`. Make sure to update both places when making
   # changes.
   install-cross:
+    needs: validate-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1

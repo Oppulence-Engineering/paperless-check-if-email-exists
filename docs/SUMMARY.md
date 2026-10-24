@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Verify and Reacher documentation](README.md)
+* [Branching and releases](branching-and-releases.md)
 
 ## Verify strategy
 

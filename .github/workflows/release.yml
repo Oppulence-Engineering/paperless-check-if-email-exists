@@ -2,23 +2,40 @@ name: release
 
 on:
   push:
-    branches:
-      - master
+    branches: [develop, main]
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  prepare-release:
+    if: ${{ github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Run release-please
+      - name: Prepare versions on develop without publishing
         uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
         with:
-          target-branch: master
+          target-branch: develop
+          skip-github-release: true
           config-file: .releaser.json
           manifest-file: .release-please-manifest.json
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
+  publish-release:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.created }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Publish only the promoted main version
+        env:
+          # A release-capable token also triggers the existing tag/release consumers.
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: python3 .github/scripts/release_policy.py publish
