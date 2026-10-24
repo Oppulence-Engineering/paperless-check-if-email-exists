@@ -48,7 +48,10 @@ Publication compares the backend version in `.release-please-manifest.json` with
 the previous `main` commit. An unchanged version deploys the promoted commit
 without creating a semantic-version release. An increased version creates `vX.Y.Z`
 at that exact merge commit; a retry can reuse a release only at the same commit.
-Version rollback fails publication. CLI and SDK jobs require an existing version
+Successful publication (including a retry) changes included release-preparation PRs
+from `autorelease: pending` to `autorelease: tagged`, allowing release-please to
+prepare the next version. Newer preparation commits still only on `develop` keep
+their pending label. Version rollback fails publication. CLI and SDK jobs require an existing version
 tag reachable from `main`; SDK checkouts use the validated tag's immutable commit,
 never the default branch. For an SDK-only retry use
 `gh workflow run sdk-generate.yml --ref vX.Y.Z`; dispatching it on a branch fails

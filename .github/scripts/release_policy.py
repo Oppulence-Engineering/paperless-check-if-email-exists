@@ -82,6 +82,28 @@ def validate_deployment():
     print(f"Validated {target} source")
 
 
+def complete_preparation_prs(repository, sha):
+    """Unblock release-please only for preparation commits included in this release."""
+    prs = json.loads(subprocess.check_output(
+        ["gh", "pr", "list", "--repo", repository, "--base", "develop", "--state", "merged",
+         "--label", "autorelease: pending", "--limit", "100", "--json", "number,headRefName,mergeCommit"],
+        text=True))
+    for pr in prs:
+        if not pr["headRefName"].startswith("release-please--branches--"):
+            continue
+        commit = (pr.get("mergeCommit") or {}).get("oid")
+        if not commit:
+            continue
+        included = subprocess.run(["git", "merge-base", "--is-ancestor", commit, sha],
+                                  capture_output=True, text=True)
+        if included.returncode == 1:
+            continue  # A newer preparation on develop must remain pending.
+        included.check_returncode()
+        subprocess.run(["gh", "pr", "edit", str(pr["number"]), "--repo", repository,
+                        "--add-label", "autorelease: tagged", "--remove-label", "autorelease: pending"],
+                       check=True)
+
+
 def main():
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
     if os.environ.get("GITHUB_REF") != "refs/heads/main" or event.get("created"):
@@ -108,12 +130,14 @@ def main():
         if tag_result.returncode != 0:
             raise ValueError("existing release tag was not fetched; refusing ambiguous replay")
         print(f"{tag} already published at the approved commit")
+        complete_preparation_prs(repository, sha)
         return
     args = ["gh", "release", "create", tag, "--repo", repository, "--target", sha,
             "--title", tag, "--generate-notes"]
     if "-" in version:
         args.append("--prerelease")
     subprocess.run(args, check=True)
+    complete_preparation_prs(repository, sha)
 
 
 if __name__ == "__main__":

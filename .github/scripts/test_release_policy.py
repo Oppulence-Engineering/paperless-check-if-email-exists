@@ -168,7 +168,7 @@ class PublicationTests(unittest.TestCase):
         with patch.dict(os.environ, GITHUB_EVENT_PATH='/tmp/event.json', GITHUB_REF='refs/heads/main',
                         GITHUB_SHA=SHA, GITHUB_REPOSITORY=REPOSITORY), \
              patch.object(policy.Path, 'read_text', read), \
-             patch.object(policy.subprocess, 'check_output', side_effect=[json.dumps([promotion()]), json.dumps({'backend': old})]), \
+             patch.object(policy.subprocess, 'check_output', side_effect=[json.dumps([promotion()]), json.dumps({'backend': old}), '[]']), \
              patch.object(policy.subprocess, 'run', side_effect=run) as runner, \
              contextlib.redirect_stdout(io.StringIO()):
             policy.main()
@@ -191,6 +191,32 @@ class PublicationTests(unittest.TestCase):
     def test_existing_tag_at_different_commit_is_never_moved(self):
         with self.assertRaisesRegex(ValueError, 'another commit'):
             self.publish('4.5.0', '4.6.0', existing_tag='c' * 40, existing_release=True)
+
+
+class PreparationCleanupTests(unittest.TestCase):
+    def test_only_included_release_preparation_prs_are_marked_tagged(self):
+        prs = [
+            {'number': 10, 'headRefName': 'release-please--branches--master', 'mergeCommit': {'oid': 'included'}},
+            {'number': 11, 'headRefName': 'release-please--branches--develop', 'mergeCommit': {'oid': 'future'}},
+            {'number': 12, 'headRefName': 'feature/other', 'mergeCommit': {'oid': 'included'}},
+        ]
+        def run(args, **kwargs):
+            return subprocess.CompletedProcess(args, 1 if 'future' in args else 0)
+        with patch.object(policy.subprocess, 'check_output', return_value=json.dumps(prs)), \
+             patch.object(policy.subprocess, 'run', side_effect=run) as runner:
+            policy.complete_preparation_prs(REPOSITORY, SHA)
+        edits = [call.args[0] for call in runner.call_args_list if call.args[0][:3] == ['gh', 'pr', 'edit']]
+        self.assertEqual(len(edits), 1)
+        self.assertEqual(edits[0][3], '10')
+        self.assertIn('autorelease: tagged', edits[0])
+        self.assertIn('autorelease: pending', edits[0])
+
+    def test_git_errors_fail_cleanup_instead_of_acknowledging_unknown_history(self):
+        prs = [{'number': 10, 'headRefName': 'release-please--branches--develop', 'mergeCommit': {'oid': 'missing'}}]
+        with patch.object(policy.subprocess, 'check_output', return_value=json.dumps(prs)), \
+             patch.object(policy.subprocess, 'run', return_value=subprocess.CompletedProcess(['git'], 128)), \
+             self.assertRaises(subprocess.CalledProcessError):
+            policy.complete_preparation_prs(REPOSITORY, SHA)
 
 
 if __name__ == '__main__':
